@@ -96,6 +96,24 @@ const HeroSection = () => {
             </span>
           </div>
         </motion.div>
+
+        {/* Hero illustration */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
+          className="mt-16 max-w-2xl mx-auto"
+        >
+          <div className="glass-card rounded-2xl p-2 overflow-hidden">
+            <img
+              src={heroIllustration}
+              alt="Tiikme verified identity platform"
+              className="w-full rounded-xl"
+              width={1280}
+              height={720}
+            />
+          </div>
+        </motion.div>
       </div>
     </section>
   );
