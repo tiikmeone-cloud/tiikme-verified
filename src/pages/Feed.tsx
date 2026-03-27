@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Image, MessageSquare, Repeat2, Bookmark, BarChart3, Zap, Users, TrendingUp, MoreHorizontal, Flag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import NewPostModal from "@/components/NewPostModal";
 
 const posts = [
   {
@@ -69,7 +70,7 @@ const PostCard = ({ post }: { post: typeof posts[0] }) => {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-bold">{post.author.name}</span>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: `${post.author.roleColor}33`, color: post.author.roleColor }}>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: `${post.author.roleColor}22`, color: post.author.roleColor }}>
               {post.author.role}
             </span>
             {post.type !== "Update" && (
@@ -99,15 +100,19 @@ const PostCard = ({ post }: { post: typeof posts[0] }) => {
 
       <p className="text-sm leading-[1.7] mb-4">{post.content}</p>
 
+      {/* Reactions — toggleable */}
       <div className="flex items-center gap-2 mb-3 flex-wrap">
         {Object.entries(post.reactions).map(([key, val]) => (
           <button
             key={key}
             onClick={() => handleReaction(key)}
-            className={`text-xs px-3 py-1.5 rounded-full glass-card transition-all active:scale-[0.97] capitalize ${
-              reacted[key] ? "border-electric text-electric" : "text-muted-foreground hover:text-foreground"
-            }`}
-            style={reacted[key] ? { borderColor: "#7C6FFF", boxShadow: "0 0 10px rgba(124,111,255,0.2)" } : {}}
+            className="text-xs px-3 py-1.5 rounded-full transition-all duration-200 active:scale-[0.97] capitalize"
+            style={{
+              background: reacted[key] ? "rgba(124,111,255,0.2)" : "rgba(255,255,255,0.06)",
+              border: `1px solid ${reacted[key] ? "#7C6FFF" : "rgba(255,255,255,0.12)"}`,
+              color: reacted[key] ? "#F0F0FF" : "rgba(240,240,255,0.6)",
+              boxShadow: reacted[key] ? "0 0 12px rgba(124,111,255,0.3)" : "none",
+            }}
           >
             {key} · {val + (reacted[key] ? 1 : 0)}
           </button>
@@ -130,11 +135,18 @@ const PostCard = ({ post }: { post: typeof posts[0] }) => {
 };
 
 const Feed = () => {
+  const [postModalOpen, setPostModalOpen] = useState(false);
+  const [postModalType, setPostModalType] = useState<string | undefined>();
+
+  const openCompose = (type?: string) => {
+    setPostModalType(type);
+    setPostModalOpen(true);
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
       <h1 className="text-[28px] font-bold mb-6">Feed</h1>
       <div className="flex gap-6">
-        {/* Main feed */}
         <div className="flex-1 max-w-2xl space-y-5">
           {/* Compose */}
           <div className="glass-card rounded-2xl p-4">
@@ -142,42 +154,39 @@ const Feed = () => {
               <div className="w-10 h-10 rounded-full bg-[#7C6FFF] flex items-center justify-center text-xs font-bold text-white">
                 AK
               </div>
-              <button className="flex-1 text-left text-sm text-muted-foreground bg-[rgba(255,255,255,0.06)] rounded-xl px-4 py-3 hover:bg-[rgba(255,255,255,0.08)] transition-colors">
+              <button onClick={() => openCompose()} className="flex-1 text-left text-sm text-muted-foreground bg-[rgba(255,255,255,0.06)] rounded-xl px-4 py-3 hover:bg-[rgba(255,255,255,0.08)] transition-colors">
                 What are you building today, Arjun?
               </button>
             </div>
             <div className="flex items-center gap-2 ml-[52px]">
               {[
-                { label: "Project update", action: () => toast.info("Opening compose...") },
-                { label: "Challenge", action: () => toast.info("Opening challenge...") },
-                { label: "Need collaborator", action: () => toast.info("Opening collab...") },
-                { label: "Photo", action: () => toast.info("Opening photo upload...") },
-              ].map((type) => (
+                { label: "Project update", type: "Project update" },
+                { label: "Challenge", type: "Challenge" },
+                { label: "Need collaborator", type: "Seek collaborator" },
+                { label: "Photo", type: "Photo" },
+              ].map((item) => (
                 <button
-                  key={type.label}
-                  onClick={type.action}
+                  key={item.label}
+                  onClick={() => openCompose(item.type)}
                   className="text-xs px-3 py-1.5 rounded-full glass-card hover:bg-[rgba(255,255,255,0.08)] transition-all active:scale-[0.97] text-muted-foreground hover:text-foreground"
                 >
-                  {type.label === "Photo" && <Image className="w-3 h-3 inline mr-1" />}
-                  {type.label}
+                  {item.label === "Photo" && <Image className="w-3 h-3 inline mr-1" />}
+                  {item.label}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Today divider */}
           <div className="flex items-center justify-center">
             <span className="text-xs text-muted-foreground glass-card px-4 py-1.5 rounded-full">
               Today · {posts.length} new posts
             </span>
           </div>
 
-          {/* Posts */}
           {posts.map((post) => (
             <PostCard key={post.id} post={post} />
           ))}
 
-          {/* Caught up */}
           <div className="flex items-center justify-center py-6">
             <span className="text-sm text-muted-foreground glass-card px-6 py-2.5 rounded-full">
               You're caught up · Showing older posts
@@ -185,9 +194,8 @@ const Feed = () => {
           </div>
         </div>
 
-        {/* Right rail (desktop) */}
+        {/* Right rail */}
         <div className="hidden xl:block w-80 space-y-5 shrink-0">
-          {/* Recruiter activity */}
           <div className="glass-card rounded-2xl p-5">
             <div className="flex items-center gap-2 mb-3">
               <Users className="w-4 h-4 text-coral" />
@@ -203,7 +211,6 @@ const Feed = () => {
             </div>
           </div>
 
-          {/* Activity Score */}
           <div className="glass-card rounded-2xl p-5">
             <p className="micro-label text-muted-foreground/50 mb-2">Activity Score</p>
             <div className="flex items-baseline gap-2 mb-1">
@@ -224,7 +231,6 @@ const Feed = () => {
             <p className="text-[11px] text-muted-foreground">12-week rolling score</p>
           </div>
 
-          {/* Open Challenges */}
           <div className="glass-card rounded-2xl p-5">
             <div className="flex items-center gap-2 mb-3">
               <Zap className="w-4 h-4 text-amber" />
@@ -247,7 +253,6 @@ const Feed = () => {
             </div>
           </div>
 
-          {/* Suggested Strands */}
           <div className="glass-card rounded-2xl p-5">
             <div className="flex items-center gap-2 mb-3">
               <TrendingUp className="w-4 h-4 text-neon" />
@@ -273,6 +278,8 @@ const Feed = () => {
           </div>
         </div>
       </div>
+
+      <NewPostModal open={postModalOpen} onClose={() => setPostModalOpen(false)} defaultType={postModalType} />
     </div>
   );
 };
