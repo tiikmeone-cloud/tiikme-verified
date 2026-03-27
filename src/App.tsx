@@ -6,8 +6,15 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index.tsx";
 import SignIn from "./pages/SignIn.tsx";
 import SignUp from "./pages/SignUp.tsx";
+import Welcome from "./pages/Welcome.tsx";
 import Feed from "./pages/Feed.tsx";
 import Profile from "./pages/Profile.tsx";
+import Nexus from "./pages/Nexus.tsx";
+import BuildLog from "./pages/BuildLog.tsx";
+import Challenges from "./pages/Challenges.tsx";
+import Strands from "./pages/Strands.tsx";
+import Alerts from "./pages/Alerts.tsx";
+import SettingsPage from "./pages/Settings.tsx";
 import AppShell from "./components/layout/AppShell.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -21,21 +28,21 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
-      <Sonner />
+      <Sonner position="bottom-right" />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
+          <Route path="/welcome" element={<Welcome />} />
           <Route path="/app/feed" element={<AppLayout><Feed /></AppLayout>} />
           <Route path="/app/profile" element={<AppLayout><Profile /></AppLayout>} />
-          <Route path="/app/nexus" element={<AppLayout><div className="p-8 text-center text-muted-foreground">Nexus — Coming soon</div></AppLayout>} />
-          <Route path="/app/build-log" element={<AppLayout><div className="p-8 text-center text-muted-foreground">Build Log — Coming soon</div></AppLayout>} />
-          <Route path="/app/challenges" element={<AppLayout><div className="p-8 text-center text-muted-foreground">Challenges — Coming soon</div></AppLayout>} />
-          <Route path="/app/strands" element={<AppLayout><div className="p-8 text-center text-muted-foreground">My Strands — Coming soon</div></AppLayout>} />
-          <Route path="/app/alerts" element={<AppLayout><div className="p-8 text-center text-muted-foreground">Alerts — Coming soon</div></AppLayout>} />
-          <Route path="/app/settings" element={<AppLayout><div className="p-8 text-center text-muted-foreground">Settings — Coming soon</div></AppLayout>} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/app/nexus" element={<AppLayout><Nexus /></AppLayout>} />
+          <Route path="/app/build-log" element={<AppLayout><BuildLog /></AppLayout>} />
+          <Route path="/app/challenges" element={<AppLayout><Challenges /></AppLayout>} />
+          <Route path="/app/strands" element={<AppLayout><Strands /></AppLayout>} />
+          <Route path="/app/alerts" element={<AppLayout><Alerts /></AppLayout>} />
+          <Route path="/app/settings" element={<AppLayout><SettingsPage /></AppLayout>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
