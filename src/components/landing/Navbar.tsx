@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { Zap } from "lucide-react";
 
 const Navbar = () => {
   return (
@@ -11,7 +12,8 @@ const Navbar = () => {
       className="fixed top-0 left-0 right-0 z-50 glass-card border-t-0 border-x-0 rounded-none"
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6 h-16">
-        <Link to="/" className="font-display text-xl font-bold tracking-tight text-foreground">
+        <Link to="/" className="flex items-center gap-1.5 text-xl font-extrabold tracking-tight text-foreground">
+          <Zap className="w-5 h-5 text-electric" />
           Tiikme
         </Link>
 

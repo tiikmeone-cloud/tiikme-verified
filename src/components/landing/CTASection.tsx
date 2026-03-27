@@ -14,11 +14,11 @@ const CTASection = () => {
       >
         {/* Glow */}
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[400px] h-[200px] bg-electric/20 blur-[100px] rounded-full" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[400px] h-[200px] bg-[rgba(124,111,255,0.2)] blur-[100px] rounded-full" />
         </div>
 
         <div className="relative z-10">
-          <h2 className="font-display text-4xl sm:text-5xl font-bold mb-4">
+          <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4">
             Ready to get{" "}
             <span className="text-electric text-primary-glow">Tiiked</span>?
           </h2>
