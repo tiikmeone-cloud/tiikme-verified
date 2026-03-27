@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, Shield, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import heroIllustration from "@/assets/hero-illustration.jpg";
 
 const HeroSection = () => {
   return (
