@@ -23,10 +23,10 @@ const ComparisonSection = () => {
           className="text-center mb-12"
         >
           <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4">
-            Tiikme vs Others
+            Built differently.
           </h2>
           <p className="text-lg text-muted-foreground">
-            Built differently from traditional platforms. Here's why.
+            Tiikme isn't like traditional platforms. Here's why.
           </p>
         </motion.div>
 
@@ -37,14 +37,12 @@ const ComparisonSection = () => {
           transition={{ delay: 0.2 }}
           className="glass-card rounded-2xl overflow-hidden"
         >
-          {/* Header */}
           <div className="grid grid-cols-3 gap-4 p-6 border-b border-border">
             <div className="text-muted-foreground font-medium text-sm">Feature</div>
             <div className="text-center font-extrabold text-electric">Tiikme</div>
-            <div className="text-center font-bold text-muted-foreground">Traditional Platforms</div>
+            <div className="text-center font-bold text-muted-foreground">Others</div>
           </div>
 
-          {/* Rows */}
           {rows.map((row, i) => (
             <div
               key={row.feature}
