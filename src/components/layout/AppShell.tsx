@@ -24,11 +24,11 @@ const connectNav = [
   { label: "Settings", icon: Settings, path: "/app/settings" },
 ];
 
-const mobileNav = [
+const mobileNav: { label: string; icon: React.ElementType; path: string; badge?: number }[] = [
   { label: "Feed", icon: LayoutGrid, path: "/app/feed" },
   { label: "Nexus", icon: Compass, path: "/app/nexus" },
   { label: "Build", icon: Layers, path: "/app/build-log" },
-  { label: "Alerts", icon: Bell, path: "/app/alerts" },
+  { label: "Alerts", icon: Bell, path: "/app/alerts", badge: 5 },
   { label: "Profile", icon: User, path: "/app/profile" },
 ];
 
