@@ -5,7 +5,7 @@ const Footer = () => {
     <footer className="border-t border-border py-12 px-4">
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
         <div>
-          <span className="font-display text-lg font-bold">Tiikme</span>
+          <span className="text-lg font-extrabold">Tiikme</span>
           <p className="text-sm text-muted-foreground mt-1">Verified professional identity for India.</p>
         </div>
         <div className="flex items-center gap-6 text-sm text-muted-foreground">

@@ -60,7 +60,7 @@ const FeaturesSection = () => {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className="font-display text-4xl sm:text-5xl font-bold mb-4">
+          <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4">
             Built for{" "}
             <span className="text-electric">every</span> working person
           </h2>
@@ -83,7 +83,7 @@ const FeaturesSection = () => {
               className="glass-card-hover p-8 rounded-2xl"
             >
               <feature.icon className={`w-10 h-10 ${feature.color} mb-4`} />
-              <h3 className="font-display text-xl font-semibold mb-2">{feature.title}</h3>
+              <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
               <p className="text-muted-foreground text-sm leading-relaxed">{feature.description}</p>
             </motion.div>
           ))}

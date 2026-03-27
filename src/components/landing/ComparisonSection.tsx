@@ -2,14 +2,14 @@ import { motion } from "framer-motion";
 import { Check, X } from "lucide-react";
 
 const rows = [
-  { feature: "Verified identity (OTP + docs)", tiikme: true, linkedin: false },
-  { feature: "Project-first profiles", tiikme: true, linkedin: false },
-  { feature: "Faculty-approved completions", tiikme: true, linkedin: false },
-  { feature: "All professions (plumbers to doctors)", tiikme: true, linkedin: false },
-  { feature: "Anti-spam (no cold DMs)", tiikme: true, linkedin: false },
-  { feature: "Activity Score (not endorsements)", tiikme: true, linkedin: false },
-  { feature: "Open challenges & bounties", tiikme: true, linkedin: false },
-  { feature: "India-first (DPDP compliant)", tiikme: true, linkedin: false },
+  { feature: "Verified identity (OTP + docs)", tiikme: true, others: false },
+  { feature: "Project-first profiles", tiikme: true, others: false },
+  { feature: "Faculty-approved completions", tiikme: true, others: false },
+  { feature: "All professions (plumbers to doctors)", tiikme: true, others: false },
+  { feature: "Anti-spam (no cold DMs)", tiikme: true, others: false },
+  { feature: "Activity Score (not endorsements)", tiikme: true, others: false },
+  { feature: "Open challenges & bounties", tiikme: true, others: false },
+  { feature: "India-first (DPDP compliant)", tiikme: true, others: false },
 ];
 
 const ComparisonSection = () => {
@@ -22,11 +22,11 @@ const ComparisonSection = () => {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <h2 className="font-display text-4xl sm:text-5xl font-bold mb-4">
-            Not another LinkedIn
+          <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4">
+            Tiikme vs Others
           </h2>
           <p className="text-lg text-muted-foreground">
-            Tiikme is built differently. Here's why.
+            Built differently from traditional platforms. Here's why.
           </p>
         </motion.div>
 
@@ -40,8 +40,8 @@ const ComparisonSection = () => {
           {/* Header */}
           <div className="grid grid-cols-3 gap-4 p-6 border-b border-border">
             <div className="text-muted-foreground font-medium text-sm">Feature</div>
-            <div className="text-center font-display font-bold text-electric">Tiikme</div>
-            <div className="text-center font-display font-bold text-muted-foreground">LinkedIn</div>
+            <div className="text-center font-extrabold text-electric">Tiikme</div>
+            <div className="text-center font-bold text-muted-foreground">Traditional Platforms</div>
           </div>
 
           {/* Rows */}
@@ -52,12 +52,12 @@ const ComparisonSection = () => {
             >
               <div className="text-sm text-foreground/80">{row.feature}</div>
               <div className="flex justify-center">
-                <div className="w-7 h-7 rounded-full bg-neon/20 flex items-center justify-center">
+                <div className="w-7 h-7 rounded-full bg-[rgba(0,255,178,0.2)] flex items-center justify-center">
                   <Check className="w-4 h-4 text-neon" />
                 </div>
               </div>
               <div className="flex justify-center">
-                <div className="w-7 h-7 rounded-full bg-destructive/20 flex items-center justify-center">
+                <div className="w-7 h-7 rounded-full bg-[rgba(255,71,87,0.2)] flex items-center justify-center">
                   <X className="w-4 h-4 text-destructive" />
                 </div>
               </div>
