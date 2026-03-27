@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, Shield, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import heroIllustration from "@/assets/hero-illustration.jpg";
 
 const HeroSection = () => {
   return (
@@ -93,6 +94,24 @@ const HeroSection = () => {
             <span className="text-sm text-muted-foreground">
               <span className="text-foreground font-semibold">12,400+</span> verified profiles
             </span>
+          </div>
+        </motion.div>
+
+        {/* Hero illustration */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
+          className="mt-16 max-w-2xl mx-auto"
+        >
+          <div className="glass-card rounded-2xl p-2 overflow-hidden">
+            <img
+              src={heroIllustration}
+              alt="Tiikme verified identity platform"
+              className="w-full rounded-xl"
+              width={1280}
+              height={720}
+            />
           </div>
         </motion.div>
       </div>
