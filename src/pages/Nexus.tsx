@@ -104,7 +104,7 @@ const GroupCard = ({ card }: { card: NexusCard }) => (
 
 const ChallengeCard = ({ card }: { card: NexusCard }) => (
   <div className="glass-card-hover rounded-2xl p-5 cursor-pointer" style={{ borderTop: "3px solid #FFB547" }}>
-    <span className="micro-label text-amber mb-2 block">Challenge</span>
+    <span className="micro-label text-amber mb-2 block">Opportunity</span>
     <h3 className="text-sm font-bold mb-2">{card.name}</h3>
     <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3">
       <span className="text-amber font-bold">{card.reward}</span>
