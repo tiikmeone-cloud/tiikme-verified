@@ -37,7 +37,7 @@ const mockCards: NexusCard[] = [
   { type: "challenge", name: "Cold Storage for Farmers", initials: "CS", color: "#FFB547", reward: "₹25,000", daysLeft: 12 } as NexusCard,
   { type: "profile", name: "Sunita Devi", initials: "SD", color: "#FFA726", role: "Skilled Trade", city: "Hyderabad", score: 74, strands: 48, institution: "Independent" },
   { type: "project", name: "TelemedicineRx", initials: "TR", color: "#26C6DA", domain: "HealthTech", status: "Active", creator: "Riya S.", creatorRole: "Student", teamSize: 4 },
-  { type: "challenge", name: "AI Crop Disease Detection", initials: "AC", color: "#FFB547", reward: "₹50,000", daysLeft: 20 },
+  { type: "challenge", name: "AI Crop Disease Detection", initials: "AC", color: "#FFB547", reward: "₹50,000", daysLeft: 20 } as NexusCard,
   { type: "profile", name: "Arjun Kumar", initials: "AK", color: "#7C6FFF", role: "Student", city: "Delhi", score: 78, strands: 156, institution: "DTU" },
   { type: "project", name: "HealthBridge App", initials: "HB", color: "#FF6B6B", domain: "Health", status: "Completed", creator: "Dr. Manoj", creatorRole: "Doctor", teamSize: 5 },
   { type: "group", name: "EduTech Builders", initials: "EB", color: "#FFB547", members: 28, activeProjects: 5 },
