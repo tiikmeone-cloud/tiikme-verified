@@ -2,8 +2,8 @@ import { ReactNode, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  LayoutGrid, Compass, User, Layers, AlertCircle,
-  Share2, Bell, Settings, PenSquare, Zap,
+  LayoutGrid, Compass, User, Layers, Target,
+  Share2, MessageCircle, Bell, Settings, PenSquare, Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import NewPostModal from "@/components/NewPostModal";
@@ -14,21 +14,25 @@ const mainNav = [
   { label: "My Profile", icon: User, path: "/app/profile" },
 ];
 
-const buildNav = [
-  { label: "Build Log", icon: Layers, path: "/app/build-log" },
-  { label: "Challenges", icon: AlertCircle, path: "/app/challenges", badge: 3 },
+const workNav = [
+  { label: "My Work", icon: Layers, path: "/app/my-work" },
+  { label: "Opportunities", icon: Target, path: "/app/opportunities", badge: 3 },
 ];
 
 const connectNav = [
   { label: "My Strands", icon: Share2, path: "/app/strands" },
+  { label: "Messages", icon: MessageCircle, path: "/app/messages", badge: 2 },
   { label: "Alerts", icon: Bell, path: "/app/alerts", badge: 5 },
+];
+
+const moreNav = [
   { label: "Settings", icon: Settings, path: "/app/settings" },
 ];
 
 const mobileNav: { label: string; icon: React.ElementType; path: string; badge?: number }[] = [
   { label: "Feed", icon: LayoutGrid, path: "/app/feed" },
   { label: "Nexus", icon: Compass, path: "/app/nexus" },
-  { label: "Build", icon: Layers, path: "/app/build-log" },
+  { label: "My Work", icon: Layers, path: "/app/my-work" },
   { label: "Alerts", icon: Bell, path: "/app/alerts", badge: 5 },
   { label: "Profile", icon: User, path: "/app/profile" },
 ];
@@ -96,8 +100,9 @@ const AppShell = ({ children }: { children: ReactNode }) => {
 
         <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
           <NavSection label="MAIN" items={mainNav} pathname={pathname} />
-          <NavSection label="BUILD" items={buildNav} pathname={pathname} />
+          <NavSection label="WORK" items={workNav} pathname={pathname} />
           <NavSection label="CONNECT" items={connectNav} pathname={pathname} />
+          <NavSection label="MORE" items={moreNav} pathname={pathname} />
         </nav>
 
         <div className="px-3 pb-3">
@@ -133,6 +138,10 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             <button onClick={() => setPostModalOpen(true)} className="p-2 rounded-lg hover:bg-[rgba(255,255,255,0.06)] transition-colors">
               <PenSquare className="w-5 h-5 text-electric" />
             </button>
+            <Link to="/app/messages" className="relative p-2 rounded-lg hover:bg-[rgba(255,255,255,0.06)] transition-colors">
+              <MessageCircle className="w-5 h-5 text-muted-foreground" />
+              <span className="absolute top-1 right-1 w-2 h-2 bg-electric rounded-full" />
+            </Link>
             <Link to="/app/alerts" className="relative p-2 rounded-lg hover:bg-[rgba(255,255,255,0.06)] transition-colors">
               <Bell className="w-5 h-5 text-muted-foreground" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-electric rounded-full" />

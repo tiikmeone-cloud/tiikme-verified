@@ -10,10 +10,11 @@ import Welcome from "./pages/Welcome.tsx";
 import Feed from "./pages/Feed.tsx";
 import Profile from "./pages/Profile.tsx";
 import Nexus from "./pages/Nexus.tsx";
-import BuildLog from "./pages/BuildLog.tsx";
-import Challenges from "./pages/Challenges.tsx";
+import MyWork from "./pages/BuildLog.tsx";
+import Opportunities from "./pages/Challenges.tsx";
 import Strands from "./pages/Strands.tsx";
 import Alerts from "./pages/Alerts.tsx";
+import Messages from "./pages/Messages.tsx";
 import SettingsPage from "./pages/Settings.tsx";
 import AppShell from "./components/layout/AppShell.tsx";
 import NotFound from "./pages/NotFound.tsx";
@@ -38,11 +39,15 @@ const App = () => (
           <Route path="/app/feed" element={<AppLayout><Feed /></AppLayout>} />
           <Route path="/app/profile" element={<AppLayout><Profile /></AppLayout>} />
           <Route path="/app/nexus" element={<AppLayout><Nexus /></AppLayout>} />
-          <Route path="/app/build-log" element={<AppLayout><BuildLog /></AppLayout>} />
-          <Route path="/app/challenges" element={<AppLayout><Challenges /></AppLayout>} />
+          <Route path="/app/my-work" element={<AppLayout><MyWork /></AppLayout>} />
+          <Route path="/app/opportunities" element={<AppLayout><Opportunities /></AppLayout>} />
           <Route path="/app/strands" element={<AppLayout><Strands /></AppLayout>} />
           <Route path="/app/alerts" element={<AppLayout><Alerts /></AppLayout>} />
+          <Route path="/app/messages" element={<AppLayout><Messages /></AppLayout>} />
           <Route path="/app/settings" element={<AppLayout><SettingsPage /></AppLayout>} />
+          {/* Legacy redirects */}
+          <Route path="/app/build-log" element={<AppLayout><MyWork /></AppLayout>} />
+          <Route path="/app/challenges" element={<AppLayout><Opportunities /></AppLayout>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

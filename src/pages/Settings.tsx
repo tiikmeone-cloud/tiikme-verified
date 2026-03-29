@@ -2,13 +2,13 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import {
   Settings as SettingsIcon, User, Bell, Shield, Check, GraduationCap, Briefcase, Rocket, Laptop, Coffee,
-  Globe, Users, Clock, MapIcon, Trash2, Download, Key, Mail,
+  Globe, Users, Clock, Trash2, Download, Key, Mail, Palette, Sun, Moon, Monitor,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
-const navItems = ["Profile", "My Journey", "Privacy", "Group Admin", "Alerts", "Language", "Account"];
+const navItems = ["Profile", "My Journey", "Appearance", "Privacy", "Group Admin", "Alerts", "Language", "Account"];
 
 const journeyCards = [
   { id: "higher", icon: GraduationCap, title: "Higher studies", desc: "M.Tech, MBA, PhD — stay as Student" },
@@ -25,6 +25,13 @@ const languages = [
   { code: "ta", label: "தமிழ்", native: "Tamil" },
   { code: "kn", label: "ಕನ್ನಡ", native: "Kannada" },
   { code: "mr", label: "मराठी", native: "Marathi" },
+];
+
+const accentOptions = [
+  { id: "electric", label: "Electric Indigo", color: "#7C6FFF" },
+  { id: "neon", label: "Neon Mint", color: "#00FFB2" },
+  { id: "coral", label: "Coral Rose", color: "#FF6B6B" },
+  { id: "amber", label: "Amber Gold", color: "#FFB547" },
 ];
 
 const Toggle = ({ label, defaultOn = true }: { label: string; defaultOn?: boolean }) => {
@@ -47,6 +54,9 @@ const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState("Profile");
   const [journeyChoice, setJourneyChoice] = useState<string | null>(null);
   const [selectedLang, setSelectedLang] = useState("en");
+  const [theme, setTheme] = useState("dark");
+  const [accent, setAccent] = useState("electric");
+  const [textSize, setTextSize] = useState("default");
   const [profile, setProfile] = useState({
     name: "Arjun Kumar", headline: "Final year CSE student building at the intersection of health and technology.",
     bio: "", institution: "Delhi Technological University", city: "Delhi", state: "Delhi", slug: "arjunkumar",
@@ -160,11 +170,84 @@ const SettingsPage = () => {
               </div>
 
               {journeyChoice && (
-                <Button variant="hero" className="w-full" onClick={() => toast.success("Journey updated! Your role badge has been updated.")}>
+                <Button variant="default" className="w-full" onClick={() => toast.success("Journey updated! Your role badge has been updated.")}>
                   Update my journey
                 </Button>
               )}
               <p className="text-xs text-muted-foreground text-center">All your project history is preserved regardless of journey change.</p>
+            </motion.div>
+          )}
+
+          {/* APPEARANCE */}
+          {activeTab === "Appearance" && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+              <div className="glass-card rounded-2xl p-6">
+                <div className="flex items-center gap-2 mb-1">
+                  <Palette className="w-5 h-5 text-electric" />
+                  <h3 className="text-lg font-bold">Appearance</h3>
+                </div>
+                <p className="text-sm text-muted-foreground mb-6">Customize how Tiikme looks for you.</p>
+
+                {/* Theme */}
+                <p className="text-sm font-bold mb-3">Theme</p>
+                <div className="grid grid-cols-3 gap-3 mb-8">
+                  {[
+                    { id: "dark", label: "Dark", icon: Moon, desc: "Default, easy on the eyes" },
+                    { id: "light", label: "Light", icon: Sun, desc: "Bright and clean" },
+                    { id: "system", label: "System", icon: Monitor, desc: "Match your device" },
+                  ].map(t => (
+                    <button
+                      key={t.id}
+                      onClick={() => { setTheme(t.id); toast.success(`Theme set to ${t.label}`); }}
+                      className="glass-card rounded-xl p-4 text-left transition-all"
+                      style={theme === t.id ? { borderColor: "#7C6FFF", boxShadow: "0 0 15px rgba(124,111,255,0.3)" } : {}}
+                    >
+                      {theme === t.id && (
+                        <div className="float-right w-5 h-5 rounded-full bg-electric flex items-center justify-center">
+                          <Check className="w-3 h-3 text-white" />
+                        </div>
+                      )}
+                      <t.icon className="w-6 h-6 text-electric mb-2" />
+                      <span className="text-sm font-bold block">{t.label}</span>
+                      <span className="text-[11px] text-muted-foreground">{t.desc}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Accent */}
+                <p className="text-sm font-bold mb-3">Accent colour</p>
+                <div className="grid grid-cols-4 gap-3 mb-8">
+                  {accentOptions.map(a => (
+                    <button
+                      key={a.id}
+                      onClick={() => { setAccent(a.id); toast.success(`Accent set to ${a.label}`); }}
+                      className="glass-card rounded-xl p-4 text-center transition-all"
+                      style={accent === a.id ? { borderColor: a.color, boxShadow: `0 0 15px ${a.color}44` } : {}}
+                    >
+                      <div className="w-8 h-8 rounded-full mx-auto mb-2" style={{ backgroundColor: a.color }} />
+                      <span className="text-[11px] font-bold block">{a.label}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Text size */}
+                <p className="text-sm font-bold mb-3">Text size</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { id: "default", label: "Default" },
+                    { id: "large", label: "Large" },
+                  ].map(s => (
+                    <button
+                      key={s.id}
+                      onClick={() => { setTextSize(s.id); toast.success(`Text size set to ${s.label}`); }}
+                      className="glass-card rounded-xl p-4 text-center transition-all"
+                      style={textSize === s.id ? { borderColor: "#7C6FFF", boxShadow: "0 0 15px rgba(124,111,255,0.3)" } : {}}
+                    >
+                      <span className={`font-bold block ${s.id === "large" ? "text-lg" : "text-sm"}`}>{s.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </motion.div>
           )}
 
@@ -195,7 +278,7 @@ const SettingsPage = () => {
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <span><span className="font-bold text-amber">Admin:</span> approve completion, edit all, hide project</span>
                     <span><span className="font-bold text-neon">Editor:</span> edit description + timeline</span>
-                    <span><span className="font-bold text-liquid-blue">Member:</span> post updates only</span>
+                    <span><span className="font-bold" style={{ color: "#4FC3F7" }}>Member:</span> post updates only</span>
                     <span><span className="font-bold text-muted-foreground">Viewer:</span> read only</span>
                   </div>
                 </div>

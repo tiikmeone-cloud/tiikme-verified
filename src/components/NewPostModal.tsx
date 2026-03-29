@@ -95,7 +95,7 @@ const NewPostModal = ({ open, onClose, defaultType }: NewPostModalProps) => {
               />
               <button className="w-full glass-card rounded-xl p-3 text-left text-xs text-muted-foreground hover:text-foreground hover:bg-[rgba(255,255,255,0.06)] transition-colors flex items-center gap-2">
                 <Link2 className="w-4 h-4 text-electric" />
-                Link a project from your Build Log
+                Link a project from My Work
               </button>
             </div>
           )}

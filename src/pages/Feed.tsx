@@ -234,7 +234,7 @@ const Feed = () => {
           <div className="glass-card rounded-2xl p-5">
             <div className="flex items-center gap-2 mb-3">
               <Zap className="w-4 h-4 text-amber" />
-              <h3 className="text-sm font-bold">Open Challenges</h3>
+              <h3 className="text-sm font-bold">Open Opportunities</h3>
             </div>
             <div className="space-y-3">
               {[
