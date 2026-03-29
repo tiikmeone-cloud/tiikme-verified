@@ -1,9 +1,68 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Image, MessageSquare, Repeat2, Bookmark, BarChart3, Zap, Users, TrendingUp, MoreHorizontal, Flag } from "lucide-react";
+import { Image, MessageSquare, Repeat2, BarChart3, Zap, Users, TrendingUp, MoreHorizontal, Flag, ChevronDown, ChevronUp, Send, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
 import NewPostModal from "@/components/NewPostModal";
+
+// Current user mock
+const currentUser = { name: "Arjun", role: "student" };
+
+const getComposePlaceholder = (role: string) => {
+  switch (role) {
+    case "student": case "startup": return `What are you building today, ${currentUser.name}?`;
+    case "professional": return "Share an insight from your work...";
+    case "doctor": return "Share a case, insight, or health tip...";
+    case "government": return "Share something from your work today...";
+    case "skilled_trade": return "Share a job you completed or a skill...";
+    case "faculty": return "Share something you're teaching or learning...";
+    case "hr": case "hr_recruiter": return "Share a hiring insight or opportunity...";
+    default: return "What's on your mind?";
+  }
+};
+
+const getQuickActions = (role: string) => {
+  switch (role) {
+    case "student": case "startup":
+      return [
+        { label: "Project update", type: "Project update" },
+        { label: "Challenge", type: "Challenge" },
+        { label: "Need collaborator", type: "Seek collaborator" },
+        { label: "Photo", type: "Photo" },
+      ];
+    case "professional": case "doctor": case "government": case "faculty":
+      return [
+        { label: "Insight", type: "Thought" },
+        { label: "Work update", type: "Project update" },
+        { label: "Photo", type: "Photo" },
+        { label: "Opportunity", type: "Challenge" },
+      ];
+    case "skilled_trade":
+      return [
+        { label: "Job done", type: "Project update" },
+        { label: "Availability", type: "Thought" },
+        { label: "Tip", type: "Thought" },
+        { label: "Photo", type: "Photo" },
+      ];
+    case "hr": case "hr_recruiter":
+      return [
+        { label: "Job opening", type: "Challenge" },
+        { label: "Hiring insight", type: "Thought" },
+        { label: "Photo", type: "Photo" },
+        { label: "Challenge", type: "Challenge" },
+      ];
+    default:
+      return [
+        { label: "Project update", type: "Project update" },
+        { label: "Challenge", type: "Challenge" },
+        { label: "Need collaborator", type: "Seek collaborator" },
+        { label: "Photo", type: "Photo" },
+      ];
+  }
+};
+
+const trendingTopics = ["#AgriTech", "#HealthTech", "#GovtJobs", "#UPSC", "#StartupIndia", "#SkilledTrade", "#TeacherLife", "#BankingCareers"];
 
 const posts = [
   {
@@ -48,49 +107,38 @@ const posts = [
   },
 ];
 
+const mockComments = [
+  { name: "Rahul K.", initials: "RK", color: "#4FC3F7", text: "This sounds amazing! I'd love to join.", time: "1h ago" },
+  { name: "Priya M.", initials: "PM", color: "#FFB547", text: "Great initiative. Shared with my students.", time: "2h ago" },
+];
+
 const PostCard = ({ post }: { post: typeof posts[0] }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [reacted, setReacted] = useState<Record<string, boolean>>({});
+  const [showComments, setShowComments] = useState(false);
+  const [commentText, setCommentText] = useState("");
 
   const handleReaction = (key: string) => {
     setReacted(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="glass-card rounded-2xl p-5"
-      style={{ borderLeft: post.borderColor ? `3px solid ${post.borderColor}` : undefined }}
-    >
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-2xl p-5" style={{ borderLeft: post.borderColor ? `3px solid ${post.borderColor}` : undefined }}>
       <div className="flex items-start gap-3 mb-3">
-        <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0" style={{ backgroundColor: post.author.roleColor }}>
-          {post.author.initials}
-        </div>
+        <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0" style={{ backgroundColor: post.author.roleColor }}>{post.author.initials}</div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-bold">{post.author.name}</span>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: `${post.author.roleColor}22`, color: post.author.roleColor }}>
-              {post.author.role}
-            </span>
-            {post.type !== "Update" && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full glass-card" style={{ color: post.borderColor }}>
-                {post.type}
-              </span>
-            )}
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: `${post.author.roleColor}22`, color: post.author.roleColor }}>{post.author.role}</span>
+            {post.type !== "Update" && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full glass-card" style={{ color: post.borderColor }}>{post.type}</span>}
           </div>
           <p className="text-xs text-muted-foreground">{post.time}</p>
         </div>
         <div className="relative">
-          <button onClick={() => setShowMenu(!showMenu)} className="p-1.5 rounded-lg hover:bg-[rgba(255,255,255,0.06)] transition-colors">
-            <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
-          </button>
+          <button onClick={() => setShowMenu(!showMenu)} className="p-1.5 rounded-lg hover:bg-[rgba(255,255,255,0.06)] transition-colors"><MoreHorizontal className="w-4 h-4 text-muted-foreground" /></button>
           {showMenu && (
             <div className="absolute right-0 top-8 glass-card rounded-xl p-1 min-w-[140px] z-10">
-              <button
-                onClick={() => { toast.info("Report submitted"); setShowMenu(false); }}
-                className="flex items-center gap-2 w-full px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-[rgba(255,255,255,0.06)] rounded-lg transition-colors"
-              >
+              <button onClick={() => { toast.info("Report submitted"); setShowMenu(false); }} className="flex items-center gap-2 w-full px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-[rgba(255,255,255,0.06)] rounded-lg transition-colors">
                 <Flag className="w-3 h-3" /> Report post
               </button>
             </div>
@@ -100,36 +148,53 @@ const PostCard = ({ post }: { post: typeof posts[0] }) => {
 
       <p className="text-sm leading-[1.7] mb-4">{post.content}</p>
 
-      {/* Reactions — toggleable */}
+      {/* Reactions */}
       <div className="flex items-center gap-2 mb-3 flex-wrap">
         {Object.entries(post.reactions).map(([key, val]) => (
-          <button
-            key={key}
-            onClick={() => handleReaction(key)}
-            className="text-xs px-3 py-1.5 rounded-full transition-all duration-200 active:scale-[0.97] capitalize"
+          <button key={key} onClick={() => handleReaction(key)} className="text-xs px-3 py-1.5 rounded-full transition-all duration-200 active:scale-[0.97] capitalize"
             style={{
               background: reacted[key] ? "rgba(124,111,255,0.2)" : "rgba(255,255,255,0.06)",
               border: `1px solid ${reacted[key] ? "#7C6FFF" : "rgba(255,255,255,0.12)"}`,
               color: reacted[key] ? "#F0F0FF" : "rgba(240,240,255,0.6)",
               boxShadow: reacted[key] ? "0 0 12px rgba(124,111,255,0.3)" : "none",
-            }}
-          >
+            }}>
             {key} · {val + (reacted[key] ? 1 : 0)}
           </button>
         ))}
       </div>
 
+      {/* Actions — Comment + Repost only (no Save in V1) */}
       <div className="flex items-center gap-1 border-t border-border pt-3">
-        <Button variant="ghost" size="sm" className="gap-1.5 text-xs">
+        <Button variant="ghost" size="sm" className="gap-1.5 text-xs" onClick={() => setShowComments(!showComments)}>
           <MessageSquare className="w-3.5 h-3.5" /> {post.comments}
+          {showComments ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
         </Button>
         <Button variant="ghost" size="sm" className="gap-1.5 text-xs" onClick={() => toast.success("Reposted")}>
           <Repeat2 className="w-3.5 h-3.5" /> Repost
         </Button>
-        <Button variant="ghost" size="sm" className="gap-1.5 text-xs" onClick={() => toast.success("Saved")}>
-          <Bookmark className="w-3.5 h-3.5" /> Save
-        </Button>
       </div>
+
+      {/* Inline comments */}
+      {showComments && (
+        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mt-3 pt-3 border-t border-border space-y-3">
+          {mockComments.map((c, i) => (
+            <div key={i} className="flex items-start gap-2">
+              <div className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0" style={{ backgroundColor: c.color }}>{c.initials}</div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold">{c.name}</span>
+                  <span className="text-[10px] text-muted-foreground">{c.time}</span>
+                </div>
+                <p className="text-xs text-muted-foreground/80">{c.text}</p>
+              </div>
+            </div>
+          ))}
+          <div className="flex items-center gap-2">
+            <input value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="Write a comment..." className="flex-1 h-9 bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.1)] rounded-xl px-3 text-xs outline-none placeholder:text-muted-foreground" onKeyDown={e => { if (e.key === "Enter" && commentText.trim()) { toast.success("Comment posted"); setCommentText(""); } }} />
+            <button onClick={() => { if (commentText.trim()) { toast.success("Comment posted"); setCommentText(""); } }} className="p-2 rounded-lg hover:bg-[rgba(255,255,255,0.06)]"><Send className="w-3.5 h-3.5 text-electric" /></button>
+          </div>
+        </motion.div>
+      )}
     </motion.div>
   );
 };
@@ -137,11 +202,14 @@ const PostCard = ({ post }: { post: typeof posts[0] }) => {
 const Feed = () => {
   const [postModalOpen, setPostModalOpen] = useState(false);
   const [postModalType, setPostModalType] = useState<string | undefined>();
+  const [activeTopic, setActiveTopic] = useState<string | null>(null);
 
   const openCompose = (type?: string) => {
     setPostModalType(type);
     setPostModalOpen(true);
   };
+
+  const quickActions = getQuickActions(currentUser.role);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
@@ -151,25 +219,14 @@ const Feed = () => {
           {/* Compose */}
           <div className="glass-card rounded-2xl p-4">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-full bg-[#7C6FFF] flex items-center justify-center text-xs font-bold text-white">
-                AK
-              </div>
+              <div className="w-10 h-10 rounded-full bg-[#7C6FFF] flex items-center justify-center text-xs font-bold text-white">AK</div>
               <button onClick={() => openCompose()} className="flex-1 text-left text-sm text-muted-foreground bg-[rgba(255,255,255,0.06)] rounded-xl px-4 py-3 hover:bg-[rgba(255,255,255,0.08)] transition-colors">
-                What are you building today, Arjun?
+                {getComposePlaceholder(currentUser.role)}
               </button>
             </div>
             <div className="flex items-center gap-2 ml-[52px]">
-              {[
-                { label: "Project update", type: "Project update" },
-                { label: "Challenge", type: "Challenge" },
-                { label: "Need collaborator", type: "Seek collaborator" },
-                { label: "Photo", type: "Photo" },
-              ].map((item) => (
-                <button
-                  key={item.label}
-                  onClick={() => openCompose(item.type)}
-                  className="text-xs px-3 py-1.5 rounded-full glass-card hover:bg-[rgba(255,255,255,0.08)] transition-all active:scale-[0.97] text-muted-foreground hover:text-foreground"
-                >
+              {quickActions.map((item) => (
+                <button key={item.label} onClick={() => openCompose(item.type)} className="text-xs px-3 py-1.5 rounded-full glass-card hover:bg-[rgba(255,255,255,0.08)] transition-all active:scale-[0.97] text-muted-foreground hover:text-foreground">
                   {item.label === "Photo" && <Image className="w-3 h-3 inline mr-1" />}
                   {item.label}
                 </button>
@@ -177,70 +234,95 @@ const Feed = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-center">
-            <span className="text-xs text-muted-foreground glass-card px-4 py-1.5 rounded-full">
-              Today · {posts.length} new posts
-            </span>
+          {/* Trending topics */}
+          <div>
+            <p className="micro-label text-muted-foreground/50 mb-2 px-1">Trending</p>
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+              {trendingTopics.map(t => (
+                <button key={t} onClick={() => setActiveTopic(activeTopic === t ? null : t)}
+                  className="whitespace-nowrap text-xs font-bold px-3 py-1.5 rounded-full transition-all shrink-0"
+                  style={{
+                    background: activeTopic === t ? "#7C6FFF" : "rgba(255,255,255,0.06)",
+                    border: `1px solid ${activeTopic === t ? "#7C6FFF" : "rgba(255,255,255,0.12)"}`,
+                    color: activeTopic === t ? "white" : "rgba(240,240,255,0.6)",
+                  }}>
+                  {t}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {posts.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))}
+          <div className="flex items-center justify-center">
+            <span className="text-xs text-muted-foreground glass-card px-4 py-1.5 rounded-full">Today · {posts.length} new posts</span>
+          </div>
+
+          {posts.map((post) => <PostCard key={post.id} post={post} />)}
 
           <div className="flex items-center justify-center py-6">
-            <span className="text-sm text-muted-foreground glass-card px-6 py-2.5 rounded-full">
-              You're caught up · Showing older posts
-            </span>
+            <span className="text-sm text-muted-foreground glass-card px-6 py-2.5 rounded-full">You're caught up · Showing older posts</span>
           </div>
         </div>
 
-        {/* Right rail */}
+        {/* Right sidebar — desktop only */}
         <div className="hidden xl:block w-80 space-y-5 shrink-0">
+          {/* Who to connect with */}
           <div className="glass-card rounded-2xl p-5">
             <div className="flex items-center gap-2 mb-3">
-              <Users className="w-4 h-4 text-coral" />
-              <h3 className="text-sm font-bold">Recruiter Activity</h3>
+              <Users className="w-4 h-4 text-electric" />
+              <h3 className="text-sm font-bold">Who to connect with</h3>
             </div>
-            <p className="text-xs text-muted-foreground mb-3">3 recruiters viewed your profile this week</p>
-            <div className="flex -space-x-2">
-              {["TCS", "INF", "WIP"].map((c) => (
-                <div key={c} className="w-8 h-8 rounded-full bg-[rgba(255,107,107,0.2)] border-2 border-background flex items-center justify-center text-[10px] font-bold text-coral">
-                  {c}
+            <div className="space-y-3">
+              {[
+                { name: "Priya M.", role: "Faculty", initials: "PM", color: "#FFB547" },
+                { name: "Rahul K.", role: "Professional", initials: "RK", color: "#4FC3F7" },
+                { name: "Dr. Neha S.", role: "Doctor", initials: "NS", color: "#26C6DA" },
+              ].map(s => (
+                <div key={s.name} className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ backgroundColor: s.color }}>{s.initials}</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{s.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{s.role}</p>
+                  </div>
+                  <Button variant="outline" size="xs" onClick={() => toast.success("Connection request sent")}>Connect</Button>
                 </div>
               ))}
             </div>
+            <Link to="/app/nexus" className="block text-xs text-electric mt-3 hover:underline">See more →</Link>
           </div>
 
-          <div className="glass-card rounded-2xl p-5">
-            <p className="micro-label text-muted-foreground/50 mb-2">Activity Score</p>
-            <div className="flex items-baseline gap-2 mb-1">
-              <span className="text-3xl font-bold text-neon">78</span>
-              <span className="text-xs text-muted-foreground">/ 100 this quarter</span>
-            </div>
-            <div className="flex items-end gap-1 h-16 mb-2">
-              {[30, 45, 55, 40, 60, 50, 72, 65, 70, 68, 75, 78].map((v, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ height: 0 }}
-                  animate={{ height: `${v}%` }}
-                  transition={{ delay: i * 0.05, duration: 0.4 }}
-                  className={`flex-1 rounded-t ${v >= 70 ? "bg-neon" : v >= 50 ? "bg-electric" : "bg-[rgba(255,255,255,0.1)]"}`}
-                />
-              ))}
-            </div>
-            <p className="text-[11px] text-muted-foreground">12-week rolling score</p>
-          </div>
-
+          {/* Trending topics */}
           <div className="glass-card rounded-2xl p-5">
             <div className="flex items-center gap-2 mb-3">
-              <Zap className="w-4 h-4 text-amber" />
-              <h3 className="text-sm font-bold">Open Opportunities</h3>
+              <TrendingUp className="w-4 h-4 text-neon" />
+              <h3 className="text-sm font-bold">Trending topics</h3>
+            </div>
+            <div className="space-y-2">
+              {[
+                { topic: "#HealthTech", posts: 234 },
+                { topic: "#AgriTech", posts: 189 },
+                { topic: "#StartupIndia", posts: 156 },
+                { topic: "#GovtJobs", posts: 142 },
+                { topic: "#SkilledTrade", posts: 98 },
+              ].map(t => (
+                <button key={t.topic} onClick={() => setActiveTopic(activeTopic === t.topic ? null : t.topic)} className="flex items-center justify-between w-full text-left py-1.5 hover:bg-[rgba(255,255,255,0.04)] rounded-lg px-2 transition-colors">
+                  <span className="text-sm font-medium text-electric">{t.topic}</span>
+                  <span className="text-[10px] text-muted-foreground">{t.posts} posts</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Open opportunities */}
+          <div className="glass-card rounded-2xl p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Target className="w-4 h-4 text-amber" />
+              <h3 className="text-sm font-bold">Open opportunities</h3>
             </div>
             <div className="space-y-3">
               {[
                 { title: "Rural Water Monitoring IoT", reward: "₹25,000", deadline: "12 days" },
                 { title: "AI Crop Disease Detection", reward: "₹50,000", deadline: "20 days" },
-              ].map((ch) => (
+              ].map(ch => (
                 <div key={ch.title} className="text-sm">
                   <p className="font-medium">{ch.title}</p>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
@@ -251,30 +333,7 @@ const Feed = () => {
                 </div>
               ))}
             </div>
-          </div>
-
-          <div className="glass-card rounded-2xl p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <TrendingUp className="w-4 h-4 text-neon" />
-              <h3 className="text-sm font-bold">Suggested Strands</h3>
-            </div>
-            <div className="space-y-3">
-              {[
-                { name: "Priya M.", role: "Faculty", initials: "PM", color: "#FFB547" },
-                { name: "Rahul K.", role: "Professional", initials: "RK", color: "#4FC3F7" },
-              ].map((s) => (
-                <div key={s.name} className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ backgroundColor: s.color }}>
-                    {s.initials}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{s.name}</p>
-                    <p className="text-[10px] text-muted-foreground">{s.role}</p>
-                  </div>
-                  <Button variant="outline" size="xs" onClick={() => toast.success("Connection request sent")}>Connect</Button>
-                </div>
-              ))}
-            </div>
+            <Link to="/app/opportunities" className="block text-xs text-electric mt-3 hover:underline">View all →</Link>
           </div>
         </div>
       </div>
