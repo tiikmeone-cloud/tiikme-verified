@@ -40,7 +40,7 @@ const ringStyle = (v: string): React.CSSProperties => {
 
 const Pings = () => {
   const [activeConvo, setActiveConvo] = useState(conversations[0]);
-  const [tab, setTab] = useState<"all" | "requests">("all");
+  const [tab, setTab] = useState<"chats" | "applications" | "requests">("chats");
   const [search, setSearch] = useState("");
   const [newMsg, setNewMsg] = useState("");
   const [showMobileList, setShowMobileList] = useState(true);
