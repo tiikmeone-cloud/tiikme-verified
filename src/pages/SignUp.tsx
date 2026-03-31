@@ -232,7 +232,7 @@ const SignUp = () => {
                 )}
               </div>
               <p className="text-xs text-muted-foreground text-center mb-4">By continuing you agree to our <Link to="/terms" className="text-electric underline">Terms</Link> and <Link to="/privacy" className="text-electric underline">Privacy Policy</Link>.</p>
-              <Button variant="hero" size="lg" onClick={() => setStep(2)} className="w-full">Continue <ArrowRight className="w-4 h-4" /></Button>
+              <Button size="lg" onClick={() => setStep(2)} className="w-full">Continue <ArrowRight className="w-4 h-4" /></Button>
             </motion.div>
           )}
 
