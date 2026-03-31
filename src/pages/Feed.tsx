@@ -1,10 +1,13 @@
 import { useState } from "react";
-import { Heart, Lightbulb, Sparkles, MessageSquare, Repeat2, Share2, MoreHorizontal, Flag, Send } from "lucide-react";
+import { Heart, Lightbulb, Sparkles, MessageSquare, Repeat2, Share2, MoreHorizontal, Flag, Send, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import NewPostModal from "@/components/NewPostModal";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import ImageGrid from "@/components/feed/ImageGrid";
+import PdfCarousel from "@/components/feed/PdfCarousel";
+import MentionText from "@/components/feed/MentionText";
 
 const currentUser = { name: "Arjun", role: "student" };
 
@@ -30,14 +33,14 @@ const getQuickActions = (role: string) => {
 const trendingTopics = ["#AgriTech", "#HealthTech", "#GovtJobs", "#UPSC", "#StartupIndia", "#SkilledTrade", "#TeacherLife", "#BankingCareers"];
 
 const posts = [
-  { id: "1", author: { name: "Riya Sharma", initials: "RS", role: "Student", roleColor: "#4F46E5" }, type: "Collab", borderColor: "#4F46E5", content: "Looking for a backend developer to join our capstone project — building a telemedicine app for rural India. React Native + Supabase stack.", time: "2h ago", reactions: { insightful: 4, useful: 12, inspiring: 2 }, comments: 8, reactedBy: { insightful: ["Arjun", "Priya", "4 others"], useful: ["Dr. Manoj", "Sunita", "10 others"], inspiring: ["Kavita", "1 other"] } },
-  { id: "2", author: { name: "Dr. Manoj Patil", initials: "MP", role: "Doctor", roleColor: "#0E7490" }, type: "", borderColor: "", content: "Completed a 3-day health camp in Gadchiroli district. Screened 450+ patients for diabetes and hypertension. Early detection saves lives.", time: "4h ago", reactions: { insightful: 18, useful: 6, inspiring: 31 }, comments: 14, reactedBy: { insightful: ["Rahul", "Prof. Sharma", "16 others"], useful: ["Riya", "5 others"], inspiring: ["Arjun", "Priya", "29 others"] } },
-  { id: "3", author: { name: "Sunita Devi", initials: "SD", role: "Skilled Trade", roleColor: "#C2410C" }, type: "", borderColor: "#C2410C", content: "Just finished rewiring an entire 3BHK flat in Dwarka. Complete with MCB panel upgrade. Client verified the work on Tiikme.", time: "6h ago", reactions: { insightful: 7, useful: 22, inspiring: 15 }, comments: 5, reactedBy: { insightful: ["Mohan", "6 others"], useful: ["Arjun", "Kavita", "20 others"], inspiring: ["Dr. Neha", "14 others"] } },
-  { id: "4", author: { name: "Kavita Rao", initials: "KR", role: "HR / Recruiter", roleColor: "#6B21A8" }, type: "Opportunity", borderColor: "#6B21A8", content: "Build a dashboard that tracks real-time hiring pipeline for startups. Best solution gets ₹15,000 and a 3-month internship.", time: "8h ago", reactions: { insightful: 24, useful: 18, inspiring: 9 }, comments: 22, reactedBy: { insightful: ["Riya", "Rahul", "22 others"], useful: ["Sunita", "17 others"], inspiring: ["Prof. Verma", "8 others"] } },
+  { id: "1", author: { name: "Riya Sharma", initials: "RS", role: "Student", roleColor: "#4F46E5" }, type: "Collab", borderColor: "#4F46E5", content: "Looking for a backend developer to join our capstone project — building a telemedicine app for rural India. React Native + Supabase stack. cc @arjunkumar", time: "2h ago", reactions: { insightful: 4, useful: 12, inspiring: 2 }, comments: 8, reactedBy: { insightful: ["Arjun", "Priya", "4 others"], useful: ["Dr. Manoj", "Sunita", "10 others"], inspiring: ["Kavita", "1 other"] }, images: ["/placeholder.svg", "/placeholder.svg"], pdf: null },
+  { id: "2", author: { name: "Dr. Manoj Patil", initials: "MP", role: "Doctor", roleColor: "#0E7490" }, type: "", borderColor: "", content: "Completed a 3-day health camp in Gadchiroli district. Screened 450+ patients for diabetes and hypertension. Early detection saves lives. @priyamenon helped coordinate.", time: "4h ago", reactions: { insightful: 18, useful: 6, inspiring: 31 }, comments: 14, reactedBy: { insightful: ["Rahul", "Prof. Sharma", "16 others"], useful: ["Riya", "5 others"], inspiring: ["Arjun", "Priya", "29 others"] }, images: ["/placeholder.svg", "/placeholder.svg", "/placeholder.svg"], pdf: null },
+  { id: "3", author: { name: "Sunita Devi", initials: "SD", role: "Skilled Trade", roleColor: "#C2410C" }, type: "", borderColor: "#C2410C", content: "Just finished rewiring an entire 3BHK flat in Dwarka. Complete with MCB panel upgrade. Client verified the work on Tiikme.", time: "6h ago", reactions: { insightful: 7, useful: 22, inspiring: 15 }, comments: 5, reactedBy: { insightful: ["Mohan", "6 others"], useful: ["Arjun", "Kavita", "20 others"], inspiring: ["Dr. Neha", "14 others"] }, images: [], pdf: { name: "Wiring_Report_Dwarka.pdf", pages: 14 } },
+  { id: "4", author: { name: "Kavita Rao", initials: "KR", role: "HR / Recruiter", roleColor: "#6B21A8" }, type: "Opportunity", borderColor: "#6B21A8", content: "Build a dashboard that tracks real-time hiring pipeline for startups. Best solution gets Rs 15,000 and a 3-month internship.", time: "8h ago", reactions: { insightful: 24, useful: 18, inspiring: 9 }, comments: 22, reactedBy: { insightful: ["Riya", "Rahul", "22 others"], useful: ["Sunita", "17 others"], inspiring: ["Prof. Verma", "8 others"] }, images: ["/placeholder.svg"], pdf: null },
 ];
 
 const mockComments = [
-  { name: "Rahul K.", initials: "RK", color: "#0369A1", text: "This sounds amazing! I'd love to join.", time: "1h ago" },
+  { name: "Rahul K.", initials: "RK", color: "#0369A1", text: "This sounds amazing! I'd love to join. @riyasharma", time: "1h ago" },
   { name: "Priya M.", initials: "PM", color: "#92400E", text: "Great initiative. Shared with my students.", time: "2h ago" },
 ];
 
@@ -87,8 +90,16 @@ const PostCard = ({ post }: { post: typeof posts[0] }) => {
         </div>
       </div>
 
-      {/* Body */}
-      <p className="text-[15px] leading-[1.8] px-5 py-2.5 text-t1">{post.content}</p>
+      {/* Body with @mentions */}
+      <p className="text-[15px] leading-[1.8] px-5 py-2.5 text-t1">
+        <MentionText text={post.content} />
+      </p>
+
+      {/* Image grid */}
+      {post.images.length > 0 && <ImageGrid images={post.images} />}
+
+      {/* PDF carousel */}
+      {post.pdf && <PdfCarousel fileName={post.pdf.name} totalPages={post.pdf.pages} />}
 
       {/* Single unified action row */}
       <div className="flex items-center gap-1.5 px-5 py-2 border-t border-border/30">
@@ -132,15 +143,20 @@ const PostCard = ({ post }: { post: typeof posts[0] }) => {
         </button>
       </div>
 
-      {/* Comments */}
+      {/* Comments with @mentions */}
       {showComments && (
         <div className="px-5 pb-4 pt-2 border-t border-border/30 space-y-3">
           {mockComments.map((c, i) => (
             <div key={i} className="flex items-start gap-2">
-              <div className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0" style={{ backgroundColor: c.color }}>{c.initials}</div>
+              <Link to="/app/profile">
+                <div className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0 hover:scale-105 transition-transform" style={{ backgroundColor: c.color }}>{c.initials}</div>
+              </Link>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2"><span className="text-[12px] font-bold text-t1">{c.name}</span><span className="text-[10px] text-t3">{c.time}</span></div>
-                <p className="text-[13px] text-t1 leading-relaxed">{c.text}</p>
+                <div className="flex items-center gap-2">
+                  <Link to="/app/profile" className="text-[12px] font-bold text-t1 hover:text-brand transition-colors">{c.name}</Link>
+                  <span className="text-[10px] text-t3">{c.time}</span>
+                </div>
+                <p className="text-[13px] text-t1 leading-relaxed"><MentionText text={c.text} /></p>
               </div>
             </div>
           ))}
@@ -217,9 +233,8 @@ const Feed = () => {
           </div>
         </div>
 
-        {/* Right rail — compact metric cards */}
+        {/* Right rail */}
         <div className="hidden xl:block w-64 space-y-3 shrink-0">
-          {/* Activity — compact */}
           <div className="rounded-2xl border border-border/30 p-3.5" style={{ background: "var(--surface)", boxShadow: "0 1px 2px rgba(0,0,0,0.03)" }}>
             <p className="text-[9px] font-bold tracking-widest uppercase text-t3 mb-1.5">Activity Signal</p>
             <div className="flex items-baseline gap-1 mb-1.5">
@@ -233,7 +248,6 @@ const Feed = () => {
             </div>
           </div>
 
-          {/* Recruiter — compact */}
           <div className="rounded-2xl border border-border/30 p-3.5" style={{ background: "var(--surface)", boxShadow: "0 1px 2px rgba(0,0,0,0.03)" }}>
             <p className="text-[9px] font-bold tracking-widest uppercase text-t3 mb-1.5">Recruiter Eyes</p>
             <p className="text-[11px] text-t2 mb-1.5">3 recruiters viewed your work</p>
@@ -243,7 +257,6 @@ const Feed = () => {
             <Link to="/app/alerts" className="text-[10px] font-semibold text-brand hover:underline">See who →</Link>
           </div>
 
-          {/* Opportunities — compact */}
           <div className="rounded-2xl border border-border/30 p-3.5" style={{ background: "var(--surface)", boxShadow: "0 1px 2px rgba(0,0,0,0.03)" }}>
             <p className="text-[9px] font-bold tracking-widest uppercase text-t3 mb-1.5">Opportunities</p>
             <div className="space-y-2">
@@ -257,15 +270,16 @@ const Feed = () => {
             <Link to="/app/opportunities" className="block text-[10px] font-semibold mt-2 text-brand hover:underline">View all →</Link>
           </div>
 
-          {/* Suggested — compact */}
           <div className="rounded-2xl border border-border/30 p-3.5" style={{ background: "var(--surface)", boxShadow: "0 1px 2px rgba(0,0,0,0.03)" }}>
             <p className="text-[9px] font-bold tracking-widest uppercase text-t3 mb-1.5">Suggested</p>
             <div className="space-y-2">
               {[{ name: "Priya M.", role: "Faculty", initials: "PM", color: "#92400E" }, { name: "Rahul K.", role: "Professional", initials: "RK", color: "#0369A1" }, { name: "Dr. Neha S.", role: "Doctor", initials: "NS", color: "#0E7490" }].map(s => (
                 <div key={s.name} className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-[8px] font-bold text-white" style={{ backgroundColor: s.color }}>{s.initials}</div>
+                  <Link to="/app/profile">
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-[8px] font-bold text-white hover:scale-105 transition-transform" style={{ backgroundColor: s.color }}>{s.initials}</div>
+                  </Link>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-bold truncate text-t1">{s.name}</p>
+                    <Link to="/app/profile" className="text-[11px] font-bold truncate text-t1 hover:text-brand transition-colors block">{s.name}</Link>
                     <p className="text-[9px] text-t3">{s.role}</p>
                   </div>
                   <Button variant="outline" size="xs" className="text-[10px] h-6 px-2 active:scale-95 transition-all duration-200" onClick={() => toast.success("Request sent")}>Connect</Button>
