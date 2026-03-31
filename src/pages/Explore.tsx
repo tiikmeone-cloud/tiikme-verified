@@ -1,13 +1,13 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Compass, Shield, Users, Layers, X, Target,
-  Cpu, Stethoscope, Scale, Building2, Wrench, FlaskConical,
-  Banknote, GraduationCap, Rocket, ArrowRight, Link2, ChevronRight, ChevronLeft, SlidersHorizontal
+  Compass, Shield, Users, Layers, Target,
+  ArrowRight, Link2, ChevronRight, ChevronLeft, SlidersHorizontal
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { tiikToast } from "@/components/ui/tiik-toast";
+import FrostedProfileCard from "@/components/FrostedProfileCard";
 
 const ROLE_COLORS: Record<string, string> = {
   Student: "#4F46E5", Professional: "#0369A1", Government: "#166534",
@@ -16,15 +16,12 @@ const ROLE_COLORS: Record<string, string> = {
 };
 
 const categoryTabs = ["All", "People", "Projects", "Institutions", "Opportunities"];
-
 const roleFilters = ["Student", "Professional", "Government", "Doctor", "Skilled Trade", "Faculty", "Builder", "Aspirant"];
 const cityFilters = ["Delhi", "Mumbai", "Bengaluru", "Hyderabad", "Chennai"];
-const domainFilters = ["Engineering", "Medicine", "Law", "Finance", "Education"];
 
-// --- Mock data ---
 const peopleMock = [
   { name: "Riya Sharma", initials: "RS", role: "Student", city: "Delhi", score: 68, strands: 92, institution: "DTU", headline: "Building healthcare apps for rural India", verified: "gold" as const, color: "#4F46E5" },
-  { name: "Dr. Manoj Patil", initials: "MP", role: "Doctor", city: "Mumbai", score: 85, strands: 210, institution: "KEM Hospital", headline: "Rural health camps & telemedicine", verified: "gold" as const, color: "#0E7490" },
+  { name: "Dr. Manoj Patil", initials: "MP", role: "Doctor", city: "Mumbai", score: 85, strands: 210, institution: "KEM Hospital", headline: "Rural health camps & telemedicine advocate", verified: "gold" as const, color: "#0E7490" },
   { name: "Sunita Devi", initials: "SD", role: "Skilled Trade", city: "Hyderabad", score: 74, strands: 48, institution: "Independent", headline: "Certified electrician, 8+ years residential & commercial", verified: "grey" as const, color: "#C2410C" },
   { name: "Kavita Rao", initials: "KR", role: "HR/Recruiter", city: "Bengaluru", score: 90, strands: 340, institution: "TCS", headline: "Talent acquisition lead, hiring for tech roles", verified: "gold" as const, color: "#6B21A8" },
   { name: "Prof. Sharma", initials: "PS", role: "Faculty", city: "Delhi", score: 88, strands: 180, institution: "DTU", headline: "CS professor, IoT & embedded systems research", verified: "gold" as const, color: "#92400E" },
@@ -51,7 +48,6 @@ const institutionsMock = [
   { name: "IIIT Hyderabad", initials: "IH", type: "College", city: "Hyderabad", members: 2100, projects: 290, verified: "gold" as const },
 ];
 
-// --- Scroll hook ---
 function useHScroll() {
   const ref = useRef<HTMLDivElement>(null);
   const scroll = (dir: "left" | "right") => {
@@ -60,43 +56,11 @@ function useHScroll() {
   return { ref, scroll };
 }
 
-// --- Cards ---
-const cardBase = "rounded-2xl border border-border/50 flex flex-col justify-between transition-all duration-200 hover:shadow-md hover:-translate-y-0.5";
-const cardShadow = "0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.02)";
-
-function PersonCard({ p }: { p: typeof peopleMock[0] }) {
-  const rc = ROLE_COLORS[p.role] || "var(--brand)";
-  return (
-    <div className={`${cardBase} h-[240px] w-[260px] shrink-0 p-5`} style={{ background: "var(--surface)", boxShadow: cardShadow, borderLeft: `3px solid ${rc}` }}>
-      <div>
-        <div className="flex items-center gap-3 mb-3">
-          <div className="relative shrink-0" style={{ width: 44, height: 44 }}>
-            <div className="w-11 h-11 rounded-full flex items-center justify-center text-[11px] font-bold text-white" style={{ backgroundColor: rc }}>{p.initials}</div>
-            {p.verified === "gold" && <div className="absolute inset-0 rounded-full" style={{ boxShadow: "0 0 0 2px var(--surface), 0 0 0 3.5px #F59E0B" }} />}
-            {p.verified === "grey" && <div className="absolute inset-0 rounded-full" style={{ boxShadow: "0 0 0 2px var(--surface), 0 0 0 3.5px #6B7280" }} />}
-          </div>
-          <div className="min-w-0 flex-1">
-            <Link to="/app/profile" className="text-[13px] font-bold text-t1 hover:text-brand transition-colors block truncate">{p.name}</Link>
-            <div className="flex items-center gap-1.5">
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: `${rc}14`, color: rc }}>{p.role}</span>
-              <Link to="/app/institution/1" className="text-[9px] text-t3 hover:text-brand transition-colors truncate">{p.institution}</Link>
-            </div>
-          </div>
-        </div>
-        <p className="text-[13px] text-t1 leading-relaxed line-clamp-2 mb-2">{p.headline}</p>
-        <div className="flex items-center gap-3 text-[10px] text-t3">
-          <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-brand inline-block" />Score {p.score}</span>
-          <span><Link2 className="w-3 h-3 inline" /> {p.strands}</span>
-        </div>
-      </div>
-      <Button variant="secondary" size="sm" className="w-full mt-3" onClick={() => tiikToast.success("Strand request sent")}>Connect</Button>
-    </div>
-  );
-}
+const cardBase = "rounded-2xl border border-border/30 flex flex-col justify-between transition-all duration-200 hover:shadow-md hover:-translate-y-0.5";
 
 function ProjectCard({ p }: { p: typeof projectsMock[0] }) {
   return (
-    <div className={`${cardBase} h-[240px] w-[260px] shrink-0 p-5`} style={{ background: "var(--surface)", boxShadow: cardShadow }}>
+    <div className={`${cardBase} h-[240px] w-[260px] shrink-0 p-5`} style={{ background: "var(--surface)", boxShadow: "0 1px 2px rgba(0,0,0,0.03)" }}>
       <div>
         <div className="flex items-center justify-between mb-2">
           <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{
@@ -115,9 +79,9 @@ function ProjectCard({ p }: { p: typeof projectsMock[0] }) {
           </div>
         </div>
         <p className="text-[13px] text-t1 leading-relaxed line-clamp-2 mb-2">{p.description}</p>
-        <span className="text-[10px] px-2 py-0.5 rounded-full bg-surface-2 border border-border/50 text-t2 inline-block">{p.domain}</span>
+        <span className="text-[10px] px-2 py-0.5 rounded-full bg-surface-2 border border-border/30 text-t2 inline-block">{p.domain}</span>
       </div>
-      <Button variant="secondary" size="sm" className="w-full mt-3">
+      <Button variant="secondary" size="sm" className="w-full mt-3 active:scale-95 transition-all duration-200">
         View project <ArrowRight className="w-3 h-3 ml-1" />
       </Button>
     </div>
@@ -126,7 +90,7 @@ function ProjectCard({ p }: { p: typeof projectsMock[0] }) {
 
 function OpportunityCard({ o }: { o: typeof opportunitiesMock[0] }) {
   return (
-    <div className={`${cardBase} h-[200px] p-5`} style={{ background: "var(--surface)", boxShadow: cardShadow, borderLeft: "3px solid #F59E0B" }}>
+    <div className={`${cardBase} h-[200px] p-5`} style={{ background: "var(--surface)", boxShadow: "0 1px 2px rgba(0,0,0,0.03)", borderLeft: "3px solid #F59E0B" }}>
       <div>
         <p className="text-[9px] font-bold uppercase tracking-wider mb-1" style={{ color: "#F59E0B" }}>{o.type}</p>
         <h3 className="text-[14px] font-bold text-t1 mb-1.5 line-clamp-2">{o.name}</h3>
@@ -134,16 +98,16 @@ function OpportunityCard({ o }: { o: typeof opportunitiesMock[0] }) {
           <span className="text-[11px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(245,158,11,0.10)", color: "#F59E0B" }}>{o.reward}</span>
           <span className="text-[10px] text-t3 flex items-center gap-1"><Target className="w-3 h-3" /> {o.daysLeft}</span>
         </div>
-        <span className="text-[10px] mt-1.5 inline-block px-2 py-0.5 rounded-full bg-surface-2 border border-border/50 text-t3">{o.domain}</span>
+        <span className="text-[10px] mt-1.5 inline-block px-2 py-0.5 rounded-full bg-surface-2 border border-border/30 text-t3">{o.domain}</span>
       </div>
-      <Button variant="secondary" size="sm" className="w-full mt-3" onClick={() => tiikToast("Opening opportunity...")}>View <ArrowRight className="w-3 h-3 ml-1" /></Button>
+      <Button variant="secondary" size="sm" className="w-full mt-3 active:scale-95 transition-all duration-200" onClick={() => tiikToast("Opening opportunity...")}>View <ArrowRight className="w-3 h-3 ml-1" /></Button>
     </div>
   );
 }
 
 function InstitutionCard({ inst }: { inst: typeof institutionsMock[0] }) {
   return (
-    <div className={`${cardBase} h-[240px] w-[260px] shrink-0 p-5`} style={{ background: "var(--surface)", boxShadow: cardShadow, borderLeft: "3px solid var(--brand)" }}>
+    <div className={`${cardBase} h-[240px] w-[260px] shrink-0 p-5`} style={{ background: "var(--surface)", boxShadow: "0 1px 2px rgba(0,0,0,0.03)", borderLeft: "3px solid var(--brand)" }}>
       <div>
         <div className="flex items-center gap-3 mb-3">
           <div className="w-11 h-11 rounded-[12px] flex items-center justify-center text-[12px] font-bold bg-brand-dim text-brand border border-brand/20">{inst.initials}</div>
@@ -164,14 +128,13 @@ function InstitutionCard({ inst }: { inst: typeof institutionsMock[0] }) {
         <p className="text-[11px] text-t3">{inst.members.toLocaleString()} members · {inst.projects} projects</p>
       </div>
       <div className="flex gap-2 mt-3">
-        <Button size="sm" className="flex-1" onClick={() => tiikToast.success("Request sent")}>I work here</Button>
-        <Button variant="ghost" size="sm" onClick={() => tiikToast.success("Following")}>Follow</Button>
+        <Button size="sm" className="flex-1 active:scale-95 transition-all duration-200" onClick={() => tiikToast.success("Request sent")}>I work here</Button>
+        <Button variant="ghost" size="sm" className="active:scale-95 transition-all duration-200" onClick={() => tiikToast.success("Following")}>Follow</Button>
       </div>
     </div>
   );
 }
 
-// --- Swimlane section ---
 function Swimlane({ title, children }: { title: string; children: React.ReactNode }) {
   const { ref, scroll } = useHScroll();
   return (
@@ -179,8 +142,8 @@ function Swimlane({ title, children }: { title: string; children: React.ReactNod
       <div className="flex items-center justify-between mb-3 px-1">
         <h2 className="text-[15px] font-bold text-t1">{title}</h2>
         <div className="flex items-center gap-1">
-          <button onClick={() => scroll("left")} className="w-7 h-7 rounded-lg flex items-center justify-center text-t3 hover:text-t1 hover:bg-surface-2 transition-all cursor-pointer"><ChevronLeft className="w-4 h-4" /></button>
-          <button onClick={() => scroll("right")} className="w-7 h-7 rounded-lg flex items-center justify-center text-t3 hover:text-t1 hover:bg-surface-2 transition-all cursor-pointer"><ChevronRight className="w-4 h-4" /></button>
+          <button onClick={() => scroll("left")} className="w-7 h-7 rounded-lg flex items-center justify-center text-t3 hover:text-t1 hover:bg-surface-2 transition-all duration-200 cursor-pointer active:scale-95"><ChevronLeft className="w-4 h-4" /></button>
+          <button onClick={() => scroll("right")} className="w-7 h-7 rounded-lg flex items-center justify-center text-t3 hover:text-t1 hover:bg-surface-2 transition-all duration-200 cursor-pointer active:scale-95"><ChevronRight className="w-4 h-4" /></button>
         </div>
       </div>
       <div ref={ref} className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
@@ -190,7 +153,6 @@ function Swimlane({ title, children }: { title: string; children: React.ReactNod
   );
 }
 
-// --- Main ---
 const Explore = () => {
   const [activeTab, setActiveTab] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
@@ -220,13 +182,13 @@ const Explore = () => {
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
           placeholder="Search by name, skill, city, field..."
-          className="w-full h-[48px] rounded-2xl bg-surface border border-border/50 pl-12 pr-4 text-sm text-t1 placeholder:text-t3 outline-none transition-all duration-200 focus:border-brand focus:shadow-[0_0_0_3px_var(--brand-dim)]"
-          style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
+          className="w-full h-[48px] rounded-2xl bg-surface border border-border/30 pl-12 pr-4 text-sm text-t1 placeholder:text-t3 outline-none transition-all duration-200 focus:border-brand focus:shadow-[0_0_0_3px_var(--brand-dim)]"
+          style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.03)" }}
         />
       </div>
 
-      {/* Primary category tabs — clean horizontal line */}
-      <div className="flex items-center gap-0 border-b border-border/40 mb-5">
+      {/* Category tabs — clean underline style */}
+      <div className="flex items-center gap-0 border-b border-border/30 mb-5">
         {categoryTabs.map(tab => (
           <button
             key={tab}
@@ -242,12 +204,11 @@ const Explore = () => {
           </button>
         ))}
 
-        {/* Filters button */}
         <div className="ml-auto">
           <button
             onClick={() => setFiltersOpen(!filtersOpen)}
-            className={`flex items-center gap-1.5 px-3 h-8 rounded-lg text-[12px] font-semibold transition-all duration-200 cursor-pointer border ${
-              hasFilters ? "border-brand text-brand bg-brand-dim" : "border-border/50 text-t3 hover:text-t1 hover:bg-surface-2"
+            className={`flex items-center gap-1.5 px-3 h-8 rounded-lg text-[12px] font-semibold transition-all duration-200 cursor-pointer border active:scale-95 ${
+              hasFilters ? "border-brand text-brand bg-brand-dim" : "border-border/30 text-t3 hover:text-t1 hover:bg-surface-2"
             }`}
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -256,29 +217,22 @@ const Explore = () => {
         </div>
       </div>
 
-      {/* Filter dropdown panel */}
+      {/* Filter dropdown */}
       <AnimatePresence>
         {filtersOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden mb-5"
-          >
-            <div className="rounded-2xl border border-border/50 p-5" style={{ background: "var(--surface)", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden mb-5">
+            <div className="rounded-2xl border border-border/30 p-5" style={{ background: "var(--surface)", boxShadow: "0 1px 2px rgba(0,0,0,0.03)" }}>
               <div className="flex items-center justify-between mb-3">
                 <p className="text-[12px] font-bold text-t1">Filter results</p>
-                {hasFilters && (
-                  <button onClick={() => { setSelectedRoles([]); setSelectedCities([]); }} className="text-[11px] text-brand hover:underline cursor-pointer">Clear all</button>
-                )}
+                {hasFilters && <button onClick={() => { setSelectedRoles([]); setSelectedCities([]); }} className="text-[11px] text-brand hover:underline cursor-pointer">Clear all</button>}
               </div>
               <div className="mb-3">
                 <p className="text-[10px] font-bold tracking-wider uppercase text-t3 mb-2">Role</p>
                 <div className="flex flex-wrap gap-1.5">
                   {roleFilters.map(r => (
                     <button key={r} onClick={() => toggleFilter(selectedRoles, r, setSelectedRoles)}
-                      className={`text-[11px] font-semibold px-3 h-7 rounded-full border transition-all duration-200 cursor-pointer ${
-                        selectedRoles.includes(r) ? "bg-brand border-brand text-white" : "bg-surface-2 border-border/50 text-t2 hover:border-brand hover:text-brand"
+                      className={`text-[11px] font-semibold px-3 h-7 rounded-full border transition-all duration-200 cursor-pointer active:scale-95 ${
+                        selectedRoles.includes(r) ? "bg-brand border-brand text-white" : "bg-surface-2 border-border/30 text-t2 hover:border-brand hover:text-brand"
                       }`}>{r}</button>
                   ))}
                 </div>
@@ -288,8 +242,8 @@ const Explore = () => {
                 <div className="flex flex-wrap gap-1.5">
                   {cityFilters.map(c => (
                     <button key={c} onClick={() => toggleFilter(selectedCities, c, setSelectedCities)}
-                      className={`text-[11px] font-semibold px-3 h-7 rounded-full border transition-all duration-200 cursor-pointer ${
-                        selectedCities.includes(c) ? "bg-brand border-brand text-white" : "bg-surface-2 border-border/50 text-t2 hover:border-brand hover:text-brand"
+                      className={`text-[11px] font-semibold px-3 h-7 rounded-full border transition-all duration-200 cursor-pointer active:scale-95 ${
+                        selectedCities.includes(c) ? "bg-brand border-brand text-white" : "bg-surface-2 border-border/30 text-t2 hover:border-brand hover:text-brand"
                       }`}>{c}</button>
                   ))}
                 </div>
@@ -299,10 +253,21 @@ const Explore = () => {
         )}
       </AnimatePresence>
 
-      {/* Swimlane content based on active tab */}
+      {/* Swimlanes — Frosted Profile Cards for people */}
       {(activeTab === "All" || activeTab === "People") && (
         <Swimlane title="Suggested Talent">
-          {peopleMock.map((p, i) => <PersonCard key={i} p={p} />)}
+          {peopleMock.map((p, i) => (
+            <FrostedProfileCard
+              key={i}
+              name={p.name}
+              initials={p.initials}
+              role={p.role}
+              roleColor={p.color}
+              institution={p.institution}
+              headline={p.headline}
+              verified={p.verified}
+            />
+          ))}
         </Swimlane>
       )}
 
@@ -327,10 +292,9 @@ const Explore = () => {
         </Swimlane>
       )}
 
-      {/* Empty state */}
       {activeTab !== "All" && (
         <div className="text-center py-8">
-          <Button variant="secondary" size="sm" onClick={() => tiikToast("Loading more results...")}>Load more</Button>
+          <Button variant="secondary" size="sm" className="active:scale-95 transition-all duration-200" onClick={() => tiikToast("Loading more results...")}>Load more</Button>
         </div>
       )}
     </div>
