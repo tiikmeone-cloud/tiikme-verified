@@ -1,10 +1,15 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { X, Image as ImageIcon, Link2, MapPin, Globe, Loader2 } from "lucide-react";
+import { X, Link2, MapPin, Globe, Loader2, PencilLine, Layers, Image as ImageIcon, FileText, Target, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
-const postTypes = ["Thought", "Project update", "Photo", "Challenge", "Seek collaborator"];
+const postTypes = [
+  { id: "thought", label: "Thought", icon: PencilLine },
+  { id: "work", label: "Work update", icon: Layers },
+  { id: "pdf", label: "PDF", icon: FileText },
+  { id: "opportunity", label: "Opportunity", icon: Target },
+  { id: "collab", label: "Collaboration", icon: Users },
+];
 
 interface NewPostModalProps {
   open: boolean;
@@ -13,14 +18,11 @@ interface NewPostModalProps {
 }
 
 const NewPostModal = ({ open, onClose, defaultType }: NewPostModalProps) => {
-  const [type, setType] = useState(defaultType || "Thought");
+  const [type, setType] = useState(defaultType || "thought");
   const [content, setContent] = useState("");
   const [visibility, setVisibility] = useState("Everyone");
   const [publishing, setPublishing] = useState(false);
   const [title, setTitle] = useState("");
-  const [reward, setReward] = useState("");
-  const [roleNeeded, setRoleNeeded] = useState("");
-  const [projectLink, setProjectLink] = useState("");
 
   if (!open) return null;
 
@@ -33,182 +35,105 @@ const NewPostModal = ({ open, onClose, defaultType }: NewPostModalProps) => {
       onClose();
       setContent("");
       setTitle("");
-      toast.success("Posted · Visible to everyone", {
-        style: { borderLeft: "3px solid #00FFB2" },
-      });
+      toast.success("Posted successfully");
     }, 800);
   };
 
-  return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm px-0 sm:px-4" onClick={onClose}>
-        <motion.div
-          initial={{ opacity: 0, y: 40, scale: 0.97 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 40, scale: 0.97 }}
-          transition={{ duration: 0.25 }}
-          className="glass-card rounded-t-2xl sm:rounded-2xl p-6 w-full sm:max-w-[560px] max-h-[85vh] overflow-y-auto"
-          onClick={e => e.stopPropagation()}
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-lg font-bold">Create post</h2>
-            <button onClick={onClose} className="p-2 rounded-lg hover:bg-[rgba(255,255,255,0.06)] transition-colors">
-              <X className="w-5 h-5 text-muted-foreground" />
-            </button>
-          </div>
+  const inputStyle: React.CSSProperties = {
+    background: "var(--surface-2)",
+    border: "1.5px solid var(--border-2)",
+    borderRadius: 14,
+    color: "var(--text-1)",
+  };
 
-          {/* Post type selector */}
-          <div className="flex gap-2 overflow-x-auto pb-4 mb-4 scrollbar-hide">
-            {postTypes.map(t => (
-              <button
-                key={t}
-                onClick={() => setType(t)}
-                className={`whitespace-nowrap text-xs font-bold px-4 py-2 rounded-full transition-all shrink-0 ${
-                  type === t
-                    ? "bg-electric text-white"
-                    : "glass-card text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {t}
-              </button>
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-0 sm:px-4" style={{ background: "rgba(4,6,26,0.7)", backdropFilter: "blur(12px)" }} onClick={onClose}>
+      <div
+        className="w-full sm:max-w-[560px] max-h-[85vh] overflow-y-auto rounded-t-[20px] sm:rounded-[20px]"
+        style={{ background: "var(--surface-2)", border: "1px solid var(--border-2)" }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Mobile drag handle */}
+        <div className="sm:hidden flex justify-center pt-2">
+          <div className="w-9 h-[5px] rounded-full" style={{ background: "var(--border-2)" }} />
+        </div>
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "var(--border)" }}>
+          <h2 className="text-[16px] font-bold" style={{ color: "var(--text-1)" }}>Create post</h2>
+          <button onClick={onClose} className="p-2 rounded-lg transition-colors" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
+        </div>
+
+        {/* Type selector */}
+        <div className="flex gap-2 overflow-x-auto px-5 py-3 scrollbar-hide">
+          {postTypes.map(t => (
+            <button key={t.id} onClick={() => setType(t.id)}
+              className="whitespace-nowrap text-[12px] font-bold px-3.5 h-8 rounded-full transition-all shrink-0 flex items-center gap-1.5"
+              style={{
+                background: type === t.id ? "var(--brand)" : "var(--surface)",
+                color: type === t.id ? "white" : "var(--text-2)",
+                border: type === t.id ? "none" : "1px solid var(--border-2)",
+                boxShadow: type === t.id ? "0 2px 8px var(--brand-glow)" : "none",
+              }}>
+              <t.icon className="w-3.5 h-3.5" /> {t.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Content */}
+        <div className="px-5 pb-3">
+          {(type === "opportunity" || type === "collab") && (
+            <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Title" className="w-full h-11 px-3.5 mb-3 text-[14px] outline-none" style={inputStyle} />
+          )}
+          <textarea
+            value={content}
+            onChange={e => setContent(e.target.value.slice(0, charLimit))}
+            placeholder={type === "thought" ? "What are you building today?" : "Describe..."}
+            className="w-full min-h-[120px] px-3.5 py-3 text-[14px] resize-none outline-none"
+            style={{ ...inputStyle, lineHeight: 1.6 }}
+          />
+          {type === "pdf" && (
+            <div className="mt-3 rounded-2xl p-10 text-center cursor-pointer transition-colors" style={{ border: "2px dashed var(--border-2)", background: "var(--surface)" }}>
+              <FileText className="w-8 h-8 mx-auto mb-2" style={{ color: "var(--text-3)" }} />
+              <p className="text-[12px]" style={{ color: "var(--text-3)" }}>Select a PDF from device</p>
+              <p className="text-[10px] mt-1" style={{ color: "var(--text-3)" }}>PDF files only · Max 10MB</p>
+            </div>
+          )}
+          {type === "work" && (
+            <button className="w-full mt-3 rounded-xl p-3 text-left text-[12px] flex items-center gap-2 transition-colors" style={{ background: "var(--surface)", border: "1px solid var(--border-2)", color: "var(--text-2)" }}>
+              <Layers className="w-4 h-4" style={{ color: "var(--brand)" }} /> Link a project from My Work
+            </button>
+          )}
+        </div>
+
+        {/* Visibility */}
+        <div className="mx-5 mb-3 flex items-center gap-2 px-3.5 py-2 rounded-[10px]" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+          <Globe className="w-4 h-4" style={{ color: "var(--text-3)" }} />
+          <span className="text-[12px]" style={{ color: "var(--text-2)" }}>Visible to</span>
+          <select value={visibility} onChange={e => setVisibility(e.target.value)}
+            className="bg-transparent text-[12px] font-semibold outline-none" style={{ color: "var(--text-1)" }}>
+            <option>Everyone</option>
+            <option>My Strands</option>
+            <option>Same institution</option>
+          </select>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between px-5 py-3 border-t" style={{ borderColor: "var(--border)" }}>
+          <div className="flex items-center gap-1">
+            {[ImageIcon, Link2, MapPin].map((Icon, i) => (
+              <button key={i} className="p-2 rounded-lg transition-colors" style={{ color: "var(--text-3)" }}><Icon className="w-4 h-4" /></button>
             ))}
           </div>
-
-          {/* Content area by type */}
-          {type === "Thought" && (
-            <textarea
-              value={content}
-              onChange={e => setContent(e.target.value.slice(0, charLimit))}
-              placeholder="What are you building today?"
-              className="w-full min-h-[120px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.1)] rounded-xl p-4 text-sm resize-none outline-none placeholder:text-muted-foreground focus:border-[rgba(124,111,255,0.5)] transition-colors"
-            />
-          )}
-
-          {type === "Project update" && (
-            <div className="space-y-3">
-              <textarea
-                value={content}
-                onChange={e => setContent(e.target.value.slice(0, charLimit))}
-                placeholder="What's new with your project?"
-                className="w-full min-h-[100px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.1)] rounded-xl p-4 text-sm resize-none outline-none placeholder:text-muted-foreground focus:border-[rgba(124,111,255,0.5)] transition-colors"
-              />
-              <button className="w-full glass-card rounded-xl p-3 text-left text-xs text-muted-foreground hover:text-foreground hover:bg-[rgba(255,255,255,0.06)] transition-colors flex items-center gap-2">
-                <Link2 className="w-4 h-4 text-electric" />
-                Link a project from My Work
-              </button>
-            </div>
-          )}
-
-          {type === "Photo" && (
-            <div className="space-y-3">
-              <div className="border-2 border-dashed border-[rgba(255,255,255,0.15)] rounded-xl p-8 text-center hover:border-[rgba(124,111,255,0.4)] transition-colors cursor-pointer">
-                <ImageIcon className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                <p className="text-xs text-muted-foreground">Drag and drop or click to upload</p>
-              </div>
-              <textarea
-                value={content}
-                onChange={e => setContent(e.target.value.slice(0, charLimit))}
-                placeholder="Add a caption..."
-                className="w-full min-h-[60px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.1)] rounded-xl p-4 text-sm resize-none outline-none placeholder:text-muted-foreground focus:border-[rgba(124,111,255,0.5)] transition-colors"
-              />
-            </div>
-          )}
-
-          {type === "Challenge" && (
-            <div className="space-y-3">
-              <input
-                value={title}
-                onChange={e => setTitle(e.target.value)}
-                placeholder="Challenge title"
-                className="w-full h-12 bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.1)] rounded-xl px-4 text-sm outline-none placeholder:text-muted-foreground focus:border-[rgba(124,111,255,0.5)] transition-colors"
-              />
-              <textarea
-                value={content}
-                onChange={e => setContent(e.target.value.slice(0, charLimit))}
-                placeholder="Describe the challenge..."
-                className="w-full min-h-[80px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.1)] rounded-xl p-4 text-sm resize-none outline-none placeholder:text-muted-foreground focus:border-[rgba(124,111,255,0.5)] transition-colors"
-              />
-              <div className="grid grid-cols-2 gap-3">
-                <select className="h-10 rounded-xl px-3 bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.1)] text-sm text-foreground">
-                  <option className="bg-[#050510]">Domain</option>
-                  <option className="bg-[#050510]">Web Dev</option>
-                  <option className="bg-[#050510]">Healthcare</option>
-                  <option className="bg-[#050510]">Agriculture</option>
-                  <option className="bg-[#050510]">IoT</option>
-                  <option className="bg-[#050510]">AI/ML</option>
-                </select>
-                <input
-                  value={reward}
-                  onChange={e => setReward(e.target.value)}
-                  placeholder="Reward (e.g. ₹25,000)"
-                  className="h-10 bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.1)] rounded-xl px-3 text-sm outline-none placeholder:text-muted-foreground"
-                />
-              </div>
-            </div>
-          )}
-
-          {type === "Seek collaborator" && (
-            <div className="space-y-3">
-              <input
-                value={roleNeeded}
-                onChange={e => setRoleNeeded(e.target.value)}
-                placeholder="Role needed (e.g. Backend Developer)"
-                className="w-full h-12 bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.1)] rounded-xl px-4 text-sm outline-none placeholder:text-muted-foreground focus:border-[rgba(124,111,255,0.5)] transition-colors"
-              />
-              <input
-                value={projectLink}
-                onChange={e => setProjectLink(e.target.value)}
-                placeholder="Project link or name"
-                className="w-full h-12 bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.1)] rounded-xl px-4 text-sm outline-none placeholder:text-muted-foreground focus:border-[rgba(124,111,255,0.5)] transition-colors"
-              />
-              <textarea
-                value={content}
-                onChange={e => setContent(e.target.value.slice(0, charLimit))}
-                placeholder="What they'll get out of it + duration + location..."
-                className="w-full min-h-[80px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.1)] rounded-xl p-4 text-sm resize-none outline-none placeholder:text-muted-foreground focus:border-[rgba(124,111,255,0.5)] transition-colors"
-              />
-            </div>
-          )}
-
-          {/* Visibility */}
-          <div className="glass-card rounded-full px-4 py-2 flex items-center gap-2 mt-4 mb-4">
-            <Globe className="w-4 h-4 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">Visible to</span>
-            <select
-              value={visibility}
-              onChange={e => setVisibility(e.target.value)}
-              className="bg-transparent text-xs font-bold text-foreground outline-none"
-            >
-              <option className="bg-[#050510]">Everyone</option>
-              <option className="bg-[#050510]">My Strands</option>
-              <option className="bg-[#050510]">Same college</option>
-            </select>
+          <div className="flex items-center gap-3">
+            <span className="text-[12px]" style={{ color: "var(--text-3)" }}>{content.length}/{charLimit}</span>
+            <Button size="default" onClick={handlePublish} disabled={publishing}>
+              {publishing ? <Loader2 className="w-4 h-4 animate-spin" /> : "Publish"}
+            </Button>
           </div>
-
-          {/* Footer */}
-          <div className="flex items-center justify-between pt-3 border-t border-border">
-            <div className="flex items-center gap-2">
-              <button className="p-2 rounded-lg hover:bg-[rgba(255,255,255,0.06)] transition-colors">
-                <ImageIcon className="w-4 h-4 text-muted-foreground" />
-              </button>
-              <button className="p-2 rounded-lg hover:bg-[rgba(255,255,255,0.06)] transition-colors">
-                <Link2 className="w-4 h-4 text-muted-foreground" />
-              </button>
-              <button className="p-2 rounded-lg hover:bg-[rgba(255,255,255,0.06)] transition-colors">
-                <MapPin className="w-4 h-4 text-muted-foreground" />
-              </button>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-muted-foreground">{content.length}/{charLimit}</span>
-              <Button variant="default" size="sm" onClick={handlePublish} disabled={publishing}>
-                {publishing ? <Loader2 className="w-4 h-4 animate-spin" /> : "Publish"}
-              </Button>
-            </div>
-          </div>
-        </motion.div>
+        </div>
       </div>
-    </AnimatePresence>
+    </div>
   );
 };
 
