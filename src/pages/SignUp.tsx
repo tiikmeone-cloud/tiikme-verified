@@ -191,7 +191,7 @@ const SignUp = () => {
                   );
                 })}
               </div>
-              <Button variant="hero" size="lg" onClick={() => selectedRole && setStep(1)} disabled={!selectedRole} className="w-full">Continue <ArrowRight className="w-4 h-4" /></Button>
+              <Button size="lg" onClick={() => selectedRole && setStep(1)} disabled={!selectedRole} className="w-full">Continue <ArrowRight className="w-4 h-4" /></Button>
             </motion.div>
           )}
 
