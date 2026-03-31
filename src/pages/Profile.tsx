@@ -77,7 +77,7 @@ const ExportModal = ({ open, onClose }: { open: boolean; onClose: () => void }) 
             <Copy className="w-4 h-4 text-muted-foreground" />
           </button>
         </div>
-        <Button variant="hero" className="w-full" onClick={() => { toast.success("Download started"); onClose(); }}>Download now</Button>
+        <Button className="w-full" onClick={() => { toast.success("Download started"); onClose(); }}>Download now</Button>
       </motion.div>
     </div>
   );

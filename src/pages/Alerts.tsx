@@ -72,7 +72,7 @@ const Alerts = () => {
               <p className={`text-sm ${!notif.read ? "font-bold" : "font-medium"}`}>{notif.title}</p>
               {(notif as any).hasActions && (
                 <div className="flex gap-2 mt-2">
-                  <Button variant="neon" size="xs" onClick={() => toast.success("Strand accepted!")}>
+                  <Button size="xs" onClick={() => toast.success("Strand accepted!")}>
                     <Check className="w-3 h-3" /> Accept
                   </Button>
                   <Button variant="ghost" size="xs" onClick={() => toast.info("Declined")}>

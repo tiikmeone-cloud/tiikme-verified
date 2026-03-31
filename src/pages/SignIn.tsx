@@ -70,7 +70,7 @@ const SignIn = () => {
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
-            <Button variant="hero" size="lg" className="w-full">
+            <Button size="lg" className="w-full">
               Sign in
               <ArrowRight className="w-4 h-4" />
             </Button>

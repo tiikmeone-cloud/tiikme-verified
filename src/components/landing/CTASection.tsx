@@ -27,7 +27,7 @@ const CTASection = () => {
             Your work deserves to be seen.
           </p>
           <Link to="/signup">
-            <Button variant="hero" size="xl">
+            <Button size="xl">
               Create your profile
               <ArrowRight className="w-5 h-5" />
             </Button>
