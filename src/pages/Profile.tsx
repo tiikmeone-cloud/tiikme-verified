@@ -104,8 +104,18 @@ const handleExport = () => {
 };
 
 const Profile = () => {
-  const [activeTab, setActiveTab] = useState<typeof tabs[number]>("Work");
+  const [activeTab, setActiveTab] = useState<typeof tabs[number]>("Portfolio");
   const [editOpen, setEditOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportWithSpinner = () => {
+    setExporting(true);
+    setTimeout(() => {
+      handleExport();
+      setExporting(false);
+      toast.success("Profile PDF downloaded with Tiikme watermark.");
+    }, 1000);
+  };
 
   const handleCopyLink = () => { navigator.clipboard.writeText("https://tiikme.in/arjunkumar"); toast.success("Link copied!"); };
 
