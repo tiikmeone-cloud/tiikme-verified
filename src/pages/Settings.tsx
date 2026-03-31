@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const navItems = ["Profile", "My Journey", "Appearance", "Privacy", "Institution", "Notifications", "Language", "Account"];
 
@@ -51,6 +53,7 @@ const SettingsPage = () => {
   const [theme, setTheme] = useState(() => localStorage.getItem("tiikme-theme") || "dark");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteText, setDeleteText] = useState("");
+  const [loggingOut, setLoggingOut] = useState(false);
   const [profile, setProfile] = useState({ name: "Arjun Kumar", headline: "Final year CSE student building at the intersection of health and technology.", bio: "", institution: "Delhi Technological University", city: "Delhi", state: "Delhi", slug: "arjunkumar" });
 
   useEffect(() => { applyTheme(theme); }, []);
@@ -63,35 +66,46 @@ const SettingsPage = () => {
   };
 
   const handleSignOut = () => {
-    const savedTheme = localStorage.getItem("tiikme-theme");
-    localStorage.clear();
-    if (savedTheme) localStorage.setItem("tiikme-theme", savedTheme);
-    toast.success("Signed out");
-    navigate("/signin");
+    setLoggingOut(true);
+    setTimeout(() => {
+      const savedTheme = localStorage.getItem("tiikme-theme");
+      localStorage.clear();
+      if (savedTheme) localStorage.setItem("tiikme-theme", savedTheme);
+      navigate("/signin");
+    }, 600);
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6">
+    <motion.div
+      animate={loggingOut ? { scale: 0.97, opacity: 0 } : { scale: 1, opacity: 1 }}
+      transition={{ duration: 0.5, ease: "easeInOut" }}
+      className="max-w-5xl mx-auto px-4 py-6"
+    >
       <div className="flex items-center gap-3 mb-6">
         <SlidersHorizontal className="w-6 h-6 text-brand" />
         <h1 className="text-[20px] font-extrabold text-t1">Settings</h1>
       </div>
       <div className="flex gap-6">
-        {/* Left nav — master-detail */}
+        {/* Left nav */}
         <div className="hidden md:block w-[200px] shrink-0">
           <div className="space-y-0.5 sticky top-20 rounded-2xl border border-border/30 overflow-hidden" style={{ background: "var(--surface)" }}>
             {navItems.map(item => (
               <button key={item} onClick={() => setActiveTab(item)}
-                className={`w-full text-left text-[13px] px-4 py-2.5 transition-all duration-200 cursor-pointer ${
+                className={`w-full text-left text-[13px] px-4 py-2.5 transition-all duration-200 cursor-pointer active:scale-[0.99] ${
                   activeTab === item ? "bg-brand-dim text-brand font-bold border-l-[3px] border-brand" : "text-t2 hover:bg-surface-2 border-l-[3px] border-transparent"
                 }`}>
                 {item}
               </button>
             ))}
             <div className="border-t border-border/30" />
-            <button onClick={handleSignOut} className="w-full text-left text-[13px] px-4 py-2.5 flex items-center gap-2 transition-all duration-200 cursor-pointer active:scale-95" style={{ color: "#DC2626" }}>
-              <LogOut className="w-4 h-4" /> Sign out
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button onClick={handleSignOut} className="w-full text-left text-[13px] px-4 py-2.5 flex items-center gap-2 transition-all duration-200 cursor-pointer active:scale-95" style={{ color: "#DC2626" }}>
+                  <LogOut className="w-4 h-4" /> Sign out
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Sign out of your account</TooltipContent>
+            </Tooltip>
           </div>
         </div>
 
@@ -119,16 +133,17 @@ const SettingsPage = () => {
 
           {activeTab === "My Journey" && (
             <div className="space-y-6">
-              <div className="rounded-2xl border-2 border-brand/20 p-5" style={{ background: "var(--surface)" }}>
-                <h3 className="text-[16px] font-bold text-t1 mb-1">My journey</h3>
-                <p className="text-[13px] text-t2">Update where you are. Your project history always stays.</p>
+              <div className="rounded-2xl p-6" style={{ background: "var(--surface)", border: "2px solid var(--brand)", borderStyle: "dashed" }}>
+                <h3 className="text-[18px] font-extrabold text-t1 mb-1">Your chapter is changing. What's next?</h3>
+                <p className="text-[13px] text-t2">Your project history always stays. Your role and badge updates instantly.</p>
               </div>
-              <p className="text-[13px] font-bold text-t1">What happens next?</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 {journeyCards.map(c => (
-                  <button key={c.id} onClick={() => setJourneyChoice(c.id)} className="rounded-xl p-5 text-left transition-all duration-200 relative cursor-pointer active:scale-[0.99] border border-border/30" style={{ background: journeyChoice === c.id ? "var(--brand-dim)" : "var(--surface)", borderColor: journeyChoice === c.id ? "var(--brand)" : undefined }}>
+                  <button key={c.id} onClick={() => setJourneyChoice(c.id)}
+                    className="rounded-xl p-5 text-left transition-all duration-200 relative cursor-pointer active:scale-[0.98] border border-border/30 group"
+                    style={{ background: journeyChoice === c.id ? "var(--brand-dim)" : "var(--surface)", borderColor: journeyChoice === c.id ? "var(--brand)" : undefined }}>
                     {journeyChoice === c.id && <div className="absolute top-3 right-3 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: "var(--brand)" }}><Check className="w-3 h-3 text-white" /></div>}
-                    <c.icon className="w-7 h-7 mb-3 text-brand" />
+                    <c.icon className="w-7 h-7 mb-3 text-brand group-hover:scale-110 transition-transform duration-200" />
                     <h4 className="text-[14px] font-bold text-t1 mb-1">{c.title}</h4>
                     <p className="text-[12px] text-t2">{c.desc}</p>
                   </button>
@@ -149,7 +164,9 @@ const SettingsPage = () => {
                   { id: "light", label: "Light", icon: Sun, desc: "Anjaneyam Orange", previewBg: "#FFF8F2", previewSurface: "#FFFFFF", previewDot: "#E8580A" },
                   { id: "system", label: "System", icon: Monitor, desc: "Match device" },
                 ].map(t => (
-                  <button key={t.id} onClick={() => handleThemeChange(t.id)} className="rounded-xl p-4 text-left transition-all duration-200 relative overflow-hidden cursor-pointer active:scale-[0.98] border border-border/30" style={{ background: theme === t.id ? "var(--brand-dim)" : "var(--surface-2)", borderColor: theme === t.id ? "var(--brand)" : undefined }}>
+                  <button key={t.id} onClick={() => handleThemeChange(t.id)}
+                    className="rounded-xl p-4 text-left transition-all duration-200 relative overflow-hidden cursor-pointer active:scale-[0.98] border border-border/30"
+                    style={{ background: theme === t.id ? "var(--brand-dim)" : "var(--surface-2)", borderColor: theme === t.id ? "var(--brand)" : undefined }}>
                     {theme === t.id && <div className="absolute top-3 right-3 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: "var(--brand)" }}><Check className="w-3 h-3 text-white" /></div>}
                     {t.previewBg && (
                       <div className="w-full h-12 rounded-lg mb-3 flex items-center justify-center gap-2" style={{ background: t.previewBg }}>
@@ -217,7 +234,9 @@ const SettingsPage = () => {
               <h3 className="text-[16px] font-bold text-t1 mb-4">Language preference</h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
                 {languages.map(l => (
-                  <button key={l.code} onClick={() => { setSelectedLang(l.code); toast.success(`Language: ${l.native}`); }} className="rounded-xl p-4 text-center transition-all duration-200 cursor-pointer active:scale-[0.98] border border-border/30" style={{ background: selectedLang === l.code ? "var(--brand-dim)" : "var(--surface-2)", borderColor: selectedLang === l.code ? "var(--brand)" : undefined }}>
+                  <button key={l.code} onClick={() => { setSelectedLang(l.code); toast.success(`Language: ${l.native}`); }}
+                    className="rounded-xl p-4 text-center transition-all duration-200 cursor-pointer active:scale-[0.98] border border-border/30"
+                    style={{ background: selectedLang === l.code ? "var(--brand-dim)" : "var(--surface-2)", borderColor: selectedLang === l.code ? "var(--brand)" : undefined }}>
                     <span className="text-lg font-bold text-t1 block">{l.label}</span>
                     <span className="text-[12px] text-t3">{l.native}</span>
                   </button>
@@ -241,32 +260,52 @@ const SettingsPage = () => {
               <div className="rounded-xl p-5" style={{ background: "rgba(220,38,38,0.05)", border: "1px solid rgba(220,38,38,0.12)" }}>
                 <h3 className="text-[16px] font-bold mb-1" style={{ color: "#DC2626" }}>Delete account</h3>
                 <p className="text-[13px] text-t2 mb-4">Permanently removes all your data. This cannot be undone.</p>
-                <Button variant="destructive" className="active:scale-95 transition-all duration-200" onClick={() => setShowDeleteModal(true)}>Delete my account</Button>
+                <Button variant="destructive" className="active:scale-95 transition-all duration-200 hover:bg-[#DC2626]/90" onClick={() => setShowDeleteModal(true)}>Delete my account</Button>
               </div>
               <Button variant="secondary" onClick={handleSignOut} className="w-full gap-2 active:scale-95 transition-all duration-200" style={{ color: "#DC2626", borderColor: "rgba(220,38,38,0.25)" }}>
                 <LogOut className="w-4 h-4" /> Sign out of all devices
               </Button>
             </div>
           )}
+
+          {/* Mobile nav */}
+          <div className="md:hidden flex flex-wrap gap-2 mb-6">
+            {navItems.map(item => (
+              <button key={item} onClick={() => setActiveTab(item)}
+                className={`text-[12px] px-3 h-8 rounded-full border transition-all duration-200 cursor-pointer active:scale-95 ${
+                  activeTab === item ? "bg-brand border-brand text-white font-bold" : "bg-surface-2 border-border/30 text-t2"
+                }`}>{item}</button>
+            ))}
+          </div>
         </div>
       </div>
 
+      {/* Delete confirmation modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(4,6,26,0.7)", backdropFilter: "blur(12px)" }} onClick={() => setShowDeleteModal(false)}>
-          <div className="rounded-2xl p-6 max-w-md w-full border border-border/30" style={{ background: "var(--surface)" }} onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(12px)" }} onClick={() => setShowDeleteModal(false)}>
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="rounded-2xl p-6 max-w-md w-full border border-border/30"
+            style={{ background: "var(--surface)", boxShadow: "0 24px 48px rgba(0,0,0,0.3)" }}
+            onClick={e => e.stopPropagation()}
+          >
             <AlertTriangle className="w-10 h-10 mx-auto mb-4" style={{ color: "#DC2626" }} />
             <h3 className="text-[18px] font-bold text-center text-t1 mb-2">Delete account?</h3>
-            <p className="text-[13px] text-center text-t2 mb-4">Your account will be permanently deleted in 30 days.</p>
+            <p className="text-[13px] text-center text-t2 mb-4">Your account will be permanently deleted in 30 days. Type your password to confirm.</p>
             <p className="text-[12px] text-t3 mb-2">Type DELETE to confirm</p>
             <Input value={deleteText} onChange={e => setDeleteText(e.target.value)} placeholder="DELETE" className="h-11 mb-4 bg-surface-2 border-border/30" />
             <div className="flex gap-3">
               <Button variant="ghost" className="flex-1 active:scale-95 transition-all duration-200" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
-              <Button variant="destructive" className="flex-1 active:scale-95 transition-all duration-200" disabled={deleteText !== "DELETE"} onClick={() => { toast.success("Account scheduled for deletion"); setShowDeleteModal(false); }}>Confirm deletion</Button>
+              <Button variant="destructive" disabled={deleteText !== "DELETE"} className="flex-1 active:scale-95 transition-all duration-200"
+                onClick={() => { setShowDeleteModal(false); toast.success("Account scheduled for deletion in 30 days"); }}>
+                <Trash2 className="w-4 h-4" /> Delete
+              </Button>
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 };
 
