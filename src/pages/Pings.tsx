@@ -103,11 +103,16 @@ const Pings = () => {
               </button>
             </TooltipTrigger><TooltipContent>New message</TooltipContent></Tooltip>
           </div>
-          <div className="flex gap-4 mb-3">
-            {(["all", "requests"] as const).map(t => (
-              <button key={t} onClick={() => setTab(t)} className={`text-[13px] font-semibold pb-1 transition-all duration-200 relative cursor-pointer ${tab === t ? "text-brand" : "text-t3 hover:text-t1"}`}>
-                {t === "all" ? "All" : `Requests (${requests.length})`}
-                {tab === t && <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-brand rounded-full" />}
+          <div className="flex gap-1 mb-3">
+            {(["chats", "applications", "requests"] as const).map(t => (
+              <button key={t} onClick={() => setTab(t)}
+                className="text-[12px] font-bold px-3.5 py-1.5 rounded-full transition-all duration-200 cursor-pointer active:scale-95 capitalize"
+                style={{
+                  background: tab === t ? "var(--brand)" : "var(--surface-2)",
+                  color: tab === t ? "white" : "var(--text-2)",
+                  border: `1px solid ${tab === t ? "var(--brand)" : "var(--border)"}`,
+                }}>
+                {t === "requests" ? `Requests (${requests.length})` : t === "applications" ? "Applications" : "Chats"}
               </button>
             ))}
           </div>
