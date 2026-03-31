@@ -287,7 +287,7 @@ const Feed = () => {
                 </div>
               ))}
             </div>
-            <Link to="/app/nexus" className="block text-xs text-electric mt-3 hover:underline">See more →</Link>
+            <Link to="/app/explore" className="block text-xs text-brand mt-3 hover:underline">See more →</Link>
           </div>
 
           {/* Trending topics */}
