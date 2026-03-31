@@ -1,22 +1,24 @@
+import { Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 
-const Footer = () => {
-  return (
-    <footer className="border-t border-[rgba(255,255,255,0.08)] py-12 px-4">
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-        <div>
-          <span className="text-lg font-extrabold text-[#F0F0FF]">Tiikme</span>
-          <p className="text-[13px] text-[rgba(240,240,255,0.6)] mt-1">Get Tiiked.</p>
+const Footer = () => (
+  <footer className="border-t px-6 py-12" style={{ borderColor: "rgba(238,240,255,0.06)" }}>
+    <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+      <div className="flex items-center gap-2">
+        <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, #3D5AF1, #5B73F5)" }}>
+          <Zap className="w-3.5 h-3.5 text-white" />
         </div>
-        <div className="flex items-center gap-6 text-[13px] text-[rgba(240,240,255,0.6)]">
-          <Link to="/privacy" className="hover:text-[#F0F0FF] transition-colors">Privacy</Link>
-          <Link to="/terms" className="hover:text-[#F0F0FF] transition-colors">Terms</Link>
-          <Link to="/grievance" className="hover:text-[#F0F0FF] transition-colors">Grievance Officer</Link>
-        </div>
-        <p className="text-[12px] text-[rgba(240,240,255,0.35)]">&copy; 2025 Tiikme · tiikme.in</p>
+        <span className="text-[16px] font-extrabold text-[#EEF0FF]">Tiikme</span>
+        <span className="text-[13px] ml-2" style={{ color: "rgba(238,240,255,0.4)" }}>Get Tiiked.</span>
       </div>
-    </footer>
-  );
-};
+      <div className="flex items-center gap-6 text-[13px]" style={{ color: "rgba(238,240,255,0.5)" }}>
+        <Link to="/privacy" className="hover:text-[#EEF0FF] transition-colors">Privacy</Link>
+        <Link to="/terms" className="hover:text-[#EEF0FF] transition-colors">Terms</Link>
+        <Link to="/grievance" className="hover:text-[#EEF0FF] transition-colors">Grievance Officer</Link>
+      </div>
+      <span className="text-[12px]" style={{ color: "rgba(238,240,255,0.35)" }}>© 2025 Tiikme · tiikme.in</span>
+    </div>
+  </footer>
+);
 
 export default Footer;
