@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Layers, Plus, ExternalLink, Copy, Users, Settings, Eye, Shield, Target, Briefcase, Wrench, BookOpen, GraduationCap, Rocket, Heart, Info } from "lucide-react";
+import { Layers, Plus, ExternalLink, Copy, Users, Settings, Eye, Shield, PlayCircle, Target, Briefcase, Wrench, BookOpen, GraduationCap, Rocket, Heart, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
