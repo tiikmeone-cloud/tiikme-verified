@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { MessageCircle, Lock, Search, Send, Paperclip, Layers, PenSquare, Check, X, Shield, ArrowLeft, FileText } from "lucide-react";
+import { MessageCircle, Lock, Search, Send, Paperclip, Layers, PenSquare, Check, X, Shield, ArrowLeft, FileText, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
@@ -40,7 +40,7 @@ const ringStyle = (v: string): React.CSSProperties => {
 
 const Pings = () => {
   const [activeConvo, setActiveConvo] = useState(conversations[0]);
-  const [tab, setTab] = useState<"all" | "requests">("all");
+  const [tab, setTab] = useState<"chats" | "applications" | "requests">("chats");
   const [search, setSearch] = useState("");
   const [newMsg, setNewMsg] = useState("");
   const [showMobileList, setShowMobileList] = useState(true);
@@ -103,11 +103,16 @@ const Pings = () => {
               </button>
             </TooltipTrigger><TooltipContent>New message</TooltipContent></Tooltip>
           </div>
-          <div className="flex gap-4 mb-3">
-            {(["all", "requests"] as const).map(t => (
-              <button key={t} onClick={() => setTab(t)} className={`text-[13px] font-semibold pb-1 transition-all duration-200 relative cursor-pointer ${tab === t ? "text-brand" : "text-t3 hover:text-t1"}`}>
-                {t === "all" ? "All" : `Requests (${requests.length})`}
-                {tab === t && <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-brand rounded-full" />}
+          <div className="flex gap-1 mb-3">
+            {(["chats", "applications", "requests"] as const).map(t => (
+              <button key={t} onClick={() => setTab(t)}
+                className="text-[12px] font-bold px-3.5 py-1.5 rounded-full transition-all duration-200 cursor-pointer active:scale-95 capitalize"
+                style={{
+                  background: tab === t ? "var(--brand)" : "var(--surface-2)",
+                  color: tab === t ? "white" : "var(--text-2)",
+                  border: `1px solid ${tab === t ? "var(--brand)" : "var(--border)"}`,
+                }}>
+                {t === "requests" ? `Requests (${requests.length})` : t === "applications" ? "Applications" : "Chats"}
               </button>
             ))}
           </div>
@@ -118,10 +123,15 @@ const Pings = () => {
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          {tab === "all" && filteredConvos.length === 0 && (
+          {tab === "chats" && filteredConvos.length === 0 && (
             <EmptyState icon={MessageCircle} title="No conversations" description="Start a conversation by sending a Ping to someone in your Strands." />
           )}
-          {tab === "all" && filteredConvos.map(convo => (
+          {tab === "applications" && (
+            <div className="p-6">
+              <EmptyState icon={Briefcase} title="No applications" description="Application messages from Opportunities you've applied to will appear here." />
+            </div>
+          )}
+          {tab === "chats" && filteredConvos.map(convo => (
             <button key={convo.id} onClick={() => { setActiveConvo(convo); setShowMobileList(false); }}
               className="w-full flex items-center gap-3 px-4 py-3 text-left transition-all duration-200 border-b cursor-pointer active:scale-[0.99]"
               style={{

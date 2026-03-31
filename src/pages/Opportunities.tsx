@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Target, Zap, Clock, Users, Trophy, Shield, Plus, Briefcase, Handshake, Star, Wrench } from "lucide-react";
+import { Target, Zap, Clock, Users, Shield, Plus, Briefcase, Handshake, Star, Wrench, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { OpportunityDetailDrawer } from "@/components/opportunities/OpportunityDrawer";
@@ -18,9 +18,53 @@ const opportunities = [
 
 const ctaLabel: Record<string, string> = { funded: "Submit my work", job: "Apply via Tiikme", collab: "Express interest", mentorship: "Offer mentorship", gig: "I can do this" };
 
+const mockApplicants = [
+  { name: "Priya M.", role: "Student", status: "new" },
+  { name: "Rahul K.", role: "Professional", status: "new" },
+  { name: "Neha S.", role: "Student", status: "shortlisted" },
+  { name: "Amit T.", role: "Professional", status: "rejected" },
+  { name: "Sunita D.", role: "Student", status: "new" },
+];
+
+const KanbanBoard = () => {
+  const columns = [
+    { title: "New", color: "#3D5AF1", items: mockApplicants.filter(a => a.status === "new") },
+    { title: "Shortlisted", color: "#10B981", items: mockApplicants.filter(a => a.status === "shortlisted") },
+    { title: "Rejected", color: "#DC2626", items: mockApplicants.filter(a => a.status === "rejected") },
+  ];
+
+  return (
+    <div className="grid grid-cols-3 gap-4 mt-5">
+      {columns.map(col => (
+        <div key={col.title} className="rounded-2xl border border-border/30 overflow-hidden" style={{ background: "var(--surface)" }}>
+          <div className="px-4 py-3 border-b border-border/30 flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full" style={{ background: col.color }} />
+            <span className="text-[13px] font-bold text-t1">{col.title}</span>
+            <span className="text-[11px] text-t3 ml-auto">{col.items.length}</span>
+          </div>
+          <div className="p-3 space-y-2 min-h-[200px]">
+            {col.items.map((item, i) => (
+              <div key={i} className="rounded-xl border border-border/30 p-3 cursor-grab hover:shadow-sm transition-all duration-200 active:scale-[0.98]" style={{ background: "var(--surface-2)" }}>
+                <p className="text-[13px] font-semibold text-t1">{item.name}</p>
+                <p className="text-[10px] text-t3">{item.role}</p>
+              </div>
+            ))}
+            {col.items.length === 0 && (
+              <div className="flex items-center justify-center h-[120px] text-[12px] text-t3 rounded-xl border-2 border-dashed border-border/30">
+                Drag applicants here
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 const Opportunities = () => {
   const [activeTab, setActiveTab] = useState("All");
   const [selectedOpp, setSelectedOpp] = useState<typeof opportunities[0] | null>(null);
+  const [view, setView] = useState<"browse" | "manage">("browse");
 
   const filtered = activeTab === "All" ? opportunities : opportunities.filter(o => {
     const map: Record<string, string> = { Jobs: "job", Gigs: "gig", Mentorship: "mentorship", Collaboration: "collab", Challenges: "funded", Research: "research" };
@@ -31,54 +75,78 @@ const Opportunities = () => {
     <div className="max-w-4xl mx-auto px-4 py-7">
       <div className="flex items-center justify-between mb-2">
         <h1 className="text-[20px] font-bold text-t1">Opportunities</h1>
-        <Button size="sm" className="gap-1.5 active:scale-95 transition-all duration-200" onClick={() => toast.info("Opening opportunity form...")}><Plus className="w-4 h-4" /> Post opportunity</Button>
+        <div className="flex items-center gap-2">
+          <div className="flex rounded-full border border-border/30 overflow-hidden">
+            <button onClick={() => setView("browse")}
+              className="text-[11px] font-bold px-3.5 py-1.5 transition-all duration-200 cursor-pointer active:scale-95"
+              style={{ background: view === "browse" ? "var(--brand)" : "var(--surface-2)", color: view === "browse" ? "white" : "var(--text-2)" }}>
+              Browse
+            </button>
+            <button onClick={() => setView("manage")}
+              className="text-[11px] font-bold px-3.5 py-1.5 transition-all duration-200 cursor-pointer active:scale-95 flex items-center gap-1"
+              style={{ background: view === "manage" ? "var(--brand)" : "var(--surface-2)", color: view === "manage" ? "white" : "var(--text-2)" }}>
+              <LayoutGrid className="w-3 h-3" /> Manage Applicants
+            </button>
+          </div>
+          <Button size="sm" className="gap-1.5 active:scale-95 transition-all duration-200" onClick={() => toast.info("Opening opportunity form...")}><Plus className="w-4 h-4" /> Post</Button>
+        </div>
       </div>
       <p className="text-[13px] text-t2 mb-5">Jobs, gigs, mentorships, collaborations, and funded challenges.</p>
 
-      <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-3 mb-5">
-        {filterTabs.map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)}
-            className="whitespace-nowrap text-xs font-bold px-4 py-2 rounded-full transition-all shrink-0 border cursor-pointer active:scale-95"
-            style={{ background: activeTab === tab ? "var(--brand)" : "var(--surface-2)", borderColor: activeTab === tab ? "var(--brand)" : "var(--border)", color: activeTab === tab ? "white" : "var(--text-2)" }}>
-            {tab}
-          </button>
-        ))}
-      </div>
+      {view === "manage" ? (
+        <div>
+          <p className="text-[14px] font-semibold text-t1 mb-1">Applicant Pipeline</p>
+          <p className="text-[12px] text-t3 mb-3">Drag and drop applicants between columns to manage their status.</p>
+          <KanbanBoard />
+        </div>
+      ) : (
+        <>
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-3 mb-5">
+            {filterTabs.map(tab => (
+              <button key={tab} onClick={() => setActiveTab(tab)}
+                className="whitespace-nowrap text-xs font-bold px-4 py-2 rounded-full transition-all shrink-0 border cursor-pointer active:scale-95"
+                style={{ background: activeTab === tab ? "var(--brand)" : "var(--surface-2)", borderColor: activeTab === tab ? "var(--brand)" : "var(--border)", color: activeTab === tab ? "white" : "var(--text-2)" }}>
+                {tab}
+              </button>
+            ))}
+          </div>
 
-      <div className="space-y-4">
-        {filtered.map((opp, i) => (
-          <motion.div key={opp.title} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-            className="rounded-2xl border border-border/30 overflow-hidden cursor-pointer hover:shadow-md transition-all duration-200"
-            style={{ background: "var(--surface)", borderLeft: `4px solid ${opp.typeColor}`, boxShadow: "0 1px 2px rgba(0,0,0,0.03)" }}
-            onClick={() => setSelectedOpp(opp)}
-          >
-            {opp.type === "funded" && (
-              <div className="px-5 py-2.5 flex items-center justify-between" style={{ background: `linear-gradient(to right, ${opp.typeColor}, ${opp.typeColor}CC)` }}>
-                <div className="flex items-center gap-2"><Zap className="w-4 h-4 text-black" /><span className="text-sm font-bold text-black">{opp.reward} reward</span></div>
-                <span className="text-xs font-medium text-black">{opp.daysLeft}</span>
-              </div>
-            )}
-            <div className="p-5">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: opp.typeColor }}>{opp.typeLabel}</span>
-                {opp.verified && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[rgba(16,185,129,0.15)] text-[#10B981] flex items-center gap-1"><Shield className="w-3 h-3" /> Verified</span>}
-              </div>
-              <h3 className="text-base font-bold text-t1 mb-2">{opp.title}</h3>
-              <p className="text-sm text-t2 mb-4 line-clamp-2">{opp.description}</p>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-                <div className="rounded-xl border border-border/30 p-3 text-xs" style={{ background: "var(--surface-2)" }}><span className="text-[9px] font-bold uppercase tracking-wider text-t3 block mb-0.5">Posted by</span><span className="font-medium text-t1">{opp.postedBy}</span></div>
-                <div className="rounded-xl border border-border/30 p-3 text-xs" style={{ background: "var(--surface-2)" }}><span className="text-[9px] font-bold uppercase tracking-wider text-t3 block mb-0.5">Compensation</span><span className="font-bold text-[#F59E0B]">{opp.reward}</span></div>
-                <div className="rounded-xl border border-border/30 p-3 text-xs" style={{ background: "var(--surface-2)" }}><span className="text-[9px] font-bold uppercase tracking-wider text-t3 block mb-0.5">Deadline</span><span className="flex items-center gap-1 text-t1"><Clock className="w-3 h-3" /> {opp.deadline}</span></div>
-                {opp.solutions > 0 && <div className="rounded-xl border border-border/30 p-3 text-xs" style={{ background: "var(--surface-2)" }}><span className="text-[9px] font-bold uppercase tracking-wider text-t3 block mb-0.5">Solutions</span><span className="flex items-center gap-1 text-t1"><Users className="w-3 h-3" /> {opp.solutions}</span></div>}
-              </div>
-              <div className="flex items-center gap-3">
-                <Button onClick={e => { e.stopPropagation(); setSelectedOpp(opp); }} className="active:scale-95 transition-all duration-200">{ctaLabel[opp.type] || "View details"}</Button>
-                {opp.type === "funded" && <Button variant="secondary" onClick={e => { e.stopPropagation(); toast.success("Following updates"); }} className="active:scale-95 transition-all duration-200">Follow updates</Button>}
-              </div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+          <div className="space-y-4">
+            {filtered.map((opp, i) => (
+              <motion.div key={opp.title} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+                className="rounded-2xl border border-border/30 overflow-hidden cursor-pointer hover:shadow-md transition-all duration-200"
+                style={{ background: "var(--surface)", borderLeft: `4px solid ${opp.typeColor}`, boxShadow: "0 1px 2px rgba(0,0,0,0.03)" }}
+                onClick={() => setSelectedOpp(opp)}
+              >
+                {opp.type === "funded" && (
+                  <div className="px-5 py-2.5 flex items-center justify-between" style={{ background: `linear-gradient(to right, ${opp.typeColor}, ${opp.typeColor}CC)` }}>
+                    <div className="flex items-center gap-2"><Zap className="w-4 h-4 text-black" /><span className="text-sm font-bold text-black">{opp.reward} reward</span></div>
+                    <span className="text-xs font-medium text-black">{opp.daysLeft}</span>
+                  </div>
+                )}
+                <div className="p-5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: opp.typeColor }}>{opp.typeLabel}</span>
+                    {opp.verified && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[rgba(16,185,129,0.15)] text-[#10B981] flex items-center gap-1"><Shield className="w-3 h-3" /> Verified</span>}
+                  </div>
+                  <h3 className="text-base font-bold text-t1 mb-2">{opp.title}</h3>
+                  <p className="text-sm text-t2 mb-4 line-clamp-2">{opp.description}</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                    <div className="rounded-xl border border-border/30 p-3 text-xs" style={{ background: "var(--surface-2)" }}><span className="text-[9px] font-bold uppercase tracking-wider text-t3 block mb-0.5">Posted by</span><span className="font-medium text-t1">{opp.postedBy}</span></div>
+                    <div className="rounded-xl border border-border/30 p-3 text-xs" style={{ background: "var(--surface-2)" }}><span className="text-[9px] font-bold uppercase tracking-wider text-t3 block mb-0.5">Compensation</span><span className="font-bold text-[#F59E0B]">{opp.reward}</span></div>
+                    <div className="rounded-xl border border-border/30 p-3 text-xs" style={{ background: "var(--surface-2)" }}><span className="text-[9px] font-bold uppercase tracking-wider text-t3 block mb-0.5">Deadline</span><span className="flex items-center gap-1 text-t1"><Clock className="w-3 h-3" /> {opp.deadline}</span></div>
+                    {opp.solutions > 0 && <div className="rounded-xl border border-border/30 p-3 text-xs" style={{ background: "var(--surface-2)" }}><span className="text-[9px] font-bold uppercase tracking-wider text-t3 block mb-0.5">Solutions</span><span className="flex items-center gap-1 text-t1"><Users className="w-3 h-3" /> {opp.solutions}</span></div>}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Button onClick={e => { e.stopPropagation(); setSelectedOpp(opp); }} className="active:scale-95 transition-all duration-200">{ctaLabel[opp.type] || "View details"}</Button>
+                    {opp.type === "funded" && <Button variant="secondary" onClick={e => { e.stopPropagation(); toast.success("Following updates"); }} className="active:scale-95 transition-all duration-200">Follow updates</Button>}
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </>
+      )}
 
       <AnimatePresence>
         {selectedOpp && <OpportunityDetailDrawer opp={selectedOpp} onClose={() => setSelectedOpp(null)} />}

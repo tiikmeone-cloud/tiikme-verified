@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import EmptyState from "@/components/EmptyState";
 
-const tabs = ["Work", "Posts", "About", "Verifications"] as const;
+const tabs = ["Portfolio", "Posts", "About", "Verifications"] as const;
 const ROLE_COLOR = "#4F46E5";
 
 const mockProjects = [
@@ -104,56 +104,84 @@ const handleExport = () => {
 };
 
 const Profile = () => {
-  const [activeTab, setActiveTab] = useState<typeof tabs[number]>("Work");
+  const [activeTab, setActiveTab] = useState<typeof tabs[number]>("Portfolio");
   const [editOpen, setEditOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportWithSpinner = () => {
+    setExporting(true);
+    setTimeout(() => {
+      handleExport();
+      setExporting(false);
+      toast.success("Profile PDF downloaded with Tiikme watermark.");
+    }, 1000);
+  };
 
   const handleCopyLink = () => { navigator.clipboard.writeText("https://tiikme.in/arjunkumar"); toast.success("Link copied!"); };
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
-      {/* Hero Card */}
-      <div className="rounded-2xl border border-border/30 overflow-hidden relative" style={{ background: "var(--surface)", boxShadow: "0 1px 2px rgba(0,0,0,0.03)" }}>
-        <div className="h-28" style={{ background: `linear-gradient(135deg, ${ROLE_COLOR}22 0%, ${ROLE_COLOR}08 100%)` }} />
-        <div className="px-7 pb-7 -mt-12">
-          <div className="flex flex-col sm:flex-row items-start gap-5">
-            <div className="relative group">
-              <div className="w-24 h-24 rounded-full flex items-center justify-center text-[28px] font-bold text-white border-4 transition-transform duration-200 group-hover:scale-105" style={{ backgroundColor: ROLE_COLOR, borderColor: "var(--surface)", boxShadow: "0 0 0 2px #F59E0B" }}>AK</div>
-              <button onClick={() => setEditOpen(true)} className="absolute inset-0 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer active:scale-95" style={{ background: "rgba(0,0,0,0.5)" }}>
-                <Camera className="w-5 h-5 text-white" />
-              </button>
+      {/* Bento Hero Card — Two Column */}
+      <div className="rounded-2xl border border-border/30 overflow-hidden" style={{ background: "var(--surface)", boxShadow: "0 1px 2px rgba(0,0,0,0.03)" }}>
+        <div className="flex flex-col sm:flex-row">
+          {/* Left Column — 3:4 Portrait */}
+          <div className="sm:w-[30%] relative group">
+            <div className="aspect-[3/4] w-full flex items-center justify-center text-[48px] font-bold text-white rounded-2xl sm:rounded-r-none" style={{ backgroundColor: ROLE_COLOR, background: `linear-gradient(160deg, ${ROLE_COLOR}, ${ROLE_COLOR}CC)` }}>
+              AK
             </div>
-            <div className="flex-1 min-w-0 pt-2">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-[24px] font-extrabold text-t1">Arjun Kumar</h1>
-                <Shield className="w-4 h-4" style={{ color: "#F59E0B" }} />
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: `${ROLE_COLOR}14`, color: ROLE_COLOR }}>Student</span>
-              </div>
-              <p className="text-[12px] font-mono mt-0.5 text-t3">@arjunkumar</p>
-              <div className="flex items-center gap-1.5 mt-1">
-                <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "var(--open-green)" }} />
-                <span className="text-[12px] font-medium" style={{ color: "var(--open-green)" }}>Open to work</span>
-              </div>
-              <p className="text-[15px] mt-2 text-t1 leading-relaxed line-clamp-2">Final year CSE student building at the intersection of health and technology.</p>
-              <div className="flex items-center gap-2 mt-2 flex-wrap">
-                <span className="flex items-center gap-1 text-[12px] px-2 py-0.5 rounded-full bg-surface-2 border border-border/30 text-t2"><MapPin className="w-3 h-3" />Delhi, India</span>
-                <Link to="/app/institution/1" className="text-[12px] px-2 py-0.5 rounded-full bg-surface-2 border border-border/30 text-t2 hover:text-brand transition-colors">DTU</Link>
-                <span className="text-[12px] px-2 py-0.5 rounded-full bg-surface-2 border border-border/30 text-t2">Hindi, English</span>
-              </div>
-              <div className="flex items-center gap-2 mt-4 flex-wrap">
-                <Button variant="secondary" size="sm" className="gap-1.5 rounded-full active:scale-95 transition-all duration-200" onClick={handleCopyLink}><Copy className="w-3 h-3" /> Copy link</Button>
-                <Button variant="secondary" size="sm" className="gap-1.5 rounded-full active:scale-95 transition-all duration-200" onClick={() => setEditOpen(true)}><Pencil className="w-3 h-3" /> Edit profile</Button>
-                <Button variant="secondary" size="sm" className="gap-1.5 rounded-full active:scale-95 transition-all duration-200" onClick={handleExport}><Download className="w-3 h-3" /> Export</Button>
-              </div>
+            <button onClick={() => setEditOpen(true)} className="absolute inset-0 rounded-2xl sm:rounded-r-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer active:scale-95" style={{ background: "rgba(0,0,0,0.4)" }}>
+              <Camera className="w-6 h-6 text-white" />
+            </button>
+            {/* Tiik Approved badge overlay */}
+            <div className="absolute bottom-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", color: "#F59E0B" }}>
+              <Shield className="w-3 h-3" /> Tiik Approved
             </div>
           </div>
 
-          <div className="grid grid-cols-4 gap-4 mt-6 pt-5 border-t border-border/30">
-            {[{ label: "PROJECTS", value: "4" }, { label: "GROUPS", value: "2" }, { label: "STRANDS", value: "156" }, { label: "ACTIVITY", value: "78" }].map(s => (
-              <div key={s.label} className="text-center">
-                <p className="text-[22px] font-extrabold text-t1">{s.value}</p>
-                <p className="text-[10px] font-bold tracking-wider uppercase text-t3">{s.label}</p>
+          {/* Right Column — Details */}
+          <div className="sm:w-[70%] p-6 sm:p-7 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-[24px] font-extrabold text-t1">Arjun Kumar</h1>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: `${ROLE_COLOR}14`, color: ROLE_COLOR }}>Student</span>
               </div>
-            ))}
+              <p className="text-[12px] font-mono mt-0.5 text-t3">@arjunkumar</p>
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "var(--open-green)" }} />
+                <span className="text-[12px] font-medium" style={{ color: "var(--open-green)" }}>Open to work</span>
+              </div>
+              <p className="text-[15px] mt-3 text-t1 leading-relaxed line-clamp-2">Final year CSE student building at the intersection of health and technology.</p>
+
+              {/* Connectivity Nodes */}
+              <p className="text-[10px] font-bold tracking-wider uppercase text-t3 mt-4 mb-2">CONNECTIVITY NODES</p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Link to="/app/institution/1" className="text-[12px] font-semibold px-3 py-1.5 rounded-full transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer" style={{ background: "rgba(79,70,229,0.08)", color: "#4F46E5" }}>
+                  <MapPin className="w-3 h-3 inline mr-1" />DTU
+                </Link>
+                <Link to="/app/explore" className="text-[12px] font-semibold px-3 py-1.5 rounded-full transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer" style={{ background: "rgba(3,105,161,0.08)", color: "#0369A1" }}>
+                  <Layers className="w-3 h-3 inline mr-1" />TelemedicineRx
+                </Link>
+                <span className="text-[12px] px-3 py-1.5 rounded-full bg-surface-2 border border-border/30 text-t2">Delhi, India</span>
+                <span className="text-[12px] px-3 py-1.5 rounded-full bg-surface-2 border border-border/30 text-t2">Hindi, English</span>
+              </div>
+            </div>
+
+            {/* Actions + Stats */}
+            <div className="mt-5 pt-4 border-t border-border/30">
+              <div className="flex items-center gap-2 flex-wrap mb-4">
+                <Button variant="secondary" size="sm" className="gap-1.5 rounded-full active:scale-95 transition-all duration-200" onClick={handleCopyLink}><Copy className="w-3 h-3" /> Copy link</Button>
+                <Button variant="secondary" size="sm" className="gap-1.5 rounded-full active:scale-95 transition-all duration-200" onClick={() => setEditOpen(true)}><Pencil className="w-3 h-3" /> Edit profile</Button>
+                <Button variant="secondary" size="sm" className="gap-1.5 rounded-full active:scale-95 transition-all duration-200" onClick={handleExportWithSpinner}><Download className="w-3 h-3" /> {exporting ? "Exporting..." : "Export"}</Button>
+              </div>
+              <div className="grid grid-cols-4 gap-3">
+                {[{ label: "PROJECTS", value: "4" }, { label: "GROUPS", value: "2" }, { label: "STRANDS", value: "156" }, { label: "ACTIVITY", value: "78" }].map(s => (
+                  <div key={s.label} className="text-center">
+                    <p className="text-[20px] font-extrabold text-t1">{s.value}</p>
+                    <p className="text-[9px] font-bold tracking-wider uppercase text-t3">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -172,7 +200,7 @@ const Profile = () => {
 
         <div className="p-5">
           {/* Work — Timeline view (default) */}
-          {activeTab === "Work" && (
+          {activeTab === "Portfolio" && (
             <div className="space-y-0">
               {mockProjects.map((p, i) => (
                 <div key={p.title} className="flex gap-4 group">
