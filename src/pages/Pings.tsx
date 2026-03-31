@@ -3,6 +3,8 @@ import { MessageCircle, Lock, Search, Send, Paperclip, Layers, PenSquare, Check,
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import EmptyState from "@/components/EmptyState";
 
 const ROLE_COLORS: Record<string, string> = { Faculty: "#92400E", Professional: "#0369A1", Doctor: "#0E7490", Student: "#4F46E5", "Skilled Trade": "#C2410C" };
 
@@ -60,11 +62,12 @@ const Pings = () => {
         <div className="p-4 border-b" style={{ borderColor: "var(--border)" }}>
           <div className="flex items-center justify-between mb-3">
             <h1 className="text-[20px] font-extrabold text-t1">Pings</h1>
-            <button className="w-9 h-9 rounded-full flex items-center justify-center bg-surface-2 border border-border/30 transition-all duration-200 hover:bg-brand-dim cursor-pointer active:scale-95" onClick={() => toast.info("New Ping composer")}>
-              <PenSquare className="w-4 h-4 text-t2" />
-            </button>
+            <Tooltip><TooltipTrigger asChild>
+              <button className="w-9 h-9 rounded-full flex items-center justify-center bg-surface-2 border border-border/30 transition-all duration-200 hover:bg-brand-dim cursor-pointer active:scale-95" onClick={() => toast.info("New Ping composer")}>
+                <PenSquare className="w-4 h-4 text-t2" />
+              </button>
+            </TooltipTrigger><TooltipContent>New message</TooltipContent></Tooltip>
           </div>
-          {/* Tabs — underline */}
           <div className="flex gap-4 mb-3">
             {(["all", "requests"] as const).map(t => (
               <button key={t} onClick={() => setTab(t)} className={`text-[13px] font-semibold pb-1 transition-all duration-200 relative cursor-pointer ${tab === t ? "text-brand" : "text-t3 hover:text-t1"}`}>
@@ -75,14 +78,17 @@ const Pings = () => {
           </div>
           <div className="flex items-center gap-2 px-3 h-9 rounded-full bg-surface-2 border border-border/30">
             <Search className="w-4 h-4 text-t3" />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search Pings..." className="flex-1 bg-transparent text-[12px] outline-none text-t1" />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search Pings..." className="flex-1 bg-transparent text-[12px] outline-none text-t1 placeholder:text-t3" />
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto">
+          {tab === "all" && filteredConvos.length === 0 && (
+            <EmptyState icon={MessageCircle} title="No conversations" description="Start a conversation by sending a Ping to someone in your Strands." />
+          )}
           {tab === "all" && filteredConvos.map(convo => (
             <button key={convo.id} onClick={() => { setActiveConvo(convo); setShowMobileList(false); }}
-              className="w-full flex items-center gap-3 px-4 py-3 text-left transition-all duration-200 border-b cursor-pointer"
+              className="w-full flex items-center gap-3 px-4 py-3 text-left transition-all duration-200 border-b cursor-pointer active:scale-[0.99]"
               style={{
                 background: activeConvo.id === convo.id ? "var(--brand-dim)" : convo.unread > 0 ? "var(--brand-dim)" : "transparent",
                 borderLeft: activeConvo.id === convo.id ? "3px solid var(--brand)" : "3px solid transparent",
@@ -114,7 +120,7 @@ const Pings = () => {
               <p className="text-[12px] mb-3 line-clamp-2 text-t2 italic">{req.preview}</p>
               <div className="flex gap-2">
                 <Button size="xs" className="active:scale-95 transition-all duration-200" onClick={() => toast.success("Accepted! Strand created.")}><Check className="w-3 h-3" /> Accept</Button>
-                <Button variant="ghost" size="xs" className="text-[#DC2626] active:scale-95 transition-all duration-200" onClick={() => toast.info("Declined")}><X className="w-3 h-3" /> Decline</Button>
+                <Button variant="ghost" size="xs" className="active:scale-95 transition-all duration-200" style={{ color: "#DC2626" }} onClick={() => toast.info("Declined")}><X className="w-3 h-3" /> Decline</Button>
               </div>
             </div>
           ))}
@@ -123,9 +129,8 @@ const Pings = () => {
 
       {/* Right panel */}
       <div className={`flex-1 flex flex-col min-w-0 ${showMobileList ? "hidden md:flex" : "flex"}`} style={{ background: "var(--bg)" }}>
-        {/* Header with lock */}
         <div className="flex items-center gap-3 px-5 h-16 border-b shrink-0" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
-          <button onClick={() => setShowMobileList(true)} className="md:hidden p-1.5 rounded-lg text-t2 cursor-pointer"><ArrowLeft className="w-5 h-5" /></button>
+          <button onClick={() => setShowMobileList(true)} className="md:hidden p-1.5 rounded-lg text-t2 cursor-pointer active:scale-95"><ArrowLeft className="w-5 h-5" /></button>
           <Link to="/app/profile" className="flex items-center gap-3 flex-1 min-w-0">
             <div className="w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ backgroundColor: ROLE_COLORS[activeConvo.role] || "#3D5AF1", ...ringStyle(activeConvo.verified) }}>{activeConvo.initials}</div>
             <div className="min-w-0">
@@ -133,22 +138,19 @@ const Pings = () => {
               <span className="text-[11px] text-t3">{activeConvo.institution}</span>
             </div>
           </Link>
-          {/* Prominent E2E lock */}
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-2 border border-border/30">
             <Lock className="w-3.5 h-3.5 text-brand" />
-            <span className="text-[11px] font-semibold text-t2">End-to-End Encrypted</span>
+            <span className="text-[11px] font-semibold text-t2 hidden sm:inline">End-to-End Encrypted</span>
           </div>
         </div>
 
-        {/* Verification banner */}
         {!dismissedBanner && activeConvo.verified === "gold" && (
           <div className="px-5 py-2 flex items-center justify-between border-b" style={{ background: "rgba(245,158,11,0.06)", borderColor: "rgba(245,158,11,0.12)" }}>
             <p className="text-[12px]" style={{ color: "rgba(245,158,11,0.9)" }}><Shield className="w-3.5 h-3.5 inline text-[#F59E0B] mr-1" />{activeConvo.name} is Tiik Approved</p>
-            <button onClick={() => setDismissedBanner(true)} className="text-t3 cursor-pointer"><X className="w-4 h-4" /></button>
+            <button onClick={() => setDismissedBanner(true)} className="text-t3 cursor-pointer active:scale-95"><X className="w-4 h-4" /></button>
           </div>
         )}
 
-        {/* Messages */}
         <div className="flex-1 overflow-y-auto px-5 py-5 space-y-2">
           <div className="text-center mb-4">
             <span className="text-[11px] px-3 py-1 rounded-full inline-flex items-center gap-1 bg-surface-2 border border-border/30 text-t3"><Lock className="w-3 h-3" /> End-to-end encrypted</span>
@@ -174,11 +176,14 @@ const Pings = () => {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input */}
         <div className="border-t px-4 py-3" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
           <div className="flex items-center gap-1 mb-2">
-            <button className="p-2 rounded-lg text-t2 hover:text-t1 hover:bg-surface-2 transition-all duration-200 cursor-pointer active:scale-95" onClick={() => toast.info("PDF upload")}><Paperclip className="w-4 h-4" /></button>
-            <button className="p-2 rounded-lg text-t2 hover:text-t1 hover:bg-surface-2 transition-all duration-200 cursor-pointer active:scale-95" onClick={() => toast.info("Share work item")}><Layers className="w-4 h-4" /></button>
+            <Tooltip><TooltipTrigger asChild>
+              <button className="p-2 rounded-lg text-t2 hover:text-t1 hover:bg-surface-2 transition-all duration-200 cursor-pointer active:scale-95" onClick={() => toast.info("PDF upload")}><Paperclip className="w-4 h-4" /></button>
+            </TooltipTrigger><TooltipContent>Attach file</TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger asChild>
+              <button className="p-2 rounded-lg text-t2 hover:text-t1 hover:bg-surface-2 transition-all duration-200 cursor-pointer active:scale-95" onClick={() => toast.info("Share work item")}><Layers className="w-4 h-4" /></button>
+            </TooltipTrigger><TooltipContent>Share work</TooltipContent></Tooltip>
           </div>
           <div className="flex items-center gap-2.5">
             <textarea value={newMsg} onChange={e => setNewMsg(e.target.value)}
