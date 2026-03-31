@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Zap, Link2, Users, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ const Welcome = () => {
   const navigate = useNavigate();
   const [showConfetti, setShowConfetti] = useState(true);
   const [linkText, setLinkText] = useState("");
+  const [exiting, setExiting] = useState(false);
   const fullLink = "tiikme.in/arjunkumar";
 
   useEffect(() => {
@@ -21,8 +22,18 @@ const Welcome = () => {
 
   const copyLink = () => { navigator.clipboard.writeText("https://tiikme.in/arjunkumar"); toast.success("Link copied!"); };
 
+  const goToFeed = useCallback(() => {
+    setExiting(true);
+    setTimeout(() => { navigate("/app/feed"); toast.success("Welcome to Tiikme!"); }, 500);
+  }, [navigate]);
+
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden" style={{ background: "#04061A" }}>
+    <motion.div
+      animate={exiting ? { scale: 0.96, opacity: 0 } : { scale: 1, opacity: 1 }}
+      transition={{ duration: 0.5, ease: "easeInOut" }}
+      className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden"
+      style={{ background: "#04061A" }}
+    >
       {/* Orbs */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-[20%] left-[10%] w-[400px] h-[400px] rounded-full" style={{ background: "radial-gradient(circle, rgba(61,90,241,0.12) 0%, transparent 70%)", animation: "floatOrb1 12s ease-in-out infinite", filter: "blur(40px)" }} />
@@ -33,7 +44,7 @@ const Welcome = () => {
         {showConfetti && (
           <div className="absolute inset-0 pointer-events-none z-50">
             {Array.from({ length: 40 }).map((_, i) => (
-              <div key={i} className="absolute rounded-sm" style={{
+              <div key={i} className={i % 2 === 0 ? "absolute rounded-sm" : "absolute rounded-full"} style={{
                 left: `${Math.random() * 100}%`,
                 width: `${4 + Math.random() * 4}px`,
                 height: `${4 + Math.random() * 4}px`,
@@ -46,8 +57,8 @@ const Welcome = () => {
         )}
       </AnimatePresence>
 
-      <motion.div initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.5 }} className="max-w-[500px] w-full text-center relative z-10">
-        {/* Check */}
+      <div className="max-w-[500px] w-full text-center relative z-10">
+        {/* Animated green check */}
         <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
           className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
           style={{ background: "rgba(16,185,129,0.1)", border: "2px solid #10B981", animation: "tiikPulse 2.5s infinite" }}>
@@ -55,20 +66,20 @@ const Welcome = () => {
         </motion.div>
 
         <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-          className="text-[40px] font-extrabold mb-2 text-[#EEF0FF]">
+          className="text-[36px] sm:text-[40px] font-extrabold mb-2 text-[#EEF0FF]">
           You're <span style={{ background: "linear-gradient(135deg, #3D5AF1, #5B73F5)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Tiiked</span>, Arjun!
         </motion.h1>
-        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} className="text-[16px] mb-8" style={{ color: "rgba(238,240,255,0.6)" }}>
+        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} className="text-[15px] mb-8" style={{ color: "rgba(238,240,255,0.6)" }}>
           Your professional identity is live.
         </motion.p>
 
         {/* Profile link card */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
-          className="inline-flex items-center gap-3 rounded-[14px] px-[18px] py-3.5 mb-8"
+          className="inline-flex items-center gap-3 rounded-2xl px-5 py-3.5 mb-8"
           style={{ background: "rgba(238,240,255,0.05)", border: "1px solid rgba(238,240,255,0.1)" }}>
           <Link2 className="w-4 h-4" style={{ color: "var(--brand)" }} />
           <span className="text-[14px] font-mono text-[#EEF0FF]">{linkText}<span className="animate-pulse">|</span></span>
-          <button onClick={copyLink} className="p-1.5 rounded-lg transition-colors"><Copy className="w-4 h-4" style={{ color: "rgba(238,240,255,0.4)" }} /></button>
+          <button onClick={copyLink} className="p-1.5 rounded-lg transition-all duration-200 hover:bg-white/5 cursor-pointer active:scale-95"><Copy className="w-4 h-4" style={{ color: "rgba(238,240,255,0.4)" }} /></button>
         </motion.div>
 
         {/* Feature cards */}
@@ -78,23 +89,23 @@ const Welcome = () => {
             { icon: Link2, title: "Share your link", desc: "tiikme.in/arjunkumar" },
             { icon: Users, title: "Find your people", desc: "Connect in Explore" },
           ].map((c, i) => (
-            <div key={i} className="rounded-2xl p-4 text-center" style={{ background: "rgba(238,240,255,0.04)", border: "1px solid rgba(238,240,255,0.07)" }}>
+            <div key={i} className="rounded-2xl p-4 text-center transition-all duration-200 hover:-translate-y-0.5" style={{ background: "rgba(238,240,255,0.04)", border: "1px solid rgba(238,240,255,0.07)" }}>
               <div className="w-10 h-10 rounded-xl mx-auto mb-2 flex items-center justify-center" style={{ background: "var(--brand-dim)" }}>
                 <c.icon className="w-5 h-5" style={{ color: "var(--brand)" }} />
               </div>
-              <h3 className="text-[13px] font-bold text-[#EEF0FF] mb-0.5">{c.title}</h3>
-              <p className="text-[11px]" style={{ color: "rgba(238,240,255,0.5)" }}>{c.desc}</p>
+              <h3 className="text-[12px] font-bold text-[#EEF0FF] mb-0.5">{c.title}</h3>
+              <p className="text-[10px]" style={{ color: "rgba(238,240,255,0.5)" }}>{c.desc}</p>
             </div>
           ))}
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}>
-          <Button size="xl" className="w-full" onClick={() => { navigate("/app/feed"); toast.success("Welcome to Tiikme!"); }}>
+          <Button size="xl" className="w-full active:scale-95 transition-all duration-200" onClick={goToFeed}>
             Take me to my feed <Zap className="w-4 h-4" />
           </Button>
         </motion.div>
-      </motion.div>
-    </div>
+      </div>
+    </motion.div>
   );
 };
 
