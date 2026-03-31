@@ -1,133 +1,157 @@
 import { ReactNode, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { motion } from "framer-motion";
 import {
-  LayoutGrid, Compass, User, Layers, Target,
-  Share2, MessageCircle, Bell, Settings, PenSquare, Zap,
+  LayoutGrid, Compass, Layers, Target,
+  Link2, MessageCircle, Bell, Settings, PenSquare, Zap, User, Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import NewPostModal from "@/components/NewPostModal";
 
-const mainNav = [
+const ROLE_COLOR = "#4F46E5"; // student default
+
+const navGroups = [
+  {
+    label: "MAIN",
+    items: [
+      { label: "Feed", icon: LayoutGrid, path: "/app/feed" },
+      { label: "Explore", icon: Compass, path: "/app/explore" },
+    ],
+  },
+  {
+    label: "WORK",
+    items: [
+      { label: "My Work", icon: Layers, path: "/app/work" },
+      { label: "Opportunities", icon: Target, path: "/app/opportunities", badge: 3 },
+    ],
+  },
+  {
+    label: "CONNECT",
+    items: [
+      { label: "My Strands", icon: Link2, path: "/app/strands" },
+      { label: "Pings", icon: MessageCircle, path: "/app/pings", badge: 2 },
+      { label: "Alerts", icon: Bell, path: "/app/alerts", badge: 5 },
+    ],
+  },
+  {
+    label: "MORE",
+    items: [
+      { label: "Settings", icon: Settings, path: "/app/settings" },
+    ],
+  },
+];
+
+const mobileNav = [
   { label: "Feed", icon: LayoutGrid, path: "/app/feed" },
-  { label: "Explore", icon: Compass, path: "/app/nexus" },
-  { label: "My Profile", icon: User, path: "/app/profile" },
-];
-
-const workNav = [
-  { label: "My Work", icon: Layers, path: "/app/my-work" },
-  { label: "Opportunities", icon: Target, path: "/app/opportunities", badge: 3 },
-];
-
-const connectNav = [
-  { label: "My Strands", icon: Share2, path: "/app/strands" },
-  { label: "Messages", icon: MessageCircle, path: "/app/messages", badge: 2 },
-  { label: "Alerts", icon: Bell, path: "/app/alerts", badge: 5 },
-];
-
-const moreNav = [
-  { label: "Settings", icon: Settings, path: "/app/settings" },
-];
-
-const mobileNav: { label: string; icon: React.ElementType; path: string; badge?: number }[] = [
-  { label: "Feed", icon: LayoutGrid, path: "/app/feed" },
-  { label: "Explore", icon: Compass, path: "/app/nexus" },
-  { label: "My Work", icon: Layers, path: "/app/my-work" },
-  { label: "Alerts", icon: Bell, path: "/app/alerts", badge: 5 },
+  { label: "Explore", icon: Compass, path: "/app/explore" },
+  { label: "Post", icon: Plus, path: "__post__" },
+  { label: "Pings", icon: MessageCircle, path: "/app/pings", badge: 2 },
   { label: "Profile", icon: User, path: "/app/profile" },
 ];
-
-interface NavItemProps {
-  item: { label: string; icon: React.ElementType; path: string; badge?: number };
-  active: boolean;
-}
-
-const NavItem = ({ item, active }: NavItemProps) => (
-  <Link to={item.path} className="relative block">
-    <div className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative ${active ? "bg-[rgba(124,111,255,0.15)] text-foreground font-bold" : "text-muted-foreground hover:text-foreground hover:bg-[rgba(255,255,255,0.06)]"}`}>
-      {active && <motion.div layoutId="sidebar-active" className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-electric" transition={{ type: "spring", stiffness: 300, damping: 30 }} />}
-      <item.icon className="w-5 h-5 shrink-0" />
-      <span className="text-sm">{item.label}</span>
-      {item.badge && <span className="ml-auto text-[10px] bg-[rgba(124,111,255,0.2)] text-electric px-2 py-0.5 rounded-full font-bold">{item.badge}</span>}
-    </div>
-  </Link>
-);
-
-const NavSection = ({ label, items, pathname }: { label: string; items: typeof mainNav; pathname: string }) => (
-  <div className="mb-2">
-    {label && <p className="px-3 py-2 micro-label text-muted-foreground/50">{label}</p>}
-    <div className="space-y-0.5">
-      {items.map((item) => <NavItem key={item.path} item={item} active={pathname === item.path} />)}
-    </div>
-  </div>
-);
 
 const AppShell = ({ children }: { children: ReactNode }) => {
   const { pathname } = useLocation();
   const [postModalOpen, setPostModalOpen] = useState(false);
 
+  const isActive = (path: string) => pathname === path || pathname.startsWith(path + "/");
+
   return (
     <div className="min-h-screen flex">
-      <aside className="hidden lg:flex flex-col w-[232px] border-r border-border bg-[rgba(5,5,16,0.9)] backdrop-blur-xl fixed inset-y-0 left-0 z-40">
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex flex-col w-60 border-r border-border bg-surface fixed inset-y-0 left-0 z-40">
+        {/* Logo */}
         <div className="h-16 flex items-center px-5 border-b border-border">
-          <Link to="/app/feed" className="flex items-center gap-1.5 text-xl font-extrabold tracking-tight">
-            <Zap className="w-5 h-5 text-electric" />Tiikme
+          <Link to="/app/feed" className="flex items-center gap-1.5 text-xl font-extrabold text-t1">
+            <Zap className="w-5 h-5 text-brand" />Tiikme
           </Link>
         </div>
 
+        {/* Nav */}
         <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-          <NavSection label="MAIN" items={mainNav} pathname={pathname} />
-          <NavSection label="WORK" items={workNav} pathname={pathname} />
-          <NavSection label="CONNECT" items={connectNav} pathname={pathname} />
-          <NavSection label="MORE" items={moreNav} pathname={pathname} />
+          {navGroups.map((group) => (
+            <div key={group.label} className="mb-2">
+              <p className="micro-label px-3 py-2">{group.label}</p>
+              <div className="space-y-0.5">
+                {group.items.map((item) => {
+                  const active = isActive(item.path);
+                  return (
+                    <Link key={item.path} to={item.path}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-[10px] transition-all duration-200 relative text-sm ${
+                        active
+                          ? "bg-brand-dim text-brand font-bold"
+                          : "text-t2 hover:text-t1 hover:bg-brand-dim"
+                      }`}
+                    >
+                      {active && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-brand" />}
+                      <item.icon className="w-5 h-5 shrink-0" />
+                      <span>{item.label}</span>
+                      {item.badge && (
+                        <span className="ml-auto text-[10px] bg-brand-dim text-brand px-2 py-0.5 rounded-full font-bold">
+                          {item.badge}
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
 
+        {/* New Post */}
         <div className="px-3 pb-3">
-          <Button variant="default" className="w-full gap-2" onClick={() => setPostModalOpen(true)}>
+          <Button className="w-full gap-2" onClick={() => setPostModalOpen(true)}>
             <PenSquare className="w-4 h-4" />New Post
           </Button>
         </div>
 
-        {/* User card — no score */}
+        {/* User card */}
         <div className="px-3 pb-4 border-t border-border pt-3">
-          <Link to="/app/profile" className="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-[rgba(255,255,255,0.06)] transition-colors">
-            <div className="w-9 h-9 rounded-full bg-[#7C6FFF] flex items-center justify-center text-xs font-bold text-white">AK</div>
+          <Link to="/app/profile" className="flex items-center gap-3 px-2 py-2 rounded-[10px] hover:bg-brand-dim transition-colors">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ backgroundColor: ROLE_COLOR }}>AK</div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold truncate">Arjun Kumar</p>
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[rgba(124,111,255,0.2)] text-electric">Student</span>
+              <p className="text-[13px] font-bold text-t1 truncate">Arjun Kumar</p>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "#EEF2FF", color: "#4F46E5" }}>Student</span>
             </div>
           </Link>
         </div>
       </aside>
 
-      <main className="flex-1 lg:ml-[232px] pb-20 lg:pb-0">
-        <header className="lg:hidden sticky top-0 z-40 h-14 flex items-center justify-between px-4 border-b border-border bg-[rgba(5,5,16,0.9)] backdrop-blur-xl">
-          <span className="flex items-center gap-1.5 text-lg font-extrabold"><Zap className="w-4 h-4 text-electric" />Tiikme</span>
+      {/* Main */}
+      <main className="flex-1 md:ml-60 pb-20 md:pb-0">
+        {/* Mobile top bar */}
+        <header className="md:hidden sticky top-0 z-40 h-[52px] flex items-center justify-between px-4 border-b border-border bg-surface">
+          <span className="flex items-center gap-1.5 text-lg font-extrabold text-t1">
+            <Zap className="w-4 h-4 text-brand" />Tiikme
+          </span>
           <div className="flex items-center gap-2">
-            <button onClick={() => setPostModalOpen(true)} className="p-2 rounded-lg hover:bg-[rgba(255,255,255,0.06)] transition-colors"><PenSquare className="w-5 h-5 text-electric" /></button>
-            <Link to="/app/messages" className="relative p-2 rounded-lg hover:bg-[rgba(255,255,255,0.06)] transition-colors">
-              <MessageCircle className="w-5 h-5 text-muted-foreground" /><span className="absolute top-1 right-1 w-2 h-2 bg-electric rounded-full" />
-            </Link>
-            <Link to="/app/alerts" className="relative p-2 rounded-lg hover:bg-[rgba(255,255,255,0.06)] transition-colors">
-              <Bell className="w-5 h-5 text-muted-foreground" /><span className="absolute top-1 right-1 w-2 h-2 bg-electric rounded-full" />
-            </Link>
+            <Link to="/app/profile" className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ backgroundColor: ROLE_COLOR }}>AK</Link>
           </div>
         </header>
 
-        <motion.div key={pathname} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>{children}</motion.div>
+        <div>{children}</div>
       </main>
 
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-[rgba(5,5,16,0.95)] backdrop-blur-xl">
-        <div className="flex items-center justify-around h-16 px-2">
+      {/* Mobile bottom nav */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-surface" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+        <div className="flex items-center justify-around h-14 px-2">
           {mobileNav.map((item) => {
-            const active = pathname === item.path;
+            if (item.path === "__post__") {
+              return (
+                <button key="post" onClick={() => setPostModalOpen(true)}
+                  className="w-12 h-12 rounded-full bg-brand flex items-center justify-center -mt-6 shadow-lg shadow-brand/30">
+                  <Plus className="w-6 h-6 text-white" />
+                </button>
+              );
+            }
+            const active = isActive(item.path);
             return (
-              <Link key={item.path} to={item.path} className="flex-1 flex flex-col items-center gap-1 py-1">
+              <Link key={item.path} to={item.path} className="flex-1 flex flex-col items-center gap-0.5 py-1">
                 <div className="relative">
-                  <item.icon className={`w-5 h-5 ${active ? "text-electric" : "text-muted-foreground"}`} />
-                  {item.badge && <span className="absolute -top-1 -right-2 w-4 h-4 bg-electric text-white text-[10px] font-bold rounded-full flex items-center justify-center">{item.badge}</span>}
+                  <item.icon className={`w-5 h-5 ${active ? "text-brand" : "text-t3"}`} />
+                  {item.badge && <span className="absolute -top-1 -right-2 w-4 h-4 bg-brand text-white text-[9px] font-bold rounded-full flex items-center justify-center">{item.badge}</span>}
                 </div>
-                <span className={`text-[10px] font-medium ${active ? "text-electric" : "text-muted-foreground"}`}>{item.label}</span>
+                <span className={`text-[10px] ${active ? "text-brand font-bold" : "text-t3"}`}>{item.label}</span>
+                {active && <div className="w-1 h-1 rounded-full bg-brand" />}
               </Link>
             );
           })}
