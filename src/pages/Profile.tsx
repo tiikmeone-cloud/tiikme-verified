@@ -200,7 +200,7 @@ const Profile = () => {
 
         <div className="p-5">
           {/* Work — Timeline view (default) */}
-          {activeTab === "Work" && (
+          {activeTab === "Portfolio" && (
             <div className="space-y-0">
               {mockProjects.map((p, i) => (
                 <div key={p.title} className="flex gap-4 group">

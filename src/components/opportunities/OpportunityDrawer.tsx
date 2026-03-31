@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { X, Clock, Users, Shield, MapPin, Briefcase, CheckSquare } from "lucide-react";
+import { X, Clock, Users, Shield, MapPin, Briefcase, CheckSquare, ToggleLeft, ToggleRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 
 interface Opportunity {
   type: string;
@@ -41,10 +42,16 @@ What we offer:
 • Tiik Verified badge on completion
 • Letter of recommendation / experience certificate`;
 
+const screeningQuestions = [
+  { id: "q1", question: "Do you have prior experience in this domain?", type: "toggle" as const },
+  { id: "q2", question: "Briefly describe your relevant experience", type: "text" as const },
+];
+
 export function OpportunityDetailDrawer({ opp, onClose }: { opp: Opportunity; onClose: () => void }) {
   const [showApply, setShowApply] = useState(false);
   const [selectedWork, setSelectedWork] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [screeningAnswers, setScreeningAnswers] = useState<Record<string, string | boolean>>({ q1: false, q2: "" });
 
   const toggleWork = (id: string) => {
     setSelectedWork(prev => prev.includes(id) ? prev.filter(w => w !== id) : [...prev, id]);
@@ -67,7 +74,7 @@ export function OpportunityDetailDrawer({ opp, onClose }: { opp: Opportunity; on
         animate={{ x: 0 }}
         exit={{ x: "100%" }}
         transition={{ type: "spring", damping: 30, stiffness: 300 }}
-        className="w-full max-w-xl h-full overflow-y-auto border-l border-border/30"
+        className="w-full max-w-md h-full overflow-y-auto border-l border-border/30 shadow-2xl"
         style={{ background: "var(--surface)" }}
         onClick={e => e.stopPropagation()}
       >
@@ -83,7 +90,6 @@ export function OpportunityDetailDrawer({ opp, onClose }: { opp: Opportunity; on
         </div>
 
         <div className="p-6 space-y-6">
-          {/* Title */}
           <div>
             <h2 className="text-[22px] font-extrabold text-t1 mb-2">{opp.title}</h2>
             <p className="text-[14px] text-t2 leading-relaxed">{opp.description}</p>
@@ -126,11 +132,11 @@ export function OpportunityDetailDrawer({ opp, onClose }: { opp: Opportunity; on
               )}
             </div>
           ) : (
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-border/30 p-5 space-y-4" style={{ background: "var(--surface-2)" }}>
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
               <h3 className="text-[16px] font-bold text-t1">Apply to {opp.title}</h3>
 
               {/* Profile preview */}
-              <div className="flex items-center gap-3 rounded-xl border border-border/30 p-3" style={{ background: "var(--surface)" }}>
+              <div className="flex items-center gap-3 rounded-xl border border-border/30 p-3" style={{ background: "var(--surface-2)" }}>
                 <div className="w-10 h-10 rounded-full bg-[#4F46E5] flex items-center justify-center text-[11px] font-bold text-white">AK</div>
                 <div>
                   <p className="text-[13px] font-bold text-t1">Arjun Kumar</p>
@@ -139,15 +145,16 @@ export function OpportunityDetailDrawer({ opp, onClose }: { opp: Opportunity; on
                 <Shield className="w-3.5 h-3.5 ml-auto text-[#F59E0B]" />
               </div>
 
-              {/* Attach work */}
+              {/* Section A: Attach proof */}
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <CheckSquare className="w-4 h-4 text-t2" />
-                  <p className="text-[13px] font-semibold text-t1">Attach relevant projects</p>
+                  <p className="text-[13px] font-semibold text-t1">Attach your proof</p>
                 </div>
-                <div className="space-y-1.5">
+                <p className="text-[11px] text-t3 mb-2">Select relevant projects from your Workspace</p>
+                <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
                   {mockWorkItems.map(w => (
-                    <label key={w.id} className="flex items-center gap-3 rounded-lg border border-border/30 p-3 cursor-pointer hover:bg-surface transition-all duration-200">
+                    <label key={w.id} className="flex items-center gap-3 rounded-lg border border-border/30 p-3 cursor-pointer hover:bg-surface-2 transition-all duration-200 active:scale-[0.99]">
                       <Checkbox
                         checked={selectedWork.includes(w.id)}
                         onCheckedChange={() => toggleWork(w.id)}
@@ -161,6 +168,39 @@ export function OpportunityDetailDrawer({ opp, onClose }: { opp: Opportunity; on
                 </div>
               </div>
 
+              {/* Section B: Screening Questions */}
+              <div>
+                <p className="text-[13px] font-semibold text-t1 mb-3">Screening Questions</p>
+                <div className="space-y-3">
+                  {screeningQuestions.map(q => (
+                    <div key={q.id} className="rounded-xl border border-border/30 p-3.5" style={{ background: "var(--surface-2)" }}>
+                      <p className="text-[13px] text-t1 mb-2">{q.question}</p>
+                      {q.type === "toggle" ? (
+                        <button
+                          onClick={() => setScreeningAnswers(prev => ({ ...prev, [q.id]: !prev[q.id] }))}
+                          className="flex items-center gap-2 cursor-pointer active:scale-95 transition-all duration-200"
+                        >
+                          {screeningAnswers[q.id] ? (
+                            <ToggleRight className="w-6 h-6 text-brand" />
+                          ) : (
+                            <ToggleLeft className="w-6 h-6 text-t3" />
+                          )}
+                          <span className="text-[12px] font-semibold text-t2">{screeningAnswers[q.id] ? "Yes" : "No"}</span>
+                        </button>
+                      ) : (
+                        <Input
+                          value={(screeningAnswers[q.id] as string) || ""}
+                          onChange={e => setScreeningAnswers(prev => ({ ...prev, [q.id]: e.target.value }))}
+                          placeholder="Type your answer..."
+                          className="h-10 bg-transparent border-border/30 text-[13px] focus:ring-2 focus:ring-brand"
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Section C: Actions */}
               <div className="flex gap-3 pt-2">
                 <Button variant="ghost" className="flex-1 active:scale-95 transition-all duration-200" onClick={() => setShowApply(false)}>Cancel</Button>
                 <Button className="flex-1 active:scale-95 transition-all duration-200" onClick={handleSubmit} disabled={submitting}>
