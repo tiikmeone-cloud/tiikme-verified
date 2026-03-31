@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import EmptyState from "@/components/EmptyState";
 
-const tabs = ["Work", "Posts", "About", "Verifications"] as const;
+const tabs = ["Portfolio", "Posts", "About", "Verifications"] as const;
 const ROLE_COLOR = "#4F46E5";
 
 const mockProjects = [
