@@ -59,7 +59,7 @@ const HeroSection = () => {
           className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16"
         >
           <Link to="/signup">
-            <Button variant="hero" size="xl">
+            <Button size="xl">
               Create your profile
               <ArrowRight className="w-5 h-5" />
             </Button>

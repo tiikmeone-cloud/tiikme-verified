@@ -191,7 +191,7 @@ const SignUp = () => {
                   );
                 })}
               </div>
-              <Button variant="hero" size="lg" onClick={() => selectedRole && setStep(1)} disabled={!selectedRole} className="w-full">Continue <ArrowRight className="w-4 h-4" /></Button>
+              <Button size="lg" onClick={() => selectedRole && setStep(1)} disabled={!selectedRole} className="w-full">Continue <ArrowRight className="w-4 h-4" /></Button>
             </motion.div>
           )}
 
@@ -232,7 +232,7 @@ const SignUp = () => {
                 )}
               </div>
               <p className="text-xs text-muted-foreground text-center mb-4">By continuing you agree to our <Link to="/terms" className="text-electric underline">Terms</Link> and <Link to="/privacy" className="text-electric underline">Privacy Policy</Link>.</p>
-              <Button variant="hero" size="lg" onClick={() => setStep(2)} className="w-full">Continue <ArrowRight className="w-4 h-4" /></Button>
+              <Button size="lg" onClick={() => setStep(2)} className="w-full">Continue <ArrowRight className="w-4 h-4" /></Button>
             </motion.div>
           )}
 
@@ -240,7 +240,7 @@ const SignUp = () => {
             <motion.div key="step2" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} transition={{ duration: 0.3 }}>
               <button onClick={() => setStep(1)} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"><ArrowLeft className="w-4 h-4" /> Back</button>
               {renderStep3()}
-              <Button variant="hero" size="lg" onClick={handleComplete} className="w-full">Create my profile <ArrowRight className="w-4 h-4" /></Button>
+              <Button size="lg" onClick={handleComplete} className="w-full">Create my profile <ArrowRight className="w-4 h-4" /></Button>
               <button onClick={handleComplete} className="block mx-auto mt-4 text-sm text-muted-foreground hover:text-foreground transition-colors">Skip for now</button>
             </motion.div>
           )}

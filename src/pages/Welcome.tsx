@@ -135,7 +135,7 @@ const Welcome = () => {
           transition={{ delay: 0.7 }}
           className="flex flex-col sm:flex-row items-center justify-center gap-3"
         >
-          <Button variant="hero" size="lg" onClick={handleGoToFeed}>
+          <Button size="lg" onClick={handleGoToFeed}>
             Take me to my feed
           </Button>
           <Button variant="ghost" size="lg" onClick={() => navigate("/app/profile")}>

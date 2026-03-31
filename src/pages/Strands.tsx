@@ -112,7 +112,7 @@ const Strands = () => {
                   <div className="text-xs text-muted-foreground">{strand.institution} · Sent {strand.sentAgo}</div>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="neon" size="xs" onClick={() => toast.success("Strand accepted!")}>
+                  <Button size="xs" onClick={() => toast.success("Strand accepted!")}>
                     <Check className="w-3 h-3" /> Accept
                   </Button>
                   <Button variant="ghost" size="xs" className="text-destructive" onClick={() => toast.info("Request declined")}>
