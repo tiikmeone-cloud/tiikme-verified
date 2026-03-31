@@ -123,10 +123,15 @@ const Pings = () => {
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          {tab === "all" && filteredConvos.length === 0 && (
+          {tab === "chats" && filteredConvos.length === 0 && (
             <EmptyState icon={MessageCircle} title="No conversations" description="Start a conversation by sending a Ping to someone in your Strands." />
           )}
-          {tab === "all" && filteredConvos.map(convo => (
+          {tab === "applications" && (
+            <div className="p-6">
+              <EmptyState icon={Briefcase} title="No applications" description="Application messages from Opportunities you've applied to will appear here." />
+            </div>
+          )}
+          {tab === "chats" && filteredConvos.map(convo => (
             <button key={convo.id} onClick={() => { setActiveConvo(convo); setShowMobileList(false); }}
               className="w-full flex items-center gap-3 px-4 py-3 text-left transition-all duration-200 border-b cursor-pointer active:scale-[0.99]"
               style={{
