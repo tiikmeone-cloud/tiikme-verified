@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { MapPin, Copy, Pencil, Download, Shield, Layers, Users, X, Camera, MessageCircle, CheckCircle } from "lucide-react";
+import { useState, useRef } from "react";
+import { MapPin, Copy, Pencil, Download, Shield, Layers, Users, X, Camera, MessageCircle, CheckCircle, Calendar, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -7,12 +7,13 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import EmptyState from "@/components/EmptyState";
 
-const tabs = ["Posts", "Work", "About", "Verifications"] as const;
+const tabs = ["Work", "Posts", "About", "Verifications"] as const;
 const ROLE_COLOR = "#4F46E5";
 
 const mockProjects = [
-  { title: "TelemedicineRx", description: "Telemedicine platform for rural India with AI triage", domain: "HealthTech", status: "active" as const, tech: ["React Native", "Supabase", "Python"], tiikApproved: true },
-  { title: "SmartGrid Monitor", description: "IoT dashboard for electrical grid monitoring", domain: "IoT", status: "completed" as const, tech: ["React", "Node.js", "MQTT"], tiikApproved: false },
+  { title: "TelemedicineRx", description: "Telemedicine platform for rural India with AI triage and offline-first sync", domain: "HealthTech", status: "active" as const, role: "Lead Developer", startDate: "Jan 2025", endDate: "Present", tech: ["React Native", "Supabase", "Python"], tiikApproved: true },
+  { title: "SmartGrid Monitor", description: "IoT dashboard for electrical grid monitoring across 4 states", domain: "IoT", status: "completed" as const, role: "Frontend Engineer", startDate: "Aug 2024", endDate: "Dec 2024", tech: ["React", "Node.js", "MQTT"], tiikApproved: false },
+  { title: "EduBridge App", description: "Vernacular learning platform for government school students in rural districts", domain: "EdTech", status: "completed" as const, role: "Full Stack Developer", startDate: "Mar 2024", endDate: "Jul 2024", tech: ["Next.js", "PostgreSQL"], tiikApproved: true },
 ];
 
 const mockGroups = [
@@ -62,6 +63,46 @@ const EditProfileModal = ({ open, onClose }: { open: boolean; onClose: () => voi
   );
 };
 
+const handleExport = () => {
+  const printWindow = window.open("", "_blank");
+  if (!printWindow) { toast.error("Pop-up blocked"); return; }
+  printWindow.document.write(`
+    <!DOCTYPE html><html><head><title>Arjun Kumar — Tiikme Profile</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; padding: 48px; color: #1a1a2e; }
+      h1 { font-size: 28px; margin-bottom: 4px; }
+      .meta { color: #6b7280; font-size: 13px; margin-bottom: 24px; }
+      h2 { font-size: 18px; margin: 28px 0 12px; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; }
+      .item { margin-bottom: 16px; padding-left: 16px; border-left: 3px solid #4F46E5; }
+      .item h3 { font-size: 15px; font-weight: 700; }
+      .item .role { font-size: 13px; color: #6b7280; }
+      .item .desc { font-size: 13px; margin-top: 4px; color: #374151; }
+      .badge { display: inline-block; font-size: 10px; background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 99px; font-weight: 700; }
+      .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 11px; color: #9ca3af; text-align: center; }
+      @media print { body { padding: 24px; } }
+    </style></head><body>
+    <h1>Arjun Kumar</h1>
+    <p class="meta">Student · DTU · Delhi, India · @arjunkumar</p>
+    <p style="font-size:14px;color:#374151;margin-bottom:8px;">Final year CSE student building at the intersection of health and technology.</p>
+    <h2>Work & Projects</h2>
+    ${mockProjects.map(p => `
+      <div class="item">
+        <h3>${p.title} ${p.tiikApproved ? '<span class="badge">Tiik Approved</span>' : ''}</h3>
+        <p class="role">${p.role} · ${p.startDate} – ${p.endDate} · ${p.domain}</p>
+        <p class="desc">${p.description}</p>
+      </div>
+    `).join("")}
+    <h2>Groups</h2>
+    ${mockGroups.map(g => `<p style="font-size:13px;margin-bottom:4px;">${g.name} — ${g.members} members, ${g.activeProjects} active projects</p>`).join("")}
+    <div class="footer">Generated via Tiikme.in · Verified Professional Identity</div>
+    </body></html>
+  `);
+  printWindow.document.close();
+  printWindow.print();
+  toast.success("Export ready — print or save as PDF");
+};
+
 const Profile = () => {
   const [activeTab, setActiveTab] = useState<typeof tabs[number]>("Work");
   const [editOpen, setEditOpen] = useState(false);
@@ -101,7 +142,7 @@ const Profile = () => {
               <div className="flex items-center gap-2 mt-4 flex-wrap">
                 <Button variant="secondary" size="sm" className="gap-1.5 rounded-full active:scale-95 transition-all duration-200" onClick={handleCopyLink}><Copy className="w-3 h-3" /> Copy link</Button>
                 <Button variant="secondary" size="sm" className="gap-1.5 rounded-full active:scale-95 transition-all duration-200" onClick={() => setEditOpen(true)}><Pencil className="w-3 h-3" /> Edit profile</Button>
-                <Button variant="secondary" size="sm" className="gap-1.5 rounded-full active:scale-95 transition-all duration-200" onClick={() => toast.success("Download started")}><Download className="w-3 h-3" /> Export</Button>
+                <Button variant="secondary" size="sm" className="gap-1.5 rounded-full active:scale-95 transition-all duration-200" onClick={handleExport}><Download className="w-3 h-3" /> Export</Button>
               </div>
             </div>
           </div>
@@ -130,21 +171,52 @@ const Profile = () => {
         </div>
 
         <div className="p-5">
+          {/* Work — Timeline view (default) */}
           {activeTab === "Work" && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {mockProjects.map(p => (
-                <div key={p.title} className="rounded-xl border border-border/30 p-5 hover:border-brand/30 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer active:scale-[0.99]">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-brand-dim"><Layers className="w-5 h-5 text-brand" /></div>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: p.status === "active" ? "rgba(16,185,129,0.12)" : "var(--brand-dim)", color: p.status === "active" ? "#10B981" : "var(--brand)" }}>{p.status === "active" ? "Active" : "Completed"}</span>
+            <div className="space-y-0">
+              {mockProjects.map((p, i) => (
+                <div key={p.title} className="flex gap-4 group">
+                  {/* Timeline line */}
+                  <div className="flex flex-col items-center pt-1">
+                    <div className="w-3 h-3 rounded-full shrink-0 border-2" style={{
+                      borderColor: p.status === "active" ? "#10B981" : "var(--brand)",
+                      background: p.status === "active" ? "#10B981" : "var(--brand)",
+                    }} />
+                    {i < mockProjects.length - 1 && <div className="w-px flex-1 mt-1" style={{ background: "var(--border-2)" }} />}
                   </div>
-                  <h3 className="text-[15px] font-bold text-t1 mb-1">{p.title}</h3>
-                  <p className="text-[13px] text-t2 mb-2 line-clamp-2">{p.description}</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-surface-2 border border-border/30 text-t2">{p.domain}</span>
-                    {p.tech.map(t => <span key={t} className="text-[10px] px-2 py-0.5 rounded bg-surface-2 text-t3">{t}</span>)}
+                  {/* Content */}
+                  <div className="flex-1 pb-6">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="text-[15px] font-bold text-t1">{p.title}</h3>
+                          {p.tiikApproved && (
+                            <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.12)", color: "#F59E0B" }}>
+                              <Shield className="w-3 h-3" /> Tiik Approved
+                            </span>
+                          )}
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{
+                            background: p.status === "active" ? "rgba(16,185,129,0.12)" : "var(--brand-dim)",
+                            color: p.status === "active" ? "#10B981" : "var(--brand)"
+                          }}>{p.status === "active" ? "Active" : "Completed"}</span>
+                        </div>
+                        <p className="text-[13px] text-t2 mt-0.5">{p.role}</p>
+                        <div className="flex items-center gap-1.5 mt-1 text-[11px] text-t3">
+                          <Calendar className="w-3 h-3" />
+                          <span>{p.startDate} – {p.endDate}</span>
+                          <span className="mx-1">·</span>
+                          <span>{p.domain}</span>
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="xs" className="opacity-0 group-hover:opacity-100 transition-all duration-200 active:scale-95 shrink-0">
+                        <ExternalLink className="w-3 h-3" />
+                      </Button>
+                    </div>
+                    <p className="text-[14px] text-t1 leading-relaxed mt-2">{p.description}</p>
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {p.tech.map(t => <span key={t} className="text-[10px] px-2 py-0.5 rounded-full bg-surface-2 border border-border/30 text-t2">{t}</span>)}
+                    </div>
                   </div>
-                  {p.tiikApproved && <div className="flex items-center gap-1 mt-2"><Shield className="w-3 h-3 text-[#F59E0B]" /><span className="text-[10px] font-bold text-[#F59E0B]">Tiik Approved</span></div>}
                 </div>
               ))}
             </div>

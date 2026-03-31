@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { MessageCircle, Lock, Search, Send, Paperclip, Layers, PenSquare, Check, X, Shield, ArrowLeft } from "lucide-react";
+import { MessageCircle, Lock, Search, Send, Paperclip, Layers, PenSquare, Check, X, Shield, ArrowLeft, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
@@ -7,6 +7,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import EmptyState from "@/components/EmptyState";
 
 const ROLE_COLORS: Record<string, string> = { Faculty: "#92400E", Professional: "#0369A1", Doctor: "#0E7490", Student: "#4F46E5", "Skilled Trade": "#C2410C" };
+const ALLOWED_TYPES = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 const conversations = [
   { id: "1", name: "Priya Menon", initials: "PM", role: "Faculty", institution: "DTU", lastMsg: "Great work on the TelemedicineRx update!", time: "2h ago", unread: 2, verified: "gold" as const },
@@ -43,20 +45,53 @@ const Pings = () => {
   const [newMsg, setNewMsg] = useState("");
   const [showMobileList, setShowMobileList] = useState(true);
   const [dismissedBanner, setDismissedBanner] = useState(false);
+  const [attachedFile, setAttachedFile] = useState<File | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const filteredConvos = conversations.filter(c => c.name.toLowerCase().includes(search.toLowerCase()));
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [activeConvo]);
 
   const handleSend = () => {
-    if (!newMsg.trim()) return;
-    toast.success("Ping sent");
+    if (!newMsg.trim() && !attachedFile) return;
+    if (attachedFile) {
+      toast.success(`Sent "${attachedFile.name}" to ${activeConvo.name}`);
+      setAttachedFile(null);
+    } else {
+      toast.success("Ping sent");
+    }
     setNewMsg("");
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      toast.error("Only PDF and DOC files are allowed in Pings V1");
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error("File size must be under 5MB");
+      return;
+    }
+    setAttachedFile(file);
+    toast.success(`"${file.name}" attached`);
+    e.target.value = "";
   };
 
   return (
     <div className="flex" style={{ height: "calc(100vh - 64px)" }}>
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        className="hidden"
+        onChange={handleFileSelect}
+      />
+
       {/* Left panel */}
       <div className={`w-full md:w-[340px] border-r flex flex-col shrink-0 ${!showMobileList ? "hidden md:flex" : "flex"}`} style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
         <div className="p-4 border-b" style={{ borderColor: "var(--border)" }}>
@@ -159,7 +194,9 @@ const Pings = () => {
           {mockMessages.map(msg => (
             <div key={msg.id} className={`flex ${msg.sender === "me" ? "justify-end" : "justify-start"} mb-2`}>
               {msg.sender === "them" && (
-                <div className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold text-white mr-2 shrink-0 mt-1" style={{ backgroundColor: ROLE_COLORS[activeConvo.role] || "#3D5AF1" }}>{activeConvo.initials}</div>
+                <Link to="/app/profile">
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold text-white mr-2 shrink-0 mt-1 hover:scale-105 transition-transform" style={{ backgroundColor: ROLE_COLORS[activeConvo.role] || "#3D5AF1" }}>{activeConvo.initials}</div>
+                </Link>
               )}
               <div className="max-w-[68%] px-3.5 py-2.5" style={{
                 background: msg.sender === "me" ? "var(--brand)" : "var(--surface-2)",
@@ -177,10 +214,21 @@ const Pings = () => {
         </div>
 
         <div className="border-t px-4 py-3" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
+          {/* Attached file preview */}
+          {attachedFile && (
+            <div className="flex items-center gap-2 mb-2 px-3 py-2 rounded-xl bg-surface-2 border border-border/30">
+              <FileText className="w-4 h-4 text-brand shrink-0" />
+              <span className="text-[12px] font-medium text-t1 truncate flex-1">{attachedFile.name}</span>
+              <span className="text-[10px] text-t3 shrink-0">{(attachedFile.size / 1024).toFixed(0)}KB</span>
+              <button onClick={() => setAttachedFile(null)} className="p-1 rounded text-t3 hover:text-t1 cursor-pointer active:scale-95"><X className="w-3.5 h-3.5" /></button>
+            </div>
+          )}
           <div className="flex items-center gap-1 mb-2">
             <Tooltip><TooltipTrigger asChild>
-              <button className="p-2 rounded-lg text-t2 hover:text-t1 hover:bg-surface-2 transition-all duration-200 cursor-pointer active:scale-95" onClick={() => toast.info("PDF upload")}><Paperclip className="w-4 h-4" /></button>
-            </TooltipTrigger><TooltipContent>Attach file</TooltipContent></Tooltip>
+              <button className="p-2 rounded-lg text-t2 hover:text-t1 hover:bg-surface-2 transition-all duration-200 cursor-pointer active:scale-95" onClick={() => fileInputRef.current?.click()}>
+                <Paperclip className="w-4 h-4" />
+              </button>
+            </TooltipTrigger><TooltipContent>Attach PDF or DOC (max 5MB)</TooltipContent></Tooltip>
             <Tooltip><TooltipTrigger asChild>
               <button className="p-2 rounded-lg text-t2 hover:text-t1 hover:bg-surface-2 transition-all duration-200 cursor-pointer active:scale-95" onClick={() => toast.info("Share work item")}><Layers className="w-4 h-4" /></button>
             </TooltipTrigger><TooltipContent>Share work</TooltipContent></Tooltip>
@@ -192,7 +240,7 @@ const Pings = () => {
               className="flex-1 min-h-[42px] max-h-[160px] rounded-2xl px-3.5 py-2.5 text-[14px] resize-none outline-none bg-surface-2 border border-border/30 text-t1 transition-all duration-200 focus:border-brand"
               rows={1}
             />
-            <button onClick={handleSend} disabled={!newMsg.trim()}
+            <button onClick={handleSend} disabled={!newMsg.trim() && !attachedFile}
               className="w-[42px] h-[42px] rounded-full flex items-center justify-center transition-all duration-200 disabled:opacity-40 active:scale-95 cursor-pointer"
               style={{ background: "var(--brand)", boxShadow: "0 3px 10px var(--brand-glow)" }}>
               <Send className="w-[18px] h-[18px] text-white" />
