@@ -46,7 +46,7 @@ const Navbar = () => {
         {/* Mobile right */}
         <div className="flex md:hidden items-center gap-2">
           <Link to="/signin" className="text-[13px] font-semibold" style={{ color: "rgba(238,240,255,0.6)" }}>Sign in</Link>
-          <Link to="/signup"><Button size="sm" className="gap-1"><Zap className="w-3 h-3" />Get Tiiked</Button></Link>
+          <Link to="/signup"><Button size="sm" className="gap-1"><img src={tiikLogo} alt="" className="w-3.5 h-3.5" />Get Tiiked</Button></Link>
           <button onClick={() => setMenuOpen(true)} className="p-1.5 ml-1 cursor-pointer" style={{ color: "rgba(238,240,255,0.7)" }}>
             <Menu className="w-6 h-6" />
           </button>
