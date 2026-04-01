@@ -4,6 +4,8 @@ import { ArrowLeft, ArrowRight, GraduationCap, Briefcase, UserCheck, BookOpen, S
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
 import RoleFields from "@/components/signup/RoleFields";
 import RoleStep3 from "@/components/signup/RoleStep3";
 
