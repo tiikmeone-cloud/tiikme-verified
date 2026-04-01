@@ -159,6 +159,8 @@ const SignUp = () => {
                     options: {
                       emailRedirectTo: window.location.origin + "/app/feed",
                       data: {
+                        first_name: formData.firstName,
+                        last_name: formData.lastName,
                         full_name: `${formData.firstName} ${formData.lastName}`.trim(),
                         role: selectedRole,
                         phone: formData.phone,
