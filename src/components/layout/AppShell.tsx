@@ -74,14 +74,17 @@ const AppShell = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <div className="min-h-screen flex" style={{ background: "var(--bg)" }}>
+    <div className="min-h-screen flex" style={{ background: "radial-gradient(ellipse at top, var(--bg), var(--bg-2))" }}>
       {/* ═══ DESKTOP SIDEBAR (≥1024px) ═══ */}
       <aside
         className="hidden lg:flex flex-col fixed inset-y-0 left-0 z-40"
         style={{
           width: 248,
-          background: "var(--surface)",
+          background: "color-mix(in srgb, var(--surface) 80%, transparent)",
+          backdropFilter: "blur(40px) saturate(200%)",
+          WebkitBackdropFilter: "blur(40px) saturate(200%)",
           borderRight: "1px solid var(--border)",
+          boxShadow: "inset -1px 0 0 rgba(255,255,255,0.06)",
         }}
       >
         {/* Logo */}
@@ -294,14 +297,9 @@ const AppShell = ({ children }: { children: ReactNode }) => {
 
       {/* ═══ MOBILE BOTTOM NAV (<768px) ═══ */}
       <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 z-50"
+        className="md:hidden fixed bottom-4 left-4 right-4 z-50 glass-dock"
         style={{
-          background: "color-mix(in srgb, var(--surface) 95%, transparent)",
-          backdropFilter: "blur(16px)",
-          WebkitBackdropFilter: "blur(16px)",
-          borderTop: "1px solid var(--border)",
           paddingBottom: "env(safe-area-inset-bottom)",
-          height: "calc(56px + env(safe-area-inset-bottom))",
         }}
       >
         <div className="flex items-center justify-around h-14 px-2">

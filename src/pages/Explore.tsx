@@ -222,10 +222,8 @@ const Explore = () => {
         <input
           type="text" value={search} onChange={e => setSearch(e.target.value)}
           placeholder="Search by name, skill, city, field..."
-          className="w-full h-[52px] glass-liquid rounded-2xl pl-[52px] pr-12 text-[14px] outline-none"
+          className="w-full h-[52px] glass-input pl-[52px] pr-12 text-[14px] outline-none"
           style={{ color: "var(--text-1)" }}
-          onFocus={e => { e.currentTarget.style.borderColor = "var(--brand)"; e.currentTarget.style.boxShadow = "0 0 0 3px var(--brand-dim)"; }}
-          onBlur={e => { e.currentTarget.style.borderColor = ""; e.currentTarget.style.boxShadow = ""; }}
         />
         {search && (
           <button onClick={() => setSearch("")} className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center" style={{ color: "var(--text-3)" }}>

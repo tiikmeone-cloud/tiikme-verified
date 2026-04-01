@@ -279,7 +279,7 @@ const Feed = () => {
           <div className="glass-liquid rounded-2xl md:rounded-3xl p-3 mb-4">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0" style={{ backgroundColor: "var(--brand)" }}>AK</div>
-              <button onClick={() => openCompose()} className="flex-1 text-left text-[13px] h-10 rounded-full px-4 cursor-pointer transition-all duration-150 hover:border-[var(--brand-dim)]" style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", color: "var(--text-3)" }}>
+              <button onClick={() => openCompose()} className="flex-1 text-left text-[13px] h-10 glass-input px-4 cursor-pointer" style={{ color: "var(--text-3)" }}>
                 {getComposePlaceholder(currentUser.role)}
               </button>
             </div>

@@ -90,7 +90,7 @@ const Opportunities = () => {
   return (
     <main className="max-w-4xl mx-auto px-4 py-7">
       <div className="flex items-center justify-between mb-2">
-        <h1 className="text-[20px] font-extrabold" style={{ color: "var(--text-1)" }}>Opportunities</h1>
+        <h1 className="text-[20px] text-emboss">Opportunities</h1>
         <div className="flex items-center gap-2">
           <div className="flex rounded-full overflow-hidden" style={{ border: "1px solid var(--border)" }}>
             <button onClick={() => setView("browse")}
