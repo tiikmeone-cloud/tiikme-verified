@@ -269,10 +269,10 @@ const AppShell = ({ children }: { children: ReactNode }) => {
         <header
           className="md:hidden sticky top-0 z-50 h-14 flex items-center justify-between px-4"
           style={{
-            background: "color-mix(in srgb, var(--surface) 92%, transparent)",
-            backdropFilter: "blur(16px) saturate(180%)",
-            WebkitBackdropFilter: "blur(16px) saturate(180%)",
-            borderBottom: "1px solid var(--border)",
+            background: "var(--glass-bg)",
+            backdropFilter: "blur(24px) saturate(180%)",
+            WebkitBackdropFilter: "blur(24px) saturate(180%)",
+            borderBottom: "1px solid var(--glass-border)",
           }}
         >
           <span className="flex items-center gap-2">
