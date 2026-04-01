@@ -1,13 +1,11 @@
 import { ReactNode, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutGrid, Compass, Layers, Target,
-  Link2, MessageCircle, Bell, SlidersHorizontal, PencilLine, Zap, Plus, User, Settings,
+  Link2, MessageCircle, Bell, SlidersHorizontal, PencilLine, Zap, Plus, User, LogOut,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import NewPostModal from "@/components/NewPostModal";
-
-const ROLE_COLOR = "#4F46E5";
+import { toast } from "sonner";
 
 const navGroups = [
   {
@@ -20,7 +18,7 @@ const navGroups = [
   {
     label: "WORK",
     items: [
-      { label: "Teams & Projects", icon: Layers, path: "/app/teams" },
+      { label: "Workspace", icon: Layers, path: "/app/teams" },
       { label: "Opportunities", icon: Target, path: "/app/opportunities", badge: 3 },
     ],
   },
@@ -50,16 +48,25 @@ const mobileNav = [
 
 const AppShell = ({ children }: { children: ReactNode }) => {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const [postModalOpen, setPostModalOpen] = useState(false);
 
   const isActive = (path: string) => pathname === path || pathname.startsWith(path + "/");
 
+  const handleSignOut = () => {
+    const savedTheme = localStorage.getItem("tiikme-theme");
+    localStorage.clear();
+    if (savedTheme) localStorage.setItem("tiikme-theme", savedTheme);
+    toast.success("Signed out");
+    navigate("/signin");
+  };
+
   return (
     <div className="min-h-screen flex" style={{ background: "var(--bg)" }}>
-      {/* Desktop sidebar */}
-      <aside className="hidden md:flex flex-col w-[248px] border-r fixed inset-y-0 left-0 z-40" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
+      {/* Desktop sidebar — no right border, uses glass */}
+      <aside className="hidden md:flex flex-col w-[248px] fixed inset-y-0 left-0 z-40 glass-card" style={{ borderRadius: 0, borderRight: "1px solid var(--glass-border)" }}>
         {/* Logo */}
-        <div className="h-16 flex items-center px-5 gap-2.5 border-b" style={{ borderColor: "var(--border)" }}>
+        <div className="h-16 flex items-center px-5 gap-2.5">
           <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, var(--brand), var(--brand-2))", boxShadow: "0 4px 12px var(--brand-glow)" }}>
             <Zap className="w-4 h-4 text-white" />
           </div>
@@ -81,7 +88,6 @@ const AppShell = ({ children }: { children: ReactNode }) => {
                         background: active ? "var(--brand-dim)" : "transparent",
                         color: active ? "var(--brand)" : "var(--text-2)",
                         fontWeight: active ? 700 : 500,
-                        border: active ? "1px solid rgba(61,90,241,0.2)" : "1px solid transparent",
                       }}
                     >
                       {active && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full" style={{ background: "var(--brand)", boxShadow: "0 0 8px var(--brand-glow)" }} />}
@@ -99,53 +105,60 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             </div>
           ))}
 
-          {/* New Post */}
+          {/* New Post — brand rounded-full */}
           <div className="px-0 mt-2">
             <button onClick={() => setPostModalOpen(true)}
-              className="w-full h-11 rounded-xl flex items-center justify-center gap-2 text-[14px] font-bold text-white transition-all hover:-translate-y-px"
+              className="w-full h-11 rounded-full flex items-center justify-center gap-2 text-[14px] font-bold text-white transition-all active:scale-95 hover:opacity-90"
               style={{ background: "linear-gradient(135deg, var(--brand), var(--brand-2))", boxShadow: "0 4px 16px var(--brand-glow)" }}>
               <PencilLine className="w-4 h-4" /> New Post
             </button>
           </div>
         </nav>
 
-        {/* User card */}
-        <div className="px-2.5 pb-3 border-t pt-3" style={{ borderColor: "var(--border)" }}>
-          <Link to="/app/profile" className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-colors" style={{ cursor: "pointer" }}>
-            <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ backgroundColor: ROLE_COLOR }}>AK</div>
+        {/* User card + Logout */}
+        <div className="px-2.5 pb-3 pt-2">
+          <Link to="/app/profile" className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-colors hover:bg-brand-dim">
+            <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ backgroundColor: "#4F46E5" }}>AK</div>
             <div className="min-w-0 flex-1">
               <p className="text-[13px] font-bold truncate" style={{ color: "var(--text-1)" }}>Arjun Kumar</p>
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "rgba(79,70,229,0.15)", color: "#4F46E5" }}>Student</span>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "var(--brand-dim)", color: "var(--brand)" }}>Student</span>
             </div>
-            <Link to="/app/settings"><Settings className="w-5 h-5 shrink-0" style={{ color: "var(--text-3)" }} /></Link>
           </Link>
+          <button onClick={handleSignOut}
+            className="w-full flex items-center gap-2.5 px-3 py-2 mt-1 rounded-xl text-[13px] font-medium transition-all duration-200 cursor-pointer active:scale-95"
+            style={{ color: "var(--text-3)" }}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(220,38,38,0.06)"; e.currentTarget.style.color = "#DC2626"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-3)"; }}
+          >
+            <LogOut className="w-4 h-4" /> Sign out
+          </button>
         </div>
       </aside>
 
       {/* Main */}
       <main className="flex-1 md:ml-[248px] pb-20 md:pb-0">
         {/* Mobile top bar */}
-        <header className="md:hidden sticky top-0 z-40 h-14 flex items-center justify-between px-4 border-b" style={{ background: "var(--surface)", borderColor: "var(--border)", backdropFilter: "blur(16px)" }}>
+        <header className="md:hidden sticky top-0 z-40 h-14 flex items-center justify-between px-4" style={{ background: "var(--glass-bg)", borderBottom: "1px solid var(--glass-border)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}>
           <span className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, var(--brand), var(--brand-2))" }}>
               <Zap className="w-3.5 h-3.5 text-white" />
             </div>
             <span className="text-[17px] font-extrabold" style={{ color: "var(--text-1)" }}>Tiikme</span>
           </span>
-          <Link to="/app/profile" className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ backgroundColor: ROLE_COLOR }}>AK</Link>
+          <Link to="/app/profile" className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ backgroundColor: "#4F46E5" }}>AK</Link>
         </header>
 
         <div>{children}</div>
       </main>
 
       {/* Mobile bottom nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t" style={{ background: "var(--surface)", borderColor: "var(--border)", paddingBottom: "env(safe-area-inset-bottom)", backdropFilter: "blur(16px)" }}>
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40" style={{ background: "var(--glass-bg)", borderTop: "1px solid var(--glass-border)", paddingBottom: "env(safe-area-inset-bottom)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}>
         <div className="flex items-center justify-around h-14 px-2">
           {mobileNav.map((item) => {
             if (item.path === "__post__") {
               return (
                 <button key="post" onClick={() => setPostModalOpen(true)}
-                  className="w-12 h-12 rounded-full flex items-center justify-center -mt-4"
+                  className="w-12 h-12 rounded-full flex items-center justify-center -mt-4 active:scale-95 transition-all"
                   style={{ background: "linear-gradient(135deg, var(--brand), var(--brand-2))", boxShadow: "0 4px 16px var(--brand-glow), 0 0 0 4px var(--bg)" }}>
                   <Plus className="w-[22px] h-[22px] text-white" />
                 </button>
