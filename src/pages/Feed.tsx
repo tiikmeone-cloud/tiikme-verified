@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Heart, Lightbulb, Sparkles, MessageSquare, Repeat2, Share2, MoreHorizontal, Flag, Send, FileText, ChevronDown, ExternalLink, Eye, Briefcase, ArrowUpRight } from "lucide-react";
+import { Heart, Lightbulb, Sparkles, MessageSquare, Repeat2, Share2, MoreHorizontal, Flag, Send, FileText, ChevronDown, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
@@ -8,17 +8,18 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import ImageGrid from "@/components/feed/ImageGrid";
 import PdfCarousel from "@/components/feed/PdfCarousel";
 import MentionText from "@/components/feed/MentionText";
+import ActivityScoreRing from "@/components/ActivityScoreRing";
 
 const currentUser = { name: "Arjun", role: "student" };
 
 const getComposePlaceholder = (role: string) => {
   switch (role) {
-    case "student": return `What are you building today, ${currentUser.name}?`;
+    case "student": return "Share a milestone, update, or thought...";
     case "doctor": return "Share a case, insight, or health tip...";
     case "government": return "Share something from your work today...";
     case "skilled_trade": return "Share a job you completed or a skill...";
     case "hr": return "Share a hiring insight or opportunity...";
-    default: return "What's on your mind?";
+    default: return "Share a milestone, update, or thought...";
   }
 };
 
@@ -57,8 +58,8 @@ const PostCard = ({ post }: { post: typeof posts[0] }) => {
   const [commentText, setCommentText] = useState("");
 
   return (
-    <div
-      className="t-card mb-3 overflow-hidden"
+    <article
+      className="glass-liquid rounded-2xl md:rounded-3xl mb-3 overflow-hidden"
       style={{ borderTop: post.topBorder ? `3px solid ${post.topBorder}` : undefined }}
     >
       {/* Header */}
@@ -77,7 +78,7 @@ const PostCard = ({ post }: { post: typeof posts[0] }) => {
         <div className="relative">
           <button onClick={() => setShowMenu(!showMenu)} className="p-1.5 rounded-lg transition-all duration-150 cursor-pointer" style={{ color: "var(--text-3)" }}><MoreHorizontal className="w-4 h-4" /></button>
           {showMenu && (
-            <div className="absolute right-0 top-8 rounded-xl p-1 min-w-[160px] z-10" style={{ background: "var(--surface-2)", border: "1px solid var(--border-2)", boxShadow: "var(--shadow-lg)" }}>
+            <div className="absolute right-0 top-8 glass-liquid rounded-xl p-1 min-w-[160px] z-10">
               <button onClick={() => { toast.info("Following"); setShowMenu(false); }} className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg transition-all duration-150 cursor-pointer" style={{ color: "var(--text-2)" }}>Follow this person</button>
               <button onClick={() => { toast.info("Report submitted"); setShowMenu(false); }} className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg transition-all duration-150 cursor-pointer" style={{ color: "var(--text-2)" }}><Flag className="w-3 h-3" /> Report</button>
               <button onClick={() => { navigator.clipboard.writeText("https://tiikme.in/post/" + post.id); toast.success("Link copied"); setShowMenu(false); }} className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg transition-all duration-150 cursor-pointer" style={{ color: "var(--text-2)" }}>Copy link</button>
@@ -92,12 +93,18 @@ const PostCard = ({ post }: { post: typeof posts[0] }) => {
       </div>
 
       {/* Media */}
-      {post.images.length > 0 && <ImageGrid images={post.images} />}
+      {post.images.length > 0 && (
+        <div className="px-4 pb-2">
+          <div className="rounded-xl overflow-hidden">
+            <ImageGrid images={post.images} />
+          </div>
+        </div>
+      )}
 
       {/* PDF */}
       {post.pdf && (
         <div className="mx-4 mb-3">
-          <div className="flex items-center gap-3 rounded-xl p-3" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
+          <div className="flex items-center gap-3 glass-liquid rounded-xl p-3">
             <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: "rgba(220,38,38,0.1)" }}>
               <FileText className="w-5 h-5" style={{ color: "#DC2626" }} />
             </div>
@@ -141,13 +148,13 @@ const PostCard = ({ post }: { post: typeof posts[0] }) => {
 
       {/* Actions row */}
       <div className="flex items-center gap-0.5 px-4 py-2" style={{ borderTop: "1px solid var(--border)" }}>
-        <button onClick={() => setShowComments(!showComments)} className="h-9 px-3 rounded-xl text-[13px] font-medium flex items-center gap-1.5 transition-all duration-150 cursor-pointer" style={{ color: "var(--text-2)" }}>
+        <button onClick={() => setShowComments(!showComments)} className="h-9 px-3 rounded-xl text-[13px] font-medium flex items-center gap-1.5 transition-all duration-150 cursor-pointer hover:bg-[var(--brand-dim)]" style={{ color: "var(--text-2)" }}>
           <MessageSquare className="w-4 h-4" /> {post.comments} <ChevronDown className={`w-3 h-3 transition-transform ${showComments ? "rotate-180" : ""}`} />
         </button>
-        <button onClick={() => toast.success("Reposted")} className="h-9 px-3 rounded-xl text-[13px] font-medium flex items-center gap-1.5 transition-all duration-150 cursor-pointer" style={{ color: "var(--text-2)" }}>
+        <button onClick={() => toast.success("Reposted")} className="h-9 px-3 rounded-xl text-[13px] font-medium flex items-center gap-1.5 transition-all duration-150 cursor-pointer hover:bg-[var(--brand-dim)]" style={{ color: "var(--text-2)" }}>
           <Repeat2 className="w-4 h-4" />
         </button>
-        <button onClick={() => { navigator.clipboard.writeText("https://tiikme.in/post/" + post.id); toast.success("Link copied!"); }} className="h-9 px-3 rounded-xl text-[13px] font-medium flex items-center gap-1.5 transition-all duration-150 cursor-pointer" style={{ color: "var(--text-2)" }}>
+        <button onClick={() => { navigator.clipboard.writeText("https://tiikme.in/post/" + post.id); toast.success("Link copied!"); }} className="h-9 px-3 rounded-xl text-[13px] font-medium flex items-center gap-1.5 transition-all duration-150 cursor-pointer hover:bg-[var(--brand-dim)]" style={{ color: "var(--text-2)" }}>
           <Share2 className="w-4 h-4" />
         </button>
       </div>
@@ -184,36 +191,22 @@ const PostCard = ({ post }: { post: typeof posts[0] }) => {
           </div>
         </div>
       )}
-    </div>
+    </article>
   );
 };
 
 /* ─── RIGHT RAIL WIDGETS ─── */
-const ActivityWidget = () => {
-  const bars = [3, 5, 7, 4, 8, 6, 9, 5, 7, 8, 6, 9];
-  return (
-    <div className="t-card p-5 mb-4">
-      <p className="micro-label mb-3">ACTIVITY THIS QUARTER</p>
-      <div className="flex items-baseline gap-1 mb-3">
-        <span className="text-[36px] font-extrabold" style={{ color: "var(--brand)" }}>78</span>
-        <span className="text-[16px]" style={{ color: "var(--text-3)" }}>/ 100</span>
-        <span className="text-[12px] ml-1" style={{ color: "var(--open-green)" }}>↑</span>
-      </div>
-      <div className="flex items-end gap-[3px] h-12 mb-3">
-        {bars.map((h, i) => (
-          <div key={i} className="flex-1 rounded-t-[3px] transition-all duration-200 hover:opacity-80 cursor-pointer" style={{
-            height: `${h * 11}%`,
-            background: i >= 8 ? "var(--brand)" : i >= 5 ? "var(--brand-dim)" : "var(--border-2)",
-          }} />
-        ))}
-      </div>
-      <p className="text-[11px]" style={{ color: "var(--text-3)" }}>Top 15% in your domain</p>
+const ActivityWidget = () => (
+  <aside className="glass-liquid rounded-2xl p-5 mb-4">
+    <p className="micro-label mb-4">ACTIVITY THIS QUARTER</p>
+    <div className="flex justify-center">
+      <ActivityScoreRing score={78} size={100} strokeWidth={7} trend="+5 this week" percentile="Top 15% in your domain" />
     </div>
-  );
-};
+  </aside>
+);
 
 const RecruiterWidget = () => (
-  <div className="t-card p-5 mb-4">
+  <aside className="glass-liquid rounded-2xl p-5 mb-4">
     <p className="micro-label mb-3">WHO SAW YOUR WORK</p>
     <p className="text-[13px] mb-3" style={{ color: "var(--text-2)" }}>3 recruiters viewed your work this week</p>
     <div className="flex -space-x-2 mb-3">
@@ -223,11 +216,11 @@ const RecruiterWidget = () => (
       <div className="w-8 h-8 rounded-full flex items-center justify-center text-[9px] font-bold" style={{ background: "var(--surface-2)", border: "2px solid var(--surface)", color: "var(--text-3)" }}>+2</div>
     </div>
     <Link to="/app/teams" className="text-[13px] font-semibold flex items-center gap-1" style={{ color: "var(--brand)" }}>See full activity <ArrowUpRight className="w-3 h-3" /></Link>
-  </div>
+  </aside>
 );
 
 const OpportunitiesWidget = () => (
-  <div className="t-card p-5 mb-4">
+  <aside className="glass-liquid rounded-2xl p-5 mb-4">
     <p className="micro-label mb-3">OPEN OPPORTUNITIES</p>
     <div className="space-y-0">
       {[{ title: "Rural Water Monitoring IoT", reward: "₹25,000", days: "12d" }, { title: "AI Crop Disease Detection", reward: "₹50,000", days: "20d" }, { title: "E-Governance Portal Redesign", reward: "₹30,000", days: "8d" }].map((ch, i) => (
@@ -244,11 +237,11 @@ const OpportunitiesWidget = () => (
       ))}
     </div>
     <Link to="/app/opportunities" className="text-[13px] font-semibold mt-2 flex items-center gap-1" style={{ color: "var(--brand)" }}>View all <ArrowUpRight className="w-3 h-3" /></Link>
-  </div>
+  </aside>
 );
 
 const SuggestedWidget = () => (
-  <div className="t-card p-5">
+  <aside className="glass-liquid rounded-2xl p-5">
     <p className="micro-label mb-3">SUGGESTED CONNECTIONS</p>
     <div className="space-y-3">
       {[{ name: "Priya M.", role: "Faculty", initials: "PM", color: "#92400E", context: "Teaches at DTU" }, { name: "Rahul K.", role: "Professional", initials: "RK", color: "#0369A1", context: "Worked at Zepto" }, { name: "Dr. Neha S.", role: "Doctor", initials: "NS", color: "#0E7490", context: "Alumni of DTU" }].map(s => (
@@ -265,7 +258,7 @@ const SuggestedWidget = () => (
       ))}
     </div>
     <Link to="/app/explore" className="text-[13px] font-semibold mt-3 flex items-center gap-1" style={{ color: "var(--brand)" }}>Find more <ArrowUpRight className="w-3 h-3" /></Link>
-  </div>
+  </aside>
 );
 
 /* ─── FEED PAGE ─── */
@@ -278,22 +271,22 @@ const Feed = () => {
   const quickActions = getQuickActions(currentUser.role);
 
   return (
-    <div className="max-w-[960px] mx-auto px-4 md:px-6 py-7">
+    <main className="max-w-[960px] mx-auto px-4 md:px-6 py-7">
       <div className="flex gap-6">
         {/* Feed column */}
         <div className="flex-1 min-w-0 max-w-[660px]">
-          {/* Compose box */}
-          <div className="t-card p-4 mb-4">
+          {/* Compose box — sleek, compact */}
+          <div className="glass-liquid rounded-2xl md:rounded-3xl p-3 mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center text-[13px] font-bold text-white shrink-0" style={{ backgroundColor: "var(--brand)" }}>AK</div>
-              <button onClick={() => openCompose()} className="flex-1 text-left text-[14px] h-11 rounded-3xl px-4 cursor-pointer transition-all duration-150" style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", color: "var(--text-3)" }}>
+              <div className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0" style={{ backgroundColor: "var(--brand)" }}>AK</div>
+              <button onClick={() => openCompose()} className="flex-1 text-left text-[13px] h-10 rounded-full px-4 cursor-pointer transition-all duration-150 hover:border-[var(--brand-dim)]" style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", color: "var(--text-3)" }}>
                 {getComposePlaceholder(currentUser.role)}
               </button>
             </div>
-            <div className="flex items-center gap-1.5 ml-[52px] pt-3 mt-3" style={{ borderTop: "1px solid var(--border)" }}>
+            <div className="flex items-center gap-1.5 ml-12 pt-2 mt-2" style={{ borderTop: "1px solid var(--border)" }}>
               {quickActions.map(item => (
                 <button key={item.label} onClick={() => openCompose(item.type)}
-                  className="h-[30px] px-3 rounded-full text-[12px] font-semibold flex items-center gap-1 cursor-pointer transition-all duration-200 active:scale-95"
+                  className="h-7 px-2.5 rounded-full text-[11px] font-semibold flex items-center gap-1 cursor-pointer transition-all duration-200 active:scale-95 hover:border-[var(--brand)] hover:text-[var(--brand)]"
                   style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-2)" }}>
                   {item.label}
                 </button>
@@ -333,16 +326,16 @@ const Feed = () => {
         </div>
 
         {/* Right rail — desktop only */}
-        <div className="hidden xl:block w-[300px] shrink-0 sticky top-7 self-start space-y-0">
+        <aside className="hidden xl:block w-[300px] shrink-0 sticky top-7 self-start space-y-0">
           <ActivityWidget />
           <RecruiterWidget />
           <OpportunitiesWidget />
           <SuggestedWidget />
-        </div>
+        </aside>
       </div>
 
       <NewPostModal open={postModalOpen} onClose={() => setPostModalOpen(false)} defaultType={postModalType} />
-    </div>
+    </main>
   );
 };
 

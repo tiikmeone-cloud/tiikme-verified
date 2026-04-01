@@ -25,6 +25,7 @@ const connectedStrands: Person[] = [
   { name: "Dr. Neha Sharma", initials: "NS", role: "Doctor", institution: "AIIMS New Delhi", verification: "gold", mutual: 5 },
   { name: "Riya Sharma", initials: "RS", role: "Student", institution: "JNTU Hyderabad", verification: "grey", mutual: 14 },
   { name: "Sunita Devi", initials: "SD", role: "Skilled Trade", institution: "Electrician, Hyderabad", verification: "none", mutual: 3 },
+  { name: "Mohan R.", initials: "MR", role: "Student", institution: "BITS Pilani", verification: "grey", mutual: 6 },
 ];
 
 const pendingStrands: Person[] = [
@@ -40,7 +41,7 @@ const suggestedStrands: Person[] = [
   { name: "Meera Joshi", initials: "MJ", role: "Professional", institution: "Backend Dev", verification: "grey", reason: "Similar projects", mutual: 4 },
 ];
 
-const Avatar = ({ initials, role, verification = "none" as Verification, size = 40 }: { initials: string; role: string; verification?: Verification; size?: number }) => {
+const Avatar = ({ initials, role, verification = "none" as Verification, size = 44 }: { initials: string; role: string; verification?: Verification; size?: number }) => {
   const color = ROLE_COLORS[role] || "#5B4FFF";
   return (
     <div className="relative shrink-0" style={{ width: size + (verification !== "none" ? 6 : 0), height: size + (verification !== "none" ? 6 : 0) }}>
@@ -78,39 +79,36 @@ const Strands = () => {
     { key: "suggested" as const, label: "Suggested" },
   ];
 
-  const renderPerson = (strand: Person, actions: React.ReactNode, subtitle: string) => (
-    <div className="flex items-center gap-3 px-4 py-3 border-b border-border/30 last:border-b-0 hover:bg-surface-2/50 transition-all duration-200">
-      <button onClick={() => navigate("/app/profile")} className="cursor-pointer">
-        <Avatar initials={strand.initials} role={strand.role} verification={strand.verification} />
+  const renderGridCard = (strand: Person, actions: React.ReactNode, subtitle: string) => (
+    <article className="glass-liquid glass-liquid-hover rounded-2xl md:rounded-3xl p-5 flex flex-col items-center text-center">
+      <button onClick={() => navigate("/app/profile")} className="cursor-pointer mb-3">
+        <Avatar initials={strand.initials} role={strand.role} verification={strand.verification} size={48} />
       </button>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <button onClick={() => navigate("/app/profile")} className="text-[13px] font-bold text-t1 hover:text-brand transition-colors cursor-pointer">{strand.name}</button>
-          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: `${ROLE_COLORS[strand.role] || "#5B4FFF"}14`, color: ROLE_COLORS[strand.role] || "#5B4FFF" }}>{strand.role}</span>
-        </div>
-        <p className="text-[11px] text-t3 truncate">{subtitle}</p>
-      </div>
-      <div className="flex gap-1.5 shrink-0">{actions}</div>
-    </div>
+      <button onClick={() => navigate("/app/profile")} className="text-[14px] font-bold hover:text-[var(--brand)] transition-colors cursor-pointer" style={{ color: "var(--text-1)" }}>{strand.name}</button>
+      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full mt-1" style={{ backgroundColor: `${ROLE_COLORS[strand.role] || "#5B4FFF"}14`, color: ROLE_COLORS[strand.role] || "#5B4FFF" }}>{strand.role}</span>
+      <p className="text-[11px] mt-1.5 line-clamp-1" style={{ color: "var(--text-3)" }}>{subtitle}</p>
+      <div className="flex gap-1.5 mt-3 w-full justify-center">{actions}</div>
+    </article>
   );
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-6">
+    <main className="max-w-4xl mx-auto px-4 py-6">
       <div className="flex items-center gap-3 mb-2">
-        <Link2 className="w-6 h-6 text-brand" />
-        <h1 className="text-[20px] font-bold text-t1">My Strands</h1>
+        <Link2 className="w-6 h-6" style={{ color: "var(--brand)" }} />
+        <h1 className="text-[20px] font-extrabold" style={{ color: "var(--text-1)" }}>My Strands</h1>
       </div>
-      <p className="text-[13px] text-t2 mb-5">Mutual connections — people who chose you and you chose back.</p>
+      <p className="text-[13px] mb-5" style={{ color: "var(--text-2)" }}>Mutual connections — people who chose you and you chose back.</p>
 
-      {/* Tabs — underline style */}
-      <div className="flex gap-0 border-b border-border/30 mb-5">
+      {/* Tabs */}
+      <div className="flex gap-0 border-b mb-5" style={{ borderColor: "var(--border)" }}>
         {tabs.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
             className={`px-4 py-2.5 text-[12px] font-semibold transition-all duration-200 relative cursor-pointer ${
-              tab === t.key ? "text-brand" : "text-t3 hover:text-t1"
-            }`}>
+              tab === t.key ? "" : "hover:opacity-80"
+            }`}
+            style={{ color: tab === t.key ? "var(--brand)" : "var(--text-3)" }}>
             {t.label}
-            {tab === t.key && <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-brand rounded-full" />}
+            {tab === t.key && <div className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full" style={{ background: "var(--brand)" }} />}
           </button>
         ))}
       </div>
@@ -118,72 +116,72 @@ const Strands = () => {
       {/* Connected */}
       {tab === "connected" && (
         <div>
-          <div className="flex items-center gap-3 px-4 mb-4 h-[38px] rounded-full bg-surface-2 border border-border/30">
-            <Search className="w-4 h-4 text-t3" />
+          <div className="flex items-center gap-3 px-4 mb-4 h-[38px] rounded-full" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
+            <Search className="w-4 h-4" style={{ color: "var(--text-3)" }} />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search your strands..."
-              className="flex-1 bg-transparent text-sm outline-none text-t1 placeholder:text-t3" />
+              className="flex-1 bg-transparent text-sm outline-none" style={{ color: "var(--text-1)" }} />
           </div>
-          <div className="rounded-2xl border border-border/30 overflow-hidden" style={{ background: "var(--surface)" }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredConnected.map((strand, i) => (
-              <motion.div key={strand.name} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}>
-                {renderPerson(strand, (
+              <motion.div key={strand.name} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
+                {renderGridCard(strand, (
                   <>
-                    <Button variant="ghost" size="xs" className="active:scale-95 transition-all duration-200" onClick={() => navigate("/app/profile")}>View</Button>
-                    <Button variant="secondary" size="xs" className="active:scale-95 transition-all duration-200" onClick={() => navigate("/app/pings")}>
+                    <Button variant="ghost" size="xs" className="active:scale-95" onClick={() => navigate("/app/profile")}>View</Button>
+                    <Button variant="secondary" size="xs" className="active:scale-95" onClick={() => navigate("/app/pings")}>
                       <MessageCircle className="w-3 h-3" /> Ping
                     </Button>
                   </>
                 ), `${strand.institution}${strand.mutual ? ` · ${strand.mutual} mutual` : ""}`)}
               </motion.div>
             ))}
-            {filteredConnected.length === 0 && (
-              <div className="text-center py-12">
-                <Link2 className="w-10 h-10 text-t3 mx-auto mb-3" />
-                <p className="text-[14px] text-t2">No strands match your search.</p>
-              </div>
-            )}
           </div>
+          {filteredConnected.length === 0 && (
+            <div className="text-center py-12">
+              <Link2 className="w-10 h-10 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
+              <p className="text-[14px]" style={{ color: "var(--text-2)" }}>No strands match your search.</p>
+            </div>
+          )}
         </div>
       )}
 
       {/* Pending */}
       {tab === "pending" && (
         <div>
-          {activePending.length > 0 && <p className="text-[13px] font-bold text-t1 mb-3">{activePending.length} pending strand requests</p>}
-          <div className="rounded-2xl border border-border/30 overflow-hidden" style={{ background: "var(--surface)" }}>
+          {activePending.length > 0 && <p className="text-[13px] font-bold mb-3" style={{ color: "var(--text-1)" }}>{activePending.length} pending strand requests</p>}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {activePending.map((strand, i) => (
-              <motion.div key={strand.name} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}>
-                {renderPerson(strand, (
+              <motion.div key={strand.name} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
+                {renderGridCard(strand, (
                   <>
-                    <Button size="xs" className="active:scale-95 transition-all duration-200" onClick={() => { setAcceptedPending(p => new Set(p).add(strand.name)); toast.success(`Strand with ${strand.name} accepted!`); }}>
+                    <Button size="xs" className="active:scale-95" onClick={() => { setAcceptedPending(p => new Set(p).add(strand.name)); toast.success(`Strand with ${strand.name} accepted!`); }}>
                       <Check className="w-3 h-3" /> Accept
                     </Button>
-                    <Button variant="ghost" size="xs" className="active:scale-95 transition-all duration-200" onClick={() => { setDeclinedPending(p => new Set(p).add(strand.name)); toast.info("Request declined"); }}>
+                    <Button variant="ghost" size="xs" className="active:scale-95" onClick={() => { setDeclinedPending(p => new Set(p).add(strand.name)); toast.info("Request declined"); }}>
                       <X className="w-3 h-3" />
                     </Button>
                   </>
                 ), `${strand.institution} · Sent ${strand.sentAgo}`)}
               </motion.div>
             ))}
-            {activePending.length === 0 && (
-              <div className="text-center py-12">
-                <Check className="w-10 h-10 text-t3 mx-auto mb-3" />
-                <p className="text-[14px] text-t2">No pending requests. You're all caught up!</p>
-              </div>
-            )}
           </div>
+          {activePending.length === 0 && (
+            <div className="text-center py-12">
+              <Check className="w-10 h-10 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
+              <p className="text-[14px]" style={{ color: "var(--text-2)" }}>No pending requests. You're all caught up!</p>
+            </div>
+          )}
         </div>
       )}
 
       {/* Suggested */}
       {tab === "suggested" && (
         <div>
-          <p className="text-[13px] font-bold text-t1 mb-3">People in your domain</p>
-          <div className="rounded-2xl border border-border/30 overflow-hidden" style={{ background: "var(--surface)" }}>
+          <p className="text-[13px] font-bold mb-3" style={{ color: "var(--text-1)" }}>People in your domain</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {suggestedStrands.map((strand, i) => (
-              <motion.div key={strand.name} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}>
-                {renderPerson(strand, (
-                  <Button size="xs" className="active:scale-95 transition-all duration-200" disabled={sentRequests.has(strand.name)}
+              <motion.div key={strand.name} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
+                {renderGridCard(strand, (
+                  <Button size="xs" className="active:scale-95" disabled={sentRequests.has(strand.name)}
                     onClick={() => { setSentRequests(p => new Set(p).add(strand.name)); toast.success(`Strand request sent to ${strand.name}`); }}>
                     {sentRequests.has(strand.name) ? "Sent ✓" : "Connect"}
                   </Button>
@@ -193,7 +191,7 @@ const Strands = () => {
           </div>
         </div>
       )}
-    </div>
+    </main>
   );
 };
 

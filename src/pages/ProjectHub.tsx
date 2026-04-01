@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Users, Shield, Plus, MessageSquare, CheckCircle, Calendar, MapPin, Send } from "lucide-react";
+import { ArrowLeft, Users, Shield, Send, ExternalLink, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link, useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
 const CURRENT_USER = "arjunkumar";
@@ -40,87 +40,108 @@ const ProjectHub = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
-      {/* Back link */}
-      <Link to="/app/teams" className="flex items-center gap-1.5 text-[13px] font-medium text-t3 hover:text-t1 transition-colors active:scale-95">
+    <main className="max-w-5xl mx-auto px-4 py-6 space-y-5">
+      {/* Back */}
+      <Link to="/app/teams" className="flex items-center gap-1.5 text-[13px] font-medium transition-colors active:scale-95 hover:opacity-80" style={{ color: "var(--text-3)" }}>
         <ArrowLeft className="w-4 h-4" /> Back to Teams & Projects
       </Link>
 
-      {/* Header Card — Liquid Glossy */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl p-6 border transition-all duration-300
-          bg-white/40 backdrop-blur-2xl border-white/60 shadow-sm
-          dark:bg-[#050510]/30 dark:border-white/10 dark:backdrop-blur-2xl"
-        style={{ boxShadow: "var(--card-shadow)" }}
-      >
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2.5 flex-wrap mb-2">
-              <h1 className="text-[24px] md:text-[28px] font-extrabold text-gray-900 dark:text-white">{mockProject.title}</h1>
-              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full" style={{
-                background: mockProject.status === "active" ? "rgba(16,185,129,0.12)" : "var(--brand-dim)",
-                color: mockProject.status === "active" ? "#10B981" : "var(--brand)",
-              }}>
-                {mockProject.status === "active" ? "Active" : "Completed"}
-              </span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-white/8 text-gray-500 dark:text-white/50">{mockProject.domain}</span>
+      {/* ── BENTO GRID ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+        {/* Hero Box — spans 2 cols */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+          className="lg:col-span-2 glass-liquid rounded-2xl md:rounded-3xl overflow-hidden relative min-h-[260px]"
+        >
+          {/* Gradient overlay */}
+          <div className="absolute inset-0" style={{
+            background: "linear-gradient(135deg, rgba(61,90,241,0.15) 0%, rgba(16,185,129,0.08) 50%, transparent 100%)"
+          }} />
+          <div className="relative z-10 p-6 md:p-8 flex flex-col justify-between h-full">
+            <div>
+              <div className="flex items-center gap-2.5 flex-wrap mb-3">
+                <h1 className="text-[24px] md:text-[28px] font-extrabold" style={{ color: "var(--text-1)" }}>{mockProject.title}</h1>
+                <span className="text-[10px] font-bold px-2.5 py-1 rounded-full" style={{
+                  background: "rgba(16,185,129,0.12)", color: "#10B981",
+                }}>Active</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "var(--surface-2)", color: "var(--text-3)" }}>{mockProject.domain}</span>
+              </div>
+              <p className="text-[14px] leading-relaxed max-w-lg" style={{ color: "var(--text-2)" }}>{mockProject.description}</p>
             </div>
-            <p className="text-[14px] text-gray-600 dark:text-white/60 leading-relaxed">{mockProject.description}</p>
+
+            <div className="flex items-center gap-3 mt-6">
+              <Button className="active:scale-95 gap-1.5">
+                <ExternalLink className="w-3.5 h-3.5" /> View Live
+              </Button>
+              {isOwner && (
+                <Button variant="secondary" className="active:scale-95 gap-1.5" onClick={() => toast.info("Opening invite...")}>
+                  <Users className="w-3.5 h-3.5" /> Invite Member
+                </Button>
+              )}
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Tiikme Chain Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          className="glass-liquid rounded-2xl md:rounded-3xl p-6"
+        >
+          <div className="flex items-center gap-2 mb-5">
+            <CheckCircle className="w-5 h-5" style={{ color: "#F59E0B" }} />
+            <div>
+              <p className="text-[12px] font-bold" style={{ color: "#F59E0B" }}>Verified by</p>
+              <p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>Prof. Sharma</p>
+            </div>
           </div>
 
-          {isOwner && (
-            <div className="flex items-center gap-2 shrink-0">
-              <Button size="sm" variant="secondary" className="gap-1.5 active:scale-95 transition-all duration-200" onClick={() => toast.info("Opening invite...")}>
-                <Users className="w-3.5 h-3.5" /> Invite Member
-              </Button>
-            </div>
-          )}
-        </div>
-
-        {/* Team avatars */}
-        <div className="flex items-center gap-3 mt-5 pt-4 border-t border-gray-200/60 dark:border-white/8">
-          <div className="flex -space-x-2">
+          {/* Vertical chain */}
+          <div className="relative pl-5">
+            <div className="absolute left-[9px] top-2 bottom-2 w-px" style={{ background: "var(--border-2)" }} />
             {mockProject.team.map((m, i) => (
-              <Link key={i} to="/app/profile" className="relative group">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-bold text-white border-2 border-white dark:border-[#050510] hover:scale-110 transition-transform" style={{ backgroundColor: m.color, zIndex: mockProject.team.length - i }}>
+              <Link key={i} to="/app/profile" className="relative flex items-center gap-3 py-2.5 group">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 group-hover:scale-110 transition-transform relative z-10" style={{ backgroundColor: m.color }}>
                   {m.initials}
                 </div>
                 {m.isHead && (
-                  <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center bg-amber-100 dark:bg-amber-900/50 border border-white dark:border-[#050510]">
-                    <Shield className="w-2.5 h-2.5" style={{ color: "#F59E0B" }} />
+                  <div className="absolute -left-[2px] top-1/2 -translate-y-1/2 w-[22px] h-[22px] rounded-full flex items-center justify-center z-20" style={{ background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.3)" }}>
+                    <Shield className="w-3 h-3" style={{ color: "#F59E0B" }} />
                   </div>
                 )}
+                <div className="min-w-0">
+                  <p className="text-[13px] font-bold group-hover:underline" style={{ color: "var(--text-1)" }}>{m.name}</p>
+                  <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{m.role}</p>
+                </div>
               </Link>
             ))}
           </div>
-          <span className="text-[12px] text-gray-500 dark:text-white/40">{mockProject.team.length} members</span>
-        </div>
-      </motion.div>
+        </motion.div>
+      </div>
 
-      {/* Post Update — only for owner/team */}
+      {/* Post Update */}
       {isOwner && (
-        <div className="rounded-2xl p-5 border border-border/30" style={{ background: "var(--surface)" }}>
-          <p className="text-[11px] font-bold uppercase tracking-wider text-t3 mb-3">Post an update</p>
+        <div className="glass-liquid rounded-2xl md:rounded-3xl p-5">
+          <p className="micro-label mb-3">POST AN UPDATE</p>
           <textarea
             value={updateText}
             onChange={e => setUpdateText(e.target.value)}
             placeholder="Share a milestone, progress update, or achievement..."
             rows={2}
-            className="w-full rounded-xl p-3.5 text-[14px] outline-none resize-none bg-surface-2 border border-border/30 text-t1 placeholder:text-t3 focus:border-brand transition-all duration-200 mb-3"
+            className="w-full rounded-xl p-3.5 text-[14px] outline-none resize-none transition-all duration-200 mb-3"
+            style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }}
           />
           <div className="flex justify-end">
-            <Button size="sm" className="gap-1.5 active:scale-95 transition-all duration-200" onClick={handlePostUpdate}>
+            <Button size="sm" className="gap-1.5 active:scale-95" onClick={handlePostUpdate}>
               <Send className="w-3.5 h-3.5" /> Post Update
             </Button>
           </div>
         </div>
       )}
 
-      {/* Living Timeline */}
-      <div>
-        <h2 className="text-[15px] font-bold text-t1 mb-4 px-1">Project Timeline</h2>
+      {/* Timeline */}
+      <section>
+        <h2 className="text-[15px] font-bold mb-4 px-1" style={{ color: "var(--text-1)" }}>Project Timeline</h2>
         <div className="space-y-0">
           {mockTimeline.map((entry, i) => (
             <motion.div
@@ -130,7 +151,7 @@ const ProjectHub = () => {
               transition={{ delay: i * 0.06 }}
               className="flex gap-4"
             >
-              {/* Timeline line + dot */}
+              {/* Dot + line */}
               <div className="flex flex-col items-center pt-1.5">
                 <div className="w-3 h-3 rounded-full shrink-0 border-2" style={{
                   borderColor: entry.isHead ? "#F59E0B" : "var(--brand)",
@@ -139,12 +160,9 @@ const ProjectHub = () => {
                 {i < mockTimeline.length - 1 && <div className="w-px flex-1 mt-1" style={{ background: "var(--border-2)" }} />}
               </div>
 
-              {/* Content card */}
-              <div className="flex-1 pb-6">
-                <div className="rounded-xl p-4 border transition-all duration-300 hover:shadow-md hover:-translate-y-0.5
-                  bg-white/40 backdrop-blur-xl border-white/60 shadow-sm
-                  dark:bg-white/4 dark:border-white/8 dark:backdrop-blur-xl"
-                >
+              {/* Content */}
+              <article className="flex-1 pb-6">
+                <div className="glass-liquid glass-liquid-hover rounded-xl p-4">
                   {entry.isHead && (
                     <div className="flex items-center gap-1.5 mb-2">
                       <Shield className="w-3.5 h-3.5" style={{ color: "#F59E0B" }} />
@@ -156,18 +174,18 @@ const ProjectHub = () => {
                       <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white hover:scale-105 transition-transform" style={{ backgroundColor: entry.color }}>{entry.initials}</div>
                     </Link>
                     <div>
-                      <Link to="/app/profile" className="text-[13px] font-bold text-t1 hover:text-brand transition-colors">{entry.author}</Link>
-                      <p className="text-[10px] text-t3">{entry.date} · {entry.time}</p>
+                      <Link to="/app/profile" className="text-[13px] font-bold hover:underline transition-colors" style={{ color: "var(--text-1)" }}>{entry.author}</Link>
+                      <p className="text-[10px]" style={{ color: "var(--text-3)" }}>{entry.date} · {entry.time}</p>
                     </div>
                   </div>
-                  <p className="text-[14px] text-t1 leading-relaxed">{entry.content}</p>
+                  <p className="text-[14px] leading-relaxed" style={{ color: "var(--text-1)" }}>{entry.content}</p>
                 </div>
-              </div>
+              </article>
             </motion.div>
           ))}
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 };
 
