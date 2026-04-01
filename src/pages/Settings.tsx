@@ -217,7 +217,7 @@ const SettingsPage = () => {
                 <div className="grid grid-cols-3 gap-3">
                   {[
                     { id: "dark", label: "Dark", icon: Moon, desc: "Krishna Blue", previewBg: "#04061A", previewDot: "#3D5AF1" },
-                    { id: "light", label: "Light", icon: Sun, desc: "Liquid Glossy", previewBg: "#FAFAFA", previewDot: "#4F46E5" },
+                    { id: "light", label: "Light", icon: Sun, desc: "Anjaneyam Orange", previewBg: "#FFF8F2", previewDot: "#E8580A" },
                     { id: "system", label: "System", icon: Monitor, desc: "Match device" },
                   ].map(t => (
                     <button key={t.id} onClick={() => handleThemeChange(t.id)}
