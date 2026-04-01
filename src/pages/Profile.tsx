@@ -160,12 +160,15 @@ const Profile = () => {
             </div>
           </div>
           <div className="grid grid-cols-4 gap-3 mt-5 pt-4 border-t border-gray-200/60 dark:border-white/8">
-            {[{ label: "PROJECTS", value: "3" }, { label: "TEAMS", value: "2" }, { label: "STRANDS", value: "156" }, { label: "ACTIVITY", value: "78" }].map(s => (
+            {[{ label: "PROJECTS", value: "3" }, { label: "TEAMS", value: "2" }, { label: "STRANDS", value: "156" }].map(s => (
               <div key={s.label} className="text-center">
                 <p className="text-[20px] font-extrabold text-gray-900 dark:text-white">{s.value}</p>
                 <p className="text-[9px] font-bold tracking-wider uppercase text-gray-400 dark:text-white/35">{s.label}</p>
               </div>
             ))}
+            <div className="text-center">
+              <ActivityScoreRing score={78} size={48} strokeWidth={4} trend="" percentile="" />
+            </div>
           </div>
         </div>
       </div>
