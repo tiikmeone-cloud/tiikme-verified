@@ -11,6 +11,7 @@ import Feed from "./pages/Feed.tsx";
 import Profile from "./pages/Profile.tsx";
 import Explore from "./pages/Explore.tsx";
 import MyWork from "./pages/MyWork.tsx";
+import ProjectHub from "./pages/ProjectHub.tsx";
 import Opportunities from "./pages/Opportunities.tsx";
 import Strands from "./pages/Strands.tsx";
 import Pings from "./pages/Pings.tsx";
@@ -45,7 +46,8 @@ const App = () => (
           <Route path="/app/feed" element={<Shell><Feed /></Shell>} />
           <Route path="/app/explore" element={<Shell><Explore /></Shell>} />
           <Route path="/app/profile" element={<Shell><Profile /></Shell>} />
-          <Route path="/app/work" element={<Shell><MyWork /></Shell>} />
+          <Route path="/app/teams" element={<Shell><MyWork /></Shell>} />
+          <Route path="/app/teams/:projectId" element={<Shell><ProjectHub /></Shell>} />
           <Route path="/app/opportunities" element={<Shell><Opportunities /></Shell>} />
           <Route path="/app/strands" element={<Shell><Strands /></Shell>} />
           <Route path="/app/pings" element={<Shell><Pings /></Shell>} />
@@ -55,6 +57,7 @@ const App = () => (
           <Route path="/app/institution/:id" element={<Shell><Institution /></Shell>} />
           {/* Legacy redirects */}
           <Route path="/app/nexus" element={<Shell><Explore /></Shell>} />
+          <Route path="/app/work" element={<Shell><MyWork /></Shell>} />
           <Route path="/app/my-work" element={<Shell><MyWork /></Shell>} />
           <Route path="/app/build-log" element={<Shell><MyWork /></Shell>} />
           <Route path="/app/challenges" element={<Shell><Opportunities /></Shell>} />
