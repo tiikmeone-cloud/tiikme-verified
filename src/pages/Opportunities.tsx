@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { OpportunityDetailDrawer } from "@/components/opportunities/OpportunityDrawer";
 
-const USER_ROLE = "Student"; // Change to "Government" or "Police" to test compliance
+const USER_ROLE: string = "Student"; // Change to "Government" or "Police" to test compliance
 
 const allFilterTabs = ["All", "Jobs", "Gigs", "Mentorship", "Collaboration", "Challenges", "Research"];
 const govFilterTabs = ["All", "Mentorship", "Community Service", "Internal Deputations"];
