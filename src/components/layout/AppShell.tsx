@@ -145,7 +145,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             </div>
             <span className="text-[17px] font-extrabold" style={{ color: "var(--text-1)" }}>Tiikme</span>
           </span>
-          <Link to="/app/profile" className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ backgroundColor: "#4F46E5" }}>AK</Link>
+          <Link to="/app/profile" className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ backgroundColor: "var(--brand)" }}>AK</Link>
         </header>
 
         <div>{children}</div>

@@ -188,7 +188,7 @@ const Feed = () => {
           {/* Compose */}
           <div className="rounded-2xl border border-border/30 p-4" style={{ background: "var(--surface)", boxShadow: "0 1px 2px rgba(0,0,0,0.03)" }}>
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-full bg-[#4F46E5] flex items-center justify-center text-[11px] font-bold text-white">AK</div>
+              <div className="w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-bold text-white" style={{ backgroundColor: "var(--brand)" }}>AK</div>
               <button onClick={() => openCompose()} className="flex-1 text-left text-sm h-[44px] rounded-full px-5 bg-surface-2 border border-border/30 text-t3 hover:border-brand transition-all duration-200 cursor-pointer active:scale-[0.99]">
                 {getComposePlaceholder(currentUser.role)}
               </button>
