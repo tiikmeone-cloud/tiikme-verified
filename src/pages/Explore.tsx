@@ -266,6 +266,7 @@ const Explore = () => {
               institution={p.institution}
               headline={p.headline}
               verified={p.verified}
+              contextBadge={p.contextBadge}
             />
           ))}
         </Swimlane>
