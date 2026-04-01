@@ -95,7 +95,7 @@ const Strands = () => {
     <main className="max-w-4xl mx-auto px-4 py-6">
       <div className="flex items-center gap-3 mb-2">
         <Link2 className="w-6 h-6" style={{ color: "var(--brand)" }} />
-        <h1 className="text-[20px] font-extrabold" style={{ color: "var(--text-1)" }}>My Strands</h1>
+        <h1 className="text-[20px] text-emboss">My Strands</h1>
       </div>
       <p className="text-[13px] mb-5" style={{ color: "var(--text-2)" }}>Mutual connections — people who chose you and you chose back.</p>
 
