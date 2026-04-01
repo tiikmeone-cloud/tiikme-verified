@@ -87,7 +87,7 @@ const Navbar = () => {
                 <Button variant="ghost" className="w-full text-[rgba(238,240,255,0.6)] hover:text-[#EEF0FF]">Sign in</Button>
               </Link>
               <Link to="/signup" onClick={() => setMenuOpen(false)}>
-                <Button className="w-full gap-1.5"><Zap className="w-3.5 h-3.5" />Get Tiiked</Button>
+                <Button className="w-full gap-1.5"><img src={tiikLogo} alt="" className="w-4 h-4" />Get Tiiked</Button>
               </Link>
             </div>
           </div>
