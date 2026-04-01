@@ -1,0 +1,899 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.4"
+  }
+  public: {
+    Tables: {
+      alerts: {
+        Row: {
+          actor_id: string | null
+          body: string | null
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          link: string | null
+          title: string | null
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          body?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          link?: string | null
+          title?: string | null
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          body?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          link?: string | null
+          title?: string | null
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alerts_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alerts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          last_message_at: string | null
+          participant_1: string | null
+          participant_2: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_message_at?: string | null
+          participant_1?: string | null
+          participant_2?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_message_at?: string | null
+          participant_1?: string | null
+          participant_2?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_participant_1_fkey"
+            columns: ["participant_1"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_participant_2_fkey"
+            columns: ["participant_2"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      institutions: {
+        Row: {
+          address_line1: string | null
+          city: string | null
+          claimed_by: string | null
+          created_at: string | null
+          district: string | null
+          founded_year: number | null
+          head_profile_id: string | null
+          id: string
+          is_claimed: boolean | null
+          is_verified: boolean | null
+          member_count: number | null
+          name: string
+          official_email: string | null
+          official_id_type: string | null
+          official_id_value: string | null
+          official_website: string | null
+          parent_institution_id: string | null
+          phone: string | null
+          pincode: string | null
+          state: string | null
+          type: string | null
+        }
+        Insert: {
+          address_line1?: string | null
+          city?: string | null
+          claimed_by?: string | null
+          created_at?: string | null
+          district?: string | null
+          founded_year?: number | null
+          head_profile_id?: string | null
+          id?: string
+          is_claimed?: boolean | null
+          is_verified?: boolean | null
+          member_count?: number | null
+          name: string
+          official_email?: string | null
+          official_id_type?: string | null
+          official_id_value?: string | null
+          official_website?: string | null
+          parent_institution_id?: string | null
+          phone?: string | null
+          pincode?: string | null
+          state?: string | null
+          type?: string | null
+        }
+        Update: {
+          address_line1?: string | null
+          city?: string | null
+          claimed_by?: string | null
+          created_at?: string | null
+          district?: string | null
+          founded_year?: number | null
+          head_profile_id?: string | null
+          id?: string
+          is_claimed?: boolean | null
+          is_verified?: boolean | null
+          member_count?: number | null
+          name?: string
+          official_email?: string | null
+          official_id_type?: string | null
+          official_id_value?: string | null
+          official_website?: string | null
+          parent_institution_id?: string | null
+          phone?: string | null
+          pincode?: string | null
+          state?: string | null
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institutions_claimed_by_fkey"
+            columns: ["claimed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "institutions_head_profile_id_fkey"
+            columns: ["head_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "institutions_parent_institution_id_fkey"
+            columns: ["parent_institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opportunities: {
+        Row: {
+          company_id: string | null
+          compensation: string | null
+          created_at: string | null
+          deadline: string | null
+          description: string | null
+          domain: string | null
+          id: string
+          is_cross_domain: boolean | null
+          is_open: boolean | null
+          location: string | null
+          poster_id: string | null
+          responses_count: number | null
+          title: string
+          type: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          compensation?: string | null
+          created_at?: string | null
+          deadline?: string | null
+          description?: string | null
+          domain?: string | null
+          id?: string
+          is_cross_domain?: boolean | null
+          is_open?: boolean | null
+          location?: string | null
+          poster_id?: string | null
+          responses_count?: number | null
+          title: string
+          type?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          compensation?: string | null
+          created_at?: string | null
+          deadline?: string | null
+          description?: string | null
+          domain?: string | null
+          id?: string
+          is_cross_domain?: boolean | null
+          is_open?: boolean | null
+          location?: string | null
+          poster_id?: string | null
+          responses_count?: number | null
+          title?: string
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunities_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunities_poster_id_fkey"
+            columns: ["poster_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pings: {
+        Row: {
+          content: string
+          conversation_id: string | null
+          created_at: string | null
+          id: string
+          is_opener: boolean | null
+          is_read: boolean | null
+          pdf_url: string | null
+          sender_id: string | null
+          work_item_id: string | null
+        }
+        Insert: {
+          content: string
+          conversation_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_opener?: boolean | null
+          is_read?: boolean | null
+          pdf_url?: string | null
+          sender_id?: string | null
+          work_item_id?: string | null
+        }
+        Update: {
+          content?: string
+          conversation_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_opener?: boolean | null
+          is_read?: boolean | null
+          pdf_url?: string | null
+          sender_id?: string | null
+          work_item_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pings_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pings_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pings_work_item_id_fkey"
+            columns: ["work_item_id"]
+            isOneToOne: false
+            referencedRelation: "work_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      posts: {
+        Row: {
+          author_id: string | null
+          comment_count: number | null
+          content: string
+          created_at: string | null
+          hashtags: string[] | null
+          id: string
+          pdf_url: string | null
+          reactions: Json | null
+          repost_of: string | null
+          type: string | null
+          visibility: string | null
+          work_item_id: string | null
+        }
+        Insert: {
+          author_id?: string | null
+          comment_count?: number | null
+          content: string
+          created_at?: string | null
+          hashtags?: string[] | null
+          id?: string
+          pdf_url?: string | null
+          reactions?: Json | null
+          repost_of?: string | null
+          type?: string | null
+          visibility?: string | null
+          work_item_id?: string | null
+        }
+        Update: {
+          author_id?: string | null
+          comment_count?: number | null
+          content?: string
+          created_at?: string | null
+          hashtags?: string[] | null
+          id?: string
+          pdf_url?: string | null
+          reactions?: Json | null
+          repost_of?: string | null
+          type?: string | null
+          visibility?: string | null
+          work_item_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "posts_repost_of_fkey"
+            columns: ["repost_of"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "posts_work_item_id_fkey"
+            columns: ["work_item_id"]
+            isOneToOne: false
+            referencedRelation: "work_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          activity_score: number | null
+          avatar_url: string | null
+          bio: string | null
+          created_at: string | null
+          designation: string | null
+          first_name: string | null
+          full_name: string | null
+          headline: string | null
+          id: string
+          institution_id: string | null
+          institution_name: string | null
+          is_public: boolean | null
+          languages: string[] | null
+          last_name: string | null
+          location_city: string | null
+          location_state: string | null
+          open_to_work: boolean | null
+          phone_hash: string | null
+          role: string | null
+          role_subtype: string | null
+          sector: string | null
+          status: string | null
+          theme_preference: string | null
+          updated_at: string | null
+          username: string
+        }
+        Insert: {
+          activity_score?: number | null
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          designation?: string | null
+          first_name?: string | null
+          full_name?: string | null
+          headline?: string | null
+          id: string
+          institution_id?: string | null
+          institution_name?: string | null
+          is_public?: boolean | null
+          languages?: string[] | null
+          last_name?: string | null
+          location_city?: string | null
+          location_state?: string | null
+          open_to_work?: boolean | null
+          phone_hash?: string | null
+          role?: string | null
+          role_subtype?: string | null
+          sector?: string | null
+          status?: string | null
+          theme_preference?: string | null
+          updated_at?: string | null
+          username: string
+        }
+        Update: {
+          activity_score?: number | null
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          designation?: string | null
+          first_name?: string | null
+          full_name?: string | null
+          headline?: string | null
+          id?: string
+          institution_id?: string | null
+          institution_name?: string | null
+          is_public?: boolean | null
+          languages?: string[] | null
+          last_name?: string | null
+          location_city?: string | null
+          location_state?: string | null
+          open_to_work?: boolean | null
+          phone_hash?: string | null
+          role?: string | null
+          role_subtype?: string | null
+          sector?: string | null
+          status?: string | null
+          theme_preference?: string | null
+          updated_at?: string | null
+          username?: string
+        }
+        Relationships: []
+      }
+      strands: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_public: boolean | null
+          receiver_id: string | null
+          requester_id: string | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_public?: boolean | null
+          receiver_id?: string | null
+          requester_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_public?: boolean | null
+          receiver_id?: string | null
+          requester_id?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "strands_receiver_id_fkey"
+            columns: ["receiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "strands_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_members: {
+        Row: {
+          contribution_description: string | null
+          id: string
+          joined_at: string | null
+          permission_level: string | null
+          role_in_project: string | null
+          user_id: string | null
+          work_item_id: string | null
+        }
+        Insert: {
+          contribution_description?: string | null
+          id?: string
+          joined_at?: string | null
+          permission_level?: string | null
+          role_in_project?: string | null
+          user_id?: string | null
+          work_item_id?: string | null
+        }
+        Update: {
+          contribution_description?: string | null
+          id?: string
+          joined_at?: string | null
+          permission_level?: string | null
+          role_in_project?: string | null
+          user_id?: string | null
+          work_item_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_members_work_item_id_fkey"
+            columns: ["work_item_id"]
+            isOneToOne: false
+            referencedRelation: "work_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_items: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string | null
+          description: string | null
+          domain: string | null
+          end_date: string | null
+          id: string
+          institution_id: string | null
+          institution_name: string | null
+          is_current: boolean | null
+          is_tiik_approved: boolean | null
+          links: Json | null
+          owner_id: string | null
+          recruiter_views: number | null
+          role_in_work: string | null
+          slug: string | null
+          start_date: string | null
+          status: string | null
+          tech_stack: string[] | null
+          title: string
+          total_views: number | null
+          type: string | null
+          updated_at: string | null
+          visibility: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          description?: string | null
+          domain?: string | null
+          end_date?: string | null
+          id?: string
+          institution_id?: string | null
+          institution_name?: string | null
+          is_current?: boolean | null
+          is_tiik_approved?: boolean | null
+          links?: Json | null
+          owner_id?: string | null
+          recruiter_views?: number | null
+          role_in_work?: string | null
+          slug?: string | null
+          start_date?: string | null
+          status?: string | null
+          tech_stack?: string[] | null
+          title: string
+          total_views?: number | null
+          type?: string | null
+          updated_at?: string | null
+          visibility?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          description?: string | null
+          domain?: string | null
+          end_date?: string | null
+          id?: string
+          institution_id?: string | null
+          institution_name?: string | null
+          is_current?: boolean | null
+          is_tiik_approved?: boolean | null
+          links?: Json | null
+          owner_id?: string | null
+          recruiter_views?: number | null
+          role_in_work?: string | null
+          slug?: string | null
+          start_date?: string | null
+          status?: string | null
+          tech_stack?: string[] | null
+          title?: string
+          total_views?: number | null
+          type?: string | null
+          updated_at?: string | null
+          visibility?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_items_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_items_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_items_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_members: {
+        Row: {
+          id: string
+          joined_at: string | null
+          role: string | null
+          user_id: string | null
+          workspace_id: string | null
+        }
+        Insert: {
+          id?: string
+          joined_at?: string | null
+          role?: string | null
+          user_id?: string | null
+          workspace_id?: string | null
+        }
+        Update: {
+          id?: string
+          joined_at?: string | null
+          role?: string | null
+          user_id?: string | null
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_members_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspaces: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          institution_id: string | null
+          member_count: number | null
+          name: string
+          privacy: string | null
+          project_count: number | null
+          type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          institution_id?: string | null
+          member_count?: number | null
+          name: string
+          privacy?: string | null
+          project_count?: number | null
+          type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          institution_id?: string | null
+          member_count?: number | null
+          name?: string
+          privacy?: string | null
+          project_count?: number | null
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspaces_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspaces_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {},
+  },
+} as const
