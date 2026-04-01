@@ -20,12 +20,12 @@ const roleFilters = ["Student", "Professional", "Government", "Doctor", "Skilled
 const cityFilters = ["Delhi", "Mumbai", "Bengaluru", "Hyderabad", "Chennai"];
 
 const peopleMock = [
-  { name: "Riya Sharma", initials: "RS", role: "Student", city: "Delhi", score: 68, strands: 92, institution: "DTU", headline: "Building healthcare apps for rural India", verified: "gold" as const, color: "#4F46E5" },
-  { name: "Dr. Manoj Patil", initials: "MP", role: "Doctor", city: "Mumbai", score: 85, strands: 210, institution: "KEM Hospital", headline: "Rural health camps & telemedicine advocate", verified: "gold" as const, color: "#0E7490" },
-  { name: "Sunita Devi", initials: "SD", role: "Skilled Trade", city: "Hyderabad", score: 74, strands: 48, institution: "Independent", headline: "Certified electrician, 8+ years residential & commercial", verified: "grey" as const, color: "#C2410C" },
-  { name: "Kavita Rao", initials: "KR", role: "HR/Recruiter", city: "Bengaluru", score: 90, strands: 340, institution: "TCS", headline: "Talent acquisition lead, hiring for tech roles", verified: "gold" as const, color: "#6B21A8" },
-  { name: "Prof. Sharma", initials: "PS", role: "Faculty", city: "Delhi", score: 88, strands: 180, institution: "DTU", headline: "CS professor, IoT & embedded systems research", verified: "gold" as const, color: "#92400E" },
-  { name: "Rahul Mehra", initials: "RM", role: "Professional", city: "Bengaluru", score: 72, strands: 115, institution: "Infosys", headline: "Full-stack engineer building fintech products", verified: "grey" as const, color: "#0369A1" },
+  { name: "Riya Sharma", initials: "RS", role: "Student", city: "Delhi", score: 68, strands: 92, institution: "DTU", headline: "Building healthcare apps for rural India", verified: "gold" as const, color: "#4F46E5", contextBadge: "Alumni of Delhi Tech University" },
+  { name: "Dr. Manoj Patil", initials: "MP", role: "Doctor", city: "Mumbai", score: 85, strands: 210, institution: "KEM Hospital", headline: "Rural health camps & telemedicine advocate", verified: "gold" as const, color: "#0E7490", contextBadge: "Connected via TelemedicineRx" },
+  { name: "Sunita Devi", initials: "SD", role: "Skilled Trade", city: "Hyderabad", score: 74, strands: 48, institution: "Independent", headline: "Certified electrician, 8+ years residential & commercial", verified: "grey" as const, color: "#C2410C", contextBadge: undefined },
+  { name: "Kavita Rao", initials: "KR", role: "HR/Recruiter", city: "Bengaluru", score: 90, strands: 340, institution: "TCS", headline: "Talent acquisition lead, hiring for tech roles", verified: "gold" as const, color: "#6B21A8", contextBadge: "Viewed your profile" },
+  { name: "Prof. Sharma", initials: "PS", role: "Faculty", city: "Delhi", score: 88, strands: 180, institution: "DTU", headline: "CS professor, IoT & embedded systems research", verified: "gold" as const, color: "#92400E", contextBadge: "Your project head" },
+  { name: "Rahul Mehra", initials: "RM", role: "Professional", city: "Bengaluru", score: 72, strands: 115, institution: "Infosys", headline: "Full-stack engineer building fintech products", verified: "grey" as const, color: "#0369A1", contextBadge: "Worked with you at Zepto" },
 ];
 
 const projectsMock = [
