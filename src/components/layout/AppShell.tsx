@@ -55,7 +55,8 @@ const AppShell = ({ children }: { children: ReactNode }) => {
 
   const isActive = (path: string) => pathname === path || pathname.startsWith(path + "/");
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
     const savedTheme = localStorage.getItem("tiikme-theme");
     localStorage.clear();
     if (savedTheme) localStorage.setItem("tiikme-theme", savedTheme);
