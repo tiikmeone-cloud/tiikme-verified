@@ -48,18 +48,19 @@
   }
 
   [data-theme="light"] {
-    /* === LIGHT MODE (Liquid Glossy) === */
-    --bg: #FAFAFA;
-    --bg-2: #F5F5F5;
+    /* === LIGHT MODE (Anjaneyam Orange) === */
+    --bg: #FFF8F2;
+    --bg-2: #FFF3E8;
     --surface: rgba(255,255,255,0.70);
     --surface-2: rgba(255,255,255,0.50);
     --surface-3: rgba(255,255,255,0.40);
     --border: rgba(0,0,0,0.06);
     --border-2: rgba(0,0,0,0.10);
-    --brand: #4F46E5;
-    --brand-2: #6366F1;
-    --brand-dim: rgba(79,70,229,0.08);
-    --brand-glow: rgba(79,70,229,0.18);
+    --brand: #E8580A;
+    --brand-2: #F97316;
+    --brand-dim: rgba(232,88,10,0.10);
+    --brand-glow: rgba(232,88,10,0.18);
+    --brand-hover: #F97316;
     --text-1: #111827;
     --text-2: #6B7280;
     --text-3: #9CA3AF;

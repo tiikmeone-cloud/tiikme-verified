@@ -18,7 +18,7 @@ const navGroups = [
   {
     label: "WORK",
     items: [
-      { label: "Workspace", icon: Layers, path: "/app/teams" },
+      { label: "My Work", icon: Layers, path: "/app/teams" },
       { label: "Opportunities", icon: Target, path: "/app/opportunities", badge: 3 },
     ],
   },
