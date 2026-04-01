@@ -142,7 +142,7 @@ const Pings = () => {
 
       {/* Right panel — Chat */}
       <div className={`flex-1 flex flex-col min-w-0 ${showMobileList ? "hidden md:flex" : "flex"}`} style={{ background: "var(--bg)" }}>
-        <div className="flex items-center gap-3 px-5 h-16 shrink-0" style={{ background: "var(--surface)", borderBottom: "1px solid var(--border)" }}>
+        <div className="flex items-center gap-3 px-5 h-16 shrink-0" style={{ background: "var(--glass-bg)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderBottom: "1px solid var(--glass-border)" }}>
           <button onClick={() => setShowMobileList(true)} className="md:hidden p-1.5 rounded-lg cursor-pointer active:scale-95" style={{ color: "var(--text-2)" }}><ArrowLeft className="w-5 h-5" /></button>
           <Link to="/app/profile" className="flex items-center gap-3 flex-1 min-w-0">
             <div className="w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ backgroundColor: ROLE_COLORS[activeConvo.role] || "#3D5AF1", ...ringStyle(activeConvo.verified) }}>{activeConvo.initials}</div>
