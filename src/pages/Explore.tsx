@@ -214,6 +214,34 @@ const Explore = () => {
   const showOpportunities = activeFilter === "All" || activeFilter === "Opportunities";
   const showTopics = activeFilter === "All" || activeFilter === "Topics";
 
+  // Role filtering
+  const roleMap: Record<string, string> = { Student: "Student", Professional: "Professional", Govt: "Government", Doctor: "Doctor", Trade: "Skilled Trade", Faculty: "Faculty", Builder: "Builder", Aspirant: "Aspirant" };
+  const filteredPeople = peopleMock.filter(p => {
+    if (activeRoles.length > 0 && !activeRoles.some(r => p.role === (roleMap[r] || r))) return false;
+    if (activeTerrain && !p.headline.toLowerCase().includes(activeTerrain.toLowerCase())) return false;
+    if (search && !p.name.toLowerCase().includes(search.toLowerCase()) && !p.headline.toLowerCase().includes(search.toLowerCase()) && !p.city.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
+  const filteredProjects = projectsMock.filter(p => {
+    if (activeTerrain && !p.domain.toLowerCase().includes(activeTerrain.toLowerCase()) && !p.description.toLowerCase().includes(activeTerrain.toLowerCase())) return false;
+    if (search && !p.name.toLowerCase().includes(search.toLowerCase()) && !p.description.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
+  const filteredInstitutions = institutionsMock.filter(inst => {
+    if (search && !inst.name.toLowerCase().includes(search.toLowerCase()) && !inst.city.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
+  const filteredOpportunities = opportunitiesMock.filter(o => {
+    if (activeTerrain && !o.domain.toLowerCase().includes(activeTerrain.toLowerCase())) return false;
+    if (search && !o.name.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
+  const filteredTopics = topicsMock.filter(t => {
+    if (search && !t.name.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
+  const totalResults = (showPeople ? filteredPeople.length : 0) + (showProjects ? filteredProjects.length : 0) + (showInstitutions ? filteredInstitutions.length : 0) + (showOpportunities ? filteredOpportunities.length : 0) + (showTopics ? filteredTopics.length : 0);
+
   return (
     <main className="max-w-[1100px] mx-auto px-3 md:px-6 py-7">
       {/* Search */}
