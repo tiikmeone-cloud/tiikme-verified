@@ -59,7 +59,7 @@ const PostCard = ({ post }: { post: typeof posts[0] }) => {
 
   return (
     <article
-      className="glass-liquid rounded-2xl md:rounded-3xl mb-3 overflow-hidden"
+      className="glass-liquid glass-liquid-hover rounded-2xl md:rounded-3xl mb-3 overflow-hidden"
       style={{ borderTop: post.topBorder ? `3px solid ${post.topBorder}` : undefined }}
     >
       {/* Header */}
