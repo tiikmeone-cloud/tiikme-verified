@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { MapPin, Copy, Shield, Layers, Users, X, Settings, MessageCircle, CheckCircle, Calendar, Globe, ThumbsUp, Lightbulb, FileText, Image, Clock, Send, Share2, ArrowRight } from "lucide-react";
+import ActivityScoreRing from "@/components/ActivityScoreRing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
