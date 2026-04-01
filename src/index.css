@@ -139,12 +139,12 @@
   }
   [data-theme="dark"] .glass-liquid,
   :root .glass-liquid {
-    background: rgba(0,0,0,0.40);
-    border-color: rgba(255,255,255,0.10);
+    background: rgba(14,18,64,0.55);
+    border-color: rgba(255,255,255,0.12);
     box-shadow:
-      0 8px 32px rgba(0,0,0,0.35),
-      inset 0 1px 0 rgba(255,255,255,0.08),
-      inset 0 -1px 0 rgba(0,0,0,0.2);
+      0 8px 32px rgba(0,0,0,0.45),
+      inset 0 1px 0 rgba(255,255,255,0.12),
+      inset 0 -1px 0 rgba(0,0,0,0.3);
   }
   [data-theme="light"] .glass-liquid {
     background: rgba(255,255,255,0.40);
