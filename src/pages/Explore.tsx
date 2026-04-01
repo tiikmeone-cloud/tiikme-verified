@@ -56,7 +56,7 @@ function useHScroll() {
   return { ref, scroll };
 }
 
-const cardBase = "rounded-2xl border border-border/30 flex flex-col justify-between transition-all duration-200 hover:shadow-md hover:-translate-y-0.5";
+const cardBase = "rounded-2xl border border-border/30 flex flex-col justify-between transition-all duration-300 hover:shadow-md hover:scale-[1.02]";
 
 function ProjectCard({ p }: { p: typeof projectsMock[0] }) {
   return (
