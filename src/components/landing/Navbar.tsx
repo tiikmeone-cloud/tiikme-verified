@@ -26,9 +26,7 @@ const Navbar = () => {
         }}
       >
         <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #3D5AF1, #5B73F5)" }}>
-            <Zap className="w-4 h-4 text-white" />
-          </div>
+          <img src={tiikLogo} alt="Tiikme" className="w-8 h-8 rounded-xl" />
           <span className="text-[19px] font-extrabold text-[#EEF0FF]">Tiikme</span>
         </Link>
 
