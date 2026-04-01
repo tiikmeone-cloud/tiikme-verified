@@ -116,7 +116,7 @@ const Strands = () => {
       {/* Connected */}
       {tab === "connected" && (
         <div>
-          <div className="flex items-center gap-3 px-4 mb-4 h-[38px] rounded-full" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
+          <div className="flex items-center gap-3 px-4 mb-4 h-[38px] glass-input">
             <Search className="w-4 h-4" style={{ color: "var(--text-3)" }} />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search your strands..."
               className="flex-1 bg-transparent text-sm outline-none" style={{ color: "var(--text-1)" }} />
