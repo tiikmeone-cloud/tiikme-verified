@@ -1,25 +1,33 @@
-import { useState, useRef } from "react";
-import { MapPin, Copy, Pencil, Download, Shield, Layers, Users, X, Camera, MessageCircle, CheckCircle, Calendar, ExternalLink } from "lucide-react";
+import { useState } from "react";
+import { MapPin, Copy, Pencil, Download, Shield, Layers, Users, X, Camera, MessageCircle, CheckCircle, Calendar, ExternalLink, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import EmptyState from "@/components/EmptyState";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const tabs = ["Portfolio", "Posts", "About", "Verifications"] as const;
 const ROLE_COLOR = "#4F46E5";
 
 const mockProjects = [
-  { title: "TelemedicineRx", description: "Telemedicine platform for rural India with AI triage and offline-first sync", domain: "HealthTech", status: "active" as const, role: "Lead Developer", startDate: "Jan 2025", endDate: "Present", tech: ["React Native", "Supabase", "Python"], tiikApproved: true },
-  { title: "SmartGrid Monitor", description: "IoT dashboard for electrical grid monitoring across 4 states", domain: "IoT", status: "completed" as const, role: "Frontend Engineer", startDate: "Aug 2024", endDate: "Dec 2024", tech: ["React", "Node.js", "MQTT"], tiikApproved: false },
-  { title: "EduBridge App", description: "Vernacular learning platform for government school students in rural districts", domain: "EdTech", status: "completed" as const, role: "Full Stack Developer", startDate: "Mar 2024", endDate: "Jul 2024", tech: ["Next.js", "PostgreSQL"], tiikApproved: true },
+  { title: "TelemedicineRx", company: "Delhi Tech University", location: "Delhi, India", description: "Telemedicine platform for rural India with AI triage and offline-first sync", domain: "HealthTech", status: "active" as const, role: "Lead Developer", startDate: "Jan 2025", endDate: "Present", tech: ["React Native", "Supabase", "Python", "TensorFlow"], tiikApproved: true },
+  { title: "SmartGrid Monitor", company: "IIT Delhi Research Lab", location: "Delhi, India", description: "IoT dashboard for electrical grid monitoring across 4 states with real-time anomaly detection", domain: "IoT", status: "completed" as const, role: "Frontend Engineer", startDate: "Aug 2024", endDate: "Dec 2024", tech: ["React", "Node.js", "MQTT", "D3.js"], tiikApproved: false },
+  { title: "EduBridge App", company: "Self / Open Source", location: "Remote", description: "Vernacular learning platform for government school students in rural districts", domain: "EdTech", status: "completed" as const, role: "Full Stack Developer", startDate: "Mar 2024", endDate: "Jul 2024", tech: ["Next.js", "PostgreSQL"], tiikApproved: true },
 ];
 
 const mockGroups = [
-  { name: "CodeCraft Club", initials: "CC", color: "#0369A1", members: 12, activeProjects: 3 },
-  { name: "EduTech Builders", initials: "EB", color: "#92400E", members: 28, activeProjects: 5 },
+  { name: "CodeCraft Club", initials: "CC", color: "#0369A1", members: 12, activeProjects: 3, description: "A community of builders shipping real products every month.", creator: "Arjun Kumar", memberAvatars: ["AK", "PM", "RS", "NS", "DT"] },
+  { name: "EduTech Builders", initials: "EB", color: "#92400E", members: 28, activeProjects: 5, description: "Open-source collective focused on education technology for Bharat.", creator: "Priya Mehta", memberAvatars: ["PM", "AK", "VK", "SS"] },
 ];
+
+const totalYears = () => {
+  const start = new Date("2024-03-01");
+  const now = new Date();
+  const diff = (now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 365);
+  return Math.max(1, Math.round(diff * 10) / 10);
+};
 
 const EditProfileModal = ({ open, onClose }: { open: boolean; onClose: () => void }) => {
   const [form, setForm] = useState({ name: "Arjun Kumar", headline: "Final year CSE student building at the intersection of health and technology.", bio: "", city: "Delhi", state: "Delhi" });
@@ -63,6 +71,58 @@ const EditProfileModal = ({ open, onClose }: { open: boolean; onClose: () => voi
   );
 };
 
+const GroupModal = ({ group, onClose }: { group: typeof mockGroups[0] | null; onClose: () => void }) => {
+  if (!group) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(12px)" }} onClick={onClose}>
+      <motion.div
+        initial={{ scale: 0.92, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.92, opacity: 0 }}
+        className="w-full max-w-md rounded-3xl border p-6 overflow-y-auto max-h-[80vh]"
+        style={{ background: "var(--surface)", borderColor: "var(--border-2)", boxShadow: "var(--card-shadow)" }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-[18px] font-bold text-white" style={{ backgroundColor: group.color }}>{group.initials}</div>
+            <div>
+              <h2 className="text-[18px] font-extrabold text-t1">{group.name}</h2>
+              <p className="text-[12px] text-t3">{group.members} members · {group.activeProjects} active projects</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-lg text-t3 hover:text-t1 cursor-pointer active:scale-95"><X className="w-5 h-5" /></button>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-t3 mb-1">DESCRIPTION</p>
+            <p className="text-[14px] text-t1 leading-relaxed">{group.description}</p>
+          </div>
+
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-t3 mb-2">TEAM MEMBERS</p>
+            <div className="space-y-2">
+              {group.memberAvatars.map((av, i) => (
+                <Link key={i} to="/app/profile" className="flex items-center gap-3 rounded-xl p-3 border border-border/30 hover:border-brand/30 transition-all duration-200 cursor-pointer active:scale-[0.99]" style={{ background: "var(--surface-2)" }}>
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-bold text-white" style={{ backgroundColor: group.color }}>{av}</div>
+                  <div className="flex-1">
+                    <p className="text-[13px] font-semibold text-t1">{av === "AK" ? "Arjun Kumar" : `Member ${av}`}</p>
+                    <p className="text-[11px] text-t3">Contributor</p>
+                  </div>
+                  {av === group.creator.split(" ").map(n => n[0]).join("") && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "var(--brand-dim)", color: "var(--brand)" }}>Admin</span>
+                  )}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 const handleExport = () => {
   const printWindow = window.open("", "_blank");
   if (!printWindow) { toast.error("Pop-up blocked"); return; }
@@ -89,7 +149,7 @@ const handleExport = () => {
     ${mockProjects.map(p => `
       <div class="item">
         <h3>${p.title} ${p.tiikApproved ? '<span class="badge">Tiik Approved</span>' : ''}</h3>
-        <p class="role">${p.role} · ${p.startDate} – ${p.endDate} · ${p.domain}</p>
+        <p class="role">${p.role} @ ${p.company} · ${p.startDate} – ${p.endDate} · ${p.domain}</p>
         <p class="desc">${p.description}</p>
       </div>
     `).join("")}
@@ -100,13 +160,13 @@ const handleExport = () => {
   `);
   printWindow.document.close();
   printWindow.print();
-  toast.success("Export ready — print or save as PDF");
 };
 
 const Profile = () => {
   const [activeTab, setActiveTab] = useState<typeof tabs[number]>("Portfolio");
   const [editOpen, setEditOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState<typeof mockGroups[0] | null>(null);
 
   const handleExportWithSpinner = () => {
     setExporting(true);
@@ -121,72 +181,84 @@ const Profile = () => {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
-      {/* Bento Hero Card — Two Column */}
-      <div className="rounded-2xl border border-border/30 overflow-hidden" style={{ background: "var(--surface)", boxShadow: "0 1px 2px rgba(0,0,0,0.03)" }}>
-        <div className="flex flex-col sm:flex-row">
-          {/* Left Column — 3:4 Portrait */}
-          <div className="sm:w-[30%] relative group">
-            <div className="aspect-[3/4] w-full flex items-center justify-center text-[48px] font-bold text-white rounded-2xl sm:rounded-r-none" style={{ backgroundColor: ROLE_COLOR, background: `linear-gradient(160deg, ${ROLE_COLOR}, ${ROLE_COLOR}CC)` }}>
-              AK
+      {/* ========== FROSTED GLASS HERO CARD ========== */}
+      <div className="rounded-3xl overflow-hidden relative w-full h-[400px] md:h-[500px]" style={{ boxShadow: "var(--card-shadow)" }}>
+        {/* Background image (placeholder gradient) */}
+        <div className="absolute inset-0 w-full h-full" style={{
+          background: `linear-gradient(160deg, ${ROLE_COLOR}, #0E7490, #10B981)`,
+        }}>
+          <div className="w-full h-full flex items-center justify-center text-[120px] font-extrabold text-white/20 select-none">
+            AK
+          </div>
+        </div>
+
+        {/* Gradient overlay */}
+        <div className="absolute inset-0" style={{
+          background: "linear-gradient(to top, #050510 0%, rgba(5,5,16,0.6) 50%, transparent 100%)"
+        }} />
+
+        {/* Edit button */}
+        <button
+          onClick={() => setEditOpen(true)}
+          className="absolute top-4 right-4 p-2.5 rounded-xl cursor-pointer active:scale-95 transition-all duration-200 z-10"
+          style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}
+        >
+          <Camera className="w-4 h-4 text-white" />
+        </button>
+
+        {/* Frosted bottom section */}
+        <div className="absolute bottom-0 w-full p-6 md:p-8" style={{ backdropFilter: "blur(16px)", borderTop: "1px solid rgba(255,255,255,0.1)", background: "rgba(5,5,16,0.3)" }}>
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h1 className="text-[26px] md:text-[30px] font-extrabold text-white">Arjun Kumar</h1>
+                <span className="flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full" style={{ background: "rgba(245,158,11,0.2)", color: "#F59E0B", border: "1px solid rgba(245,158,11,0.3)" }}>
+                  <Shield className="w-3 h-3" /> Tiik Approved
+                </span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: `${ROLE_COLOR}33`, color: "#a5b4fc" }}>Student</span>
+              </div>
+              <p className="text-[12px] font-mono mt-1 text-white/40">@arjunkumar</p>
+              <div className="flex items-center gap-1.5 mt-1">
+                <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#10B981" }} />
+                <span className="text-[12px] font-medium text-[#10B981]">Open to work</span>
+              </div>
+              <p className="text-[14px] md:text-[15px] mt-3 text-white/80 leading-relaxed line-clamp-2">Final year CSE student building at the intersection of health and technology.</p>
+
+              {/* Connectivity Nodes */}
+              <div className="flex items-center gap-2 flex-wrap mt-3">
+                <Link to="/app/institution/1" className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer" style={{ background: "rgba(79,70,229,0.15)", color: "#a5b4fc", border: "1px solid rgba(79,70,229,0.2)" }}>
+                  <MapPin className="w-3 h-3 inline mr-1" />DTU
+                </Link>
+                <Link to="/app/explore" className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer" style={{ background: "rgba(16,185,129,0.15)", color: "#34d399", border: "1px solid rgba(16,185,129,0.2)" }}>
+                  <Layers className="w-3 h-3 inline mr-1" />TelemedicineRx
+                </Link>
+                <span className="text-[11px] px-3 py-1.5 rounded-full text-white/50" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}>Delhi, India</span>
+              </div>
             </div>
-            <button onClick={() => setEditOpen(true)} className="absolute inset-0 rounded-2xl sm:rounded-r-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer active:scale-95" style={{ background: "rgba(0,0,0,0.4)" }}>
-              <Camera className="w-6 h-6 text-white" />
-            </button>
-            {/* Tiik Approved badge overlay */}
-            <div className="absolute bottom-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", color: "#F59E0B" }}>
-              <Shield className="w-3 h-3" /> Tiik Approved
+
+            {/* Action buttons */}
+            <div className="flex items-center gap-2 shrink-0">
+              <Button variant="secondary" size="sm" className="gap-1.5 rounded-full active:scale-95 transition-all duration-200 text-white border-white/20 hover:bg-white/10" style={{ background: "rgba(255,255,255,0.08)" }} onClick={handleCopyLink}><Copy className="w-3 h-3" /> Copy link</Button>
+              <Button variant="secondary" size="sm" className="gap-1.5 rounded-full active:scale-95 transition-all duration-200 text-white border-white/20 hover:bg-white/10" style={{ background: "rgba(255,255,255,0.08)" }} onClick={() => setEditOpen(true)}><Pencil className="w-3 h-3" /></Button>
+              <Button size="sm" className="gap-1.5 rounded-full active:scale-95 transition-all duration-200" onClick={handleExportWithSpinner}>
+                <Download className="w-3 h-3" /> {exporting ? "Exporting..." : "Export"}
+              </Button>
             </div>
           </div>
 
-          {/* Right Column — Details */}
-          <div className="sm:w-[70%] p-6 sm:p-7 flex flex-col justify-between">
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-[24px] font-extrabold text-t1">Arjun Kumar</h1>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: `${ROLE_COLOR}14`, color: ROLE_COLOR }}>Student</span>
+          {/* Stats row */}
+          <div className="grid grid-cols-4 gap-3 mt-5 pt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+            {[{ label: "PROJECTS", value: "4" }, { label: "GROUPS", value: "2" }, { label: "STRANDS", value: "156" }, { label: "ACTIVITY", value: "78" }].map(s => (
+              <div key={s.label} className="text-center">
+                <p className="text-[20px] font-extrabold text-white">{s.value}</p>
+                <p className="text-[9px] font-bold tracking-wider uppercase text-white/35">{s.label}</p>
               </div>
-              <p className="text-[12px] font-mono mt-0.5 text-t3">@arjunkumar</p>
-              <div className="flex items-center gap-1.5 mt-1.5">
-                <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "var(--open-green)" }} />
-                <span className="text-[12px] font-medium" style={{ color: "var(--open-green)" }}>Open to work</span>
-              </div>
-              <p className="text-[15px] mt-3 text-t1 leading-relaxed line-clamp-2">Final year CSE student building at the intersection of health and technology.</p>
-
-              {/* Connectivity Nodes */}
-              <p className="text-[10px] font-bold tracking-wider uppercase text-t3 mt-4 mb-2">CONNECTIVITY NODES</p>
-              <div className="flex items-center gap-2 flex-wrap">
-                <Link to="/app/institution/1" className="text-[12px] font-semibold px-3 py-1.5 rounded-full transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer" style={{ background: "rgba(79,70,229,0.08)", color: "#4F46E5" }}>
-                  <MapPin className="w-3 h-3 inline mr-1" />DTU
-                </Link>
-                <Link to="/app/explore" className="text-[12px] font-semibold px-3 py-1.5 rounded-full transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer" style={{ background: "rgba(3,105,161,0.08)", color: "#0369A1" }}>
-                  <Layers className="w-3 h-3 inline mr-1" />TelemedicineRx
-                </Link>
-                <span className="text-[12px] px-3 py-1.5 rounded-full bg-surface-2 border border-border/30 text-t2">Delhi, India</span>
-                <span className="text-[12px] px-3 py-1.5 rounded-full bg-surface-2 border border-border/30 text-t2">Hindi, English</span>
-              </div>
-            </div>
-
-            {/* Actions + Stats */}
-            <div className="mt-5 pt-4 border-t border-border/30">
-              <div className="flex items-center gap-2 flex-wrap mb-4">
-                <Button variant="secondary" size="sm" className="gap-1.5 rounded-full active:scale-95 transition-all duration-200" onClick={handleCopyLink}><Copy className="w-3 h-3" /> Copy link</Button>
-                <Button variant="secondary" size="sm" className="gap-1.5 rounded-full active:scale-95 transition-all duration-200" onClick={() => setEditOpen(true)}><Pencil className="w-3 h-3" /> Edit profile</Button>
-                <Button variant="secondary" size="sm" className="gap-1.5 rounded-full active:scale-95 transition-all duration-200" onClick={handleExportWithSpinner}><Download className="w-3 h-3" /> {exporting ? "Exporting..." : "Export"}</Button>
-              </div>
-              <div className="grid grid-cols-4 gap-3">
-                {[{ label: "PROJECTS", value: "4" }, { label: "GROUPS", value: "2" }, { label: "STRANDS", value: "156" }, { label: "ACTIVITY", value: "78" }].map(s => (
-                  <div key={s.label} className="text-center">
-                    <p className="text-[20px] font-extrabold text-t1">{s.value}</p>
-                    <p className="text-[9px] font-bold tracking-wider uppercase text-t3">{s.label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* ========== TABS ========== */}
       <div className="rounded-2xl border border-border/30 overflow-hidden" style={{ background: "var(--surface)" }}>
         <div className="flex border-b border-border/30 px-7">
           {tabs.map(tab => (
@@ -199,54 +271,69 @@ const Profile = () => {
         </div>
 
         <div className="p-5">
-          {/* Work — Timeline view (default) */}
+          {/* ========== PORTFOLIO TAB ========== */}
           {activeTab === "Portfolio" && (
-            <div className="space-y-0">
-              {mockProjects.map((p, i) => (
-                <div key={p.title} className="flex gap-4 group">
-                  {/* Timeline line */}
-                  <div className="flex flex-col items-center pt-1">
-                    <div className="w-3 h-3 rounded-full shrink-0 border-2" style={{
-                      borderColor: p.status === "active" ? "#10B981" : "var(--brand)",
-                      background: p.status === "active" ? "#10B981" : "var(--brand)",
-                    }} />
-                    {i < mockProjects.length - 1 && <div className="w-px flex-1 mt-1" style={{ background: "var(--border-2)" }} />}
-                  </div>
-                  {/* Content */}
-                  <div className="flex-1 pb-6">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="text-[15px] font-bold text-t1">{p.title}</h3>
-                          {p.tiikApproved && (
-                            <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.12)", color: "#F59E0B" }}>
-                              <Shield className="w-3 h-3" /> Tiik Approved
-                            </span>
-                          )}
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{
-                            background: p.status === "active" ? "rgba(16,185,129,0.12)" : "var(--brand-dim)",
-                            color: p.status === "active" ? "#10B981" : "var(--brand)"
-                          }}>{p.status === "active" ? "Active" : "Completed"}</span>
-                        </div>
-                        <p className="text-[13px] text-t2 mt-0.5">{p.role}</p>
-                        <div className="flex items-center gap-1.5 mt-1 text-[11px] text-t3">
-                          <Calendar className="w-3 h-3" />
-                          <span>{p.startDate} – {p.endDate}</span>
-                          <span className="mx-1">·</span>
-                          <span>{p.domain}</span>
-                        </div>
-                      </div>
-                      <Button variant="ghost" size="xs" className="opacity-0 group-hover:opacity-100 transition-all duration-200 active:scale-95 shrink-0">
-                        <ExternalLink className="w-3 h-3" />
-                      </Button>
-                    </div>
-                    <p className="text-[14px] text-t1 leading-relaxed mt-2">{p.description}</p>
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      {p.tech.map(t => <span key={t} className="text-[10px] px-2 py-0.5 rounded-full bg-surface-2 border border-border/30 text-t2">{t}</span>)}
-                    </div>
-                  </div>
+            <div>
+              {/* Experience summary */}
+              <div className="rounded-xl border border-border/30 p-4 mb-5 flex items-center gap-3" style={{ background: "var(--surface-2)" }}>
+                <Globe className="w-5 h-5 text-brand shrink-0" />
+                <div>
+                  <p className="text-[14px] font-bold text-t1">Total Experience: {totalYears()} Years</p>
+                  <p className="text-[12px] text-t3">{mockProjects.length} projects across {[...new Set(mockProjects.map(p => p.domain))].length} domains</p>
                 </div>
-              ))}
+              </div>
+
+              <div className="space-y-0">
+                {mockProjects.map((p, i) => (
+                  <div key={p.title} className="flex gap-4 group">
+                    {/* Timeline */}
+                    <div className="flex flex-col items-center pt-1">
+                      <div className="w-3 h-3 rounded-full shrink-0 border-2" style={{
+                        borderColor: p.status === "active" ? "#10B981" : "var(--brand)",
+                        background: p.status === "active" ? "#10B981" : "var(--brand)",
+                      }} />
+                      {i < mockProjects.length - 1 && <div className="w-px flex-1 mt-1" style={{ background: "var(--border-2)" }} />}
+                    </div>
+                    {/* Content */}
+                    <div className="flex-1 pb-6">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="text-[15px] font-bold text-t1">{p.role} @ {p.company}</h3>
+                            {p.tiikApproved && (
+                              <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.12)", color: "#F59E0B" }}>
+                                <Shield className="w-3 h-3" /> Tiik Approved
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1.5 mt-1 text-[12px] text-t3">
+                            <MapPin className="w-3 h-3" />
+                            <span>{p.location}</span>
+                            <span className="mx-0.5">|</span>
+                            <Calendar className="w-3 h-3" />
+                            <span>{p.startDate} – {p.endDate}</span>
+                          </div>
+                        </div>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-all duration-200 active:scale-95 shrink-0 h-8 w-8 p-0">
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>View full project details</TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <p className="text-[14px] text-t2 leading-relaxed mt-2 line-clamp-2">{p.description}</p>
+                      {/* Skills pills */}
+                      <div className="flex flex-wrap gap-1.5 mt-2.5">
+                        {p.tech.map(t => (
+                          <span key={t} className="text-[10px] font-semibold px-2.5 py-1 rounded-full" style={{ background: "var(--brand-dim)", color: "var(--brand)", border: "1px solid var(--brand-glow)" }}>{t}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
@@ -254,22 +341,48 @@ const Profile = () => {
             <EmptyState icon={MessageCircle} title="No posts yet" description="Share your first update — a project milestone, an insight, or a question." actionLabel="Share your first update" onAction={() => toast.info("Opening compose...")} />
           )}
 
+          {/* ========== ABOUT TAB (Groups as floating glass) ========== */}
           {activeTab === "About" && (
             <div className="space-y-6">
               <div>
-                <p className="text-[11px] font-bold tracking-wider uppercase text-t3 mb-3">MY GROUPS</p>
+                <p className="text-[10px] font-bold tracking-wider uppercase text-t3 mb-3">MY GROUPS</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {mockGroups.map(g => (
-                    <div key={g.name} className="rounded-xl border border-border/30 p-4 flex items-center gap-3 hover:border-brand/30 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer active:scale-[0.99]">
-                      <div className="w-12 h-12 rounded-xl flex items-center justify-center text-[14px] font-bold text-white" style={{ backgroundColor: g.color }}>{g.initials}</div>
-                      <div>
-                        <p className="text-[14px] font-bold text-t1">{g.name}</p>
-                        <p className="text-[12px] text-t3">{g.members} members · {g.activeProjects} active projects</p>
-                        <span className="text-[12px] font-semibold text-brand">View group</span>
+                    <div
+                      key={g.name}
+                      onClick={() => setSelectedGroup(g)}
+                      className="rounded-2xl p-5 cursor-pointer hover:-translate-y-1 transition-all duration-300 active:scale-[0.98]"
+                      style={{
+                        background: "rgba(255,255,255,0.04)",
+                        backdropFilter: "blur(20px)",
+                        border: "1px solid rgba(255,255,255,0.08)",
+                        boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+                      }}
+                    >
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-12 h-12 rounded-xl flex items-center justify-center text-[14px] font-bold text-white" style={{ backgroundColor: g.color }}>{g.initials}</div>
+                        <div>
+                          <p className="text-[14px] font-bold text-t1">{g.name}</p>
+                          <p className="text-[11px] text-t3">{g.activeProjects} active projects</p>
+                        </div>
+                      </div>
+                      {/* Overlapping avatars */}
+                      <div className="flex items-center">
+                        {g.memberAvatars.slice(0, 4).map((av, i) => (
+                          <div key={i} className="w-8 h-8 rounded-full flex items-center justify-center text-[9px] font-bold text-white border-2" style={{ backgroundColor: g.color, borderColor: "var(--surface)", marginLeft: i > 0 ? "-8px" : "0", zIndex: 4 - i }}>
+                            {av}
+                          </div>
+                        ))}
+                        {g.members > 4 && (
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-[9px] font-bold border-2 -ml-2" style={{ background: "var(--surface-2)", borderColor: "var(--surface)", color: "var(--text-2)" }}>
+                            +{g.members - 4}
+                          </div>
+                        )}
+                        <span className="text-[11px] text-t3 ml-3">{g.members} members</span>
                       </div>
                     </div>
                   ))}
-                  <div className="rounded-xl p-4 flex items-center justify-center cursor-pointer hover:border-brand/30 transition-all duration-200 active:scale-[0.99]" style={{ border: "2px dashed var(--border-2)" }}>
+                  <div className="rounded-2xl p-5 flex items-center justify-center cursor-pointer hover:border-brand/30 transition-all duration-200 active:scale-[0.99]" style={{ border: "2px dashed var(--border-2)" }}>
                     <span className="text-[13px] font-semibold text-t3">+ Create or join a group</span>
                   </div>
                 </div>
@@ -294,6 +407,9 @@ const Profile = () => {
       </div>
 
       <EditProfileModal open={editOpen} onClose={() => setEditOpen(false)} />
+      <AnimatePresence>
+        {selectedGroup && <GroupModal group={selectedGroup} onClose={() => setSelectedGroup(null)} />}
+      </AnimatePresence>
     </div>
   );
 };

@@ -39,7 +39,6 @@ const AddWorkModal = ({ open, onClose }: { open: boolean; onClose: () => void })
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-0 sm:px-4" style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(8px)" }} onClick={() => { onClose(); setStep("type"); }}>
-      {/* Mobile drag handle */}
       <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
         className="w-full sm:max-w-lg rounded-t-[20px] sm:rounded-2xl border border-border/30 p-6 sm:p-8 max-h-[85vh] overflow-y-auto"
         style={{ background: "var(--surface)", boxShadow: "0 24px 48px rgba(0,0,0,0.3)" }}
@@ -48,7 +47,7 @@ const AddWorkModal = ({ open, onClose }: { open: boolean; onClose: () => void })
 
         {step === "type" && (
           <>
-            <h2 className="text-xl font-bold text-t1 mb-2">Add work to My Work</h2>
+            <h2 className="text-xl font-bold text-t1 mb-2">Add work to Workspace</h2>
             <p className="text-sm text-t2 mb-6">Choose what type of work you want to add.</p>
             <div className="grid grid-cols-3 gap-3 mb-6">
               {workTypes.map(wt => (
@@ -67,7 +66,6 @@ const AddWorkModal = ({ open, onClose }: { open: boolean; onClose: () => void })
             <div className="space-y-4 mb-4">
               <Input placeholder="Title (required)" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} className="h-11 bg-surface-2 border-border/30 focus:ring-2 focus:ring-brand" />
               <textarea placeholder="Description (required)" value={form.desc} onChange={e => setForm({ ...form, desc: e.target.value })} rows={3} className="w-full bg-surface-2 border border-border/30 rounded-xl p-4 text-sm outline-none resize-none placeholder:text-t3 text-t1 focus:border-brand transition-all duration-200" />
-              {/* Drag-and-drop zone */}
               <div
                 onDragOver={e => { e.preventDefault(); setDragOver(true); }}
                 onDragLeave={() => setDragOver(false)}
@@ -100,7 +98,7 @@ const AddWorkModal = ({ open, onClose }: { open: boolean; onClose: () => void })
               <p className="text-xs text-t2">HOD, Computer Science · DTU</p>
             </div>
             <div className="flex gap-3">
-              <Button variant="ghost" onClick={() => { toast.success("Work added to My Work"); onClose(); setStep("type"); }} className="flex-1 active:scale-95 transition-all duration-200 hover:bg-surface-2">Skip</Button>
+              <Button variant="ghost" onClick={() => { toast.success("Work added to Workspace"); onClose(); setStep("type"); }} className="flex-1 active:scale-95 transition-all duration-200 hover:bg-surface-2">Skip</Button>
               <Button onClick={() => { toast.success("Request sent & work added"); onClose(); setStep("type"); }} className="flex-1 active:scale-95 transition-all duration-200">Send request</Button>
             </div>
           </>
@@ -113,18 +111,17 @@ const AddWorkModal = ({ open, onClose }: { open: boolean; onClose: () => void })
 const MyWork = () => {
   const [addOpen, setAddOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
 
-  // Simulate loading
   if (loading) return <div className="max-w-4xl mx-auto px-4 py-7"><SkeletonCard count={3} /></div>;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-7">
       <div className="flex items-center justify-between mb-2">
-        <h1 className="text-[20px] font-bold text-t1">My Work</h1>
+        <h1 className="text-[20px] font-bold text-t1">Workspace</h1>
         <Button size="sm" className="gap-1.5 active:scale-95 transition-all duration-200" onClick={() => setAddOpen(true)}><Plus className="w-4 h-4" /> Add work</Button>
       </div>
-      <p className="text-[13px] text-t2 mb-6">Your verified professional record — shareable at tiikme.in/arjunkumar</p>
+      <p className="text-[13px] text-t2 mb-6">Your private drafting board. Manage your portfolio, check analytics, and set visibility before showcasing on your public profile.</p>
 
       {!dismissed && (
         <div className="rounded-xl border border-border/30 p-4 mb-6 relative" style={{ background: "var(--surface)", borderLeft: "3px solid var(--brand)" }}>
@@ -167,13 +164,13 @@ const MyWork = () => {
               </div>
               <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                 <Tooltip><TooltipTrigger asChild>
-                  <Button variant="ghost" size="xs" className="h-7 w-7 p-0 active:scale-95" onClick={e => { e.stopPropagation(); window.open("#", "_blank"); }}><ExternalLink className="w-3 h-3" /></Button>
-                </TooltipTrigger><TooltipContent>Open</TooltipContent></Tooltip>
+                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 active:scale-95" onClick={e => { e.stopPropagation(); window.open("#", "_blank"); }}><ExternalLink className="w-3 h-3" /></Button>
+                </TooltipTrigger><TooltipContent>View full project details</TooltipContent></Tooltip>
                 <Tooltip><TooltipTrigger asChild>
-                  <Button variant="ghost" size="xs" className="h-7 w-7 p-0 active:scale-95" onClick={e => { e.stopPropagation(); navigator.clipboard.writeText(`https://tiikme.in/arjunkumar/${project.title.toLowerCase().replace(/\s+/g, '-')}`); toast.success("Link copied"); }}><Copy className="w-3 h-3" /></Button>
+                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 active:scale-95" onClick={e => { e.stopPropagation(); navigator.clipboard.writeText(`https://tiikme.in/arjunkumar/${project.title.toLowerCase().replace(/\s+/g, '-')}`); toast.success("Link copied"); }}><Copy className="w-3 h-3" /></Button>
                 </TooltipTrigger><TooltipContent>Copy link</TooltipContent></Tooltip>
                 <Tooltip><TooltipTrigger asChild>
-                  <Button variant="ghost" size="xs" className="h-7 w-7 p-0 active:scale-95" onClick={e => { e.stopPropagation(); toast.info("Opening invite..."); }}><Users className="w-3 h-3" /></Button>
+                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 active:scale-95" onClick={e => { e.stopPropagation(); toast.info("Opening invite..."); }}><Users className="w-3 h-3" /></Button>
                 </TooltipTrigger><TooltipContent>Invite team</TooltipContent></Tooltip>
               </div>
             </motion.div>
@@ -182,7 +179,7 @@ const MyWork = () => {
       )}
 
       <button onClick={() => setAddOpen(true)} className="w-full mt-4 border-2 border-dashed border-border/30 rounded-2xl p-5 text-sm text-t3 hover:text-t1 hover:border-brand transition-all duration-200 flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer">
-        <Plus className="w-4 h-4" /> Add another item to My Work
+        <Plus className="w-4 h-4" /> Add another item to Workspace
       </button>
 
       <AddWorkModal open={addOpen} onClose={() => setAddOpen(false)} />
