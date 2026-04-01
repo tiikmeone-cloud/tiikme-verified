@@ -146,7 +146,32 @@ const SignUp = () => {
                   {selectedRole && <RoleFields role={selectedRole} data={roleData} update={updateRole} />}
                 </div>
                 <p className="text-[12px] text-center mt-5 mb-4" style={{ color: "rgba(238,240,255,0.35)" }}>By continuing you agree to our <Link to="/terms" style={{ color: "var(--brand)" }}>Terms</Link> and <Link to="/privacy" style={{ color: "var(--brand)" }}>Privacy Policy</Link>.</p>
-                <Button size="xl" onClick={() => setStep(2)} className="w-full active:scale-95 transition-all duration-200">Continue <ArrowRight className="w-4 h-4 ml-1" /></Button>
+                <Button size="xl" onClick={async () => {
+                  if (!formData.email || !formData.password || !formData.firstName) {
+                    toast.info("Please fill in required fields"); return;
+                  }
+                  if (formData.password.length < 8) {
+                    toast.info("Password must be at least 8 characters"); return;
+                  }
+                  const { error } = await supabase.auth.signUp({
+                    email: formData.email,
+                    password: formData.password,
+                    options: {
+                      emailRedirectTo: window.location.origin + "/app/feed",
+                      data: {
+                        full_name: `${formData.firstName} ${formData.lastName}`.trim(),
+                        role: selectedRole,
+                        phone: formData.phone,
+                        institution: formData.institution,
+                        city: formData.city,
+                        state: formData.state,
+                      },
+                    },
+                  });
+                  if (error) { toast.error(error.message); return; }
+                  toast.success("Account created!");
+                  setStep(2);
+                }} className="w-full active:scale-95 transition-all duration-200">Continue <ArrowRight className="w-4 h-4 ml-1" /></Button>
               </div>
             </motion.div>
           )}
