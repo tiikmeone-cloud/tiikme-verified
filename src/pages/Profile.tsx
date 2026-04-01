@@ -174,7 +174,7 @@ const Profile = () => {
       </div>
 
       {/* ========== TABS ========== */}
-      <div className="rounded-2xl border border-border/30 overflow-hidden" style={{ background: "var(--surface)" }}>
+      <div className="glass-card overflow-hidden">
         <div className="flex border-b border-border/30 px-7">
           {tabs.map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
