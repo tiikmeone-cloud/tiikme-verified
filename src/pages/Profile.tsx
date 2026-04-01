@@ -551,6 +551,7 @@ const Profile = () => {
       <AnimatePresence>
         {selectedGroup && <GroupModal group={selectedGroup} onClose={() => setSelectedGroup(null)} />}
         {selectedProject && <ProjectModal project={selectedProject} onClose={() => setSelectedProject(null)} />}
+        {verifyProject && <VerificationModal project={verifyProject} onClose={() => setVerifyProject(null)} />}
       </AnimatePresence>
     </div>
   );
