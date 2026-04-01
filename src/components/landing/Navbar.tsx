@@ -40,7 +40,7 @@ const Navbar = () => {
         {/* Desktop right */}
         <div className="hidden md:flex items-center gap-3">
           <Link to="/signin"><Button variant="ghost" className="text-[rgba(238,240,255,0.6)] hover:text-[#EEF0FF]">Sign in</Button></Link>
-          <Link to="/signup"><Button className="gap-1.5"><Zap className="w-3.5 h-3.5" />Get Tiiked</Button></Link>
+          <Link to="/signup"><Button className="gap-1.5"><img src={tiikLogo} alt="" className="w-4 h-4" />Get Tiiked</Button></Link>
         </div>
 
         {/* Mobile right */}
