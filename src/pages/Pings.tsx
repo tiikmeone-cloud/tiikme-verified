@@ -192,11 +192,15 @@ const Pings = () => {
                 )}
                 {!isMe && prevSame && <div className="w-7 mr-2 shrink-0" />}
                 <div className="max-w-[68%] px-3.5 py-2.5 group" style={{
-                  background: isMe ? "linear-gradient(135deg, var(--brand), var(--brand-2))" : "var(--surface-2)",
-                  border: isMe ? "none" : "1px solid var(--border)",
+                  background: isMe ? "linear-gradient(135deg, var(--brand), var(--brand-2))" : "rgba(255,255,255,0.30)",
+                  backdropFilter: isMe ? "none" : "blur(20px)",
+                  WebkitBackdropFilter: isMe ? "none" : "blur(20px)",
+                  border: isMe ? "none" : "1px solid rgba(255,255,255,0.40)",
                   borderRadius: `${topLeft}px ${topRight}px ${bottomRight}px ${bottomLeft}px`,
                   color: isMe ? "white" : "var(--text-1)",
-                  boxShadow: isMe ? "0 2px 8px var(--brand-glow)" : "none",
+                  boxShadow: isMe
+                    ? "inset 0 1px 1px rgba(255,255,255,0.4), 0 4px 16px var(--brand-glow)"
+                    : "0 4px 12px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.5)",
                 }}>
                   <p className="text-[14px] leading-[1.6]">{msg.text}</p>
                   <p className="text-[10px] mt-1 text-right opacity-0 group-hover:opacity-60 transition-opacity" style={{ color: isMe ? "rgba(255,255,255,0.7)" : "var(--text-3)" }}>{msg.time}</p>
