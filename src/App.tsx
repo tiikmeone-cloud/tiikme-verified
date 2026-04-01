@@ -18,6 +18,7 @@ import Alerts from "./pages/Alerts.tsx";
 import SettingsPage from "./pages/Settings.tsx";
 import Institution from "./pages/Institution.tsx";
 import WorkDetail from "./pages/WorkDetail.tsx";
+import VerifyInvite from "./pages/VerifyInvite.tsx";
 import AppShell from "./components/layout/AppShell.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -39,6 +40,7 @@ const App = () => (
           <Route path="/signin" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/welcome" element={<Welcome />} />
+          <Route path="/verify-invite" element={<VerifyInvite />} />
           {/* App */}
           <Route path="/app/feed" element={<Shell><Feed /></Shell>} />
           <Route path="/app/explore" element={<Shell><Explore /></Shell>} />

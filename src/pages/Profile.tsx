@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MapPin, Copy, Shield, Layers, Users, X, Settings, MessageCircle, CheckCircle, Calendar, Globe, ThumbsUp, Lightbulb, FileText, Image } from "lucide-react";
+import { MapPin, Copy, Shield, Layers, Users, X, Settings, MessageCircle, CheckCircle, Calendar, Globe, ThumbsUp, Lightbulb, FileText, Image, Clock, Send, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -246,11 +246,66 @@ const GroupModal = ({ group, onClose }: { group: GroupType | null; onClose: () =
   );
 };
 
+const VerificationModal = ({ project, onClose }: { project: ProjectType | null; onClose: () => void }) => {
+  if (!project) return null;
+  const inviteText = `Hi ${project.anchor}, I've added our project "${project.title}" to Tiikme. Please verify my contribution here: https://tiikme.in/verify-invite?project=${encodeURIComponent(project.title)}&from=arjunkumar`;
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(inviteText);
+    toast.success("Invite text copied!");
+  };
+
+  const handleWhatsApp = () => {
+    window.open(`https://wa.me/?text=${encodeURIComponent(inviteText)}`, "_blank");
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(12px)" }} onClick={onClose}>
+      <motion.div
+        initial={{ scale: 0.92, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.92, opacity: 0 }}
+        className="w-full max-w-md rounded-3xl border p-6 bg-white/70 dark:bg-[#111118]/80 backdrop-blur-2xl border-white/30 dark:border-white/10"
+        style={{ boxShadow: "var(--card-shadow)" }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(245,158,11,0.12)" }}>
+              <Shield className="w-5 h-5" style={{ color: "#F59E0B" }} />
+            </div>
+            <h2 className="text-[18px] font-extrabold text-t1">Get Tiik Approved</h2>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-lg text-t3 hover:text-t1 cursor-pointer active:scale-95"><X className="w-5 h-5" /></button>
+        </div>
+
+        <p className="text-[14px] text-t2 leading-relaxed mb-5">
+          Send this link to your Project Head or Manager. Once they verify, your project receives the official Tiik Approved badge.
+        </p>
+
+        <div className="rounded-xl border border-border/30 p-4 mb-5" style={{ background: "var(--surface-2)" }}>
+          <p className="text-[13px] text-t1 leading-relaxed select-all">{inviteText}</p>
+        </div>
+
+        <div className="flex gap-3">
+          <Button className="flex-1 gap-2 active:scale-95 transition-all duration-200" onClick={handleCopy}>
+            <Copy className="w-4 h-4" /> Copy Link
+          </Button>
+          <Button variant="secondary" className="flex-1 gap-2 active:scale-95 transition-all duration-200" onClick={handleWhatsApp} style={{ background: "#25D366", color: "white", border: "none" }}>
+            <Share2 className="w-4 h-4" /> WhatsApp
+          </Button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 const Profile = () => {
   const [activeTab, setActiveTab] = useState<typeof tabs[number]>("Portfolio");
   const [editOpen, setEditOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<GroupType | null>(null);
   const [selectedProject, setSelectedProject] = useState<ProjectType | null>(null);
+  const [verifyProject, setVerifyProject] = useState<ProjectType | null>(null);
 
   const handleCopyLink = () => { navigator.clipboard.writeText("https://tiikme.in/arjunkumar"); toast.success("Link copied!"); };
 
@@ -381,17 +436,30 @@ const Profile = () => {
                             <Shield className="w-3 h-3" /> Tiik Approved
                           </span>
                         )}
+                        {!p.tiikApproved && p.anchor && p.anchorStatus === "pending" && (
+                          <span className="flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400">
+                            <Clock className="w-3 h-3" /> Awaiting Approval
+                          </span>
+                        )}
                       </div>
 
                       {/* Anchor line */}
                       {p.anchor ? (
-                        <p className="text-[12px] mt-1" style={{ color: "var(--brand)" }}>
-                          <Shield className="w-3 h-3 inline mr-1" />
-                          Verified by: {p.anchor}
+                        <div className="mt-1">
+                          <p className="text-[12px]" style={{ color: "var(--brand)" }}>
+                            <Shield className="w-3 h-3 inline mr-1" />
+                            Verified by: {p.anchor}
+                          </p>
                           {p.anchorStatus === "pending" && (
-                            <span className="text-[10px] font-bold ml-1.5 px-1.5 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.12)", color: "#F59E0B" }}>Pending</span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setVerifyProject(p); }}
+                              className="text-[11px] font-medium mt-0.5 cursor-pointer hover:underline transition-all duration-200 active:scale-95"
+                              style={{ color: "var(--brand)" }}
+                            >
+                              <Send className="w-3 h-3 inline mr-1" />Resend verification invite
+                            </button>
                           )}
-                        </p>
+                        </div>
                       ) : (
                         <span className="inline-block text-[10px] font-semibold px-2.5 py-0.5 rounded-full mt-1" style={{ background: "var(--brand-dim)", color: "var(--brand)" }}>Independent Project</span>
                       )}
@@ -483,6 +551,7 @@ const Profile = () => {
       <AnimatePresence>
         {selectedGroup && <GroupModal group={selectedGroup} onClose={() => setSelectedGroup(null)} />}
         {selectedProject && <ProjectModal project={selectedProject} onClose={() => setSelectedProject(null)} />}
+        {verifyProject && <VerificationModal project={verifyProject} onClose={() => setVerifyProject(null)} />}
       </AnimatePresence>
     </div>
   );
