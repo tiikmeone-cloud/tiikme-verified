@@ -1,10 +1,12 @@
 import { Link } from "react-router-dom";
-import { Zap } from "lucide-react";
+import { Zap, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 10);
     window.addEventListener("scroll", fn);
@@ -16,7 +18,7 @@ const Navbar = () => {
       className="sticky top-0 z-50 h-16 flex items-center justify-between px-6"
       style={{
         background: scrolled ? "rgba(4,6,26,0.85)" : "transparent",
-        backdropFilter: scrolled ? "blur(20px)" : "none",
+        backdropFilter: scrolled ? "blur(20px) saturate(180%)" : "none",
         borderBottom: scrolled ? "1px solid rgba(238,240,255,0.06)" : "none",
         transition: "all 0.3s ease",
       }}
@@ -27,14 +29,23 @@ const Navbar = () => {
         </div>
         <span className="text-[19px] font-extrabold text-[#EEF0FF]">Tiikme</span>
       </Link>
+
+      {/* Desktop center links */}
       <div className="hidden md:flex items-center gap-6">
         {["Features", "How it works", "For Institutions"].map(l => (
           <a key={l} href={`#${l.toLowerCase().replace(/\s/g, "-")}`} className="text-[14px] font-medium text-[rgba(238,240,255,0.6)] hover:text-[#EEF0FF] transition-colors">{l}</a>
         ))}
       </div>
-      <div className="flex items-center gap-3">
+
+      {/* Desktop right */}
+      <div className="hidden md:flex items-center gap-3">
         <Link to="/signin"><Button variant="ghost" className="text-[rgba(238,240,255,0.6)] hover:text-[#EEF0FF]">Sign in</Button></Link>
         <Link to="/signup"><Button className="gap-1.5"><Zap className="w-3.5 h-3.5" />Get Tiiked</Button></Link>
+      </div>
+
+      {/* Mobile right */}
+      <div className="flex md:hidden items-center gap-2">
+        <Link to="/signup"><Button size="sm" className="gap-1"><Zap className="w-3 h-3" />Get Tiiked</Button></Link>
       </div>
     </nav>
   );
