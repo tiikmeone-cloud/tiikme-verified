@@ -212,7 +212,7 @@ const Pings = () => {
         </div>
 
         {/* Input area */}
-        <div className="px-4 py-3" style={{ background: "var(--surface)", borderTop: "1px solid var(--border)" }}>
+        <div className="px-4 py-3" style={{ background: "var(--glass-bg)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderTop: "1px solid var(--glass-border)" }}>
           {attachedFile && (
             <div className="flex items-center gap-2 mb-2 px-3 py-2 rounded-xl" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
               <FileText className="w-4 h-4 shrink-0" style={{ color: "var(--brand)" }} />
