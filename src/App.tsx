@@ -19,6 +19,7 @@ import Alerts from "./pages/Alerts.tsx";
 import SettingsPage from "./pages/Settings.tsx";
 import Institution from "./pages/Institution.tsx";
 import WorkDetail from "./pages/WorkDetail.tsx";
+import Workspace from "./pages/Workspace.tsx";
 import VerifyInvite from "./pages/VerifyInvite.tsx";
 import AppShell from "./components/layout/AppShell.tsx";
 import NotFound from "./pages/NotFound.tsx";
@@ -55,6 +56,7 @@ const App = () => (
           <Route path="/app/alerts" element={<Shell><Alerts /></Shell>} />
           <Route path="/app/settings" element={<Shell><SettingsPage /></Shell>} />
           <Route path="/app/institution/:id" element={<Shell><Institution /></Shell>} />
+          <Route path="/app/workspace" element={<Shell><Workspace /></Shell>} />
           {/* Legacy redirects */}
           <Route path="/app/nexus" element={<Shell><Explore /></Shell>} />
           <Route path="/app/work" element={<Shell><MyWork /></Shell>} />
