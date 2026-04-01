@@ -74,17 +74,17 @@ const AppShell = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <div className="min-h-screen flex" style={{ background: "radial-gradient(ellipse at top, var(--bg), var(--bg-2))" }}>
+    <div className="min-h-screen flex">
       {/* ═══ DESKTOP SIDEBAR (≥1024px) ═══ */}
       <aside
         className="hidden lg:flex flex-col fixed inset-y-0 left-0 z-40"
         style={{
           width: 248,
-          background: "color-mix(in srgb, var(--surface) 80%, transparent)",
-          backdropFilter: "blur(40px) saturate(200%)",
-          WebkitBackdropFilter: "blur(40px) saturate(200%)",
-          borderRight: "1px solid var(--border)",
-          boxShadow: "inset -1px 0 0 rgba(255,255,255,0.06)",
+          background: "var(--glass-bg)",
+          backdropFilter: "blur(24px) saturate(180%)",
+          WebkitBackdropFilter: "blur(24px) saturate(180%)",
+          borderRight: "1px solid var(--glass-border)",
+          boxShadow: "2px 0 24px rgba(4,6,26,0.2)",
         }}
       >
         {/* Logo */}
@@ -188,8 +188,10 @@ const AppShell = ({ children }: { children: ReactNode }) => {
         className="hidden md:flex lg:hidden flex-col items-center fixed inset-y-0 left-0 z-40 py-3"
         style={{
           width: 64,
-          background: "var(--surface)",
-          borderRight: "1px solid var(--border)",
+          background: "var(--glass-bg)",
+          backdropFilter: "blur(24px) saturate(180%)",
+          WebkitBackdropFilter: "blur(24px) saturate(180%)",
+          borderRight: "1px solid var(--glass-border)",
         }}
       >
         {/* Logo mark */}
@@ -267,10 +269,10 @@ const AppShell = ({ children }: { children: ReactNode }) => {
         <header
           className="md:hidden sticky top-0 z-50 h-14 flex items-center justify-between px-4"
           style={{
-            background: "color-mix(in srgb, var(--surface) 92%, transparent)",
-            backdropFilter: "blur(16px) saturate(180%)",
-            WebkitBackdropFilter: "blur(16px) saturate(180%)",
-            borderBottom: "1px solid var(--border)",
+            background: "var(--glass-bg)",
+            backdropFilter: "blur(24px) saturate(180%)",
+            WebkitBackdropFilter: "blur(24px) saturate(180%)",
+            borderBottom: "1px solid var(--glass-border)",
           }}
         >
           <span className="flex items-center gap-2">

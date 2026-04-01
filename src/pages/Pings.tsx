@@ -73,7 +73,7 @@ const Pings = () => {
       <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={handleFileSelect} />
 
       {/* Left panel */}
-      <div className={`w-full md:w-[340px] flex flex-col shrink-0 ${!showMobileList ? "hidden md:flex" : "flex"}`} style={{ background: "var(--surface)", borderRight: "1px solid var(--border)" }}>
+      <div className={`w-full md:w-[340px] flex flex-col shrink-0 ${!showMobileList ? "hidden md:flex" : "flex"}`} style={{ background: "var(--glass-bg)", backdropFilter: "blur(20px) saturate(180%)", WebkitBackdropFilter: "blur(20px) saturate(180%)", borderRight: "1px solid var(--glass-border)" }}>
         <div className="p-4" style={{ borderBottom: "1px solid var(--border)" }}>
           <div className="flex items-center justify-between mb-3">
             <h1 className="text-[20px] font-extrabold" style={{ color: "var(--text-1)", letterSpacing: "-0.01em" }}>Pings</h1>
@@ -142,7 +142,7 @@ const Pings = () => {
 
       {/* Right panel — Chat */}
       <div className={`flex-1 flex flex-col min-w-0 ${showMobileList ? "hidden md:flex" : "flex"}`} style={{ background: "var(--bg)" }}>
-        <div className="flex items-center gap-3 px-5 h-16 shrink-0" style={{ background: "var(--surface)", borderBottom: "1px solid var(--border)" }}>
+        <div className="flex items-center gap-3 px-5 h-16 shrink-0" style={{ background: "var(--glass-bg)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderBottom: "1px solid var(--glass-border)" }}>
           <button onClick={() => setShowMobileList(true)} className="md:hidden p-1.5 rounded-lg cursor-pointer active:scale-95" style={{ color: "var(--text-2)" }}><ArrowLeft className="w-5 h-5" /></button>
           <Link to="/app/profile" className="flex items-center gap-3 flex-1 min-w-0">
             <div className="w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ backgroundColor: ROLE_COLORS[activeConvo.role] || "#3D5AF1", ...ringStyle(activeConvo.verified) }}>{activeConvo.initials}</div>
@@ -192,15 +192,15 @@ const Pings = () => {
                 )}
                 {!isMe && prevSame && <div className="w-7 mr-2 shrink-0" />}
                 <div className="max-w-[68%] px-3.5 py-2.5 group" style={{
-                  background: isMe ? "linear-gradient(135deg, var(--brand), var(--brand-2))" : "rgba(20,24,82,0.65)",
-                  backdropFilter: isMe ? "none" : "blur(24px) saturate(180%)",
-                  WebkitBackdropFilter: isMe ? "none" : "blur(24px) saturate(180%)",
-                  border: isMe ? "none" : "1.5px solid rgba(255,255,255,0.18)",
+                  background: isMe ? "linear-gradient(135deg, var(--brand), var(--brand-2))" : "var(--glass-bg)",
+                  backdropFilter: isMe ? "none" : "blur(16px) saturate(180%)",
+                  WebkitBackdropFilter: isMe ? "none" : "blur(16px) saturate(180%)",
+                  border: isMe ? "none" : `1px solid var(--glass-border-t)`,
                   borderRadius: `${topLeft}px ${topRight}px ${bottomRight}px ${bottomLeft}px`,
                   color: isMe ? "white" : "var(--text-1)",
                   boxShadow: isMe
                     ? "inset 0 1px 1px rgba(255,255,255,0.4), 0 4px 16px var(--brand-glow)"
-                    : "0 4px 16px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.15)",
+                    : "var(--glass-shadow)",
                 }}>
                   <p className="text-[14px] leading-[1.6]">{msg.text}</p>
                   <p className="text-[10px] mt-1 text-right opacity-0 group-hover:opacity-60 transition-opacity" style={{ color: isMe ? "rgba(255,255,255,0.7)" : "var(--text-3)" }}>{msg.time}</p>
@@ -212,7 +212,7 @@ const Pings = () => {
         </div>
 
         {/* Input area */}
-        <div className="px-4 py-3" style={{ background: "var(--surface)", borderTop: "1px solid var(--border)" }}>
+        <div className="px-4 py-3" style={{ background: "var(--glass-bg)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderTop: "1px solid var(--glass-border)" }}>
           {attachedFile && (
             <div className="flex items-center gap-2 mb-2 px-3 py-2 rounded-xl" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
               <FileText className="w-4 h-4 shrink-0" style={{ color: "var(--brand)" }} />
