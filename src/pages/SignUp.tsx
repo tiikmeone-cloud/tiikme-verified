@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, GraduationCap, Briefcase, UserCheck, BookOpen, Stethoscope, Building2, Wrench, Heart, Rocket, Check, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, ArrowRight, GraduationCap, Briefcase, UserCheck, BookOpen, Stethoscope, Building2, Wrench, Heart, Rocket, Check, Eye, EyeOff, Plus, X, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useNavigate } from "react-router-dom";
@@ -22,24 +22,54 @@ const indianStates = ["Andhra Pradesh", "Bihar", "Delhi", "Gujarat", "Karnataka"
 const inputS: React.CSSProperties = { background: "rgba(238,240,255,0.05)", border: "1.5px solid rgba(238,240,255,0.1)", borderRadius: 12, color: "#EEF0FF", height: 44 };
 const glassCard: React.CSSProperties = { background: "rgba(255,255,255,0.04)", backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)", boxShadow: "0 0 0 1px rgba(255,255,255,0.06), 0 24px 48px rgba(0,0,0,0.4)" };
 
+interface ExperienceEntry {
+  id: string;
+  role: string;
+  company: string;
+  startMonth: string;
+  startYear: string;
+  endMonth: string;
+  endYear: string;
+  isPresent: boolean;
+  description: string;
+  projectHead: string;
+}
+
+const months = ["01","02","03","04","05","06","07","08","09","10","11","12"];
+const years = Array.from({ length: 30 }, (_, i) => String(2026 - i));
+
+const emptyExperience = (): ExperienceEntry => ({
+  id: crypto.randomUUID(),
+  role: "",
+  company: "",
+  startMonth: "",
+  startYear: "",
+  endMonth: "",
+  endYear: "",
+  isPresent: false,
+  description: "",
+  projectHead: "",
+});
+
 const SignUp = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({ firstName: "", lastName: "", email: "", password: "", phone: "", institution: "", city: "", state: "", projectTitle: "", projectDesc: "", projectLink: "", jobTitle: "", companyName: "", designation: "", department: "", district: "", specialisation: "", hospitalName: "", subject: "", yearsExperience: "" });
+  const [formData, setFormData] = useState({ firstName: "", lastName: "", email: "", password: "", phone: "", institution: "", city: "", state: "" });
+  const [experiences, setExperiences] = useState<ExperienceEntry[]>([emptyExperience()]);
   const update = (key: string, val: string) => setFormData(p => ({ ...p, [key]: val }));
 
-  const step3Fields: Record<string, { title: string; sub: string; items: { placeholder: string; key: string; type?: string }[] }> = {
-    student: { title: "Add your first project", sub: "Any project, even half-done counts.", items: [{ placeholder: "Project title", key: "projectTitle" }, { placeholder: "One-line description", key: "projectDesc" }, { placeholder: "Project Head / Manager (optional)", key: "projectHead" }, { placeholder: "Link (optional)", key: "projectLink" }] },
-    professional: { title: "Your current role", sub: "Tell us where you work.", items: [{ placeholder: "Job title", key: "jobTitle" }, { placeholder: "Company name", key: "companyName" }] },
-    government: { title: "Your service profile", sub: "Tell us about your role.", items: [{ placeholder: "Designation", key: "designation" }, { placeholder: "Department", key: "department" }, { placeholder: "District / Zone", key: "district" }] },
-    doctor: { title: "Your medical profile", sub: "Tell us about your practice.", items: [{ placeholder: "Designation (MBBS, MD...)", key: "designation" }, { placeholder: "Specialisation", key: "specialisation" }, { placeholder: "Hospital / Clinic", key: "hospitalName" }] },
-    faculty: { title: "Your teaching profile", sub: "Tell us what you teach.", items: [{ placeholder: "Designation", key: "designation" }, { placeholder: "Department + Subject", key: "subject" }] },
-    skilled_trade: { title: "Your trade profile", sub: "Tell us about your trade.", items: [{ placeholder: "Years of experience", key: "yearsExperience", type: "number" }, { placeholder: "City of work", key: "city" }] },
+  const updateExp = (id: string, key: keyof ExperienceEntry, val: string | boolean) => {
+    setExperiences(prev => prev.map(e => e.id === id ? { ...e, [key]: val } : e));
   };
 
-  const f = step3Fields[selectedRole || ""] || step3Fields.student;
+  const addExperience = () => setExperiences(prev => [...prev, emptyExperience()]);
+  const removeExperience = (id: string) => {
+    if (experiences.length > 1) setExperiences(prev => prev.filter(e => e.id !== id));
+  };
+
+  const selectS: React.CSSProperties = { background: "rgba(238,240,255,0.05)", border: "1.5px solid rgba(238,240,255,0.1)", borderRadius: 12, color: "#EEF0FF", height: 44 };
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden" style={{ background: "#04061A" }}>
@@ -59,6 +89,7 @@ const SignUp = () => {
         </div>
 
         <AnimatePresence mode="wait">
+          {/* STEP 0: Role Selection */}
           {step === 0 && (
             <motion.div key="s0" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
               <div className="rounded-2xl p-8 sm:p-10 max-w-[520px] mx-auto" style={glassCard}>
@@ -90,6 +121,7 @@ const SignUp = () => {
             </motion.div>
           )}
 
+          {/* STEP 1: Personal Details */}
           {step === 1 && (
             <motion.div key="s1" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
               <button onClick={() => setStep(0)} className="flex items-center gap-1 text-[13px] mb-6 transition-colors cursor-pointer active:scale-95" style={{ color: "rgba(238,240,255,0.5)" }}><ArrowLeft className="w-4 h-4" /> Back</button>
@@ -125,16 +157,91 @@ const SignUp = () => {
             </motion.div>
           )}
 
+          {/* STEP 2: Dynamic Add Experience Loop */}
           {step === 2 && (
             <motion.div key="s2" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
               <button onClick={() => setStep(1)} className="flex items-center gap-1 text-[13px] mb-6 cursor-pointer active:scale-95" style={{ color: "rgba(238,240,255,0.5)" }}><ArrowLeft className="w-4 h-4" /> Back</button>
-              <div className="rounded-2xl p-8 max-w-[500px] mx-auto" style={glassCard}>
-                <h2 className="text-[24px] font-extrabold text-center mb-1 text-[#EEF0FF]">{f.title}</h2>
-                <p className="text-center mb-7" style={{ color: "rgba(238,240,255,0.5)" }}>{f.sub}</p>
-                <div className="space-y-3.5 mb-6">
-                  {f.items.map(i => <Input key={i.key} type={i.type} placeholder={i.placeholder} value={(formData as any)[i.key]} onChange={e => update(i.key, e.target.value)} style={inputS} />)}
+              <div className="rounded-2xl p-6 sm:p-8 max-w-[540px] mx-auto max-h-[75vh] overflow-y-auto scrollbar-hide" style={glassCard}>
+                <h2 className="text-[24px] font-extrabold text-center mb-1 text-[#EEF0FF]">Add your experience</h2>
+                <p className="text-center mb-6" style={{ color: "rgba(238,240,255,0.5)" }}>Add positions, projects, or roles — like LinkedIn.</p>
+
+                <div className="space-y-5">
+                  {experiences.map((exp, idx) => (
+                    <div key={exp.id} className="rounded-xl p-5 relative" style={{ background: "rgba(238,240,255,0.03)", border: "1px solid rgba(238,240,255,0.08)" }}>
+                      {experiences.length > 1 && (
+                        <button onClick={() => removeExperience(exp.id)} className="absolute top-3 right-3 p-1 rounded-lg cursor-pointer active:scale-95 transition-all" style={{ color: "rgba(238,240,255,0.3)" }}>
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                      <p className="text-[11px] font-bold uppercase tracking-wider mb-3" style={{ color: "rgba(238,240,255,0.4)" }}>Position {idx + 1}</p>
+
+                      <div className="space-y-3">
+                        <Input placeholder="Role / Title" value={exp.role} onChange={e => updateExp(exp.id, "role", e.target.value)} style={inputS} />
+                        <Input placeholder="Company / Institution" value={exp.company} onChange={e => updateExp(exp.id, "company", e.target.value)} style={inputS} />
+
+                        {/* Date row */}
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <p className="text-[10px] font-semibold mb-1.5" style={{ color: "rgba(238,240,255,0.4)" }}>Start Date</p>
+                            <div className="grid grid-cols-2 gap-2">
+                              <select value={exp.startMonth} onChange={e => updateExp(exp.id, "startMonth", e.target.value)} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={selectS}>
+                                <option value="">MM</option>
+                                {months.map(m => <option key={m} value={m}>{m}</option>)}
+                              </select>
+                              <select value={exp.startYear} onChange={e => updateExp(exp.id, "startYear", e.target.value)} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={selectS}>
+                                <option value="">YYYY</option>
+                                {years.map(y => <option key={y} value={y}>{y}</option>)}
+                              </select>
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <p className="text-[10px] font-semibold" style={{ color: "rgba(238,240,255,0.4)" }}>End Date</p>
+                              <label className="flex items-center gap-1.5 cursor-pointer">
+                                <input type="checkbox" checked={exp.isPresent} onChange={e => updateExp(exp.id, "isPresent", e.target.checked)} className="rounded accent-[#3D5AF1]" />
+                                <span className="text-[10px] font-medium" style={{ color: "rgba(238,240,255,0.5)" }}>Present</span>
+                              </label>
+                            </div>
+                            {!exp.isPresent ? (
+                              <div className="grid grid-cols-2 gap-2">
+                                <select value={exp.endMonth} onChange={e => updateExp(exp.id, "endMonth", e.target.value)} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={selectS}>
+                                  <option value="">MM</option>
+                                  {months.map(m => <option key={m} value={m}>{m}</option>)}
+                                </select>
+                                <select value={exp.endYear} onChange={e => updateExp(exp.id, "endYear", e.target.value)} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={selectS}>
+                                  <option value="">YYYY</option>
+                                  {years.map(y => <option key={y} value={y}>{y}</option>)}
+                                </select>
+                              </div>
+                            ) : (
+                              <div className="h-10 rounded-lg flex items-center px-3 text-[13px]" style={{ ...selectS, opacity: 0.5 }}>
+                                <Calendar className="w-3.5 h-3.5 mr-1.5" /> Present
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <textarea
+                          placeholder="Describe your work, skills, and impact..."
+                          value={exp.description}
+                          onChange={e => updateExp(exp.id, "description", e.target.value)}
+                          rows={2}
+                          className="w-full rounded-xl p-3 text-[13px] outline-none resize-none placeholder:text-[rgba(238,240,255,0.3)]"
+                          style={{ background: "rgba(238,240,255,0.05)", border: "1.5px solid rgba(238,240,255,0.1)", color: "#EEF0FF" }}
+                        />
+
+                        <Input placeholder="Project Head / Manager (optional)" value={exp.projectHead} onChange={e => updateExp(exp.id, "projectHead", e.target.value)} style={inputS} />
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <Button size="xl" onClick={() => navigate("/welcome")} className="w-full active:scale-95 transition-all duration-200">Create my profile <ArrowRight className="w-4 h-4" /></Button>
+
+                {/* Add another */}
+                <button onClick={addExperience} className="w-full mt-4 py-3 rounded-xl text-[13px] font-semibold flex items-center justify-center gap-2 cursor-pointer transition-all duration-200 active:scale-[0.98] hover:border-[rgba(238,240,255,0.2)]" style={{ border: "1.5px dashed rgba(238,240,255,0.12)", color: "rgba(238,240,255,0.5)" }}>
+                  <Plus className="w-4 h-4" /> Add another position
+                </button>
+
+                <Button size="xl" onClick={() => navigate("/welcome")} className="w-full mt-5 active:scale-95 transition-all duration-200">Create my profile <ArrowRight className="w-4 h-4" /></Button>
                 <button onClick={() => navigate("/welcome")} className="block mx-auto mt-4 text-[13px] cursor-pointer hover:underline active:scale-95 transition-all duration-200" style={{ color: "rgba(238,240,255,0.4)" }}>Skip for now</button>
               </div>
             </motion.div>

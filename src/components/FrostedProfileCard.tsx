@@ -11,11 +11,12 @@ interface FrostedProfileCardProps {
   institution: string;
   headline: string;
   verified: "gold" | "grey" | "none";
+  contextBadge?: string;
   onConnect?: () => void;
   className?: string;
 }
 
-const FrostedProfileCard = ({ name, initials, role, roleColor, institution, headline, verified, onConnect, className = "" }: FrostedProfileCardProps) => {
+const FrostedProfileCard = ({ name, initials, role, roleColor, institution, headline, verified, contextBadge, onConnect, className = "" }: FrostedProfileCardProps) => {
   return (
     <div className={`group relative w-[260px] h-[300px] rounded-2xl overflow-hidden shrink-0 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg border border-border/30 ${className}`}
       style={{ background: "var(--surface)" }}>
@@ -59,6 +60,12 @@ const FrostedProfileCard = ({ name, initials, role, roleColor, institution, head
             <Link to="/app/institution/1" className="text-[10px] text-t3 hover:text-brand transition-colors">{institution}</Link>
           </div>
           <p className="text-[12px] text-t2 mt-2 line-clamp-2 leading-relaxed">{headline}</p>
+          {contextBadge && (
+            <p className="text-[11px] font-bold mt-1.5 px-2.5 py-1 rounded-full inline-block transition-all duration-300"
+              style={{ background: "var(--brand-dim)", color: "var(--brand)" }}>
+              {contextBadge}
+            </p>
+          )}
         </div>
         <Button
           variant="secondary"
