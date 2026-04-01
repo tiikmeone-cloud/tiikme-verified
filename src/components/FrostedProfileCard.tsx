@@ -11,6 +11,7 @@ interface FrostedProfileCardProps {
   institution: string;
   headline: string;
   verified: "gold" | "grey" | "none";
+  contextBadge?: string;
   onConnect?: () => void;
   className?: string;
 }
