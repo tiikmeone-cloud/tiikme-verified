@@ -326,7 +326,7 @@ const Feed = () => {
         </div>
 
         {/* Right rail — desktop only */}
-        <aside className="hidden xl:block w-[300px] shrink-0 sticky top-7 self-start space-y-0">
+        <aside className="hidden lg:block w-[280px] shrink-0 sticky top-7 self-start space-y-0">
           <ActivityWidget />
           <RecruiterWidget />
           <OpportunitiesWidget />
