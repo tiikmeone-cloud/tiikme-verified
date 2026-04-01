@@ -74,7 +74,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <div className="min-h-screen flex" style={{ background: "var(--bg)" }}>
+    <div className="min-h-screen flex" style={{ background: "radial-gradient(ellipse at top, var(--bg), var(--bg-2))" }}>
       {/* ═══ DESKTOP SIDEBAR (≥1024px) ═══ */}
       <aside
         className="hidden lg:flex flex-col fixed inset-y-0 left-0 z-40"
