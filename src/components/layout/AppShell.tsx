@@ -18,7 +18,7 @@ const navGroups = [
   {
     label: "WORK",
     items: [
-      { label: "Workspace", icon: Layers, path: "/app/teams" },
+      { label: "My Work", icon: Layers, path: "/app/teams" },
       { label: "Opportunities", icon: Target, path: "/app/opportunities", badge: 3 },
     ],
   },
@@ -118,7 +118,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
         {/* User card + Logout */}
         <div className="px-2.5 pb-3 pt-2">
           <Link to="/app/profile" className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-colors hover:bg-brand-dim">
-            <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ backgroundColor: "#4F46E5" }}>AK</div>
+            <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ backgroundColor: "var(--brand)" }}>AK</div>
             <div className="min-w-0 flex-1">
               <p className="text-[13px] font-bold truncate" style={{ color: "var(--text-1)" }}>Arjun Kumar</p>
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "var(--brand-dim)", color: "var(--brand)" }}>Student</span>
@@ -145,7 +145,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             </div>
             <span className="text-[17px] font-extrabold" style={{ color: "var(--text-1)" }}>Tiikme</span>
           </span>
-          <Link to="/app/profile" className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ backgroundColor: "#4F46E5" }}>AK</Link>
+          <Link to="/app/profile" className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ backgroundColor: "var(--brand)" }}>AK</Link>
         </header>
 
         <div>{children}</div>

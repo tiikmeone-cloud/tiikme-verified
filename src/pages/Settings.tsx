@@ -154,7 +154,7 @@ const SettingsPage = () => {
                 <h3 className="text-[16px] font-bold text-t1 mb-5">Profile</h3>
                 <div className="flex items-center gap-5 mb-6">
                   <div className="relative group cursor-pointer">
-                    <div className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold text-white" style={{ backgroundColor: "#4F46E5" }}>AK</div>
+                    <div className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold text-white" style={{ backgroundColor: "var(--brand)" }}>AK</div>
                     <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-200">
                       <Camera className="w-5 h-5 text-white" />
                     </div>
@@ -217,7 +217,7 @@ const SettingsPage = () => {
                 <div className="grid grid-cols-3 gap-3">
                   {[
                     { id: "dark", label: "Dark", icon: Moon, desc: "Krishna Blue", previewBg: "#04061A", previewDot: "#3D5AF1" },
-                    { id: "light", label: "Light", icon: Sun, desc: "Liquid Glossy", previewBg: "#FAFAFA", previewDot: "#4F46E5" },
+                    { id: "light", label: "Light", icon: Sun, desc: "Anjaneyam Orange", previewBg: "#FFF8F2", previewDot: "#E8580A" },
                     { id: "system", label: "System", icon: Monitor, desc: "Match device" },
                   ].map(t => (
                     <button key={t.id} onClick={() => handleThemeChange(t.id)}

@@ -144,7 +144,7 @@ const Profile = () => {
               </div>
               <p className="text-[14px] md:text-[15px] mt-3 text-gray-700 dark:text-white/80 leading-relaxed line-clamp-2">Final year CSE student building at the intersection of health and technology.</p>
               <div className="flex items-center gap-2 flex-wrap mt-3">
-                <Link to="/app/institution/1" className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer bg-indigo-100 text-indigo-700 border border-indigo-200 dark:bg-indigo-500/15 dark:text-indigo-300 dark:border-indigo-500/20">
+                <Link to="/app/institution/1" className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer" style={{ background: "var(--brand-dim)", color: "var(--brand)", border: "1px solid var(--brand-glow)" }}>
                   <MapPin className="w-3 h-3 inline mr-1" />DTU
                 </Link>
                 <Link to="/app/teams/telemedicinerx" className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer bg-emerald-100 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/20">
