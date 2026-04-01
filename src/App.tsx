@@ -19,6 +19,7 @@ import Alerts from "./pages/Alerts.tsx";
 import SettingsPage from "./pages/Settings.tsx";
 import Institution from "./pages/Institution.tsx";
 import WorkDetail from "./pages/WorkDetail.tsx";
+import Workspace from "./pages/Workspace.tsx";
 import VerifyInvite from "./pages/VerifyInvite.tsx";
 import AppShell from "./components/layout/AppShell.tsx";
 import NotFound from "./pages/NotFound.tsx";
