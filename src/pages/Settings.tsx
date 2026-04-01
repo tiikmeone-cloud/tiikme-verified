@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { tiikToast } from "@/components/ui/tiik-toast";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { supabase } from "@/lib/supabase";
 
 const navItems = [
   { id: "profile", label: "Profile", icon: User },
@@ -62,14 +63,13 @@ const SettingsPage = () => {
     tiikToast.success(`Theme set to ${newTheme}`);
   };
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
     setLoggingOut(true);
-    setTimeout(() => {
-      const savedTheme = localStorage.getItem("tiikme-theme");
-      localStorage.clear();
-      if (savedTheme) localStorage.setItem("tiikme-theme", savedTheme);
-      navigate("/signin");
-    }, 600);
+    await supabase.auth.signOut();
+    const savedTheme = localStorage.getItem("tiikme-theme");
+    localStorage.clear();
+    if (savedTheme) localStorage.setItem("tiikme-theme", savedTheme);
+    setTimeout(() => navigate("/signin"), 500);
   };
 
   return (

@@ -21,6 +21,8 @@ import Institution from "./pages/Institution.tsx";
 import WorkDetail from "./pages/WorkDetail.tsx";
 import Workspace from "./pages/Workspace.tsx";
 import VerifyInvite from "./pages/VerifyInvite.tsx";
+import Privacy from "./pages/Privacy.tsx";
+import Terms from "./pages/Terms.tsx";
 import AppShell from "./components/layout/AppShell.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -43,6 +45,8 @@ const App = () => (
           <Route path="/signup" element={<SignUp />} />
           <Route path="/welcome" element={<Welcome />} />
           <Route path="/verify-invite" element={<VerifyInvite />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
           {/* App */}
           <Route path="/app/feed" element={<Shell><Feed /></Shell>} />
           <Route path="/app/explore" element={<Shell><Explore /></Shell>} />
