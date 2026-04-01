@@ -16,7 +16,7 @@ interface FrostedProfileCardProps {
   className?: string;
 }
 
-const FrostedProfileCard = ({ name, initials, role, roleColor, institution, headline, verified, onConnect, className = "" }: FrostedProfileCardProps) => {
+const FrostedProfileCard = ({ name, initials, role, roleColor, institution, headline, verified, contextBadge, onConnect, className = "" }: FrostedProfileCardProps) => {
   return (
     <div className={`group relative w-[260px] h-[300px] rounded-2xl overflow-hidden shrink-0 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg border border-border/30 ${className}`}
       style={{ background: "var(--surface)" }}>
