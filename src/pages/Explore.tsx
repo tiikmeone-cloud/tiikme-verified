@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, X, ChevronLeft, ChevronRight, Shield, Users, Layers, Target,
   ArrowRight, Cpu, Stethoscope, Scale, Building2, Wrench, Microscope,
-  DollarSign, GraduationCap, Rocket, ShieldCheck, Hash, MapPin, Eye
+  DollarSign, GraduationCap, Rocket, ShieldCheck, Hash, MapPin
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -74,7 +74,7 @@ const ringStyle = (v: string): React.CSSProperties => {
 function PersonCard({ p }: { p: typeof peopleMock[0] }) {
   const [connected, setConnected] = useState(false);
   return (
-    <div className="t-card t-card-hover p-[18px] flex flex-col" style={{ borderTop: `4px solid ${p.color}` }}>
+    <article className="glass-liquid glass-liquid-hover rounded-2xl md:rounded-3xl p-[18px] flex flex-col cursor-pointer" style={{ borderTop: `4px solid ${p.color}` }}>
       <div className="flex items-start justify-between mb-2.5">
         <Link to="/app/profile">
           <div className="w-12 h-12 rounded-full flex items-center justify-center text-[15px] font-bold text-white" style={{ backgroundColor: p.color, ...ringStyle(p.verified) }}>{p.initials}</div>
@@ -91,17 +91,17 @@ function PersonCard({ p }: { p: typeof peopleMock[0] }) {
         <span className="text-[11px] font-bold px-2 py-0.5 rounded-full" style={{ background: "var(--brand-dim)", color: "var(--brand)" }}>{p.score}</span>
         <span className="text-[11px]" style={{ color: "var(--text-3)" }}>{p.strands} strands</span>
       </div>
-      <Button variant={connected ? "ghost" : "secondary"} className="w-full mt-3" disabled={connected}
+      <Button variant={connected ? "ghost" : "secondary"} className="w-full mt-3 active:scale-95" disabled={connected}
         onClick={() => { setConnected(true); tiikToast.success("Connection request sent"); }}>
-        {connected ? "Sent ✓" : "Connect"}
+        {connected ? "Pending ✓" : "Connect"}
       </Button>
-    </div>
+    </article>
   );
 }
 
 function ProjectCard({ p }: { p: typeof projectsMock[0] }) {
   return (
-    <div className="t-card t-card-hover p-[18px] flex flex-col">
+    <article className="glass-liquid glass-liquid-hover rounded-2xl md:rounded-3xl p-[18px] flex flex-col">
       <div className="flex items-center justify-between mb-2.5">
         <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${p.color}14` }}>
           <Layers className="w-5 h-5" style={{ color: p.color }} strokeWidth={1.8} />
@@ -122,17 +122,17 @@ function ProjectCard({ p }: { p: typeof projectsMock[0] }) {
         <Users className="w-3 h-3" style={{ color: "var(--text-3)" }} />
         <span className="text-[11px]" style={{ color: "var(--text-3)" }}>Team of {p.teamSize}</span>
       </div>
-      <Button variant="secondary" className="w-full mt-3">
+      <Button variant="secondary" className="w-full mt-3 active:scale-95">
         View project <ArrowRight className="w-3 h-3 ml-1" />
       </Button>
-    </div>
+    </article>
   );
 }
 
 function InstitutionCard({ inst }: { inst: typeof institutionsMock[0] }) {
   const [following, setFollowing] = useState(false);
   return (
-    <div className="t-card t-card-hover p-[18px] flex flex-col">
+    <article className="glass-liquid glass-liquid-hover rounded-2xl md:rounded-3xl p-[18px] flex flex-col">
       <div className="flex items-center gap-3 mb-3">
         <div className="w-12 h-12 rounded-xl flex items-center justify-center text-[13px] font-bold" style={{ background: "var(--brand-dim)", border: "1px solid var(--border-2)", color: "var(--brand)" }}>{inst.initials}</div>
         <div className="min-w-0 flex-1">
@@ -152,18 +152,18 @@ function InstitutionCard({ inst }: { inst: typeof institutionsMock[0] }) {
       )}
       <p className="text-[11px] mb-3" style={{ color: "var(--text-3)" }}>{inst.members.toLocaleString()} verified members · {inst.projects} projects</p>
       <div className="flex gap-2 mt-auto">
-        <Button className="flex-1" onClick={() => tiikToast.success("Verification request sent")}>I work here</Button>
-        <Button variant="ghost" className="flex-1" onClick={() => { setFollowing(!following); tiikToast.success(following ? "Unfollowed" : "Following"); }}>
+        <Button className="flex-1 active:scale-95" onClick={() => tiikToast.success("Verification request sent")}>I work here</Button>
+        <Button variant="ghost" className="flex-1 active:scale-95" onClick={() => { setFollowing(!following); tiikToast.success(following ? "Unfollowed" : "Following"); }}>
           {following ? "Following ✓" : "Follow"}
         </Button>
       </div>
-    </div>
+    </article>
   );
 }
 
 function OpportunityCard({ o }: { o: typeof opportunitiesMock[0] }) {
   return (
-    <div className="t-card t-card-hover p-[18px] flex flex-col" style={{ borderLeft: "4px solid #F59E0B" }}>
+    <article className="glass-liquid glass-liquid-hover rounded-2xl md:rounded-3xl p-[18px] flex flex-col" style={{ borderLeft: "4px solid #F59E0B" }}>
       <p className="micro-label mb-1" style={{ color: "#F59E0B" }}>{o.type}</p>
       <p className="text-[15px] font-bold" style={{ color: "var(--text-1)" }}>{o.name}</p>
       <p className="text-[12px] mt-1" style={{ color: "var(--text-3)" }}>Posted by {o.poster}</p>
@@ -171,25 +171,25 @@ function OpportunityCard({ o }: { o: typeof opportunitiesMock[0] }) {
         <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full" style={{ backgroundColor: "rgba(245,158,11,0.10)", color: "#F59E0B" }}>{o.reward}</span>
         <span className="text-[11px] flex items-center gap-1" style={{ color: "var(--text-3)" }}><Target className="w-3 h-3" /> {o.daysLeft}</span>
       </div>
-      <Button variant="secondary" className="w-full mt-3">View <ArrowRight className="w-3 h-3 ml-1" /></Button>
-    </div>
+      <Button variant="secondary" className="w-full mt-3 active:scale-95">View <ArrowRight className="w-3 h-3 ml-1" /></Button>
+    </article>
   );
 }
 
 function TopicCard({ t }: { t: typeof topicsMock[0] }) {
   const [following, setFollowing] = useState(false);
   return (
-    <div className="t-card t-card-hover p-[18px] flex flex-col" style={{ borderLeft: "4px solid var(--brand)" }}>
+    <article className="glass-liquid glass-liquid-hover rounded-2xl md:rounded-3xl p-[18px] flex flex-col" style={{ borderLeft: "4px solid var(--brand)" }}>
       <div className="flex items-center gap-2 mb-2">
         <Hash className="w-8 h-8" style={{ color: "var(--brand)" }} />
         <span className="text-[18px] font-bold" style={{ color: "var(--text-1)" }}>{t.name}</span>
       </div>
       <p className="text-[12px]" style={{ color: "var(--text-3)" }}>{t.posts.toLocaleString()} posts · {t.followers} followers</p>
-      <Button variant={following ? "ghost" : "secondary"} size="sm" className="w-full mt-3" disabled={following}
+      <Button variant={following ? "ghost" : "secondary"} size="sm" className="w-full mt-3 active:scale-95" disabled={following}
         onClick={() => { setFollowing(true); tiikToast.success("Following #" + t.name); }}>
         {following ? "Following ✓" : "Follow"}
       </Button>
-    </div>
+    </article>
   );
 }
 
@@ -215,20 +215,17 @@ const Explore = () => {
   const showTopics = activeFilter === "All" || activeFilter === "Topics";
 
   return (
-    <div className="max-w-[1100px] mx-auto px-3 md:px-6 py-7">
+    <main className="max-w-[1100px] mx-auto px-3 md:px-6 py-7">
       {/* Search */}
       <div className="relative mb-5">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: "var(--text-3)" }} />
         <input
           type="text" value={search} onChange={e => setSearch(e.target.value)}
           placeholder="Search by name, skill, city, field..."
-          className="w-full h-[52px] rounded-2xl pl-[52px] pr-12 text-[14px] outline-none"
-          style={{
-            background: "var(--surface)", border: "1.5px solid var(--border-2)",
-            color: "var(--text-1)", transition: "border 0.15s, box-shadow 0.15s",
-          }}
+          className="w-full h-[52px] glass-liquid rounded-2xl pl-[52px] pr-12 text-[14px] outline-none"
+          style={{ color: "var(--text-1)" }}
           onFocus={e => { e.currentTarget.style.borderColor = "var(--brand)"; e.currentTarget.style.boxShadow = "0 0 0 3px var(--brand-dim)"; }}
-          onBlur={e => { e.currentTarget.style.borderColor = "var(--border-2)"; e.currentTarget.style.boxShadow = "none"; }}
+          onBlur={e => { e.currentTarget.style.borderColor = ""; e.currentTarget.style.boxShadow = ""; }}
         />
         {search && (
           <button onClick={() => setSearch("")} className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center" style={{ color: "var(--text-3)" }}>
@@ -251,12 +248,12 @@ const Explore = () => {
             const active = activeTerrain === f.name;
             return (
               <button key={f.name} onClick={() => setActiveTerrain(active ? null : f.name)}
-                className="shrink-0 w-[110px] rounded-2xl p-3.5 text-center cursor-pointer"
+                className="shrink-0 w-[110px] glass-liquid rounded-2xl p-3.5 text-center cursor-pointer"
                 style={{
-                  background: active ? "var(--brand-dim)" : "var(--surface)",
-                  border: active ? "1.5px solid var(--brand)" : "1px solid var(--border)",
-                  transition: "all 0.2s cubic-bezier(0.34,1.56,0.64,1)",
+                  borderColor: active ? "var(--brand)" : undefined,
+                  background: active ? "var(--brand-dim)" : undefined,
                   transform: active ? "translateY(-2px)" : "none",
+                  transition: "all 0.2s cubic-bezier(0.34,1.56,0.64,1)",
                 }}>
                 <div className="w-2 h-2 rounded-full mx-auto mb-2" style={{ background: f.color }} />
                 <f.icon className="w-6 h-6 mx-auto mb-1.5" style={{ color: active ? "var(--brand)" : f.color }} strokeWidth={1.8} />
@@ -272,7 +269,7 @@ const Explore = () => {
       <div className="flex gap-1.5 overflow-x-auto scrollbar-hide mb-2.5 pb-1">
         {filterRow1.map(f => (
           <button key={f} onClick={() => setActiveFilter(f)}
-            className="shrink-0 h-[30px] px-3 rounded-full text-[12px] font-semibold cursor-pointer"
+            className="shrink-0 h-[30px] px-3 rounded-full text-[12px] font-semibold cursor-pointer active:scale-95"
             style={{
               background: activeFilter === f ? "var(--brand)" : "var(--surface-2)",
               color: activeFilter === f ? "white" : "var(--text-2)",
@@ -290,7 +287,7 @@ const Explore = () => {
           const active = activeRoles.includes(r);
           return (
             <button key={r} onClick={() => toggleRole(r)}
-              className="shrink-0 h-[30px] px-3 rounded-full text-[12px] font-semibold cursor-pointer"
+              className="shrink-0 h-[30px] px-3 rounded-full text-[12px] font-semibold cursor-pointer active:scale-95"
               style={{
                 background: active ? "var(--brand)" : "var(--surface-2)",
                 color: active ? "white" : "var(--text-2)",
@@ -304,7 +301,7 @@ const Explore = () => {
       </div>
 
       {/* Results Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <AnimatePresence>
           {showPeople && peopleMock.map((p, i) => (
             <motion.div key={"p" + i} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
@@ -336,11 +333,11 @@ const Explore = () => {
 
       {/* Load more */}
       <div className="mt-6">
-        <Button variant="secondary" className="w-full" onClick={() => tiikToast("Loading 12 more results...")}>
+        <Button variant="secondary" className="w-full active:scale-95" onClick={() => tiikToast("Loading 12 more results...")}>
           Load 12 more results
         </Button>
       </div>
-    </div>
+    </main>
   );
 };
 
