@@ -9,15 +9,15 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-[var(--brand)] text-white border-none shadow-[0_2px_8px_var(--brand-glow),inset_0_1px_0_rgba(255,255,255,0.1)] hover:bg-[var(--brand-2)] hover:shadow-[0_8px_24px_var(--brand-glow)] hover:-translate-y-px hover:scale-[1.01] active:scale-[0.97] active:shadow-[0_2px_6px_var(--brand-glow)] transition-all duration-150",
+          "bg-gradient-to-b from-[var(--brand-2)] to-[var(--brand)] text-white border border-[var(--brand-2)]/50 shadow-[inset_0_1px_1px_rgba(255,255,255,0.6),_0_8px_16px_var(--brand-glow)] hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.7),_0_12px_28px_var(--brand-glow)] hover:-translate-y-px hover:scale-[1.01] active:scale-[0.95] active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)] transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)]",
         secondary:
-          "bg-[var(--surface-2)] border-[1.5px] border-[var(--border-2)] text-[var(--text-1)] font-semibold hover:border-[var(--brand)] hover:bg-[var(--brand-dim)] hover:text-[var(--brand)] active:scale-[0.97] transition-all duration-150",
+          "bg-white/30 dark:bg-white/5 backdrop-blur-md border border-white/40 dark:border-white/10 text-[var(--text-1)] font-semibold shadow-sm hover:border-[var(--brand)] hover:bg-[var(--brand-dim)] hover:text-[var(--brand)] hover:-translate-y-px active:scale-[0.95] transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)]",
         ghost:
-          "bg-transparent text-[var(--text-2)] hover:text-[var(--text-1)] hover:bg-[var(--brand-dim)] active:scale-[0.97] transition-all duration-150",
+          "bg-transparent text-[var(--text-2)] hover:text-[var(--text-1)] hover:bg-white/20 dark:hover:bg-white/5 active:scale-[0.95] transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)]",
         destructive:
-          "bg-[rgba(220,38,38,0.08)] border border-[rgba(220,38,38,0.2)] text-[#DC2626] hover:bg-[rgba(220,38,38,0.14)] active:scale-[0.97] transition-all duration-150",
+          "bg-gradient-to-b from-red-400 to-red-600 text-white border border-red-400/50 shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),_0_8px_16px_rgba(220,38,38,0.3)] hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.5),_0_12px_24px_rgba(220,38,38,0.4)] active:scale-[0.95] active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)] transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)]",
         outline:
-          "bg-[var(--surface-2)] border-[1.5px] border-[var(--border-2)] text-[var(--text-1)] font-semibold hover:border-[var(--brand)] hover:bg-[var(--brand-dim)] active:scale-[0.97] transition-all duration-150",
+          "bg-white/30 dark:bg-white/5 backdrop-blur-md border-[1.5px] border-white/40 dark:border-white/10 text-[var(--text-1)] font-semibold shadow-sm hover:border-[var(--brand)] hover:bg-[var(--brand-dim)] active:scale-[0.95] transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)]",
         link: "text-[var(--brand)] underline-offset-4 hover:underline",
       },
       size: {
