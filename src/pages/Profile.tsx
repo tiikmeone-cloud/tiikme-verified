@@ -436,17 +436,30 @@ const Profile = () => {
                             <Shield className="w-3 h-3" /> Tiik Approved
                           </span>
                         )}
+                        {!p.tiikApproved && p.anchor && p.anchorStatus === "pending" && (
+                          <span className="flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400">
+                            <Clock className="w-3 h-3" /> Awaiting Approval
+                          </span>
+                        )}
                       </div>
 
                       {/* Anchor line */}
                       {p.anchor ? (
-                        <p className="text-[12px] mt-1" style={{ color: "var(--brand)" }}>
-                          <Shield className="w-3 h-3 inline mr-1" />
-                          Verified by: {p.anchor}
+                        <div className="mt-1">
+                          <p className="text-[12px]" style={{ color: "var(--brand)" }}>
+                            <Shield className="w-3 h-3 inline mr-1" />
+                            Verified by: {p.anchor}
+                          </p>
                           {p.anchorStatus === "pending" && (
-                            <span className="text-[10px] font-bold ml-1.5 px-1.5 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.12)", color: "#F59E0B" }}>Pending</span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setVerifyProject(p); }}
+                              className="text-[11px] font-medium mt-0.5 cursor-pointer hover:underline transition-all duration-200 active:scale-95"
+                              style={{ color: "var(--brand)" }}
+                            >
+                              <Send className="w-3 h-3 inline mr-1" />Resend verification invite
+                            </button>
                           )}
-                        </p>
+                        </div>
                       ) : (
                         <span className="inline-block text-[10px] font-semibold px-2.5 py-0.5 rounded-full mt-1" style={{ background: "var(--brand-dim)", color: "var(--brand)" }}>Independent Project</span>
                       )}
