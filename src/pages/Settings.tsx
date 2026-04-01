@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { tiikToast } from "@/components/ui/tiik-toast";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { supabase } from "@/lib/supabase";
 
 const navItems = [
   { id: "profile", label: "Profile", icon: User },
