@@ -31,7 +31,7 @@ const SignUp = () => {
   const update = (key: string, val: string) => setFormData(p => ({ ...p, [key]: val }));
 
   const step3Fields: Record<string, { title: string; sub: string; items: { placeholder: string; key: string; type?: string }[] }> = {
-    student: { title: "Add your first project", sub: "Any project, even half-done counts.", items: [{ placeholder: "Project title", key: "projectTitle" }, { placeholder: "One-line description", key: "projectDesc" }, { placeholder: "Link (optional)", key: "projectLink" }] },
+    student: { title: "Add your first project", sub: "Any project, even half-done counts.", items: [{ placeholder: "Project title", key: "projectTitle" }, { placeholder: "One-line description", key: "projectDesc" }, { placeholder: "Project Head / Manager (optional)", key: "projectHead" }, { placeholder: "Link (optional)", key: "projectLink" }] },
     professional: { title: "Your current role", sub: "Tell us where you work.", items: [{ placeholder: "Job title", key: "jobTitle" }, { placeholder: "Company name", key: "companyName" }] },
     government: { title: "Your service profile", sub: "Tell us about your role.", items: [{ placeholder: "Designation", key: "designation" }, { placeholder: "Department", key: "department" }, { placeholder: "District / Zone", key: "district" }] },
     doctor: { title: "Your medical profile", sub: "Tell us about your practice.", items: [{ placeholder: "Designation (MBBS, MD...)", key: "designation" }, { placeholder: "Specialisation", key: "specialisation" }, { placeholder: "Hospital / Clinic", key: "hospitalName" }] },
