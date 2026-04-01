@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Zap, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
+import tiikLogo from "@/assets/tiikme-logo.png";
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -25,9 +26,7 @@ const Navbar = () => {
         }}
       >
         <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #3D5AF1, #5B73F5)" }}>
-            <Zap className="w-4 h-4 text-white" />
-          </div>
+          <img src={tiikLogo} alt="Tiikme" className="w-8 h-8 rounded-xl" />
           <span className="text-[19px] font-extrabold text-[#EEF0FF]">Tiikme</span>
         </Link>
 
@@ -41,13 +40,13 @@ const Navbar = () => {
         {/* Desktop right */}
         <div className="hidden md:flex items-center gap-3">
           <Link to="/signin"><Button variant="ghost" className="text-[rgba(238,240,255,0.6)] hover:text-[#EEF0FF]">Sign in</Button></Link>
-          <Link to="/signup"><Button className="gap-1.5"><Zap className="w-3.5 h-3.5" />Get Tiiked</Button></Link>
+          <Link to="/signup"><Button className="gap-1.5"><img src={tiikLogo} alt="" className="w-4 h-4" />Get Tiiked</Button></Link>
         </div>
 
         {/* Mobile right */}
         <div className="flex md:hidden items-center gap-2">
           <Link to="/signin" className="text-[13px] font-semibold" style={{ color: "rgba(238,240,255,0.6)" }}>Sign in</Link>
-          <Link to="/signup"><Button size="sm" className="gap-1"><Zap className="w-3 h-3" />Get Tiiked</Button></Link>
+          <Link to="/signup"><Button size="sm" className="gap-1"><img src={tiikLogo} alt="" className="w-3.5 h-3.5" />Get Tiiked</Button></Link>
           <button onClick={() => setMenuOpen(true)} className="p-1.5 ml-1 cursor-pointer" style={{ color: "rgba(238,240,255,0.7)" }}>
             <Menu className="w-6 h-6" />
           </button>
@@ -88,7 +87,7 @@ const Navbar = () => {
                 <Button variant="ghost" className="w-full text-[rgba(238,240,255,0.6)] hover:text-[#EEF0FF]">Sign in</Button>
               </Link>
               <Link to="/signup" onClick={() => setMenuOpen(false)}>
-                <Button className="w-full gap-1.5"><Zap className="w-3.5 h-3.5" />Get Tiiked</Button>
+                <Button className="w-full gap-1.5"><img src={tiikLogo} alt="" className="w-4 h-4" />Get Tiiked</Button>
               </Link>
             </div>
           </div>

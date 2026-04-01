@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, Shield, Users, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import tiikLogo from "@/assets/tiikme-logo.png";
 
 const HeroSection = () => {
   return (
@@ -43,7 +44,7 @@ const HeroSection = () => {
           className="flex flex-col sm:flex-row items-center justify-center gap-3.5 mb-10">
           <Link to="/signup">
             <Button size="xl" className="gap-2">
-              <Zap className="w-4 h-4" />
+              <img src={tiikLogo} alt="" className="w-5 h-5" />
               Get Tiiked — it's free
               <ArrowRight className="w-4 h-4" />
             </Button>
