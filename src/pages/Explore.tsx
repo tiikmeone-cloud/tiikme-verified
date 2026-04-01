@@ -327,29 +327,37 @@ const Explore = () => {
       </div>
 
       {/* Results Grid */}
+      {totalResults === 0 && (
+        <div className="text-center py-16">
+          <Search className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
+          <p className="text-[16px] font-bold mb-2" style={{ color: "var(--text-1)" }}>No results found</p>
+          <p className="text-[13px] mb-4" style={{ color: "var(--text-3)" }}>Try adjusting your filters or search term.</p>
+          <Button variant="secondary" onClick={() => { setActiveFilter("All"); setActiveRoles([]); setActiveTerrain(null); setSearch(""); }}>Clear all filters</Button>
+        </div>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <AnimatePresence>
-          {showPeople && peopleMock.map((p, i) => (
+          {showPeople && filteredPeople.map((p, i) => (
             <motion.div key={"p" + i} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
               <PersonCard p={p} />
             </motion.div>
           ))}
-          {showProjects && projectsMock.map((p, i) => (
+          {showProjects && filteredProjects.map((p, i) => (
             <motion.div key={"pr" + i} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
               <ProjectCard p={p} />
             </motion.div>
           ))}
-          {showInstitutions && institutionsMock.map((inst, i) => (
+          {showInstitutions && filteredInstitutions.map((inst, i) => (
             <motion.div key={"inst" + i} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
               <InstitutionCard inst={inst} />
             </motion.div>
           ))}
-          {showOpportunities && opportunitiesMock.map((o, i) => (
+          {showOpportunities && filteredOpportunities.map((o, i) => (
             <motion.div key={"opp" + i} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
               <OpportunityCard o={o} />
             </motion.div>
           ))}
-          {showTopics && topicsMock.map((t, i) => (
+          {showTopics && filteredTopics.map((t, i) => (
             <motion.div key={"topic" + i} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
               <TopicCard t={t} />
             </motion.div>

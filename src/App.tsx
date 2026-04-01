@@ -56,6 +56,7 @@ const App = () => (
           <Route path="/app/alerts" element={<Shell><Alerts /></Shell>} />
           <Route path="/app/settings" element={<Shell><SettingsPage /></Shell>} />
           <Route path="/app/institution/:id" element={<Shell><Institution /></Shell>} />
+          <Route path="/app/workspace" element={<Shell><Workspace /></Shell>} />
           {/* Legacy redirects */}
           <Route path="/app/nexus" element={<Shell><Explore /></Shell>} />
           <Route path="/app/work" element={<Shell><MyWork /></Shell>} />

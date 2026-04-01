@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, GraduationCap, Briefcase, UserCheck, BookOpen, Stethoscope, Building2, Wrench, Heart, Rocket, Check, Eye, EyeOff, Plus, X, Calendar } from "lucide-react";
+import { ArrowLeft, ArrowRight, GraduationCap, Briefcase, UserCheck, BookOpen, Stethoscope, Building2, Wrench, Heart, Rocket, Check, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useNavigate } from "react-router-dom";
+import RoleFields from "@/components/signup/RoleFields";
+import RoleStep3 from "@/components/signup/RoleStep3";
 
 const roles = [
   { id: "student", label: "Student", desc: "College, university, or school", icon: GraduationCap, color: "#4F46E5" },
@@ -20,23 +22,10 @@ const roles = [
 const indianStates = ["Andhra Pradesh", "Bihar", "Delhi", "Gujarat", "Karnataka", "Kerala", "Maharashtra", "Tamil Nadu", "Telangana", "Uttar Pradesh", "West Bengal"];
 
 const inputS: React.CSSProperties = { background: "rgba(238,240,255,0.05)", border: "1.5px solid rgba(238,240,255,0.1)", borderRadius: 12, color: "#EEF0FF", height: 44 };
+const selectS: React.CSSProperties = { background: "rgba(238,240,255,0.05)", border: "1.5px solid rgba(238,240,255,0.1)", borderRadius: 12, color: "#EEF0FF", height: 44 };
 const glassCard: React.CSSProperties = { background: "rgba(8,11,42,0.85)", backdropFilter: "blur(20px) saturate(180%)", WebkitBackdropFilter: "blur(20px) saturate(180%)", border: "1px solid rgba(238,240,255,0.08)", borderRadius: 24 };
 
-interface ExperienceEntry {
-  id: string; role: string; company: string; startMonth: string; startYear: string; endMonth: string; endYear: string; isPresent: boolean; description: string; projectHead: string;
-}
-
-const months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
-const years = Array.from({ length: 30 }, (_, i) => String(2026 - i));
-
-const emptyExperience = (): ExperienceEntry => ({
-  id: crypto.randomUUID(), role: "", company: "", startMonth: "", startYear: "", endMonth: "", endYear: "", isPresent: false, description: "", projectHead: "",
-});
-
-const selectS: React.CSSProperties = { background: "rgba(238,240,255,0.05)", border: "1.5px solid rgba(238,240,255,0.1)", borderRadius: 12, color: "#EEF0FF", height: 44 };
-
-// Password strength
-const getStrength = (pw: string): { level: number; label: string; color: string } => {
+const getStrength = (pw: string) => {
   if (pw.length < 6) return { level: 0, label: "Too short", color: "#DC2626" };
   if (pw.length < 10) return { level: 1, label: "Could be stronger", color: "#F59E0B" };
   return { level: 2, label: "Strong", color: "#10B981" };
@@ -48,12 +37,9 @@ const SignUp = () => {
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ firstName: "", lastName: "", email: "", password: "", phone: "", institution: "", city: "", state: "" });
-  const [experiences, setExperiences] = useState<ExperienceEntry[]>([emptyExperience()]);
+  const [roleData, setRoleData] = useState<Record<string, string>>({});
   const update = (key: string, val: string) => setFormData(p => ({ ...p, [key]: val }));
-  const updateExp = (id: string, key: keyof ExperienceEntry, val: string | boolean) => setExperiences(prev => prev.map(e => e.id === id ? { ...e, [key]: val } : e));
-  const addExperience = () => setExperiences(prev => [...prev, emptyExperience()]);
-  const removeExperience = (id: string) => { if (experiences.length > 1) setExperiences(prev => prev.filter(e => e.id !== id)); };
-
+  const updateRole = (key: string, val: string) => setRoleData(p => ({ ...p, [key]: val }));
   const strength = getStrength(formData.password);
 
   return (
@@ -66,7 +52,6 @@ const SignUp = () => {
       <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-[520px] relative z-10">
         <Link to="/" className="text-[20px] font-extrabold mb-7 block text-center text-[#EEF0FF]">Tiikme</Link>
 
-        {/* Progress bar */}
         <div className="flex gap-1.5 mb-8 max-w-xs mx-auto">
           {[0, 1, 2].map(s => (
             <div key={s} className="flex-1 h-[3px] rounded-full transition-all duration-500" style={{ background: s <= step ? "var(--brand)" : "rgba(238,240,255,0.12)" }} />
@@ -74,7 +59,7 @@ const SignUp = () => {
         </div>
 
         <AnimatePresence mode="wait">
-          {/* ═══ STEP 0: ROLE SELECTION ═══ */}
+          {/* STEP 0: ROLE SELECTION */}
           {step === 0 && (
             <motion.div key="s0" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
               <div className="p-8 sm:p-10" style={glassCard}>
@@ -113,11 +98,11 @@ const SignUp = () => {
             </motion.div>
           )}
 
-          {/* ═══ STEP 1: YOUR DETAILS ═══ */}
+          {/* STEP 1: YOUR DETAILS + ROLE-SPECIFIC FIELDS */}
           {step === 1 && (
             <motion.div key="s1" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
               <button onClick={() => setStep(0)} className="flex items-center gap-1 text-[13px] mb-4 cursor-pointer active:scale-95" style={{ color: "rgba(238,240,255,0.5)" }}><ArrowLeft className="w-4 h-4" /> Back</button>
-              <div className="p-8" style={glassCard}>
+              <div className="p-8 max-h-[80vh] overflow-y-auto scrollbar-hide" style={glassCard}>
                 <h2 className="text-[28px] font-extrabold text-center mb-1 text-[#EEF0FF]" style={{ letterSpacing: "-0.02em" }}>Your details</h2>
                 <p className="text-center mb-7 text-[14px]" style={{ color: "rgba(238,240,255,0.55)" }}>This helps others find and verify you.</p>
                 <div className="space-y-3.5">
@@ -154,6 +139,9 @@ const SignUp = () => {
                       {indianStates.map(s => <option key={s}>{s}</option>)}
                     </select>
                   </div>
+
+                  {/* Role-specific fields */}
+                  {selectedRole && <RoleFields role={selectedRole} data={roleData} update={updateRole} />}
                 </div>
                 <p className="text-[12px] text-center mt-5 mb-4" style={{ color: "rgba(238,240,255,0.35)" }}>By continuing you agree to our <Link to="/terms" style={{ color: "var(--brand)" }}>Terms</Link> and <Link to="/privacy" style={{ color: "var(--brand)" }}>Privacy Policy</Link>.</p>
                 <Button size="xl" onClick={() => setStep(2)} className="w-full active:scale-95 transition-all duration-200">Continue <ArrowRight className="w-4 h-4 ml-1" /></Button>
@@ -161,60 +149,16 @@ const SignUp = () => {
             </motion.div>
           )}
 
-          {/* ═══ STEP 2: ADD EXPERIENCE ═══ */}
+          {/* STEP 2: ROLE-ADAPTIVE FIRST ENTRY */}
           {step === 2 && (
             <motion.div key="s2" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
               <button onClick={() => setStep(1)} className="flex items-center gap-1 text-[13px] mb-4 cursor-pointer active:scale-95" style={{ color: "rgba(238,240,255,0.5)" }}><ArrowLeft className="w-4 h-4" /> Back</button>
-              <div className="p-6 sm:p-8 max-h-[75vh] overflow-y-auto scrollbar-hide" style={glassCard}>
-                <h2 className="text-[28px] font-extrabold text-center mb-1 text-[#EEF0FF]" style={{ letterSpacing: "-0.02em" }}>Add your experience</h2>
-                <p className="text-center mb-6 text-[14px]" style={{ color: "rgba(238,240,255,0.55)" }}>Add positions, projects, or roles.</p>
-                <div className="space-y-5">
-                  {experiences.map((exp, idx) => (
-                    <div key={exp.id} className="rounded-2xl p-5 relative" style={{ background: "rgba(238,240,255,0.03)", border: "1px solid rgba(238,240,255,0.08)" }}>
-                      {experiences.length > 1 && (
-                        <button onClick={() => removeExperience(exp.id)} className="absolute top-3 right-3 p-1 rounded-lg cursor-pointer active:scale-95" style={{ color: "rgba(238,240,255,0.3)" }}><X className="w-4 h-4" /></button>
-                      )}
-                      <p className="micro-label mb-3" style={{ color: "rgba(238,240,255,0.4)" }}>POSITION {idx + 1}</p>
-                      <div className="space-y-3">
-                        <Input placeholder="Role / Title" value={exp.role} onChange={e => updateExp(exp.id, "role", e.target.value)} style={inputS} />
-                        <Input placeholder="Company / Institution" value={exp.company} onChange={e => updateExp(exp.id, "company", e.target.value)} style={inputS} />
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <p className="text-[10px] font-semibold mb-1.5" style={{ color: "rgba(238,240,255,0.4)" }}>Start Date</p>
-                            <div className="grid grid-cols-2 gap-2">
-                              <select value={exp.startMonth} onChange={e => updateExp(exp.id, "startMonth", e.target.value)} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={selectS}><option value="">MM</option>{months.map(m => <option key={m}>{m}</option>)}</select>
-                              <select value={exp.startYear} onChange={e => updateExp(exp.id, "startYear", e.target.value)} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={selectS}><option value="">YYYY</option>{years.map(y => <option key={y}>{y}</option>)}</select>
-                            </div>
-                          </div>
-                          <div>
-                            <div className="flex items-center justify-between mb-1.5">
-                              <p className="text-[10px] font-semibold" style={{ color: "rgba(238,240,255,0.4)" }}>End Date</p>
-                              <label className="flex items-center gap-1.5 cursor-pointer">
-                                <input type="checkbox" checked={exp.isPresent} onChange={e => updateExp(exp.id, "isPresent", e.target.checked)} className="rounded accent-[#3D5AF1]" />
-                                <span className="text-[10px] font-medium" style={{ color: "rgba(238,240,255,0.5)" }}>Present</span>
-                              </label>
-                            </div>
-                            {!exp.isPresent ? (
-                              <div className="grid grid-cols-2 gap-2">
-                                <select value={exp.endMonth} onChange={e => updateExp(exp.id, "endMonth", e.target.value)} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={selectS}><option value="">MM</option>{months.map(m => <option key={m}>{m}</option>)}</select>
-                                <select value={exp.endYear} onChange={e => updateExp(exp.id, "endYear", e.target.value)} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={selectS}><option value="">YYYY</option>{years.map(y => <option key={y}>{y}</option>)}</select>
-                              </div>
-                            ) : (
-                              <div className="h-10 rounded-lg flex items-center px-3 text-[13px]" style={{ ...selectS, opacity: 0.5 }}><Calendar className="w-3.5 h-3.5 mr-1.5" /> Present</div>
-                            )}
-                          </div>
-                        </div>
-                        <textarea placeholder="Describe your work, skills, and impact..." value={exp.description} onChange={e => updateExp(exp.id, "description", e.target.value)} rows={2}
-                          className="w-full rounded-xl p-3 text-[13px] outline-none resize-none" style={{ background: "rgba(238,240,255,0.05)", border: "1.5px solid rgba(238,240,255,0.1)", color: "#EEF0FF" }} />
-                        <Input placeholder="Project Head / Manager (optional)" value={exp.projectHead} onChange={e => updateExp(exp.id, "projectHead", e.target.value)} style={inputS} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <button onClick={addExperience} className="w-full mt-4 py-3 rounded-xl text-[13px] font-semibold flex items-center justify-center gap-2 cursor-pointer transition-all duration-200 active:scale-[0.98]" style={{ border: "1.5px dashed rgba(238,240,255,0.12)", color: "rgba(238,240,255,0.5)" }}><Plus className="w-4 h-4" /> Add another position</button>
-                <Button size="xl" onClick={() => navigate("/welcome")} className="w-full mt-5 active:scale-95 transition-all duration-200">Create my profile <ArrowRight className="w-4 h-4 ml-1" /></Button>
-                <button onClick={() => navigate("/welcome")} className="block mx-auto mt-3 text-[13px] cursor-pointer hover:underline" style={{ color: "var(--brand)" }}>Skip for now</button>
-              </div>
+              <RoleStep3
+                role={selectedRole || "student"}
+                roleData={roleData}
+                onFinish={() => navigate("/welcome")}
+                onSkip={() => navigate("/welcome")}
+              />
             </motion.div>
           )}
         </AnimatePresence>
