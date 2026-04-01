@@ -1,185 +1,326 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Target, Zap, Clock, Users, Shield, Plus, Briefcase, Handshake, Star, Wrench, LayoutGrid, AlertTriangle } from "lucide-react";
+import {
+  Search, Briefcase, Target, Wrench, Star, Handshake, Shield, Clock,
+  Users, MapPin, Bookmark, Share2, ArrowLeft, Plus, ChevronDown, X,
+  Zap, Building2, ExternalLink
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { OpportunityDetailDrawer } from "@/components/opportunities/OpportunityDrawer";
+import { Link } from "react-router-dom";
 
-const USER_ROLE: string = "Student";
+const USER_ROLE = "Student";
 
-const allFilterTabs = ["All", "Jobs", "Gigs", "Mentorship", "Collaboration", "Challenges", "Research"];
-const govFilterTabs = ["All", "Mentorship", "Community Service", "Internal Deputations"];
+const typeFilters = ["All", "Jobs", "Gigs", "Mentorship", "Challenges", "Research"];
 
 const opportunities = [
-  { type: "funded", icon: Target, typeLabel: "FUNDED CHALLENGE", typeColor: "#F59E0B", title: "Affordable cold storage for Telangana mango and tomato farmers", description: "Post-harvest losses reach up to 35% for mangoes due to lack of cold storage within 30km.", postedBy: "TechMahindra CSR", verified: true, reward: "₹25,000", deadline: "May 15, 2025", daysLeft: "12 days left", solutions: 23, featured: true },
-  { type: "job", icon: Briefcase, typeLabel: "JOB OPENING", typeColor: "#DC2626", title: "Backend Engineer — Zepto, Hyderabad", description: "Looking for a backend engineer with experience in distributed systems, Go/Python.", postedBy: "Zepto", verified: true, reward: "₹8-12 LPA", deadline: "Rolling", daysLeft: "Open", solutions: 0, featured: false },
-  { type: "collab", icon: Handshake, typeLabel: "COLLABORATION", typeColor: "#5B4FFF", title: "Need React Native dev for healthcare app", description: "Building a patient management app for rural clinics. Equity + experience letter.", postedBy: "Dr. Riya Sharma", verified: true, reward: "Equity + letter", deadline: "3 months", daysLeft: "Ongoing", solutions: 0, featured: false },
-  { type: "mentorship", icon: Star, typeLabel: "MENTORSHIP", typeColor: "#10B981", title: "Looking for mentor in IoT + AgriTech", description: "Final year student working on smart irrigation. Guidance over 3-6 months.", postedBy: "Arjun Kumar", verified: false, reward: "Online / Hyderabad", deadline: "3-6 months", daysLeft: "Open", solutions: 0, featured: false },
-  { type: "gig", icon: Wrench, typeLabel: "GIG", typeColor: "#C2410C", title: "Electrical wiring for 3BHK apartment", description: "Complete rewiring of a 3BHK flat in Dwarka. MCB panel upgrade + earthing.", postedBy: "Verified homeowner", verified: true, reward: "₹8,000-12,000", deadline: "This week", daysLeft: "Urgent", solutions: 0, featured: false },
-  { type: "funded", icon: Target, typeLabel: "FUNDED CHALLENGE", typeColor: "#F59E0B", title: "AI-based crop disease detection — mobile first", description: "Build a mobile app for crop disease identification from photos. Must work offline.", postedBy: "AgriTech India Foundation", verified: true, reward: "₹50,000", deadline: "July 10, 2025", daysLeft: "45 days left", solutions: 31, featured: false },
-  { type: "community", icon: Handshake, typeLabel: "COMMUNITY SERVICE", typeColor: "#10B981", title: "Digital literacy drive — Government schools, Rajasthan", description: "Volunteer to teach basic computer skills across 15 government schools in Jaipur district.", postedBy: "District Administration, Jaipur", verified: true, reward: "Certificate + commendation", deadline: "Aug 2025", daysLeft: "Open", solutions: 4, featured: false },
-  { type: "deputation", icon: Briefcase, typeLabel: "INTERNAL DEPUTATION", typeColor: "#0369A1", title: "IT Cell — State Police Modernisation Unit", description: "Deputation opportunity for officers with tech background. 2-year posting.", postedBy: "DGP Office, Telangana", verified: true, reward: "Pay protection", deadline: "Jun 30, 2025", daysLeft: "30 days left", solutions: 0, featured: false },
+  { id: "1", type: "funded", typeLabel: "CHALLENGE", typeColor: "#F59E0B", title: "Affordable cold storage for Telangana mango farmers", company: "TechMahindra CSR", companyInitials: "TM", companyColor: "#4F46E5", location: "Remote", compensation: "₹25,000", experience: "Any", mode: "Remote", deadline: "May 15, 2025", daysLeft: "12 days", solutions: 23, verified: true, postedBy: "Ravi Kumar", postedByRole: "CSR Lead", description: "Post-harvest losses reach up to 35% for mangoes due to lack of cold storage within 30km. Build an affordable, portable cold storage solution." },
+  { id: "2", type: "job", typeLabel: "JOB", typeColor: "#3D5AF1", title: "Backend Engineer", company: "Zepto", companyInitials: "ZP", companyColor: "#6B21A8", location: "Hyderabad", compensation: "₹8-12 LPA", experience: "2-5 yrs", mode: "On-site", deadline: "Rolling", daysLeft: "Open", solutions: 34, verified: true, postedBy: "Kavita Rao", postedByRole: "HR Manager", description: "Looking for a backend engineer with experience in distributed systems, Go/Python. Strong DSA fundamentals required." },
+  { id: "3", type: "collab", typeLabel: "COLLAB", typeColor: "#7C3AED", title: "React Native dev for healthcare app", company: "Dr. Riya Sharma", companyInitials: "RS", companyColor: "#0E7490", location: "Remote", compensation: "Equity + letter", experience: "Any", mode: "Remote", deadline: "3 months", daysLeft: "Ongoing", solutions: 0, verified: true, postedBy: "Dr. Riya Sharma", postedByRole: "Founder", description: "Building a patient management app for rural clinics. React Native + Supabase stack. Equity + experience letter offered." },
+  { id: "4", type: "mentorship", typeLabel: "MENTORSHIP", typeColor: "#10B981", title: "Looking for mentor in IoT + AgriTech", company: "Arjun Kumar", companyInitials: "AK", companyColor: "#4F46E5", location: "Hyderabad", compensation: "Online / Hybrid", experience: "5+ yrs", mode: "Hybrid", deadline: "3-6 months", daysLeft: "Open", solutions: 0, verified: false, postedBy: "Arjun Kumar", postedByRole: "Student", description: "Final year student working on smart irrigation. Need guidance on sensor calibration and ML model deployment." },
+  { id: "5", type: "gig", typeLabel: "GIG", typeColor: "#C2410C", title: "Electrical wiring for 3BHK apartment", company: "Verified homeowner", companyInitials: "VH", companyColor: "#C2410C", location: "Delhi", compensation: "₹8,000-12,000", experience: "3+ yrs", mode: "On-site", deadline: "This week", daysLeft: "Urgent", solutions: 0, verified: true, postedBy: "Mohan S.", postedByRole: "Homeowner", description: "Complete rewiring of a 3BHK flat in Dwarka. MCB panel upgrade + earthing. Must have valid license." },
+  { id: "6", type: "funded", typeLabel: "CHALLENGE", typeColor: "#F59E0B", title: "AI-based crop disease detection — mobile first", company: "AgriTech India Foundation", companyInitials: "AI", companyColor: "#166534", location: "Remote", compensation: "₹50,000", experience: "Any", mode: "Remote", deadline: "Jul 10, 2025", daysLeft: "45 days", solutions: 31, verified: true, postedBy: "Prof. Sharma", postedByRole: "Director", description: "Build a mobile app for crop disease identification from photos. Must work offline in low-connectivity areas." },
+  { id: "7", type: "job", typeLabel: "JOB", typeColor: "#3D5AF1", title: "Product Manager — Fintech", company: "Razorpay", companyInitials: "RP", companyColor: "#0369A1", location: "Bengaluru", compensation: "₹18-25 LPA", experience: "3-5 yrs", mode: "Hybrid", deadline: "Rolling", daysLeft: "Open", solutions: 12, verified: true, postedBy: "Sneha T.", postedByRole: "VP Product", description: "Own the payments dashboard experience. Work with engineering and design to ship features for 8M+ merchants." },
+  { id: "8", type: "job", typeLabel: "JOB", typeColor: "#3D5AF1", title: "Frontend Developer — React", company: "CRED", companyInitials: "CR", companyColor: "#374151", location: "Bengaluru", compensation: "₹12-18 LPA", experience: "1-3 yrs", mode: "On-site", deadline: "Rolling", daysLeft: "Open", solutions: 45, verified: true, postedBy: "Anil M.", postedByRole: "Engineering Lead", description: "Build pixel-perfect UI components for CRED's consumer app. React, TypeScript, and motion design experience preferred." },
+  { id: "9", type: "gig", typeLabel: "GIG", typeColor: "#C2410C", title: "Plumbing work — commercial building", company: "ABC Realty", companyInitials: "AB", companyColor: "#92400E", location: "Mumbai", compensation: "₹15,000-20,000", experience: "5+ yrs", mode: "On-site", deadline: "2 weeks", daysLeft: "10 days", solutions: 0, verified: true, postedBy: "Rajesh P.", postedByRole: "Site Manager", description: "Complete plumbing installation for a new commercial building. CPVC piping, water tank connections, drainage setup." },
+  { id: "10", type: "mentorship", typeLabel: "MENTORSHIP", typeColor: "#10B981", title: "UPSC preparation guidance needed", company: "Aspirant", companyInitials: "AS", companyColor: "#374151", location: "Online", compensation: "Volunteer", experience: "Cleared UPSC", mode: "Online", deadline: "Ongoing", daysLeft: "Open", solutions: 0, verified: false, postedBy: "Meera K.", postedByRole: "Aspirant", description: "Looking for a mentor who has cleared UPSC CSE. Need guidance on optional subject selection and answer writing." },
 ];
 
-const ctaLabel: Record<string, string> = { funded: "Submit my work", job: "Apply via Tiikme", collab: "Express interest", mentorship: "Offer mentorship", gig: "I can do this", community: "Volunteer", deputation: "View details" };
+const typeMap: Record<string, string> = { Jobs: "job", Gigs: "gig", Mentorship: "mentorship", Challenges: "funded", Research: "research", Collaboration: "collab" };
 
-const mockApplicants = [
-  { name: "Priya M.", role: "Student", status: "new" },
-  { name: "Rahul K.", role: "Professional", status: "new" },
-  { name: "Neha S.", role: "Student", status: "shortlisted" },
-  { name: "Amit T.", role: "Professional", status: "rejected" },
-  { name: "Sunita D.", role: "Student", status: "new" },
-];
-
-const KanbanBoard = () => {
-  const columns = [
-    { title: "New", color: "#3D5AF1", items: mockApplicants.filter(a => a.status === "new") },
-    { title: "Shortlisted", color: "#10B981", items: mockApplicants.filter(a => a.status === "shortlisted") },
-    { title: "Rejected", color: "#DC2626", items: mockApplicants.filter(a => a.status === "rejected") },
-  ];
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">
-      {columns.map(col => (
-        <div key={col.title} className="rounded-3xl border border-dashed p-4" style={{ background: "var(--surface-2)", borderColor: "var(--border-2)" }}>
-          <div className="flex items-center gap-2 mb-3 px-1">
-            <div className="w-2 h-2 rounded-full" style={{ background: col.color }} />
-            <span className="text-[13px] font-bold" style={{ color: "var(--text-1)" }}>{col.title}</span>
-            <span className="text-[11px] ml-auto" style={{ color: "var(--text-3)" }}>{col.items.length}</span>
-          </div>
-          <div className="space-y-2 min-h-[200px]">
-            {col.items.map((item, i) => (
-              <div key={i} className="glass-liquid rounded-xl p-3 cursor-grab hover:shadow-md transition-all duration-200 active:scale-[0.98]">
-                <p className="text-[13px] font-semibold" style={{ color: "var(--text-1)" }}>{item.name}</p>
-                <p className="text-[10px]" style={{ color: "var(--text-3)" }}>{item.role}</p>
-              </div>
-            ))}
-            {col.items.length === 0 && (
-              <div className="flex items-center justify-center h-[120px] text-[12px] rounded-xl border-2 border-dashed" style={{ borderColor: "var(--border)", color: "var(--text-3)" }}>
-                Drag applicants here
-              </div>
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-const isGovRole = USER_ROLE === "Government" || USER_ROLE === "Police";
+const typeIcons: Record<string, React.ElementType> = { job: Briefcase, funded: Target, gig: Wrench, mentorship: Star, collab: Handshake };
 
 const Opportunities = () => {
-  const [activeTab, setActiveTab] = useState("All");
-  const [selectedOpp, setSelectedOpp] = useState<typeof opportunities[0] | null>(null);
-  const [view, setView] = useState<"browse" | "manage">("browse");
+  const [activeType, setActiveType] = useState("All");
+  const [search, setSearch] = useState("");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [saved, setSaved] = useState<string[]>([]);
+  const [mobileDetail, setMobileDetail] = useState(false);
 
-  const filterTabs = isGovRole ? govFilterTabs : allFilterTabs;
+  const filtered = opportunities.filter(o => {
+    if (activeType !== "All" && o.type !== typeMap[activeType]) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      if (!o.title.toLowerCase().includes(q) && !o.company.toLowerCase().includes(q) && !o.location.toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
 
-  const filtered = (() => {
-    let list = opportunities;
-    if (isGovRole) list = list.filter(o => o.type !== "job" && o.type !== "gig");
-    if (activeTab === "All") return list;
-    const map: Record<string, string> = {
-      Jobs: "job", Gigs: "gig", Mentorship: "mentorship", Collaboration: "collab",
-      Challenges: "funded", Research: "research",
-      "Community Service": "community", "Internal Deputations": "deputation",
-    };
-    return list.filter(o => o.type === map[activeTab]);
-  })();
+  const selected = opportunities.find(o => o.id === selectedId);
+
+  const toggleSave = (id: string) => {
+    setSaved(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
+    toast.success(saved.includes(id) ? "Removed from saved" : "Saved for later");
+  };
+
+  const selectOpp = (id: string) => {
+    setSelectedId(id);
+    setMobileDetail(true);
+  };
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-7">
-      <div className="flex items-center justify-between mb-2">
-        <h1 className="text-[20px] text-emboss">Opportunities</h1>
-        <div className="flex items-center gap-2">
-          <div className="flex rounded-full overflow-hidden" style={{ border: "1px solid var(--border)" }}>
-            <button onClick={() => setView("browse")}
-              className="text-[11px] font-bold px-3.5 py-1.5 transition-all duration-200 cursor-pointer active:scale-95"
-              style={{ background: view === "browse" ? "var(--brand)" : "var(--surface-2)", color: view === "browse" ? "white" : "var(--text-2)" }}>
-              Browse
-            </button>
-            <button onClick={() => setView("manage")}
-              className="text-[11px] font-bold px-3.5 py-1.5 transition-all duration-200 cursor-pointer active:scale-95 flex items-center gap-1"
-              style={{ background: view === "manage" ? "var(--brand)" : "var(--surface-2)", color: view === "manage" ? "white" : "var(--text-2)" }}>
-              <LayoutGrid className="w-3 h-3" /> Manage
-            </button>
+    <div className="flex" style={{ height: "calc(100vh - 64px)" }}>
+      {/* Left Panel — Job List */}
+      <div className={`w-full md:w-[420px] md:shrink-0 flex flex-col ${mobileDetail ? "hidden md:flex" : "flex"}`}
+        style={{ borderRight: "1px solid var(--border)" }}>
+
+        {/* Header */}
+        <div className="px-4 pt-5 pb-3">
+          <div className="flex items-center justify-between mb-3">
+            <h1 className="text-[18px] font-extrabold" style={{ color: "var(--text-1)" }}>Opportunities</h1>
+            <Button size="sm" className="gap-1 active:scale-95" onClick={() => toast.info("Opening post form...")}>
+              <Plus className="w-3.5 h-3.5" /> Post
+            </Button>
           </div>
-          <Button size="sm" className="gap-1.5 active:scale-95" onClick={() => toast.info("Opening opportunity form...")}><Plus className="w-4 h-4" /> Post</Button>
-        </div>
-      </div>
-      <p className="text-[13px] mb-5" style={{ color: "var(--text-2)" }}>Jobs, gigs, mentorships, collaborations, and funded challenges.</p>
 
-      {isGovRole && (
-        <div className="glass-liquid rounded-xl p-4 mb-5 flex items-center gap-3" style={{ borderLeft: "3px solid #F59E0B" }}>
-          <AlertTriangle className="w-5 h-5 shrink-0" style={{ color: "#F59E0B" }} />
-          <p className="text-[13px]" style={{ color: "var(--text-2)" }}>Opportunities filtered for Government Conduct Rule compliance.</p>
-        </div>
-      )}
+          {/* Search */}
+          <div className="relative mb-3">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-3)" }} />
+            <input value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Search by role, company, location..."
+              className="w-full h-10 glass-input pl-10 pr-9 text-[13px] outline-none" style={{ color: "var(--text-1)" }} />
+            {search && (
+              <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer" style={{ color: "var(--text-3)" }}>
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
 
-      {view === "manage" ? (
-        <div>
-          <p className="text-[14px] font-semibold mb-1" style={{ color: "var(--text-1)" }}>Applicant Pipeline</p>
-          <p className="text-[12px] mb-3" style={{ color: "var(--text-3)" }}>Drag and drop applicants between columns.</p>
-          <KanbanBoard />
-        </div>
-      ) : (
-        <>
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-3 mb-5">
-            {filterTabs.map(tab => (
-              <button key={tab} onClick={() => setActiveTab(tab)}
-                className="whitespace-nowrap text-xs font-bold px-4 py-2 rounded-full transition-all shrink-0 cursor-pointer active:scale-95"
-                style={{ background: activeTab === tab ? "var(--brand)" : "var(--surface-2)", border: `1px solid ${activeTab === tab ? "var(--brand)" : "var(--border)"}`, color: activeTab === tab ? "white" : "var(--text-2)" }}>
-                {tab}
+          {/* Type pills */}
+          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
+            {typeFilters.map(f => (
+              <button key={f} onClick={() => setActiveType(f)}
+                className="shrink-0 h-[28px] px-3 rounded-full text-[11px] font-bold cursor-pointer active:scale-95"
+                style={{
+                  background: activeType === f ? "var(--brand)" : "var(--surface-2)",
+                  color: activeType === f ? "white" : "var(--text-2)",
+                  border: activeType === f ? "none" : "1px solid var(--border)",
+                }}>
+                {f}
               </button>
             ))}
           </div>
+        </div>
 
-          <div className="space-y-4">
-            {filtered.length === 0 && (
-              <div className="glass-liquid rounded-2xl p-8 text-center">
-                <p className="text-[14px]" style={{ color: "var(--text-2)" }}>No opportunities in this category yet.</p>
-              </div>
-            )}
-            {filtered.map((opp, i) => (
-              <motion.div key={opp.title} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                className="glass-liquid glass-liquid-hover rounded-2xl md:rounded-3xl overflow-hidden cursor-pointer"
-                style={{ borderLeft: `4px solid ${opp.typeColor}` }}
-                onClick={() => setSelectedOpp(opp)}
-              >
-                {opp.type === "funded" && (
-                  <div className="px-5 py-2.5 flex items-center justify-between" style={{ background: `linear-gradient(to right, ${opp.typeColor}, ${opp.typeColor}CC)` }}>
-                    <div className="flex items-center gap-2"><Zap className="w-4 h-4 text-black" /><span className="text-sm font-bold text-black">{opp.reward} reward</span></div>
-                    <span className="text-xs font-medium text-black">{opp.daysLeft}</span>
+        {/* Info banner */}
+        <div className="px-4 pb-2">
+          <p className="text-[11px] px-3 py-1.5 rounded-lg" style={{ background: "var(--brand-dim)", color: "var(--brand)" }}>
+            Showing opportunities for {USER_ROLE} profiles · <button className="underline cursor-pointer" onClick={() => setActiveType("All")}>Show all</button>
+          </p>
+        </div>
+
+        {/* Job cards list */}
+        <div className="flex-1 overflow-y-auto">
+          {filtered.length === 0 && (
+            <div className="text-center py-12">
+              <Search className="w-10 h-10 mx-auto mb-2" style={{ color: "var(--text-3)" }} />
+              <p className="text-[14px] font-bold mb-1" style={{ color: "var(--text-1)" }}>No opportunities found</p>
+              <Button variant="secondary" size="sm" onClick={() => { setSearch(""); setActiveType("All"); }}>Clear filters</Button>
+            </div>
+          )}
+          {filtered.map(opp => {
+            const Icon = typeIcons[opp.type] || Briefcase;
+            const isActive = selectedId === opp.id;
+            return (
+              <button key={opp.id} onClick={() => selectOpp(opp.id)}
+                className="w-full text-left px-4 py-3 cursor-pointer transition-all duration-100"
+                style={{
+                  background: isActive ? "var(--brand-dim)" : "transparent",
+                  borderLeft: isActive ? "3px solid var(--brand)" : "3px solid transparent",
+                  borderBottom: "1px solid var(--border)",
+                }}>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5"
+                    style={{ background: `${opp.companyColor}14`, color: opp.companyColor }}>
+                    {opp.companyInitials}
                   </div>
-                )}
-                <div className="p-5">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: opp.typeColor }}>{opp.typeLabel}</span>
-                    {opp.verified && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1" style={{ background: "rgba(16,185,129,0.15)", color: "#10B981" }}><Shield className="w-3 h-3" /> Verified</span>}
-                  </div>
-                  <h3 className="text-base font-bold mb-2" style={{ color: "var(--text-1)" }}>{opp.title}</h3>
-                  <p className="text-sm mb-4 line-clamp-2" style={{ color: "var(--text-2)" }}>{opp.description}</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-                    <div className="glass-liquid rounded-xl p-3 text-xs"><span className="text-[9px] font-bold uppercase tracking-wider block mb-0.5" style={{ color: "var(--text-3)" }}>Posted by</span><span className="font-medium" style={{ color: "var(--text-1)" }}>{opp.postedBy}</span></div>
-                    <div className="glass-liquid rounded-xl p-3 text-xs"><span className="text-[9px] font-bold uppercase tracking-wider block mb-0.5" style={{ color: "var(--text-3)" }}>Compensation</span><span className="font-bold" style={{ color: "#F59E0B" }}>{opp.reward}</span></div>
-                    <div className="glass-liquid rounded-xl p-3 text-xs"><span className="text-[9px] font-bold uppercase tracking-wider block mb-0.5" style={{ color: "var(--text-3)" }}>Deadline</span><span className="flex items-center gap-1" style={{ color: "var(--text-1)" }}><Clock className="w-3 h-3" /> {opp.deadline}</span></div>
-                    {opp.solutions > 0 && <div className="glass-liquid rounded-xl p-3 text-xs"><span className="text-[9px] font-bold uppercase tracking-wider block mb-0.5" style={{ color: "var(--text-3)" }}>Solutions</span><span className="flex items-center gap-1" style={{ color: "var(--text-1)" }}><Users className="w-3 h-3" /> {opp.solutions}</span></div>}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Button onClick={e => { e.stopPropagation(); setSelectedOpp(opp); }} className="active:scale-95">{ctaLabel[opp.type] || "View details"}</Button>
-                    {opp.type === "funded" && <Button variant="secondary" onClick={e => { e.stopPropagation(); toast.success("Following updates"); }} className="active:scale-95">Follow updates</Button>}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <p className="text-[13px] font-bold truncate" style={{ color: "var(--text-1)" }}>{opp.title}</p>
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0"
+                        style={{ background: `${opp.typeColor}1A`, color: opp.typeColor }}>{opp.typeLabel}</span>
+                    </div>
+                    <p className="text-[11px] truncate" style={{ color: "var(--text-3)" }}>
+                      {opp.company} · {opp.location} · {opp.compensation}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      {opp.verified && (
+                        <span className="text-[9px] font-bold flex items-center gap-0.5" style={{ color: "#10B981" }}>
+                          <Shield className="w-2.5 h-2.5" /> Verified
+                        </span>
+                      )}
+                      <span className="text-[10px]" style={{ color: "var(--text-3)" }}>{opp.daysLeft}</span>
+                      {opp.solutions > 0 && <span className="text-[10px]" style={{ color: "var(--text-3)" }}>· {opp.solutions} applied</span>}
+                    </div>
                   </div>
                 </div>
-              </motion.div>
-            ))}
-          </div>
-        </>
-      )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
-      <AnimatePresence>
-        {selectedOpp && <OpportunityDetailDrawer opp={selectedOpp} onClose={() => setSelectedOpp(null)} />}
-      </AnimatePresence>
-    </main>
+      {/* Right Panel — Detail */}
+      <div className={`flex-1 overflow-y-auto ${mobileDetail ? "flex flex-col" : "hidden md:flex md:flex-col"}`}
+        style={{ background: "var(--bg)" }}>
+        {!selected ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center px-6">
+              <Briefcase className="w-14 h-14 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
+              <p className="text-[16px] font-bold mb-1" style={{ color: "var(--text-1)" }}>Select an opportunity</p>
+              <p className="text-[13px]" style={{ color: "var(--text-3)" }}>Click any listing to view full details</p>
+            </div>
+          </div>
+        ) : (
+          <div className="max-w-[640px] mx-auto w-full px-4 md:px-6 py-5">
+            {/* Mobile back */}
+            <button onClick={() => setMobileDetail(false)}
+              className="md:hidden flex items-center gap-1 mb-4 text-[13px] font-semibold cursor-pointer"
+              style={{ color: "var(--brand)" }}>
+              <ArrowLeft className="w-4 h-4" /> Opportunities
+            </button>
+
+            {/* Company + Title */}
+            <div className="flex items-start gap-4 mb-4">
+              <div className="w-14 h-14 rounded-xl flex items-center justify-center text-[16px] font-bold shrink-0"
+                style={{ background: `${selected.companyColor}14`, color: selected.companyColor }}>
+                {selected.companyInitials}
+              </div>
+              <div className="flex-1 min-w-0">
+                <Link to="/app/institution/1" className="text-[13px] font-semibold hover:underline" style={{ color: "var(--brand)" }}>
+                  {selected.company}
+                </Link>
+                <h2 className="text-[20px] font-extrabold mt-0.5" style={{ color: "var(--text-1)" }}>{selected.title}</h2>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                    style={{ background: `${selected.typeColor}1A`, color: selected.typeColor }}>{selected.typeLabel}</span>
+                  {selected.verified && (
+                    <span className="text-[10px] font-bold flex items-center gap-0.5 px-2 py-0.5 rounded-full"
+                      style={{ background: "rgba(16,185,129,0.1)", color: "#10B981" }}>
+                      <Shield className="w-3 h-3" /> Verified
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Posted by */}
+            <div className="flex items-center gap-2.5 mb-4 p-3 rounded-xl" style={{ background: "var(--surface-2)" }}>
+              <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
+                style={{ background: selected.companyColor }}>
+                {selected.postedBy.split(" ").map(w => w[0]).join("")}
+              </div>
+              <div>
+                <p className="text-[12px] font-semibold" style={{ color: "var(--text-1)" }}>{selected.postedBy}</p>
+                <p className="text-[10px]" style={{ color: "var(--text-3)" }}>{selected.postedByRole} · {selected.company}</p>
+              </div>
+            </div>
+
+            {/* Key info chips */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-5">
+              {[
+                { icon: MapPin, label: selected.location },
+                { icon: Zap, label: selected.compensation },
+                { icon: Clock, label: selected.mode },
+                { icon: Building2, label: selected.experience },
+                { icon: Users, label: `${selected.solutions} applied` },
+                { icon: Clock, label: selected.daysLeft },
+              ].map((c, i) => (
+                <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
+                  <c.icon className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--text-3)" }} />
+                  <span className="text-[12px] font-medium truncate" style={{ color: "var(--text-1)" }}>{c.label}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-2 mb-6">
+              <Button className="flex-1 active:scale-95" onClick={() => toast.success("Application started — attach your portfolio")}>
+                Apply via Tiikme
+              </Button>
+              <Button variant="secondary" className="active:scale-95 gap-1" onClick={() => toggleSave(selected.id)}>
+                <Bookmark className={`w-4 h-4 ${saved.includes(selected.id) ? "fill-current" : ""}`} />
+                {saved.includes(selected.id) ? "Saved" : "Save"}
+              </Button>
+              <Button variant="ghost" className="active:scale-95" onClick={() => { navigator.clipboard.writeText(window.location.origin + "/app/opportunities?id=" + selected.id); toast.success("Link copied"); }}>
+                <Share2 className="w-4 h-4" />
+              </Button>
+            </div>
+
+            {/* Social proof */}
+            {selected.solutions > 0 && (
+              <p className="text-[12px] mb-5 px-1" style={{ color: "var(--text-3)" }}>
+                {selected.solutions} people have applied · 3 from your college
+              </p>
+            )}
+
+            {/* Description */}
+            <div className="mb-6">
+              <p className="micro-label mb-2">ABOUT THIS ROLE</p>
+              <p className="text-[14px] leading-[1.75]" style={{ color: "var(--text-2)" }}>{selected.description}</p>
+              <div className="mt-4 text-[14px] leading-[1.75] whitespace-pre-line" style={{ color: "var(--text-2)" }}>
+{`Requirements:
+• Strong understanding of the problem domain
+• Demonstrated ability to build and ship products
+• Experience with modern tech stacks
+• Portfolio of relevant work on Tiikme
+
+What we offer:
+• Competitive compensation as listed
+• Mentorship from industry experts
+• Tiik Verified badge on completion`}
+              </div>
+            </div>
+
+            {/* Skills */}
+            <div className="mb-6">
+              <p className="micro-label mb-2">SKILLS REQUIRED</p>
+              <div className="flex flex-wrap gap-1.5">
+                {["React", "TypeScript", "Node.js", "Problem Solving", "Communication"].map(s => (
+                  <span key={s} className="text-[11px] font-medium px-2.5 py-1 rounded-full"
+                    style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-2)" }}>{s}</span>
+                ))}
+              </div>
+            </div>
+
+            {/* Company info */}
+            <div className="glass-liquid rounded-xl p-4 mb-6">
+              <p className="micro-label mb-2">ABOUT THE COMPANY</p>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center text-[11px] font-bold"
+                  style={{ background: `${selected.companyColor}14`, color: selected.companyColor }}>{selected.companyInitials}</div>
+                <div>
+                  <p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>{selected.company}</p>
+                  <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{selected.location}</p>
+                </div>
+              </div>
+              <Link to="/app/institution/1" className="text-[12px] font-semibold flex items-center gap-1" style={{ color: "var(--brand)" }}>
+                View company page <ExternalLink className="w-3 h-3" />
+              </Link>
+            </div>
+
+            {/* Similar */}
+            <div>
+              <p className="micro-label mb-3">SIMILAR OPPORTUNITIES</p>
+              <div className="space-y-2">
+                {opportunities.filter(o => o.id !== selected.id && o.type === selected.type).slice(0, 3).map(o => (
+                  <button key={o.id} onClick={() => { setSelectedId(o.id); window.scrollTo(0, 0); }}
+                    className="w-full text-left flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-100"
+                    style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[9px] font-bold"
+                      style={{ background: `${o.companyColor}14`, color: o.companyColor }}>{o.companyInitials}</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12px] font-bold truncate" style={{ color: "var(--text-1)" }}>{o.title}</p>
+                      <p className="text-[10px]" style={{ color: "var(--text-3)" }}>{o.company} · {o.compensation}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 
