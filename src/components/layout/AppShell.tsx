@@ -188,8 +188,10 @@ const AppShell = ({ children }: { children: ReactNode }) => {
         className="hidden md:flex lg:hidden flex-col items-center fixed inset-y-0 left-0 z-40 py-3"
         style={{
           width: 64,
-          background: "var(--surface)",
-          borderRight: "1px solid var(--border)",
+          background: "var(--glass-bg)",
+          backdropFilter: "blur(24px) saturate(180%)",
+          WebkitBackdropFilter: "blur(24px) saturate(180%)",
+          borderRight: "1px solid var(--glass-border)",
         }}
       >
         {/* Logo mark */}
