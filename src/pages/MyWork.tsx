@@ -1,12 +1,17 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Layers, Plus, ExternalLink, Copy, Users, Eye, Shield, Target, Briefcase, Wrench, BookOpen, GraduationCap, Rocket, Heart, FolderOpen } from "lucide-react";
+import { Layers, Plus, Copy, Users, Eye, Shield, Target, Briefcase, Wrench, BookOpen, GraduationCap, Rocket, Heart, FolderOpen, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
 import EmptyState from "@/components/EmptyState";
 import SkeletonCard from "@/components/SkeletonCard";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+
+const CURRENT_USER = "arjunkumar";
+const PAGE_OWNER = "arjunkumar";
+const isOwner = CURRENT_USER === PAGE_OWNER;
 
 const workTypes = [
   { id: "project", label: "Project", icon: Layers },
@@ -21,9 +26,9 @@ const workTypes = [
 ];
 
 const projects = [
-  { title: "TelemedicineRx", role: "Backend Lead", status: "active", team: "Team of 4", institution: "Delhi Tech University", type: "Project", tags: [{ label: "Tiik Approved", gold: true }, { label: "Public", gold: false }], stats: "6 recruiter views", updated: "2 days ago", domain: "HealthTech" },
-  { title: "SmartGrid Monitor", role: "Full Stack", status: "paused", team: "Team of 3", institution: "IIT Delhi", type: "Project", tags: [{ label: "Strands only", gold: false }], stats: "200+ users", updated: "3 weeks ago", domain: "IoT" },
-  { title: "HealthBridge App", role: "Mobile Developer", status: "completed", team: "Team of 5", institution: "", type: "Project", tags: [{ label: "Tiik Approved", gold: true }, { label: "Public", gold: false }], stats: "400+ downloads", updated: "Jan 2025", domain: "Health" },
+  { title: "TelemedicineRx", role: "Backend Lead", status: "active", team: "Team of 4", institution: "Delhi Tech University", type: "Project", tags: [{ label: "Tiik Approved", gold: true }, { label: "Public", gold: false }], stats: "6 recruiter views", updated: "2 days ago", domain: "HealthTech", hubId: "telemedicinerx" },
+  { title: "SmartGrid Monitor", role: "Full Stack", status: "paused", team: "Team of 3", institution: "IIT Delhi", type: "Project", tags: [{ label: "Strands only", gold: false }], stats: "200+ users", updated: "3 weeks ago", domain: "IoT", hubId: "smartgrid" },
+  { title: "HealthBridge App", role: "Mobile Developer", status: "completed", team: "Team of 5", institution: "", type: "Project", tags: [{ label: "Tiik Approved", gold: true }, { label: "Public", gold: false }], stats: "400+ downloads", updated: "Jan 2025", domain: "Health", hubId: null },
 ];
 
 const statusColor = (s: string) => s === "active" ? "#10B981" : s === "paused" ? "#F59E0B" : "var(--brand)";
@@ -47,7 +52,7 @@ const AddWorkModal = ({ open, onClose }: { open: boolean; onClose: () => void })
 
         {step === "type" && (
           <>
-            <h2 className="text-xl font-bold text-t1 mb-2">Add work to Workspace</h2>
+            <h2 className="text-xl font-bold text-t1 mb-2">Add to Teams & Projects</h2>
             <p className="text-sm text-t2 mb-6">Choose what type of work you want to add.</p>
             <div className="grid grid-cols-3 gap-3 mb-6">
               {workTypes.map(wt => (
@@ -98,7 +103,7 @@ const AddWorkModal = ({ open, onClose }: { open: boolean; onClose: () => void })
               <p className="text-xs text-t2">HOD, Computer Science · DTU</p>
             </div>
             <div className="flex gap-3">
-              <Button variant="ghost" onClick={() => { toast.success("Work added to Workspace"); onClose(); setStep("type"); }} className="flex-1 active:scale-95 transition-all duration-200 hover:bg-surface-2">Skip</Button>
+              <Button variant="ghost" onClick={() => { toast.success("Work added"); onClose(); setStep("type"); }} className="flex-1 active:scale-95 transition-all duration-200 hover:bg-surface-2">Skip</Button>
               <Button onClick={() => { toast.success("Request sent & work added"); onClose(); setStep("type"); }} className="flex-1 active:scale-95 transition-all duration-200">Send request</Button>
             </div>
           </>
@@ -118,12 +123,19 @@ const MyWork = () => {
   return (
     <div className="max-w-4xl mx-auto px-4 py-7">
       <div className="flex items-center justify-between mb-2">
-        <h1 className="text-[20px] font-bold text-t1">Workspace</h1>
-        <Button size="sm" className="gap-1.5 active:scale-95 transition-all duration-200" onClick={() => setAddOpen(true)}><Plus className="w-4 h-4" /> Add work</Button>
+        <h1 className="text-[20px] font-bold text-t1">Teams & Projects</h1>
+        {isOwner && (
+          <Button size="sm" className="gap-1.5 active:scale-95 transition-all duration-200" onClick={() => setAddOpen(true)}><Plus className="w-4 h-4" /> Add work</Button>
+        )}
       </div>
-      <p className="text-[13px] text-t2 mb-6">Your private drafting board. Manage your portfolio, check analytics, and set visibility before showcasing on your public profile.</p>
+      <p className="text-[13px] text-t2 mb-6">
+        {isOwner
+          ? "Your public hub for teams and projects. Manage, invite members, and post updates."
+          : "Explore this user's teams, projects, and verified work history."
+        }
+      </p>
 
-      {!dismissed && (
+      {!dismissed && isOwner && (
         <div className="rounded-xl border border-border/30 p-4 mb-6 relative" style={{ background: "var(--surface)", borderLeft: "3px solid var(--brand)" }}>
           <button onClick={() => setDismissed(true)} className="absolute top-3 right-3 text-t3 hover:text-t1 transition-colors cursor-pointer active:scale-95">
             <span className="text-[14px]">×</span>
@@ -159,28 +171,38 @@ const MyWork = () => {
                   <span>·</span><span className="px-1.5 py-0 rounded bg-surface-2 text-t2">{project.domain}</span>
                 </div>
               </div>
+
+              {/* View Project Hub link */}
+              {project.hubId && (
+                <Link to={`/app/teams/${project.hubId}`} className="hidden sm:flex items-center gap-1.5 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg px-3 py-1.5 transition-all duration-200 active:scale-95 shrink-0" onClick={e => e.stopPropagation()}>
+                  View Hub <ArrowRight className="w-3 h-3" />
+                </Link>
+              )}
+
               <div className="hidden sm:flex items-center gap-1.5 text-[10px] text-t3 shrink-0">
                 <Eye className="w-3 h-3" /><span>{project.stats}</span>
               </div>
-              <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                <Tooltip><TooltipTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 active:scale-95" onClick={e => { e.stopPropagation(); window.open("#", "_blank"); }}><ExternalLink className="w-3 h-3" /></Button>
-                </TooltipTrigger><TooltipContent>View full project details</TooltipContent></Tooltip>
-                <Tooltip><TooltipTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 active:scale-95" onClick={e => { e.stopPropagation(); navigator.clipboard.writeText(`https://tiikme.in/arjunkumar/${project.title.toLowerCase().replace(/\s+/g, '-')}`); toast.success("Link copied"); }}><Copy className="w-3 h-3" /></Button>
-                </TooltipTrigger><TooltipContent>Copy link</TooltipContent></Tooltip>
-                <Tooltip><TooltipTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 active:scale-95" onClick={e => { e.stopPropagation(); toast.info("Opening invite..."); }}><Users className="w-3 h-3" /></Button>
-                </TooltipTrigger><TooltipContent>Invite team</TooltipContent></Tooltip>
-              </div>
+
+              {isOwner && (
+                <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <Tooltip><TooltipTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 active:scale-95" onClick={e => { e.stopPropagation(); navigator.clipboard.writeText(`https://tiikme.in/arjunkumar/${project.title.toLowerCase().replace(/\s+/g, '-')}`); toast.success("Link copied"); }}><Copy className="w-3 h-3" /></Button>
+                  </TooltipTrigger><TooltipContent>Copy link</TooltipContent></Tooltip>
+                  <Tooltip><TooltipTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 active:scale-95" onClick={e => { e.stopPropagation(); toast.info("Opening invite..."); }}><Users className="w-3 h-3" /></Button>
+                  </TooltipTrigger><TooltipContent>Invite team</TooltipContent></Tooltip>
+                </div>
+              )}
             </motion.div>
           ))}
         </div>
       )}
 
-      <button onClick={() => setAddOpen(true)} className="w-full mt-4 border-2 border-dashed border-border/30 rounded-2xl p-5 text-sm text-t3 hover:text-t1 hover:border-brand transition-all duration-200 flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer">
-        <Plus className="w-4 h-4" /> Add another item to Workspace
-      </button>
+      {isOwner && (
+        <button onClick={() => setAddOpen(true)} className="w-full mt-4 border-2 border-dashed border-border/30 rounded-2xl p-5 text-sm text-t3 hover:text-t1 hover:border-brand transition-all duration-200 flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer">
+          <Plus className="w-4 h-4" /> Add another item
+        </button>
+      )}
 
       <AddWorkModal open={addOpen} onClose={() => setAddOpen(false)} />
     </div>
