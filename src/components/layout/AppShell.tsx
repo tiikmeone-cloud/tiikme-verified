@@ -80,8 +80,11 @@ const AppShell = ({ children }: { children: ReactNode }) => {
         className="hidden lg:flex flex-col fixed inset-y-0 left-0 z-40"
         style={{
           width: 248,
-          background: "var(--surface)",
+          background: "color-mix(in srgb, var(--surface) 80%, transparent)",
+          backdropFilter: "blur(40px) saturate(200%)",
+          WebkitBackdropFilter: "blur(40px) saturate(200%)",
           borderRight: "1px solid var(--border)",
+          boxShadow: "inset -1px 0 0 rgba(255,255,255,0.06)",
         }}
       >
         {/* Logo */}
