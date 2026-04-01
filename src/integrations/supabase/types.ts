@@ -761,10 +761,39 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      admin_dashboard: {
+        Row: {
+          doctor_count: number | null
+          government_count: number | null
+          new_users_24h: number | null
+          new_users_7d: number | null
+          posts_today: number | null
+          professional_count: number | null
+          student_count: number | null
+          tiik_approved_works: number | null
+          total_posts: number | null
+          total_strands: number | null
+          total_users: number | null
+          trade_count: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      [_ in never]: never
+      get_user_list: {
+        Args: { p_limit?: number; p_offset?: number; p_role?: string }
+        Returns: {
+          city: string
+          created_at: string
+          email: string
+          full_name: string
+          has_tiik_approved: boolean
+          institution: string
+          post_count: number
+          role: string
+          user_id: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
