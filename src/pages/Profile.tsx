@@ -1,25 +1,24 @@
 import { useState } from "react";
-import { MapPin, Copy, Pencil, Download, Shield, Layers, Users, X, Camera, MessageCircle, CheckCircle, Calendar, ExternalLink, Globe } from "lucide-react";
+import { MapPin, Copy, Shield, Layers, Users, X, Settings, MessageCircle, CheckCircle, Calendar, Globe, ThumbsUp, Lightbulb, FileText, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import EmptyState from "@/components/EmptyState";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const tabs = ["Portfolio", "Posts", "About", "Verifications"] as const;
 const ROLE_COLOR = "#4F46E5";
 
 const mockProjects = [
-  { title: "TelemedicineRx", company: "Delhi Tech University", location: "Delhi, India", description: "Telemedicine platform for rural India with AI triage and offline-first sync", domain: "HealthTech", status: "active" as const, role: "Lead Developer", startDate: "Jan 2025", endDate: "Present", tech: ["React Native", "Supabase", "Python", "TensorFlow"], tiikApproved: true },
-  { title: "SmartGrid Monitor", company: "IIT Delhi Research Lab", location: "Delhi, India", description: "IoT dashboard for electrical grid monitoring across 4 states with real-time anomaly detection", domain: "IoT", status: "completed" as const, role: "Frontend Engineer", startDate: "Aug 2024", endDate: "Dec 2024", tech: ["React", "Node.js", "MQTT", "D3.js"], tiikApproved: false },
-  { title: "EduBridge App", company: "Self / Open Source", location: "Remote", description: "Vernacular learning platform for government school students in rural districts", domain: "EdTech", status: "completed" as const, role: "Full Stack Developer", startDate: "Mar 2024", endDate: "Jul 2024", tech: ["Next.js", "PostgreSQL"], tiikApproved: true },
+  { title: "TelemedicineRx", company: "Delhi Tech University", location: "Delhi, India", description: "Telemedicine platform for rural India with AI triage and offline-first sync", domain: "HealthTech", status: "active" as const, role: "Lead Developer", startDate: "Jan 2025", endDate: "Present", tech: ["React Native", "Supabase", "Python", "TensorFlow"], tiikApproved: true, anchor: "Prof. Sharma", anchorStatus: "verified" as const, teamSize: 4, problemSolved: "Bridging the healthcare gap for 50M+ rural Indians who lack access to specialists. Built an AI-powered triage system that works offline.", socialProof: { insightful: 12, useful: 4 }, attachments: ["architecture-diagram.pdf", "demo-screenshot.png"] },
+  { title: "SmartGrid Monitor", company: "IIT Delhi Research Lab", location: "Delhi, India", description: "IoT dashboard for electrical grid monitoring across 4 states with real-time anomaly detection", domain: "IoT", status: "completed" as const, role: "Frontend Engineer", startDate: "Aug 2024", endDate: "Dec 2024", tech: ["React", "Node.js", "MQTT", "D3.js"], tiikApproved: false, anchor: "Dr. Verma", anchorStatus: "pending" as const, teamSize: 3, problemSolved: "Real-time monitoring dashboard that reduced grid downtime by 23% across 4 Indian states.", socialProof: { insightful: 8, useful: 2 }, attachments: ["completion-certificate.pdf"] },
+  { title: "EduBridge App", company: "Self / Open Source", location: "Remote", description: "Vernacular learning platform for government school students in rural districts", domain: "EdTech", status: "completed" as const, role: "Full Stack Developer", startDate: "Mar 2024", endDate: "Jul 2024", tech: ["Next.js", "PostgreSQL"], tiikApproved: true, anchor: null, anchorStatus: "none" as const, teamSize: 1, problemSolved: "Making quality education accessible in 8 Indian languages for 10,000+ government school students.", socialProof: { insightful: 18, useful: 7 }, attachments: [] },
 ];
 
 const mockGroups = [
-  { name: "CodeCraft Club", initials: "CC", color: "#0369A1", members: 12, activeProjects: 3, description: "A community of builders shipping real products every month.", creator: "Arjun Kumar", memberAvatars: ["AK", "PM", "RS", "NS", "DT"] },
-  { name: "EduTech Builders", initials: "EB", color: "#92400E", members: 28, activeProjects: 5, description: "Open-source collective focused on education technology for Bharat.", creator: "Priya Mehta", memberAvatars: ["PM", "AK", "VK", "SS"] },
+  { name: "CodeCraft Club", initials: "CC", color: "#0369A1", members: 12, activeProjects: 3, description: "A community of builders shipping real products every month.", creator: "Arjun Kumar", memberAvatars: ["AK", "PM", "RS", "NS", "DT"], problemSolved: "Creating a sustainable pipeline of student-built products that solve real Indian problems, with 3 projects shipped to production.", socialProof: { insightful: 24, useful: 11 }, attachments: ["team-photo.png"] },
+  { name: "EduTech Builders", initials: "EB", color: "#92400E", members: 28, activeProjects: 5, description: "Open-source collective focused on education technology for Bharat.", creator: "Priya Mehta", memberAvatars: ["PM", "AK", "VK", "SS"], problemSolved: "Building open-source EdTech tools that serve vernacular-medium students across Bharat.", socialProof: { insightful: 31, useful: 15 }, attachments: ["showcase-deck.pdf", "hackathon-win.png"] },
 ];
 
 const totalYears = () => {
@@ -38,7 +37,7 @@ const EditProfileModal = ({ open, onClose }: { open: boolean; onClose: () => voi
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         className="w-full sm:max-w-lg rounded-t-[20px] sm:rounded-2xl p-6 sm:p-8 max-h-[85vh] overflow-y-auto border border-border/30"
-        style={{ background: "var(--surface)", boxShadow: "0 24px 48px rgba(0,0,0,0.3)" }}
+        style={{ background: "var(--surface)", boxShadow: "var(--card-shadow)" }}
         onClick={e => e.stopPropagation()}
       >
         <div className="sm:hidden flex justify-center -mt-2 mb-4"><div className="w-9 h-[5px] rounded-full" style={{ background: "var(--border-2)" }} /></div>
@@ -71,7 +70,108 @@ const EditProfileModal = ({ open, onClose }: { open: boolean; onClose: () => voi
   );
 };
 
-const GroupModal = ({ group, onClose }: { group: typeof mockGroups[0] | null; onClose: () => void }) => {
+type ProjectType = typeof mockProjects[number];
+type GroupType = typeof mockGroups[number];
+
+const ProjectModal = ({ project, onClose }: { project: ProjectType | null; onClose: () => void }) => {
+  if (!project) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(12px)" }} onClick={onClose}>
+      <motion.div
+        initial={{ scale: 0.92, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.92, opacity: 0 }}
+        className="w-full max-w-md rounded-3xl border p-6 overflow-y-auto max-h-[80vh]
+          bg-white/70 dark:bg-[#111118]/80 backdrop-blur-2xl border-white/30 dark:border-white/10"
+        style={{ boxShadow: "var(--card-shadow)" }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-[18px] font-extrabold text-t1">{project.title}</h2>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{
+                background: project.status === "active" ? "rgba(16,185,129,0.12)" : "var(--brand-dim)",
+                color: project.status === "active" ? "#10B981" : "var(--brand)"
+              }}>
+                {project.status === "active" ? "Active" : "Completed"}
+              </span>
+            </div>
+            <p className="text-[12px] text-t3 mt-0.5">{project.role} @ {project.company}</p>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-lg text-t3 hover:text-t1 cursor-pointer active:scale-95"><X className="w-5 h-5" /></button>
+        </div>
+
+        <div className="space-y-5">
+          {/* Problem Solved */}
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-t3 mb-1.5">PROBLEM SOLVED</p>
+            <p className="text-[14px] text-t1 leading-relaxed">{project.problemSolved}</p>
+          </div>
+
+          {/* The Chain: Anchor + Team */}
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-t3 mb-2">THE CHAIN</p>
+            {project.anchor ? (
+              <div className="rounded-xl p-3 border border-border/30 mb-2" style={{ background: "var(--surface-2)" }}>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ backgroundColor: ROLE_COLOR }}>{project.anchor.split(" ").map(n => n[0]).join("")}</div>
+                  <div className="flex-1">
+                    <p className="text-[13px] font-semibold text-t1">{project.anchor}</p>
+                    <p className="text-[10px] text-t3">Project Head</p>
+                  </div>
+                  {project.anchorStatus === "verified" ? (
+                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(16,185,129,0.12)", color: "#10B981" }}>Verified</span>
+                  ) : (
+                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.12)", color: "#F59E0B" }}>Pending invite</span>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <span className="text-[11px] font-semibold px-3 py-1 rounded-full" style={{ background: "var(--brand-dim)", color: "var(--brand)" }}>Independent Project</span>
+            )}
+            {project.teamSize > 1 && (
+              <p className="text-[12px] text-t3 mt-2">+ {project.teamSize - 1} other contributors</p>
+            )}
+          </div>
+
+          {/* Social Proof */}
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-t3 mb-1.5">SOCIAL PROOF</p>
+            <div className="flex items-center gap-4">
+              <span className="flex items-center gap-1.5 text-[13px] text-t2"><ThumbsUp className="w-3.5 h-3.5" style={{ color: "var(--brand)" }} /> {project.socialProof.insightful} Insightful</span>
+              <span className="flex items-center gap-1.5 text-[13px] text-t2"><Lightbulb className="w-3.5 h-3.5" style={{ color: "#F59E0B" }} /> {project.socialProof.useful} Useful</span>
+            </div>
+          </div>
+
+          {/* Attachments */}
+          {project.attachments.length > 0 && (
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-t3 mb-2">ATTACHMENTS</p>
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {project.attachments.map(a => (
+                  <div key={a} className="flex items-center gap-2 rounded-xl px-3 py-2 border border-border/30 shrink-0 cursor-pointer hover:border-brand/30 transition-all duration-200 active:scale-95" style={{ background: "var(--surface-2)" }}>
+                    {a.endsWith(".pdf") ? <FileText className="w-4 h-4 text-t3" /> : <Image className="w-4 h-4 text-t3" />}
+                    <span className="text-[11px] font-medium text-t2 truncate max-w-[120px]">{a}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Skills */}
+          <div className="flex flex-wrap gap-1.5">
+            {project.tech.map(t => (
+              <span key={t} className="text-[10px] font-semibold px-2.5 py-1 rounded-full" style={{ background: "var(--brand-dim)", color: "var(--brand)", border: "1px solid var(--brand-glow)" }}>{t}</span>
+            ))}
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+const GroupModal = ({ group, onClose }: { group: GroupType | null; onClose: () => void }) => {
   if (!group) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(12px)" }} onClick={onClose}>
@@ -79,8 +179,9 @@ const GroupModal = ({ group, onClose }: { group: typeof mockGroups[0] | null; on
         initial={{ scale: 0.92, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.92, opacity: 0 }}
-        className="w-full max-w-md rounded-3xl border p-6 overflow-y-auto max-h-[80vh]"
-        style={{ background: "var(--surface)", borderColor: "var(--border-2)", boxShadow: "var(--card-shadow)" }}
+        className="w-full max-w-md rounded-3xl border p-6 overflow-y-auto max-h-[80vh]
+          bg-white/70 dark:bg-[#111118]/80 backdrop-blur-2xl border-white/30 dark:border-white/10"
+        style={{ boxShadow: "var(--card-shadow)" }}
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-5">
@@ -88,17 +189,39 @@ const GroupModal = ({ group, onClose }: { group: typeof mockGroups[0] | null; on
             <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-[18px] font-bold text-white" style={{ backgroundColor: group.color }}>{group.initials}</div>
             <div>
               <h2 className="text-[18px] font-extrabold text-t1">{group.name}</h2>
-              <p className="text-[12px] text-t3">{group.members} members · {group.activeProjects} active projects</p>
+              <p className="text-[12px] text-t3">{group.members} members</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 rounded-lg text-t3 hover:text-t1 cursor-pointer active:scale-95"><X className="w-5 h-5" /></button>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-5">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-t3 mb-1">DESCRIPTION</p>
-            <p className="text-[14px] text-t1 leading-relaxed">{group.description}</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-t3 mb-1.5">PROBLEM SOLVED</p>
+            <p className="text-[14px] text-t1 leading-relaxed">{group.problemSolved}</p>
           </div>
+
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-t3 mb-1.5">SOCIAL PROOF</p>
+            <div className="flex items-center gap-4">
+              <span className="flex items-center gap-1.5 text-[13px] text-t2"><ThumbsUp className="w-3.5 h-3.5" style={{ color: "var(--brand)" }} /> {group.socialProof.insightful} Insightful</span>
+              <span className="flex items-center gap-1.5 text-[13px] text-t2"><Lightbulb className="w-3.5 h-3.5" style={{ color: "#F59E0B" }} /> {group.socialProof.useful} Useful</span>
+            </div>
+          </div>
+
+          {group.attachments.length > 0 && (
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-t3 mb-2">ATTACHMENTS</p>
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {group.attachments.map(a => (
+                  <div key={a} className="flex items-center gap-2 rounded-xl px-3 py-2 border border-border/30 shrink-0 cursor-pointer hover:border-brand/30 transition-all duration-200 active:scale-95" style={{ background: "var(--surface-2)" }}>
+                    {a.endsWith(".pdf") ? <FileText className="w-4 h-4 text-t3" /> : <Image className="w-4 h-4 text-t3" />}
+                    <span className="text-[11px] font-medium text-t2 truncate max-w-[120px]">{a}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div>
             <p className="text-[10px] font-bold uppercase tracking-wider text-t3 mb-2">TEAM MEMBERS</p>
@@ -123,65 +246,17 @@ const GroupModal = ({ group, onClose }: { group: typeof mockGroups[0] | null; on
   );
 };
 
-const handleExport = () => {
-  const printWindow = window.open("", "_blank");
-  if (!printWindow) { toast.error("Pop-up blocked"); return; }
-  printWindow.document.write(`
-    <!DOCTYPE html><html><head><title>Arjun Kumar — Tiikme Profile</title>
-    <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; padding: 48px; color: #1a1a2e; }
-      h1 { font-size: 28px; margin-bottom: 4px; }
-      .meta { color: #6b7280; font-size: 13px; margin-bottom: 24px; }
-      h2 { font-size: 18px; margin: 28px 0 12px; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; }
-      .item { margin-bottom: 16px; padding-left: 16px; border-left: 3px solid #4F46E5; }
-      .item h3 { font-size: 15px; font-weight: 700; }
-      .item .role { font-size: 13px; color: #6b7280; }
-      .item .desc { font-size: 13px; margin-top: 4px; color: #374151; }
-      .badge { display: inline-block; font-size: 10px; background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 99px; font-weight: 700; }
-      .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 11px; color: #9ca3af; text-align: center; }
-      @media print { body { padding: 24px; } }
-    </style></head><body>
-    <h1>Arjun Kumar</h1>
-    <p class="meta">Student · DTU · Delhi, India · @arjunkumar</p>
-    <p style="font-size:14px;color:#374151;margin-bottom:8px;">Final year CSE student building at the intersection of health and technology.</p>
-    <h2>Work & Projects</h2>
-    ${mockProjects.map(p => `
-      <div class="item">
-        <h3>${p.title} ${p.tiikApproved ? '<span class="badge">Tiik Approved</span>' : ''}</h3>
-        <p class="role">${p.role} @ ${p.company} · ${p.startDate} – ${p.endDate} · ${p.domain}</p>
-        <p class="desc">${p.description}</p>
-      </div>
-    `).join("")}
-    <h2>Groups</h2>
-    ${mockGroups.map(g => `<p style="font-size:13px;margin-bottom:4px;">${g.name} — ${g.members} members, ${g.activeProjects} active projects</p>`).join("")}
-    <div class="footer">Generated via Tiikme.in · Verified Professional Identity</div>
-    </body></html>
-  `);
-  printWindow.document.close();
-  printWindow.print();
-};
-
 const Profile = () => {
   const [activeTab, setActiveTab] = useState<typeof tabs[number]>("Portfolio");
   const [editOpen, setEditOpen] = useState(false);
-  const [exporting, setExporting] = useState(false);
-  const [selectedGroup, setSelectedGroup] = useState<typeof mockGroups[0] | null>(null);
-
-  const handleExportWithSpinner = () => {
-    setExporting(true);
-    setTimeout(() => {
-      handleExport();
-      setExporting(false);
-      toast.success("Profile PDF downloaded with Tiikme watermark.");
-    }, 1000);
-  };
+  const [selectedGroup, setSelectedGroup] = useState<GroupType | null>(null);
+  const [selectedProject, setSelectedProject] = useState<ProjectType | null>(null);
 
   const handleCopyLink = () => { navigator.clipboard.writeText("https://tiikme.in/arjunkumar"); toast.success("Link copied!"); };
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
-      {/* ========== FROSTED GLASS HERO CARD ========== */}
+      {/* ========== LIQUID GLOSSY HERO CARD ========== */}
       <div className="rounded-3xl overflow-hidden relative w-full h-[400px] md:h-[500px]" style={{ boxShadow: "var(--card-shadow)" }}>
         {/* Background image (placeholder gradient) */}
         <div className="absolute inset-0 w-full h-full" style={{
@@ -192,66 +267,70 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* Gradient overlay */}
-        <div className="absolute inset-0" style={{
-          background: "linear-gradient(to top, #050510 0%, rgba(5,5,16,0.6) 50%, transparent 100%)"
-        }} />
+        {/* Gradient overlay — theme-aware */}
+        <div className="absolute inset-0 bg-gradient-to-t from-white/90 via-white/40 to-transparent dark:from-[#050510] dark:via-[#050510]/60 dark:to-transparent" />
 
-        {/* Edit button */}
+        {/* Settings gear (top right) — replaces Edit/Export/Copy */}
         <button
           onClick={() => setEditOpen(true)}
-          className="absolute top-4 right-4 p-2.5 rounded-xl cursor-pointer active:scale-95 transition-all duration-200 z-10"
-          style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.15)" }}
+          className="absolute top-4 right-4 p-2.5 rounded-xl cursor-pointer active:scale-95 transition-all duration-200 z-10
+            bg-white/20 dark:bg-white/10 backdrop-blur-xl border border-white/30 dark:border-white/15"
         >
-          <Camera className="w-4 h-4 text-white" />
+          <Settings className="w-4 h-4 text-white" />
         </button>
 
-        {/* Frosted bottom section */}
-        <div className="absolute bottom-0 w-full p-6 md:p-8" style={{ backdropFilter: "blur(16px)", borderTop: "1px solid rgba(255,255,255,0.1)", background: "rgba(5,5,16,0.3)" }}>
+        {/* Frosted bottom section — theme-aware */}
+        <div className="absolute bottom-0 w-full p-6 md:p-8 backdrop-blur-xl
+          bg-white/40 border-t border-white/60
+          dark:bg-[#050510]/30 dark:border-t dark:border-white/10">
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2.5 flex-wrap">
-                <h1 className="text-[26px] md:text-[30px] font-extrabold text-white">Arjun Kumar</h1>
+                <h1 className="text-[26px] md:text-[30px] font-extrabold text-gray-900 dark:text-white">Arjun Kumar</h1>
                 <span className="flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full" style={{ background: "rgba(245,158,11,0.2)", color: "#F59E0B", border: "1px solid rgba(245,158,11,0.3)" }}>
                   <Shield className="w-3 h-3" /> Tiik Approved
                 </span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: `${ROLE_COLOR}33`, color: "#a5b4fc" }}>Student</span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: `${ROLE_COLOR}20`, color: ROLE_COLOR }}>Student</span>
               </div>
-              <p className="text-[12px] font-mono mt-1 text-white/40">@arjunkumar</p>
+              <p className="text-[12px] font-mono mt-1 text-gray-500 dark:text-white/40">@arjunkumar</p>
               <div className="flex items-center gap-1.5 mt-1">
                 <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#10B981" }} />
-                <span className="text-[12px] font-medium text-[#10B981]">Open to work</span>
+                <span className="text-[12px] font-medium" style={{ color: "#10B981" }}>Open to work</span>
               </div>
-              <p className="text-[14px] md:text-[15px] mt-3 text-white/80 leading-relaxed line-clamp-2">Final year CSE student building at the intersection of health and technology.</p>
+              <p className="text-[14px] md:text-[15px] mt-3 text-gray-700 dark:text-white/80 leading-relaxed line-clamp-2">Final year CSE student building at the intersection of health and technology.</p>
 
               {/* Connectivity Nodes */}
               <div className="flex items-center gap-2 flex-wrap mt-3">
-                <Link to="/app/institution/1" className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer" style={{ background: "rgba(79,70,229,0.15)", color: "#a5b4fc", border: "1px solid rgba(79,70,229,0.2)" }}>
+                <Link to="/app/institution/1" className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer
+                  bg-indigo-100 text-indigo-700 border border-indigo-200
+                  dark:bg-indigo-500/15 dark:text-indigo-300 dark:border-indigo-500/20">
                   <MapPin className="w-3 h-3 inline mr-1" />DTU
                 </Link>
-                <Link to="/app/explore" className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer" style={{ background: "rgba(16,185,129,0.15)", color: "#34d399", border: "1px solid rgba(16,185,129,0.2)" }}>
+                <Link to="/app/explore" className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer
+                  bg-emerald-100 text-emerald-700 border border-emerald-200
+                  dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/20">
                   <Layers className="w-3 h-3 inline mr-1" />TelemedicineRx
                 </Link>
-                <span className="text-[11px] px-3 py-1.5 rounded-full text-white/50" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}>Delhi, India</span>
+                <span className="text-[11px] px-3 py-1.5 rounded-full text-gray-500 dark:text-white/50
+                  bg-gray-100 dark:bg-white/8 border border-gray-200 dark:border-white/10">Delhi, India</span>
               </div>
             </div>
 
-            {/* Action buttons */}
+            {/* Minimal actions */}
             <div className="flex items-center gap-2 shrink-0">
-              <Button variant="secondary" size="sm" className="gap-1.5 rounded-full active:scale-95 transition-all duration-200 text-white border-white/20 hover:bg-white/10" style={{ background: "rgba(255,255,255,0.08)" }} onClick={handleCopyLink}><Copy className="w-3 h-3" /> Copy link</Button>
-              <Button variant="secondary" size="sm" className="gap-1.5 rounded-full active:scale-95 transition-all duration-200 text-white border-white/20 hover:bg-white/10" style={{ background: "rgba(255,255,255,0.08)" }} onClick={() => setEditOpen(true)}><Pencil className="w-3 h-3" /></Button>
-              <Button size="sm" className="gap-1.5 rounded-full active:scale-95 transition-all duration-200" onClick={handleExportWithSpinner}>
-                <Download className="w-3 h-3" /> {exporting ? "Exporting..." : "Export"}
+              <Button variant="ghost" size="sm" className="gap-1.5 rounded-full active:scale-95 transition-all duration-200
+                text-gray-600 dark:text-white/70 hover:bg-gray-200/50 dark:hover:bg-white/10" onClick={handleCopyLink}>
+                <Copy className="w-3.5 h-3.5" />
               </Button>
             </div>
           </div>
 
           {/* Stats row */}
-          <div className="grid grid-cols-4 gap-3 mt-5 pt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+          <div className="grid grid-cols-4 gap-3 mt-5 pt-4 border-t border-gray-200/60 dark:border-white/8">
             {[{ label: "PROJECTS", value: "4" }, { label: "GROUPS", value: "2" }, { label: "STRANDS", value: "156" }, { label: "ACTIVITY", value: "78" }].map(s => (
               <div key={s.label} className="text-center">
-                <p className="text-[20px] font-extrabold text-white">{s.value}</p>
-                <p className="text-[9px] font-bold tracking-wider uppercase text-white/35">{s.label}</p>
+                <p className="text-[20px] font-extrabold text-gray-900 dark:text-white">{s.value}</p>
+                <p className="text-[9px] font-bold tracking-wider uppercase text-gray-400 dark:text-white/35">{s.label}</p>
               </div>
             ))}
           </div>
@@ -274,7 +353,6 @@ const Profile = () => {
           {/* ========== PORTFOLIO TAB ========== */}
           {activeTab === "Portfolio" && (
             <div>
-              {/* Experience summary */}
               <div className="rounded-xl border border-border/30 p-4 mb-5 flex items-center gap-3" style={{ background: "var(--surface-2)" }}>
                 <Globe className="w-5 h-5 text-brand shrink-0" />
                 <div>
@@ -285,7 +363,7 @@ const Profile = () => {
 
               <div className="space-y-0">
                 {mockProjects.map((p, i) => (
-                  <div key={p.title} className="flex gap-4 group">
+                  <div key={p.title} className="flex gap-4 group cursor-pointer" onClick={() => setSelectedProject(p)}>
                     {/* Timeline */}
                     <div className="flex flex-col items-center pt-1">
                       <div className="w-3 h-3 rounded-full shrink-0 border-2" style={{
@@ -296,35 +374,36 @@ const Profile = () => {
                     </div>
                     {/* Content */}
                     <div className="flex-1 pb-6">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="text-[15px] font-bold text-t1">{p.role} @ {p.company}</h3>
-                            {p.tiikApproved && (
-                              <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.12)", color: "#F59E0B" }}>
-                                <Shield className="w-3 h-3" /> Tiik Approved
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-1.5 mt-1 text-[12px] text-t3">
-                            <MapPin className="w-3 h-3" />
-                            <span>{p.location}</span>
-                            <span className="mx-0.5">|</span>
-                            <Calendar className="w-3 h-3" />
-                            <span>{p.startDate} – {p.endDate}</span>
-                          </div>
-                        </div>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-all duration-200 active:scale-95 shrink-0 h-8 w-8 p-0">
-                              <ExternalLink className="w-3.5 h-3.5" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>View full project details</TooltipContent>
-                        </Tooltip>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-[15px] font-bold text-t1">{p.role} @ {p.company}</h3>
+                        {p.tiikApproved && (
+                          <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.12)", color: "#F59E0B" }}>
+                            <Shield className="w-3 h-3" /> Tiik Approved
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Anchor line */}
+                      {p.anchor ? (
+                        <p className="text-[12px] mt-1" style={{ color: "var(--brand)" }}>
+                          <Shield className="w-3 h-3 inline mr-1" />
+                          Verified by: {p.anchor}
+                          {p.anchorStatus === "pending" && (
+                            <span className="text-[10px] font-bold ml-1.5 px-1.5 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.12)", color: "#F59E0B" }}>Pending</span>
+                          )}
+                        </p>
+                      ) : (
+                        <span className="inline-block text-[10px] font-semibold px-2.5 py-0.5 rounded-full mt-1" style={{ background: "var(--brand-dim)", color: "var(--brand)" }}>Independent Project</span>
+                      )}
+
+                      <div className="flex items-center gap-1.5 mt-1 text-[12px] text-t3">
+                        <MapPin className="w-3 h-3" />
+                        <span>{p.location}</span>
+                        <span className="mx-0.5">|</span>
+                        <Calendar className="w-3 h-3" />
+                        <span>{p.startDate} – {p.endDate}</span>
                       </div>
                       <p className="text-[14px] text-t2 leading-relaxed mt-2 line-clamp-2">{p.description}</p>
-                      {/* Skills pills */}
                       <div className="flex flex-wrap gap-1.5 mt-2.5">
                         {p.tech.map(t => (
                           <span key={t} className="text-[10px] font-semibold px-2.5 py-1 rounded-full" style={{ background: "var(--brand-dim)", color: "var(--brand)", border: "1px solid var(--brand-glow)" }}>{t}</span>
@@ -341,7 +420,7 @@ const Profile = () => {
             <EmptyState icon={MessageCircle} title="No posts yet" description="Share your first update — a project milestone, an insight, or a question." actionLabel="Share your first update" onAction={() => toast.info("Opening compose...")} />
           )}
 
-          {/* ========== ABOUT TAB (Groups as floating glass) ========== */}
+          {/* ========== ABOUT TAB ========== */}
           {activeTab === "About" && (
             <div className="space-y-6">
               <div>
@@ -351,13 +430,8 @@ const Profile = () => {
                     <div
                       key={g.name}
                       onClick={() => setSelectedGroup(g)}
-                      className="rounded-2xl p-5 cursor-pointer hover:-translate-y-1 transition-all duration-300 active:scale-[0.98]"
-                      style={{
-                        background: "rgba(255,255,255,0.04)",
-                        backdropFilter: "blur(20px)",
-                        border: "1px solid rgba(255,255,255,0.08)",
-                        boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
-                      }}
+                      className="rounded-2xl p-5 cursor-pointer hover:-translate-y-1 transition-all duration-300 active:scale-[0.98]
+                        bg-white/50 dark:bg-white/4 backdrop-blur-lg border border-white/20 dark:border-white/8 shadow-lg"
                     >
                       <div className="flex items-center gap-3 mb-3">
                         <div className="w-12 h-12 rounded-xl flex items-center justify-center text-[14px] font-bold text-white" style={{ backgroundColor: g.color }}>{g.initials}</div>
@@ -366,7 +440,6 @@ const Profile = () => {
                           <p className="text-[11px] text-t3">{g.activeProjects} active projects</p>
                         </div>
                       </div>
-                      {/* Overlapping avatars */}
                       <div className="flex items-center">
                         {g.memberAvatars.slice(0, 4).map((av, i) => (
                           <div key={i} className="w-8 h-8 rounded-full flex items-center justify-center text-[9px] font-bold text-white border-2" style={{ backgroundColor: g.color, borderColor: "var(--surface)", marginLeft: i > 0 ? "-8px" : "0", zIndex: 4 - i }}>
@@ -409,6 +482,7 @@ const Profile = () => {
       <EditProfileModal open={editOpen} onClose={() => setEditOpen(false)} />
       <AnimatePresence>
         {selectedGroup && <GroupModal group={selectedGroup} onClose={() => setSelectedGroup(null)} />}
+        {selectedProject && <ProjectModal project={selectedProject} onClose={() => setSelectedProject(null)} />}
       </AnimatePresence>
     </div>
   );
