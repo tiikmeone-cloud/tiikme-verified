@@ -199,6 +199,13 @@ export type Database = {
             referencedRelation: "institutions"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "institutions_parent_institution_id_fkey"
+            columns: ["parent_institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       opportunities: {
@@ -256,6 +263,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunities_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "institutions_public"
             referencedColumns: ["id"]
           },
           {
@@ -658,6 +672,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "work_items_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "work_items_owner_id_fkey"
             columns: ["owner_id"]
             isOneToOne: false
@@ -757,6 +778,13 @@ export type Database = {
             referencedRelation: "institutions"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "workspaces_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
@@ -777,6 +805,79 @@ export type Database = {
           trade_count: number | null
         }
         Relationships: []
+      }
+      institutions_public: {
+        Row: {
+          city: string | null
+          created_at: string | null
+          district: string | null
+          founded_year: number | null
+          head_profile_id: string | null
+          id: string | null
+          is_verified: boolean | null
+          member_count: number | null
+          name: string | null
+          official_website: string | null
+          parent_institution_id: string | null
+          pincode: string | null
+          state: string | null
+          type: string | null
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string | null
+          district?: string | null
+          founded_year?: number | null
+          head_profile_id?: string | null
+          id?: string | null
+          is_verified?: boolean | null
+          member_count?: number | null
+          name?: string | null
+          official_website?: string | null
+          parent_institution_id?: string | null
+          pincode?: string | null
+          state?: string | null
+          type?: string | null
+        }
+        Update: {
+          city?: string | null
+          created_at?: string | null
+          district?: string | null
+          founded_year?: number | null
+          head_profile_id?: string | null
+          id?: string | null
+          is_verified?: boolean | null
+          member_count?: number | null
+          name?: string | null
+          official_website?: string | null
+          parent_institution_id?: string | null
+          pincode?: string | null
+          state?: string | null
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institutions_head_profile_id_fkey"
+            columns: ["head_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "institutions_parent_institution_id_fkey"
+            columns: ["parent_institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "institutions_parent_institution_id_fkey"
+            columns: ["parent_institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions_public"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
