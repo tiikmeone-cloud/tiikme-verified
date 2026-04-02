@@ -1203,6 +1203,7 @@ export type Database = {
       }
     }
     Functions: {
+      get_page_tracker_count: { Args: { p_page_id: string }; Returns: number }
       get_user_list: {
         Args: { p_limit?: number; p_offset?: number; p_role?: string }
         Returns: {
