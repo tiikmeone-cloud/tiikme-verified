@@ -1,7 +1,7 @@
 import { ReactNode, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  LayoutGrid, Compass, Layers, Target,
+  LayoutGrid, Compass, Layers, Users, Target,
   Link2, MessageCircle, Bell, SlidersHorizontal, PencilLine, Zap, Plus, User, LogOut,
 } from "lucide-react";
 import NewPostModal from "@/components/NewPostModal";
