@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MapPin, Copy, Shield, Layers, Users, X, Settings, MessageCircle, CheckCircle, Calendar, Globe, Send, Share2, ArrowRight, Building2, Languages, ExternalLink, Clock, Eye, Briefcase, Plus, Link2 } from "lucide-react";
 import ActivityScoreRing from "@/components/ActivityScoreRing";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import EmptyState from "@/components/EmptyState";
 import VisibilityToggle from "@/components/profile/VisibilityToggle";
 import AchievementsTab from "@/components/profile/AchievementsTab";
 import CustomLinks from "@/components/profile/CustomLinks";
+import { supabase } from "@/integrations/supabase/client";
 
 const tabs = ["Work & Projects", "Achievements", "Posts", "About"] as const;
 const ROLE_COLOR = "#4F46E5";
@@ -32,9 +33,30 @@ const statusColors: Record<string, { dot: string; accent: string; label: string 
   paused: { dot: "#F59E0B", accent: "#F59E0B", label: "Paused" },
 };
 
-const EditProfileModal = ({ open, onClose }: { open: boolean; onClose: () => void }) => {
-  const [form, setForm] = useState({ name: "Arjun Kumar", headline: "Final year CSE student building at the intersection of health and technology.", bio: "", city: "Delhi", state: "Delhi" });
+const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose: () => void; onSaved: () => void }) => {
+  const [form, setForm] = useState({ name: "", headline: "", bio: "", city: "", state: "", username: "" });
+  const [saving, setSaving] = useState(false);
   const [customLinks, setCustomLinks] = useState(mockCustomLinks);
+
+  useEffect(() => {
+    if (!open) return;
+    const load = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase.from("profiles").select("*").eq("id", user.id).single();
+      if (data) {
+        setForm({
+          name: data.full_name || "",
+          headline: data.headline || "",
+          bio: data.bio || "",
+          city: data.location_city || "",
+          state: data.location_state || "",
+          username: data.username || "",
+        });
+      }
+    };
+    load();
+  }, [open]);
 
   const addLink = () => { if (customLinks.length < 5) setCustomLinks([...customLinks, { url: "", label: "" }]); };
   const updateLink = (i: number, key: string, val: string) => {
@@ -44,36 +66,54 @@ const EditProfileModal = ({ open, onClose }: { open: boolean; onClose: () => voi
   };
   const removeLink = (i: number) => setCustomLinks(customLinks.filter((_, idx) => idx !== i));
 
+  const handleSave = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    setSaving(true);
+    const { error } = await supabase.from("profiles").update({
+      full_name: form.name,
+      headline: form.headline.slice(0, 80),
+      bio: form.bio.slice(0, 300),
+      username: form.username,
+      location_city: form.city,
+      location_state: form.state,
+      custom_links: customLinks.filter(l => l.url) as any,
+    }).eq("id", user.id);
+    setSaving(false);
+    if (error) { toast.error("Failed to save"); return; }
+    toast.success("Profile updated ✓");
+    onSaved();
+    onClose();
+  };
+
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} onClick={onClose}>
-      <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-        className="w-full sm:max-w-lg rounded-t-[24px] sm:rounded-[20px] p-6 sm:p-8 max-h-[85vh] overflow-y-auto glass-card"
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-end" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} onClick={onClose}>
+      <motion.div initial={{ x: 400, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: 400, opacity: 0 }}
+        className="w-full sm:w-[400px] h-full sm:h-auto sm:max-h-[90vh] rounded-l-[24px] sm:rounded-[20px] p-6 sm:p-8 overflow-y-auto glass-card"
         onClick={e => e.stopPropagation()}>
-        <div className="sm:hidden flex justify-center -mt-2 mb-4"><div className="w-10 h-[5px] rounded-full" style={{ background: "var(--border-2)" }} /></div>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-[20px] font-extrabold" style={{ color: "var(--text-1)" }}>Edit profile</h2>
           <button onClick={onClose} className="p-2 rounded-lg cursor-pointer active:scale-95" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
         </div>
         <div className="space-y-4">
-          {[{ label: "Display name", val: form.name, key: "name" }, { label: "Headline", val: form.headline, key: "headline" }].map(f => (
-            <div key={f.key}>
-              <label className="micro-label block mb-1.5">{f.label}</label>
-              <Input value={f.val} onChange={e => setForm({ ...form, [f.key]: e.target.value })} />
-            </div>
-          ))}
+          <div><label className="micro-label block mb-1.5">Display name</label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
+          <div><label className="micro-label block mb-1.5">Headline (80 chars)</label><Input value={form.headline} onChange={e => setForm({ ...form, headline: e.target.value.slice(0, 80) })} maxLength={80} /></div>
           <div>
-            <label className="micro-label block mb-1.5">Bio</label>
-            <textarea value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })} placeholder="Tell people about yourself..." rows={3}
+            <label className="micro-label block mb-1.5">Bio (300 chars)</label>
+            <textarea value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value.slice(0, 300) })} placeholder="Tell people about yourself..." rows={3} maxLength={300}
               className="w-full rounded-xl p-3.5 text-[14px] outline-none resize-none transition-all duration-150"
               style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", color: "var(--text-1)" }} />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[13px]" style={{ color: "var(--text-3)" }}>@</span>
+            <Input value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} className="flex-1" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div><label className="micro-label block mb-1.5">City</label><Input value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} /></div>
             <div><label className="micro-label block mb-1.5">State</label><Input value={form.state} onChange={e => setForm({ ...form, state: e.target.value })} /></div>
           </div>
 
-          {/* Custom Links Section */}
           <div>
             <label className="micro-label block mb-1.5">Custom Links</label>
             <div className="space-y-2">
@@ -92,7 +132,7 @@ const EditProfileModal = ({ open, onClose }: { open: boolean; onClose: () => voi
 
           <div className="flex gap-3 pt-2">
             <Button variant="ghost" className="flex-1" onClick={onClose}>Cancel</Button>
-            <Button className="flex-1" onClick={() => { toast.success("Profile updated"); onClose(); }}>Save changes</Button>
+            <Button className="flex-1" onClick={handleSave} disabled={saving}>{saving ? "Saving..." : "Save changes"}</Button>
           </div>
         </div>
       </motion.div>
@@ -134,8 +174,34 @@ const Profile = () => {
   const [projectVisibility, setProjectVisibility] = useState<Record<string, string>>(
     Object.fromEntries(mockProjects.map(p => [p.title, p.visibility]))
   );
+  const [profileData, setProfileData] = useState<any>(null);
+  const [workspaces, setWorkspaces] = useState<any[]>([]);
 
-  const handleCopyLink = () => { navigator.clipboard.writeText("https://tiikme.in/arjunkumar"); toast.success("Link copied!"); };
+  const loadProfile = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const [{ data: profile }, { data: ws }] = await Promise.all([
+      supabase.from("profiles").select("*").eq("id", user.id).single(),
+      supabase.from("workspace_members").select("*, workspace:workspaces(name, type)").eq("user_id", user.id),
+    ]);
+    setProfileData(profile);
+    setWorkspaces(ws || []);
+  };
+
+  useEffect(() => { loadProfile(); }, []);
+
+  const displayName = profileData?.full_name || "Arjun Kumar";
+  const username = profileData?.username || "arjunkumar";
+  const headline = profileData?.headline || "Final year CSE student building at the intersection of health and technology.";
+  const institution = profileData?.institution_name || "DTU";
+  const city = profileData?.location_city || "Delhi";
+  const state = profileData?.location_state || "India";
+
+  const handleCopyLink = async () => {
+    const url = window.location.origin + "/" + username;
+    await navigator.clipboard.writeText(url);
+    toast.success(`Profile link copied! tiikme.in/${username}`);
+  };
 
   return (
     <div className="max-w-[760px] mx-auto px-0 md:px-4 py-0 md:py-7 space-y-0">
@@ -156,25 +222,27 @@ const Profile = () => {
         <div className="px-6 pb-6 relative">
           <div className="flex items-end gap-4 -mt-12">
             <div className="relative group cursor-pointer" onClick={() => setEditOpen(true)}>
-              <div className="w-24 h-24 rounded-full flex items-center justify-center text-[30px] font-extrabold text-white shrink-0"
+              <div className="w-24 h-24 rounded-full flex items-center justify-center text-[30px] font-extrabold text-white shrink-0 overflow-hidden"
                 style={{
                   backgroundColor: ROLE_COLOR,
                   border: "3px solid var(--surface)",
                   boxShadow: "0 0 0 2px var(--surface), 0 0 0 4.5px #F59E0B, 0 0 12px rgba(245,158,11,0.45), 0 0 24px rgba(245,158,11,0.15)",
-                }}>AK</div>
+                }}>
+                {profileData?.avatar_url ? <img src={profileData.avatar_url} alt="" className="w-full h-full object-cover" /> : displayName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
+              </div>
               <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <Settings className="w-5 h-5 text-white" />
               </div>
             </div>
             <div className="flex-1 min-w-0 pb-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-[24px] font-extrabold" style={{ color: "var(--text-1)" }}>Arjun Kumar</h1>
+                <h1 className="text-[24px] font-extrabold" style={{ color: "var(--text-1)" }}>{displayName}</h1>
                 <div className="w-[18px] h-[18px] rounded-full flex items-center justify-center" style={{ background: "#F59E0B" }}>
                   <CheckCircle className="w-3 h-3 text-white" />
                 </div>
                 <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full" style={{ background: `${ROLE_COLOR}1A`, color: ROLE_COLOR, border: `1px solid ${ROLE_COLOR}33` }}>{ROLE_LABEL}</span>
               </div>
-              <p className="text-[12px] font-mono" style={{ color: "var(--text-3)" }}>@arjunkumar</p>
+              <p className="text-[12px] font-mono" style={{ color: "var(--text-3)" }}>@{username}</p>
             </div>
           </div>
 
@@ -183,21 +251,20 @@ const Profile = () => {
             <span className="text-[12px] font-medium" style={{ color: "var(--open-green)" }}>Open to work</span>
           </div>
 
-          <p className="text-[14px] mt-2 line-clamp-1" style={{ color: "var(--text-2)", lineHeight: 1.75 }}>Final year CSE student building at the intersection of health and technology.</p>
+          <p className="text-[14px] mt-2 line-clamp-1" style={{ color: "var(--text-2)", lineHeight: 1.75 }}>{headline}</p>
 
           <div className="flex flex-wrap gap-1.5 mt-3">
             <Link to="/app/institution/1" className="flex items-center gap-1 text-[12px] font-semibold px-2.5 py-1 rounded-full transition-all duration-150" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }}>
-              <Building2 className="w-3 h-3" /> DTU
+              <Building2 className="w-3 h-3" /> {institution}
             </Link>
             <span className="flex items-center gap-1 text-[12px] font-semibold px-2.5 py-1 rounded-full" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }}>
-              <MapPin className="w-3 h-3" /> Delhi, India
+              <MapPin className="w-3 h-3" /> {city}, {state}
             </span>
             <span className="flex items-center gap-1 text-[12px] font-semibold px-2.5 py-1 rounded-full" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }}>
               <Languages className="w-3 h-3" /> Hindi, English
             </span>
           </div>
 
-          {/* Custom Links */}
           <div className="mt-2">
             <CustomLinks links={mockCustomLinks} />
           </div>
@@ -213,7 +280,7 @@ const Profile = () => {
               <p className="micro-label mt-0.5">Projects</p>
             </button>
             <button onClick={() => setActiveTab("About")} className="text-center cursor-pointer">
-              <p className="text-[22px] font-extrabold" style={{ color: "var(--text-1)" }}>2</p>
+              <p className="text-[22px] font-extrabold" style={{ color: "var(--text-1)" }}>{workspaces.length || 2}</p>
               <p className="micro-label mt-0.5">Workspaces</p>
             </button>
             <Link to="/app/strands" className="text-center">
@@ -240,7 +307,6 @@ const Profile = () => {
         </div>
 
         <div className="p-6">
-          {/* ═══ WORK & PROJECTS TAB ═══ */}
           {activeTab === "Work & Projects" && (
             <div className="relative">
               <div className="absolute left-[11px] top-5 bottom-16 w-[2px]" style={{ background: "var(--border-2)" }} />
@@ -260,144 +326,98 @@ const Profile = () => {
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className="text-[15px] font-bold" style={{ color: "var(--text-1)" }}>{p.title}</h3>
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{
-                                background: sc.dot === "var(--open-green)" ? "rgba(16,185,129,0.1)" : "var(--brand-dim)",
-                                color: sc.dot === "var(--open-green)" ? "var(--open-green)" : "var(--brand)",
-                              }}>{sc.label}</span>
+                              <Link to={p.hubId ? `/app/teams/${p.hubId}` : "#"} className="text-[14px] font-bold hover:underline" style={{ color: "var(--text-1)" }}>{p.title}</Link>
+                              {p.tiikApproved && (
+                                <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.12)", color: "#F59E0B", border: "1px solid rgba(245,158,11,0.3)" }}>
+                                  <Shield className="w-2.5 h-2.5" /> Tiik Approved
+                                </span>
+                              )}
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: `rgba(${sc.dot === "var(--brand)" ? "61,90,241" : sc.dot === "var(--open-green)" ? "16,185,129" : "245,158,11"},0.12)`, color: sc.dot.startsWith("var") ? sc.dot : sc.dot }}>{sc.label}</span>
                             </div>
-                            {p.tiikApproved && (
-                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full mt-1" style={{ background: "rgba(245,158,11,0.1)", color: "#F59E0B", border: "1px solid rgba(245,158,11,0.3)", boxShadow: "0 0 8px rgba(245,158,11,0.2)" }}>
-                                <CheckCircle className="w-3 h-3" /> Tiik Approved
-                              </span>
-                            )}
+                            <p className="text-[12px] mt-0.5" style={{ color: "var(--text-3)" }}>{p.company} · {p.role}</p>
                           </div>
-                          {/* Visibility toggle */}
-                          <VisibilityToggle value={vis} onChange={v => setProjectVisibility(prev => ({ ...prev, [p.title]: v }))} />
                         </div>
-
-                        <div className="flex items-center gap-1.5 px-4 mt-1 text-[12px] flex-wrap" style={{ color: "var(--text-3)" }}>
-                          <span>Your role: {p.role}</span>
-                          <span>·</span>
-                          <span>Team of {p.teamSize}</span>
-                          <span>·</span>
-                          <Link to="/app/institution/1" className="font-semibold" style={{ color: "var(--brand)" }}>{p.company}</Link>
+                        <p className="px-4 pt-1.5 text-[13px] line-clamp-2" style={{ color: "var(--text-2)" }}>{p.description}</p>
+                        <div className="flex flex-wrap gap-1 px-4 pt-2">
+                          {p.tech.slice(0, 4).map(t => <span key={t} className="text-[10px] font-medium px-2 py-0.5 rounded-full" style={{ background: "var(--surface-2)", color: "var(--text-3)", border: "1px solid var(--border)" }}>{t}</span>)}
+                          {p.tech.length > 4 && <span className="text-[10px] font-medium px-2 py-0.5 rounded-full cursor-pointer" style={{ background: "var(--surface-2)", color: "var(--brand)", border: "1px solid var(--border)" }}>+{p.tech.length - 4} more</span>}
                         </div>
-
-                        <p className="text-[13px] px-4 mt-2 line-clamp-2" style={{ color: "var(--text-2)" }}>{p.description}</p>
-
-                        <div className="flex flex-wrap gap-1.5 px-4 mt-2">
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-2)" }}>{p.domain}</span>
-                          {p.tech.map(t => (
-                            <span key={t} className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--brand-dim)", color: "var(--brand)" }}>{t}</span>
-                          ))}
+                        <div className="flex items-center gap-3 px-4 py-3 mt-2" style={{ borderTop: "1px solid var(--border)" }}>
+                          <span className="text-[11px] flex items-center gap-1" style={{ color: "var(--text-3)" }}><Eye className="w-3 h-3" /> {p.views}</span>
+                          <span className="text-[11px] flex items-center gap-1" style={{ color: "var(--text-3)" }}><Briefcase className="w-3 h-3" /> {p.recruiterViews} recruiter views</span>
+                          <span className="text-[11px] flex items-center gap-1" style={{ color: "var(--text-3)" }}><Users className="w-3 h-3" /> {p.teamSize}</span>
+                          <span className="text-[11px] flex items-center gap-1" style={{ color: "var(--text-3)" }}><Calendar className="w-3 h-3" /> {p.startDate} – {p.endDate}</span>
+                          <div className="ml-auto"><VisibilityToggle value={vis} onChange={v => setProjectVisibility(prev => ({ ...prev, [p.title]: v }))} /></div>
                         </div>
-
-                        <div className="flex items-center gap-1 px-4 mt-2">
-                          {Array.from({ length: Math.min(3, p.teamSize) }).map((_, i) => (
-                            <Link key={i} to="/app/profile" className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold text-white -ml-2 first:ml-0 hover:scale-110 transition-transform" style={{ backgroundColor: ["#4F46E5", "#0369A1", "#C2410C", "#92400E"][i], border: "2px solid var(--surface)" }}>
-                              {["AK", "RS", "PM", "RK"][i]}
-                            </Link>
-                          ))}
-                          {p.teamSize > 3 && <span className="text-[11px] ml-1" style={{ color: "var(--text-3)" }}>+{p.teamSize - 3} more</span>}
-                        </div>
-
-                        {!p.tiikApproved && p.anchor && p.anchorStatus === "pending" && (
-                          <div className="mx-4 mt-2 rounded-lg px-3 py-2" style={{ background: "rgba(245,158,11,0.06)", border: "1px dashed rgba(245,158,11,0.35)" }}>
-                            <p className="text-[12px] font-medium" style={{ color: "rgba(245,158,11,0.85)" }}>⏳ Awaiting Tiik Approval from {p.anchor}</p>
-                            <button onClick={() => setVerifyProject(p)} className="text-[11px] font-semibold mt-0.5 cursor-pointer" style={{ color: "var(--brand)" }}>Resend invite →</button>
-                          </div>
+                        {!p.tiikApproved && p.anchor && (
+                          <button onClick={() => setVerifyProject(p)} className="w-full px-4 py-2.5 text-[12px] font-semibold flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.99]"
+                            style={{ background: "rgba(245,158,11,0.06)", color: "#F59E0B", borderTop: "1px solid rgba(245,158,11,0.15)" }}>
+                            <Shield className="w-3.5 h-3.5" /> Get Tiik Approved — Invite {p.anchor}
+                          </button>
                         )}
-
-                        <div className="flex items-center justify-between px-4 py-3 mt-2" style={{ borderTop: "1px solid var(--border)" }}>
-                          <div className="flex items-center gap-3 text-[12px]" style={{ color: "var(--text-3)" }}>
-                            <span className="flex items-center gap-1"><Eye className="w-3 h-3" /> {p.views} views</span>
-                            <span className="flex items-center gap-1"><Briefcase className="w-3 h-3" /> {p.recruiterViews} recruiter views</span>
-                          </div>
-                          {p.hubId && (
-                            <Link to={`/app/teams/${p.hubId}`} className="flex items-center gap-1 text-[13px] font-semibold" style={{ color: "var(--brand)" }}>
-                              View Hub <ExternalLink className="w-3 h-3" />
-                            </Link>
-                          )}
-                        </div>
                       </div>
                     </div>
                   );
                 })}
               </div>
-
-              <div className="flex gap-4 relative mt-3">
-                <div className="w-6 shrink-0" />
-                <button className="flex-1 rounded-2xl p-6 text-center cursor-pointer transition-all duration-200" style={{ border: "2px dashed var(--border-2)" }}>
-                  <Plus className="w-8 h-8 mx-auto mb-2" style={{ color: "var(--text-3)" }} />
-                  <p className="text-[13px]" style={{ color: "var(--text-2)" }}>Add work, project, or achievement</p>
-                </button>
-              </div>
+              <Link to="/app/mywork" className="flex items-center justify-center gap-1.5 mt-5 py-3 t-card t-card-hover text-[13px] font-semibold" style={{ color: "var(--brand)" }}>
+                <Plus className="w-4 h-4" /> Add new project
+              </Link>
             </div>
           )}
 
-          {/* ═══ ACHIEVEMENTS TAB ═══ */}
-          {activeTab === "Achievements" && (
-            <AchievementsTab isOwnProfile={true} />
-          )}
+          {activeTab === "Achievements" && <AchievementsTab />}
 
-          {/* ═══ POSTS TAB ═══ */}
           {activeTab === "Posts" && (
-            <EmptyState icon={MessageCircle} title="No posts yet" description="Share your first update — a project milestone, an insight, or a question." actionLabel="Share your first update" onAction={() => toast.info("Opening compose...")} />
+            <EmptyState icon={MessageCircle} title="No posts yet" description="Posts you share on the feed will appear here." />
           )}
 
-          {/* ═══ ABOUT TAB ═══ */}
           {activeTab === "About" && (
-            <div className="space-y-8">
+            <div className="space-y-6">
               <div>
-                <p className="micro-label mb-3">EDUCATION & EXPERIENCE</p>
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3 p-3 rounded-xl" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "var(--brand-dim)" }}><Building2 className="w-5 h-5" style={{ color: "var(--brand)" }} /></div>
-                    <div>
-                      <p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>Delhi Technological University</p>
-                      <p className="text-[12px]" style={{ color: "var(--text-3)" }}>B.Tech Computer Science · 2022 – 2026</p>
-                    </div>
+                <p className="micro-label mb-3">EDUCATION</p>
+                <div className="t-card p-4 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "var(--brand-dim)" }}>
+                    <Building2 className="w-5 h-5" style={{ color: "var(--brand)" }} />
+                  </div>
+                  <div>
+                    <p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>{institution}</p>
+                    <p className="text-[12px]" style={{ color: "var(--text-3)" }}>{profileData?.role || ROLE_LABEL}</p>
                   </div>
                 </div>
               </div>
-
               <div>
-                <p className="micro-label mb-3">MY WORKSPACES</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {[{ name: "TelemedicineRx Team", members: 4, projects: 2, role: "Lead" }, { name: "DTU CS Club", members: 28, projects: 5, role: "Member" }].map(w => (
-                    <Link key={w.name} to="/app/workspace" className="t-card t-card-hover p-4 block" style={{ borderLeft: "4px solid var(--brand)" }}>
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl flex items-center justify-center text-[14px] font-bold" style={{ background: "var(--brand-dim)", color: "var(--brand)" }}>{w.name.charAt(0)}</div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>{w.name}</p>
-                          <p className="text-[12px]" style={{ color: "var(--text-3)" }}>{w.members} members · {w.projects} projects</p>
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full mt-1 inline-block" style={{ background: "var(--brand-dim)", color: "var(--brand)" }}>{w.role}</span>
+                <p className="micro-label mb-3">WORKSPACES</p>
+                {workspaces.length > 0 ? (
+                  <div className="space-y-2">
+                    {workspaces.map((ws: any) => (
+                      <div key={ws.id} className="t-card p-3 flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold" style={{ background: "var(--brand-dim)", color: "var(--brand)" }}>
+                          {ws.workspace?.name?.slice(0, 2).toUpperCase() || "WS"}
+                        </div>
+                        <div>
+                          <p className="text-[13px] font-bold" style={{ color: "var(--text-1)" }}>{ws.workspace?.name || "Workspace"}</p>
+                          <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{ws.role} · {ws.workspace?.type || "Project"}</p>
                         </div>
                       </div>
-                      <p className="text-[13px] font-semibold mt-2" style={{ color: "var(--brand)" }}>View workspace →</p>
-                    </Link>
-                  ))}
-                  <button className="rounded-2xl p-6 text-center cursor-pointer transition-all duration-200" style={{ border: "2px dashed var(--border-2)" }}>
-                    <Plus className="w-6 h-6 mx-auto mb-1" style={{ color: "var(--text-3)" }} />
-                    <p className="text-[13px]" style={{ color: "var(--text-2)" }}>Create or join workspace</p>
-                  </button>
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {["TelemedicineRx Team", "DTU CS Club"].map(n => (
+                      <div key={n} className="t-card p-3 flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold" style={{ background: "var(--brand-dim)", color: "var(--brand)" }}>{n.slice(0, 2).toUpperCase()}</div>
+                        <p className="text-[13px] font-bold" style={{ color: "var(--text-1)" }}>{n}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-
-              {/* Custom Links in About */}
-              {mockCustomLinks.length > 0 && (
-                <div>
-                  <p className="micro-label mb-3">LINKS</p>
-                  <CustomLinks links={mockCustomLinks} />
-                </div>
-              )}
-
               <div>
                 <p className="micro-label mb-3">SKILLS</p>
-                <div className="flex flex-wrap gap-2">
-                  {["React", "TypeScript", "Python", "TensorFlow", "Node.js", "PostgreSQL", "React Native", "Supabase"].map(s => (
-                    <span key={s} className="text-[12px] font-semibold px-3 py-1.5 rounded-full" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }}>{s}</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {["React", "TypeScript", "Python", "Supabase", "IoT", "ML", "Node.js", "Docker"].map(s => (
+                    <span key={s} className="text-[11px] font-medium px-3 py-1 rounded-full" style={{ background: "var(--surface-2)", color: "var(--text-2)", border: "1px solid var(--border)" }}>{s}</span>
                   ))}
                 </div>
               </div>
@@ -406,8 +426,8 @@ const Profile = () => {
         </div>
       </div>
 
-      <EditProfileModal open={editOpen} onClose={() => setEditOpen(false)} />
       <AnimatePresence>
+        {editOpen && <EditProfileDrawer open={editOpen} onClose={() => setEditOpen(false)} onSaved={loadProfile} />}
         {verifyProject && <VerificationModal project={verifyProject} onClose={() => setVerifyProject(null)} />}
       </AnimatePresence>
     </div>
