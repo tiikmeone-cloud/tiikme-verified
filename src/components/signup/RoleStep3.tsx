@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, Plus } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const inputS: React.CSSProperties = { background: "rgba(238,240,255,0.05)", border: "1.5px solid rgba(238,240,255,0.1)", borderRadius: 12, color: "#EEF0FF", height: 44 };
@@ -26,12 +26,12 @@ export default function RoleStep3({ role, roleData, onFinish, onSkip }: RoleStep
     switch (role) {
       case "student": return showInternship ? "Your internship" : "Add your first project";
       case "professional": return "Your current role";
-      case "government": return "Your service profile";
-      case "doctor": return "Your medical profile";
+      case "government": return "Your posting details";
+      case "doctor": return "Your registration";
       case "faculty": return "What do you teach?";
       case "skilled_trade": return "Your first completed job";
       case "hr": return "Your hiring focus";
-      case "builder": return "Your venture details";
+      case "builder": return "Tell us about your venture";
       case "aspirant": return "Your preparation journey";
       default: return "Add your first entry";
     }
@@ -69,7 +69,6 @@ export default function RoleStep3({ role, roleData, onFinish, onSkip }: RoleStep
   const renderProfessional = () => (
     <div className="space-y-3">
       <Input placeholder="Job title" value={data.title || ""} onChange={e => u("title", e.target.value)} style={inputS} />
-      <Input placeholder="Company" value={roleData.company || data.company || ""} onChange={e => u("company", e.target.value)} style={inputS} />
       <div className="grid grid-cols-2 gap-3">
         <select value={data.startMonth || ""} onChange={e => u("startMonth", e.target.value)} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={selectS}><option value="">Start MM</option>{months.map(m => <option key={m}>{m}</option>)}</select>
         <select value={data.startYear || ""} onChange={e => u("startYear", e.target.value)} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={selectS}><option value="">Start YYYY</option>{years.map(y => <option key={y}>{y}</option>)}</select>
@@ -79,8 +78,7 @@ export default function RoleStep3({ role, roleData, onFinish, onSkip }: RoleStep
 
   const renderGovernment = () => (
     <div className="space-y-3">
-      <Input placeholder="Designation" value={roleData.designation || data.designation || ""} onChange={e => u("designation", e.target.value)} style={inputS} />
-      <Input placeholder="Department" value={roleData.department || data.dept || ""} onChange={e => u("dept", e.target.value)} style={inputS} />
+      <Input placeholder="Designation" value={data.designation || ""} onChange={e => u("designation", e.target.value)} style={inputS} />
       <Input placeholder="Posting location" value={data.postingLoc || ""} onChange={e => u("postingLoc", e.target.value)} style={inputS} />
       <select value={data.joinedYear || ""} onChange={e => u("joinedYear", e.target.value)} className="w-full px-3 text-[14px] outline-none cursor-pointer" style={selectS}>
         <option value="">Joined year</option>{years.map(y => <option key={y}>{y}</option>)}
@@ -92,13 +90,11 @@ export default function RoleStep3({ role, roleData, onFinish, onSkip }: RoleStep
     <div className="space-y-3">
       <Input placeholder="NMC Registration (optional)" value={data.nmc || ""} onChange={e => u("nmc", e.target.value)} style={inputS} />
       <Input placeholder="Specialisation" value={roleData.specialisation || data.spec || ""} onChange={e => u("spec", e.target.value)} style={inputS} />
-      <Input placeholder="Hospital" value={roleData.hospital || data.hospital || ""} onChange={e => u("hospital", e.target.value)} style={inputS} />
     </div>
   );
 
   const renderFaculty = () => (
     <div className="space-y-3">
-      <Input placeholder="Department" value={roleData.department || data.dept || ""} onChange={e => u("dept", e.target.value)} style={inputS} />
       <Input placeholder="Subjects taught (comma separated)" value={data.subjects || ""} onChange={e => u("subjects", e.target.value)} style={inputS} />
       <Input type="number" placeholder="Years teaching" value={data.yearsTeaching || ""} onChange={e => u("yearsTeaching", e.target.value)} style={inputS} />
     </div>
@@ -137,7 +133,6 @@ export default function RoleStep3({ role, roleData, onFinish, onSkip }: RoleStep
 
   const renderBuilder = () => (
     <div className="space-y-3">
-      <Input placeholder="Startup / Project name" value={roleData.startupName || data.name || ""} onChange={e => u("name", e.target.value)} style={inputS} />
       <textarea placeholder="What problem are you solving?" value={data.problem || ""} onChange={e => u("problem", e.target.value)} rows={2}
         className="w-full rounded-xl p-3 text-[13px] outline-none resize-none" style={{ background: "rgba(238,240,255,0.05)", border: "1.5px solid rgba(238,240,255,0.1)", color: "#EEF0FF" }} />
       <Input placeholder="Website or link (optional)" value={data.link || ""} onChange={e => u("link", e.target.value)} style={inputS} />
