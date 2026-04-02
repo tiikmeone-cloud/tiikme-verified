@@ -1,0 +1,1 @@
+ALTER VIEW public.institutions_public SET (security_invoker = true);
