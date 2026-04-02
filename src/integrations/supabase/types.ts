@@ -358,6 +358,44 @@ export type Database = {
           },
         ]
       }
+      opportunity_applications: {
+        Row: {
+          applicant_id: string
+          cover_note: string | null
+          created_at: string | null
+          id: string
+          opportunity_id: string
+          status: string | null
+          work_items_attached: string[] | null
+        }
+        Insert: {
+          applicant_id: string
+          cover_note?: string | null
+          created_at?: string | null
+          id?: string
+          opportunity_id: string
+          status?: string | null
+          work_items_attached?: string[] | null
+        }
+        Update: {
+          applicant_id?: string
+          cover_note?: string | null
+          created_at?: string | null
+          id?: string
+          opportunity_id?: string
+          status?: string | null
+          work_items_attached?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_applications_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       page_admins: {
         Row: {
           created_at: string | null
@@ -633,6 +671,80 @@ export type Database = {
           },
         ]
       }
+      post_comments: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          parent_id: string | null
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          parent_id?: string | null
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          parent_id?: string | null
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "post_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_reactions: {
+        Row: {
+          created_at: string | null
+          id: string
+          post_id: string
+          reaction_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          post_id: string
+          reaction_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          reaction_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_reactions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       posts: {
         Row: {
           author_id: string | null
@@ -641,6 +753,7 @@ export type Database = {
           created_at: string | null
           hashtags: string[] | null
           id: string
+          image_urls: string[] | null
           is_shared_to_feed: boolean | null
           pdf_url: string | null
           post_type: string | null
@@ -659,6 +772,7 @@ export type Database = {
           created_at?: string | null
           hashtags?: string[] | null
           id?: string
+          image_urls?: string[] | null
           is_shared_to_feed?: boolean | null
           pdf_url?: string | null
           post_type?: string | null
@@ -677,6 +791,7 @@ export type Database = {
           created_at?: string | null
           hashtags?: string[] | null
           id?: string
+          image_urls?: string[] | null
           is_shared_to_feed?: boolean | null
           pdf_url?: string | null
           post_type?: string | null
