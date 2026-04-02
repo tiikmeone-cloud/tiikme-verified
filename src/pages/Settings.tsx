@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Check, GraduationCap, Briefcase, Rocket, Laptop, Coffee, Sun, Moon, Monitor, Palette, Mail, Key, Download, Trash2, AlertTriangle, Camera, User, Shield, Bell, Eye, Lock, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,15 +52,75 @@ const SettingsPage = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteText, setDeleteText] = useState("");
   const [loggingOut, setLoggingOut] = useState(false);
-  const [profile, setProfile] = useState({ name: "Arjun Kumar", headline: "Final year CSE student building at the intersection of health and technology.", bio: "", institution: "Delhi Technological University", city: "Delhi", state: "Delhi", slug: "arjunkumar" });
+  const [saving, setSaving] = useState(false);
+  const [profile, setProfile] = useState({ name: "", headline: "", bio: "", institution: "", city: "", state: "", slug: "", avatar_url: "" });
+  const [userId, setUserId] = useState<string | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { applyTheme(theme); }, []);
+
+  // Load profile from Supabase
+  useEffect(() => {
+    const loadProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      setUserId(user.id);
+      const { data } = await supabase.from("profiles").select("*").eq("id", user.id).single();
+      if (data) {
+        setProfile({
+          name: data.full_name || "",
+          headline: data.headline || "",
+          bio: data.bio || "",
+          institution: data.institution_name || "",
+          city: data.location_city || "",
+          state: data.location_state || "",
+          slug: data.username || "",
+          avatar_url: data.avatar_url || "",
+        });
+      }
+    };
+    loadProfile();
+  }, []);
 
   const handleThemeChange = (newTheme: string) => {
     setTheme(newTheme);
     localStorage.setItem("tiikme-theme", newTheme);
     applyTheme(newTheme);
     tiikToast.success(`Theme set to ${newTheme}`);
+  };
+
+  const handleSaveProfile = async () => {
+    if (!userId) return;
+    setSaving(true);
+    const { error } = await supabase.from("profiles").update({
+      full_name: profile.name,
+      headline: profile.headline,
+      bio: profile.bio,
+      institution_name: profile.institution,
+      location_city: profile.city,
+      location_state: profile.state,
+      username: profile.slug,
+    }).eq("id", userId);
+    setSaving(false);
+    if (error) { tiikToast.error("Failed to save"); return; }
+    tiikToast.success("Settings saved ✓");
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !userId) return;
+    if (file.size > 2 * 1024 * 1024) { tiikToast.error("Max 2MB"); return; }
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) { tiikToast.error("JPEG, PNG, or WebP only"); return; }
+
+    const path = `${userId}/avatar.${file.name.split(".").pop()}`;
+    const { error: uploadErr } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+    if (uploadErr) { tiikToast.error("Upload failed"); return; }
+
+    const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
+    const avatarUrl = urlData.publicUrl + "?t=" + Date.now();
+    await supabase.from("profiles").update({ avatar_url: avatarUrl }).eq("id", userId);
+    setProfile(p => ({ ...p, avatar_url: avatarUrl }));
+    tiikToast.success("Avatar updated ✓");
   };
 
   const handleSignOut = async () => {
@@ -72,6 +132,13 @@ const SettingsPage = () => {
     setTimeout(() => navigate("/signin"), 500);
   };
 
+  const handleDeleteAccount = async () => {
+    setShowDeleteModal(false);
+    await supabase.auth.signOut();
+    tiikToast.success("Account scheduled for deletion in 30 days");
+    navigate("/");
+  };
+
   return (
     <motion.div
       animate={loggingOut ? { scale: 0.97, opacity: 0 } : { scale: 1, opacity: 1 }}
@@ -81,7 +148,6 @@ const SettingsPage = () => {
       <h1 className="text-[20px] font-extrabold mb-5" style={{ color: "var(--text-1)", letterSpacing: "-0.01em" }}>Settings</h1>
 
       <div className="flex gap-6">
-        {/* Desktop left nav */}
         <div className="hidden md:block w-[200px] shrink-0">
           <div className="sticky top-20 space-y-0.5">
             {navItems.map(item => (
@@ -97,7 +163,6 @@ const SettingsPage = () => {
                 {item.label}
               </button>
             ))}
-            {/* Sign out */}
             <div style={{ borderTop: "1px solid var(--border)", marginTop: 8, paddingTop: 8 }}>
               <button onClick={handleSignOut}
                 className="w-full text-left text-[13px] px-3 h-[42px] rounded-xl flex items-center gap-2.5 cursor-pointer"
@@ -111,7 +176,6 @@ const SettingsPage = () => {
         </div>
 
         <div className="flex-1 min-w-0">
-          {/* Mobile tab chips */}
           <div className="md:hidden flex flex-wrap gap-1.5 mb-5">
             {navItems.map(item => (
               <button key={item.id} onClick={() => setActiveTab(item.id)}
@@ -128,20 +192,22 @@ const SettingsPage = () => {
             ))}
           </div>
 
-          {/* PROFILE */}
           {activeTab === "profile" && (
             <div className="space-y-5">
               <div className="t-card p-5">
                 <h3 className="text-[16px] font-bold mb-5" style={{ color: "var(--text-1)" }}>Profile</h3>
                 <div className="flex items-center gap-5 mb-5">
-                  <div className="relative group cursor-pointer">
-                    <div className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold text-white" style={{ backgroundColor: "var(--brand)" }}>AK</div>
+                  <div className="relative group cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
+                    <div className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold text-white overflow-hidden" style={{ backgroundColor: "var(--brand)" }}>
+                      {profile.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : (profile.name?.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "AK")}
+                    </div>
                     <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center" style={{ transition: "opacity 0.2s" }}>
                       <Camera className="w-5 h-5 text-white" />
                     </div>
+                    <input ref={avatarInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleAvatarUpload} />
                   </div>
                   <div>
-                    <p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>Arjun Kumar</p>
+                    <p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>{profile.name || "Your Name"}</p>
                     <p className="text-[12px]" style={{ color: "var(--text-3)" }}>Click avatar to change</p>
                   </div>
                 </div>
@@ -152,16 +218,17 @@ const SettingsPage = () => {
                   </div>
                   <div>
                     <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "var(--text-3)", letterSpacing: "0.08em" }}>Headline</label>
-                    <Input value={profile.headline} onChange={e => setProfile({ ...profile, headline: e.target.value })} />
+                    <Input value={profile.headline} onChange={e => setProfile({ ...profile, headline: e.target.value.slice(0, 80) })} maxLength={80} />
                   </div>
                   <div>
                     <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "var(--text-3)", letterSpacing: "0.08em" }}>Bio</label>
-                    <textarea value={profile.bio} onChange={e => setProfile({ ...profile, bio: e.target.value })} placeholder="Tell people about yourself..." rows={3}
+                    <textarea value={profile.bio} onChange={e => setProfile({ ...profile, bio: e.target.value.slice(0, 300) })} placeholder="Tell people about yourself..." rows={3} maxLength={300}
                       className="w-full rounded-xl p-3.5 text-[14px] outline-none resize-none"
                       style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", color: "var(--text-1)", transition: "border 0.15s" }}
                       onFocus={e => e.currentTarget.style.borderColor = "var(--brand)"}
                       onBlur={e => e.currentTarget.style.borderColor = "var(--border-2)"}
                     />
+                    <p className="text-[10px] text-right mt-1" style={{ color: "var(--text-3)" }}>{profile.bio.length}/300</p>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div><label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "var(--text-3)" }}>City</label><Input value={profile.city} onChange={e => setProfile({ ...profile, city: e.target.value })} /></div>
@@ -172,20 +239,19 @@ const SettingsPage = () => {
                     <Input value={profile.slug} onChange={e => setProfile({ ...profile, slug: e.target.value })} className="flex-1" />
                   </div>
                   <div className="flex justify-end">
-                    <Button onClick={() => tiikToast.success("Profile saved")}>Save changes</Button>
+                    <Button onClick={handleSaveProfile} disabled={saving}>{saving ? "Saving..." : "Save changes"}</Button>
                   </div>
                 </div>
               </div>
-              {/* Security */}
               <div className="t-card p-5">
                 <h3 className="text-[16px] font-bold mb-4" style={{ color: "var(--text-1)" }}>Security</h3>
                 <div className="space-y-0">
                   <div className="flex items-center justify-between py-3" style={{ borderBottom: "1px solid var(--border)" }}>
-                    <div className="flex items-center gap-3"><Mail className="w-4 h-4" style={{ color: "var(--text-3)" }} /><div><p className="text-[14px]" style={{ color: "var(--text-1)" }}>arjun@example.com</p><p className="text-[12px]" style={{ color: "var(--text-3)" }}>Primary email</p></div></div>
+                    <div className="flex items-center gap-3"><Mail className="w-4 h-4" style={{ color: "var(--text-3)" }} /><div><p className="text-[14px]" style={{ color: "var(--text-1)" }}>Email</p><p className="text-[12px]" style={{ color: "var(--text-3)" }}>Primary email</p></div></div>
                     <Button variant="ghost" size="sm" onClick={() => tiikToast("Update flow coming soon")}>Update</Button>
                   </div>
                   <div className="flex items-center justify-between py-3" style={{ borderBottom: "1px solid var(--border)" }}>
-                    <div className="flex items-center gap-3"><Key className="w-4 h-4" style={{ color: "var(--text-3)" }} /><div><p className="text-[14px]" style={{ color: "var(--text-1)" }}>Password</p><p className="text-[12px]" style={{ color: "var(--text-3)" }}>Last changed 3 months ago</p></div></div>
+                    <div className="flex items-center gap-3"><Key className="w-4 h-4" style={{ color: "var(--text-3)" }} /><div><p className="text-[14px]" style={{ color: "var(--text-1)" }}>Password</p><p className="text-[12px]" style={{ color: "var(--text-3)" }}>Change your password</p></div></div>
                     <Button variant="ghost" size="sm" onClick={() => tiikToast("Password update coming soon")}>Update</Button>
                   </div>
                   <div className="flex items-center justify-between py-3">
@@ -197,7 +263,6 @@ const SettingsPage = () => {
             </div>
           )}
 
-          {/* APPEARANCE */}
           {activeTab === "appearance" && (
             <div className="t-card p-5">
               <h3 className="text-[20px] font-extrabold mb-4" style={{ color: "var(--text-1)" }}>Theme</h3>
@@ -236,7 +301,6 @@ const SettingsPage = () => {
             </div>
           )}
 
-          {/* MY JOURNEY */}
           {activeTab === "journey" && (
             <div className="space-y-5">
               <div className="t-card p-5" style={{ borderColor: "var(--brand)", borderStyle: "dashed", borderWidth: "2px" }}>
@@ -259,35 +323,34 @@ const SettingsPage = () => {
             </div>
           )}
 
-          {/* PRIVACY */}
           {activeTab === "privacy" && (
             <div className="t-card p-5">
               <h3 className="text-[16px] font-bold mb-4" style={{ color: "var(--text-1)" }}>Privacy settings</h3>
               <Toggle label="Open to opportunities" desc="Show green dot on profile" />
               <Toggle label="Show profile in Explore" />
               <Toggle label="Show recruiter view count on work" />
-              <Toggle label="Allow strand requests" />
+              <Toggle label="Allow Strand requests" />
               <Toggle label="Show Activity Score publicly" />
-              <Toggle label="Show strand count publicly" />
+              <Toggle label="Show Strand count publicly" />
             </div>
           )}
 
-          {/* INSTITUTION */}
           {activeTab === "institution" && (
             <div className="t-card p-5">
               <h3 className="text-[16px] font-bold mb-4" style={{ color: "var(--text-1)" }}>Institution</h3>
               <p className="text-[14px] mb-3" style={{ color: "var(--text-2)" }}>You are linked to:</p>
               <div className="t-card p-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[11px] font-bold" style={{ background: "var(--brand-dim)", color: "var(--brand)" }}>DT</div>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[11px] font-bold" style={{ background: "var(--brand-dim)", color: "var(--brand)" }}>
+                  {profile.institution?.slice(0, 2).toUpperCase() || "??"}
+                </div>
                 <div>
-                  <p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>Delhi Technological University</p>
-                  <p className="text-[12px]" style={{ color: "var(--text-3)" }}>College · Delhi</p>
+                  <p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>{profile.institution || "Not set"}</p>
+                  <p className="text-[12px]" style={{ color: "var(--text-3)" }}>{profile.city || "Unknown"}</p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* NOTIFICATIONS */}
           {activeTab === "notifications" && (
             <div className="t-card p-5">
               <h3 className="text-[16px] font-bold mb-4" style={{ color: "var(--text-1)" }}>Notification preferences</h3>
@@ -301,7 +364,6 @@ const SettingsPage = () => {
             </div>
           )}
 
-          {/* ACCOUNT */}
           {activeTab === "account" && (
             <div className="space-y-5">
               <div className="t-card p-5">
@@ -310,7 +372,6 @@ const SettingsPage = () => {
                   <LogOut className="w-4 h-4" /> Sign out of all devices
                 </Button>
               </div>
-              {/* Danger zone */}
               <div className="rounded-2xl p-5" style={{ background: "rgba(220,38,38,0.04)", border: "1px solid rgba(220,38,38,0.12)" }}>
                 <h3 className="text-[16px] font-bold mb-1" style={{ color: "#DC2626" }}>Delete Account</h3>
                 <p className="text-[13px] mb-4" style={{ color: "var(--text-2)" }}>Permanently removes all your data after 30 days.</p>
@@ -321,7 +382,6 @@ const SettingsPage = () => {
         </div>
       </div>
 
-      {/* Delete confirmation modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} onClick={() => setShowDeleteModal(false)}>
           <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
@@ -333,8 +393,7 @@ const SettingsPage = () => {
             <Input value={deleteText} onChange={e => setDeleteText(e.target.value)} placeholder="DELETE" className="mb-4" />
             <div className="flex gap-3">
               <Button variant="ghost" className="flex-1" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
-              <Button variant="destructive" disabled={deleteText !== "DELETE"} className="flex-1"
-                onClick={() => { setShowDeleteModal(false); tiikToast.success("Account scheduled for deletion in 30 days"); }}>
+              <Button variant="destructive" disabled={deleteText !== "DELETE"} className="flex-1" onClick={handleDeleteAccount}>
                 Confirm deletion
               </Button>
             </div>
