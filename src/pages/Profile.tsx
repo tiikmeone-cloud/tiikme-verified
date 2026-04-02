@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MapPin, Copy, Shield, Layers, Users, X, Settings, MessageCircle, CheckCircle, Calendar, Globe, Send, Share2, ArrowRight, Building2, Languages, ExternalLink, Clock, Eye, Briefcase, Plus } from "lucide-react";
+import { MapPin, Copy, Shield, Layers, Users, X, Settings, MessageCircle, CheckCircle, Calendar, Globe, Send, Share2, ArrowRight, Building2, Languages, ExternalLink, Clock, Eye, Briefcase, Plus, Link2 } from "lucide-react";
 import ActivityScoreRing from "@/components/ActivityScoreRing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,15 +7,23 @@ import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import EmptyState from "@/components/EmptyState";
+import VisibilityToggle from "@/components/profile/VisibilityToggle";
+import AchievementsTab from "@/components/profile/AchievementsTab";
+import CustomLinks from "@/components/profile/CustomLinks";
 
-const tabs = ["Work", "Posts", "About", "Verifications"] as const;
+const tabs = ["Work & Projects", "Achievements", "Posts", "About"] as const;
 const ROLE_COLOR = "#4F46E5";
 const ROLE_LABEL = "Student";
 
 const mockProjects = [
-  { title: "TelemedicineRx", company: "Delhi Tech University", location: "Delhi, India", description: "Telemedicine platform for rural India with AI triage and offline-first sync", domain: "HealthTech", status: "active" as const, role: "Lead Developer", startDate: "Jan 2025", endDate: "Present", tech: ["React Native", "Supabase", "Python", "TensorFlow"], tiikApproved: true, anchor: "Prof. Sharma", anchorStatus: "verified" as const, teamSize: 4, hubId: "telemedicinerx", views: 847, recruiterViews: 6 },
-  { title: "SmartGrid Monitor", company: "IIT Delhi Research Lab", location: "Delhi, India", description: "IoT dashboard for electrical grid monitoring across 4 states with real-time anomaly detection", domain: "IoT", status: "completed" as const, role: "Frontend Engineer", startDate: "Aug 2024", endDate: "Dec 2024", tech: ["React", "Node.js", "MQTT", "D3.js"], tiikApproved: false, anchor: "Dr. Verma", anchorStatus: "pending" as const, teamSize: 3, hubId: "smartgrid", views: 312, recruiterViews: 2 },
-  { title: "EduBridge App", company: "Self / Open Source", location: "Remote", description: "Vernacular learning platform for government school students in rural districts", domain: "EdTech", status: "completed" as const, role: "Full Stack Developer", startDate: "Mar 2024", endDate: "Jul 2024", tech: ["Next.js", "PostgreSQL"], tiikApproved: true, anchor: null, anchorStatus: "none" as const, teamSize: 1, hubId: null, views: 189, recruiterViews: 1 },
+  { title: "TelemedicineRx", company: "Delhi Tech University", location: "Delhi, India", description: "Telemedicine platform for rural India with AI triage and offline-first sync", domain: "HealthTech", status: "active" as const, role: "Lead Developer", startDate: "Jan 2025", endDate: "Present", tech: ["React Native", "Supabase", "Python", "TensorFlow"], tiikApproved: true, anchor: "Prof. Sharma", anchorStatus: "verified" as const, teamSize: 4, hubId: "telemedicinerx", views: 847, recruiterViews: 6, visibility: "public" },
+  { title: "SmartGrid Monitor", company: "IIT Delhi Research Lab", location: "Delhi, India", description: "IoT dashboard for electrical grid monitoring across 4 states with real-time anomaly detection", domain: "IoT", status: "completed" as const, role: "Frontend Engineer", startDate: "Aug 2024", endDate: "Dec 2024", tech: ["React", "Node.js", "MQTT", "D3.js"], tiikApproved: false, anchor: "Dr. Verma", anchorStatus: "pending" as const, teamSize: 3, hubId: "smartgrid", views: 312, recruiterViews: 2, visibility: "public" },
+  { title: "EduBridge App", company: "Self / Open Source", location: "Remote", description: "Vernacular learning platform for government school students in rural districts", domain: "EdTech", status: "completed" as const, role: "Full Stack Developer", startDate: "Mar 2024", endDate: "Jul 2024", tech: ["Next.js", "PostgreSQL"], tiikApproved: true, anchor: null, anchorStatus: "none" as const, teamSize: 1, hubId: null, views: 189, recruiterViews: 1, visibility: "connections" },
+];
+
+const mockCustomLinks = [
+  { url: "https://github.com/arjunkumar", label: "My GitHub" },
+  { url: "https://arjunkumar.dev", label: "Portfolio" },
 ];
 
 const statusColors: Record<string, { dot: string; accent: string; label: string }> = {
@@ -26,6 +34,16 @@ const statusColors: Record<string, { dot: string; accent: string; label: string 
 
 const EditProfileModal = ({ open, onClose }: { open: boolean; onClose: () => void }) => {
   const [form, setForm] = useState({ name: "Arjun Kumar", headline: "Final year CSE student building at the intersection of health and technology.", bio: "", city: "Delhi", state: "Delhi" });
+  const [customLinks, setCustomLinks] = useState(mockCustomLinks);
+
+  const addLink = () => { if (customLinks.length < 5) setCustomLinks([...customLinks, { url: "", label: "" }]); };
+  const updateLink = (i: number, key: string, val: string) => {
+    const updated = [...customLinks];
+    updated[i] = { ...updated[i], [key]: val };
+    setCustomLinks(updated);
+  };
+  const removeLink = (i: number) => setCustomLinks(customLinks.filter((_, idx) => idx !== i));
+
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} onClick={onClose}>
@@ -54,6 +72,24 @@ const EditProfileModal = ({ open, onClose }: { open: boolean; onClose: () => voi
             <div><label className="micro-label block mb-1.5">City</label><Input value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} /></div>
             <div><label className="micro-label block mb-1.5">State</label><Input value={form.state} onChange={e => setForm({ ...form, state: e.target.value })} /></div>
           </div>
+
+          {/* Custom Links Section */}
+          <div>
+            <label className="micro-label block mb-1.5">Custom Links</label>
+            <div className="space-y-2">
+              {customLinks.map((link, i) => (
+                <div key={i} className="flex gap-2 items-center">
+                  <Input placeholder="URL" value={link.url} onChange={e => updateLink(i, "url", e.target.value)} className="flex-1" />
+                  <Input placeholder="Display text" value={link.label} onChange={e => updateLink(i, "label", e.target.value)} className="flex-1" />
+                  <button onClick={() => removeLink(i)} className="p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-4 h-4" /></button>
+                </div>
+              ))}
+              {customLinks.length < 5 && (
+                <button onClick={addLink} className="text-[12px] font-semibold cursor-pointer" style={{ color: "var(--brand)" }}>+ Add another link</button>
+              )}
+            </div>
+          </div>
+
           <div className="flex gap-3 pt-2">
             <Button variant="ghost" className="flex-1" onClick={onClose}>Cancel</Button>
             <Button className="flex-1" onClick={() => { toast.success("Profile updated"); onClose(); }}>Save changes</Button>
@@ -92,9 +128,12 @@ const VerificationModal = ({ project, onClose }: { project: typeof mockProjects[
 };
 
 const Profile = () => {
-  const [activeTab, setActiveTab] = useState<typeof tabs[number]>("Work");
+  const [activeTab, setActiveTab] = useState<typeof tabs[number]>("Work & Projects");
   const [editOpen, setEditOpen] = useState(false);
   const [verifyProject, setVerifyProject] = useState<typeof mockProjects[0] | null>(null);
+  const [projectVisibility, setProjectVisibility] = useState<Record<string, string>>(
+    Object.fromEntries(mockProjects.map(p => [p.title, p.visibility]))
+  );
 
   const handleCopyLink = () => { navigator.clipboard.writeText("https://tiikme.in/arjunkumar"); toast.success("Link copied!"); };
 
@@ -102,25 +141,19 @@ const Profile = () => {
     <div className="max-w-[760px] mx-auto px-0 md:px-4 py-0 md:py-7 space-y-0">
       {/* ═══ PROFILE HERO CARD ═══ */}
       <div className="t-card overflow-hidden relative" style={{ borderRadius: "0px", borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
-        {/* Role-colored decorative band */}
         <div className="h-[100px] md:h-[100px] relative" style={{
           background: `linear-gradient(135deg, color-mix(in srgb, ${ROLE_COLOR} 40%, var(--surface)) 0%, color-mix(in srgb, ${ROLE_COLOR} 15%, var(--surface)) 50%, var(--surface) 100%)`,
         }}>
-          {/* Decorative dots */}
           <div className="absolute right-8 top-4 w-10 h-10 rounded-full" style={{ background: ROLE_COLOR, opacity: 0.08, filter: "blur(12px)" }} />
           <div className="absolute right-20 top-8 w-8 h-8 rounded-full" style={{ background: ROLE_COLOR, opacity: 0.06, filter: "blur(10px)" }} />
           <div className="absolute right-32 top-3 w-6 h-6 rounded-full" style={{ background: ROLE_COLOR, opacity: 0.05, filter: "blur(8px)" }} />
-
-          {/* Verification badge top-right */}
           <div className="absolute top-3 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold"
             style={{ background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.3)", color: "#F59E0B" }}>
             <Shield className="w-3 h-3" /> Tiik Approved by DTU
           </div>
         </div>
 
-        {/* Profile info section */}
         <div className="px-6 pb-6 relative">
-          {/* Avatar overlapping band */}
           <div className="flex items-end gap-4 -mt-12">
             <div className="relative group cursor-pointer" onClick={() => setEditOpen(true)}>
               <div className="w-24 h-24 rounded-full flex items-center justify-center text-[30px] font-extrabold text-white shrink-0"
@@ -145,16 +178,13 @@ const Profile = () => {
             </div>
           </div>
 
-          {/* Status pill */}
           <div className="flex items-center gap-1.5 mt-2 ml-0">
             <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--open-green)", animation: "statusPulse 2s infinite" }} />
             <span className="text-[12px] font-medium" style={{ color: "var(--open-green)" }}>Open to work</span>
           </div>
 
-          {/* Headline */}
           <p className="text-[14px] mt-2 line-clamp-1" style={{ color: "var(--text-2)", lineHeight: 1.75 }}>Final year CSE student building at the intersection of health and technology.</p>
 
-          {/* Chips row */}
           <div className="flex flex-wrap gap-1.5 mt-3">
             <Link to="/app/institution/1" className="flex items-center gap-1 text-[12px] font-semibold px-2.5 py-1 rounded-full transition-all duration-150" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }}>
               <Building2 className="w-3 h-3" /> DTU
@@ -167,15 +197,18 @@ const Profile = () => {
             </span>
           </div>
 
-          {/* Action buttons */}
+          {/* Custom Links */}
+          <div className="mt-2">
+            <CustomLinks links={mockCustomLinks} />
+          </div>
+
           <div className="flex gap-2 mt-4">
             <Button variant="ghost" size="sm" className="gap-1.5 rounded-full" onClick={handleCopyLink}><Copy className="w-3.5 h-3.5" /> Copy link</Button>
             <Button variant="secondary" size="sm" className="gap-1.5 rounded-full" onClick={() => setEditOpen(true)}><Settings className="w-3.5 h-3.5" /> Edit profile</Button>
           </div>
 
-          {/* Stats row */}
           <div className="flex items-center gap-6 mt-4 pt-4" style={{ borderTop: "1px solid var(--border)" }}>
-            <button onClick={() => setActiveTab("Work")} className="text-center cursor-pointer">
+            <button onClick={() => setActiveTab("Work & Projects")} className="text-center cursor-pointer">
               <p className="text-[22px] font-extrabold" style={{ color: "var(--text-1)" }}>3</p>
               <p className="micro-label mt-0.5">Projects</p>
             </button>
@@ -207,25 +240,20 @@ const Profile = () => {
         </div>
 
         <div className="p-6">
-          {/* ═══ WORK TAB — VERTICAL TIMELINE ═══ */}
-          {activeTab === "Work" && (
+          {/* ═══ WORK & PROJECTS TAB ═══ */}
+          {activeTab === "Work & Projects" && (
             <div className="relative">
-              {/* Timeline line */}
               <div className="absolute left-[11px] top-5 bottom-16 w-[2px]" style={{ background: "var(--border-2)" }} />
-
               <div className="space-y-3.5">
                 {mockProjects.map((p) => {
                   const sc = statusColors[p.status] || statusColors.active;
+                  const vis = projectVisibility[p.title] || "public";
                   return (
                     <div key={p.title} className="flex gap-4 relative">
-                      {/* Timeline dot */}
                       <div className="w-6 flex justify-center pt-5 shrink-0 z-10">
                         <div className="w-[10px] h-[10px] rounded-full" style={{ background: sc.dot, border: "2px solid var(--surface)" }} />
                       </div>
-
-                      {/* Card */}
                       <div className="flex-1 t-card t-card-hover overflow-hidden cursor-pointer" style={{ borderLeft: `4px solid ${sc.accent}` }}>
-                        {/* Header */}
                         <div className="flex items-start gap-3 px-4 pt-4">
                           <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--brand-dim)" }}>
                             <Layers className="w-5 h-5" style={{ color: "var(--brand)" }} />
@@ -244,9 +272,10 @@ const Profile = () => {
                               </span>
                             )}
                           </div>
+                          {/* Visibility toggle */}
+                          <VisibilityToggle value={vis} onChange={v => setProjectVisibility(prev => ({ ...prev, [p.title]: v }))} />
                         </div>
 
-                        {/* Meta */}
                         <div className="flex items-center gap-1.5 px-4 mt-1 text-[12px] flex-wrap" style={{ color: "var(--text-3)" }}>
                           <span>Your role: {p.role}</span>
                           <span>·</span>
@@ -255,10 +284,8 @@ const Profile = () => {
                           <Link to="/app/institution/1" className="font-semibold" style={{ color: "var(--brand)" }}>{p.company}</Link>
                         </div>
 
-                        {/* Description */}
                         <p className="text-[13px] px-4 mt-2 line-clamp-2" style={{ color: "var(--text-2)" }}>{p.description}</p>
 
-                        {/* Tags */}
                         <div className="flex flex-wrap gap-1.5 px-4 mt-2">
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-2)" }}>{p.domain}</span>
                           {p.tech.map(t => (
@@ -266,7 +293,6 @@ const Profile = () => {
                           ))}
                         </div>
 
-                        {/* Team chain */}
                         <div className="flex items-center gap-1 px-4 mt-2">
                           {Array.from({ length: Math.min(3, p.teamSize) }).map((_, i) => (
                             <Link key={i} to="/app/profile" className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold text-white -ml-2 first:ml-0 hover:scale-110 transition-transform" style={{ backgroundColor: ["#4F46E5", "#0369A1", "#C2410C", "#92400E"][i], border: "2px solid var(--surface)" }}>
@@ -276,7 +302,6 @@ const Profile = () => {
                           {p.teamSize > 3 && <span className="text-[11px] ml-1" style={{ color: "var(--text-3)" }}>+{p.teamSize - 3} more</span>}
                         </div>
 
-                        {/* Awaiting approval banner */}
                         {!p.tiikApproved && p.anchor && p.anchorStatus === "pending" && (
                           <div className="mx-4 mt-2 rounded-lg px-3 py-2" style={{ background: "rgba(245,158,11,0.06)", border: "1px dashed rgba(245,158,11,0.35)" }}>
                             <p className="text-[12px] font-medium" style={{ color: "rgba(245,158,11,0.85)" }}>⏳ Awaiting Tiik Approval from {p.anchor}</p>
@@ -284,7 +309,6 @@ const Profile = () => {
                           </div>
                         )}
 
-                        {/* Footer */}
                         <div className="flex items-center justify-between px-4 py-3 mt-2" style={{ borderTop: "1px solid var(--border)" }}>
                           <div className="flex items-center gap-3 text-[12px]" style={{ color: "var(--text-3)" }}>
                             <span className="flex items-center gap-1"><Eye className="w-3 h-3" /> {p.views} views</span>
@@ -302,7 +326,6 @@ const Profile = () => {
                 })}
               </div>
 
-              {/* Add work card */}
               <div className="flex gap-4 relative mt-3">
                 <div className="w-6 shrink-0" />
                 <button className="flex-1 rounded-2xl p-6 text-center cursor-pointer transition-all duration-200" style={{ border: "2px dashed var(--border-2)" }}>
@@ -313,6 +336,11 @@ const Profile = () => {
             </div>
           )}
 
+          {/* ═══ ACHIEVEMENTS TAB ═══ */}
+          {activeTab === "Achievements" && (
+            <AchievementsTab isOwnProfile={true} />
+          )}
+
           {/* ═══ POSTS TAB ═══ */}
           {activeTab === "Posts" && (
             <EmptyState icon={MessageCircle} title="No posts yet" description="Share your first update — a project milestone, an insight, or a question." actionLabel="Share your first update" onAction={() => toast.info("Opening compose...")} />
@@ -321,7 +349,6 @@ const Profile = () => {
           {/* ═══ ABOUT TAB ═══ */}
           {activeTab === "About" && (
             <div className="space-y-8">
-              {/* Education */}
               <div>
                 <p className="micro-label mb-3">EDUCATION & EXPERIENCE</p>
                 <div className="space-y-3">
@@ -335,12 +362,11 @@ const Profile = () => {
                 </div>
               </div>
 
-              {/* Workspaces */}
               <div>
                 <p className="micro-label mb-3">MY WORKSPACES</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {[{ name: "TelemedicineRx Team", members: 4, projects: 2, role: "Lead" }, { name: "DTU CS Club", members: 28, projects: 5, role: "Member" }].map(w => (
-                    <Link key={w.name} to="/app/teams" className="t-card t-card-hover p-4 block" style={{ borderLeft: "4px solid var(--brand)" }}>
+                    <Link key={w.name} to="/app/workspace" className="t-card t-card-hover p-4 block" style={{ borderLeft: "4px solid var(--brand)" }}>
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-xl flex items-center justify-center text-[14px] font-bold" style={{ background: "var(--brand-dim)", color: "var(--brand)" }}>{w.name.charAt(0)}</div>
                         <div className="flex-1 min-w-0">
@@ -359,7 +385,14 @@ const Profile = () => {
                 </div>
               </div>
 
-              {/* Skills */}
+              {/* Custom Links in About */}
+              {mockCustomLinks.length > 0 && (
+                <div>
+                  <p className="micro-label mb-3">LINKS</p>
+                  <CustomLinks links={mockCustomLinks} />
+                </div>
+              )}
+
               <div>
                 <p className="micro-label mb-3">SKILLS</p>
                 <div className="flex flex-wrap gap-2">
@@ -368,21 +401,6 @@ const Profile = () => {
                   ))}
                 </div>
               </div>
-            </div>
-          )}
-
-          {/* ═══ VERIFICATIONS TAB ═══ */}
-          {activeTab === "Verifications" && (
-            <div className="space-y-1">
-              {[{ level: "Phone", status: "Verified", color: "#10B981" }, { level: "Email", status: "Verified", color: "#10B981" }, { level: "Institution", status: "DTU — Verified", color: "#F59E0B" }, { level: "Tiik Approval", status: "Approved by Prof. Kumar", color: "#F59E0B" }].map(v => (
-                <div key={v.level} className="flex items-center justify-between py-3" style={{ borderBottom: "1px solid var(--border)" }}>
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="w-4 h-4" style={{ color: v.color }} />
-                    <span className="text-[14px]" style={{ color: "var(--text-1)" }}>{v.level}</span>
-                  </div>
-                  <span className="text-[12px] font-bold" style={{ color: v.color }}>{v.status}</span>
-                </div>
-              ))}
             </div>
           )}
         </div>

@@ -14,6 +14,83 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          achievement_date: string | null
+          certificate_file_url: string | null
+          certificate_url: string | null
+          created_at: string | null
+          description: string | null
+          icon_emoji: string | null
+          id: string
+          is_shared_to_feed: boolean | null
+          issued_by: string | null
+          issuing_body_recognized: boolean | null
+          source_admin_name: string | null
+          source_type: string | null
+          source_workspace_id: string | null
+          source_workspace_name: string | null
+          title: string
+          type: string
+          updated_at: string | null
+          user_id: string
+          verification_url: string | null
+          visibility: string | null
+        }
+        Insert: {
+          achievement_date?: string | null
+          certificate_file_url?: string | null
+          certificate_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon_emoji?: string | null
+          id?: string
+          is_shared_to_feed?: boolean | null
+          issued_by?: string | null
+          issuing_body_recognized?: boolean | null
+          source_admin_name?: string | null
+          source_type?: string | null
+          source_workspace_id?: string | null
+          source_workspace_name?: string | null
+          title: string
+          type?: string
+          updated_at?: string | null
+          user_id: string
+          verification_url?: string | null
+          visibility?: string | null
+        }
+        Update: {
+          achievement_date?: string | null
+          certificate_file_url?: string | null
+          certificate_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon_emoji?: string | null
+          id?: string
+          is_shared_to_feed?: boolean | null
+          issued_by?: string | null
+          issuing_body_recognized?: boolean | null
+          source_admin_name?: string | null
+          source_type?: string | null
+          source_workspace_id?: string | null
+          source_workspace_name?: string | null
+          title?: string
+          type?: string
+          updated_at?: string | null
+          user_id?: string
+          verification_url?: string | null
+          visibility?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "achievements_source_workspace_id_fkey"
+            columns: ["source_workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alerts: {
         Row: {
           actor_id: string | null
@@ -281,6 +358,223 @@ export type Database = {
           },
         ]
       }
+      page_admins: {
+        Row: {
+          created_at: string | null
+          id: string
+          page_id: string
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          page_id: string
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          page_id?: string
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_admins_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      page_trackers: {
+        Row: {
+          created_at: string | null
+          id: string
+          page_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          page_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          page_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_trackers_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pages: {
+        Row: {
+          about: string | null
+          activity_photos: string[] | null
+          affiliation: string | null
+          also_known_as: string | null
+          awards: Json | null
+          bed_count: number | null
+          city: string | null
+          client_types: string[] | null
+          cover_url: string | null
+          created_at: string | null
+          created_by: string | null
+          creator_specialisation_tags: string[] | null
+          custom_links: Json | null
+          emergency_contact: string | null
+          founded_year: number | null
+          founding_number: number | null
+          govt_level: string | null
+          id: string
+          industry: string | null
+          institution_id: string | null
+          jurisdiction: string | null
+          logo_url: string | null
+          member_count: number | null
+          naac_grade: string | null
+          nabh_accredited: boolean | null
+          name: string
+          nirf_ranking: number | null
+          notable_work: string | null
+          official_email: string | null
+          official_website: string | null
+          page_type: string
+          pincode: string | null
+          service_hours: string | null
+          slug: string
+          specialisations: string[] | null
+          state: string | null
+          student_count: number | null
+          sub_type: string | null
+          team_size: string | null
+          tracker_count: number | null
+          trust_score: number | null
+          updated_at: string | null
+          why_work_with_us: string | null
+          work_culture_tags: string[] | null
+        }
+        Insert: {
+          about?: string | null
+          activity_photos?: string[] | null
+          affiliation?: string | null
+          also_known_as?: string | null
+          awards?: Json | null
+          bed_count?: number | null
+          city?: string | null
+          client_types?: string[] | null
+          cover_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          creator_specialisation_tags?: string[] | null
+          custom_links?: Json | null
+          emergency_contact?: string | null
+          founded_year?: number | null
+          founding_number?: number | null
+          govt_level?: string | null
+          id?: string
+          industry?: string | null
+          institution_id?: string | null
+          jurisdiction?: string | null
+          logo_url?: string | null
+          member_count?: number | null
+          naac_grade?: string | null
+          nabh_accredited?: boolean | null
+          name: string
+          nirf_ranking?: number | null
+          notable_work?: string | null
+          official_email?: string | null
+          official_website?: string | null
+          page_type?: string
+          pincode?: string | null
+          service_hours?: string | null
+          slug: string
+          specialisations?: string[] | null
+          state?: string | null
+          student_count?: number | null
+          sub_type?: string | null
+          team_size?: string | null
+          tracker_count?: number | null
+          trust_score?: number | null
+          updated_at?: string | null
+          why_work_with_us?: string | null
+          work_culture_tags?: string[] | null
+        }
+        Update: {
+          about?: string | null
+          activity_photos?: string[] | null
+          affiliation?: string | null
+          also_known_as?: string | null
+          awards?: Json | null
+          bed_count?: number | null
+          city?: string | null
+          client_types?: string[] | null
+          cover_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          creator_specialisation_tags?: string[] | null
+          custom_links?: Json | null
+          emergency_contact?: string | null
+          founded_year?: number | null
+          founding_number?: number | null
+          govt_level?: string | null
+          id?: string
+          industry?: string | null
+          institution_id?: string | null
+          jurisdiction?: string | null
+          logo_url?: string | null
+          member_count?: number | null
+          naac_grade?: string | null
+          nabh_accredited?: boolean | null
+          name?: string
+          nirf_ranking?: number | null
+          notable_work?: string | null
+          official_email?: string | null
+          official_website?: string | null
+          page_type?: string
+          pincode?: string | null
+          service_hours?: string | null
+          slug?: string
+          specialisations?: string[] | null
+          state?: string | null
+          student_count?: number | null
+          sub_type?: string | null
+          team_size?: string | null
+          tracker_count?: number | null
+          trust_score?: number | null
+          updated_at?: string | null
+          why_work_with_us?: string | null
+          work_culture_tags?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pages_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pages_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pings: {
         Row: {
           content: string
@@ -347,12 +641,16 @@ export type Database = {
           created_at: string | null
           hashtags: string[] | null
           id: string
+          is_shared_to_feed: boolean | null
           pdf_url: string | null
+          post_type: string | null
           reactions: Json | null
           repost_of: string | null
           type: string | null
           visibility: string | null
           work_item_id: string | null
+          workspace_id: string | null
+          workspace_name: string | null
         }
         Insert: {
           author_id?: string | null
@@ -361,12 +659,16 @@ export type Database = {
           created_at?: string | null
           hashtags?: string[] | null
           id?: string
+          is_shared_to_feed?: boolean | null
           pdf_url?: string | null
+          post_type?: string | null
           reactions?: Json | null
           repost_of?: string | null
           type?: string | null
           visibility?: string | null
           work_item_id?: string | null
+          workspace_id?: string | null
+          workspace_name?: string | null
         }
         Update: {
           author_id?: string | null
@@ -375,12 +677,16 @@ export type Database = {
           created_at?: string | null
           hashtags?: string[] | null
           id?: string
+          is_shared_to_feed?: boolean | null
           pdf_url?: string | null
+          post_type?: string | null
           reactions?: Json | null
           repost_of?: string | null
           type?: string | null
           visibility?: string | null
           work_item_id?: string | null
+          workspace_id?: string | null
+          workspace_name?: string | null
         }
         Relationships: [
           {
@@ -404,6 +710,13 @@ export type Database = {
             referencedRelation: "work_items"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "posts_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
         ]
       }
       profiles: {
@@ -412,6 +725,7 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           created_at: string | null
+          custom_links: Json | null
           designation: string | null
           first_name: string | null
           full_name: string | null
@@ -439,6 +753,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
+          custom_links?: Json | null
           designation?: string | null
           first_name?: string | null
           full_name?: string | null
@@ -466,6 +781,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
+          custom_links?: Json | null
           designation?: string | null
           first_name?: string | null
           full_name?: string | null
@@ -691,21 +1007,27 @@ export type Database = {
         Row: {
           id: string
           joined_at: string | null
+          left_at: string | null
           role: string | null
+          status: string | null
           user_id: string | null
           workspace_id: string | null
         }
         Insert: {
           id?: string
           joined_at?: string | null
+          left_at?: string | null
           role?: string | null
+          status?: string | null
           user_id?: string | null
           workspace_id?: string | null
         }
         Update: {
           id?: string
           joined_at?: string | null
+          left_at?: string | null
           role?: string | null
+          status?: string | null
           user_id?: string | null
           workspace_id?: string | null
         }

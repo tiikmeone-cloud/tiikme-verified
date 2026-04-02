@@ -41,11 +41,9 @@ export default function RoleFields({ role, data, update }: RoleFieldsProps) {
         <Select value={data.industry || ""} onChange={v => update("industry", v)} placeholder="Industry" options={privateIndustries} />
         <Select value={data.function || ""} onChange={v => update("function", v)} placeholder="Function / Department" options={privateFunctions} />
         <Input placeholder="Job title / Designation" value={data.designation || ""} onChange={e => update("designation", e.target.value)} style={inputS} />
-        <Input placeholder="Company name" value={data.company || ""} onChange={e => update("company", e.target.value)} style={inputS} />
         <Select value={data.startYear || ""} onChange={v => update("startYear", v)} placeholder="Start year" options={years} />
       </>}
       {data.sector === "Government (Central)" && <>
-        <Input placeholder="Ministry / Department" value={data.ministry || ""} onChange={e => update("ministry", e.target.value)} style={inputS} />
         <Input placeholder="Designation" value={data.designation || ""} onChange={e => update("designation", e.target.value)} style={inputS} />
         <Input placeholder="Grade / Pay level (optional)" value={data.grade || ""} onChange={e => update("grade", e.target.value)} style={inputS} />
       </>}
@@ -67,7 +65,6 @@ export default function RoleFields({ role, data, update }: RoleFieldsProps) {
       <p style={{ ...labelS, fontSize: 11, marginBottom: 10 }}>Your service profile</p>
       <Select value={data.govSubtype || ""} onChange={v => update("govSubtype", v)} placeholder="Sub-type" options={["Central Government", "State Government", "District / Local Body", "PSU", "Constitutional Body", "Statutory Body"]} />
       <Select value={data.serviceType || ""} onChange={v => update("serviceType", v)} placeholder="Service type" options={govtServices} />
-      <Input placeholder="Department" value={data.department || ""} onChange={e => update("department", e.target.value)} style={inputS} />
       <Input placeholder="Designation" value={data.designation || ""} onChange={e => update("designation", e.target.value)} style={inputS} />
       <Input placeholder="Posting location" value={data.postingLocation || ""} onChange={e => update("postingLocation", e.target.value)} style={inputS} />
     </div>
@@ -78,7 +75,6 @@ export default function RoleFields({ role, data, update }: RoleFieldsProps) {
       <p style={{ ...labelS, fontSize: 11, marginBottom: 10 }}>Your medical profile</p>
       <Select value={data.qualification || ""} onChange={v => update("qualification", v)} placeholder="Qualification" options={qualifications} />
       <Input placeholder="Specialisation" value={data.specialisation || ""} onChange={e => update("specialisation", e.target.value)} style={inputS} />
-      <Input placeholder="Hospital or Clinic name" value={data.hospital || ""} onChange={e => update("hospital", e.target.value)} style={inputS} />
       <Select value={data.doctorLevel || ""} onChange={v => update("doctorLevel", v)} placeholder="Current level" options={doctorLevels} />
     </div>
   );
@@ -86,7 +82,6 @@ export default function RoleFields({ role, data, update }: RoleFieldsProps) {
   if (role === "faculty") return (
     <div className="space-y-3 mt-4 pt-4" style={{ borderTop: "1px solid rgba(238,240,255,0.08)" }}>
       <p style={{ ...labelS, fontSize: 11, marginBottom: 10 }}>Your teaching profile</p>
-      <Input placeholder="Institution name" value={data.facultyInstitution || ""} onChange={e => update("facultyInstitution", e.target.value)} style={inputS} />
       <Input placeholder="Department" value={data.department || ""} onChange={e => update("department", e.target.value)} style={inputS} />
       <Select value={data.designation || ""} onChange={v => update("designation", v)} placeholder="Designation" options={["Professor", "Associate Professor", "Assistant Professor", "Lecturer"]} />
     </div>
@@ -104,7 +99,6 @@ export default function RoleFields({ role, data, update }: RoleFieldsProps) {
   if (role === "hr") return (
     <div className="space-y-3 mt-4 pt-4" style={{ borderTop: "1px solid rgba(238,240,255,0.08)" }}>
       <p style={{ ...labelS, fontSize: 11, marginBottom: 10 }}>Your HR role</p>
-      <Input placeholder="Company name" value={data.company || ""} onChange={e => update("company", e.target.value)} style={inputS} />
       <Select value={data.hrRole || ""} onChange={v => update("hrRole", v)} placeholder="Your HR role" options={hrRoles} />
       <Select value={data.teamSize || ""} onChange={v => update("teamSize", v)} placeholder="Team size" options={["1-10", "11-50", "51-200", "200+"]} />
     </div>
@@ -113,7 +107,6 @@ export default function RoleFields({ role, data, update }: RoleFieldsProps) {
   if (role === "builder") return (
     <div className="space-y-3 mt-4 pt-4" style={{ borderTop: "1px solid rgba(238,240,255,0.08)" }}>
       <p style={{ ...labelS, fontSize: 11, marginBottom: 10 }}>Your venture</p>
-      <Input placeholder="Startup / Project name" value={data.startupName || ""} onChange={e => update("startupName", e.target.value)} style={inputS} />
       <Select value={data.startupStage || ""} onChange={v => update("startupStage", v)} placeholder="Stage" options={startupStages} />
       <Select value={data.founderType || ""} onChange={v => update("founderType", v)} placeholder="Sub-type" options={founderTypes} />
     </div>
@@ -123,11 +116,9 @@ export default function RoleFields({ role, data, update }: RoleFieldsProps) {
     <div className="space-y-3 mt-4 pt-4" style={{ borderTop: "1px solid rgba(238,240,255,0.08)" }}>
       <p style={{ ...labelS, fontSize: 11, marginBottom: 10 }}>Your preparation</p>
       <Select value={data.exam || ""} onChange={v => update("exam", v)} placeholder="Exam preparing for" options={exams} />
-      <Input placeholder="Coaching institute (optional)" value={data.coaching || ""} onChange={e => update("coaching", e.target.value)} style={inputS} />
       <Select value={data.prepStage || ""} onChange={v => update("prepStage", v)} placeholder="Current stage" options={prepStages} />
     </div>
   );
 
-  // student — no additional fields in step 2
   return null;
 }

@@ -20,6 +20,8 @@ import SettingsPage from "./pages/Settings.tsx";
 import Institution from "./pages/Institution.tsx";
 import WorkDetail from "./pages/WorkDetail.tsx";
 import Workspace from "./pages/Workspace.tsx";
+import CreatePage from "./pages/CreatePage.tsx";
+import PageProfile from "./pages/PageProfile.tsx";
 import VerifyInvite from "./pages/VerifyInvite.tsx";
 import Privacy from "./pages/Privacy.tsx";
 import Terms from "./pages/Terms.tsx";
@@ -47,10 +49,12 @@ const App = () => (
           <Route path="/verify-invite" element={<VerifyInvite />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
+          <Route path="/create-page" element={<Shell><CreatePage /></Shell>} />
           {/* App */}
           <Route path="/app/feed" element={<Shell><Feed /></Shell>} />
           <Route path="/app/explore" element={<Shell><Explore /></Shell>} />
           <Route path="/app/profile" element={<Shell><Profile /></Shell>} />
+          <Route path="/app/profile/:id" element={<Shell><Profile /></Shell>} />
           <Route path="/app/teams" element={<Shell><MyWork /></Shell>} />
           <Route path="/app/teams/:projectId" element={<Shell><ProjectHub /></Shell>} />
           <Route path="/app/opportunities" element={<Shell><Opportunities /></Shell>} />
@@ -61,6 +65,8 @@ const App = () => (
           <Route path="/app/settings" element={<Shell><SettingsPage /></Shell>} />
           <Route path="/app/institution/:id" element={<Shell><Institution /></Shell>} />
           <Route path="/app/workspace" element={<Shell><Workspace /></Shell>} />
+          {/* Pages (org profiles) */}
+          <Route path="/p/:slug" element={<Shell><PageProfile /></Shell>} />
           {/* Legacy redirects */}
           <Route path="/app/nexus" element={<Shell><Explore /></Shell>} />
           <Route path="/app/work" element={<Shell><MyWork /></Shell>} />

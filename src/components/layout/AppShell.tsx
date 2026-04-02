@@ -1,8 +1,8 @@
 import { ReactNode, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  LayoutGrid, Compass, Layers, Users, Target,
-  Link2, MessageCircle, Bell, SlidersHorizontal, PencilLine, Zap, Plus, User, LogOut,
+  LayoutGrid, Compass, Users, Target, User,
+  Link2, MessageCircle, Bell, SlidersHorizontal, PencilLine, Zap, Plus, LogOut,
 } from "lucide-react";
 import NewPostModal from "@/components/NewPostModal";
 import { toast } from "sonner";
@@ -20,7 +20,7 @@ const navGroups = [
   {
     label: "WORK",
     items: [
-      { label: "My Work", icon: Layers, path: "/app/teams" },
+      { label: "Profile", icon: User, path: "/app/profile" },
       { label: "Workspace", icon: Users, path: "/app/workspace" },
       { label: "Opportunities", icon: Target, path: "/app/opportunities", badge: 3 },
     ],
@@ -65,7 +65,6 @@ const AppShell = ({ children }: { children: ReactNode }) => {
     navigate("/signin");
   };
 
-  // Get current page title for mobile
   const getPageTitle = () => {
     for (const g of navGroups) {
       for (const item of g.items) {
@@ -90,7 +89,6 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           boxShadow: "2px 0 24px rgba(4,6,26,0.2)",
         }}
       >
-        {/* Logo */}
         <div className="h-16 flex items-center px-5 gap-2.5">
           <div
             className="w-8 h-8 rounded-xl flex items-center justify-center"
@@ -101,7 +99,6 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           <Link to="/app/feed" className="text-[19px] font-extrabold" style={{ color: "var(--text-1)" }}>Tiikme</Link>
         </div>
 
-        {/* Nav groups */}
         <nav className="flex-1 overflow-y-auto px-2.5 py-3">
           {navGroups.map((group) => (
             <div key={group.label} className="mb-1">
@@ -149,7 +146,6 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             </div>
           ))}
 
-          {/* New Post */}
           <div className="px-0 mt-2">
             <button
               onClick={() => setPostModalOpen(true)}
@@ -165,7 +161,6 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           </div>
         </nav>
 
-        {/* User card + Logout */}
         <div className="px-2.5 pb-3 pt-2" style={{ borderTop: "1px solid var(--border)" }}>
           <Link to="/app/profile" className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl" style={{ transition: "background 0.15s" }}>
             <div className="w-10 h-10 rounded-full flex items-center justify-center text-[13px] font-bold text-white" style={{ backgroundColor: "var(--brand)" }}>AK</div>
@@ -197,7 +192,6 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           borderRight: "1px solid var(--glass-border)",
         }}
       >
-        {/* Logo mark */}
         <div className="mb-4">
           <Link to="/app/feed">
             <div
@@ -209,7 +203,6 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           </Link>
         </div>
 
-        {/* Icons */}
         <nav className="flex-1 flex flex-col items-center gap-1 overflow-y-auto">
           {navGroups.flatMap(g => g.items).map((item) => {
             const active = isActive(item.path);
@@ -247,7 +240,6 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           })}
         </nav>
 
-        {/* Post FAB */}
         <button
           onClick={() => setPostModalOpen(true)}
           className="w-10 h-10 rounded-full flex items-center justify-center mb-2 active:scale-[0.92]"
@@ -260,7 +252,6 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           <PencilLine className="w-4 h-4 text-white" />
         </button>
 
-        {/* User avatar */}
         <Link to="/app/profile">
           <div className="w-10 h-10 rounded-full flex items-center justify-center text-[13px] font-bold text-white" style={{ backgroundColor: "var(--brand)" }}>AK</div>
         </Link>
@@ -268,7 +259,6 @@ const AppShell = ({ children }: { children: ReactNode }) => {
 
       {/* ═══ MAIN CONTENT ═══ */}
       <main className="flex-1 md:ml-16 lg:ml-[248px] pb-20 md:pb-0">
-        {/* Mobile top bar (<768px) */}
         <header
           className="md:hidden sticky top-0 z-50 h-14 flex items-center justify-between px-4"
           style={{
@@ -284,7 +274,6 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             </div>
             <span className="text-[17px] font-extrabold" style={{ color: "var(--text-1)" }}>Tiikme</span>
           </span>
-          {/* Page title centered */}
           <span className="absolute left-1/2 -translate-x-1/2 text-[16px] font-bold" style={{ color: "var(--text-1)" }}>
             {getPageTitle()}
           </span>

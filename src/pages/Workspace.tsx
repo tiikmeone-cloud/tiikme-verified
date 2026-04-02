@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Users, Layers, MessageCircle, Settings, Hash, Send, Crown, Lock, Rocket, Building2, ChevronDown, Globe, ArrowRight } from "lucide-react";
+import { Plus, Users, Layers, MessageCircle, Settings, Hash, Send, Crown, Lock, Rocket, Building2, ChevronDown, Globe, ArrowRight, X, Link2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { tiikToast } from "@/components/ui/tiik-toast";
@@ -21,16 +21,16 @@ const mockWorkspaces = [
 ];
 
 const discoverWorkspaces = [
-  { id: "d1", name: "DTU Announcements", initials: "DA", type: "Institution", members: 4200 },
-  { id: "d2", name: "DTU Placement Cell", initials: "DP", type: "Institution", members: 3100 },
+  { id: "d1", name: "DTU Announcements", initials: "DA", type: "Institution", members: 4200, privacy: "public" },
+  { id: "d2", name: "DTU Placement Cell", initials: "DP", type: "Institution", members: 3100, privacy: "members_only" },
 ];
 
 const mockMembers = [
-  { name: "Arjun Kumar", initials: "AK", role: "Admin", color: "#4F46E5", joined: "Jan 2025" },
-  { name: "Riya Sharma", initials: "RS", role: "Lead", color: "#4F46E5", joined: "Jan 2025" },
-  { name: "Priya Menon", initials: "PM", role: "Member", color: "#92400E", joined: "Feb 2025" },
-  { name: "Rahul Kumar", initials: "RK", role: "Member", color: "#0369A1", joined: "Mar 2025" },
-  { name: "Sunita Devi", initials: "SD", role: "Alumni", color: "#C2410C", joined: "Nov 2024" },
+  { id: "m1", name: "Arjun Kumar", initials: "AK", role: "Admin", color: "#4F46E5", joined: "Jan 2025", stranded: false },
+  { id: "m2", name: "Riya Sharma", initials: "RS", role: "Lead", color: "#4F46E5", joined: "Jan 2025", stranded: true },
+  { id: "m3", name: "Priya Menon", initials: "PM", role: "Member", color: "#92400E", joined: "Feb 2025", stranded: false },
+  { id: "m4", name: "Rahul Kumar", initials: "RK", role: "Member", color: "#0369A1", joined: "Mar 2025", stranded: false },
+  { id: "m5", name: "Sunita Devi", initials: "SD", role: "Alumni", color: "#C2410C", joined: "Nov 2024", stranded: false },
 ];
 
 const postTypes = [
@@ -41,10 +41,18 @@ const postTypes = [
   { emoji: "🗓", label: "Event", type: "event" },
 ];
 
+const defaultVisibility: Record<string, string> = {
+  announcement: "team",
+  achievement: "followers",
+  project_update: "followers",
+  discussion: "team",
+  event: "team",
+};
+
 const mockPosts = [
-  { id: "1", author: "Riya Sharma", initials: "RS", color: "#4F46E5", type: "achievement", typeLabel: "🏆 Achievement", content: "We won the Smart India Hackathon 2025! Our TelemedicineRx project secured 1st place.", time: "2h ago", sharable: true },
-  { id: "2", author: "Arjun Kumar", initials: "AK", color: "#4F46E5", type: "project_update", typeLabel: "📦 Project update", content: "Shipped the offline-first sync module. Now works without internet in rural areas.", time: "5h ago", sharable: true },
-  { id: "3", author: "Priya Menon", initials: "PM", color: "#92400E", type: "announcement", typeLabel: "📢 Announcement", content: "Weekly standup moved to Wednesday 6 PM. Please update your availability.", time: "Yesterday", sharable: false },
+  { id: "1", author: "Riya Sharma", initials: "RS", color: "#4F46E5", type: "achievement", typeLabel: "🏆 Achievement", content: "We won the Smart India Hackathon 2025! Our TelemedicineRx project secured 1st place.", time: "2h ago", sharable: true, isShared: false, visibility: "followers" },
+  { id: "2", author: "Arjun Kumar", initials: "AK", color: "#4F46E5", type: "project_update", typeLabel: "📦 Project update", content: "Shipped the offline-first sync module. Now works without internet in rural areas.", time: "5h ago", sharable: true, isShared: false, visibility: "followers" },
+  { id: "3", author: "Priya Menon", initials: "PM", color: "#92400E", type: "announcement", typeLabel: "📢 Announcement", content: "Weekly standup moved to Wednesday 6 PM. Please update your availability.", time: "Yesterday", sharable: false, isShared: false, visibility: "team" },
 ];
 
 const templates = [
@@ -68,6 +76,24 @@ const Workspace = () => {
   const [searchWs, setSearchWs] = useState("");
   const [mobileShowRight, setMobileShowRight] = useState(false);
 
+  // Workspace fixes state
+  const [composeOpen, setComposeOpen] = useState(false);
+  const [composeText, setComposeText] = useState("");
+  const [composeType, setComposeType] = useState("discussion");
+  const [composeVisibility, setComposeVisibility] = useState("team");
+  const [posts, setPosts] = useState(mockPosts);
+  const [joinedDiscover, setJoinedDiscover] = useState<string[]>([]);
+  const [members, setMembers] = useState(mockMembers);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showInvite, setShowInvite] = useState(false);
+  const [showShareConfirm, setShowShareConfirm] = useState<string | null>(null);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [settingsName, setSettingsName] = useState("");
+  const [settingsDesc, setSettingsDesc] = useState("");
+  const [settingsPrivacy, setSettingsPrivacy] = useState("members_only");
+  const [inviteInput, setInviteInput] = useState("");
+  const [inviteRole, setInviteRole] = useState("member");
+
   const activeWs = mockWorkspaces.find(w => w.id === selected);
   const tabs = ["Feed", "Projects", "Members", "About"];
   const hasChannels = activeWs?.channels && activeWs.channels.length > 0;
@@ -78,6 +104,57 @@ const Workspace = () => {
     setActiveChannel(null);
     setMobileShowRight(true);
   };
+
+  const handlePost = () => {
+    if (!composeText.trim()) return;
+    const newPost = {
+      id: Date.now().toString(),
+      author: "Arjun Kumar",
+      initials: "AK",
+      color: "#4F46E5",
+      type: composeType,
+      typeLabel: `${postTypes.find(p => p.type === composeType)?.emoji || "💬"} ${postTypes.find(p => p.type === composeType)?.label || "Discussion"}`,
+      content: composeText,
+      time: "Just now",
+      sharable: composeType !== "announcement" || composeVisibility !== "team",
+      isShared: false,
+      visibility: composeVisibility,
+    };
+    setPosts([newPost, ...posts]);
+    setComposeText("");
+    setComposeOpen(false);
+    tiikToast.success("Posted ✓");
+  };
+
+  const handleJoinDiscover = (id: string, privacy: string) => {
+    setJoinedDiscover(prev => [...prev, id]);
+    if (privacy === "public") {
+      tiikToast.success("Joined ✓");
+    } else {
+      tiikToast.success("Join request sent ✓");
+    }
+  };
+
+  const handleShareToFeed = (postId: string) => {
+    setPosts(prev => prev.map(p => p.id === postId ? { ...p, isShared: true } : p));
+    setShowShareConfirm(null);
+    tiikToast.success("Shared to your feed ✓");
+  };
+
+  const handleStrand = (memberId: string) => {
+    setMembers(prev => prev.map(m => m.id === memberId ? { ...m, stranded: true } : m));
+    tiikToast.success("Strand request sent ✓");
+  };
+
+  const handleLeave = () => {
+    setShowLeaveConfirm(false);
+    setSelected(null);
+    setMobileShowRight(false);
+    tiikToast("You've left the workspace. Your work stays.");
+  };
+
+  const visIcons = { team: Lock, followers: Users, public: Globe };
+  const visLabels = { team: "Team only", followers: "Followers", public: "Public feed" };
 
   return (
     <div className="flex" style={{ height: "calc(100vh - 64px)" }}>
@@ -91,7 +168,6 @@ const Workspace = () => {
           </button>
         </div>
 
-        {/* Search */}
         <div className="px-3 pt-3 pb-1">
           <input value={searchWs} onChange={e => setSearchWs(e.target.value)} placeholder="Search workspaces..."
             className="w-full h-9 glass-input px-3 text-[12px] outline-none" style={{ color: "var(--text-1)" }} />
@@ -116,13 +192,12 @@ const Workspace = () => {
                     onClick={e => { e.stopPropagation(); setExpandedChannels(p => p.includes(ws.id) ? p.filter(x => x !== ws.id) : [...p, ws.id]); }} />
                 )}
               </button>
-              {/* Channels */}
               {ws.channels && expandedChannels.includes(ws.id) && (
                 <div className="pl-9 pr-3 pb-1">
                   {ws.channels.map(ch => (
                     <button key={ch.id} onClick={() => { setSelected(ws.id); setActiveChannel(ch.id); setActiveTab("Feed"); setMobileShowRight(true); }}
                       className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-left cursor-pointer text-[11px]"
-                      style={{ background: activeChannel === ch.id ? "var(--surface-2)" : "transparent", color: "var(--text-2)" }}>
+                      style={{ background: activeChannel === ch.id ? "var(--surface-2)" : "transparent", color: activeChannel === ch.id ? "var(--brand)" : "var(--text-2)", fontWeight: activeChannel === ch.id ? 700 : 400 }}>
                       {ch.type === "restricted" ? <Lock className="w-3 h-3 shrink-0" style={{ color: "var(--text-3)" }} /> :
                        ch.type === "announcement_only" ? <Globe className="w-3 h-3 shrink-0" style={{ color: "var(--text-3)" }} /> :
                        <Hash className="w-3 h-3 shrink-0" style={{ color: "var(--text-3)" }} />}
@@ -136,16 +211,22 @@ const Workspace = () => {
 
           <div className="px-4 pt-3">
             <p className="micro-label pb-1.5">DISCOVER</p>
-            {discoverWorkspaces.map(ws => (
-              <div key={ws.id} className="flex items-center gap-2.5 py-2" style={{ borderBottom: "1px solid var(--border)" }}>
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[9px] font-bold" style={{ background: "var(--surface-2)", color: "var(--text-2)" }}>{ws.initials}</div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[11px] font-semibold truncate" style={{ color: "var(--text-1)" }}>{ws.name}</p>
-                  <p className="text-[9px]" style={{ color: "var(--text-3)" }}>{ws.members} members</p>
+            {discoverWorkspaces.map(ws => {
+              const joined = joinedDiscover.includes(ws.id);
+              return (
+                <div key={ws.id} className="flex items-center gap-2.5 py-2" style={{ borderBottom: "1px solid var(--border)" }}>
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[9px] font-bold" style={{ background: "var(--surface-2)", color: "var(--text-2)" }}>{ws.initials}</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-semibold truncate" style={{ color: "var(--text-1)" }}>{ws.name}</p>
+                    <p className="text-[9px]" style={{ color: "var(--text-3)" }}>{ws.members} members</p>
+                  </div>
+                  <button disabled={joined} className="text-[10px] font-bold cursor-pointer disabled:cursor-default" style={{ color: joined ? "var(--text-3)" : "var(--brand)" }}
+                    onClick={() => handleJoinDiscover(ws.id, ws.privacy)}>
+                    {joined ? (ws.privacy === "public" ? "Joined ✓" : "Sent ✓") : "Join →"}
+                  </button>
                 </div>
-                <button className="text-[10px] font-bold cursor-pointer" style={{ color: "var(--brand)" }} onClick={() => tiikToast.success("Join request sent")}>Join →</button>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="p-4 space-y-2">
@@ -180,7 +261,6 @@ const Workspace = () => {
           </div>
         ) : (
           <div className="max-w-[800px] mx-auto w-full px-4 py-5">
-            {/* Mobile back */}
             <button onClick={() => setMobileShowRight(false)} className="md:hidden flex items-center gap-1 mb-3 text-[13px] font-semibold cursor-pointer" style={{ color: "var(--brand)" }}>
               ← Workspaces
             </button>
@@ -193,13 +273,13 @@ const Workspace = () => {
                   <h1 className="text-[18px] font-extrabold" style={{ color: "var(--text-1)" }}>{activeWs?.name}</h1>
                   <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "var(--surface-2)", color: "var(--text-2)" }}>{activeWs?.type}</span>
-                    <span className="text-[11px]" style={{ color: "var(--text-3)" }}>{mockMembers.length} members · 2 projects</span>
+                    <span className="text-[11px]" style={{ color: "var(--text-3)" }}>{members.filter(m => m.role !== "Alumni").length} members · 2 projects</span>
                   </div>
                 </div>
                 <div className="flex gap-1.5">
-                  <Button size="sm" onClick={() => tiikToast("Compose post")}>Post</Button>
-                  <Button variant="secondary" size="sm" onClick={() => tiikToast("Invite member")}>Add member</Button>
-                  <Button variant="ghost" size="sm" onClick={() => tiikToast("Workspace settings")}><Settings className="w-4 h-4" /></Button>
+                  <Button size="sm" onClick={() => { setComposeOpen(true); setComposeType("discussion"); setComposeVisibility("team"); }}>Post</Button>
+                  <Button variant="secondary" size="sm" onClick={() => setShowInvite(true)}>Add member</Button>
+                  <Button variant="ghost" size="sm" onClick={() => { setSettingsName(activeWs?.name || ""); setSettingsDesc(""); setSettingsPrivacy("members_only"); setShowSettings(true); }}><Settings className="w-4 h-4" /></Button>
                 </div>
               </div>
             </div>
@@ -218,23 +298,65 @@ const Workspace = () => {
             {/* Feed */}
             {activeTab === "Feed" && (
               <div className="space-y-3">
-                {/* Post type selector + compose */}
+                {/* Compose */}
                 <div className="t-card p-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ background: "var(--brand)" }}>AK</div>
-                    <button onClick={() => tiikToast("Opening compose...")} className="flex-1 text-left text-[12px] h-9 glass-input px-3 cursor-pointer" style={{ color: "var(--text-3)" }}>
-                      Share with {activeWs?.name}...
-                    </button>
-                  </div>
-                  <div className="flex gap-1.5 ml-10 overflow-x-auto scrollbar-hide">
-                    {postTypes.map(pt => (
-                      <button key={pt.type} onClick={() => tiikToast(`Creating ${pt.label}...`)}
-                        className="shrink-0 text-[10px] font-semibold h-7 px-2.5 rounded-full cursor-pointer active:scale-95"
-                        style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-2)" }}>
-                        {pt.emoji} {pt.label}
-                      </button>
-                    ))}
-                  </div>
+                  {!composeOpen ? (
+                    <>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ background: "var(--brand)" }}>AK</div>
+                        <button onClick={() => setComposeOpen(true)} className="flex-1 text-left text-[12px] h-9 glass-input px-3 cursor-pointer" style={{ color: "var(--text-3)" }}>
+                          {activeChannel ? `Post to #${activeWs?.channels?.find(c => c.id === activeChannel)?.name}...` : `Share with ${activeWs?.name}...`}
+                        </button>
+                      </div>
+                      <div className="flex gap-1.5 ml-10 overflow-x-auto scrollbar-hide">
+                        {postTypes.map(pt => (
+                          <button key={pt.type} onClick={() => { setComposeType(pt.type); setComposeVisibility(defaultVisibility[pt.type] || "team"); setComposeOpen(true); }}
+                            className="shrink-0 text-[10px] font-semibold h-7 px-2.5 rounded-full cursor-pointer active:scale-95"
+                            style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-2)" }}>
+                            {pt.emoji} {pt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ background: "var(--brand)" }}>AK</div>
+                        <div className="flex gap-1.5 overflow-x-auto scrollbar-hide flex-1">
+                          {postTypes.map(pt => (
+                            <button key={pt.type} onClick={() => { setComposeType(pt.type); if (pt.type !== "discussion") setComposeVisibility(defaultVisibility[pt.type] || "team"); else setComposeVisibility("team"); }}
+                              className="shrink-0 text-[10px] font-semibold h-7 px-2.5 rounded-full cursor-pointer"
+                              style={{ background: composeType === pt.type ? "var(--brand-dim)" : "var(--surface-2)", border: composeType === pt.type ? "1px solid var(--brand)" : "1px solid var(--border)", color: composeType === pt.type ? "var(--brand)" : "var(--text-2)" }}>
+                              {pt.emoji} {pt.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <textarea value={composeText} onChange={e => setComposeText(e.target.value)} placeholder={`Share with ${activeWs?.name}...`} rows={3}
+                        className="w-full rounded-xl p-3 text-[13px] outline-none resize-none mb-2" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }} autoFocus />
+                      
+                      {/* Visibility selector */}
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-[10px] font-semibold" style={{ color: "var(--text-3)" }}>Who sees this:</span>
+                        {(["team", "followers", "public"] as const).map(v => {
+                          const VisIcon = visIcons[v];
+                          const locked = composeType === "discussion" && v !== "team";
+                          return (
+                            <button key={v} disabled={locked} onClick={() => !locked && setComposeVisibility(v)}
+                              className="text-[10px] font-semibold h-7 px-2.5 rounded-full cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+                              style={{ background: composeVisibility === v ? "var(--brand-dim)" : "var(--surface-2)", border: composeVisibility === v ? "1px solid var(--brand)" : "1px solid var(--border)", color: composeVisibility === v ? "var(--brand)" : "var(--text-2)" }}>
+                              <VisIcon className="w-3 h-3" /> {visLabels[v]}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <div className="flex gap-2 justify-end">
+                        <Button variant="ghost" size="sm" onClick={() => setComposeOpen(false)}>Cancel</Button>
+                        <Button size="sm" disabled={!composeText.trim()} onClick={handlePost}>Post</Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {activeChannel && (
@@ -245,7 +367,7 @@ const Workspace = () => {
                   </div>
                 )}
 
-                {mockPosts.map(post => (
+                {posts.map(post => (
                   <article key={post.id} className="t-card t-card-hover p-4" style={{ borderLeft: post.type === "announcement" ? "3px solid #F59E0B" : post.type === "achievement" ? "3px solid var(--brand)" : undefined }}>
                     <div className="flex items-center gap-2.5 mb-2">
                       <Link to="/app/profile"><div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white hover:scale-105 transition-transform" style={{ backgroundColor: post.color }}>{post.initials}</div></Link>
@@ -253,12 +375,22 @@ const Workspace = () => {
                         <Link to="/app/profile" className="text-[12px] font-bold hover:underline" style={{ color: "var(--text-1)" }}>{post.author}</Link>
                         <span className="text-[10px] ml-1.5" style={{ color: "var(--text-3)" }}>{post.time}</span>
                       </div>
-                      <span className="text-[10px] font-medium px-2 py-0.5 rounded-full" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-2)" }}>{post.typeLabel}</span>
+                      <div className="flex items-center gap-1.5">
+                        {/* Visibility badge */}
+                        {post.visibility === "team" && <Lock className="w-3 h-3" style={{ color: "var(--text-3)" }} />}
+                        {post.visibility === "followers" && <Users className="w-3 h-3" style={{ color: "var(--brand)" }} />}
+                        {post.visibility === "public" && <Globe className="w-3 h-3" style={{ color: "#F59E0B" }} />}
+                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-2)" }}>{post.typeLabel}</span>
+                      </div>
                     </div>
                     <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-2)" }}>{post.content}</p>
                     {post.sharable && (
                       <div className="flex items-center gap-3 mt-3 pt-2" style={{ borderTop: "1px solid var(--border)" }}>
-                        <button onClick={() => tiikToast.success("Shared to your feed")} className="text-[11px] font-semibold cursor-pointer" style={{ color: "var(--brand)" }}>Share to my Feed</button>
+                        {post.isShared ? (
+                          <span className="text-[11px] font-semibold" style={{ color: "var(--text-3)" }}>Shared ✓</span>
+                        ) : (
+                          <button onClick={() => setShowShareConfirm(post.id)} className="text-[11px] font-semibold cursor-pointer" style={{ color: "var(--brand)" }}>Share to my Feed</button>
+                        )}
                       </div>
                     )}
                   </article>
@@ -280,7 +412,7 @@ const Workspace = () => {
                       <span className="text-[10px]" style={{ color: "var(--text-3)" }}>{p.domain} · by {p.owner}</span>
                     </div>
                     <div className="flex -space-x-1.5 mt-2">
-                      {mockMembers.slice(0, 3).map(m => (
+                      {members.slice(0, 3).map(m => (
                         <div key={m.name} className="w-6 h-6 rounded-full flex items-center justify-center text-[8px] font-bold text-white" style={{ backgroundColor: m.color, border: "2px solid var(--surface)" }}>{m.initials}</div>
                       ))}
                     </div>
@@ -297,12 +429,12 @@ const Workspace = () => {
             {activeTab === "Members" && (
               <div>
                 <div className="flex gap-2 mb-4">
-                  <Button size="sm" variant="secondary" onClick={() => tiikToast("Invite by phone/email")}>Invite member</Button>
-                  <Button size="sm" variant="ghost" onClick={() => { navigator.clipboard.writeText("tiikme.in/ws/invite/abc123"); tiikToast.success("Invite link copied"); }}>Copy invite link</Button>
+                  <Button size="sm" variant="secondary" onClick={() => setShowInvite(true)}>Invite member</Button>
+                  <Button size="sm" variant="ghost" onClick={() => { navigator.clipboard.writeText("tiikme.in/join/abc123"); tiikToast.success("Invite link copied"); }}>Copy invite link</Button>
                 </div>
                 <div className="space-y-1">
-                  {mockMembers.filter(m => !m.role.includes("Alumni")).map(m => (
-                    <div key={m.name} className="flex items-center gap-2.5 py-2.5 px-2 rounded-xl" style={{ borderBottom: "1px solid var(--border)" }}>
+                  {members.filter(m => m.role !== "Alumni").map(m => (
+                    <div key={m.id} className="flex items-center gap-2.5 py-2.5 px-2 rounded-xl" style={{ borderBottom: "1px solid var(--border)" }}>
                       <Link to="/app/profile"><div className="w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold text-white hover:scale-105 transition-transform" style={{ backgroundColor: m.color }}>{m.initials}</div></Link>
                       <div className="flex-1 min-w-0">
                         <Link to="/app/profile" className="text-[13px] font-bold hover:underline" style={{ color: "var(--text-1)" }}>{m.name}</Link>
@@ -311,15 +443,19 @@ const Workspace = () => {
                       <span className="text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5" style={{ background: m.role === "Admin" ? "rgba(245,158,11,0.1)" : "var(--surface-2)", color: m.role === "Admin" ? "#F59E0B" : "var(--text-2)" }}>
                         {m.role === "Lead" && <Crown className="w-2.5 h-2.5" />}{m.role}
                       </span>
+                      {m.stranded ? (
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--surface-2)", color: "var(--text-3)" }}>Stranded ✓</span>
+                      ) : (
+                        <Button variant="ghost" size="sm" className="text-[11px] h-7" onClick={() => handleStrand(m.id)}><Link2 className="w-3 h-3 mr-1" />Strand</Button>
+                      )}
                       <Button variant="ghost" size="sm" className="text-[11px] h-7" onClick={() => navigate("/app/pings")}><MessageCircle className="w-3 h-3 mr-1" />Ping</Button>
                     </div>
                   ))}
-                  {/* Alumni */}
-                  {mockMembers.filter(m => m.role === "Alumni").length > 0 && (
+                  {members.filter(m => m.role === "Alumni").length > 0 && (
                     <>
                       <p className="micro-label pt-3 pb-1">ALUMNI</p>
-                      {mockMembers.filter(m => m.role === "Alumni").map(m => (
-                        <div key={m.name} className="flex items-center gap-2.5 py-2 px-2 opacity-60">
+                      {members.filter(m => m.role === "Alumni").map(m => (
+                        <div key={m.id} className="flex items-center gap-2.5 py-2 px-2 opacity-60">
                           <div className="w-8 h-8 rounded-full flex items-center justify-center text-[9px] font-bold text-white" style={{ backgroundColor: m.color }}>{m.initials}</div>
                           <span className="text-[12px]" style={{ color: "var(--text-2)" }}>{m.name}</span>
                           <span className="text-[9px] px-2 py-0.5 rounded-full ml-auto" style={{ background: "var(--surface-2)", color: "var(--text-3)" }}>Alumni</span>
@@ -340,10 +476,10 @@ const Workspace = () => {
                   <p>Type: {activeWs?.type} workspace</p>
                   <p>Created: Jan 2025 by Arjun Kumar</p>
                   <p>Privacy: Members only</p>
-                  <p>Institution: <Link to="/app/institution/1" className="hover:underline" style={{ color: "var(--brand)" }}>Delhi Technological University</Link></p>
+                  <p>Institution: <Link to="/p/dtu" className="hover:underline" style={{ color: "var(--brand)" }}>Delhi Technological University</Link></p>
                 </div>
                 <div className="mt-4 pt-4" style={{ borderTop: "1px solid var(--border)" }}>
-                  <Button variant="ghost" className="w-full text-[12px]" style={{ color: "#DC2626" }} onClick={() => tiikToast("Leave workspace?")}>Leave workspace</Button>
+                  <Button variant="ghost" className="w-full text-[12px]" style={{ color: "#DC2626" }} onClick={() => setShowLeaveConfirm(true)}>Leave workspace</Button>
                 </div>
               </div>
             )}
@@ -351,8 +487,115 @@ const Workspace = () => {
         )}
       </div>
 
-      {/* Create modal */}
+      {/* ═══ MODALS ═══ */}
       <AnimatePresence>
+        {/* Share to Feed Confirmation */}
+        {showShareConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} onClick={() => setShowShareConfirm(null)}>
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+              className="glass-card p-6 max-w-sm w-full" onClick={e => e.stopPropagation()}>
+              <h2 className="text-[17px] font-extrabold mb-2" style={{ color: "var(--text-1)" }}>Share to your public feed?</h2>
+              <p className="text-[13px] mb-5" style={{ color: "var(--text-2)" }}>This achievement will appear in the Tiikme feed and be attributed to your profile.</p>
+              <div className="flex gap-3">
+                <Button variant="ghost" className="flex-1" onClick={() => setShowShareConfirm(null)}>Cancel</Button>
+                <Button className="flex-1" onClick={() => handleShareToFeed(showShareConfirm)}>Share to feed →</Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Leave Confirmation */}
+        {showLeaveConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} onClick={() => setShowLeaveConfirm(false)}>
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+              className="glass-card p-6 max-w-sm w-full" onClick={e => e.stopPropagation()}>
+              <h2 className="text-[17px] font-extrabold mb-2" style={{ color: "var(--text-1)" }}>Leave {activeWs?.name}?</h2>
+              <p className="text-[13px] mb-5" style={{ color: "var(--text-2)" }}>Your past contributions will remain visible.</p>
+              <div className="flex gap-3">
+                <Button variant="ghost" className="flex-1" onClick={() => setShowLeaveConfirm(false)}>Cancel</Button>
+                <Button className="flex-1" style={{ background: "#DC2626" }} onClick={handleLeave}>Leave workspace</Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Invite Modal */}
+        {showInvite && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} onClick={() => setShowInvite(false)}>
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+              className="glass-card p-6 max-w-md w-full" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-[17px] font-extrabold" style={{ color: "var(--text-1)" }}>Invite to {activeWs?.name}</h2>
+                <button onClick={() => setShowInvite(false)} className="p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
+              </div>
+              <div className="space-y-3">
+                <Input placeholder="Email or Tiikme username" value={inviteInput} onChange={e => setInviteInput(e.target.value)} />
+                <div>
+                  <label className="micro-label block mb-1">Role</label>
+                  <div className="flex gap-2">
+                    {["admin", "editor", "member"].map(r => (
+                      <button key={r} onClick={() => setInviteRole(r)}
+                        className="flex-1 py-2 rounded-lg text-[11px] font-semibold cursor-pointer capitalize"
+                        style={{ background: inviteRole === r ? "var(--brand-dim)" : "var(--surface-2)", border: inviteRole === r ? "1px solid var(--brand)" : "1px solid var(--border)", color: inviteRole === r ? "var(--brand)" : "var(--text-2)" }}>
+                        {r}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <Button className="w-full" onClick={() => { setShowInvite(false); tiikToast.success("Invite sent!"); setInviteInput(""); }}>Send invite</Button>
+                <div className="pt-2" style={{ borderTop: "1px solid var(--border)" }}>
+                  <p className="text-[11px] mb-1.5" style={{ color: "var(--text-3)" }}>Or share this link:</p>
+                  <div className="flex gap-2">
+                    <Input value="tiikme.in/join/abc123" readOnly className="flex-1 text-[11px]" />
+                    <Button variant="secondary" size="sm" onClick={() => { navigator.clipboard.writeText("tiikme.in/join/abc123"); tiikToast.success("Link copied!"); }}><Copy className="w-3.5 h-3.5" /></Button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Settings Modal */}
+        {showSettings && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} onClick={() => setShowSettings(false)}>
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+              className="glass-card p-6 max-w-md w-full" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-[17px] font-extrabold" style={{ color: "var(--text-1)" }}>Workspace settings</h2>
+                <button onClick={() => setShowSettings(false)} className="p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
+              </div>
+              <div className="space-y-3">
+                <div><label className="micro-label block mb-1">Name</label><Input value={settingsName} onChange={e => setSettingsName(e.target.value)} /></div>
+                <div><label className="micro-label block mb-1">Description</label>
+                  <textarea value={settingsDesc} onChange={e => setSettingsDesc(e.target.value)} placeholder="Workspace description" rows={2}
+                    className="w-full rounded-xl p-3 text-[12px] outline-none resize-none" style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", color: "var(--text-1)" }} />
+                </div>
+                <div>
+                  <label className="micro-label block mb-1">Privacy</label>
+                  <div className="flex gap-2">
+                    {[{ v: "public", l: "Public" }, { v: "members_only", l: "Members only" }, { v: "invite_only", l: "Invite only" }].map(o => (
+                      <button key={o.v} onClick={() => setSettingsPrivacy(o.v)}
+                        className="flex-1 py-2 rounded-lg text-[11px] font-semibold cursor-pointer"
+                        style={{ background: settingsPrivacy === o.v ? "var(--brand-dim)" : "var(--surface-2)", border: settingsPrivacy === o.v ? "1px solid var(--brand)" : "1px solid var(--border)", color: settingsPrivacy === o.v ? "var(--brand)" : "var(--text-2)" }}>
+                        {o.l}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <Button className="w-full" onClick={() => { setShowSettings(false); tiikToast.success("Settings saved!"); }}>Save changes</Button>
+                <div className="pt-3 mt-2" style={{ borderTop: "1px solid var(--border)" }}>
+                  <p className="micro-label mb-2" style={{ color: "#DC2626" }}>DANGER ZONE</p>
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="sm" className="flex-1 text-[11px]" style={{ color: "#F59E0B" }}>Archive workspace</Button>
+                    <Button variant="ghost" size="sm" className="flex-1 text-[11px]" style={{ color: "#DC2626" }}>Delete workspace</Button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Create modal */}
         {showCreate && (
           <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} onClick={() => setShowCreate(false)}>
             <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
@@ -406,8 +649,8 @@ const Workspace = () => {
               {createStep === 2 && (
                 <>
                   <h2 className="text-[17px] font-extrabold mb-2" style={{ color: "var(--text-1)" }}>Invite members</h2>
-                  <p className="text-[12px] mb-4" style={{ color: "var(--text-3)" }}>Add team members by email or phone</p>
-                  <textarea placeholder="Enter emails or phone numbers (one per line)" rows={3}
+                  <p className="text-[12px] mb-4" style={{ color: "var(--text-3)" }}>Add team members by email</p>
+                  <textarea placeholder="Enter emails (one per line)" rows={3}
                     className="w-full rounded-xl p-3 text-[12px] outline-none resize-none mb-3" style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", color: "var(--text-1)" }} />
                   <div className="flex gap-3">
                     <Button variant="ghost" className="flex-1" onClick={() => setCreateStep(1)}>Back</Button>
