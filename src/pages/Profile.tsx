@@ -366,7 +366,7 @@ const Profile = () => {
             </div>
           )}
 
-          {activeTab === "Achievements" && <AchievementsTab />}
+          {activeTab === "Achievements" && <AchievementsTab isOwnProfile={true} />}
 
           {activeTab === "Posts" && (
             <EmptyState icon={MessageCircle} title="No posts yet" description="Posts you share on the feed will appear here." />
