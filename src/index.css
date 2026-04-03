@@ -100,49 +100,7 @@
     --sidebar-background: var(--surface);
   }
 
-  [data-theme="light"] {
-    /* === LIGHT MODE (Anjaneyam Orange) === */
-    --bg: #FFF8F2;
-    --bg-2: #FFF3E8;
-    --surface: rgba(255,255,255,0.70);
-    --surface-2: rgba(255,255,255,0.50);
-    --surface-3: rgba(255,255,255,0.40);
-    --border: rgba(0,0,0,0.06);
-    --border-2: rgba(0,0,0,0.10);
-    --brand: #E8580A;
-    --brand-2: #F97316;
-    --brand-dim: rgba(232,88,10,0.10);
-    --brand-glow: rgba(232,88,10,0.18);
-    --brand-hover: #F97316;
-    --text-1: #111827;
-    --text-2: #6B7280;
-    --text-3: #9CA3AF;
-    --tiik-gold: #F59E0B;
-    --tiik-grey: #6B7280;
-    --open-green: #10B981;
-    --danger: #DC2626;
-
-    /* Shadows light */
-    --shadow-sm: 0 1px 2px rgba(0,0,0,0.04), 0 4px 8px rgba(0,0,0,0.06);
-    --shadow-md: 0 2px 4px rgba(0,0,0,0.06), 0 8px 24px rgba(232,88,10,0.04);
-    --shadow-lg: 0 4px 12px rgba(0,0,0,0.08), 0 16px 40px rgba(232,88,10,0.06);
-    --shadow-glow: 0 0 20px var(--brand-glow);
-    --card-shadow: var(--shadow-md);
-
-    /* Glass light */
-    --glass-bg: rgba(255, 255, 255, 0.55);
-    --glass-border: rgba(26, 8, 0, 0.08);
-    --glass-border-t: rgba(255, 255, 255, 0.85);
-    --glass-shadow:
-      0 8px 32px rgba(232,88,10,0.06),
-      0 2px 8px rgba(0,0,0,0.05),
-      inset 0 1px 0 rgba(255,255,255,0.9),
-      inset 0 -1px 0 rgba(0,0,0,0.04);
-    --glass-blur: blur(20px) saturate(180%) brightness(1.02);
-
-    /* Sidebar light */
-    --sidebar-background: rgba(255,255,255,0.70);
-  }
+  /* Light is now default in :root, so remove the old [data-theme="light"] block */
 }
 
 @layer base {
