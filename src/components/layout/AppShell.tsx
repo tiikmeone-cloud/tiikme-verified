@@ -2,7 +2,7 @@ import { ReactNode, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutGrid, Compass, Users, Target, User,
-  Link2, MessageCircle, Bell, SlidersHorizontal, PencilLine, Zap, Plus, LogOut,
+  Link2, MessageCircle, Bell, SlidersHorizontal, PencilLine, Zap, Plus, LogOut, GraduationCap,
 } from "lucide-react";
 import NewPostModal from "@/components/NewPostModal";
 import { toast } from "sonner";
