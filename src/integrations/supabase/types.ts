@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      academy_progress: {
+        Row: {
+          completed: boolean | null
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          module_id: string
+          score: number | null
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          module_id: string
+          score?: number | null
+          user_id: string
+        }
+        Update: {
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          module_id?: string
+          score?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       achievements: {
         Row: {
           achievement_date: string | null
@@ -834,6 +864,36 @@ export type Database = {
           },
         ]
       }
+      power_transactions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          reason: string
+          reference_id: string | null
+          reference_type: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: string
+          reason: string
+          reference_id?: string | null
+          reference_type?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          reason?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           activity_score: number | null
@@ -1007,6 +1067,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_power: {
+        Row: {
+          current_power: number | null
+          diamond_count: number | null
+          id: string
+          last_updated: string | null
+          level: string | null
+          level_num: number | null
+          total_power_earned: number | null
+          user_id: string
+        }
+        Insert: {
+          current_power?: number | null
+          diamond_count?: number | null
+          id?: string
+          last_updated?: string | null
+          level?: string | null
+          level_num?: number | null
+          total_power_earned?: number | null
+          user_id: string
+        }
+        Update: {
+          current_power?: number | null
+          diamond_count?: number | null
+          id?: string
+          last_updated?: string | null
+          level?: string | null
+          level_num?: number | null
+          total_power_earned?: number | null
+          user_id?: string
+        }
+        Relationships: []
       }
       work_items: {
         Row: {
