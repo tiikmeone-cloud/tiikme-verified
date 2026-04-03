@@ -113,19 +113,18 @@
     -webkit-font-smoothing: antialiased;
     min-height: 100vh;
     transition: background 0.3s ease, color 0.3s ease;
-    /* Dark mode depth background */
-    background:
-      radial-gradient(ellipse at 20% 20%, rgba(61,90,241,0.08) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 80%, rgba(91,115,245,0.06) 0%, transparent 50%),
-      radial-gradient(ellipse at 50% 50%, rgba(14,18,64,0.4) 0%, transparent 70%),
-      #04061A;
-  }
-  [data-theme="light"] body {
     background:
       radial-gradient(ellipse at 20% 10%, rgba(232,88,10,0.06) 0%, transparent 40%),
       radial-gradient(ellipse at 80% 90%, rgba(249,115,22,0.04) 0%, transparent 40%),
       radial-gradient(ellipse at 60% 40%, rgba(255,255,255,0.5) 0%, transparent 60%),
       #FFF8F2;
+  }
+  [data-theme="dark"] body {
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(61,90,241,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(91,115,245,0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(14,18,64,0.4) 0%, transparent 70%),
+      #04061A;
   }
 }
 

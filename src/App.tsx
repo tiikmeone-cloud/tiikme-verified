@@ -68,6 +68,7 @@ const App = () => (
           <Route path="/app/settings" element={<Shell><SettingsPage /></Shell>} />
           <Route path="/app/institution/:id" element={<Shell><Institution /></Shell>} />
           <Route path="/app/workspace" element={<Shell><Workspace /></Shell>} />
+          <Route path="/app/academy" element={<Shell><Academy /></Shell>} />
           {/* Pages (org profiles) */}
           <Route path="/p/:slug" element={<Shell><PageProfile /></Shell>} />
           {/* Legacy redirects */}
