@@ -292,7 +292,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
 
       {/* ═══ MOBILE BOTTOM NAV (<768px) ═══ */}
       <nav
-        className="md:hidden fixed bottom-3 left-3 right-3 z-50 glass-dock"
+        className="flex md:hidden fixed bottom-3 left-3 right-3 z-50 glass-dock"
         style={{
           paddingBottom: "env(safe-area-inset-bottom)",
           boxShadow: "0 -4px 40px rgba(0,0,0,0.5), 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15)",
