@@ -259,7 +259,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
       </aside>
 
       {/* ═══ MAIN CONTENT ═══ */}
-      <main className="flex-1 md:ml-16 lg:ml-[248px] pb-20 md:pb-0">
+      <main className="flex-1 md:ml-16 lg:ml-[248px] pb-24 md:pb-0">
         <header
           className="md:hidden sticky top-0 z-50 h-14 flex items-center justify-between px-4"
           style={{

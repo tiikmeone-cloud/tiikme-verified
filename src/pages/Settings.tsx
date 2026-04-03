@@ -48,7 +48,7 @@ const SettingsPage = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("profile");
   const [journeyChoice, setJourneyChoice] = useState<string | null>(null);
-  const [theme, setTheme] = useState(() => localStorage.getItem("tiikme-theme") || "dark");
+  const [theme, setTheme] = useState(() => localStorage.getItem("tiikme-theme") || "light");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteText, setDeleteText] = useState("");
   const [loggingOut, setLoggingOut] = useState(false);
