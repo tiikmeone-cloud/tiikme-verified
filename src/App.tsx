@@ -25,6 +25,8 @@ import PageProfile from "./pages/PageProfile.tsx";
 import VerifyInvite from "./pages/VerifyInvite.tsx";
 import Privacy from "./pages/Privacy.tsx";
 import Terms from "./pages/Terms.tsx";
+import JoinAsInstitution from "./pages/JoinAsInstitution.tsx";
+import Academy from "./pages/Academy.tsx";
 import AppShell from "./components/layout/AppShell.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -47,6 +49,7 @@ const App = () => (
           <Route path="/signup" element={<SignUp />} />
           <Route path="/welcome" element={<Welcome />} />
           <Route path="/verify-invite" element={<VerifyInvite />} />
+          <Route path="/join-as-institution" element={<JoinAsInstitution />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/create-page" element={<Shell><CreatePage /></Shell>} />
@@ -65,6 +68,7 @@ const App = () => (
           <Route path="/app/settings" element={<Shell><SettingsPage /></Shell>} />
           <Route path="/app/institution/:id" element={<Shell><Institution /></Shell>} />
           <Route path="/app/workspace" element={<Shell><Workspace /></Shell>} />
+          <Route path="/app/academy" element={<Shell><Academy /></Shell>} />
           {/* Pages (org profiles) */}
           <Route path="/p/:slug" element={<Shell><PageProfile /></Shell>} />
           {/* Legacy redirects */}

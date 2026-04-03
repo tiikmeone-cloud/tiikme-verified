@@ -2,7 +2,7 @@ import { ReactNode, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutGrid, Compass, Users, Target, User,
-  Link2, MessageCircle, Bell, SlidersHorizontal, PencilLine, Zap, Plus, LogOut,
+  Link2, MessageCircle, Bell, SlidersHorizontal, PencilLine, Zap, Plus, LogOut, GraduationCap,
 } from "lucide-react";
 import NewPostModal from "@/components/NewPostModal";
 import { toast } from "sonner";
@@ -29,6 +29,7 @@ const navGroups = [
     label: "CONNECT",
     items: [
       { label: "My Strands", icon: Link2, path: "/app/strands" },
+      { label: "Academy", icon: GraduationCap, path: "/app/academy" },
       { label: "Pings", icon: MessageCircle, path: "/app/pings", badge: 2 },
       { label: "Alerts", icon: Bell, path: "/app/alerts", badge: 5 },
     ],
@@ -258,7 +259,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
       </aside>
 
       {/* ═══ MAIN CONTENT ═══ */}
-      <main className="flex-1 md:ml-16 lg:ml-[248px] pb-20 md:pb-0">
+      <main className="flex-1 md:ml-16 lg:ml-[248px] pb-24 md:pb-0">
         <header
           className="md:hidden sticky top-0 z-50 h-14 flex items-center justify-between px-4"
           style={{
@@ -291,7 +292,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
 
       {/* ═══ MOBILE BOTTOM NAV (<768px) ═══ */}
       <nav
-        className="md:hidden fixed bottom-3 left-3 right-3 z-50 glass-dock"
+        className="flex md:hidden fixed bottom-3 left-3 right-3 z-50 glass-dock"
         style={{
           paddingBottom: "env(safe-area-inset-bottom)",
           boxShadow: "0 -4px 40px rgba(0,0,0,0.5), 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15)",

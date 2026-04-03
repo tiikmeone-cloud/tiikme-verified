@@ -6,6 +6,60 @@
 
 @layer base {
   :root {
+    /* === LIGHT MODE (Anjaneyam Orange) — DEFAULT === */
+    --bg: #FFF8F2;
+    --bg-2: #FFF3E8;
+    --surface: rgba(255,255,255,0.70);
+    --surface-2: rgba(255,255,255,0.50);
+    --surface-3: rgba(255,255,255,0.40);
+    --border: rgba(0,0,0,0.06);
+    --border-2: rgba(0,0,0,0.10);
+    --brand: #E8580A;
+    --brand-2: #F97316;
+    --brand-dim: rgba(232,88,10,0.10);
+    --brand-glow: rgba(232,88,10,0.18);
+    --brand-hover: #F97316;
+    --text-1: #111827;
+    --text-2: #6B7280;
+    --text-3: #9CA3AF;
+    --tiik-gold: #F59E0B;
+    --tiik-grey: #6B7280;
+    --open-green: #10B981;
+    --danger: #DC2626;
+
+    --radius: 0.625rem;
+
+    /* Shadows light */
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.04), 0 4px 8px rgba(0,0,0,0.06);
+    --shadow-md: 0 2px 4px rgba(0,0,0,0.06), 0 8px 24px rgba(232,88,10,0.04);
+    --shadow-lg: 0 4px 12px rgba(0,0,0,0.08), 0 16px 40px rgba(232,88,10,0.06);
+    --shadow-glow: 0 0 20px var(--brand-glow);
+    --card-shadow: var(--shadow-md);
+
+    /* Glass light */
+    --glass-bg: rgba(255, 255, 255, 0.55);
+    --glass-border: rgba(26, 8, 0, 0.08);
+    --glass-border-t: rgba(255, 255, 255, 0.85);
+    --glass-shadow:
+      0 8px 32px rgba(232,88,10,0.06),
+      0 2px 8px rgba(0,0,0,0.05),
+      inset 0 1px 0 rgba(255,255,255,0.9),
+      inset 0 -1px 0 rgba(0,0,0,0.04);
+    --glass-blur: blur(20px) saturate(180%) brightness(1.02);
+    --glass-radius: 18px;
+
+    /* Sidebar */
+    --sidebar-background: rgba(255,255,255,0.70);
+    --sidebar-foreground: var(--text-1);
+    --sidebar-primary: var(--brand);
+    --sidebar-primary-foreground: #fff;
+    --sidebar-accent: var(--brand-dim);
+    --sidebar-accent-foreground: var(--text-1);
+    --sidebar-border: var(--border);
+    --sidebar-ring: var(--brand);
+  }
+
+  [data-theme="dark"] {
     /* === DARK MODE (Krishna Blue) === */
     --bg: #04061A;
     --bg-2: #08092A;
@@ -27,17 +81,12 @@
     --open-green: #10B981;
     --danger: #DC2626;
 
-    /* Shadcn compat */
-    --radius: 0.625rem;
-
-    /* Shadow system */
     --shadow-sm: 0 1px 3px rgba(0,0,0,0.3), 0 4px 8px rgba(4,6,26,0.4);
     --shadow-md: 0 2px 4px rgba(0,0,0,0.3), 0 8px 16px rgba(4,6,26,0.5), 0 20px 40px rgba(4,6,26,0.3);
     --shadow-lg: 0 4px 8px rgba(0,0,0,0.4), 0 16px 32px rgba(4,6,26,0.6), 0 40px 80px rgba(4,6,26,0.4);
     --shadow-glow: 0 0 20px var(--brand-glow), 0 0 60px rgba(61,90,241,0.1);
     --card-shadow: var(--shadow-md);
 
-    /* ═══ APPLE LIQUID GLASS VARIABLES ═══ */
     --glass-bg: rgba(8, 11, 42, 0.6);
     --glass-border: rgba(238, 240, 255, 0.08);
     --glass-border-t: rgba(238, 240, 255, 0.16);
@@ -47,62 +96,11 @@
       inset 0 1px 0 rgba(238,240,255,0.06),
       inset 0 -1px 0 rgba(0,0,0,0.15);
     --glass-blur: blur(20px) saturate(180%) brightness(1.05);
-    --glass-radius: 18px;
 
-    /* Sidebar */
     --sidebar-background: var(--surface);
-    --sidebar-foreground: var(--text-1);
-    --sidebar-primary: var(--brand);
-    --sidebar-primary-foreground: #fff;
-    --sidebar-accent: var(--brand-dim);
-    --sidebar-accent-foreground: var(--text-1);
-    --sidebar-border: var(--border);
-    --sidebar-ring: var(--brand);
   }
 
-  [data-theme="light"] {
-    /* === LIGHT MODE (Anjaneyam Orange) === */
-    --bg: #FFF8F2;
-    --bg-2: #FFF3E8;
-    --surface: rgba(255,255,255,0.70);
-    --surface-2: rgba(255,255,255,0.50);
-    --surface-3: rgba(255,255,255,0.40);
-    --border: rgba(0,0,0,0.06);
-    --border-2: rgba(0,0,0,0.10);
-    --brand: #E8580A;
-    --brand-2: #F97316;
-    --brand-dim: rgba(232,88,10,0.10);
-    --brand-glow: rgba(232,88,10,0.18);
-    --brand-hover: #F97316;
-    --text-1: #111827;
-    --text-2: #6B7280;
-    --text-3: #9CA3AF;
-    --tiik-gold: #F59E0B;
-    --tiik-grey: #6B7280;
-    --open-green: #10B981;
-    --danger: #DC2626;
-
-    /* Shadows light */
-    --shadow-sm: 0 1px 2px rgba(0,0,0,0.04), 0 4px 8px rgba(0,0,0,0.06);
-    --shadow-md: 0 2px 4px rgba(0,0,0,0.06), 0 8px 24px rgba(232,88,10,0.04);
-    --shadow-lg: 0 4px 12px rgba(0,0,0,0.08), 0 16px 40px rgba(232,88,10,0.06);
-    --shadow-glow: 0 0 20px var(--brand-glow);
-    --card-shadow: var(--shadow-md);
-
-    /* Glass light */
-    --glass-bg: rgba(255, 255, 255, 0.55);
-    --glass-border: rgba(26, 8, 0, 0.08);
-    --glass-border-t: rgba(255, 255, 255, 0.85);
-    --glass-shadow:
-      0 8px 32px rgba(232,88,10,0.06),
-      0 2px 8px rgba(0,0,0,0.05),
-      inset 0 1px 0 rgba(255,255,255,0.9),
-      inset 0 -1px 0 rgba(0,0,0,0.04);
-    --glass-blur: blur(20px) saturate(180%) brightness(1.02);
-
-    /* Sidebar light */
-    --sidebar-background: rgba(255,255,255,0.70);
-  }
+  /* Light is now default in :root, so remove the old [data-theme="light"] block */
 }
 
 @layer base {
@@ -115,19 +113,18 @@
     -webkit-font-smoothing: antialiased;
     min-height: 100vh;
     transition: background 0.3s ease, color 0.3s ease;
-    /* Dark mode depth background */
-    background:
-      radial-gradient(ellipse at 20% 20%, rgba(61,90,241,0.08) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 80%, rgba(91,115,245,0.06) 0%, transparent 50%),
-      radial-gradient(ellipse at 50% 50%, rgba(14,18,64,0.4) 0%, transparent 70%),
-      #04061A;
-  }
-  [data-theme="light"] body {
     background:
       radial-gradient(ellipse at 20% 10%, rgba(232,88,10,0.06) 0%, transparent 40%),
       radial-gradient(ellipse at 80% 90%, rgba(249,115,22,0.04) 0%, transparent 40%),
       radial-gradient(ellipse at 60% 40%, rgba(255,255,255,0.5) 0%, transparent 60%),
       #FFF8F2;
+  }
+  [data-theme="dark"] body {
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(61,90,241,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(91,115,245,0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(14,18,64,0.4) 0%, transparent 70%),
+      #04061A;
   }
 }
 

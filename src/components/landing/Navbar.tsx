@@ -32,9 +32,10 @@ const Navbar = () => {
 
         {/* Desktop center links */}
         <div className="hidden md:flex items-center gap-6">
-          {["Features", "How it works", "For Institutions"].map(l => (
-            <a key={l} href={`#${l.toLowerCase().replace(/\s/g, "-")}`} className="text-[14px] font-medium text-[rgba(238,240,255,0.6)] hover:text-[#EEF0FF] transition-colors">{l}</a>
+          {[{ label: "Features", href: "#features" }, { label: "How it works", href: "#how-it-works" }].map(l => (
+            <a key={l.label} href={l.href} className="text-[14px] font-medium text-[rgba(238,240,255,0.6)] hover:text-[#EEF0FF] transition-colors">{l.label}</a>
           ))}
+          <Link to="/join-as-institution" className="text-[14px] font-medium text-[rgba(238,240,255,0.6)] hover:text-[#EEF0FF] transition-colors">For Institutions</Link>
         </div>
 
         {/* Desktop right */}
@@ -71,13 +72,16 @@ const Navbar = () => {
             </button>
 
             <div className="flex flex-col gap-1">
-              {["Features", "How it works", "For Institutions"].map(l => (
-                <a key={l} href={`#${l.toLowerCase().replace(/\s/g, "-")}`}
+              {[{ label: "Features", href: "#features" }, { label: "How it works", href: "#how-it-works" }].map(l => (
+                <a key={l.label} href={l.href}
                   onClick={() => setMenuOpen(false)}
                   className="text-[15px] font-medium py-3 px-3 rounded-xl transition-colors"
                   style={{ color: "rgba(238,240,255,0.7)" }}
-                >{l}</a>
+                >{l.label}</a>
               ))}
+              <Link to="/join-as-institution" onClick={() => setMenuOpen(false)}
+                className="text-[15px] font-medium py-3 px-3 rounded-xl transition-colors"
+                style={{ color: "rgba(238,240,255,0.7)" }}>For Institutions</Link>
             </div>
 
             <div className="h-px my-4" style={{ background: "rgba(238,240,255,0.08)" }} />
