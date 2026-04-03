@@ -25,6 +25,8 @@ import PageProfile from "./pages/PageProfile.tsx";
 import VerifyInvite from "./pages/VerifyInvite.tsx";
 import Privacy from "./pages/Privacy.tsx";
 import Terms from "./pages/Terms.tsx";
+import JoinAsInstitution from "./pages/JoinAsInstitution.tsx";
+import Academy from "./pages/Academy.tsx";
 import AppShell from "./components/layout/AppShell.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
