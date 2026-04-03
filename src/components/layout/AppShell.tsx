@@ -29,6 +29,7 @@ const navGroups = [
     label: "CONNECT",
     items: [
       { label: "My Strands", icon: Link2, path: "/app/strands" },
+      { label: "Academy", icon: GraduationCap, path: "/app/academy" },
       { label: "Pings", icon: MessageCircle, path: "/app/pings", badge: 2 },
       { label: "Alerts", icon: Bell, path: "/app/alerts", badge: 5 },
     ],
