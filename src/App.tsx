@@ -49,6 +49,7 @@ const App = () => (
           <Route path="/signup" element={<SignUp />} />
           <Route path="/welcome" element={<Welcome />} />
           <Route path="/verify-invite" element={<VerifyInvite />} />
+          <Route path="/join-as-institution" element={<JoinAsInstitution />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/create-page" element={<Shell><CreatePage /></Shell>} />
