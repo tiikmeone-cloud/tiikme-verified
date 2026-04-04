@@ -215,7 +215,7 @@ const Profile = () => {
       {/* ═══ PROFILE HERO CARD ═══ */}
       <div className="t-card overflow-hidden relative" style={{ borderRadius: "0px", borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
         <div className="h-[100px] md:h-[100px] relative" style={{
-          background: `linear-gradient(135deg, color-mix(in srgb, ${ROLE_COLOR} 40%, var(--surface)) 0%, color-mix(in srgb, ${ROLE_COLOR} 15%, var(--surface)) 50%, var(--surface) 100%)`,
+211:           background: `linear-gradient(135deg, color-mix(in srgb, ${roleColor} 40%, var(--surface)) 0%, color-mix(in srgb, ${roleColor} 15%, var(--surface)) 50%, var(--surface) 100%)`,
         }}>
           <div className="absolute right-8 top-4 w-10 h-10 rounded-full" style={{ background: ROLE_COLOR, opacity: 0.08, filter: "blur(12px)" }} />
           <div className="absolute right-20 top-8 w-8 h-8 rounded-full" style={{ background: ROLE_COLOR, opacity: 0.06, filter: "blur(10px)" }} />

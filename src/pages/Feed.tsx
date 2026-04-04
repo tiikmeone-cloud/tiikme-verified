@@ -192,7 +192,9 @@ const LivePostCard = ({ post }: { post: any }) => {
             </div>
           ))}
           <div className="flex items-center gap-2 mt-2">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0" style={{ background: "var(--brand)" }}>AK</div>
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden" style={{ background: "var(--brand)" }}>
+              {user?.user_metadata?.avatar_url ? <img src={user.user_metadata.avatar_url} alt="" className="w-full h-full object-cover" /> : (user?.user_metadata?.full_name || "U").split(" ").map((w:string)=>w[0]).join("").slice(0,2).toUpperCase()}
+            </div>
             <input value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="Write a comment..."
               className="flex-1 h-9 rounded-xl px-3 text-[13px] outline-none transition-all duration-150"
               style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }}
