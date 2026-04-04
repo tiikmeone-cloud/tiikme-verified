@@ -455,7 +455,7 @@ const Feed = () => {
   }, [hasMore, loadingMore, loadMore]);
 
   const openCompose = (type?: string) => { setPostModalType(type); setPostModalOpen(true); };
-  const quickActions = getQuickActions(currentUser.role);
+  const quickActions = getQuickActions(userRole);
 
   const hasLivePosts = livePosts.length > 0;
 
