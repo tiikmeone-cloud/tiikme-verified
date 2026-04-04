@@ -434,9 +434,6 @@ const Feed = () => {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const { profile, initials } = useAuth();
   const userRole = profile?.role || "student";
-  const [activeTopic, setActiveTopic] = useState<string | null>(null);
-  const { posts: livePosts, loading, loadingMore, hasMore, loadMore } = useFeedPosts();
-  const sentinelRef = useRef<HTMLDivElement>(null);
 
   // Infinite scroll observer
   useEffect(() => {
