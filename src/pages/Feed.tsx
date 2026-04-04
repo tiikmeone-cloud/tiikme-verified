@@ -131,12 +131,23 @@ const LivePostCard = ({ post }: { post: any }) => {
 
       <div className="flex items-center gap-1.5 px-4 py-2">
         {reactionConfig.map(r => {
-          const count = (reactions[r.key] || 0) + (reacted[r.key] ? 1 : 0);
+          const count = (reactionCounts[r.key] || 0);
           const active = reacted[r.key];
           return (
             <button
               key={r.key}
-              onClick={() => setReacted(p => ({ ...p, [r.key]: !p[r.key] }))}
+              onClick={async () => {
+                const isSame = reacted[r.key];
+                setReacted(p => ({ ...p, [r.key]: !isSame }));
+                setReactionCounts(p => ({ ...p, [r.key]: isSame ? Math.max(0, (p[r.key] || 0) - 1) : (p[r.key] || 0) + 1 }));
+                if (user) {
+                  if (isSame) {
+                    await supabase.from("post_reactions").delete().eq("post_id", post.id).eq("user_id", user.id);
+                  } else {
+                    await supabase.from("post_reactions").upsert({ post_id: post.id, user_id: user.id, reaction_type: r.key }, { onConflict: "post_id,user_id" } as any);
+                  }
+                }
+              }}
               className="h-7 px-2.5 rounded-full text-[12px] font-semibold flex items-center gap-1 transition-all duration-200 cursor-pointer active:scale-95"
               style={{
                 background: active ? "var(--brand-dim)" : "var(--surface-2)",
