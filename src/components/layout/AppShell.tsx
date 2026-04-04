@@ -8,6 +8,7 @@ import NewPostModal from "@/components/NewPostModal";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navGroups = [
   {
