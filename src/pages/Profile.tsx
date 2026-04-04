@@ -231,7 +231,7 @@ const Profile = () => {
             <div className="relative group cursor-pointer" onClick={() => setEditOpen(true)}>
               <div className="w-24 h-24 rounded-full flex items-center justify-center text-[30px] font-extrabold text-white shrink-0 overflow-hidden"
                 style={{
-                  backgroundColor: ROLE_COLOR,
+                  backgroundColor: roleColor,
                   border: "3px solid var(--surface)",
                   boxShadow: "0 0 0 2px var(--surface), 0 0 0 4.5px #F59E0B, 0 0 12px rgba(245,158,11,0.45), 0 0 24px rgba(245,158,11,0.15)",
                 }}>
@@ -247,7 +247,7 @@ const Profile = () => {
                 <div className="w-[18px] h-[18px] rounded-full flex items-center justify-center" style={{ background: "#F59E0B" }}>
                   <CheckCircle className="w-3 h-3 text-white" />
                 </div>
-                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full" style={{ background: `${ROLE_COLOR}1A`, color: ROLE_COLOR, border: `1px solid ${ROLE_COLOR}33` }}>{ROLE_LABEL}</span>
+                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full" style={{ background: `${roleColor}1A`, color: roleColor, border: `1px solid ${ROLE_COLOR}33` }}>{roleLabel}</span>
               </div>
               <p className="text-[12px] font-mono" style={{ color: "var(--text-3)" }}>@{username}</p>
             </div>
@@ -389,7 +389,7 @@ const Profile = () => {
                   </div>
                   <div>
                     <p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>{institution}</p>
-                    <p className="text-[12px]" style={{ color: "var(--text-3)" }}>{profileData?.role || ROLE_LABEL}</p>
+                    <p className="text-[12px]" style={{ color: "var(--text-3)" }}>{profileData?.role || roleLabel}</p>
                   </div>
                 </div>
               </div>
