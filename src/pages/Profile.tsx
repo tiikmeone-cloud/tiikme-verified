@@ -175,6 +175,7 @@ const Profile = () => {
   const [projectVisibility, setProjectVisibility] = useState<Record<string, string>>(
     Object.fromEntries(mockProjects.map(p => [p.title, p.visibility]))
   );
+  const { profile: authProfile, initials: authInitials, displayName: authDisplayName, refreshProfile } = useAuth();
   const [profileData, setProfileData] = useState<any>(null);
   const [workspaces, setWorkspaces] = useState<any[]>([]);
 
@@ -191,12 +192,17 @@ const Profile = () => {
 
   useEffect(() => { loadProfile(); }, []);
 
-  const displayName = profileData?.full_name || "Arjun Kumar";
-  const username = profileData?.username || "arjunkumar";
-  const headline = profileData?.headline || "Final year CSE student building at the intersection of health and technology.";
-  const institution = profileData?.institution_name || "DTU";
-  const city = profileData?.location_city || "Delhi";
-  const state = profileData?.location_state || "India";
+  const displayName = profileData?.full_name || authDisplayName || "Your Name";
+  const username = profileData?.username || authProfile?.username || "username";
+  const headline = profileData?.headline || "";
+  const institution = profileData?.institution_name || "";
+  const city = profileData?.location_city || "";
+  const state = profileData?.location_state || "";
+  const role = profileData?.role || authProfile?.role || "student";
+  const roleLabel = role.charAt(0).toUpperCase() + role.slice(1).replace(/_/g, " ");
+  const initials = displayName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase() || "U";
+  const ROLE_COLOR_MAP: Record<string, string> = { student: "#4F46E5", professional: "#0369A1", doctor: "#0E7490", government: "#166534", skilled_trade: "#C2410C", hr: "#6B21A8", faculty: "#92400E", builder: "#7C3AED", aspirant: "#374151" };
+  const roleColor = ROLE_COLOR_MAP[role] || "#4F46E5";
 
   const handleCopyLink = async () => {
     const url = window.location.origin + "/" + username;
