@@ -291,7 +291,9 @@ const AppShell = ({ children }: { children: ReactNode }) => {
               <Bell className="w-5 h-5" style={{ color: "var(--text-2)" }} />
               <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full" style={{ background: "var(--danger)" }} />
             </Link>
-            <Link to="/app/profile" className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ backgroundColor: "var(--brand)" }}>AK</Link>
+            <Link to="/app/profile" className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white overflow-hidden" style={{ backgroundColor: "var(--brand)" }}>
+              {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : initials}
+            </Link>
           </div>
         </header>
 
