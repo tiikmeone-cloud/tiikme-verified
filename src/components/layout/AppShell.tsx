@@ -259,7 +259,10 @@ const AppShell = ({ children }: { children: ReactNode }) => {
         </button>
 
         <Link to="/app/profile">
-          <div className="w-10 h-10 rounded-full flex items-center justify-center text-[13px] font-bold text-white" style={{ backgroundColor: "var(--brand)" }}>AK</div>
+          <div className="w-10 h-10 rounded-full flex items-center justify-center text-[13px] font-bold text-white overflow-hidden" style={{ backgroundColor: "var(--brand)" }}>
+            {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : initials}
+          </div>
+        </Link>
         </Link>
       </aside>
 
