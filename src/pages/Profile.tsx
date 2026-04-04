@@ -11,6 +11,7 @@ import VisibilityToggle from "@/components/profile/VisibilityToggle";
 import AchievementsTab from "@/components/profile/AchievementsTab";
 import CustomLinks from "@/components/profile/CustomLinks";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const tabs = ["Work & Projects", "Achievements", "Posts", "About"] as const;
 const ROLE_COLOR = "#4F46E5";
