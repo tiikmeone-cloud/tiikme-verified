@@ -215,11 +215,11 @@ const Profile = () => {
       {/* ═══ PROFILE HERO CARD ═══ */}
       <div className="t-card overflow-hidden relative" style={{ borderRadius: "0px", borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
         <div className="h-[100px] md:h-[100px] relative" style={{
-211:           background: `linear-gradient(135deg, color-mix(in srgb, ${roleColor} 40%, var(--surface)) 0%, color-mix(in srgb, ${roleColor} 15%, var(--surface)) 50%, var(--surface) 100%)`,
+          background: `linear-gradient(135deg, color-mix(in srgb, ${roleColor} 40%, var(--surface)) 0%, color-mix(in srgb, ${roleColor} 15%, var(--surface)) 50%, var(--surface) 100%)`,
         }}>
-          <div className="absolute right-8 top-4 w-10 h-10 rounded-full" style={{ background: ROLE_COLOR, opacity: 0.08, filter: "blur(12px)" }} />
-          <div className="absolute right-20 top-8 w-8 h-8 rounded-full" style={{ background: ROLE_COLOR, opacity: 0.06, filter: "blur(10px)" }} />
-          <div className="absolute right-32 top-3 w-6 h-6 rounded-full" style={{ background: ROLE_COLOR, opacity: 0.05, filter: "blur(8px)" }} />
+          <div className="absolute right-8 top-4 w-10 h-10 rounded-full" style={{ background: roleColor, opacity: 0.08, filter: "blur(12px)" }} />
+          <div className="absolute right-20 top-8 w-8 h-8 rounded-full" style={{ background: roleColor, opacity: 0.06, filter: "blur(10px)" }} />
+          <div className="absolute right-32 top-3 w-6 h-6 rounded-full" style={{ background: roleColor, opacity: 0.05, filter: "blur(8px)" }} />
           <div className="absolute top-3 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold"
             style={{ background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.3)", color: "#F59E0B" }}>
             <Shield className="w-3 h-3" /> Tiik Approved by DTU
