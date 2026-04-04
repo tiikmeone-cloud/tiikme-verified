@@ -466,10 +466,12 @@ const Feed = () => {
         <div className="flex-1 min-w-0 max-w-[660px]">
           {/* Compose box */}
           <div className="glass-liquid rounded-2xl md:rounded-3xl p-3 mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0" style={{ backgroundColor: "var(--brand)" }}>AK</div>
+           <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: "var(--brand)" }}>
+                {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : initials}
+              </div>
               <button onClick={() => openCompose()} className="flex-1 text-left text-[13px] h-10 glass-input px-4 cursor-pointer" style={{ color: "var(--text-3)" }}>
-                {getComposePlaceholder(currentUser.role)}
+                {getComposePlaceholder(userRole)}
               </button>
             </div>
             <div className="flex items-center gap-1.5 ml-12 pt-2 mt-2" style={{ borderTop: "1px solid var(--border)" }}>
