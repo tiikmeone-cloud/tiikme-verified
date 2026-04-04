@@ -11,8 +11,8 @@ import MentionText from "@/components/feed/MentionText";
 import ActivityScoreRing from "@/components/ActivityScoreRing";
 import SkeletonCard from "@/components/SkeletonCard";
 import { useFeedPosts } from "@/hooks/useFeedPosts";
-
-const currentUser = { name: "Arjun", role: "student" };
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const getComposePlaceholder = (role: string) => {
   switch (role) {
