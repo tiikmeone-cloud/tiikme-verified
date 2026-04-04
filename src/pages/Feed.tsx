@@ -67,8 +67,13 @@ const roleColorMap: Record<string, string> = {
 const LivePostCard = ({ post }: { post: any }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [reacted, setReacted] = useState<Record<string, boolean>>({});
+  const [reactionCounts, setReactionCounts] = useState<Record<string, number>>({});
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
+  const { user } = useAuth();
+
+  const reactions = post.reactions || { insightful: 0, useful: 0, inspiring: 0 };
+  useEffect(() => { setReactionCounts({ ...reactions }); }, []);
 
   const author = post.author;
   const name = author?.full_name || author?.username || "Unknown";
