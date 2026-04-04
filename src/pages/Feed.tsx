@@ -80,7 +80,6 @@ const LivePostCard = ({ post }: { post: any }) => {
   const initials = name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
   const role = author?.role || "user";
   const roleColor = roleColorMap[role] || "#6B7280";
-  const reactions = post.reactions || { insightful: 0, useful: 0, inspiring: 0 };
   const timeAgo = post.created_at
     ? getTimeAgo(new Date(post.created_at))
     : "";
