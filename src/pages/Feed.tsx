@@ -11,8 +11,8 @@ import MentionText from "@/components/feed/MentionText";
 import ActivityScoreRing from "@/components/ActivityScoreRing";
 import SkeletonCard from "@/components/SkeletonCard";
 import { useFeedPosts } from "@/hooks/useFeedPosts";
-
-const currentUser = { name: "Arjun", role: "student" };
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const getComposePlaceholder = (role: string) => {
   switch (role) {
@@ -67,15 +67,19 @@ const roleColorMap: Record<string, string> = {
 const LivePostCard = ({ post }: { post: any }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [reacted, setReacted] = useState<Record<string, boolean>>({});
+  const [reactionCounts, setReactionCounts] = useState<Record<string, number>>({});
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
+  const { user } = useAuth();
+
+  const reactions = post.reactions || { insightful: 0, useful: 0, inspiring: 0 };
+  useEffect(() => { setReactionCounts({ ...reactions }); }, []);
 
   const author = post.author;
   const name = author?.full_name || author?.username || "Unknown";
   const initials = name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
   const role = author?.role || "user";
   const roleColor = roleColorMap[role] || "#6B7280";
-  const reactions = post.reactions || { insightful: 0, useful: 0, inspiring: 0 };
   const timeAgo = post.created_at
     ? getTimeAgo(new Date(post.created_at))
     : "";
@@ -127,12 +131,23 @@ const LivePostCard = ({ post }: { post: any }) => {
 
       <div className="flex items-center gap-1.5 px-4 py-2">
         {reactionConfig.map(r => {
-          const count = (reactions[r.key] || 0) + (reacted[r.key] ? 1 : 0);
+          const count = (reactionCounts[r.key] || 0);
           const active = reacted[r.key];
           return (
             <button
               key={r.key}
-              onClick={() => setReacted(p => ({ ...p, [r.key]: !p[r.key] }))}
+              onClick={async () => {
+                const isSame = reacted[r.key];
+                setReacted(p => ({ ...p, [r.key]: !isSame }));
+                setReactionCounts(p => ({ ...p, [r.key]: isSame ? Math.max(0, (p[r.key] || 0) - 1) : (p[r.key] || 0) + 1 }));
+                if (user) {
+                  if (isSame) {
+                    await supabase.from("post_reactions").delete().eq("post_id", post.id).eq("user_id", user.id);
+                  } else {
+                    await supabase.from("post_reactions").upsert({ post_id: post.id, user_id: user.id, reaction_type: r.key }, { onConflict: "post_id,user_id" } as any);
+                  }
+                }
+              }}
               className="h-7 px-2.5 rounded-full text-[12px] font-semibold flex items-center gap-1 transition-all duration-200 cursor-pointer active:scale-95"
               style={{
                 background: active ? "var(--brand-dim)" : "var(--surface-2)",
@@ -177,7 +192,9 @@ const LivePostCard = ({ post }: { post: any }) => {
             </div>
           ))}
           <div className="flex items-center gap-2 mt-2">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0" style={{ background: "var(--brand)" }}>AK</div>
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden" style={{ background: "var(--brand)" }}>
+              {user?.user_metadata?.avatar_url ? <img src={user.user_metadata.avatar_url} alt="" className="w-full h-full object-cover" /> : (user?.user_metadata?.full_name || "U").split(" ").map((w:string)=>w[0]).join("").slice(0,2).toUpperCase()}
+            </div>
             <input value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="Write a comment..."
               className="flex-1 h-9 rounded-xl px-3 text-[13px] outline-none transition-all duration-150"
               style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }}
@@ -417,6 +434,8 @@ const Feed = () => {
   const [activeTopic, setActiveTopic] = useState<string | null>(null);
   const { posts: livePosts, loading, loadingMore, hasMore, loadMore } = useFeedPosts();
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const { profile, initials } = useAuth();
+  const userRole = profile?.role || "student";
 
   // Infinite scroll observer
   useEffect(() => {
@@ -435,7 +454,7 @@ const Feed = () => {
   }, [hasMore, loadingMore, loadMore]);
 
   const openCompose = (type?: string) => { setPostModalType(type); setPostModalOpen(true); };
-  const quickActions = getQuickActions(currentUser.role);
+  const quickActions = getQuickActions(userRole);
 
   const hasLivePosts = livePosts.length > 0;
 
@@ -446,10 +465,12 @@ const Feed = () => {
         <div className="flex-1 min-w-0 max-w-[660px]">
           {/* Compose box */}
           <div className="glass-liquid rounded-2xl md:rounded-3xl p-3 mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0" style={{ backgroundColor: "var(--brand)" }}>AK</div>
+           <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: "var(--brand)" }}>
+                {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : initials}
+              </div>
               <button onClick={() => openCompose()} className="flex-1 text-left text-[13px] h-10 glass-input px-4 cursor-pointer" style={{ color: "var(--text-3)" }}>
-                {getComposePlaceholder(currentUser.role)}
+                {getComposePlaceholder(userRole)}
               </button>
             </div>
             <div className="flex items-center gap-1.5 ml-12 pt-2 mt-2" style={{ borderTop: "1px solid var(--border)" }}>

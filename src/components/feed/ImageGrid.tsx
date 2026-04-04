@@ -1,30 +1,32 @@
-const ImageGrid = ({ images }: { images: string[] }) => {
-  if (!images.length) return null;
+const isValidImage = (url: string) => url && (url.startsWith("http") || url.startsWith("data:") || url.startsWith("blob:"));
 
-  if (images.length === 1) {
+const ImageGrid = ({ images }: { images: string[] }) => {
+  const validImages = images.filter(isValidImage);
+  if (!validImages.length) return null;
+
+  if (validImages.length === 1) {
     return (
       <div className="px-5 pb-2">
-        <img src={images[0]} alt="Post image" className="w-full max-h-96 object-cover rounded-xl border border-border/30" />
+        <img src={validImages[0]} alt="" className="w-full max-h-96 object-cover rounded-xl border border-border/30" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
       </div>
     );
   }
 
-  if (images.length === 2) {
+  if (validImages.length === 2) {
     return (
       <div className="px-5 pb-2 grid grid-cols-2 gap-1.5">
-        {images.map((img, i) => (
-          <img key={i} src={img} alt={`Post image ${i + 1}`} className="w-full h-56 object-cover rounded-xl border border-border/30" />
+        {validImages.map((img, i) => (
+          <img key={i} src={img} alt="" className="w-full h-56 object-cover rounded-xl border border-border/30" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
         ))}
       </div>
     );
   }
 
-  // 3 or 4 images: masonry style
   return (
     <div className="px-5 pb-2 grid grid-cols-2 gap-1.5">
-      <img src={images[0]} alt="Post image 1" className="w-full col-span-2 h-52 object-cover rounded-xl border border-border/30" />
-      {images.slice(1, 4).map((img, i) => (
-        <img key={i} src={img} alt={`Post image ${i + 2}`} className="w-full h-36 object-cover rounded-xl border border-border/30" />
+      <img src={validImages[0]} alt="" className="w-full col-span-2 h-52 object-cover rounded-xl border border-border/30" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+      {validImages.slice(1, 4).map((img, i) => (
+        <img key={i} src={img} alt="" className="w-full h-36 object-cover rounded-xl border border-border/30" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
       ))}
     </div>
   );

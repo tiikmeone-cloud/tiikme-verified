@@ -11,6 +11,7 @@ import VisibilityToggle from "@/components/profile/VisibilityToggle";
 import AchievementsTab from "@/components/profile/AchievementsTab";
 import CustomLinks from "@/components/profile/CustomLinks";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const tabs = ["Work & Projects", "Achievements", "Posts", "About"] as const;
 const ROLE_COLOR = "#4F46E5";
@@ -174,6 +175,7 @@ const Profile = () => {
   const [projectVisibility, setProjectVisibility] = useState<Record<string, string>>(
     Object.fromEntries(mockProjects.map(p => [p.title, p.visibility]))
   );
+  const { profile: authProfile, initials: authInitials, displayName: authDisplayName, refreshProfile } = useAuth();
   const [profileData, setProfileData] = useState<any>(null);
   const [workspaces, setWorkspaces] = useState<any[]>([]);
 
@@ -190,12 +192,17 @@ const Profile = () => {
 
   useEffect(() => { loadProfile(); }, []);
 
-  const displayName = profileData?.full_name || "Arjun Kumar";
-  const username = profileData?.username || "arjunkumar";
-  const headline = profileData?.headline || "Final year CSE student building at the intersection of health and technology.";
-  const institution = profileData?.institution_name || "DTU";
-  const city = profileData?.location_city || "Delhi";
-  const state = profileData?.location_state || "India";
+  const displayName = profileData?.full_name || authDisplayName || "Your Name";
+  const username = profileData?.username || authProfile?.username || "username";
+  const headline = profileData?.headline || "";
+  const institution = profileData?.institution_name || "";
+  const city = profileData?.location_city || "";
+  const state = profileData?.location_state || "";
+  const role = profileData?.role || authProfile?.role || "student";
+  const roleLabel = role.charAt(0).toUpperCase() + role.slice(1).replace(/_/g, " ");
+  const initials = displayName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase() || "U";
+  const ROLE_COLOR_MAP: Record<string, string> = { student: "#4F46E5", professional: "#0369A1", doctor: "#0E7490", government: "#166534", skilled_trade: "#C2410C", hr: "#6B21A8", faculty: "#92400E", builder: "#7C3AED", aspirant: "#374151" };
+  const roleColor = ROLE_COLOR_MAP[role] || "#4F46E5";
 
   const handleCopyLink = async () => {
     const url = window.location.origin + "/" + username;
@@ -208,11 +215,11 @@ const Profile = () => {
       {/* ═══ PROFILE HERO CARD ═══ */}
       <div className="t-card overflow-hidden relative" style={{ borderRadius: "0px", borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
         <div className="h-[100px] md:h-[100px] relative" style={{
-          background: `linear-gradient(135deg, color-mix(in srgb, ${ROLE_COLOR} 40%, var(--surface)) 0%, color-mix(in srgb, ${ROLE_COLOR} 15%, var(--surface)) 50%, var(--surface) 100%)`,
+          background: `linear-gradient(135deg, color-mix(in srgb, ${roleColor} 40%, var(--surface)) 0%, color-mix(in srgb, ${roleColor} 15%, var(--surface)) 50%, var(--surface) 100%)`,
         }}>
-          <div className="absolute right-8 top-4 w-10 h-10 rounded-full" style={{ background: ROLE_COLOR, opacity: 0.08, filter: "blur(12px)" }} />
-          <div className="absolute right-20 top-8 w-8 h-8 rounded-full" style={{ background: ROLE_COLOR, opacity: 0.06, filter: "blur(10px)" }} />
-          <div className="absolute right-32 top-3 w-6 h-6 rounded-full" style={{ background: ROLE_COLOR, opacity: 0.05, filter: "blur(8px)" }} />
+          <div className="absolute right-8 top-4 w-10 h-10 rounded-full" style={{ background: roleColor, opacity: 0.08, filter: "blur(12px)" }} />
+          <div className="absolute right-20 top-8 w-8 h-8 rounded-full" style={{ background: roleColor, opacity: 0.06, filter: "blur(10px)" }} />
+          <div className="absolute right-32 top-3 w-6 h-6 rounded-full" style={{ background: roleColor, opacity: 0.05, filter: "blur(8px)" }} />
           <div className="absolute top-3 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold"
             style={{ background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.3)", color: "#F59E0B" }}>
             <Shield className="w-3 h-3" /> Tiik Approved by DTU
@@ -224,7 +231,7 @@ const Profile = () => {
             <div className="relative group cursor-pointer" onClick={() => setEditOpen(true)}>
               <div className="w-24 h-24 rounded-full flex items-center justify-center text-[30px] font-extrabold text-white shrink-0 overflow-hidden"
                 style={{
-                  backgroundColor: ROLE_COLOR,
+                  backgroundColor: roleColor,
                   border: "3px solid var(--surface)",
                   boxShadow: "0 0 0 2px var(--surface), 0 0 0 4.5px #F59E0B, 0 0 12px rgba(245,158,11,0.45), 0 0 24px rgba(245,158,11,0.15)",
                 }}>
@@ -240,7 +247,7 @@ const Profile = () => {
                 <div className="w-[18px] h-[18px] rounded-full flex items-center justify-center" style={{ background: "#F59E0B" }}>
                   <CheckCircle className="w-3 h-3 text-white" />
                 </div>
-                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full" style={{ background: `${ROLE_COLOR}1A`, color: ROLE_COLOR, border: `1px solid ${ROLE_COLOR}33` }}>{ROLE_LABEL}</span>
+                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full" style={{ background: `${roleColor}1A`, color: roleColor, border: `1px solid ${ROLE_COLOR}33` }}>{roleLabel}</span>
               </div>
               <p className="text-[12px] font-mono" style={{ color: "var(--text-3)" }}>@{username}</p>
             </div>
@@ -382,7 +389,7 @@ const Profile = () => {
                   </div>
                   <div>
                     <p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>{institution}</p>
-                    <p className="text-[12px]" style={{ color: "var(--text-3)" }}>{profileData?.role || ROLE_LABEL}</p>
+                    <p className="text-[12px]" style={{ color: "var(--text-3)" }}>{profileData?.role || roleLabel}</p>
                   </div>
                 </div>
               </div>
