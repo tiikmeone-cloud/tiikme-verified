@@ -263,7 +263,6 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : initials}
           </div>
         </Link>
-        </Link>
       </aside>
 
       {/* ═══ MAIN CONTENT ═══ */}
