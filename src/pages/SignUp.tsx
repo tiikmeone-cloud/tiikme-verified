@@ -187,6 +187,10 @@ const SignUp = () => {
                   })}
                 </div>
                 <Button size="xl" onClick={() => selectedRole && setStep(1)} disabled={!selectedRole} className="w-full active:scale-95 transition-all duration-200">Continue <ArrowRight className="w-4 h-4 ml-1" /></Button>
+                <p className="text-center text-[13px] mt-4" style={{ color: "rgba(238,240,255,0.4)" }}>
+                  Registering for a company or institution?{" "}
+                  <Link to="/join-as-institution" className="font-semibold" style={{ color: "var(--brand, #3D5AF1)" }}>Create an Institution Page →</Link>
+                </p>
               </div>
               <p className="text-center text-[14px] mt-4" style={{ color: "rgba(238,240,255,0.4)" }}>
                 Already have an account? <Link to="/signin" className="font-semibold" style={{ color: "var(--brand)" }}>Sign in</Link>
