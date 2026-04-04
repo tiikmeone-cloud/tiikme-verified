@@ -55,6 +55,8 @@ const AppShell = ({ children }: { children: ReactNode }) => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const [postModalOpen, setPostModalOpen] = useState(false);
+  const { profile, initials, displayName } = useAuth();
+  const roleLabel = profile?.role ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1).replace(/_/g, " ") : "Member";
 
   const isActive = (path: string) => pathname === path || pathname.startsWith(path + "/");
 
