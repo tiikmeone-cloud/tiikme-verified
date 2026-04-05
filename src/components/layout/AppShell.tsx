@@ -268,9 +268,8 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             borderBottom: "1px solid var(--glass-border)",
           }}
         >
-          <span className="flex items-center gap-2">
-            <img src={tiikLogo} alt="Tiikme" className="w-[26px] h-[26px] rounded-lg" />
-            <span className="text-[17px] font-extrabold" style={{ color: "var(--text-1)" }}>Tiikme</span>
+          <span className="flex items-center">
+            <img src={tiikLogo} alt="Tiikme" className="h-5 w-auto" />
           </span>
           <span className="absolute left-1/2 -translate-x-1/2 text-[16px] font-bold" style={{ color: "var(--text-1)" }}>
             {getPageTitle()}
