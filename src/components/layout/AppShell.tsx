@@ -269,7 +269,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           }}
         >
           <span className="flex items-center">
-            <img src={tiikLogo} alt="Tiikme" className="h-5 w-auto" />
+            <img src={tiikLogo} alt="Tiikme" className="h-8 w-auto" />
           </span>
           <span className="absolute left-1/2 -translate-x-1/2 text-[16px] font-bold" style={{ color: "var(--text-1)" }}>
             {getPageTitle()}

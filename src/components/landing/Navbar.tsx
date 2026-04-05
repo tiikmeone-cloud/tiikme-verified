@@ -26,7 +26,7 @@ const Navbar = () => {
         }}
       >
         <Link to="/" className="flex items-center">
-          <img src={tiikLogo} alt="Tiikme" className="h-7 w-auto" />
+          <img src={tiikLogo} alt="Tiikme" className="h-10 w-auto" />
         </Link>
 
         {/* Desktop center links */}

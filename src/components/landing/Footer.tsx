@@ -5,7 +5,7 @@ const Footer = () => (
   <footer className="border-t px-6 py-12" style={{ borderColor: "rgba(238,240,255,0.06)" }}>
     <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
       <div className="flex items-center gap-3">
-        <img src={tiikLogo} alt="Tiikme" className="h-6 w-auto" />
+        <img src={tiikLogo} alt="Tiikme" className="h-8 w-auto" />
         <span className="text-[13px] font-['Silkscreen']" style={{ color: "rgba(238,240,255,0.4)" }}>Get Tiiked. ✓</span>
       </div>
       <div className="flex items-center gap-6 text-[13px]" style={{ color: "rgba(238,240,255,0.5)" }}>

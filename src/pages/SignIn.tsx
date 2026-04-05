@@ -63,7 +63,7 @@ const SignIn = () => {
 
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-[440px] relative z-10">
           <Link to="/" className="flex items-center gap-2 mb-8">
-            <img src={tiikLogo} alt="Tiikme" className="h-7 w-auto" />
+            <img src={tiikLogo} alt="Tiikme" className="h-10 w-auto" />
           </Link>
           <h1 className="text-[30px] font-extrabold mb-1 text-[#EEF0FF]" style={{ letterSpacing: "-0.02em" }}>Welcome back.</h1>
           <p className="text-[14px] mb-6" style={{ color: "rgba(238,240,255,0.5)" }}>
