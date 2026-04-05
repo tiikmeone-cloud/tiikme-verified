@@ -1,4 +1,4 @@
-import { Zap } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Link } from "react-router-dom";
 import tiikLogo from "@/assets/tiikme-logo.png";
 
