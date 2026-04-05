@@ -198,12 +198,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
       >
         <div className="mb-4">
           <Link to="/app/feed">
-            <div
-              className="w-8 h-8 rounded-xl flex items-center justify-center"
-              style={{ background: "linear-gradient(135deg, var(--brand), var(--brand-2))", boxShadow: "0 4px 12px var(--brand-glow)" }}
-            >
-              <Zap className="w-4 h-4 text-white" />
-            </div>
+            <img src={tiikLogo} alt="Tiikme" className="w-8 h-8 rounded-xl" />
           </Link>
         </div>
 
