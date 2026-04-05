@@ -43,10 +43,9 @@ const HeroSection = () => {
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }}
           className="flex flex-col sm:flex-row items-center justify-center gap-3.5 mb-10">
           <Link to="/signup">
-            <Button size="xl" className="gap-2">
-              <img src={tiikLogo} alt="" className="w-5 h-5" />
+            <Button size="xl" className="gap-2 font-['Silkscreen']">
               Get Tiiked — it's free
-              <ArrowRight className="w-4 h-4" />
+              <span className="text-white/80 text-lg">✓</span>
             </Button>
           </Link>
           <a href="#features">
