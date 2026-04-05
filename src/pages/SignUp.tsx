@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import RoleFields from "@/components/signup/RoleFields";
 import RoleStep3 from "@/components/signup/RoleStep3";
+import tiikLogo from "@/assets/tiikme-logo.png";
 
 const roles = [
   { id: "student", label: "Student", desc: "College, university, or school", icon: GraduationCap, color: "#4F46E5" },
