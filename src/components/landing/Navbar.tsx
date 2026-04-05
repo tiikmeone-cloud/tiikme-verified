@@ -25,9 +25,8 @@ const Navbar = () => {
           transition: "all 0.3s ease",
         }}
       >
-        <Link to="/" className="flex items-center gap-2">
-          <img src={tiikLogo} alt="Tiikme" className="w-8 h-8 rounded-xl" />
-          <span className="text-[19px] font-extrabold text-[#EEF0FF]">Tiikme</span>
+        <Link to="/" className="flex items-center">
+          <img src={tiikLogo} alt="Tiikme" className="h-10 w-auto" />
         </Link>
 
         {/* Desktop center links */}
@@ -41,13 +40,13 @@ const Navbar = () => {
         {/* Desktop right */}
         <div className="hidden md:flex items-center gap-3">
           <Link to="/signin"><Button variant="ghost" className="text-[rgba(238,240,255,0.6)] hover:text-[#EEF0FF]">Sign in</Button></Link>
-          <Link to="/signup"><Button className="gap-1.5"><img src={tiikLogo} alt="" className="w-4 h-4" />Get Tiiked</Button></Link>
+          <Link to="/signup"><Button className="gap-1.5 font-['Silkscreen']"><span>Get Tiiked</span> <span className="text-white/80">✓</span></Button></Link>
         </div>
 
         {/* Mobile right */}
         <div className="flex md:hidden items-center gap-2">
           <Link to="/signin" className="text-[13px] font-semibold" style={{ color: "rgba(238,240,255,0.6)" }}>Sign in</Link>
-          <Link to="/signup"><Button size="sm" className="gap-1"><img src={tiikLogo} alt="" className="w-3.5 h-3.5" />Get Tiiked</Button></Link>
+          <Link to="/signup"><Button size="sm" className="gap-1 font-['Silkscreen']">Get Tiiked ✓</Button></Link>
           <button onClick={() => setMenuOpen(true)} className="p-1.5 ml-1 cursor-pointer" style={{ color: "rgba(238,240,255,0.7)" }}>
             <Menu className="w-6 h-6" />
           </button>
@@ -91,7 +90,7 @@ const Navbar = () => {
                 <Button variant="ghost" className="w-full text-[rgba(238,240,255,0.6)] hover:text-[#EEF0FF]">Sign in</Button>
               </Link>
               <Link to="/signup" onClick={() => setMenuOpen(false)}>
-                <Button className="w-full gap-1.5"><img src={tiikLogo} alt="" className="w-4 h-4" />Get Tiiked</Button>
+                <Button className="w-full gap-1.5 font-['Silkscreen']">Get Tiiked ✓</Button>
               </Link>
             </div>
           </div>

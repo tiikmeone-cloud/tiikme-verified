@@ -94,10 +94,9 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           boxShadow: "2px 0 24px rgba(4,6,26,0.2)",
         }}
       >
-        <div className="h-16 flex items-center px-5 gap-2.5">
-          <Link to="/app/feed" className="flex items-center gap-2">
-            <img src={tiikLogo} alt="Tiikme" className="w-8 h-8 rounded-xl" />
-            <span className="text-[19px] font-extrabold" style={{ color: "var(--text-1)" }}>Tiikme</span>
+        <div className="h-16 flex items-center px-5">
+          <Link to="/app/feed">
+            <img src={tiikLogo} alt="Tiikme" className="h-10 w-auto" />
           </Link>
         </div>
 
@@ -198,7 +197,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
       >
         <div className="mb-4">
           <Link to="/app/feed">
-            <img src={tiikLogo} alt="Tiikme" className="w-8 h-8 rounded-xl" />
+            <img src={tiikLogo} alt="Tiikme" className="h-9 w-auto" />
           </Link>
         </div>
 
@@ -269,9 +268,8 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             borderBottom: "1px solid var(--glass-border)",
           }}
         >
-          <span className="flex items-center gap-2">
-            <img src={tiikLogo} alt="Tiikme" className="w-[26px] h-[26px] rounded-lg" />
-            <span className="text-[17px] font-extrabold" style={{ color: "var(--text-1)" }}>Tiikme</span>
+          <span className="flex items-center">
+            <img src={tiikLogo} alt="Tiikme" className="h-8 w-auto" />
           </span>
           <span className="absolute left-1/2 -translate-x-1/2 text-[16px] font-bold" style={{ color: "var(--text-1)" }}>
             {getPageTitle()}
