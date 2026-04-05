@@ -95,13 +95,10 @@ const AppShell = ({ children }: { children: ReactNode }) => {
         }}
       >
         <div className="h-16 flex items-center px-5 gap-2.5">
-          <div
-            className="w-8 h-8 rounded-xl flex items-center justify-center"
-            style={{ background: "linear-gradient(135deg, var(--brand), var(--brand-2))", boxShadow: "0 4px 12px var(--brand-glow)" }}
-          >
-            <Zap className="w-4 h-4 text-white" />
-          </div>
-          <Link to="/app/feed" className="text-[19px] font-extrabold" style={{ color: "var(--text-1)" }}>Tiikme</Link>
+          <Link to="/app/feed" className="flex items-center gap-2">
+            <img src={tiikLogo} alt="Tiikme" className="w-8 h-8 rounded-xl" />
+            <span className="text-[19px] font-extrabold" style={{ color: "var(--text-1)" }}>Tiikme</span>
+          </Link>
         </div>
 
         <nav className="flex-1 overflow-y-auto px-2.5 py-3">
