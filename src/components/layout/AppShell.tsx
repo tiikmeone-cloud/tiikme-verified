@@ -275,9 +275,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           }}
         >
           <span className="flex items-center gap-2">
-            <div className="w-[26px] h-[26px] rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, var(--brand), var(--brand-2))" }}>
-              <Zap className="w-3.5 h-3.5 text-white" />
-            </div>
+            <img src={tiikLogo} alt="Tiikme" className="w-[26px] h-[26px] rounded-lg" />
             <span className="text-[17px] font-extrabold" style={{ color: "var(--text-1)" }}>Tiikme</span>
           </span>
           <span className="absolute left-1/2 -translate-x-1/2 text-[16px] font-bold" style={{ color: "var(--text-1)" }}>
