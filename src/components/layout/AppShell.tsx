@@ -2,8 +2,9 @@ import { ReactNode, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutGrid, Compass, Users, Target, User,
-  Link2, MessageCircle, Bell, SlidersHorizontal, PencilLine, Zap, Plus, LogOut, GraduationCap,
+  Link2, MessageCircle, Bell, SlidersHorizontal, PencilLine, Plus, LogOut, GraduationCap,
 } from "lucide-react";
+import tiikLogo from "@/assets/tiikme-logo.png";
 import NewPostModal from "@/components/NewPostModal";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -94,13 +95,10 @@ const AppShell = ({ children }: { children: ReactNode }) => {
         }}
       >
         <div className="h-16 flex items-center px-5 gap-2.5">
-          <div
-            className="w-8 h-8 rounded-xl flex items-center justify-center"
-            style={{ background: "linear-gradient(135deg, var(--brand), var(--brand-2))", boxShadow: "0 4px 12px var(--brand-glow)" }}
-          >
-            <Zap className="w-4 h-4 text-white" />
-          </div>
-          <Link to="/app/feed" className="text-[19px] font-extrabold" style={{ color: "var(--text-1)" }}>Tiikme</Link>
+          <Link to="/app/feed" className="flex items-center gap-2">
+            <img src={tiikLogo} alt="Tiikme" className="w-8 h-8 rounded-xl" />
+            <span className="text-[19px] font-extrabold" style={{ color: "var(--text-1)" }}>Tiikme</span>
+          </Link>
         </div>
 
         <nav className="flex-1 overflow-y-auto px-2.5 py-3">
@@ -200,12 +198,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
       >
         <div className="mb-4">
           <Link to="/app/feed">
-            <div
-              className="w-8 h-8 rounded-xl flex items-center justify-center"
-              style={{ background: "linear-gradient(135deg, var(--brand), var(--brand-2))", boxShadow: "0 4px 12px var(--brand-glow)" }}
-            >
-              <Zap className="w-4 h-4 text-white" />
-            </div>
+            <img src={tiikLogo} alt="Tiikme" className="w-8 h-8 rounded-xl" />
           </Link>
         </div>
 
@@ -277,9 +270,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           }}
         >
           <span className="flex items-center gap-2">
-            <div className="w-[26px] h-[26px] rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, var(--brand), var(--brand-2))" }}>
-              <Zap className="w-3.5 h-3.5 text-white" />
-            </div>
+            <img src={tiikLogo} alt="Tiikme" className="w-[26px] h-[26px] rounded-lg" />
             <span className="text-[17px] font-extrabold" style={{ color: "var(--text-1)" }}>Tiikme</span>
           </span>
           <span className="absolute left-1/2 -translate-x-1/2 text-[16px] font-bold" style={{ color: "var(--text-1)" }}>
