@@ -197,7 +197,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
       >
         <div className="mb-4">
           <Link to="/app/feed">
-            <img src={tiikLogo} alt="Tiikme" className="w-8 h-8 rounded-xl" />
+            <img src={tiikLogo} alt="Tiikme" className="h-6 w-auto" />
           </Link>
         </div>
 
