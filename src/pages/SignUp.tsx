@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import RoleFields from "@/components/signup/RoleFields";
 import RoleStep3 from "@/components/signup/RoleStep3";
+import tiikLogo from "@/assets/tiikme-logo.png";
 
 const roles = [
   { id: "student", label: "Student", desc: "College, university, or school", icon: GraduationCap, color: "#4F46E5" },
@@ -146,7 +147,10 @@ const SignUp = () => {
       </div>
 
       <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-[520px] relative z-10">
-        <Link to="/" className="text-[20px] font-extrabold mb-7 block text-center text-[#EEF0FF]">Tiikme</Link>
+        <Link to="/" className="flex items-center justify-center gap-2 mb-7">
+          <img src={tiikLogo} alt="Tiikme" className="w-8 h-8 rounded-xl" />
+          <span className="text-[20px] font-extrabold text-[#EEF0FF]">Tiikme</span>
+        </Link>
 
         <div className="flex gap-1.5 mb-8 max-w-xs mx-auto">
           {[0, 1, 2].map(s => (

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Zap, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import tiikLogo from "@/assets/tiikme-logo.png";
