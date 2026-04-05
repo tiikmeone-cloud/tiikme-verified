@@ -2,8 +2,9 @@ import { ReactNode, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutGrid, Compass, Users, Target, User,
-  Link2, MessageCircle, Bell, SlidersHorizontal, PencilLine, Zap, Plus, LogOut, GraduationCap,
+  Link2, MessageCircle, Bell, SlidersHorizontal, PencilLine, Plus, LogOut, GraduationCap,
 } from "lucide-react";
+import tiikLogo from "@/assets/tiikme-logo.png";
 import NewPostModal from "@/components/NewPostModal";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
