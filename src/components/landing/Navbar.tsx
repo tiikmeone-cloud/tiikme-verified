@@ -25,9 +25,8 @@ const Navbar = () => {
           transition: "all 0.3s ease",
         }}
       >
-        <Link to="/" className="flex items-center gap-2">
-          <img src={tiikLogo} alt="Tiikme" className="w-8 h-8 rounded-xl" />
-          <span className="text-[19px] font-extrabold text-[#EEF0FF]">Tiikme</span>
+        <Link to="/" className="flex items-center">
+          <img src={tiikLogo} alt="Tiikme" className="h-7 w-auto" />
         </Link>
 
         {/* Desktop center links */}
