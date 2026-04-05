@@ -94,10 +94,9 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           boxShadow: "2px 0 24px rgba(4,6,26,0.2)",
         }}
       >
-        <div className="h-16 flex items-center px-5 gap-2.5">
-          <Link to="/app/feed" className="flex items-center gap-2">
-            <img src={tiikLogo} alt="Tiikme" className="w-8 h-8 rounded-xl" />
-            <span className="text-[19px] font-extrabold" style={{ color: "var(--text-1)" }}>Tiikme</span>
+        <div className="h-16 flex items-center px-5">
+          <Link to="/app/feed">
+            <img src={tiikLogo} alt="Tiikme" className="h-7 w-auto" />
           </Link>
         </div>
 
