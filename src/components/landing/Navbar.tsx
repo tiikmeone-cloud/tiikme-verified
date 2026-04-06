@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
-import tiikLogo from "@/assets/tiikme-logo.png";
+import logoDark from "@/assets/tiikme-logo-dark.png";
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -26,7 +26,7 @@ const Navbar = () => {
         }}
       >
         <Link to="/" className="flex items-center">
-          <img src={tiikLogo} alt="Tiikme" className="h-10 w-auto" />
+          <img src={logoDark} alt="Tiikme" className="h-10 w-auto" />
         </Link>
 
         {/* Desktop center links */}

@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import RoleFields from "@/components/signup/RoleFields";
 import RoleStep3 from "@/components/signup/RoleStep3";
-import tiikLogo from "@/assets/tiikme-logo.png";
+import ThemeLogo from "@/components/ThemeLogo";
 
 const roles = [
   { id: "student", label: "Student", desc: "College, university, or school", icon: GraduationCap, color: "#4F46E5" },
@@ -148,7 +148,7 @@ const SignUp = () => {
 
       <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-[520px] relative z-10">
         <Link to="/" className="flex items-center justify-center mb-7">
-          <img src={tiikLogo} alt="Tiikme" className="h-10 w-auto" />
+          <ThemeLogo className="h-10 w-auto" />
         </Link>
 
         <div className="flex gap-1.5 mb-8 max-w-xs mx-auto">

@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, Shield, Users, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import tiikLogo from "@/assets/tiikme-logo.png";
+import logoDark from "@/assets/tiikme-logo-dark.png";
 
 const HeroSection = () => {
   return (

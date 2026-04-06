@@ -4,7 +4,7 @@ import {
   LayoutGrid, Compass, Users, Target, User,
   Link2, MessageCircle, Bell, SlidersHorizontal, PencilLine, Plus, LogOut, GraduationCap,
 } from "lucide-react";
-import tiikLogo from "@/assets/tiikme-logo.png";
+import ThemeLogo from "@/components/ThemeLogo";
 import NewPostModal from "@/components/NewPostModal";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -96,7 +96,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
       >
         <div className="h-16 flex items-center px-5">
           <Link to="/app/feed">
-            <img src={tiikLogo} alt="Tiikme" className="h-10 w-auto" />
+            <ThemeLogo className="h-10 w-auto" />
           </Link>
         </div>
 
@@ -197,7 +197,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
       >
         <div className="mb-4">
           <Link to="/app/feed">
-            <img src={tiikLogo} alt="Tiikme" className="h-9 w-auto" />
+            <ThemeLogo className="h-9 w-auto" />
           </Link>
         </div>
 
@@ -269,7 +269,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           }}
         >
           <span className="flex items-center">
-            <img src={tiikLogo} alt="Tiikme" className="h-8 w-auto" />
+            <ThemeLogo className="h-8 w-auto" />
           </span>
           <span className="absolute left-1/2 -translate-x-1/2 text-[16px] font-bold" style={{ color: "var(--text-1)" }}>
             {getPageTitle()}
