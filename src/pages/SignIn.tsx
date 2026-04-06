@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
-import tiikLogo from "@/assets/tiikme-logo.png";
+import ThemeLogo from "@/components/ThemeLogo";
 
 const SignIn = () => {
   const navigate = useNavigate();

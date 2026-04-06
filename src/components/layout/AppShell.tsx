@@ -4,7 +4,7 @@ import {
   LayoutGrid, Compass, Users, Target, User,
   Link2, MessageCircle, Bell, SlidersHorizontal, PencilLine, Plus, LogOut, GraduationCap,
 } from "lucide-react";
-import tiikLogo from "@/assets/tiikme-logo.png";
+import ThemeLogo from "@/components/ThemeLogo";
 import NewPostModal from "@/components/NewPostModal";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
