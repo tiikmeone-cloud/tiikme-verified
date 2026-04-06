@@ -243,7 +243,7 @@ const Profile = () => {
             </div>
             <div className="flex-1 min-w-0 pb-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-[24px] font-extrabold" style={{ color: "var(--text-1)" }}>{displayName}</h1>
+                <h1 className="text-[24px] font-extrabold font-['Silkscreen']" style={{ color: "var(--text-1)" }}>{displayName}</h1>
                 <div className="w-[18px] h-[18px] rounded-full flex items-center justify-center" style={{ background: "#F59E0B" }}>
                   <CheckCircle className="w-3 h-3 text-white" />
                 </div>
