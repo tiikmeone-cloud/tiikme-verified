@@ -11,16 +11,16 @@ const features = [
 
 const FeaturesSection = () => (
   <section id="features" className="px-4 py-24 max-w-6xl mx-auto">
-    <h2 className="text-center font-extrabold text-[32px] text-[#EEF0FF] mb-4 tracking-tight">Everything you need</h2>
-    <p className="text-center text-[16px] mb-14" style={{ color: "rgba(238,240,255,0.5)" }}>A professional identity platform built for India.</p>
+    <h2 className="text-center font-extrabold text-[32px] mb-4 tracking-tight" style={{ color: "var(--text-1)" }}>Everything you need</h2>
+    <p className="text-center text-[16px] mb-14" style={{ color: "var(--text-2)" }}>A professional identity platform built for India.</p>
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
       {features.map(f => (
-        <div key={f.title} className="t-card t-card-hover p-6 group" style={{ background: "rgba(8,11,42,0.6)" }}>
+        <div key={f.title} className="t-card t-card-hover p-6 group">
           <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ background: `${f.color}20` }}>
             <f.icon className="w-5 h-5" style={{ color: f.color }} />
           </div>
-          <h3 className="text-[16px] font-bold text-[#EEF0FF] mb-1.5">{f.title}</h3>
-          <p className="text-[13px] leading-relaxed" style={{ color: "rgba(238,240,255,0.55)" }}>{f.desc}</p>
+          <h3 className="text-[16px] font-bold mb-1.5" style={{ color: "var(--text-1)" }}>{f.title}</h3>
+          <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-2)" }}>{f.desc}</p>
         </div>
       ))}
     </div>
