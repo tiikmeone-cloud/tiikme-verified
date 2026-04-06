@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
-import tiikLogo from "@/assets/tiikme-logo.png";
+import logoDark from "@/assets/tiikme-logo-dark.png";
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
