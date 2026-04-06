@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import tiikLogo from "@/assets/tiikme-logo.png";
+import logoDark from "@/assets/tiikme-logo-dark.png";
 
 const Footer = () => (
   <footer className="border-t px-6 py-12" style={{ borderColor: "rgba(238,240,255,0.06)" }}>
