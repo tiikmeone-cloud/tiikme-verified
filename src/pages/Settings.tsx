@@ -6,6 +6,7 @@ import { tiikToast } from "@/components/ui/tiik-toast";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
   { id: "profile", label: "Profile", icon: User },
@@ -46,6 +47,7 @@ const Toggle = ({ label, desc, defaultOn = true }: { label: string; desc?: strin
 
 const SettingsPage = () => {
   const navigate = useNavigate();
+  const { user, refreshProfile } = useAuth();
   const [activeTab, setActiveTab] = useState("profile");
   const [journeyChoice, setJourneyChoice] = useState<string | null>(null);
   const [theme, setTheme] = useState(() => localStorage.getItem("tiikme-theme") || "light");
@@ -57,15 +59,22 @@ const SettingsPage = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
+  // Account tab state
+  const [newEmail, setNewEmail] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [emailUpdating, setEmailUpdating] = useState(false);
+  const [passwordUpdating, setPasswordUpdating] = useState(false);
+
   useEffect(() => { applyTheme(theme); }, []);
 
-  // Load profile from Supabase
   useEffect(() => {
     const loadProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      setUserId(user.id);
-      const { data } = await supabase.from("profiles").select("*").eq("id", user.id).single();
+      const { data: { user: u } } = await supabase.auth.getUser();
+      if (!u) return;
+      setUserId(u.id);
+      const { data } = await supabase.from("profiles").select("*").eq("id", u.id).maybeSingle();
       if (data) {
         setProfile({
           name: data.full_name || "",
@@ -103,6 +112,7 @@ const SettingsPage = () => {
     }).eq("id", userId);
     setSaving(false);
     if (error) { tiikToast.error("Failed to save"); return; }
+    await refreshProfile();
     tiikToast.success("Settings saved ✓");
   };
 
@@ -112,15 +122,60 @@ const SettingsPage = () => {
     if (file.size > 2 * 1024 * 1024) { tiikToast.error("Max 2MB"); return; }
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) { tiikToast.error("JPEG, PNG, or WebP only"); return; }
 
-    const path = `${userId}/avatar.${file.name.split(".").pop()}`;
-    const { error: uploadErr } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+    // Resize to 400x400 and convert to WebP
+    const canvas = document.createElement("canvas");
+    canvas.width = 400; canvas.height = 400;
+    const ctx = canvas.getContext("2d")!;
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    await new Promise(r => img.onload = r);
+    const size = Math.min(img.width, img.height);
+    ctx.drawImage(img, (img.width - size) / 2, (img.height - size) / 2, size, size, 0, 0, 400, 400);
+    const blob = await new Promise<Blob | null>(r => canvas.toBlob(r, "image/webp", 0.85));
+    if (!blob) { tiikToast.error("Processing failed"); return; }
+
+    const path = `${userId}/avatar.webp`;
+    const { error: uploadErr } = await supabase.storage.from("avatars").upload(path, blob, { upsert: true, contentType: "image/webp" });
     if (uploadErr) { tiikToast.error("Upload failed"); return; }
 
     const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
     const avatarUrl = urlData.publicUrl + "?t=" + Date.now();
     await supabase.from("profiles").update({ avatar_url: avatarUrl }).eq("id", userId);
     setProfile(p => ({ ...p, avatar_url: avatarUrl }));
+    await refreshProfile();
     tiikToast.success("Avatar updated ✓");
+  };
+
+  const handleUpdateEmail = async () => {
+    if (!newEmail.trim()) { tiikToast.error("Enter a new email"); return; }
+    setEmailUpdating(true);
+    const { error } = await supabase.auth.updateUser({ email: newEmail });
+    setEmailUpdating(false);
+    if (error) { tiikToast.error(error.message); return; }
+    tiikToast.success(`Verification email sent to ${newEmail}. Check your inbox.`);
+    setNewEmail("");
+  };
+
+  const handleUpdatePassword = async () => {
+    if (!currentPassword || !newPassword) { tiikToast.error("Fill in all fields"); return; }
+    if (newPassword.length < 8) { tiikToast.error("Password must be at least 8 characters"); return; }
+    if (newPassword !== confirmPassword) { tiikToast.error("Passwords don't match"); return; }
+    setPasswordUpdating(true);
+    // Verify current password
+    const { error: signInErr } = await supabase.auth.signInWithPassword({
+      email: user?.email || "",
+      password: currentPassword,
+    });
+    if (signInErr) {
+      setPasswordUpdating(false);
+      tiikToast.error("Current password is incorrect");
+      return;
+    }
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setPasswordUpdating(false);
+    if (error) { tiikToast.error(error.message); return; }
+    tiikToast.success("Password updated ✓");
+    setCurrentPassword(""); setNewPassword(""); setConfirmPassword("");
   };
 
   const handleSignOut = async () => {
@@ -199,7 +254,7 @@ const SettingsPage = () => {
                 <div className="flex items-center gap-5 mb-5">
                   <div className="relative group cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
                     <div className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold text-white overflow-hidden" style={{ backgroundColor: "var(--brand)" }}>
-                      {profile.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : (profile.name?.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "AK")}
+                      {profile.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : (profile.name?.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "U")}
                     </div>
                     <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center" style={{ transition: "opacity 0.2s" }}>
                       <Camera className="w-5 h-5 text-white" />
@@ -219,6 +274,7 @@ const SettingsPage = () => {
                   <div>
                     <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "var(--text-3)", letterSpacing: "0.08em" }}>Headline</label>
                     <Input value={profile.headline} onChange={e => setProfile({ ...profile, headline: e.target.value.slice(0, 80) })} maxLength={80} />
+                    <p className="text-[10px] text-right mt-1" style={{ color: "var(--text-3)" }}>{profile.headline.length}/80</p>
                   </div>
                   <div>
                     <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "var(--text-3)", letterSpacing: "0.08em" }}>Bio</label>
@@ -236,27 +292,10 @@ const SettingsPage = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-[13px]" style={{ color: "var(--text-3)" }}>tiikme.in/</span>
-                    <Input value={profile.slug} onChange={e => setProfile({ ...profile, slug: e.target.value })} className="flex-1" />
+                    <Input value={profile.slug} onChange={e => setProfile({ ...profile, slug: e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, "") })} className="flex-1" />
                   </div>
                   <div className="flex justify-end">
                     <Button onClick={handleSaveProfile} disabled={saving}>{saving ? "Saving..." : "Save changes"}</Button>
-                  </div>
-                </div>
-              </div>
-              <div className="t-card p-5">
-                <h3 className="text-[16px] font-bold mb-4" style={{ color: "var(--text-1)" }}>Security</h3>
-                <div className="space-y-0">
-                  <div className="flex items-center justify-between py-3" style={{ borderBottom: "1px solid var(--border)" }}>
-                    <div className="flex items-center gap-3"><Mail className="w-4 h-4" style={{ color: "var(--text-3)" }} /><div><p className="text-[14px]" style={{ color: "var(--text-1)" }}>Email</p><p className="text-[12px]" style={{ color: "var(--text-3)" }}>Primary email</p></div></div>
-                    <Button variant="ghost" size="sm" onClick={() => tiikToast("Update flow coming soon")}>Update</Button>
-                  </div>
-                  <div className="flex items-center justify-between py-3" style={{ borderBottom: "1px solid var(--border)" }}>
-                    <div className="flex items-center gap-3"><Key className="w-4 h-4" style={{ color: "var(--text-3)" }} /><div><p className="text-[14px]" style={{ color: "var(--text-1)" }}>Password</p><p className="text-[12px]" style={{ color: "var(--text-3)" }}>Change your password</p></div></div>
-                    <Button variant="ghost" size="sm" onClick={() => tiikToast("Password update coming soon")}>Update</Button>
-                  </div>
-                  <div className="flex items-center justify-between py-3">
-                    <div className="flex items-center gap-3"><Download className="w-4 h-4" style={{ color: "var(--text-3)" }} /><div><p className="text-[14px]" style={{ color: "var(--text-1)" }}>Download my data</p><p className="text-[12px]" style={{ color: "var(--text-3)" }}>Export all your data</p></div></div>
-                    <Button variant="ghost" size="sm" onClick={() => tiikToast("Preparing export...")}>Export</Button>
                   </div>
                 </div>
               </div>
@@ -366,8 +405,48 @@ const SettingsPage = () => {
 
           {activeTab === "account" && (
             <div className="space-y-5">
+              {/* Change Email */}
               <div className="t-card p-5">
-                <h3 className="text-[16px] font-bold mb-4" style={{ color: "var(--text-1)" }}>Account</h3>
+                <h3 className="text-[16px] font-bold mb-4" style={{ color: "var(--text-1)" }}>Change Email</h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "var(--text-3)" }}>Current Email</label>
+                    <Input value={user?.email || ""} disabled className="opacity-60" />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "var(--text-3)" }}>New Email</label>
+                    <Input type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="new@email.com" />
+                  </div>
+                  <Button onClick={handleUpdateEmail} disabled={emailUpdating} className="gap-2">
+                    <Mail className="w-4 h-4" /> {emailUpdating ? "Sending..." : "Update email"}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Change Password */}
+              <div className="t-card p-5">
+                <h3 className="text-[16px] font-bold mb-4" style={{ color: "var(--text-1)" }}>Change Password</h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "var(--text-3)" }}>Current Password</label>
+                    <Input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "var(--text-3)" }}>New Password (min 8 chars)</label>
+                    <Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "var(--text-3)" }}>Confirm New Password</label>
+                    <Input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
+                  </div>
+                  <Button onClick={handleUpdatePassword} disabled={passwordUpdating} className="gap-2">
+                    <Key className="w-4 h-4" /> {passwordUpdating ? "Updating..." : "Update password"}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Sign out & Delete */}
+              <div className="t-card p-5">
                 <Button variant="secondary" onClick={handleSignOut} className="gap-2">
                   <LogOut className="w-4 h-4" /> Sign out of all devices
                 </Button>
