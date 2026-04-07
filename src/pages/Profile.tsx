@@ -318,10 +318,12 @@ const Profile = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 mt-2 ml-0">
-            <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--open-green)", animation: "statusPulse 2s infinite" }} />
-            <span className="text-[12px] font-medium" style={{ color: "var(--open-green)" }}>Open to work</span>
-          </div>
+          {profileData?.open_to_work && (
+            <div className="flex items-center gap-1.5 mt-2 ml-0">
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--open-green)", animation: "statusPulse 2s infinite" }} />
+              <span className="text-[12px] font-medium" style={{ color: "var(--open-green)" }}>Open to work</span>
+            </div>
+          )}
 
           <p className="text-[14px] mt-2 line-clamp-1" style={{ color: "var(--text-2)", lineHeight: 1.75 }}>{headline}</p>
 
