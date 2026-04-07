@@ -23,10 +23,6 @@ const mockProjects = [
   { title: "EduBridge App", company: "Self / Open Source", location: "Remote", description: "Vernacular learning platform for government school students in rural districts", domain: "EdTech", status: "completed" as const, role: "Full Stack Developer", startDate: "Mar 2024", endDate: "Jul 2024", tech: ["Next.js", "PostgreSQL"], tiikApproved: true, anchor: null, anchorStatus: "none" as const, teamSize: 1, hubId: null, views: 189, recruiterViews: 1, visibility: "connections" },
 ];
 
-const mockCustomLinks = [
-  { url: "https://github.com/arjunkumar", label: "My GitHub" },
-  { url: "https://arjunkumar.dev", label: "Portfolio" },
-];
 
 const statusColors: Record<string, { dot: string; accent: string; label: string }> = {
   active: { dot: "var(--brand)", accent: "var(--open-green)", label: "Active" },
