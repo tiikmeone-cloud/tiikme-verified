@@ -35,16 +35,20 @@ const statusColors: Record<string, { dot: string; accent: string; label: string 
 };
 
 const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose: () => void; onSaved: () => void }) => {
-  const [form, setForm] = useState({ name: "", headline: "", bio: "", city: "", state: "", username: "" });
+  const { refreshProfile } = useAuth();
+  const [form, setForm] = useState({ name: "", headline: "", bio: "", city: "", state: "", username: "", open_to_work: false, avatar_url: "" });
   const [saving, setSaving] = useState(false);
-  const [customLinks, setCustomLinks] = useState(mockCustomLinks);
+  const [customLinks, setCustomLinks] = useState<{ url: string; label: string }[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
+  const avatarRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const { data } = await supabase.from("profiles").select("*").eq("id", user.id).single();
+      setUserId(user.id);
+      const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
       if (data) {
         setForm({
           name: data.full_name || "",
@@ -53,7 +57,10 @@ const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose:
           city: data.location_city || "",
           state: data.location_state || "",
           username: data.username || "",
+          open_to_work: data.open_to_work || false,
+          avatar_url: data.avatar_url || "",
         });
+        setCustomLinks(Array.isArray(data.custom_links) ? (data.custom_links as any[]).map(l => ({ url: l.url || "", label: l.label || "" })) : []);
       }
     };
     load();
@@ -67,22 +74,51 @@ const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose:
   };
   const removeLink = (i: number) => setCustomLinks(customLinks.filter((_, idx) => idx !== i));
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !userId) return;
+    if (file.size > 2 * 1024 * 1024) { toast.error("Max 2MB"); return; }
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) { toast.error("JPEG, PNG, or WebP only"); return; }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = 400; canvas.height = 400;
+    const ctx = canvas.getContext("2d")!;
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    await new Promise(r => img.onload = r);
+    const size = Math.min(img.width, img.height);
+    ctx.drawImage(img, (img.width - size) / 2, (img.height - size) / 2, size, size, 0, 0, 400, 400);
+    const blob = await new Promise<Blob | null>(r => canvas.toBlob(r, "image/webp", 0.85));
+    if (!blob) { toast.error("Processing failed"); return; }
+
+    const path = `${userId}/avatar.webp`;
+    const { error: uploadErr } = await supabase.storage.from("avatars").upload(path, blob, { upsert: true, contentType: "image/webp" });
+    if (uploadErr) { toast.error("Upload failed"); return; }
+
+    const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
+    const avatarUrl = urlData.publicUrl + "?t=" + Date.now();
+    await supabase.from("profiles").update({ avatar_url: avatarUrl }).eq("id", userId);
+    setForm(p => ({ ...p, avatar_url: avatarUrl }));
+    toast.success("Avatar updated ✓");
+  };
+
   const handleSave = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!userId) return;
     setSaving(true);
     const { error } = await supabase.from("profiles").update({
       full_name: form.name,
       headline: form.headline.slice(0, 80),
       bio: form.bio.slice(0, 300),
-      username: form.username,
+      username: form.username.toLowerCase().replace(/[^a-z0-9._-]/g, ""),
       location_city: form.city,
       location_state: form.state,
+      open_to_work: form.open_to_work,
       custom_links: customLinks.filter(l => l.url) as any,
-    }).eq("id", user.id);
+    }).eq("id", userId);
     setSaving(false);
     if (error) { toast.error("Failed to save"); return; }
     toast.success("Profile updated ✓");
+    await refreshProfile();
     onSaved();
     onClose();
   };
@@ -97,22 +133,55 @@ const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose:
           <h2 className="text-[20px] font-extrabold" style={{ color: "var(--text-1)" }}>Edit profile</h2>
           <button onClick={onClose} className="p-2 rounded-lg cursor-pointer active:scale-95" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
         </div>
+
+        {/* Avatar */}
+        <div className="flex items-center gap-4 mb-5">
+          <div className="relative group cursor-pointer" onClick={() => avatarRef.current?.click()}>
+            <div className="w-16 h-16 rounded-full flex items-center justify-center text-[20px] font-bold text-white overflow-hidden" style={{ backgroundColor: "var(--brand)" }}>
+              {form.avatar_url ? <img src={form.avatar_url} alt="" className="w-full h-full object-cover" /> : form.name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase() || "U"}
+            </div>
+            <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+              <Settings className="w-4 h-4 text-white" />
+            </div>
+            <input ref={avatarRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleAvatarUpload} />
+          </div>
+          <p className="text-[12px]" style={{ color: "var(--text-3)" }}>Click to change avatar</p>
+        </div>
+
         <div className="space-y-4">
           <div><label className="micro-label block mb-1.5">Display name</label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
-          <div><label className="micro-label block mb-1.5">Headline (80 chars)</label><Input value={form.headline} onChange={e => setForm({ ...form, headline: e.target.value.slice(0, 80) })} maxLength={80} /></div>
+          <div>
+            <label className="micro-label block mb-1.5">Headline (80 chars)</label>
+            <Input value={form.headline} onChange={e => setForm({ ...form, headline: e.target.value.slice(0, 80) })} maxLength={80} />
+            <p className="text-[10px] text-right mt-1" style={{ color: "var(--text-3)" }}>{form.headline.length}/80</p>
+          </div>
           <div>
             <label className="micro-label block mb-1.5">Bio (300 chars)</label>
             <textarea value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value.slice(0, 300) })} placeholder="Tell people about yourself..." rows={3} maxLength={300}
               className="w-full rounded-xl p-3.5 text-[14px] outline-none resize-none transition-all duration-150"
               style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", color: "var(--text-1)" }} />
+            <p className="text-[10px] text-right mt-1" style={{ color: "var(--text-3)" }}>{form.bio.length}/300</p>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[13px]" style={{ color: "var(--text-3)" }}>@</span>
-            <Input value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} className="flex-1" />
+            <Input value={form.username} onChange={e => setForm({ ...form, username: e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, "") })} className="flex-1" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div><label className="micro-label block mb-1.5">City</label><Input value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} /></div>
             <div><label className="micro-label block mb-1.5">State</label><Input value={form.state} onChange={e => setForm({ ...form, state: e.target.value })} /></div>
+          </div>
+
+          {/* Open to work toggle */}
+          <div className="flex items-center justify-between py-3" style={{ borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)" }}>
+            <div>
+              <span className="text-[14px] font-medium" style={{ color: "var(--text-1)" }}>Open to work</span>
+              <p className="text-[11px]" style={{ color: "var(--text-3)" }}>Show green dot on your profile</p>
+            </div>
+            <button onClick={() => setForm({ ...form, open_to_work: !form.open_to_work })}
+              className="w-11 h-6 rounded-full flex items-center px-0.5 cursor-pointer active:scale-95"
+              style={{ background: form.open_to_work ? "var(--brand)" : "var(--border-2)", transition: "all 0.2s" }}>
+              <div className="w-5 h-5 rounded-full bg-white" style={{ transition: "transform 0.2s", transform: form.open_to_work ? "translateX(20px)" : "translateX(0)" }} />
+            </button>
           </div>
 
           <div>
