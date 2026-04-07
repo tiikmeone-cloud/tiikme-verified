@@ -338,7 +338,7 @@ const Profile = () => {
           </div>
 
           <div className="mt-2">
-            <CustomLinks links={mockCustomLinks} />
+            <CustomLinks links={Array.isArray(profileData?.custom_links) ? (profileData.custom_links as any[]) : []} />
           </div>
 
           <div className="flex gap-2 mt-4">
