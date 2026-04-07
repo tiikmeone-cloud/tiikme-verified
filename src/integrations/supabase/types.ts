@@ -921,7 +921,7 @@ export type Database = {
           status: string | null
           theme_preference: string | null
           updated_at: string | null
-          username: string
+          username: string | null
         }
         Insert: {
           activity_score?: number | null
@@ -949,7 +949,7 @@ export type Database = {
           status?: string | null
           theme_preference?: string | null
           updated_at?: string | null
-          username: string
+          username?: string | null
         }
         Update: {
           activity_score?: number | null
@@ -977,7 +977,7 @@ export type Database = {
           status?: string | null
           theme_preference?: string | null
           updated_at?: string | null
-          username?: string
+          username?: string | null
         }
         Relationships: []
       }
