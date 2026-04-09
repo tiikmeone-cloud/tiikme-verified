@@ -307,6 +307,7 @@ const Profile = () => {
   const [profileData, setProfileData] = useState<any>(null);
   const [workspaces, setWorkspaces] = useState<any[]>([]);
   const [workItems, setWorkItems] = useState<any[]>([]);
+  const [userPosts, setUserPosts] = useState<any[]>([]);
   const [stats, setStats] = useState({ projects: 0, workspaces: 0, strands: 0 });
 
   const loadProfile = async () => {
@@ -314,15 +315,17 @@ const Profile = () => {
     if (!currentUser) return;
     const userId = currentUser.id;
 
-    const [{ data: profile }, { data: ws }, { data: items }, { count: strandCount }] = await Promise.all([
+    const [{ data: profile }, { data: ws }, { data: items }, { count: strandCount }, { data: posts }] = await Promise.all([
       supabase.from("profiles").select("*").eq("id", userId).single(),
       supabase.from("workspace_members").select("*, workspace:workspaces(name, type)").eq("user_id", userId),
       supabase.from("work_items").select("*").eq("owner_id", userId).order("created_at", { ascending: false }),
       supabase.from("strands").select("*", { count: "exact", head: true }).or(`requester_id.eq.${userId},receiver_id.eq.${userId}`).eq("status", "accepted"),
+      supabase.from("posts").select("*").eq("author_id", userId).order("created_at", { ascending: false }).limit(20),
     ]);
     setProfileData(profile);
     setWorkspaces(ws || []);
     setWorkItems(items || []);
+    setUserPosts(posts || []);
     setStats({
       projects: items?.length || 0,
       workspaces: ws?.length || 0,
@@ -555,7 +558,42 @@ const Profile = () => {
           {activeTab === "Achievements" && <AchievementsTab isOwnProfile={true} />}
 
           {activeTab === "Posts" && (
-            <EmptyState icon={MessageCircle} title="No posts yet" description="Posts you share on the feed will appear here." />
+            userPosts.length === 0 ? (
+              <EmptyState icon={MessageCircle} title="No posts yet" description="Posts you share on the feed will appear here." />
+            ) : (
+              <div className="space-y-3">
+                {userPosts.map((post: any) => (
+                  <div key={post.id} className="t-card p-4">
+                    <p className="text-[14px] leading-relaxed" style={{ color: "var(--text-1)" }}>{post.content}</p>
+                    {post.image_urls?.length > 0 && (
+                      <div className="mt-2 flex gap-2 overflow-x-auto">
+                        {post.image_urls.slice(0, 3).map((url: string, i: number) => (
+                          <img key={i} src={url} alt="" className="w-20 h-20 rounded-lg object-cover" />
+                        ))}
+                      </div>
+                    )}
+                    {post.hashtags?.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {post.hashtags.map((tag: string) => (
+                          <span key={tag} className="text-[11px] font-semibold" style={{ color: "var(--brand)" }}>#{tag}</span>
+                        ))}
+                      </div>
+                    )}
+                    <div className="flex items-center gap-4 mt-3 pt-2" style={{ borderTop: "1px solid var(--border)" }}>
+                      <span className="text-[11px]" style={{ color: "var(--text-3)" }}>
+                        {new Date(post.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                      </span>
+                      <span className="text-[11px]" style={{ color: "var(--text-3)" }}>
+                        {(post.reactions?.useful || 0) + (post.reactions?.insightful || 0) + (post.reactions?.inspiring || 0)} reactions
+                      </span>
+                      <span className="text-[11px]" style={{ color: "var(--text-3)" }}>
+                        {post.comment_count || 0} comments
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
           )}
 
           {activeTab === "About" && (
