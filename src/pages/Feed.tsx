@@ -442,10 +442,41 @@ const Feed = () => {
   const [postModalOpen, setPostModalOpen] = useState(false);
   const [postModalType, setPostModalType] = useState<string | undefined>();
   const [activeTopic, setActiveTopic] = useState<string | null>(null);
-  const { posts: livePosts, loading, loadingMore, hasMore, loadMore } = useFeedPosts();
+  const { posts: livePosts, loading, loadingMore, hasMore, loadMore, refresh } = useFeedPosts();
   const sentinelRef = useRef<HTMLDivElement>(null);
   const { profile, initials } = useAuth();
   const userRole = profile?.role || "student";
+
+  // Pull-to-refresh state
+  const [pullY, setPullY] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const touchStartY = useRef(0);
+  const feedRef = useRef<HTMLDivElement>(null);
+  const PULL_THRESHOLD = 80;
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (window.scrollY === 0) {
+      touchStartY.current = e.touches[0].clientY;
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (refreshing || window.scrollY > 0) return;
+    const dy = e.touches[0].clientY - touchStartY.current;
+    if (dy > 0) {
+      setPullY(Math.min(dy * 0.4, 120));
+    }
+  };
+
+  const handleTouchEnd = async () => {
+    if (pullY >= PULL_THRESHOLD && !refreshing) {
+      setRefreshing(true);
+      setPullY(PULL_THRESHOLD);
+      await refresh();
+      setRefreshing(false);
+    }
+    setPullY(0);
+  };
 
   // Infinite scroll observer
   useEffect(() => {
@@ -469,7 +500,21 @@ const Feed = () => {
   const hasLivePosts = livePosts.length > 0;
 
   return (
-    <main className="max-w-[960px] mx-auto px-4 md:px-6 py-7">
+    <main className="max-w-[960px] mx-auto px-4 md:px-6 py-7"
+      ref={feedRef}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* Pull-to-refresh indicator (mobile) */}
+      <div className="md:hidden flex items-center justify-center overflow-hidden transition-all duration-200"
+        style={{ height: pullY > 0 ? `${pullY}px` : 0, opacity: pullY > 20 ? 1 : 0 }}>
+        <div className={`w-7 h-7 rounded-full border-2 border-t-transparent ${refreshing ? 'animate-spin' : ''}`}
+          style={{ borderColor: "var(--brand)", borderTopColor: "transparent", transform: `rotate(${pullY * 3}deg)` }} />
+        {pullY >= PULL_THRESHOLD && !refreshing && (
+          <span className="ml-2 text-[11px] font-semibold" style={{ color: "var(--text-3)" }}>Release to refresh</span>
+        )}
+      </div>
       <div className="flex gap-6">
         {/* Feed column */}
         <div className="flex-1 min-w-0 max-w-[660px]">
