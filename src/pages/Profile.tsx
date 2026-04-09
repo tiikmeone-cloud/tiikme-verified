@@ -202,9 +202,106 @@ const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose:
   );
 };
 
-const Profile = () => {
+const AddWorkForm = ({ userId, role, institution, onSaved, onClose }: { userId?: string; role: string; institution: string; onSaved: () => void; onClose: () => void }) => {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [type, setType] = useState("");
+  const [techStack, setTechStack] = useState("");
+  const [saving, setSaving] = useState(false);
+  const inputS: React.CSSProperties = { background: "var(--surface-2)", border: "1.5px solid var(--border-2)", borderRadius: 12, color: "var(--text-1)", height: 44 };
+
+  const handleSave = async () => {
+    if (!title.trim() || !userId) return;
+    setSaving(true);
+    const { error } = await supabase.from("work_items").insert({
+      owner_id: userId, title: title.trim(), description: description.trim(),
+      type: type || "project", institution_name: institution,
+      tech_stack: techStack ? techStack.split(",").map(s => s.trim()).filter(Boolean) : [],
+      status: "active", visibility: "public",
+    });
+    setSaving(false);
+    if (error) { toast.error("Failed to save"); return; }
+    toast.success("Project added ✓");
+    onSaved();
+  };
+
+  return (
+    <>
+      <div className="flex items-center justify-between mb-5">
+        <h2 className="text-[20px] font-extrabold" style={{ color: "var(--text-1)" }}>Add project</h2>
+        <button onClick={onClose} className="p-2 rounded-lg cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
+      </div>
+      <div className="space-y-4">
+        <Input placeholder="Project title *" value={title} onChange={e => setTitle(e.target.value)} style={inputS} />
+        <select value={type} onChange={e => setType(e.target.value)} className="w-full px-3 text-[14px] outline-none cursor-pointer" style={inputS}>
+          <option value="">Type</option>
+          <option value="software">💻 Software / App</option>
+          <option value="research">🔬 Research</option>
+          <option value="hardware">⚡ Hardware / IoT</option>
+          <option value="design">📐 Design</option>
+          <option value="internship">💼 Internship</option>
+          <option value="other">📝 Other</option>
+        </select>
+        <textarea value={description} onChange={e => setDescription(e.target.value.slice(0, 300))} placeholder="Short description (300 chars)" rows={3} maxLength={300}
+          className="w-full rounded-xl p-3.5 text-[14px] outline-none resize-none" style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", color: "var(--text-1)" }} />
+        <Input placeholder="Tech stack (comma separated)" value={techStack} onChange={e => setTechStack(e.target.value)} style={inputS} />
+        <Button className="w-full" onClick={handleSave} disabled={saving || !title.trim()}>{saving ? "Saving..." : "Save project"}</Button>
+      </div>
+    </>
+  );
+};
+
+const AddAchievementForm = ({ userId, onSaved, onClose }: { userId?: string; onSaved: () => void; onClose: () => void }) => {
+  const [title, setTitle] = useState("");
+  const [type, setType] = useState("award");
+  const [issuedBy, setIssuedBy] = useState("");
+  const [description, setDescription] = useState("");
+  const [saving, setSaving] = useState(false);
+  const inputS: React.CSSProperties = { background: "var(--surface-2)", border: "1.5px solid var(--border-2)", borderRadius: 12, color: "var(--text-1)", height: 44 };
+
+  const handleSave = async () => {
+    if (!title.trim() || !userId) return;
+    setSaving(true);
+    const { error } = await supabase.from("achievements").insert({
+      user_id: userId, title: title.trim(), type, issued_by: issuedBy.trim() || null,
+      description: description.trim() || null, visibility: "public",
+    });
+    setSaving(false);
+    if (error) { toast.error("Failed to save"); return; }
+    toast.success("Achievement added ✓");
+    onSaved();
+  };
+
+  return (
+    <>
+      <div className="flex items-center justify-between mb-5">
+        <h2 className="text-[20px] font-extrabold" style={{ color: "var(--text-1)" }}>Add achievement</h2>
+        <button onClick={onClose} className="p-2 rounded-lg cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
+      </div>
+      <div className="space-y-4">
+        <Input placeholder="Achievement title *" value={title} onChange={e => setTitle(e.target.value)} style={inputS} />
+        <select value={type} onChange={e => setType(e.target.value)} className="w-full px-3 text-[14px] outline-none cursor-pointer" style={inputS}>
+          <option value="award">🏆 Competition Win</option>
+          <option value="scholarship">🎓 Scholarship</option>
+          <option value="certification">📜 Certification</option>
+          <option value="recognition">👏 Recognition</option>
+          <option value="publication">📰 Publication</option>
+          <option value="leadership">🌟 Leadership Role</option>
+          <option value="other">🎯 Other</option>
+        </select>
+        <Input placeholder="Issued by (organisation)" value={issuedBy} onChange={e => setIssuedBy(e.target.value)} style={inputS} />
+        <textarea value={description} onChange={e => setDescription(e.target.value.slice(0, 200))} placeholder="Description (200 chars)" rows={2} maxLength={200}
+          className="w-full rounded-xl p-3.5 text-[14px] outline-none resize-none" style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", color: "var(--text-1)" }} />
+        <Button className="w-full" onClick={handleSave} disabled={saving || !title.trim()}>{saving ? "Saving..." : "Save achievement"}</Button>
+      </div>
+    </>
+  );
+};
+
   const [activeTab, setActiveTab] = useState<typeof tabs[number]>("Work & Projects");
   const [editOpen, setEditOpen] = useState(false);
+  const [showAddWork, setShowAddWork] = useState(false);
+  const [showAddAchievement, setShowAddAchievement] = useState(false);
   const { profile: authProfile, initials: authInitials, displayName: authDisplayName, refreshProfile, user } = useAuth();
   const [profileData, setProfileData] = useState<any>(null);
   const [workspaces, setWorkspaces] = useState<any[]>([]);
@@ -397,7 +494,7 @@ const Profile = () => {
           {activeTab === "Work & Projects" && (
             <div className="relative">
               {workItems.length === 0 ? (
-                <EmptyState icon={Layers} title="No projects yet" description="Add your first project or work item to build your verified portfolio." actionLabel="Add project" onAction={() => toast.info("Project creation coming soon")} />
+                <EmptyState icon={Layers} title="No projects yet" description="Add your first project or work item to build your verified portfolio." actionLabel="+ Add project" onAction={() => setShowAddWork(true)} />
               ) : (
                 <>
                   <div className="absolute left-[11px] top-5 bottom-16 w-[2px]" style={{ background: "var(--border-2)" }} />
@@ -448,9 +545,9 @@ const Profile = () => {
                   </div>
                 </>
               )}
-              <Link to="/app/mywork" className="flex items-center justify-center gap-1.5 mt-5 py-3 t-card t-card-hover text-[13px] font-semibold" style={{ color: "var(--brand)" }}>
+              <button onClick={() => setShowAddWork(true)} className="flex items-center justify-center gap-1.5 mt-5 py-3 t-card t-card-hover text-[13px] font-semibold w-full" style={{ color: "var(--brand)" }}>
                 <Plus className="w-4 h-4" /> Add new project
-              </Link>
+              </button>
             </div>
           )}
 
@@ -510,6 +607,28 @@ const Profile = () => {
       <AnimatePresence>
         {editOpen && <EditProfileDrawer open={editOpen} onClose={() => setEditOpen(false)} onSaved={loadProfile} />}
       </AnimatePresence>
+
+      {/* Add Work Item Modal */}
+      {showAddWork && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} onClick={() => setShowAddWork(false)}>
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-[520px] max-h-[90vh] overflow-y-auto rounded-[20px] p-6 glass-card mx-4"
+            onClick={e => e.stopPropagation()}>
+            <AddWorkForm userId={user?.id} role={profileData?.role || "student"} institution={profileData?.institution_name || ""} onSaved={() => { setShowAddWork(false); loadProfile(); }} onClose={() => setShowAddWork(false)} />
+          </motion.div>
+        </div>
+      )}
+
+      {/* Add Achievement Modal */}
+      {showAddAchievement && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} onClick={() => setShowAddAchievement(false)}>
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-[480px] max-h-[90vh] overflow-y-auto rounded-[20px] p-6 glass-card mx-4"
+            onClick={e => e.stopPropagation()}>
+            <AddAchievementForm userId={user?.id} onSaved={() => { setShowAddAchievement(false); loadProfile(); }} onClose={() => setShowAddAchievement(false)} />
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };

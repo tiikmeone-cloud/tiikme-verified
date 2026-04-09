@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { MessageCircle, Lock, Search, Send, Paperclip, Layers, PenSquare, Check, X, Shield, ArrowLeft, FileText, Briefcase } from "lucide-react";
+import { MessageCircle, Search, Send, Paperclip, Layers, PenSquare, Check, X, Shield, ArrowLeft, FileText, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
@@ -195,10 +195,6 @@ const Pings = () => {
                   </div>
                 </Link>
               )}
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
-                <Lock className="w-3.5 h-3.5" style={{ color: "var(--brand)" }} />
-                <span className="text-[11px] font-semibold hidden sm:inline" style={{ color: "var(--text-2)" }}>Encrypted</span>
-              </div>
             </div>
 
             {/* Verification banner */}
@@ -211,9 +207,6 @@ const Pings = () => {
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto px-5 py-5 space-y-2">
-              <div className="text-center mb-4">
-                <span className="text-[11px] px-3 py-1 rounded-full inline-flex items-center gap-1" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-3)" }}><Lock className="w-3 h-3" /> End-to-end encrypted</span>
-              </div>
               {messagesLoading && <div className="flex justify-center py-10"><div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: "var(--brand)", borderTopColor: "transparent" }} /></div>}
               {messages.map((msg, i) => {
                 const isMe = msg.sender_id === user?.id;

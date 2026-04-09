@@ -37,18 +37,6 @@ const getQuickActions = (role: string) => {
 
 const trendingTopics = ["#AgriTech", "#HealthTech", "#GovtJobs", "#UPSC", "#StartupIndia", "#SkilledTrade", "#TeacherLife", "#BankingCareers"];
 
-// Fallback mock data shown when no DB posts exist yet
-const mockPosts = [
-  { id: "1", author: { name: "Riya Sharma", initials: "RS", role: "Student", roleColor: "#4F46E5" }, type: "Collab", topBorder: "var(--open-green)", content: "Looking for a backend developer to join our capstone project — building a telemedicine app for rural India. React Native + Supabase stack. cc @arjunkumar", time: "2h ago", reactions: { insightful: 4, useful: 12, inspiring: 2 }, comments: 8, reactedBy: { insightful: ["Arjun", "Priya", "4 others"], useful: ["Dr. Manoj", "Sunita", "10 others"], inspiring: ["Kavita", "1 other"] }, images: ["/placeholder.svg", "/placeholder.svg"], pdf: null },
-  { id: "2", author: { name: "Dr. Manoj Patil", initials: "MP", role: "Doctor", roleColor: "#0E7490" }, type: "", topBorder: "", content: "Completed a 3-day health camp in Gadchiroli district. Screened 450+ patients for diabetes and hypertension. Early detection saves lives. @priyamenon helped coordinate.", time: "4h ago", reactions: { insightful: 18, useful: 6, inspiring: 31 }, comments: 14, reactedBy: { insightful: ["Rahul", "Prof. Sharma", "16 others"], useful: ["Riya", "5 others"], inspiring: ["Arjun", "Priya", "29 others"] }, images: ["/placeholder.svg", "/placeholder.svg", "/placeholder.svg"], pdf: null },
-  { id: "3", author: { name: "Sunita Devi", initials: "SD", role: "Skilled Trade", roleColor: "#C2410C" }, type: "", topBorder: "", content: "Just finished rewiring an entire 3BHK flat in Dwarka. Complete with MCB panel upgrade. Client verified the work on Tiikme.", time: "6h ago", reactions: { insightful: 7, useful: 22, inspiring: 15 }, comments: 5, reactedBy: { insightful: ["Mohan", "6 others"], useful: ["Arjun", "Kavita", "20 others"], inspiring: ["Dr. Neha", "14 others"] }, images: [], pdf: { name: "Wiring_Report_Dwarka.pdf", pages: 14 } },
-  { id: "4", author: { name: "Kavita Rao", initials: "KR", role: "HR / Recruiter", roleColor: "#6B21A8" }, type: "Opportunity", topBorder: "#F59E0B", content: "Build a dashboard that tracks real-time hiring pipeline for startups. Best solution gets Rs 15,000 and a 3-month internship.", time: "8h ago", reactions: { insightful: 24, useful: 18, inspiring: 9 }, comments: 22, reactedBy: { insightful: ["Riya", "Rahul", "22 others"], useful: ["Sunita", "17 others"], inspiring: ["Prof. Verma", "8 others"] }, images: ["/placeholder.svg"], pdf: null },
-];
-
-const mockComments = [
-  { name: "Rahul K.", initials: "RK", color: "#0369A1", text: "This sounds amazing! I'd love to join. @riyasharma", time: "1h ago" },
-  { name: "Priya M.", initials: "PM", color: "#92400E", text: "Great initiative. Shared with my students.", time: "2h ago" },
-];
 
 const reactionConfig = [
   { key: "insightful", icon: Heart, label: "Insightful" },
@@ -221,143 +209,6 @@ const LivePostCard = ({ post }: { post: any }) => {
   );
 };
 
-/* ─── MOCK POST CARD (original static) ─── */
-const MockPostCard = ({ post }: { post: typeof mockPosts[0] }) => {
-  const [showMenu, setShowMenu] = useState(false);
-  const [reacted, setReacted] = useState<Record<string, boolean>>({});
-  const [showComments, setShowComments] = useState(false);
-  const [commentText, setCommentText] = useState("");
-
-  return (
-    <article
-      className="glass-liquid glass-liquid-hover rounded-2xl md:rounded-3xl mb-3 overflow-hidden"
-      style={{ borderTop: post.topBorder ? `3px solid ${post.topBorder}` : undefined }}
-    >
-      <div className="flex items-center gap-3 px-4 pt-4 pb-1">
-        <Link to="/app/profile">
-          <div className="w-11 h-11 rounded-full flex items-center justify-center text-[14px] font-bold text-white shrink-0 transition-transform duration-200 hover:scale-105" style={{ backgroundColor: post.author.roleColor }}>{post.author.initials}</div>
-        </Link>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <Link to="/app/profile" className="text-[14px] font-bold hover:underline transition-colors" style={{ color: "var(--text-1)" }}>{post.author.name}</Link>
-            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full" style={{ background: `${post.author.roleColor}1A`, color: post.author.roleColor, border: `1px solid ${post.author.roleColor}33` }}>{post.author.role}</span>
-            {post.type && <span className="text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ background: "var(--surface-2)", color: "var(--text-3)", border: "1px solid var(--border)" }}>{post.type}</span>}
-          </div>
-          <span className="text-[11px]" style={{ color: "var(--text-3)" }}>{post.time}</span>
-        </div>
-        <div className="relative">
-          <button onClick={() => setShowMenu(!showMenu)} className="p-1.5 rounded-lg transition-all duration-150 cursor-pointer" style={{ color: "var(--text-3)" }}><MoreHorizontal className="w-4 h-4" /></button>
-          {showMenu && (
-            <div className="absolute right-0 top-8 glass-liquid rounded-xl p-1 min-w-[160px] z-10">
-              <button onClick={() => { toast.info("Following"); setShowMenu(false); }} className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg transition-all duration-150 cursor-pointer" style={{ color: "var(--text-2)" }}>Follow this person</button>
-              <button onClick={() => { toast.info("Report submitted"); setShowMenu(false); }} className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg transition-all duration-150 cursor-pointer" style={{ color: "var(--text-2)" }}><Flag className="w-3 h-3" /> Report</button>
-              <button onClick={() => { navigator.clipboard.writeText("https://tiikme.in/post/" + post.id); toast.success("Link copied"); setShowMenu(false); }} className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg transition-all duration-150 cursor-pointer" style={{ color: "var(--text-2)" }}>Copy link</button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="px-4 py-2.5 post-body" style={{ fontSize: "14px", lineHeight: 1.75, color: "var(--text-2)" }}>
-        <MentionText text={post.content} />
-      </div>
-
-      {post.images.length > 0 && (
-        <div className="px-4 pb-2">
-          <div className="rounded-xl overflow-hidden">
-            <ImageGrid images={post.images} />
-          </div>
-        </div>
-      )}
-
-      {post.pdf && (
-        <div className="mx-4 mb-3">
-          <div className="flex items-center gap-3 glass-liquid rounded-xl p-3">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: "rgba(220,38,38,0.1)" }}>
-              <FileText className="w-5 h-5" style={{ color: "#DC2626" }} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-bold truncate" style={{ color: "var(--text-1)" }}>{post.pdf.name}</p>
-              <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{post.pdf.pages} pages</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="flex items-center gap-1.5 px-4 py-2">
-        {reactionConfig.map(r => {
-          const count = (post.reactions as any)[r.key] + (reacted[r.key] ? 1 : 0);
-          const active = reacted[r.key];
-          const people = (post.reactedBy as any)[r.key] as string[];
-          return (
-            <Tooltip key={r.key}>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => setReacted(p => ({ ...p, [r.key]: !p[r.key] }))}
-                  className="h-7 px-2.5 rounded-full text-[12px] font-semibold flex items-center gap-1 transition-all duration-200 cursor-pointer active:scale-95"
-                  style={{
-                    background: active ? "var(--brand-dim)" : "var(--surface-2)",
-                    border: active ? "1px solid var(--brand)" : "1px solid var(--border)",
-                    color: active ? "var(--brand)" : "var(--text-3)",
-                    boxShadow: active ? "0 0 8px var(--brand-glow)" : "none",
-                  }}
-                >
-                  <r.icon className="w-3.5 h-3.5" /> {r.label} · {count}
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="text-[11px] max-w-[200px]">
-                {people.join(", ")} found this {r.label}
-              </TooltipContent>
-            </Tooltip>
-          );
-        })}
-      </div>
-
-      <div className="flex items-center gap-0.5 px-4 py-2" style={{ borderTop: "1px solid var(--border)" }}>
-        <button onClick={() => setShowComments(!showComments)} className="h-9 px-3 rounded-xl text-[13px] font-medium flex items-center gap-1.5 transition-all duration-150 cursor-pointer hover:bg-[var(--brand-dim)]" style={{ color: "var(--text-2)" }}>
-          <MessageSquare className="w-4 h-4" /> {post.comments} <ChevronDown className={`w-3 h-3 transition-transform ${showComments ? "rotate-180" : ""}`} />
-        </button>
-        <button onClick={() => toast.success("Reposted")} className="h-9 px-3 rounded-xl text-[13px] font-medium flex items-center gap-1.5 transition-all duration-150 cursor-pointer hover:bg-[var(--brand-dim)]" style={{ color: "var(--text-2)" }}>
-          <Repeat2 className="w-4 h-4" />
-        </button>
-        <button onClick={() => { navigator.clipboard.writeText("https://tiikme.in/post/" + post.id); toast.success("Link copied!"); }} className="h-9 px-3 rounded-xl text-[13px] font-medium flex items-center gap-1.5 transition-all duration-150 cursor-pointer hover:bg-[var(--brand-dim)]" style={{ color: "var(--text-2)" }}>
-          <Share2 className="w-4 h-4" />
-        </button>
-      </div>
-
-      {showComments && (
-        <div className="px-4 pb-4 pt-3 space-y-3" style={{ borderTop: "1px solid var(--border)" }}>
-          {mockComments.map((c, i) => (
-            <div key={i} className="flex items-start gap-2">
-              <Link to="/app/profile">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 hover:scale-105 transition-transform" style={{ backgroundColor: c.color }}>{c.initials}</div>
-              </Link>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <Link to="/app/profile" className="text-[13px] font-bold hover:underline" style={{ color: "var(--text-1)" }}>{c.name}</Link>
-                  <span className="text-[11px]" style={{ color: "var(--text-3)" }}>{c.time}</span>
-                </div>
-                <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-2)" }}><MentionText text={c.text} /></p>
-                <button className="text-[11px] font-semibold mt-0.5 cursor-pointer" style={{ color: "var(--brand)" }}>Reply</button>
-              </div>
-            </div>
-          ))}
-          <div className="flex items-center gap-2 mt-2">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0" style={{ background: "var(--brand)" }}>AK</div>
-            <input value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="Write a comment..."
-              className="flex-1 h-9 rounded-xl px-3 text-[13px] outline-none transition-all duration-150"
-              style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }}
-              onKeyDown={e => { if (e.key === "Enter" && commentText.trim()) { toast.success("Comment posted"); setCommentText(""); } }} />
-            <button onClick={() => { if (commentText.trim()) { toast.success("Comment posted"); setCommentText(""); } }}
-              className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer active:scale-95"
-              style={{ background: commentText.trim() ? "var(--brand)" : "var(--surface-2)" }}>
-              <Send className="w-3.5 h-3.5" style={{ color: commentText.trim() ? "white" : "var(--text-3)" }} />
-            </button>
-          </div>
-        </div>
-      )}
-    </article>
-  );
-};
 
 /* ─── HELPERS ─── */
 function getTimeAgo(date: Date): string {
@@ -497,7 +348,7 @@ const Feed = () => {
   const openCompose = (type?: string) => { setPostModalType(type); setPostModalOpen(true); };
   const quickActions = getQuickActions(userRole);
 
-  const hasLivePosts = livePosts.length > 0;
+  
 
   return (
     <main className="max-w-[960px] mx-auto px-4 md:px-6 py-7"
@@ -556,40 +407,40 @@ const Feed = () => {
           </div>
 
           {/* Today divider */}
-          <div className="flex items-center gap-3 my-4">
-            <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
-            <span className="text-[11px] font-semibold px-4 py-1.5 rounded-full" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-2)" }}>
-              Today · {hasLivePosts ? livePosts.length : mockPosts.length} posts
-            </span>
-            <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
-          </div>
+          {!loading && livePosts.length > 0 && (
+            <div className="flex items-center gap-3 my-4">
+              <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
+              <span className="text-[11px] font-semibold px-4 py-1.5 rounded-full" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-2)" }}>
+                Today · {livePosts.length} posts
+              </span>
+              <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
+            </div>
+          )}
 
           {/* Loading skeleton */}
           {loading && <SkeletonCard count={3} />}
 
           {/* Live posts from DB */}
-          {!loading && hasLivePosts && livePosts.map(post => (
+          {!loading && livePosts.length > 0 && livePosts.map(post => (
             <LivePostCard key={post.id} post={post} />
           ))}
 
-          {/* Fallback mock posts when DB is empty */}
-          {!loading && !hasLivePosts && mockPosts.map(post => (
-            <MockPostCard key={post.id} post={post} />
-          ))}
+          {/* Empty state when no posts */}
+          {!loading && livePosts.length === 0 && (
+            <div className="glass-liquid rounded-2xl p-10 text-center">
+              <MessageSquare className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
+              <p className="text-[16px] font-bold mb-1" style={{ color: "var(--text-1)" }}>Nothing here yet</p>
+              <p className="text-[13px] mb-4" style={{ color: "var(--text-3)" }}>Be the first to post something.</p>
+              <Button onClick={() => openCompose()} className="rounded-full">Write a post →</Button>
+            </div>
+          )}
 
           {/* Infinite scroll sentinel */}
           <div ref={sentinelRef} className="h-1" />
 
           {loadingMore && <SkeletonCard count={2} />}
 
-          {!loading && !hasMore && (
-            <div className="flex items-center justify-center py-8">
-              <span className="text-[12px] font-medium px-5 py-2 rounded-full" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-3)" }}>You're caught up ✓</span>
-            </div>
-          )}
-
-          {/* Show caught up for mock posts too */}
-          {!loading && !hasLivePosts && (
+          {!loading && !hasMore && livePosts.length > 0 && (
             <div className="flex items-center justify-center py-8">
               <span className="text-[12px] font-medium px-5 py-2 rounded-full" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-3)" }}>You're caught up ✓</span>
             </div>
