@@ -312,7 +312,9 @@ const Workspace = () => {
                   {!composeOpen ? (
                     <>
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ background: "var(--brand)" }}>AK</div>
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white overflow-hidden" style={{ background: "var(--brand)" }}>
+                          {authProfile?.avatar_url ? <img src={authProfile.avatar_url} alt="" className="w-full h-full object-cover" /> : userInitials}
+                        </div>
                         <button onClick={() => setComposeOpen(true)} className="flex-1 text-left text-[12px] h-9 glass-input px-3 cursor-pointer" style={{ color: "var(--text-3)" }}>
                           {activeChannel ? `Post to #${activeWs?.channels?.find(c => c.id === activeChannel)?.name}...` : `Share with ${activeWs?.name}...`}
                         </button>
