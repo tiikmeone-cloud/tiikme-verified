@@ -4,7 +4,7 @@ import ActivityScoreRing from "@/components/ActivityScoreRing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import EmptyState from "@/components/EmptyState";
 import VisibilityToggle from "@/components/profile/VisibilityToggle";
