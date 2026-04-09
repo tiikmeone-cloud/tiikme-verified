@@ -1411,6 +1411,16 @@ export type Database = {
       }
     }
     Functions: {
+      award_power: {
+        Args: {
+          p_amount: number
+          p_reason: string
+          p_reference_id?: string
+          p_reference_type?: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       get_page_tracker_count: { Args: { p_page_id: string }; Returns: number }
       get_user_list: {
         Args: { p_limit?: number; p_offset?: number; p_role?: string }

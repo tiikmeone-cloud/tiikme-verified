@@ -7,37 +7,21 @@ export async function awardPower(
   refId?: string,
   refType?: string
 ) {
-  // Insert transaction
-  await supabase.from("power_transactions" as any).insert({
-    user_id: userId,
-    amount,
-    reason,
-    reference_id: refId || null,
-    reference_type: refType || null,
+  // Use the secure server-side RPC function instead of direct inserts
+  const { data, error } = await supabase.rpc("award_power", {
+    p_user_id: userId,
+    p_amount: amount,
+    p_reason: reason,
+    p_reference_id: refId || null,
+    p_reference_type: refType || null,
   });
 
-  // Get current totals
-  const { data } = await supabase
-    .from("user_power" as any)
-    .select("current_power, total_power_earned")
-    .eq("user_id", userId)
-    .single();
+  if (error) throw error;
 
-  const currentPower = ((data as any)?.current_power || 0) + amount;
-  const totalEarned = ((data as any)?.total_power_earned || 0) + amount;
-
-  // Upsert power
-  await supabase.from("user_power" as any).upsert(
-    {
-      user_id: userId,
-      current_power: currentPower,
-      total_power_earned: totalEarned,
-      last_updated: new Date().toISOString(),
-    },
-    { onConflict: "user_id" }
-  );
-
-  return { currentPower, totalEarned };
+  return {
+    currentPower: (data as any)?.current_power || 0,
+    totalEarned: (data as any)?.total_earned || 0,
+  };
 }
 
 export const MILESTONES = {
