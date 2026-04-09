@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute, PublicOnlyRoute } from "@/components/RouteGuard";
 import Index from "./pages/Index.tsx";
 import SignIn from "./pages/SignIn.tsx";
 import SignUp from "./pages/SignUp.tsx";
@@ -34,7 +35,7 @@ import NotFound from "./pages/NotFound.tsx";
 const queryClient = new QueryClient();
 
 const Shell = ({ children }: { children: React.ReactNode }) => (
-  <AppShell>{children}</AppShell>
+  <ProtectedRoute><AppShell>{children}</AppShell></ProtectedRoute>
 );
 
 const App = () => (
@@ -47,15 +48,15 @@ const App = () => (
         <Routes>
           {/* Public */}
           <Route path="/" element={<Index />} />
-          <Route path="/signin" element={<SignIn />} />
-          <Route path="/signup" element={<SignUp />} />
+          <Route path="/signin" element={<PublicOnlyRoute><SignIn /></PublicOnlyRoute>} />
+          <Route path="/signup" element={<PublicOnlyRoute><SignUp /></PublicOnlyRoute>} />
           <Route path="/welcome" element={<Welcome />} />
           <Route path="/verify-invite" element={<VerifyInvite />} />
           <Route path="/join-as-institution" element={<JoinAsInstitution />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/create-page" element={<Shell><CreatePage /></Shell>} />
-          {/* App */}
+          {/* App (protected) */}
           <Route path="/app/feed" element={<Shell><Feed /></Shell>} />
           <Route path="/app/explore" element={<Shell><Explore /></Shell>} />
           <Route path="/app/profile" element={<Shell><Profile /></Shell>} />
