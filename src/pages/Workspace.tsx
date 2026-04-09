@@ -203,7 +203,7 @@ const Workspace = () => {
 
         <div className="flex-1 overflow-y-auto">
           <p className="micro-label px-4 pt-3 pb-1.5">MY WORKSPACES</p>
-          {mockWorkspaces.filter(ws => !searchWs || ws.name.toLowerCase().includes(searchWs.toLowerCase())).map(ws => (
+          {displayWorkspaces.filter(ws => !searchWs || ws.name.toLowerCase().includes(searchWs.toLowerCase())).map(ws => (
             <div key={ws.id}>
               <button onClick={() => selectWs(ws.id)}
                 className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left cursor-pointer transition-all duration-150"
