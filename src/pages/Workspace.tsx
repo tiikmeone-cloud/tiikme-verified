@@ -407,30 +407,13 @@ const Workspace = () => {
               </div>
             )}
 
-            {/* Projects */}
+            {/* Projects - show real work items linked to workspace */}
             {activeTab === "Projects" && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {[{ name: "TelemedicineRx", status: "Active", owner: "Arjun K.", domain: "HealthTech" }, { name: "Health Camp Tracker", status: "Planning", owner: "Riya S.", domain: "Health" }].map(p => (
-                  <Link key={p.name} to="/app/teams/1" className="t-card t-card-hover p-4 block">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Layers className="w-4 h-4" style={{ color: "var(--brand)" }} />
-                      <p className="text-[13px] font-bold" style={{ color: "var(--text-1)" }}>{p.name}</p>
-                    </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: p.status === "Active" ? "rgba(16,185,129,0.1)" : "var(--brand-dim)", color: p.status === "Active" ? "#10B981" : "var(--brand)" }}>{p.status}</span>
-                      <span className="text-[10px]" style={{ color: "var(--text-3)" }}>{p.domain} · by {p.owner}</span>
-                    </div>
-                    <div className="flex -space-x-1.5 mt-2">
-                      {members.slice(0, 3).map(m => (
-                        <div key={m.name} className="w-6 h-6 rounded-full flex items-center justify-center text-[8px] font-bold text-white" style={{ backgroundColor: m.color, border: "2px solid var(--surface)" }}>{m.initials}</div>
-                      ))}
-                    </div>
-                  </Link>
-                ))}
-                <button onClick={() => tiikToast("Link project from My Work")} className="rounded-2xl p-6 text-center cursor-pointer" style={{ border: "2px dashed var(--border-2)" }}>
-                  <Plus className="w-5 h-5 mx-auto mb-1" style={{ color: "var(--text-3)" }} />
-                  <p className="text-[12px]" style={{ color: "var(--text-2)" }}>Link a project</p>
-                </button>
+              <div className="text-center py-10">
+                <Layers className="w-10 h-10 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
+                <p className="text-[14px] font-bold mb-1" style={{ color: "var(--text-1)" }}>No projects linked yet</p>
+                <p className="text-[12px] mb-3" style={{ color: "var(--text-3)" }}>Link projects from My Work to this workspace.</p>
+                <Button variant="secondary" size="sm" onClick={() => navigate("/app/teams")}>Go to My Work</Button>
               </div>
             )}
 
