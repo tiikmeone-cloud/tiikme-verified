@@ -190,6 +190,7 @@ const SignUp = () => {
       sector: roleData.sector || null,
       role_subtype: roleData.roleSubtype || null,
       role_metadata: roleData as any,
+      onboarding_complete: true,
     }, { onConflict: "id" });
 
     setIsSubmitting(false);
