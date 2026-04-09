@@ -190,8 +190,7 @@ const SignUp = () => {
       sector: roleData.sector || null,
       role_subtype: roleData.roleSubtype || null,
       role_metadata: roleData as any,
-      onboarding_complete: true,
-    }, { onConflict: "id" });
+    } as any, { onConflict: "id" });
 
     setIsSubmitting(false);
     if (error) { toast.error("Failed to save profile"); return; }
