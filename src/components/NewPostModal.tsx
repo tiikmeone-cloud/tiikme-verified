@@ -158,10 +158,10 @@ const NewPostModal = ({ open, onClose, defaultType, onPublished }: NewPostModalP
           type: type,
           visibility: visibility,
           hashtags: extractHashtags(content),
-          image_urls: uploadedUrls.length > 0 ? uploadedUrls : undefined,
+          image_urls: uploadedUrls.length > 0 ? uploadedUrls : [],
           created_at: new Date().toISOString(),
         } as any)
-        .select()
+        .select(`*, author:profiles!author_id(id, username, full_name, role, avatar_url, institution_name, activity_score)`)
         .single();
 
       if (error) {
