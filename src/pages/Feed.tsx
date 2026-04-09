@@ -348,7 +348,7 @@ const Feed = () => {
   const openCompose = (type?: string) => { setPostModalType(type); setPostModalOpen(true); };
   const quickActions = getQuickActions(userRole);
 
-  const hasLivePosts = livePosts.length > 0;
+  
 
   return (
     <main className="max-w-[960px] mx-auto px-4 md:px-6 py-7"
