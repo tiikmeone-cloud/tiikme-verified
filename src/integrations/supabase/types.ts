@@ -896,6 +896,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          about_qa: Json | null
           activity_score: number | null
           avatar_url: string | null
           bio: string | null
@@ -925,9 +926,12 @@ export type Database = {
           theme_preference: string | null
           updated_at: string | null
           username: string | null
+          verification_badge_text: string | null
+          verification_type: string | null
           verified_by: string | null
         }
         Insert: {
+          about_qa?: Json | null
           activity_score?: number | null
           avatar_url?: string | null
           bio?: string | null
@@ -957,9 +961,12 @@ export type Database = {
           theme_preference?: string | null
           updated_at?: string | null
           username?: string | null
+          verification_badge_text?: string | null
+          verification_type?: string | null
           verified_by?: string | null
         }
         Update: {
+          about_qa?: Json | null
           activity_score?: number | null
           avatar_url?: string | null
           bio?: string | null
@@ -989,6 +996,8 @@ export type Database = {
           theme_preference?: string | null
           updated_at?: string | null
           username?: string | null
+          verification_badge_text?: string | null
+          verification_type?: string | null
           verified_by?: string | null
         }
         Relationships: []
@@ -1113,6 +1122,45 @@ export type Database = {
         }
         Relationships: []
       }
+      verifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          notes: string | null
+          scope: string | null
+          status: string | null
+          subject_user_id: string
+          verification_type: string | null
+          verified_at: string | null
+          verifier_user_id: string | null
+          work_item_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          scope?: string | null
+          status?: string | null
+          subject_user_id: string
+          verification_type?: string | null
+          verified_at?: string | null
+          verifier_user_id?: string | null
+          work_item_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          scope?: string | null
+          status?: string | null
+          subject_user_id?: string
+          verification_type?: string | null
+          verified_at?: string | null
+          verifier_user_id?: string | null
+          work_item_id?: string | null
+        }
+        Relationships: []
+      }
       work_items: {
         Row: {
           approved_at: string | null
@@ -1126,14 +1174,17 @@ export type Database = {
           institution_name: string | null
           is_current: boolean | null
           is_tiik_approved: boolean | null
+          is_tiiked: boolean | null
           links: Json | null
           owner_id: string | null
+          project_type: string | null
           recruiter_views: number | null
           role_in_work: string | null
           slug: string | null
           start_date: string | null
           status: string | null
           tech_stack: string[] | null
+          tiiked_by: string | null
           title: string
           total_views: number | null
           type: string | null
@@ -1152,14 +1203,17 @@ export type Database = {
           institution_name?: string | null
           is_current?: boolean | null
           is_tiik_approved?: boolean | null
+          is_tiiked?: boolean | null
           links?: Json | null
           owner_id?: string | null
+          project_type?: string | null
           recruiter_views?: number | null
           role_in_work?: string | null
           slug?: string | null
           start_date?: string | null
           status?: string | null
           tech_stack?: string[] | null
+          tiiked_by?: string | null
           title: string
           total_views?: number | null
           type?: string | null
@@ -1178,14 +1232,17 @@ export type Database = {
           institution_name?: string | null
           is_current?: boolean | null
           is_tiik_approved?: boolean | null
+          is_tiiked?: boolean | null
           links?: Json | null
           owner_id?: string | null
+          project_type?: string | null
           recruiter_views?: number | null
           role_in_work?: string | null
           slug?: string | null
           start_date?: string | null
           status?: string | null
           tech_stack?: string[] | null
+          tiiked_by?: string | null
           title?: string
           total_views?: number | null
           type?: string | null
