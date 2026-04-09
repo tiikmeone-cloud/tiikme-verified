@@ -314,11 +314,21 @@ const Profile = () => {
   const navigate = useNavigate();
 
   const loadProfile = async () => {
-    const { data: { user: currentUser } } = await supabase.auth.getUser();
-    if (!currentUser) { setDataLoading(false); return; }
-    const userId = currentUser.id;
+    if (!user?.id) {
+      setProfileData(authProfile || null);
+      setWorkspaces([]);
+      setWorkItems([]);
+      setUserPosts([]);
+      setAchievements([]);
+      setStats({ projects: 0, workspaces: 0, strands: 0 });
+      setDataLoading(false);
+      return;
+    }
 
-    const [{ data: profile }, { data: ws }, { data: items }, { count: strandCount }, { data: posts }, { data: achvs }] = await Promise.all([
+    setDataLoading(true);
+
+    const userId = user.id;
+    const [profileRes, wsRes, itemsRes, strandCountRes, postsRes, achvsRes] = await Promise.allSettled([
       supabase.from("profiles").select("id, full_name, first_name, last_name, username, role, role_subtype, headline, bio, avatar_url, institution_name, location_city, location_state, activity_score, is_public, custom_links, open_to_work, designation, sector, languages, department, is_verified, role_metadata, about_qa, verification_badge_text, verification_type, created_at, updated_at").eq("id", userId).maybeSingle(),
       supabase.from("workspace_members").select("*, workspace:workspaces(name, type)").eq("user_id", userId),
       supabase.from("work_items").select("*").eq("owner_id", userId).order("created_at", { ascending: false }),
@@ -326,7 +336,15 @@ const Profile = () => {
       supabase.from("posts").select("*").eq("author_id", userId).order("created_at", { ascending: false }).limit(20),
       supabase.from("achievements").select("*").eq("user_id", userId).order("created_at", { ascending: false }),
     ]);
-    setProfileData(profile);
+
+    const profile = profileRes.status === "fulfilled" ? profileRes.value.data : null;
+    const ws = wsRes.status === "fulfilled" ? wsRes.value.data : [];
+    const items = itemsRes.status === "fulfilled" ? itemsRes.value.data : [];
+    const strandCount = strandCountRes.status === "fulfilled" ? strandCountRes.value.count : 0;
+    const posts = postsRes.status === "fulfilled" ? postsRes.value.data : [];
+    const achvs = achvsRes.status === "fulfilled" ? achvsRes.value.data : [];
+
+    setProfileData(profile || authProfile || null);
     setWorkspaces(ws || []);
     setWorkItems(items || []);
     setUserPosts(posts || []);
@@ -339,7 +357,11 @@ const Profile = () => {
     setDataLoading(false);
   };
 
-  useEffect(() => { loadProfile(); }, []);
+  useEffect(() => {
+    if (!authLoading) {
+      void loadProfile();
+    }
+  }, [user?.id, authLoading]);
 
   // Show skeleton while auth or data is loading
   if (authLoading || dataLoading) {
@@ -366,7 +388,6 @@ const Profile = () => {
 
   // If no user at all, redirect
   if (!user) {
-    navigate("/signin");
     return null;
   }
 

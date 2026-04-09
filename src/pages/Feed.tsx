@@ -59,7 +59,11 @@ const LivePostCard = ({ post }: { post: any }) => {
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
   const { user, profile: authProfile, initials: userInitials } = useAuth();
-  const { userReaction, counts, toggleReaction } = usePostReactions(post.id, user?.id);
+  const { userReaction, counts, toggleReaction } = usePostReactions(
+    post.id,
+    user?.id,
+    (post.reactions as Record<string, number> | null) || null
+  );
   const { comments, loading: commentsLoading, addComment } = usePostComments(post.id, showComments);
 
   const author = post.author;
