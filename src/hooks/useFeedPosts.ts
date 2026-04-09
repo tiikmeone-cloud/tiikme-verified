@@ -194,6 +194,60 @@ export function useFeedPosts() {
     loadPosts(0);
   }, [loadPosts]);
 
+  // Real-time subscription for new posts
+  useEffect(() => {
+    const channel = supabase
+      .channel("feed-realtime")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "posts" },
+        async (payload) => {
+          const newPost = payload.new as any;
+          // Skip if already in our list or not public
+          if (newPost.visibility !== "everyone") return;
+
+          // Fetch with author profile
+          const { data } = await supabase
+            .from("posts")
+            .select(
+              `*, author:profiles!author_id (id, username, full_name, role, avatar_url, institution_name, activity_score)`
+            )
+            .eq("id", newPost.id)
+            .single();
+
+          if (data) {
+            const scored = {
+              ...data,
+              _score: scorePost(
+                data as any,
+                userMeta.role,
+                userMeta.institution,
+                userMeta.strandIds,
+                seenIds.current
+              ),
+            };
+            setPosts((prev) => {
+              if (prev.some((p) => p.id === scored.id)) return prev;
+              return [scored as any, ...prev];
+            });
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "posts" },
+        (payload) => {
+          const deletedId = (payload.old as any).id;
+          setPosts((prev) => prev.filter((p) => p.id !== deletedId));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userMeta]);
+
   const loadMore = useCallback(() => {
     if (loadingMore || !hasMore) return;
     const next = pageRef.current + 1;
