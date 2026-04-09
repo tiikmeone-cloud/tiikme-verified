@@ -901,6 +901,7 @@ export type Database = {
           bio: string | null
           created_at: string | null
           custom_links: Json | null
+          department: string | null
           designation: string | null
           first_name: string | null
           full_name: string | null
@@ -909,6 +910,7 @@ export type Database = {
           institution_id: string | null
           institution_name: string | null
           is_public: boolean | null
+          is_verified: boolean | null
           languages: string[] | null
           last_name: string | null
           location_city: string | null
@@ -916,12 +918,14 @@ export type Database = {
           open_to_work: boolean | null
           phone_hash: string | null
           role: string | null
+          role_metadata: Json | null
           role_subtype: string | null
           sector: string | null
           status: string | null
           theme_preference: string | null
           updated_at: string | null
           username: string | null
+          verified_by: string | null
         }
         Insert: {
           activity_score?: number | null
@@ -929,6 +933,7 @@ export type Database = {
           bio?: string | null
           created_at?: string | null
           custom_links?: Json | null
+          department?: string | null
           designation?: string | null
           first_name?: string | null
           full_name?: string | null
@@ -937,6 +942,7 @@ export type Database = {
           institution_id?: string | null
           institution_name?: string | null
           is_public?: boolean | null
+          is_verified?: boolean | null
           languages?: string[] | null
           last_name?: string | null
           location_city?: string | null
@@ -944,12 +950,14 @@ export type Database = {
           open_to_work?: boolean | null
           phone_hash?: string | null
           role?: string | null
+          role_metadata?: Json | null
           role_subtype?: string | null
           sector?: string | null
           status?: string | null
           theme_preference?: string | null
           updated_at?: string | null
           username?: string | null
+          verified_by?: string | null
         }
         Update: {
           activity_score?: number | null
@@ -957,6 +965,7 @@ export type Database = {
           bio?: string | null
           created_at?: string | null
           custom_links?: Json | null
+          department?: string | null
           designation?: string | null
           first_name?: string | null
           full_name?: string | null
@@ -965,6 +974,7 @@ export type Database = {
           institution_id?: string | null
           institution_name?: string | null
           is_public?: boolean | null
+          is_verified?: boolean | null
           languages?: string[] | null
           last_name?: string | null
           location_city?: string | null
@@ -972,12 +982,14 @@ export type Database = {
           open_to_work?: boolean | null
           phone_hash?: string | null
           role?: string | null
+          role_metadata?: Json | null
           role_subtype?: string | null
           sector?: string | null
           status?: string | null
           theme_preference?: string | null
           updated_at?: string | null
           username?: string | null
+          verified_by?: string | null
         }
         Relationships: []
       }
