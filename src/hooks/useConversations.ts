@@ -151,7 +151,7 @@ export function useConversations(userId: string | undefined) {
     }
   }, [activeConvoId, userId]);
 
-  // Real-time subscription
+  // Real-time subscription for active conversation messages
   useEffect(() => {
     if (!activeConvoId) return;
     const channel = supabase
@@ -168,13 +168,50 @@ export function useConversations(userId: string | undefined) {
             if (prev.some(m => m.id === newMsg.id)) return prev;
             return [...prev, { ...newMsg, status: "delivered" as const }];
           });
-          // Mark as read immediately
           supabase.from("pings").update({ is_read: true }).eq("id", newMsg.id).then(() => {});
         }
+      })
+      .on("postgres_changes", {
+        event: "UPDATE",
+        schema: "public",
+        table: "pings",
+        filter: `conversation_id=eq.${activeConvoId}`,
+      }, (payload) => {
+        const updated = payload.new as any;
+        setMessages(prev => prev.map(m =>
+          m.id === updated.id ? { ...m, is_read: updated.is_read, status: updated.is_read ? "read" as const : "delivered" as const } : m
+        ));
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [activeConvoId, userId]);
+
+  // Real-time subscription for conversation list (new messages in any conversation)
+  useEffect(() => {
+    if (!userId) return;
+    const channel = supabase
+      .channel(`convos:${userId}`)
+      .on("postgres_changes", {
+        event: "INSERT",
+        schema: "public",
+        table: "pings",
+      }, (payload) => {
+        const newMsg = payload.new as any;
+        // If this message is in a conversation we're part of, refresh the list
+        if (newMsg.sender_id !== userId) {
+          fetchConversations();
+        }
+      })
+      .on("postgres_changes", {
+        event: "*",
+        schema: "public",
+        table: "conversations",
+      }, () => {
+        fetchConversations();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [userId, fetchConversations]);
 
   // Create or find conversation
   const findOrCreateConversation = useCallback(async (otherUserId: string) => {
