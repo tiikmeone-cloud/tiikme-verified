@@ -62,7 +62,7 @@ const Workspace = () => {
   const [inviteRole, setInviteRole] = useState("member");
   const [expandedChannels, setExpandedChannels] = useState<string[]>([]);
   const [activeChannel, setActiveChannel] = useState<string | null>(null);
-  const [joinedDiscover, setJoinedDiscover] = useState<string[]>([]);
+  
 
   // Members: use real data only
   const members = realMembers.map(m => ({
