@@ -415,7 +415,8 @@ const Profile = () => {
 
   return (
     <div className="max-w-[760px] mx-auto px-0 md:px-4 py-0 md:py-7 space-y-0">
-      <title>{displayName ? `${displayName} — Tiikme` : "Profile — Tiikme"}</title>
+      {/* ═══ PROFILE HERO CARD ═══ */}
+      <div className="t-card overflow-hidden relative" style={{ borderRadius: "0px", borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
         <div className="h-[100px] md:h-[100px] relative" style={{
           background: `linear-gradient(135deg, color-mix(in srgb, ${roleColor} 40%, var(--surface)) 0%, color-mix(in srgb, ${roleColor} 15%, var(--surface)) 50%, var(--surface) 100%)`,
         }}>
