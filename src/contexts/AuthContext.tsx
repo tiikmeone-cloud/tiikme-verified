@@ -1,13 +1,14 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { User } from "@supabase/supabase-js";
 
-interface UserProfile {
+export interface UserProfile {
   id: string;
-  full_name: string;
+  full_name: string | null;
   first_name: string | null;
   last_name: string | null;
-  username: string;
-  role: string;
+  username: string | null;
+  role: string | null;
   role_subtype: string | null;
   headline: string | null;
   bio: string | null;
@@ -15,22 +16,26 @@ interface UserProfile {
   institution_name: string | null;
   location_city: string | null;
   location_state: string | null;
-  activity_score: number;
-  is_public: boolean;
+  activity_score: number | null;
+  is_public: boolean | null;
   custom_links: any[];
-  open_to_work: boolean;
+  open_to_work: boolean | null;
   designation: string | null;
   sector: string | null;
   languages: string[] | null;
+  department: string | null;
+  is_verified: boolean | null;
+  role_metadata: Record<string, any> | null;
 }
 
 interface AuthContextValue {
-  user: any | null;
+  user: User | null;
   profile: UserProfile | null;
   loading: boolean;
   initials: string;
   displayName: string;
   refreshProfile: () => Promise<void>;
+  refetchProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue>({
@@ -40,12 +45,13 @@ const AuthContext = createContext<AuthContextValue>({
   initials: "",
   displayName: "",
   refreshProfile: async () => {},
+  refetchProfile: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -59,7 +65,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (data) {
       setProfile(data as any);
     } else if (error?.code === "PGRST116") {
-      // Profile doesn't exist — create one
       const fallbackName = meta?.full_name || meta?.first_name || "";
       const { data: newProfile } = await supabase.from("profiles").insert({
         id: userId,
@@ -78,17 +83,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    const init = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setUser(session.user);
-        await fetchProfile(session.user.id, session.user.user_metadata);
-      }
-      setLoading(false);
-    };
-    init();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
         setUser(session.user);
         await fetchProfile(session.user.id, session.user.user_metadata);
@@ -96,6 +91,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(null);
         setProfile(null);
       }
+      setLoading(false);
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser(session.user);
+        fetchProfile(session.user.id, session.user.user_metadata);
+      }
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
@@ -110,7 +114,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     .toUpperCase() || "U";
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, initials, displayName, refreshProfile }}>
+    <AuthContext.Provider value={{ user, profile, loading, initials, displayName, refreshProfile, refetchProfile: refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
