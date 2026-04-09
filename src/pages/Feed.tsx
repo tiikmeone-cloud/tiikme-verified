@@ -469,7 +469,7 @@ const Feed = () => {
         </aside>
       </div>
 
-      <NewPostModal open={postModalOpen} onClose={() => setPostModalOpen(false)} defaultType={postModalType} />
+      <NewPostModal open={postModalOpen} onClose={() => setPostModalOpen(false)} defaultType={postModalType} onPublished={refresh} />
     </main>
   );
 };

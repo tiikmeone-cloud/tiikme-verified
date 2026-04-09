@@ -380,7 +380,7 @@ const Profile = () => {
         <h1 className="text-[22px] font-extrabold mb-2" style={{ color: "var(--text-1)" }}>Set up your profile</h1>
         <p className="text-[14px] mb-2" style={{ color: "var(--text-2)" }}>{user.email}</p>
         <p className="text-[13px] mb-6 text-center max-w-xs" style={{ color: "var(--text-3)" }}>Add your name, location, and details so people can find and connect with you.</p>
-        <button onClick={() => navigate("/signup")} className="px-6 py-3 rounded-xl font-bold text-sm text-white" style={{ background: "#E8580A" }}>
+        <button onClick={() => navigate("/signup")} className="px-6 py-3 rounded-xl font-bold text-sm text-white cursor-pointer active:scale-95 transition-transform" style={{ background: "#E8580A" }}>
           Complete your profile →
         </button>
       </div>
