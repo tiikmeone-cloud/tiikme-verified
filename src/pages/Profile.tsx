@@ -586,7 +586,7 @@ const Profile = () => {
             </div>
           )}
 
-          {activeTab === "Achievements" && <AchievementsTab isOwnProfile={true} />}
+          {activeTab === "Achievements" && <AchievementsTab isOwnProfile={true} achievements={achievements} userId={user?.id} onRefresh={loadProfile} />}
 
           {activeTab === "Posts" && (
             userPosts.length === 0 ? (
