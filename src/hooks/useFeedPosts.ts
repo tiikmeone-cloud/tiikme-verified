@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const POSTS_PER_PAGE = 20;
 
@@ -12,6 +13,7 @@ interface FeedPost {
   comment_count: number | null;
   hashtags: string[] | null;
   pdf_url: string | null;
+  image_urls: string[] | null;
   visibility: string | null;
   author_id: string | null;
   author?: {
@@ -58,79 +60,53 @@ function scorePost(
   seenIds: Set<string>
 ): number {
   let score = 0;
-
-  // Trust weight (2.5x)
   const author = post.author;
   if (strandIds.has(post.author_id || "")) score += 2.0;
-  if (author?.institution_name && author.institution_name === userInstitution)
-    score += 1.5;
-
-  // Relevance weight (2.0x) — simplified domain matching via role
+  if (author?.institution_name && author.institution_name === userInstitution) score += 1.5;
   if (author?.role === userRole) score += 2.0;
   else if (author?.role) score += 0.5;
-
-  // Recency weight (1.5x)
   score += getRecencyWeight(post.created_at);
-
-  // Engagement weight (1.0x)
   score += getEngagementWeight(post.reactions, post.comment_count);
-
-  // Freshness boost (0.5x)
   if (!seenIds.has(post.id)) score += Math.random() * 0.5;
-
   return score;
 }
 
 export function useFeedPosts() {
+  const { user, profile, isReady } = useAuth();
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const pageRef = useRef(0);
+  const mountedRef = useRef(true);
   const seenIds = useRef<Set<string>>(
     new Set(JSON.parse(sessionStorage.getItem("tiikme-seen-posts") || "[]"))
   );
-  const [userMeta, setUserMeta] = useState<{
-    role: string | null;
-    institution: string | null;
-    strandIds: Set<string>;
-  }>({ role: null, institution: null, strandIds: new Set() });
+  const [strandIds, setStrandIds] = useState<Set<string>>(new Set());
 
-  // Load user context
   useEffect(() => {
-    const loadUserContext = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const [profileRes, strandsRes] = await Promise.all([
-        supabase
-          .from("profiles")
-          .select("role, institution_name")
-          .eq("id", user.id)
-          .single(),
-        supabase
-          .from("strands")
-          .select("requester_id, receiver_id")
-          .or(`requester_id.eq.${user.id},receiver_id.eq.${user.id}`)
-          .eq("status", "accepted"),
-      ]);
-
-      const strandIds = new Set<string>();
-      (strandsRes.data || []).forEach((s) => {
-        if (s.requester_id !== user.id) strandIds.add(s.requester_id!);
-        if (s.receiver_id !== user.id) strandIds.add(s.receiver_id!);
-      });
-
-      setUserMeta({
-        role: profileRes.data?.role || null,
-        institution: profileRes.data?.institution_name || null,
-        strandIds,
-      });
-    };
-    loadUserContext();
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
   }, []);
+
+  // Load strands once when user is ready
+  useEffect(() => {
+    if (!isReady || !user) return;
+    supabase
+      .from("strands")
+      .select("requester_id, receiver_id")
+      .or(`requester_id.eq.${user.id},receiver_id.eq.${user.id}`)
+      .eq("status", "accepted")
+      .then(({ data }) => {
+        if (!mountedRef.current) return;
+        const ids = new Set<string>();
+        (data || []).forEach(s => {
+          if (s.requester_id !== user.id) ids.add(s.requester_id!);
+          if (s.receiver_id !== user.id) ids.add(s.receiver_id!);
+        });
+        setStrandIds(ids);
+      });
+  }, [isReady, user]);
 
   const loadPosts = useCallback(
     async (pageNum: number, append = false) => {
@@ -140,113 +116,80 @@ export function useFeedPosts() {
       try {
         const { data, error } = await supabase
           .from("posts")
-          .select(
-            `*, author:profiles!author_id (id, username, full_name, role, avatar_url, institution_name, activity_score)`
-          )
+          .select(`*, author:profiles!author_id (id, username, full_name, role, avatar_url, institution_name, activity_score)`)
           .eq("visibility", "everyone")
           .order("created_at", { ascending: false })
-          .range(
-            pageNum * POSTS_PER_PAGE,
-            (pageNum + 1) * POSTS_PER_PAGE - 1
-          );
+          .range(pageNum * POSTS_PER_PAGE, (pageNum + 1) * POSTS_PER_PAGE - 1);
 
+        if (!mountedRef.current) return;
         if (error) throw error;
+
+        const userRole = profile?.role || null;
+        const userInst = profile?.institution_name || null;
 
         const scored = (data || [])
           .map((post: any) => ({
             ...post,
-            _score: scorePost(
-              post,
-              userMeta.role,
-              userMeta.institution,
-              userMeta.strandIds,
-              seenIds.current
-            ),
+            _score: scorePost(post, userRole, userInst, strandIds, seenIds.current),
           }))
           .sort((a: any, b: any) => b._score - a._score);
 
-        // Mark as seen
         scored.forEach((p: any) => seenIds.current.add(p.id));
-        sessionStorage.setItem(
-          "tiikme-seen-posts",
-          JSON.stringify([...seenIds.current])
-        );
+        try {
+          sessionStorage.setItem("tiikme-seen-posts", JSON.stringify([...seenIds.current].slice(-200)));
+        } catch {}
 
-        if (append) {
-          setPosts((prev) => [...prev, ...scored]);
-        } else {
-          setPosts(scored);
-        }
-
+        if (append) setPosts(prev => [...prev, ...scored]);
+        else setPosts(scored);
         setHasMore((data || []).length === POSTS_PER_PAGE);
       } catch (err) {
         console.error("Failed to load posts:", err);
       } finally {
-        setLoading(false);
-        setLoadingMore(false);
+        if (mountedRef.current) {
+          setLoading(false);
+          setLoadingMore(false);
+        }
       }
     },
-    [userMeta]
+    [profile?.role, profile?.institution_name, strandIds]
   );
 
-  // Initial load
+  // Load posts only when auth is ready
   useEffect(() => {
+    if (!isReady) return;
     loadPosts(0);
-  }, [loadPosts]);
+  }, [isReady, loadPosts]);
 
-  // Real-time subscription for new posts
+  // Real-time subscription
   useEffect(() => {
+    if (!isReady) return;
     const channel = supabase
       .channel("feed-realtime")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "posts" },
-        async (payload) => {
-          const newPost = payload.new as any;
-          // Skip if already in our list or not public
-          if (newPost.visibility !== "everyone") return;
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "posts" }, async (payload) => {
+        const newPost = payload.new as any;
+        if (newPost.visibility !== "everyone") return;
 
-          // Fetch with author profile
-          const { data } = await supabase
-            .from("posts")
-            .select(
-              `*, author:profiles!author_id (id, username, full_name, role, avatar_url, institution_name, activity_score)`
-            )
-            .eq("id", newPost.id)
-            .single();
+        const { data } = await supabase
+          .from("posts")
+          .select(`*, author:profiles!author_id (id, username, full_name, role, avatar_url, institution_name, activity_score)`)
+          .eq("id", newPost.id)
+          .single();
 
-          if (data) {
-            const scored = {
-              ...data,
-              _score: scorePost(
-                data as any,
-                userMeta.role,
-                userMeta.institution,
-                userMeta.strandIds,
-                seenIds.current
-              ),
-            };
-            setPosts((prev) => {
-              if (prev.some((p) => p.id === scored.id)) return prev;
-              return [scored as any, ...prev];
-            });
-          }
+        if (data && mountedRef.current) {
+          setPosts(prev => {
+            if (prev.some(p => p.id === data.id)) return prev;
+            return [data as any, ...prev];
+          });
         }
-      )
-      .on(
-        "postgres_changes",
-        { event: "DELETE", schema: "public", table: "posts" },
-        (payload) => {
-          const deletedId = (payload.old as any).id;
-          setPosts((prev) => prev.filter((p) => p.id !== deletedId));
-        }
-      )
+      })
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "posts" }, (payload) => {
+        const deletedId = (payload.old as any).id;
+        if (mountedRef.current) setPosts(prev => prev.filter(p => p.id !== deletedId));
+      })
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [userMeta]);
+    return () => { supabase.removeChannel(channel); };
+  }, [isReady]);
 
   const loadMore = useCallback(() => {
     if (loadingMore || !hasMore) return;

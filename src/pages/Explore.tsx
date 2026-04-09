@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { Search, X, Shield, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -83,6 +83,9 @@ const Explore = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [roleFilter, setRoleFilter] = useState("All");
   const [verifiedOnly, setVerifiedOnly] = useState(false);
+  const mountedRef = useRef(true);
+
+  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
   const fetchPeople = useCallback(async () => {
     setLoading(true);
@@ -112,8 +115,10 @@ const Explore = () => {
     }
 
     const { data } = await query;
-    setPeople((data as ProfileResult[]) || []);
-    setLoading(false);
+    if (mountedRef.current) {
+      setPeople((data as ProfileResult[]) || []);
+      setLoading(false);
+    }
   }, [search, user?.id, roleFilter, verifiedOnly]);
 
   useEffect(() => {
