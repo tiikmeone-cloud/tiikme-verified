@@ -463,13 +463,20 @@ const Workspace = () => {
             {activeTab === "About" && (
               <div className="t-card p-5">
                 <h3 className="text-[15px] font-bold mb-3" style={{ color: "var(--text-1)" }}>About {activeWs?.name}</h3>
-                <p className="text-[13px] leading-relaxed mb-4" style={{ color: "var(--text-2)" }}>Building a telemedicine platform for rural India with AI triage and offline-first sync capabilities.</p>
-                <div className="space-y-2 text-[12px]" style={{ color: "var(--text-3)" }}>
-                  <p>Type: {activeWs?.type} workspace</p>
-                  <p>Created: Jan 2025 by Arjun Kumar</p>
-                  <p>Privacy: Members only</p>
-                  <p>Institution: <Link to="/p/dtu" className="hover:underline" style={{ color: "var(--brand)" }}>Delhi Technological University</Link></p>
-                </div>
+                {(() => {
+                  const realWs = realWorkspaces.find(w => w.id === selected);
+                  return (
+                    <>
+                      {realWs?.description && <p className="text-[13px] leading-relaxed mb-4" style={{ color: "var(--text-2)" }}>{realWs.description}</p>}
+                      <div className="space-y-2 text-[12px]" style={{ color: "var(--text-3)" }}>
+                        <p>Type: {activeWs?.type} workspace</p>
+                        <p>Created: {realWs?.created_at ? new Date(realWs.created_at).toLocaleDateString("en", { month: "short", year: "numeric" }) : "—"}</p>
+                        <p>Privacy: {realWs?.privacy || "Members only"}</p>
+                        <p>Members: {members.length}</p>
+                      </div>
+                    </>
+                  );
+                })()}
                 <div className="mt-4 pt-4" style={{ borderTop: "1px solid var(--border)" }}>
                   <Button variant="ghost" className="w-full text-[12px]" style={{ color: "#DC2626" }} onClick={() => setShowLeaveConfirm(true)}>Leave workspace</Button>
                 </div>
