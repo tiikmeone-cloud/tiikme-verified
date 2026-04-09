@@ -332,7 +332,9 @@ const Workspace = () => {
                   ) : (
                     <div>
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ background: "var(--brand)" }}>AK</div>
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white overflow-hidden" style={{ background: "var(--brand)" }}>
+                          {authProfile?.avatar_url ? <img src={authProfile.avatar_url} alt="" className="w-full h-full object-cover" /> : userInitials}
+                        </div>
                         <div className="flex gap-1.5 overflow-x-auto scrollbar-hide flex-1">
                           {postTypes.map(pt => (
                             <button key={pt.type} onClick={() => { setComposeType(pt.type); if (pt.type !== "discussion") setComposeVisibility(defaultVisibility[pt.type] || "team"); else setComposeVisibility("team"); }}
