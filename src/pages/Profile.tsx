@@ -512,6 +512,28 @@ const Profile = () => {
       <AnimatePresence>
         {editOpen && <EditProfileDrawer open={editOpen} onClose={() => setEditOpen(false)} onSaved={loadProfile} />}
       </AnimatePresence>
+
+      {/* Add Work Item Modal */}
+      {showAddWork && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} onClick={() => setShowAddWork(false)}>
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-[520px] max-h-[90vh] overflow-y-auto rounded-[20px] p-6 glass-card mx-4"
+            onClick={e => e.stopPropagation()}>
+            <AddWorkForm userId={user?.id} role={profileData?.role || "student"} institution={profileData?.institution_name || ""} onSaved={() => { setShowAddWork(false); loadProfile(); }} onClose={() => setShowAddWork(false)} />
+          </motion.div>
+        </div>
+      )}
+
+      {/* Add Achievement Modal */}
+      {showAddAchievement && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} onClick={() => setShowAddAchievement(false)}>
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-[480px] max-h-[90vh] overflow-y-auto rounded-[20px] p-6 glass-card mx-4"
+            onClick={e => e.stopPropagation()}>
+            <AddAchievementForm userId={user?.id} onSaved={() => { setShowAddAchievement(false); loadProfile(); }} onClose={() => setShowAddAchievement(false)} />
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };
