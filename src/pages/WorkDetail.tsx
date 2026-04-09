@@ -1,158 +1,170 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { ArrowLeft, Layers, Copy, Shield, ExternalLink, Users, MessageSquare, Share2, Github, Globe } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, Layers, Copy, Shield, ExternalLink, Users, MessageSquare, Github, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Link, useNavigate } from "react-router-dom";
-
-const work = {
-  title: "TelemedicineRx",
-  status: "Active",
-  domain: ["HealthTech", "React Native", "Supabase"],
-  description: "A telemedicine platform designed for rural India, enabling remote consultations with AI-powered triage. The app works on 2G connectivity and supports voice-based inputs in Hindi and Telugu. Built by a team of 4 students from Delhi Technological University.",
-  links: [{ label: "GitHub", icon: Github, url: "#" }, { label: "Demo", icon: Globe, url: "#" }],
-  metrics: [{ label: "Profile views", value: "847" }, { label: "Recruiter views", value: "6" }, { label: "Followers", value: "23" }, { label: "Discussions", value: "8" }],
-  verifiedBy: { name: "Prof. Kumar", initials: "PK", designation: "HOD, CSE · DTU", verified: "gold" },
-  team: [
-    { name: "Arjun Kumar", initials: "AK", role: "Backend Lead", color: "#4F46E5" },
-    { name: "Riya Sharma", initials: "RS", role: "Frontend", color: "#4F46E5" },
-    { name: "Rahul K.", initials: "RK", role: "Mobile Dev", color: "#0369A1" },
-    { name: "Priya M.", initials: "PM", role: "Design", color: "#92400E" },
-  ],
-  milestones: [
-    { date: "Mar 2025", title: "AI triage module launched", desc: "Integrated symptom checker with 85% accuracy", active: true },
-    { date: "Feb 2025", title: "Beta released", desc: "50 pilot users in Gadchiroli district", active: false },
-    { date: "Jan 2025", title: "Project started", desc: "Team formed, tech stack decided", active: false },
-  ],
-};
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 const WorkDetail = () => {
   const navigate = useNavigate();
+  const { slug } = useParams();
+  const [work, setWork] = useState<any>(null);
+  const [team, setTeam] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [commentText, setCommentText] = useState("");
+
+  useEffect(() => {
+    const load = async () => {
+      if (!slug) { setLoading(false); return; }
+      // Try to find by slug or ID
+      const { data } = await supabase
+        .from("work_items")
+        .select("*, owner:profiles!work_items_owner_id_fkey(id, full_name, username, avatar_url, role)")
+        .or(`slug.eq.${slug},id.eq.${slug}`)
+        .maybeSingle();
+      setWork(data);
+
+      if (data?.id) {
+        const { data: members } = await supabase
+          .from("team_members")
+          .select("*, user:profiles!team_members_user_id_fkey(id, full_name, avatar_url, role)")
+          .eq("work_item_id", data.id);
+        setTeam(members || []);
+      }
+      setLoading(false);
+    };
+    load();
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <div className="max-w-5xl mx-auto px-4 py-7 space-y-4">
+        <div className="t-card p-6 animate-pulse space-y-4">
+          <div className="h-6 w-48 rounded" style={{ background: "var(--surface-2)" }} />
+          <div className="h-4 w-96 rounded" style={{ background: "var(--surface-2)" }} />
+          <div className="h-20 rounded" style={{ background: "var(--surface-2)" }} />
+        </div>
+      </div>
+    );
+  }
+
+  if (!work) {
+    return (
+      <div className="max-w-5xl mx-auto px-4 py-16 text-center">
+        <Layers className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
+        <p className="text-[16px] font-bold mb-2" style={{ color: "var(--text-1)" }}>Work item not found</p>
+        <p className="text-[13px] mb-4" style={{ color: "var(--text-3)" }}>It may have been removed or made private.</p>
+        <Button variant="secondary" onClick={() => navigate(-1)}>Go back</Button>
+      </div>
+    );
+  }
+
+  const owner = work.owner;
+  const ownerName = owner?.full_name || owner?.username || "Unknown";
+  const links = work.links || {};
+  const techStack = work.tech_stack || [];
+
+  const ROLE_COLORS: Record<string, string> = { student: "#4F46E5", professional: "#0369A1", doctor: "#0E7490", government: "#166534", skilled_trade: "#C2410C" };
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-7">
-      <div className="flex items-center gap-2 text-sm text-t2 mb-5">
-        <button onClick={() => navigate(-1)} className="hover:text-t1 transition-colors"><ArrowLeft className="w-4 h-4" /></button>
-        <Link to="/app/profile" className="hover:text-brand transition-colors">arjunkumar</Link>
+      <div className="flex items-center gap-2 text-sm mb-5" style={{ color: "var(--text-2)" }}>
+        <button onClick={() => navigate(-1)} className="cursor-pointer" style={{ color: "var(--text-2)" }}><ArrowLeft className="w-4 h-4" /></button>
+        {owner?.username && <Link to={`/app/profile/${owner.id}`} className="hover:underline" style={{ color: "var(--brand)" }}>{owner.username}</Link>}
         <span>/</span>
-        <span className="text-t1 font-bold">{work.title}</span>
+        <span className="font-bold" style={{ color: "var(--text-1)" }}>{work.title}</span>
       </div>
 
       <div className="flex gap-6 flex-col lg:flex-row">
-        {/* Main */}
         <div className="flex-1 space-y-4">
-          {/* Hero */}
           <div className="t-card p-6">
             <div className="flex items-center gap-2 mb-3 flex-wrap">
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[rgba(16,185,129,0.15)] text-[#10B981]">{work.status}</span>
-              {work.domain.map(d => <span key={d} className="text-[10px] px-2 py-0.5 rounded-full bg-surface-2 border border-border text-t2">{d}</span>)}
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: work.status === "active" ? "rgba(16,185,129,0.15)" : "rgba(245,158,11,0.15)", color: work.status === "active" ? "#10B981" : "#F59E0B" }}>
+                {(work.status || "active").charAt(0).toUpperCase() + (work.status || "active").slice(1)}
+              </span>
+              {techStack.map((d: string) => <span key={d} className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-2)" }}>{d}</span>)}
             </div>
-            <h1 className="text-2xl font-extrabold text-t1 mb-3">{work.title}</h1>
-            <p className="text-sm text-t2 leading-[1.75] mb-4">{work.description}</p>
+            <h1 className="text-2xl font-extrabold mb-3" style={{ color: "var(--text-1)" }}>{work.title}</h1>
+            {work.description && <p className="text-sm leading-[1.75] mb-4" style={{ color: "var(--text-2)" }}>{work.description}</p>}
             <div className="flex gap-2 mb-4">
-              {work.links.map(l => (
-                <Button key={l.label} variant="secondary" size="sm" className="gap-1.5"><l.icon className="w-3 h-3" /> {l.label}</Button>
-              ))}
+              {links.github && <a href={links.github} target="_blank" rel="noopener noreferrer"><Button variant="secondary" size="sm" className="gap-1.5"><Github className="w-3 h-3" /> GitHub</Button></a>}
+              {links.demo && <a href={links.demo} target="_blank" rel="noopener noreferrer"><Button variant="secondary" size="sm" className="gap-1.5"><Globe className="w-3 h-3" /> Demo</Button></a>}
             </div>
             <div className="flex gap-2">
-              <Button variant="secondary" size="sm" onClick={() => toast.success("Following this work")}>Follow work</Button>
-              <Button variant="secondary" size="sm">Discuss</Button>
-              <Button variant="secondary" size="sm" onClick={() => { navigator.clipboard.writeText("https://tiikme.in/arjunkumar/telemedicinerx"); toast.success("Link copied"); }}><Copy className="w-3 h-3" /> Share</Button>
+              <Button variant="secondary" size="sm" onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success("Link copied"); }}><Copy className="w-3 h-3 mr-1" /> Share</Button>
             </div>
           </div>
 
-          {/* Metrics */}
           <div className="grid grid-cols-4 gap-3">
-            {work.metrics.map(m => (
+            {[
+              { label: "Profile views", value: work.total_views || 0 },
+              { label: "Recruiter views", value: work.recruiter_views || 0 },
+              { label: "Team size", value: team.length + 1 },
+              { label: "Status", value: (work.status || "active").charAt(0).toUpperCase() + (work.status || "active").slice(1) },
+            ].map(m => (
               <div key={m.label} className="t-card p-4 text-center">
-                <p className="text-xl font-bold text-t1">{m.value}</p>
+                <p className="text-xl font-bold" style={{ color: "var(--text-1)" }}>{m.value}</p>
                 <p className="micro-label mt-1">{m.label}</p>
               </div>
             ))}
           </div>
 
-          {/* Chain */}
-          <div className="t-card p-5">
-            <p className="micro-label mb-3">TIIKME CHAIN</p>
-            <div className="flex items-center gap-4 overflow-x-auto scrollbar-hide pb-2">
-              <div className="text-center shrink-0">
-                <p className="micro-label text-[#F59E0B] mb-1">VERIFIED BY</p>
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white mx-auto mb-1" style={{ backgroundColor: "#92400E", border: "2.5px solid #F59E0B" }}>{work.verifiedBy.initials}</div>
-                <p className="text-[11px] font-bold text-t1">{work.verifiedBy.name}</p>
-                <p className="text-[10px] text-t3">{work.verifiedBy.designation}</p>
+          {(team.length > 0 || owner) && (
+            <div className="t-card p-5">
+              <p className="micro-label mb-3">TEAM</p>
+              <div className="flex items-center gap-4 overflow-x-auto scrollbar-hide pb-2">
+                {owner && (
+                  <Link to={`/app/profile/${owner.id}`} className="text-center shrink-0 hover:-translate-y-1 transition-transform">
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold text-white mx-auto mb-1 overflow-hidden" style={{ backgroundColor: ROLE_COLORS[owner.role || ""] || "#6B7280" }}>
+                      {owner.avatar_url ? <img src={owner.avatar_url} alt="" className="w-full h-full object-cover" /> : (ownerName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase())}
+                    </div>
+                    <p className="text-[11px] font-bold" style={{ color: "var(--text-1)" }}>{ownerName.split(" ")[0]}</p>
+                    <p className="text-[10px]" style={{ color: "var(--text-3)" }}>Owner</p>
+                  </Link>
+                )}
+                {team.map(m => {
+                  const u = m.user;
+                  const name = u?.full_name || "User";
+                  const initials = name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
+                  return (
+                    <Link key={m.id} to={`/app/profile/${u?.id}`} className="text-center shrink-0 hover:-translate-y-1 transition-transform">
+                      <div className="w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold text-white mx-auto mb-1 overflow-hidden" style={{ backgroundColor: ROLE_COLORS[u?.role || ""] || "#6B7280" }}>
+                        {u?.avatar_url ? <img src={u.avatar_url} alt="" className="w-full h-full object-cover" /> : initials}
+                      </div>
+                      <p className="text-[11px] font-bold" style={{ color: "var(--text-1)" }}>{name.split(" ")[0]}</p>
+                      <p className="text-[10px]" style={{ color: "var(--text-3)" }}>{m.role_in_project || "Member"}</p>
+                    </Link>
+                  );
+                })}
               </div>
-              <div className="w-8 h-[3px] bg-border shrink-0" />
-              {work.team.map(m => (
-                <Link key={m.name} to="/app/profile" className="text-center shrink-0 hover:-translate-y-1 transition-transform">
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold text-white mx-auto mb-1" style={{ backgroundColor: m.color }}>{m.initials}</div>
-                  <p className="text-[11px] font-bold text-t1">{m.name.split(" ")[0]}</p>
-                  <p className="text-[10px] text-t3">{m.role}</p>
-                </Link>
-              ))}
-              <div className="w-8 h-[3px] bg-border shrink-0" />
-              <button className="text-center shrink-0" onClick={() => toast.info("Opening collab request")}>
-                <div className="w-9 h-9 rounded-full border-2 border-dashed border-brand flex items-center justify-center text-brand mx-auto mb-1">+</div>
-                <p className="text-[10px] text-t3">Open role</p>
-              </button>
             </div>
-            <p className="text-[11px] text-t3 mt-3">Click any name to see their contribution</p>
-          </div>
+          )}
 
-          {/* Timeline */}
-          <div className="t-card p-5">
-            <p className="micro-label mb-3">BUILD TIMELINE</p>
-            <div className="space-y-4">
-              {work.milestones.map((m, i) => (
-                <div key={i} className="flex items-start gap-3">
-                  <div className="w-3 h-3 rounded-full mt-1 shrink-0" style={{ backgroundColor: m.active ? "hsl(var(--brand))" : "hsl(var(--text-3))" }} />
-                  <div>
-                    <p className="text-xs text-t3">{m.date}</p>
-                    <p className="text-sm font-bold text-t1">{m.title}</p>
-                    <p className="text-xs text-t2">{m.desc}</p>
-                  </div>
-                </div>
-              ))}
+          {work.is_tiik_approved && (
+            <div className="t-card p-5">
+              <div className="flex items-center gap-2">
+                <Shield className="w-5 h-5" style={{ color: "#F59E0B" }} />
+                <p className="text-[14px] font-bold" style={{ color: "#F59E0B" }}>Tiik Approved</p>
+              </div>
+              <p className="text-[12px] mt-1" style={{ color: "var(--text-3)" }}>This work has been verified by a trusted authority.</p>
             </div>
-          </div>
-
-          {/* Discussions */}
-          <div className="t-card p-5">
-            <p className="micro-label mb-3">DISCUSSIONS</p>
-            <div className="flex items-center gap-2 mb-4">
-              <input value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="Ask a question about this work..." className="flex-1 h-9 bg-surface-2 border border-border rounded-2xl px-4 text-xs outline-none placeholder:text-t3 text-t1 focus:border-brand transition-colors" />
-              <Button size="sm" onClick={() => { if (commentText.trim()) { toast.success("Comment posted"); setCommentText(""); } }}>Post</Button>
-            </div>
-            <p className="text-sm text-t3 text-center">No discussions yet. Be the first to ask!</p>
-          </div>
+          )}
         </div>
 
-        {/* Sidebar */}
         <div className="w-full lg:w-80 shrink-0 space-y-4">
           <div className="t-card p-5">
-            <h3 className="text-sm font-bold text-t1 mb-3">Interested in this person?</h3>
+            <h3 className="text-sm font-bold mb-3" style={{ color: "var(--text-1)" }}>Interested?</h3>
             <div className="space-y-2">
-              <Button className="w-full" size="sm">Reach out</Button>
-              <Button variant="secondary" className="w-full" size="sm">Save to pool</Button>
-              <Button variant="secondary" className="w-full" size="sm">Post a challenge</Button>
+              <Button className="w-full" size="sm" onClick={() => toast.info("Coming soon")}>Reach out</Button>
+              <Button variant="secondary" className="w-full" size="sm" onClick={() => toast.success("Saved")}>Save to pool</Button>
             </div>
           </div>
-          <div className="t-card p-5">
-            <p className="micro-label mb-2">VERIFIED BY</p>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ backgroundColor: "#92400E", border: "2px solid #F59E0B" }}>{work.verifiedBy.initials}</div>
-              <div><p className="text-sm font-bold text-t1">{work.verifiedBy.name}</p><p className="text-xs text-t2">{work.verifiedBy.designation}</p></div>
+          {work.institution_name && (
+            <div className="t-card p-5">
+              <p className="micro-label mb-2">INSTITUTION</p>
+              <p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>{work.institution_name}</p>
             </div>
-          </div>
-          <div className="t-card p-5">
-            <p className="micro-label mb-2">SIMILAR WORK</p>
-            {["HealthBridge App", "MedConnect", "RuralCare AI"].map(w => (
-              <div key={w} className="py-2 border-b border-border last:border-0">
-                <p className="text-sm font-bold text-t1">{w}</p>
-                <p className="text-xs text-t3">HealthTech · Active</p>
-              </div>
-            ))}
-          </div>
+          )}
         </div>
       </div>
     </div>
