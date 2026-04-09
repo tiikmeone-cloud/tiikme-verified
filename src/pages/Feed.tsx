@@ -223,70 +223,84 @@ function getTimeAgo(date: Date): string {
 }
 
 /* ─── RIGHT RAIL WIDGETS ─── */
-const ActivityWidget = () => (
-  <aside className="glass-liquid rounded-2xl p-5 mb-4">
-    <p className="micro-label mb-4">ACTIVITY THIS QUARTER</p>
-    <div className="flex justify-center">
-      <ActivityScoreRing score={78} size={100} strokeWidth={7} trend="+5 this week" percentile="Top 15% in your domain" />
-    </div>
-  </aside>
-);
+const ActivityWidget = () => {
+  const { profile } = useAuth();
+  const score = profile?.activity_score || 0;
+  return (
+    <aside className="glass-liquid rounded-2xl p-5 mb-4">
+      <p className="micro-label mb-4">ACTIVITY THIS QUARTER</p>
+      <div className="flex justify-center">
+        <ActivityScoreRing score={score} size={100} strokeWidth={7} />
+      </div>
+    </aside>
+  );
+};
 
-const RecruiterWidget = () => (
-  <aside className="glass-liquid rounded-2xl p-5 mb-4">
-    <p className="micro-label mb-3">WHO SAW YOUR WORK</p>
-    <p className="text-[13px] mb-3" style={{ color: "var(--text-2)" }}>3 recruiters viewed your work this week</p>
-    <div className="flex -space-x-2 mb-3">
-      {[{ i: "ZP", c: "#6B21A8" }, { i: "RA", c: "#0369A1" }, { i: "TC", c: "#C2410C" }, { i: "MK", c: "#166534" }, { i: "SJ", c: "#92400E" }].map((a, idx) => (
-        <div key={idx} className="w-8 h-8 rounded-full flex items-center justify-center text-[9px] font-bold text-white" style={{ backgroundColor: a.c, border: "2px solid var(--surface)" }}>{a.i}</div>
-      ))}
-      <div className="w-8 h-8 rounded-full flex items-center justify-center text-[9px] font-bold" style={{ background: "var(--surface-2)", border: "2px solid var(--surface)", color: "var(--text-3)" }}>+2</div>
-    </div>
-    <Link to="/app/teams" className="text-[13px] font-semibold flex items-center gap-1" style={{ color: "var(--brand)" }}>See full activity <ArrowUpRight className="w-3 h-3" /></Link>
-  </aside>
-);
-
-const OpportunitiesWidget = () => (
-  <aside className="glass-liquid rounded-2xl p-5 mb-4">
-    <p className="micro-label mb-3">OPEN OPPORTUNITIES</p>
-    <div className="space-y-0">
-      {[{ title: "Rural Water Monitoring IoT", reward: "₹25,000", days: "12d" }, { title: "AI Crop Disease Detection", reward: "₹50,000", days: "20d" }, { title: "E-Governance Portal Redesign", reward: "₹30,000", days: "8d" }].map((ch, i) => (
-        <Link key={ch.title} to="/app/opportunities" className="flex items-start gap-2.5 py-2.5 cursor-pointer" style={{ borderBottom: i < 2 ? "1px solid var(--border)" : "none" }}>
-          <div className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ background: "#F59E0B" }} />
-          <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-bold" style={{ color: "var(--text-1)" }}>{ch.title}</p>
-            <div className="flex gap-1.5 text-[11px]" style={{ color: "var(--text-3)" }}>
-              <span className="font-bold" style={{ color: "#F59E0B" }}>{ch.reward}</span>
-              <span>·</span><span>{ch.days}</span>
+const OpportunitiesWidget = () => {
+  const [opps, setOpps] = useState<any[]>([]);
+  useEffect(() => {
+    supabase.from("opportunities").select("id, title, compensation, deadline").eq("is_open", true).order("created_at", { ascending: false }).limit(3).then(({ data }) => setOpps(data || []));
+  }, []);
+  if (opps.length === 0) return null;
+  return (
+    <aside className="glass-liquid rounded-2xl p-5 mb-4">
+      <p className="micro-label mb-3">OPEN OPPORTUNITIES</p>
+      <div className="space-y-0">
+        {opps.map((ch, i) => (
+          <Link key={ch.id} to="/app/opportunities" className="flex items-start gap-2.5 py-2.5 cursor-pointer" style={{ borderBottom: i < opps.length - 1 ? "1px solid var(--border)" : "none" }}>
+            <div className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ background: "#F59E0B" }} />
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-bold" style={{ color: "var(--text-1)" }}>{ch.title}</p>
+              <div className="flex gap-1.5 text-[11px]" style={{ color: "var(--text-3)" }}>
+                {ch.compensation && <span className="font-bold" style={{ color: "#F59E0B" }}>{ch.compensation}</span>}
+                {ch.deadline && <><span>·</span><span>{ch.deadline}</span></>}
+              </div>
             </div>
-          </div>
-        </Link>
-      ))}
-    </div>
-    <Link to="/app/opportunities" className="text-[13px] font-semibold mt-2 flex items-center gap-1" style={{ color: "var(--brand)" }}>View all <ArrowUpRight className="w-3 h-3" /></Link>
-  </aside>
-);
-
-const SuggestedWidget = () => (
-  <aside className="glass-liquid rounded-2xl p-5">
-    <p className="micro-label mb-3">SUGGESTED CONNECTIONS</p>
-    <div className="space-y-3">
-      {[{ name: "Priya M.", role: "Faculty", initials: "PM", color: "#92400E", context: "Teaches at DTU" }, { name: "Rahul K.", role: "Professional", initials: "RK", color: "#0369A1", context: "Worked at Zepto" }, { name: "Dr. Neha S.", role: "Doctor", initials: "NS", color: "#0E7490", context: "Alumni of DTU" }].map(s => (
-        <div key={s.name} className="flex items-center gap-2.5">
-          <Link to="/app/profile">
-            <div className="w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-bold text-white hover:scale-105 transition-transform" style={{ backgroundColor: s.color }}>{s.initials}</div>
           </Link>
-          <div className="flex-1 min-w-0">
-            <Link to="/app/profile" className="text-[13px] font-bold truncate block hover:underline" style={{ color: "var(--text-1)" }}>{s.name}</Link>
-            <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{s.context}</p>
-          </div>
-          <Button variant="secondary" size="xs" className="active:scale-95 transition-all duration-200" onClick={() => toast.success("Request sent")}>Connect</Button>
-        </div>
-      ))}
-    </div>
-    <Link to="/app/explore" className="text-[13px] font-semibold mt-3 flex items-center gap-1" style={{ color: "var(--brand)" }}>Find more <ArrowUpRight className="w-3 h-3" /></Link>
-  </aside>
-);
+        ))}
+      </div>
+      <Link to="/app/opportunities" className="text-[13px] font-semibold mt-2 flex items-center gap-1" style={{ color: "var(--brand)" }}>View all <ArrowUpRight className="w-3 h-3" /></Link>
+    </aside>
+  );
+};
+
+const SuggestedWidget = () => {
+  const { user } = useAuth();
+  const [suggested, setSuggested] = useState<any[]>([]);
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("profiles").select("id, full_name, role, avatar_url, institution_name").neq("id", user.id).eq("is_public", true).order("activity_score", { ascending: false }).limit(3).then(({ data }) => setSuggested(data || []));
+  }, [user]);
+  if (suggested.length === 0) return null;
+  const roleColorMap2: Record<string, string> = { student: "#4F46E5", professional: "#0369A1", doctor: "#0E7490", government: "#166534", skilled_trade: "#C2410C", hr: "#6B21A8", faculty: "#92400E" };
+  return (
+    <aside className="glass-liquid rounded-2xl p-5">
+      <p className="micro-label mb-3">SUGGESTED CONNECTIONS</p>
+      <div className="space-y-3">
+        {suggested.map(s => {
+          const name = s.full_name || "User";
+          const initials = name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
+          const color = roleColorMap2[s.role || ""] || "#6B7280";
+          return (
+            <div key={s.id} className="flex items-center gap-2.5">
+              <Link to={`/app/profile/${s.id}`}>
+                <div className="w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-bold text-white hover:scale-105 transition-transform overflow-hidden" style={{ backgroundColor: color }}>
+                  {s.avatar_url ? <img src={s.avatar_url} alt="" className="w-full h-full object-cover" /> : initials}
+                </div>
+              </Link>
+              <div className="flex-1 min-w-0">
+                <Link to={`/app/profile/${s.id}`} className="text-[13px] font-bold truncate block hover:underline" style={{ color: "var(--text-1)" }}>{name}</Link>
+                <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{s.institution_name || s.role || ""}</p>
+              </div>
+              <Button variant="secondary" size="xs" className="active:scale-95 transition-all duration-200" onClick={() => { supabase.from("strands").insert({ requester_id: user!.id, receiver_id: s.id }); toast.success("Request sent"); }}>Connect</Button>
+            </div>
+          );
+        })}
+      </div>
+      <Link to="/app/explore" className="text-[13px] font-semibold mt-3 flex items-center gap-1" style={{ color: "var(--brand)" }}>Find more <ArrowUpRight className="w-3 h-3" /></Link>
+    </aside>
+  );
+};
 
 /* ─── FEED PAGE ─── */
 const Feed = () => {
@@ -450,7 +464,6 @@ const Feed = () => {
         {/* Right rail — desktop only */}
         <aside className="hidden lg:block w-[280px] shrink-0 sticky top-7 self-start space-y-0">
           <ActivityWidget />
-          <RecruiterWidget />
           <OpportunitiesWidget />
           <SuggestedWidget />
         </aside>

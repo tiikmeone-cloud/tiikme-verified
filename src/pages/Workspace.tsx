@@ -8,32 +8,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWorkspaces } from "@/hooks/useWorkspaces";
 import { supabase } from "@/integrations/supabase/client";
-const mockWorkspaces = [
-  { id: "1", name: "TelemedicineRx Team", initials: "TR", lastActivity: "2 hours ago", unread: 3, type: "Project", channels: [
-    { id: "c1", name: "general", type: "public", members: 4 },
-    { id: "c2", name: "dev-updates", type: "public", members: 3 },
-  ]},
-  { id: "2", name: "Zepto Engineering", initials: "ZE", lastActivity: "Yesterday", unread: 0, type: "Company", channels: [
-    { id: "c3", name: "company-wide", type: "public", members: 847 },
-    { id: "c4", name: "engineering", type: "restricted", members: 120 },
-    { id: "c5", name: "hiring", type: "public", members: 15 },
-    { id: "c6", name: "announcements", type: "announcement_only", members: 847 },
-  ]},
-  { id: "3", name: "DTU CS Club", initials: "DC", lastActivity: "3 days ago", unread: 1, type: "Club" },
-];
-
-const discoverWorkspaces = [
-  { id: "d1", name: "DTU Announcements", initials: "DA", type: "Institution", members: 4200, privacy: "public" },
-  { id: "d2", name: "DTU Placement Cell", initials: "DP", type: "Institution", members: 3100, privacy: "members_only" },
-];
-
-const mockMembers = [
-  { id: "m1", name: "Arjun Kumar", initials: "AK", role: "Admin", color: "#4F46E5", joined: "Jan 2025", stranded: false },
-  { id: "m2", name: "Riya Sharma", initials: "RS", role: "Lead", color: "#4F46E5", joined: "Jan 2025", stranded: true },
-  { id: "m3", name: "Priya Menon", initials: "PM", role: "Member", color: "#92400E", joined: "Feb 2025", stranded: false },
-  { id: "m4", name: "Rahul Kumar", initials: "RK", role: "Member", color: "#0369A1", joined: "Mar 2025", stranded: false },
-  { id: "m5", name: "Sunita Devi", initials: "SD", role: "Alumni", color: "#C2410C", joined: "Nov 2024", stranded: false },
-];
 
 const postTypes = [
   { emoji: "📢", label: "Announcement", type: "announcement" },
@@ -50,12 +24,6 @@ const defaultVisibility: Record<string, string> = {
   discussion: "team",
   event: "team",
 };
-
-const mockPosts = [
-  { id: "1", author: "Riya Sharma", initials: "RS", color: "#4F46E5", type: "achievement", typeLabel: "🏆 Achievement", content: "We won the Smart India Hackathon 2025! Our TelemedicineRx project secured 1st place.", time: "2h ago", sharable: true, isShared: false, visibility: "followers" },
-  { id: "2", author: "Arjun Kumar", initials: "AK", color: "#4F46E5", type: "project_update", typeLabel: "📦 Project update", content: "Shipped the offline-first sync module. Now works without internet in rural areas.", time: "5h ago", sharable: true, isShared: false, visibility: "followers" },
-  { id: "3", author: "Priya Menon", initials: "PM", color: "#92400E", type: "announcement", typeLabel: "📢 Announcement", content: "Weekly standup moved to Wednesday 6 PM. Please update your availability.", time: "Yesterday", sharable: false, isShared: false, visibility: "team" },
-];
 
 const templates = [
   { id: "project", icon: Rocket, title: "Project Team", desc: "Build something together" },
@@ -94,10 +62,10 @@ const Workspace = () => {
   const [inviteRole, setInviteRole] = useState("member");
   const [expandedChannels, setExpandedChannels] = useState<string[]>([]);
   const [activeChannel, setActiveChannel] = useState<string | null>(null);
-  const [joinedDiscover, setJoinedDiscover] = useState<string[]>([]);
+  
 
-  // Members: use real if available, else mock
-  const members = realMembers.length > 0 ? realMembers.map(m => ({
+  // Members: use real data only
+  const members = realMembers.map(m => ({
     id: m.id,
     name: m.profile?.full_name || m.profile?.username || "User",
     initials: (m.profile?.full_name || "U").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(),
@@ -105,10 +73,9 @@ const Workspace = () => {
     color: "#4F46E5",
     joined: m.joined_at ? new Date(m.joined_at).toLocaleDateString("en", { month: "short", year: "numeric" }) : "",
     stranded: false,
-  })) : mockMembers;
+  }));
 
   const handleJoinDiscover = (id: string, privacy: string) => {
-    setJoinedDiscover(prev => [...prev, id]);
     tiikToast.success(privacy === "public" ? "Joined ✓" : "Join request sent ✓");
   };
 
@@ -116,8 +83,8 @@ const Workspace = () => {
     tiikToast.success("Strand request sent ✓");
   };
 
-  // Use real workspaces, fallback to mock if none
-  const displayWorkspaces = realWorkspaces.length > 0 ? realWorkspaces.map(ws => ({
+  // Use real workspaces only
+  const displayWorkspaces = realWorkspaces.map(ws => ({
     id: ws.id,
     name: ws.name,
     initials: ws.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(),
@@ -125,7 +92,7 @@ const Workspace = () => {
     unread: 0,
     type: ws.type || "Project",
     channels: [] as any[],
-  })) : mockWorkspaces;
+  }));
 
   const activeWs = displayWorkspaces.find(w => w.id === selected);
   const tabs = ["Feed", "Projects", "Members", "About"];
@@ -236,7 +203,7 @@ const Workspace = () => {
 
         <div className="flex-1 overflow-y-auto">
           <p className="micro-label px-4 pt-3 pb-1.5">MY WORKSPACES</p>
-          {mockWorkspaces.filter(ws => !searchWs || ws.name.toLowerCase().includes(searchWs.toLowerCase())).map(ws => (
+          {displayWorkspaces.filter(ws => !searchWs || ws.name.toLowerCase().includes(searchWs.toLowerCase())).map(ws => (
             <div key={ws.id}>
               <button onClick={() => selectWs(ws.id)}
                 className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left cursor-pointer transition-all duration-150"
@@ -270,25 +237,6 @@ const Workspace = () => {
             </div>
           ))}
 
-          <div className="px-4 pt-3">
-            <p className="micro-label pb-1.5">DISCOVER</p>
-            {discoverWorkspaces.map(ws => {
-              const joined = joinedDiscover.includes(ws.id);
-              return (
-                <div key={ws.id} className="flex items-center gap-2.5 py-2" style={{ borderBottom: "1px solid var(--border)" }}>
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[9px] font-bold" style={{ background: "var(--surface-2)", color: "var(--text-2)" }}>{ws.initials}</div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-semibold truncate" style={{ color: "var(--text-1)" }}>{ws.name}</p>
-                    <p className="text-[9px]" style={{ color: "var(--text-3)" }}>{ws.members} members</p>
-                  </div>
-                  <button disabled={joined} className="text-[10px] font-bold cursor-pointer disabled:cursor-default" style={{ color: joined ? "var(--text-3)" : "var(--brand)" }}
-                    onClick={() => handleJoinDiscover(ws.id, ws.privacy)}>
-                    {joined ? (ws.privacy === "public" ? "Joined ✓" : "Sent ✓") : "Join →"}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
 
           <div className="p-4 space-y-2">
             <button onClick={() => { setShowCreate(true); setCreateStep(0); }} className="w-full text-[12px] font-semibold py-2 rounded-xl cursor-pointer" style={{ border: "1.5px dashed var(--border-2)", color: "var(--text-3)" }}>+ Create workspace</button>
@@ -364,7 +312,9 @@ const Workspace = () => {
                   {!composeOpen ? (
                     <>
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ background: "var(--brand)" }}>AK</div>
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white overflow-hidden" style={{ background: "var(--brand)" }}>
+                          {authProfile?.avatar_url ? <img src={authProfile.avatar_url} alt="" className="w-full h-full object-cover" /> : userInitials}
+                        </div>
                         <button onClick={() => setComposeOpen(true)} className="flex-1 text-left text-[12px] h-9 glass-input px-3 cursor-pointer" style={{ color: "var(--text-3)" }}>
                           {activeChannel ? `Post to #${activeWs?.channels?.find(c => c.id === activeChannel)?.name}...` : `Share with ${activeWs?.name}...`}
                         </button>
@@ -382,7 +332,9 @@ const Workspace = () => {
                   ) : (
                     <div>
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ background: "var(--brand)" }}>AK</div>
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white overflow-hidden" style={{ background: "var(--brand)" }}>
+                          {authProfile?.avatar_url ? <img src={authProfile.avatar_url} alt="" className="w-full h-full object-cover" /> : userInitials}
+                        </div>
                         <div className="flex gap-1.5 overflow-x-auto scrollbar-hide flex-1">
                           {postTypes.map(pt => (
                             <button key={pt.type} onClick={() => { setComposeType(pt.type); if (pt.type !== "discussion") setComposeVisibility(defaultVisibility[pt.type] || "team"); else setComposeVisibility("team"); }}
@@ -428,61 +380,57 @@ const Workspace = () => {
                   </div>
                 )}
 
-                {posts.map(post => (
-                  <article key={post.id} className="t-card t-card-hover p-4" style={{ borderLeft: post.type === "announcement" ? "3px solid #F59E0B" : post.type === "achievement" ? "3px solid var(--brand)" : undefined }}>
-                    <div className="flex items-center gap-2.5 mb-2">
-                      <Link to="/app/profile"><div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white hover:scale-105 transition-transform" style={{ backgroundColor: post.color }}>{post.initials}</div></Link>
-                      <div className="flex-1 min-w-0">
-                        <Link to="/app/profile" className="text-[12px] font-bold hover:underline" style={{ color: "var(--text-1)" }}>{post.author}</Link>
-                        <span className="text-[10px] ml-1.5" style={{ color: "var(--text-3)" }}>{post.time}</span>
+                {posts.length === 0 && (
+                  <div className="text-center py-8">
+                    <MessageCircle className="w-8 h-8 mx-auto mb-2" style={{ color: "var(--text-3)" }} />
+                    <p className="text-[13px] font-bold" style={{ color: "var(--text-1)" }}>No posts yet</p>
+                    <p className="text-[11px]" style={{ color: "var(--text-3)" }}>Be the first to share with this workspace.</p>
+                  </div>
+                )}
+                {posts.map(post => {
+                  const author = post.author as any;
+                  const authorName = author?.full_name || author?.username || "User";
+                  const authorInitials = authorName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
+                  const ROLE_COLORS: Record<string, string> = { student: "#4F46E5", professional: "#0369A1", doctor: "#0E7490", government: "#166534", skilled_trade: "#C2410C", hr: "#6B21A8", faculty: "#92400E" };
+                  const authorColor = ROLE_COLORS[author?.role || ""] || "#6B7280";
+                  const timeAgo = post.created_at ? (() => { const s = Math.floor((Date.now() - new Date(post.created_at).getTime()) / 1000); if (s < 60) return "just now"; const m = Math.floor(s / 60); if (m < 60) return `${m}m ago`; const h = Math.floor(m / 60); if (h < 24) return `${h}h ago`; return `${Math.floor(h / 24)}d ago`; })() : "";
+                  return (
+                    <article key={post.id} className="t-card t-card-hover p-4" style={{ borderLeft: post.type === "announcement" ? "3px solid #F59E0B" : post.type === "achievement" ? "3px solid var(--brand)" : undefined }}>
+                      <div className="flex items-center gap-2.5 mb-2">
+                        <Link to={`/app/profile/${author?.id || ""}`}>
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white hover:scale-105 transition-transform overflow-hidden" style={{ backgroundColor: authorColor }}>
+                            {author?.avatar_url ? <img src={author.avatar_url} alt="" className="w-full h-full object-cover" /> : authorInitials}
+                          </div>
+                        </Link>
+                        <div className="flex-1 min-w-0">
+                          <Link to={`/app/profile/${author?.id || ""}`} className="text-[12px] font-bold hover:underline" style={{ color: "var(--text-1)" }}>{authorName}</Link>
+                          <span className="text-[10px] ml-1.5" style={{ color: "var(--text-3)" }}>{timeAgo}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          {post.visibility === "workspace" && <Lock className="w-3 h-3" style={{ color: "var(--text-3)" }} />}
+                          {post.visibility === "everyone" && <Globe className="w-3 h-3" style={{ color: "#F59E0B" }} />}
+                          {post.post_type && <span className="text-[10px] font-medium px-2 py-0.5 rounded-full" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-2)" }}>{post.post_type}</span>}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        {/* Visibility badge */}
-                        {post.visibility === "team" && <Lock className="w-3 h-3" style={{ color: "var(--text-3)" }} />}
-                        {post.visibility === "followers" && <Users className="w-3 h-3" style={{ color: "var(--brand)" }} />}
-                        {post.visibility === "public" && <Globe className="w-3 h-3" style={{ color: "#F59E0B" }} />}
-                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-2)" }}>{post.typeLabel}</span>
-                      </div>
-                    </div>
-                    <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-2)" }}>{post.content}</p>
-                    {post.sharable && (
-                      <div className="flex items-center gap-3 mt-3 pt-2" style={{ borderTop: "1px solid var(--border)" }}>
-                        {post.isShared ? (
-                          <span className="text-[11px] font-semibold" style={{ color: "var(--text-3)" }}>Shared ✓</span>
-                        ) : (
+                      <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-2)" }}>{post.content}</p>
+                      {!post.is_shared_to_feed && post.visibility === "everyone" && (
+                        <div className="flex items-center gap-3 mt-3 pt-2" style={{ borderTop: "1px solid var(--border)" }}>
                           <button onClick={() => setShowShareConfirm(post.id)} className="text-[11px] font-semibold cursor-pointer" style={{ color: "var(--brand)" }}>Share to my Feed</button>
-                        )}
-                      </div>
-                    )}
-                  </article>
-                ))}
+                        </div>
+                      )}
+                    </article>
+                  );
+                })}
               </div>
             )}
 
-            {/* Projects */}
+            {/* Projects - show real work items linked to workspace */}
             {activeTab === "Projects" && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {[{ name: "TelemedicineRx", status: "Active", owner: "Arjun K.", domain: "HealthTech" }, { name: "Health Camp Tracker", status: "Planning", owner: "Riya S.", domain: "Health" }].map(p => (
-                  <Link key={p.name} to="/app/teams/1" className="t-card t-card-hover p-4 block">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Layers className="w-4 h-4" style={{ color: "var(--brand)" }} />
-                      <p className="text-[13px] font-bold" style={{ color: "var(--text-1)" }}>{p.name}</p>
-                    </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: p.status === "Active" ? "rgba(16,185,129,0.1)" : "var(--brand-dim)", color: p.status === "Active" ? "#10B981" : "var(--brand)" }}>{p.status}</span>
-                      <span className="text-[10px]" style={{ color: "var(--text-3)" }}>{p.domain} · by {p.owner}</span>
-                    </div>
-                    <div className="flex -space-x-1.5 mt-2">
-                      {members.slice(0, 3).map(m => (
-                        <div key={m.name} className="w-6 h-6 rounded-full flex items-center justify-center text-[8px] font-bold text-white" style={{ backgroundColor: m.color, border: "2px solid var(--surface)" }}>{m.initials}</div>
-                      ))}
-                    </div>
-                  </Link>
-                ))}
-                <button onClick={() => tiikToast("Link project from My Work")} className="rounded-2xl p-6 text-center cursor-pointer" style={{ border: "2px dashed var(--border-2)" }}>
-                  <Plus className="w-5 h-5 mx-auto mb-1" style={{ color: "var(--text-3)" }} />
-                  <p className="text-[12px]" style={{ color: "var(--text-2)" }}>Link a project</p>
-                </button>
+              <div className="text-center py-10">
+                <Layers className="w-10 h-10 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
+                <p className="text-[14px] font-bold mb-1" style={{ color: "var(--text-1)" }}>No projects linked yet</p>
+                <p className="text-[12px] mb-3" style={{ color: "var(--text-3)" }}>Link projects from My Work to this workspace.</p>
+                <Button variant="secondary" size="sm" onClick={() => navigate("/app/teams")}>Go to My Work</Button>
               </div>
             )}
 
@@ -532,13 +480,20 @@ const Workspace = () => {
             {activeTab === "About" && (
               <div className="t-card p-5">
                 <h3 className="text-[15px] font-bold mb-3" style={{ color: "var(--text-1)" }}>About {activeWs?.name}</h3>
-                <p className="text-[13px] leading-relaxed mb-4" style={{ color: "var(--text-2)" }}>Building a telemedicine platform for rural India with AI triage and offline-first sync capabilities.</p>
-                <div className="space-y-2 text-[12px]" style={{ color: "var(--text-3)" }}>
-                  <p>Type: {activeWs?.type} workspace</p>
-                  <p>Created: Jan 2025 by Arjun Kumar</p>
-                  <p>Privacy: Members only</p>
-                  <p>Institution: <Link to="/p/dtu" className="hover:underline" style={{ color: "var(--brand)" }}>Delhi Technological University</Link></p>
-                </div>
+                {(() => {
+                  const realWs = realWorkspaces.find(w => w.id === selected);
+                  return (
+                    <>
+                      {realWs?.description && <p className="text-[13px] leading-relaxed mb-4" style={{ color: "var(--text-2)" }}>{realWs.description}</p>}
+                      <div className="space-y-2 text-[12px]" style={{ color: "var(--text-3)" }}>
+                        <p>Type: {activeWs?.type} workspace</p>
+                        <p>Created: {realWs?.created_at ? new Date(realWs.created_at).toLocaleDateString("en", { month: "short", year: "numeric" }) : "—"}</p>
+                        <p>Privacy: {realWs?.privacy || "Members only"}</p>
+                        <p>Members: {members.length}</p>
+                      </div>
+                    </>
+                  );
+                })()}
                 <div className="mt-4 pt-4" style={{ borderTop: "1px solid var(--border)" }}>
                   <Button variant="ghost" className="w-full text-[12px]" style={{ color: "#DC2626" }} onClick={() => setShowLeaveConfirm(true)}>Leave workspace</Button>
                 </div>
@@ -710,14 +665,14 @@ const Workspace = () => {
               {createStep === 2 && (
                 <>
                   <h2 className="text-[17px] font-extrabold mb-2" style={{ color: "var(--text-1)" }}>Invite members</h2>
-                  <p className="text-[12px] mb-4" style={{ color: "var(--text-3)" }}>Add team members by email</p>
+                  <p className="text-[12px] mb-4" style={{ color: "var(--text-3)" }}>Add team members by email (optional)</p>
                   <textarea placeholder="Enter emails (one per line)" rows={3}
                     className="w-full rounded-xl p-3 text-[12px] outline-none resize-none mb-3" style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", color: "var(--text-1)" }} />
                   <div className="flex gap-3">
                     <Button variant="ghost" className="flex-1" onClick={() => setCreateStep(1)}>Back</Button>
-                    <Button className="flex-1" onClick={() => { setShowCreate(false); tiikToast.success(`"${createName || "New workspace"}" created!`); setCreateName(""); setCreateDesc(""); }}>Create workspace</Button>
+                    <Button className="flex-1" onClick={handleCreateWorkspace}>Create workspace</Button>
                   </div>
-                  <button onClick={() => { setShowCreate(false); tiikToast.success(`"${createName || "New workspace"}" created!`); setCreateName(""); setCreateDesc(""); }}
+                  <button onClick={handleCreateWorkspace}
                     className="w-full text-[12px] mt-2 cursor-pointer" style={{ color: "var(--text-3)" }}>Skip — I'll invite later</button>
                 </>
               )}
