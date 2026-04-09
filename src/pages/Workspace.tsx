@@ -237,25 +237,6 @@ const Workspace = () => {
             </div>
           ))}
 
-          <div className="px-4 pt-3">
-            <p className="micro-label pb-1.5">DISCOVER</p>
-            {discoverWorkspaces.map(ws => {
-              const joined = joinedDiscover.includes(ws.id);
-              return (
-                <div key={ws.id} className="flex items-center gap-2.5 py-2" style={{ borderBottom: "1px solid var(--border)" }}>
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[9px] font-bold" style={{ background: "var(--surface-2)", color: "var(--text-2)" }}>{ws.initials}</div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-semibold truncate" style={{ color: "var(--text-1)" }}>{ws.name}</p>
-                    <p className="text-[9px]" style={{ color: "var(--text-3)" }}>{ws.members} members</p>
-                  </div>
-                  <button disabled={joined} className="text-[10px] font-bold cursor-pointer disabled:cursor-default" style={{ color: joined ? "var(--text-3)" : "var(--brand)" }}
-                    onClick={() => handleJoinDiscover(ws.id, ws.privacy)}>
-                    {joined ? (ws.privacy === "public" ? "Joined ✓" : "Sent ✓") : "Join →"}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
 
           <div className="p-4 space-y-2">
             <button onClick={() => { setShowCreate(true); setCreateStep(0); }} className="w-full text-[12px] font-semibold py-2 rounded-xl cursor-pointer" style={{ border: "1.5px dashed var(--border-2)", color: "var(--text-3)" }}>+ Create workspace</button>
