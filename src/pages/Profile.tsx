@@ -298,6 +298,7 @@ const AddAchievementForm = ({ userId, onSaved, onClose }: { userId?: string; onS
   );
 };
 
+const Profile = () => {
   const [activeTab, setActiveTab] = useState<typeof tabs[number]>("Work & Projects");
   const [editOpen, setEditOpen] = useState(false);
   const [showAddWork, setShowAddWork] = useState(false);
