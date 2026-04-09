@@ -384,6 +384,32 @@ const Profile = () => {
     );
   }
 
+  const displayName = profileData?.full_name || authDisplayName || "";
+  const username = profileData?.username || authProfile?.username || "";
+  const headline = profileData?.headline || "";
+  const institution = profileData?.institution_name || "";
+  const city = profileData?.location_city || "";
+  const state = profileData?.location_state || "";
+  const role = profileData?.role || authProfile?.role || "student";
+  const roleLabel = role.charAt(0).toUpperCase() + role.slice(1).replace(/_/g, " ");
+  const initials = displayName ? displayName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase() : authInitials || "U";
+  const ROLE_COLOR_MAP: Record<string, string> = { student: "#4F46E5", professional: "#0369A1", doctor: "#0E7490", government: "#166534", skilled_trade: "#C2410C", hr: "#6B21A8", faculty: "#92400E", builder: "#7C3AED", aspirant: "#374151" };
+  const roleColor = ROLE_COLOR_MAP[role] || "#4F46E5";
+  const isVerified = profileData?.is_verified === true;
+  const activityScore = profileData?.activity_score || 0;
+
+  const statusColors: Record<string, { dot: string; accent: string; label: string }> = {
+    active: { dot: "var(--brand)", accent: "var(--open-green)", label: "Active" },
+    completed: { dot: "var(--open-green)", accent: "var(--brand)", label: "Completed" },
+    paused: { dot: "#F59E0B", accent: "#F59E0B", label: "Paused" },
+  };
+
+  const handleCopyLink = async () => {
+    const url = window.location.origin + "/" + username;
+    await navigator.clipboard.writeText(url);
+    toast.success(`Profile link copied! tiikme.in/${username}`);
+  };
+
   return (
     <div className="max-w-[760px] mx-auto px-0 md:px-4 py-0 md:py-7 space-y-0">
       {/* ═══ PROFILE HERO CARD ═══ */}
