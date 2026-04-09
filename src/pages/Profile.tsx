@@ -205,6 +205,8 @@ const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose:
 const Profile = () => {
   const [activeTab, setActiveTab] = useState<typeof tabs[number]>("Work & Projects");
   const [editOpen, setEditOpen] = useState(false);
+  const [showAddWork, setShowAddWork] = useState(false);
+  const [showAddAchievement, setShowAddAchievement] = useState(false);
   const { profile: authProfile, initials: authInitials, displayName: authDisplayName, refreshProfile, user } = useAuth();
   const [profileData, setProfileData] = useState<any>(null);
   const [workspaces, setWorkspaces] = useState<any[]>([]);
