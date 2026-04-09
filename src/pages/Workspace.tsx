@@ -380,34 +380,47 @@ const Workspace = () => {
                   </div>
                 )}
 
-                {posts.map(post => (
-                  <article key={post.id} className="t-card t-card-hover p-4" style={{ borderLeft: post.type === "announcement" ? "3px solid #F59E0B" : post.type === "achievement" ? "3px solid var(--brand)" : undefined }}>
-                    <div className="flex items-center gap-2.5 mb-2">
-                      <Link to="/app/profile"><div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white hover:scale-105 transition-transform" style={{ backgroundColor: post.color }}>{post.initials}</div></Link>
-                      <div className="flex-1 min-w-0">
-                        <Link to="/app/profile" className="text-[12px] font-bold hover:underline" style={{ color: "var(--text-1)" }}>{post.author}</Link>
-                        <span className="text-[10px] ml-1.5" style={{ color: "var(--text-3)" }}>{post.time}</span>
+                {posts.length === 0 && (
+                  <div className="text-center py-8">
+                    <MessageCircle className="w-8 h-8 mx-auto mb-2" style={{ color: "var(--text-3)" }} />
+                    <p className="text-[13px] font-bold" style={{ color: "var(--text-1)" }}>No posts yet</p>
+                    <p className="text-[11px]" style={{ color: "var(--text-3)" }}>Be the first to share with this workspace.</p>
+                  </div>
+                )}
+                {posts.map(post => {
+                  const author = post.author as any;
+                  const authorName = author?.full_name || author?.username || "User";
+                  const authorInitials = authorName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
+                  const ROLE_COLORS: Record<string, string> = { student: "#4F46E5", professional: "#0369A1", doctor: "#0E7490", government: "#166534", skilled_trade: "#C2410C", hr: "#6B21A8", faculty: "#92400E" };
+                  const authorColor = ROLE_COLORS[author?.role || ""] || "#6B7280";
+                  const timeAgo = post.created_at ? (() => { const s = Math.floor((Date.now() - new Date(post.created_at).getTime()) / 1000); if (s < 60) return "just now"; const m = Math.floor(s / 60); if (m < 60) return `${m}m ago`; const h = Math.floor(m / 60); if (h < 24) return `${h}h ago`; return `${Math.floor(h / 24)}d ago`; })() : "";
+                  return (
+                    <article key={post.id} className="t-card t-card-hover p-4" style={{ borderLeft: post.type === "announcement" ? "3px solid #F59E0B" : post.type === "achievement" ? "3px solid var(--brand)" : undefined }}>
+                      <div className="flex items-center gap-2.5 mb-2">
+                        <Link to={`/app/profile/${author?.id || ""}`}>
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white hover:scale-105 transition-transform overflow-hidden" style={{ backgroundColor: authorColor }}>
+                            {author?.avatar_url ? <img src={author.avatar_url} alt="" className="w-full h-full object-cover" /> : authorInitials}
+                          </div>
+                        </Link>
+                        <div className="flex-1 min-w-0">
+                          <Link to={`/app/profile/${author?.id || ""}`} className="text-[12px] font-bold hover:underline" style={{ color: "var(--text-1)" }}>{authorName}</Link>
+                          <span className="text-[10px] ml-1.5" style={{ color: "var(--text-3)" }}>{timeAgo}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          {post.visibility === "workspace" && <Lock className="w-3 h-3" style={{ color: "var(--text-3)" }} />}
+                          {post.visibility === "everyone" && <Globe className="w-3 h-3" style={{ color: "#F59E0B" }} />}
+                          {post.post_type && <span className="text-[10px] font-medium px-2 py-0.5 rounded-full" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-2)" }}>{post.post_type}</span>}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        {/* Visibility badge */}
-                        {post.visibility === "team" && <Lock className="w-3 h-3" style={{ color: "var(--text-3)" }} />}
-                        {post.visibility === "followers" && <Users className="w-3 h-3" style={{ color: "var(--brand)" }} />}
-                        {post.visibility === "public" && <Globe className="w-3 h-3" style={{ color: "#F59E0B" }} />}
-                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-2)" }}>{post.typeLabel}</span>
-                      </div>
-                    </div>
-                    <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-2)" }}>{post.content}</p>
-                    {post.sharable && (
-                      <div className="flex items-center gap-3 mt-3 pt-2" style={{ borderTop: "1px solid var(--border)" }}>
-                        {post.isShared ? (
-                          <span className="text-[11px] font-semibold" style={{ color: "var(--text-3)" }}>Shared ✓</span>
-                        ) : (
+                      <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-2)" }}>{post.content}</p>
+                      {!post.is_shared_to_feed && post.visibility === "everyone" && (
+                        <div className="flex items-center gap-3 mt-3 pt-2" style={{ borderTop: "1px solid var(--border)" }}>
                           <button onClick={() => setShowShareConfirm(post.id)} className="text-[11px] font-semibold cursor-pointer" style={{ color: "var(--brand)" }}>Share to my Feed</button>
-                        )}
-                      </div>
-                    )}
-                  </article>
-                ))}
+                        </div>
+                      )}
+                    </article>
+                  );
+                })}
               </div>
             )}
 
