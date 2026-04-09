@@ -397,7 +397,7 @@ const Profile = () => {
           {activeTab === "Work & Projects" && (
             <div className="relative">
               {workItems.length === 0 ? (
-                <EmptyState icon={Layers} title="No projects yet" description="Add your first project or work item to build your verified portfolio." actionLabel="Add project" onAction={() => toast.info("Project creation coming soon")} />
+                <EmptyState icon={Layers} title="No projects yet" description="Add your first project or work item to build your verified portfolio." actionLabel="+ Add project" onAction={() => setShowAddWork(true)} />
               ) : (
                 <>
                   <div className="absolute left-[11px] top-5 bottom-16 w-[2px]" style={{ background: "var(--border-2)" }} />
@@ -448,9 +448,9 @@ const Profile = () => {
                   </div>
                 </>
               )}
-              <Link to="/app/mywork" className="flex items-center justify-center gap-1.5 mt-5 py-3 t-card t-card-hover text-[13px] font-semibold" style={{ color: "var(--brand)" }}>
+              <button onClick={() => setShowAddWork(true)} className="flex items-center justify-center gap-1.5 mt-5 py-3 t-card t-card-hover text-[13px] font-semibold w-full" style={{ color: "var(--brand)" }}>
                 <Plus className="w-4 h-4" /> Add new project
-              </Link>
+              </button>
             </div>
           )}
 
