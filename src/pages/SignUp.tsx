@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import RoleFields from "@/components/signup/RoleFields";
 import ThemeLogo from "@/components/ThemeLogo";
 import AuthThemeToggle from "@/components/AuthThemeToggle";

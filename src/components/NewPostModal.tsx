@@ -149,7 +149,7 @@ const NewPostModal = ({ open, onClose, defaultType, onPublished }: NewPostModalP
         }
       }
 
-      const { error } = await supabase
+      const { data: postData, error } = await supabase
         .from("posts")
         .insert({
           author_id: user.id,
@@ -160,9 +160,14 @@ const NewPostModal = ({ open, onClose, defaultType, onPublished }: NewPostModalP
           hashtags: extractHashtags(content),
           image_urls: uploadedUrls.length > 0 ? uploadedUrls : undefined,
           created_at: new Date().toISOString(),
-        } as any);
+        } as any)
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Post insert error:", error.message, error.details, error.hint);
+        throw error;
+      }
 
       onClose();
       setContent("");
