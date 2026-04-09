@@ -64,8 +64,8 @@ const Workspace = () => {
   const [activeChannel, setActiveChannel] = useState<string | null>(null);
   const [joinedDiscover, setJoinedDiscover] = useState<string[]>([]);
 
-  // Members: use real if available, else mock
-  const members = realMembers.length > 0 ? realMembers.map(m => ({
+  // Members: use real data only
+  const members = realMembers.map(m => ({
     id: m.id,
     name: m.profile?.full_name || m.profile?.username || "User",
     initials: (m.profile?.full_name || "U").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(),
@@ -73,10 +73,9 @@ const Workspace = () => {
     color: "#4F46E5",
     joined: m.joined_at ? new Date(m.joined_at).toLocaleDateString("en", { month: "short", year: "numeric" }) : "",
     stranded: false,
-  })) : mockMembers;
+  }));
 
   const handleJoinDiscover = (id: string, privacy: string) => {
-    setJoinedDiscover(prev => [...prev, id]);
     tiikToast.success(privacy === "public" ? "Joined ✓" : "Join request sent ✓");
   };
 
@@ -84,8 +83,8 @@ const Workspace = () => {
     tiikToast.success("Strand request sent ✓");
   };
 
-  // Use real workspaces, fallback to mock if none
-  const displayWorkspaces = realWorkspaces.length > 0 ? realWorkspaces.map(ws => ({
+  // Use real workspaces only
+  const displayWorkspaces = realWorkspaces.map(ws => ({
     id: ws.id,
     name: ws.name,
     initials: ws.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(),
@@ -93,7 +92,7 @@ const Workspace = () => {
     unread: 0,
     type: ws.type || "Project",
     channels: [] as any[],
-  })) : mockWorkspaces;
+  }));
 
   const activeWs = displayWorkspaces.find(w => w.id === selected);
   const tabs = ["Feed", "Projects", "Members", "About"];
