@@ -648,14 +648,14 @@ const Workspace = () => {
               {createStep === 2 && (
                 <>
                   <h2 className="text-[17px] font-extrabold mb-2" style={{ color: "var(--text-1)" }}>Invite members</h2>
-                  <p className="text-[12px] mb-4" style={{ color: "var(--text-3)" }}>Add team members by email</p>
+                  <p className="text-[12px] mb-4" style={{ color: "var(--text-3)" }}>Add team members by email (optional)</p>
                   <textarea placeholder="Enter emails (one per line)" rows={3}
                     className="w-full rounded-xl p-3 text-[12px] outline-none resize-none mb-3" style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", color: "var(--text-1)" }} />
                   <div className="flex gap-3">
                     <Button variant="ghost" className="flex-1" onClick={() => setCreateStep(1)}>Back</Button>
-                    <Button className="flex-1" onClick={() => { setShowCreate(false); tiikToast.success(`"${createName || "New workspace"}" created!`); setCreateName(""); setCreateDesc(""); }}>Create workspace</Button>
+                    <Button className="flex-1" onClick={handleCreateWorkspace}>Create workspace</Button>
                   </div>
-                  <button onClick={() => { setShowCreate(false); tiikToast.success(`"${createName || "New workspace"}" created!`); setCreateName(""); setCreateDesc(""); }}
+                  <button onClick={handleCreateWorkspace}
                     className="w-full text-[12px] mt-2 cursor-pointer" style={{ color: "var(--text-3)" }}>Skip — I'll invite later</button>
                 </>
               )}
