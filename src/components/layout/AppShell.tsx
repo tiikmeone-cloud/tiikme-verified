@@ -8,7 +8,7 @@ import ThemeLogo from "@/components/ThemeLogo";
 import NewPostModal from "@/components/NewPostModal";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 const navGroups = [
