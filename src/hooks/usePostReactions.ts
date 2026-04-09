@@ -1,40 +1,54 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export function usePostReactions(postId: string, userId: string | undefined) {
+const emptyCounts = { insightful: 0, useful: 0, inspiring: 0 };
+
+function normalizeCounts(source?: Record<string, number> | null) {
+  return {
+    insightful: source?.insightful || 0,
+    useful: source?.useful || 0,
+    inspiring: source?.inspiring || 0,
+  };
+}
+
+export function usePostReactions(
+  postId: string,
+  userId: string | undefined,
+  initialCounts?: Record<string, number> | null
+) {
   const [userReaction, setUserReaction] = useState<string | null>(null);
-  const [counts, setCounts] = useState<Record<string, number>>({ insightful: 0, useful: 0, inspiring: 0 });
+  const [counts, setCounts] = useState<Record<string, number>>(normalizeCounts(initialCounts));
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    if (!postId) return;
-    // Fetch counts
+    setCounts(normalizeCounts(initialCounts));
+  }, [initialCounts, postId]);
+
+  useEffect(() => {
+    if (!postId || !userId) {
+      setUserReaction(null);
+      setLoaded(true);
+      return;
+    }
+
+    let cancelled = false;
+    setLoaded(false);
+
     supabase
       .from("post_reactions")
       .select("reaction_type")
       .eq("post_id", postId)
+      .eq("user_id", userId)
+      .maybeSingle()
       .then(({ data }) => {
-        const c: Record<string, number> = { insightful: 0, useful: 0, inspiring: 0 };
-        (data || []).forEach(r => { c[r.reaction_type] = (c[r.reaction_type] || 0) + 1; });
-        setCounts(c);
-        // Find user's reaction
-        if (userId) {
-          const mine = (data || []).find((r: any) => false); // can't filter by user from this query
-        }
+        if (cancelled) return;
+        setUserReaction(data?.reaction_type || null);
         setLoaded(true);
       });
-    // Fetch user's own reaction separately
-    if (userId) {
-      supabase
-        .from("post_reactions")
-        .select("reaction_type")
-        .eq("post_id", postId)
-        .eq("user_id", userId)
-        .maybeSingle()
-        .then(({ data }) => {
-          setUserReaction(data?.reaction_type || null);
-        });
-    }
+
+    return () => {
+      cancelled = true;
+    };
   }, [postId, userId]);
 
   const toggleReaction = useCallback(async (reactionType: string) => {
@@ -57,5 +71,5 @@ export function usePostReactions(postId: string, userId: string | undefined) {
     }
   }, [postId, userId, userReaction]);
 
-  return { userReaction, counts, toggleReaction, loaded };
+  return { userReaction, counts: counts || emptyCounts, toggleReaction, loaded };
 }

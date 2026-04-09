@@ -55,6 +55,17 @@ const AuthContext = createContext<AuthContextValue>({
 
 export const useAuth = () => useContext(AuthContext);
 
+const getProfileCacheKey = (userId: string) => `tiikme-profile:${userId}`;
+
+const readCachedProfile = (userId: string): UserProfile | null => {
+  try {
+    const cached = localStorage.getItem(getProfileCacheKey(userId));
+    return cached ? (JSON.parse(cached) as UserProfile) : null;
+  } catch {
+    return null;
+  }
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -70,43 +81,68 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) {
         console.error("Profile fetch error:", error);
-        setProfile(null);
+        setProfile(readCachedProfile(userId));
       } else {
         setProfile(data as any);
+        if (data) {
+          localStorage.setItem(getProfileCacheKey(userId), JSON.stringify(data));
+        } else {
+          localStorage.removeItem(getProfileCacheKey(userId));
+        }
       }
     } catch (e) {
       console.error("Profile fetch exception:", e);
-      setProfile(null);
+      setProfile(readCachedProfile(userId));
     }
   }, []);
 
   useEffect(() => {
-    // Get existing session first
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    let isMounted = true;
+
+    const hydrateAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!isMounted) return;
+
       const currentUser = session?.user ?? null;
       setUser(currentUser);
+
       if (currentUser) {
-        fetchProfile(currentUser.id).finally(() => setLoading(false));
+        const cachedProfile = readCachedProfile(currentUser.id);
+        if (cachedProfile) setProfile(cachedProfile);
+        void fetchProfile(currentUser.id);
       } else {
-        setLoading(false);
+        setProfile(null);
       }
-    });
+
+      setLoading(false);
+    };
+
+    void hydrateAuth();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      (_event, session) => {
+        if (!isMounted) return;
+
         const currentUser = session?.user ?? null;
         setUser(currentUser);
+
         if (currentUser) {
-          await fetchProfile(currentUser.id);
+          const cachedProfile = readCachedProfile(currentUser.id);
+          if (cachedProfile) setProfile(cachedProfile);
+          void fetchProfile(currentUser.id);
         } else {
           setProfile(null);
         }
+
         setLoading(false);
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, [fetchProfile]);
 
   const refreshProfile = useCallback(async () => {
