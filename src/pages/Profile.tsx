@@ -307,6 +307,7 @@ const Profile = () => {
   const [profileData, setProfileData] = useState<any>(null);
   const [workspaces, setWorkspaces] = useState<any[]>([]);
   const [workItems, setWorkItems] = useState<any[]>([]);
+  const [userPosts, setUserPosts] = useState<any[]>([]);
   const [stats, setStats] = useState({ projects: 0, workspaces: 0, strands: 0 });
 
   const loadProfile = async () => {
@@ -314,15 +315,17 @@ const Profile = () => {
     if (!currentUser) return;
     const userId = currentUser.id;
 
-    const [{ data: profile }, { data: ws }, { data: items }, { count: strandCount }] = await Promise.all([
+    const [{ data: profile }, { data: ws }, { data: items }, { count: strandCount }, { data: posts }] = await Promise.all([
       supabase.from("profiles").select("*").eq("id", userId).single(),
       supabase.from("workspace_members").select("*, workspace:workspaces(name, type)").eq("user_id", userId),
       supabase.from("work_items").select("*").eq("owner_id", userId).order("created_at", { ascending: false }),
       supabase.from("strands").select("*", { count: "exact", head: true }).or(`requester_id.eq.${userId},receiver_id.eq.${userId}`).eq("status", "accepted"),
+      supabase.from("posts").select("*").eq("author_id", userId).order("created_at", { ascending: false }).limit(20),
     ]);
     setProfileData(profile);
     setWorkspaces(ws || []);
     setWorkItems(items || []);
+    setUserPosts(posts || []);
     setStats({
       projects: items?.length || 0,
       workspaces: ws?.length || 0,
