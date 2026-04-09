@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Users, Layers, MessageCircle, Settings, Hash, Send, Crown, Lock, Rocket, Building2, ChevronDown, Globe, ArrowRight, X, Link2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { tiikToast } from "@/components/ui/tiik-toast";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-
+import { useAuth } from "@/contexts/AuthContext";
+import { useWorkspaces } from "@/hooks/useWorkspaces";
+import { supabase } from "@/integrations/supabase/client";
 const mockWorkspaces = [
   { id: "1", name: "TelemedicineRx Team", initials: "TR", lastActivity: "2 hours ago", unread: 3, type: "Project", channels: [
     { id: "c1", name: "general", type: "public", members: 4 },
@@ -63,7 +65,9 @@ const templates = [
 
 const Workspace = () => {
   const navigate = useNavigate();
-  const [selected, setSelected] = useState<string | null>("1");
+  const { user, profile: authProfile, initials: userInitials } = useAuth();
+  const { workspaces: realWorkspaces, loading: wsLoading, members: realMembers, fetchMembers, createWorkspace } = useWorkspaces(user?.id);
+  const [selected, setSelected] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("Feed");
   const [showCreate, setShowCreate] = useState(false);
   const [createStep, setCreateStep] = useState(0);
@@ -71,19 +75,14 @@ const Workspace = () => {
   const [createName, setCreateName] = useState("");
   const [createDesc, setCreateDesc] = useState("");
   const [createPrivacy, setCreatePrivacy] = useState("members_only");
-  const [expandedChannels, setExpandedChannels] = useState<string[]>(["2"]);
-  const [activeChannel, setActiveChannel] = useState<string | null>(null);
   const [searchWs, setSearchWs] = useState("");
   const [mobileShowRight, setMobileShowRight] = useState(false);
 
-  // Workspace fixes state
   const [composeOpen, setComposeOpen] = useState(false);
   const [composeText, setComposeText] = useState("");
   const [composeType, setComposeType] = useState("discussion");
   const [composeVisibility, setComposeVisibility] = useState("team");
-  const [posts, setPosts] = useState(mockPosts);
-  const [joinedDiscover, setJoinedDiscover] = useState<string[]>([]);
-  const [members, setMembers] = useState(mockMembers);
+  const [posts, setPosts] = useState<any[]>([]);
   const [showSettings, setShowSettings] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
   const [showShareConfirm, setShowShareConfirm] = useState<string | null>(null);
@@ -94,63 +93,102 @@ const Workspace = () => {
   const [inviteInput, setInviteInput] = useState("");
   const [inviteRole, setInviteRole] = useState("member");
 
-  const activeWs = mockWorkspaces.find(w => w.id === selected);
+  // Use real workspaces, fallback to mock if none
+  const displayWorkspaces = realWorkspaces.length > 0 ? realWorkspaces.map(ws => ({
+    id: ws.id,
+    name: ws.name,
+    initials: ws.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(),
+    lastActivity: ws.created_at ? new Date(ws.created_at).toLocaleDateString() : "",
+    unread: 0,
+    type: ws.type || "Project",
+    channels: [] as any[],
+  })) : mockWorkspaces;
+
+  const activeWs = displayWorkspaces.find(w => w.id === selected);
   const tabs = ["Feed", "Projects", "Members", "About"];
-  const hasChannels = activeWs?.channels && activeWs.channels.length > 0;
+
+  // Load members when workspace changes
+  useEffect(() => {
+    if (selected && realWorkspaces.some(w => w.id === selected)) {
+      fetchMembers(selected);
+    }
+  }, [selected, realWorkspaces, fetchMembers]);
+
+  // Load workspace posts
+  useEffect(() => {
+    if (!selected) return;
+    const loadPosts = async () => {
+      const { data } = await supabase
+        .from("posts")
+        .select("*, author:profiles!author_id(id, full_name, username, avatar_url, role)")
+        .eq("workspace_id", selected)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (data) setPosts(data);
+    };
+    loadPosts();
+  }, [selected]);
 
   const selectWs = (id: string) => {
     setSelected(id);
     setActiveTab("Feed");
-    setActiveChannel(null);
     setMobileShowRight(true);
   };
 
-  const handlePost = () => {
-    if (!composeText.trim()) return;
-    const newPost = {
-      id: Date.now().toString(),
-      author: "Arjun Kumar",
-      initials: "AK",
-      color: "#4F46E5",
-      type: composeType,
-      typeLabel: `${postTypes.find(p => p.type === composeType)?.emoji || "💬"} ${postTypes.find(p => p.type === composeType)?.label || "Discussion"}`,
-      content: composeText,
-      time: "Just now",
-      sharable: composeType !== "announcement" || composeVisibility !== "team",
-      isShared: false,
-      visibility: composeVisibility,
-    };
-    setPosts([newPost, ...posts]);
-    setComposeText("");
-    setComposeOpen(false);
-    tiikToast.success("Posted ✓");
+  const handlePost = async () => {
+    if (!composeText.trim() || !user) return;
+    const { data, error } = await supabase
+      .from("posts")
+      .insert({
+        author_id: user.id,
+        content: composeText.trim(),
+        post_type: composeType,
+        type: composeType,
+        visibility: composeVisibility === "public" ? "everyone" : "workspace",
+        workspace_id: selected,
+        workspace_name: activeWs?.name || "",
+      })
+      .select("*, author:profiles!author_id(id, full_name, username, avatar_url, role)")
+      .single();
+    if (!error && data) {
+      setPosts(prev => [data, ...prev]);
+      setComposeText("");
+      setComposeOpen(false);
+      tiikToast.success("Posted ✓");
+    } else {
+      tiikToast.error("Failed to post");
+    }
   };
 
-  const handleJoinDiscover = (id: string, privacy: string) => {
-    setJoinedDiscover(prev => [...prev, id]);
-    if (privacy === "public") {
-      tiikToast.success("Joined ✓");
+  const handleCreateWorkspace = async () => {
+    if (!createName.trim()) return;
+    const ws = await createWorkspace(createName, createDesc, createType || "project", createPrivacy);
+    if (ws) {
+      setShowCreate(false);
+      setCreateName("");
+      setCreateDesc("");
+      setSelected(ws.id);
+      setMobileShowRight(true);
+      tiikToast.success("Workspace created ✓");
     } else {
-      tiikToast.success("Join request sent ✓");
+      tiikToast.error("Failed to create workspace");
     }
   };
 
   const handleShareToFeed = (postId: string) => {
-    setPosts(prev => prev.map(p => p.id === postId ? { ...p, isShared: true } : p));
+    setPosts(prev => prev.map(p => p.id === postId ? { ...p, is_shared_to_feed: true } : p));
     setShowShareConfirm(null);
     tiikToast.success("Shared to your feed ✓");
   };
 
-  const handleStrand = (memberId: string) => {
-    setMembers(prev => prev.map(m => m.id === memberId ? { ...m, stranded: true } : m));
-    tiikToast.success("Strand request sent ✓");
-  };
-
-  const handleLeave = () => {
+  const handleLeave = async () => {
+    if (user && selected) {
+      await supabase.from("workspace_members").update({ status: "left", left_at: new Date().toISOString() }).eq("workspace_id", selected).eq("user_id", user.id);
+    }
     setShowLeaveConfirm(false);
     setSelected(null);
     setMobileShowRight(false);
-    tiikToast("You've left the workspace. Your work stays.");
+    tiikToast("You've left the workspace.");
   };
 
   const visIcons = { team: Lock, followers: Users, public: Globe };
