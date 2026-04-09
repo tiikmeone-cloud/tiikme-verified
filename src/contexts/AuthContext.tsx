@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
@@ -37,6 +37,7 @@ interface AuthContextValue {
   user: User | null;
   profile: UserProfile | null;
   loading: boolean;
+  isReady: boolean;
   initials: string;
   displayName: string;
   refreshProfile: () => Promise<void>;
@@ -47,6 +48,7 @@ const AuthContext = createContext<AuthContextValue>({
   user: null,
   profile: null,
   loading: true,
+  isReady: false,
   initials: "",
   displayName: "",
   refreshProfile: async () => {},
@@ -55,21 +57,20 @@ const AuthContext = createContext<AuthContextValue>({
 
 export const useAuth = () => useContext(AuthContext);
 
-const getProfileCacheKey = (userId: string) => `tiikme-profile:${userId}`;
+const PROFILE_CACHE_KEY = (id: string) => `tiikme-profile:${id}`;
 
-const readCachedProfile = (userId: string): UserProfile | null => {
+const readCache = (id: string): UserProfile | null => {
   try {
-    const cached = localStorage.getItem(getProfileCacheKey(userId));
-    return cached ? (JSON.parse(cached) as UserProfile) : null;
-  } catch {
-    return null;
-  }
+    const raw = localStorage.getItem(PROFILE_CACHE_KEY(id));
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isReady, setIsReady] = useState(false);
+  const mountedRef = useRef(true);
 
   const fetchProfile = useCallback(async (userId: string) => {
     try {
@@ -79,68 +80,65 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .eq("id", userId)
         .maybeSingle();
 
+      if (!mountedRef.current) return;
+
       if (error) {
         console.error("Profile fetch error:", error);
-        setProfile(readCachedProfile(userId));
+        setProfile(prev => prev || readCache(userId));
       } else {
         setProfile(data as any);
-        if (data) {
-          localStorage.setItem(getProfileCacheKey(userId), JSON.stringify(data));
-        } else {
-          localStorage.removeItem(getProfileCacheKey(userId));
-        }
+        if (data) localStorage.setItem(PROFILE_CACHE_KEY(userId), JSON.stringify(data));
+        else localStorage.removeItem(PROFILE_CACHE_KEY(userId));
       }
     } catch (e) {
+      if (!mountedRef.current) return;
       console.error("Profile fetch exception:", e);
-      setProfile(readCachedProfile(userId));
+      setProfile(prev => prev || readCache(userId));
     }
   }, []);
 
   useEffect(() => {
-    let isMounted = true;
+    mountedRef.current = true;
 
-    const hydrateAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!isMounted) return;
+    // 1. Restore session from storage — this is the ONLY blocking call
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mountedRef.current) return;
+      const u = session?.user ?? null;
+      setUser(u);
+      setIsReady(true); // App can render immediately
 
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-
-      if (currentUser) {
-        const cachedProfile = readCachedProfile(currentUser.id);
-        if (cachedProfile) setProfile(cachedProfile);
-        void fetchProfile(currentUser.id);
+      if (u) {
+        // Show cached profile instantly, then refresh in background
+        const cached = readCache(u.id);
+        if (cached) setProfile(cached);
+        // Fire-and-forget — never block on this
+        fetchProfile(u.id);
       } else {
         setProfile(null);
       }
+    });
 
-      setLoading(false);
-    };
-
-    void hydrateAuth();
-
-    // Listen for auth changes
+    // 2. Listen for future auth changes (sign-in, sign-out, token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        if (!isMounted) return;
+        if (!mountedRef.current) return;
+        const u = session?.user ?? null;
+        setUser(u);
+        setIsReady(true);
 
-        const currentUser = session?.user ?? null;
-        setUser(currentUser);
-
-        if (currentUser) {
-          const cachedProfile = readCachedProfile(currentUser.id);
-          if (cachedProfile) setProfile(cachedProfile);
-          void fetchProfile(currentUser.id);
+        if (u) {
+          const cached = readCache(u.id);
+          if (cached) setProfile(cached);
+          // Non-blocking profile refresh
+          fetchProfile(u.id);
         } else {
           setProfile(null);
         }
-
-        setLoading(false);
       }
     );
 
     return () => {
-      isMounted = false;
+      mountedRef.current = false;
       subscription.unsubscribe();
     };
   }, [fetchProfile]);
@@ -158,7 +156,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     .toUpperCase() || "U";
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, initials, displayName, refreshProfile, refetchProfile: refreshProfile }}>
+    <AuthContext.Provider value={{
+      user, profile,
+      loading: !isReady,
+      isReady,
+      initials, displayName,
+      refreshProfile, refetchProfile: refreshProfile,
+    }}>
       {children}
     </AuthContext.Provider>
   );

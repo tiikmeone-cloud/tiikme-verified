@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Workspace {
@@ -31,27 +31,29 @@ export function useWorkspaces(userId: string | undefined) {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [loading, setLoading] = useState(true);
   const [members, setMembers] = useState<WorkspaceMember[]>([]);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
 
   const fetchWorkspaces = useCallback(async () => {
     if (!userId) { setLoading(false); return; }
     setLoading(true);
 
-    // Get workspace IDs user belongs to
-    const { data: memberRows } = await supabase
-      .from("workspace_members")
-      .select("workspace_id")
-      .eq("user_id", userId)
-      .eq("status", "active");
+    // Single query: get workspace IDs the user belongs to
+    const [{ data: memberRows }, { data: createdWs }] = await Promise.all([
+      supabase.from("workspace_members").select("workspace_id").eq("user_id", userId).eq("status", "active"),
+      supabase.from("workspaces").select("id").eq("created_by", userId),
+    ]);
 
-    const wsIds = (memberRows || []).map(m => m.workspace_id).filter(Boolean) as string[];
+    if (!mountedRef.current) return;
 
-    // Also get workspaces created by user
-    const { data: createdWs } = await supabase
-      .from("workspaces")
-      .select("id")
-      .eq("created_by", userId);
-
-    const allIds = [...new Set([...wsIds, ...(createdWs || []).map(w => w.id)])];
+    const allIds = [...new Set([
+      ...(memberRows || []).map(m => m.workspace_id).filter(Boolean) as string[],
+      ...(createdWs || []).map(w => w.id),
+    ])];
 
     if (allIds.length === 0) {
       setWorkspaces([]);
@@ -65,8 +67,10 @@ export function useWorkspaces(userId: string | undefined) {
       .in("id", allIds)
       .order("created_at", { ascending: false });
 
-    setWorkspaces(ws || []);
-    setLoading(false);
+    if (mountedRef.current) {
+      setWorkspaces(ws || []);
+      setLoading(false);
+    }
   }, [userId]);
 
   useEffect(() => { fetchWorkspaces(); }, [fetchWorkspaces]);
@@ -77,7 +81,7 @@ export function useWorkspaces(userId: string | undefined) {
       .select("*, profile:profiles!user_id(id, full_name, username, avatar_url, role)")
       .eq("workspace_id", workspaceId)
       .eq("status", "active");
-    setMembers((data as any[]) || []);
+    if (mountedRef.current) setMembers((data as any[]) || []);
   }, []);
 
   const createWorkspace = useCallback(async (name: string, description: string, type: string, privacy: string) => {
@@ -90,15 +94,11 @@ export function useWorkspaces(userId: string | undefined) {
 
     if (error) return null;
 
-    // Add creator as admin member
     if (data) {
       await supabase.from("workspace_members").insert({
-        workspace_id: data.id,
-        user_id: userId,
-        role: "admin",
-        status: "active",
+        workspace_id: data.id, user_id: userId, role: "admin", status: "active",
       });
-      await fetchWorkspaces();
+      fetchWorkspaces();
     }
     return data;
   }, [userId, fetchWorkspaces]);
