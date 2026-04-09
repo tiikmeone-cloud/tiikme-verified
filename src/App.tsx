@@ -36,7 +36,7 @@ const VerifyInvite = lazy(() => import("./pages/VerifyInvite.tsx"));
 const Privacy = lazy(() => import("./pages/Privacy.tsx"));
 const Terms = lazy(() => import("./pages/Terms.tsx"));
 const JoinAsInstitution = lazy(() => import("./pages/JoinAsInstitution.tsx"));
-const Academy = lazy(() => import("./pages/Academy.tsx"));
+
 
 const queryClient = new QueryClient();
 
