@@ -8,32 +8,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWorkspaces } from "@/hooks/useWorkspaces";
 import { supabase } from "@/integrations/supabase/client";
-const mockWorkspaces = [
-  { id: "1", name: "TelemedicineRx Team", initials: "TR", lastActivity: "2 hours ago", unread: 3, type: "Project", channels: [
-    { id: "c1", name: "general", type: "public", members: 4 },
-    { id: "c2", name: "dev-updates", type: "public", members: 3 },
-  ]},
-  { id: "2", name: "Zepto Engineering", initials: "ZE", lastActivity: "Yesterday", unread: 0, type: "Company", channels: [
-    { id: "c3", name: "company-wide", type: "public", members: 847 },
-    { id: "c4", name: "engineering", type: "restricted", members: 120 },
-    { id: "c5", name: "hiring", type: "public", members: 15 },
-    { id: "c6", name: "announcements", type: "announcement_only", members: 847 },
-  ]},
-  { id: "3", name: "DTU CS Club", initials: "DC", lastActivity: "3 days ago", unread: 1, type: "Club" },
-];
-
-const discoverWorkspaces = [
-  { id: "d1", name: "DTU Announcements", initials: "DA", type: "Institution", members: 4200, privacy: "public" },
-  { id: "d2", name: "DTU Placement Cell", initials: "DP", type: "Institution", members: 3100, privacy: "members_only" },
-];
-
-const mockMembers = [
-  { id: "m1", name: "Arjun Kumar", initials: "AK", role: "Admin", color: "#4F46E5", joined: "Jan 2025", stranded: false },
-  { id: "m2", name: "Riya Sharma", initials: "RS", role: "Lead", color: "#4F46E5", joined: "Jan 2025", stranded: true },
-  { id: "m3", name: "Priya Menon", initials: "PM", role: "Member", color: "#92400E", joined: "Feb 2025", stranded: false },
-  { id: "m4", name: "Rahul Kumar", initials: "RK", role: "Member", color: "#0369A1", joined: "Mar 2025", stranded: false },
-  { id: "m5", name: "Sunita Devi", initials: "SD", role: "Alumni", color: "#C2410C", joined: "Nov 2024", stranded: false },
-];
 
 const postTypes = [
   { emoji: "📢", label: "Announcement", type: "announcement" },
@@ -50,12 +24,6 @@ const defaultVisibility: Record<string, string> = {
   discussion: "team",
   event: "team",
 };
-
-const mockPosts = [
-  { id: "1", author: "Riya Sharma", initials: "RS", color: "#4F46E5", type: "achievement", typeLabel: "🏆 Achievement", content: "We won the Smart India Hackathon 2025! Our TelemedicineRx project secured 1st place.", time: "2h ago", sharable: true, isShared: false, visibility: "followers" },
-  { id: "2", author: "Arjun Kumar", initials: "AK", color: "#4F46E5", type: "project_update", typeLabel: "📦 Project update", content: "Shipped the offline-first sync module. Now works without internet in rural areas.", time: "5h ago", sharable: true, isShared: false, visibility: "followers" },
-  { id: "3", author: "Priya Menon", initials: "PM", color: "#92400E", type: "announcement", typeLabel: "📢 Announcement", content: "Weekly standup moved to Wednesday 6 PM. Please update your availability.", time: "Yesterday", sharable: false, isShared: false, visibility: "team" },
-];
 
 const templates = [
   { id: "project", icon: Rocket, title: "Project Team", desc: "Build something together" },
