@@ -13,6 +13,8 @@ import SkeletonCard from "@/components/SkeletonCard";
 import { useFeedPosts } from "@/hooks/useFeedPosts";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { usePostReactions } from "@/hooks/usePostReactions";
+import { usePostComments } from "@/hooks/usePostComments";
 
 const getComposePlaceholder = (role: string) => {
   switch (role) {
@@ -66,35 +68,37 @@ const roleColorMap: Record<string, string> = {
 /* ─── LIVE POST CARD (from DB) ─── */
 const LivePostCard = ({ post }: { post: any }) => {
   const [showMenu, setShowMenu] = useState(false);
-  const [reacted, setReacted] = useState<Record<string, boolean>>({});
-  const [reactionCounts, setReactionCounts] = useState<Record<string, number>>({});
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
-  const { user } = useAuth();
-
-  const reactions = post.reactions || { insightful: 0, useful: 0, inspiring: 0 };
-  useEffect(() => { setReactionCounts({ ...reactions }); }, []);
+  const { user, profile: authProfile, initials: userInitials } = useAuth();
+  const { userReaction, counts, toggleReaction } = usePostReactions(post.id, user?.id);
+  const { comments, loading: commentsLoading, addComment } = usePostComments(post.id, showComments);
 
   const author = post.author;
   const name = author?.full_name || author?.username || "Unknown";
   const initials = name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
   const role = author?.role || "user";
   const roleColor = roleColorMap[role] || "#6B7280";
-  const timeAgo = post.created_at
-    ? getTimeAgo(new Date(post.created_at))
-    : "";
+  const timeAgo = post.created_at ? getTimeAgo(new Date(post.created_at)) : "";
+
+  const handleComment = async () => {
+    if (!commentText.trim() || !user) return;
+    await addComment(user.id, commentText.trim());
+    setCommentText("");
+    toast.success("Comment posted");
+  };
 
   return (
     <article className="glass-liquid glass-liquid-hover rounded-2xl md:rounded-3xl mb-3 overflow-hidden">
       <div className="flex items-center gap-3 px-4 pt-4 pb-1">
-        <Link to="/app/profile">
+        <Link to={`/app/profile/${author?.id || ""}`}>
           <div className="w-11 h-11 rounded-full flex items-center justify-center text-[14px] font-bold text-white shrink-0 transition-transform duration-200 hover:scale-105" style={{ backgroundColor: roleColor }}>
             {author?.avatar_url ? <img src={author.avatar_url} alt="" className="w-full h-full rounded-full object-cover" /> : initials}
           </div>
         </Link>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <Link to="/app/profile" className="text-[14px] font-bold hover:underline transition-colors" style={{ color: "var(--text-1)" }}>{name}</Link>
+            <Link to={`/app/profile/${author?.id || ""}`} className="text-[14px] font-bold hover:underline transition-colors" style={{ color: "var(--text-1)" }}>{name}</Link>
             <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full" style={{ background: `${roleColor}1A`, color: roleColor, border: `1px solid ${roleColor}33` }}>{role}</span>
             {post.type && post.type !== "thought" && <span className="text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ background: "var(--surface-2)", color: "var(--text-3)", border: "1px solid var(--border)" }}>{post.type}</span>}
           </div>
@@ -107,6 +111,9 @@ const LivePostCard = ({ post }: { post: any }) => {
               <button onClick={() => { toast.info("Following"); setShowMenu(false); }} className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg transition-all duration-150 cursor-pointer" style={{ color: "var(--text-2)" }}>Follow this person</button>
               <button onClick={() => { toast.info("Report submitted"); setShowMenu(false); }} className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg transition-all duration-150 cursor-pointer" style={{ color: "var(--text-2)" }}><Flag className="w-3 h-3" /> Report</button>
               <button onClick={() => { navigator.clipboard.writeText("https://tiikme.in/post/" + post.id); toast.success("Link copied"); setShowMenu(false); }} className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg transition-all duration-150 cursor-pointer" style={{ color: "var(--text-2)" }}>Copy link</button>
+              {user?.id === post.author_id && (
+                <button onClick={async () => { await supabase.from("posts").delete().eq("id", post.id); toast.success("Post deleted"); setShowMenu(false); }} className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg transition-all duration-150 cursor-pointer" style={{ color: "#DC2626" }}>Delete post</button>
+              )}
             </div>
           )}
         </div>
@@ -115,6 +122,10 @@ const LivePostCard = ({ post }: { post: any }) => {
       <div className="px-4 py-2.5 post-body" style={{ fontSize: "14px", lineHeight: 1.75, color: "var(--text-2)" }}>
         <MentionText text={post.content} />
       </div>
+
+      {post.image_urls && post.image_urls.length > 0 && (
+        <div className="px-4 pb-2"><div className="rounded-xl overflow-hidden"><ImageGrid images={post.image_urls} /></div></div>
+      )}
 
       {post.pdf_url && (
         <div className="mx-4 mb-3">
@@ -131,23 +142,12 @@ const LivePostCard = ({ post }: { post: any }) => {
 
       <div className="flex items-center gap-1.5 px-4 py-2">
         {reactionConfig.map(r => {
-          const count = (reactionCounts[r.key] || 0);
-          const active = reacted[r.key];
+          const count = counts[r.key] || 0;
+          const active = userReaction === r.key;
           return (
             <button
               key={r.key}
-              onClick={async () => {
-                const isSame = reacted[r.key];
-                setReacted(p => ({ ...p, [r.key]: !isSame }));
-                setReactionCounts(p => ({ ...p, [r.key]: isSame ? Math.max(0, (p[r.key] || 0) - 1) : (p[r.key] || 0) + 1 }));
-                if (user) {
-                  if (isSame) {
-                    await supabase.from("post_reactions").delete().eq("post_id", post.id).eq("user_id", user.id);
-                  } else {
-                    await supabase.from("post_reactions").upsert({ post_id: post.id, user_id: user.id, reaction_type: r.key }, { onConflict: "post_id,user_id" } as any);
-                  }
-                }
-              }}
+              onClick={() => toggleReaction(r.key)}
               className="h-7 px-2.5 rounded-full text-[12px] font-semibold flex items-center gap-1 transition-all duration-200 cursor-pointer active:scale-95"
               style={{
                 background: active ? "var(--brand-dim)" : "var(--surface-2)",
@@ -176,30 +176,40 @@ const LivePostCard = ({ post }: { post: any }) => {
 
       {showComments && (
         <div className="px-4 pb-4 pt-3 space-y-3" style={{ borderTop: "1px solid var(--border)" }}>
-          {mockComments.map((c, i) => (
-            <div key={i} className="flex items-start gap-2">
-              <Link to="/app/profile">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 hover:scale-105 transition-transform" style={{ backgroundColor: c.color }}>{c.initials}</div>
-              </Link>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <Link to="/app/profile" className="text-[13px] font-bold hover:underline" style={{ color: "var(--text-1)" }}>{c.name}</Link>
-                  <span className="text-[11px]" style={{ color: "var(--text-3)" }}>{c.time}</span>
+          {commentsLoading && <p className="text-[12px]" style={{ color: "var(--text-3)" }}>Loading comments...</p>}
+          {comments.map((c: any) => {
+            const cName = c.author?.full_name || c.author?.username || "User";
+            const cInitials = cName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
+            const cRole = c.author?.role || "user";
+            const cColor = roleColorMap[cRole] || "#6B7280";
+            const cTime = c.created_at ? getTimeAgo(new Date(c.created_at)) : "";
+            return (
+              <div key={c.id} className="flex items-start gap-2">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0" style={{ backgroundColor: cColor }}>
+                  {c.author?.avatar_url ? <img src={c.author.avatar_url} alt="" className="w-full h-full rounded-full object-cover" /> : cInitials}
                 </div>
-                <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-2)" }}><MentionText text={c.text} /></p>
-                <button className="text-[11px] font-semibold mt-0.5 cursor-pointer" style={{ color: "var(--brand)" }}>Reply</button>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[13px] font-bold" style={{ color: "var(--text-1)" }}>{cName}</span>
+                    <span className="text-[11px]" style={{ color: "var(--text-3)" }}>{cTime}</span>
+                  </div>
+                  <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-2)" }}><MentionText text={c.content} /></p>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
+          {!commentsLoading && comments.length === 0 && (
+            <p className="text-[12px]" style={{ color: "var(--text-3)" }}>No comments yet. Be the first!</p>
+          )}
           <div className="flex items-center gap-2 mt-2">
             <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden" style={{ background: "var(--brand)" }}>
-              {user?.user_metadata?.avatar_url ? <img src={user.user_metadata.avatar_url} alt="" className="w-full h-full object-cover" /> : (user?.user_metadata?.full_name || "U").split(" ").map((w:string)=>w[0]).join("").slice(0,2).toUpperCase()}
+              {authProfile?.avatar_url ? <img src={authProfile.avatar_url} alt="" className="w-full h-full object-cover" /> : userInitials}
             </div>
             <input value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="Write a comment..."
               className="flex-1 h-9 rounded-xl px-3 text-[13px] outline-none transition-all duration-150"
               style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }}
-              onKeyDown={e => { if (e.key === "Enter" && commentText.trim()) { toast.success("Comment posted"); setCommentText(""); } }} />
-            <button onClick={() => { if (commentText.trim()) { toast.success("Comment posted"); setCommentText(""); } }}
+              onKeyDown={e => { if (e.key === "Enter" && commentText.trim()) handleComment(); }} />
+            <button onClick={handleComment}
               className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer active:scale-95"
               style={{ background: commentText.trim() ? "var(--brand)" : "var(--surface-2)" }}>
               <Send className="w-3.5 h-3.5" style={{ color: commentText.trim() ? "white" : "var(--text-3)" }} />
