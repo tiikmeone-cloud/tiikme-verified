@@ -44,8 +44,7 @@ export function usePostComments(postId: string, enabled: boolean) {
       .single();
     if (!error && data) {
       setComments(prev => [...prev, data as any]);
-      // Update comment count on post
-      await supabase.rpc("award_power" as any, {}).catch(() => {}); // ignore
+      // Comment added successfully
     }
     return { data, error };
   }, [postId]);
