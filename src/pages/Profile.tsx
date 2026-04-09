@@ -4,7 +4,7 @@ import ActivityScoreRing from "@/components/ActivityScoreRing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import EmptyState from "@/components/EmptyState";
 import VisibilityToggle from "@/components/profile/VisibilityToggle";
@@ -303,37 +303,86 @@ const Profile = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [showAddWork, setShowAddWork] = useState(false);
   const [showAddAchievement, setShowAddAchievement] = useState(false);
-  const { profile: authProfile, initials: authInitials, displayName: authDisplayName, refreshProfile, user } = useAuth();
+  const { profile: authProfile, initials: authInitials, displayName: authDisplayName, refreshProfile, user, loading: authLoading } = useAuth();
   const [profileData, setProfileData] = useState<any>(null);
   const [workspaces, setWorkspaces] = useState<any[]>([]);
   const [workItems, setWorkItems] = useState<any[]>([]);
   const [userPosts, setUserPosts] = useState<any[]>([]);
+  const [achievements, setAchievements] = useState<any[]>([]);
   const [stats, setStats] = useState({ projects: 0, workspaces: 0, strands: 0 });
+  const [dataLoading, setDataLoading] = useState(true);
+  const navigate = useNavigate();
 
   const loadProfile = async () => {
     const { data: { user: currentUser } } = await supabase.auth.getUser();
-    if (!currentUser) return;
+    if (!currentUser) { setDataLoading(false); return; }
     const userId = currentUser.id;
 
-    const [{ data: profile }, { data: ws }, { data: items }, { count: strandCount }, { data: posts }] = await Promise.all([
+    const [{ data: profile }, { data: ws }, { data: items }, { count: strandCount }, { data: posts }, { data: achvs }] = await Promise.all([
       supabase.from("profiles").select("id, full_name, first_name, last_name, username, role, role_subtype, headline, bio, avatar_url, institution_name, location_city, location_state, activity_score, is_public, custom_links, open_to_work, designation, sector, languages, department, is_verified, role_metadata, about_qa, verification_badge_text, verification_type, created_at, updated_at").eq("id", userId).single(),
       supabase.from("workspace_members").select("*, workspace:workspaces(name, type)").eq("user_id", userId),
       supabase.from("work_items").select("*").eq("owner_id", userId).order("created_at", { ascending: false }),
       supabase.from("strands").select("*", { count: "exact", head: true }).or(`requester_id.eq.${userId},receiver_id.eq.${userId}`).eq("status", "accepted"),
       supabase.from("posts").select("*").eq("author_id", userId).order("created_at", { ascending: false }).limit(20),
+      supabase.from("achievements").select("*").eq("user_id", userId).order("created_at", { ascending: false }),
     ]);
     setProfileData(profile);
     setWorkspaces(ws || []);
     setWorkItems(items || []);
     setUserPosts(posts || []);
+    setAchievements(achvs || []);
     setStats({
       projects: items?.length || 0,
       workspaces: ws?.length || 0,
       strands: strandCount || 0,
     });
+    setDataLoading(false);
   };
 
   useEffect(() => { loadProfile(); }, []);
+
+  // Show skeleton while auth or data is loading
+  if (authLoading || dataLoading) {
+    return (
+      <div className="max-w-[760px] mx-auto px-4 py-7 space-y-4">
+        <div className="t-card p-6 animate-pulse">
+          <div className="h-24 rounded-xl" style={{ background: "var(--surface-2)" }} />
+          <div className="flex items-end gap-4 -mt-12 px-6">
+            <div className="w-24 h-24 rounded-full" style={{ background: "var(--surface-2)" }} />
+            <div className="flex-1 space-y-2 pb-1">
+              <div className="h-6 w-40 rounded" style={{ background: "var(--surface-2)" }} />
+              <div className="h-4 w-24 rounded" style={{ background: "var(--surface-2)" }} />
+            </div>
+          </div>
+        </div>
+        <div className="t-card p-6 animate-pulse space-y-3">
+          <div className="h-10 rounded" style={{ background: "var(--surface-2)" }} />
+          <div className="h-20 rounded" style={{ background: "var(--surface-2)" }} />
+          <div className="h-20 rounded" style={{ background: "var(--surface-2)" }} />
+        </div>
+      </div>
+    );
+  }
+
+  // If no user at all, redirect
+  if (!user) {
+    navigate("/signin");
+    return null;
+  }
+
+  // If user exists but no profile row
+  if (!profileData && !authProfile) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
+        <span className="text-6xl mb-4">👤</span>
+        <h1 className="text-[22px] font-extrabold mb-2" style={{ color: "var(--text-1)" }}>Complete your profile</h1>
+        <p className="text-[14px] mb-6" style={{ color: "var(--text-3)" }}>Tell the community who you are</p>
+        <Button onClick={() => navigate("/welcome")} style={{ background: "var(--brand)" }} className="text-white px-6 py-3 rounded-xl font-bold">
+          Set up my profile →
+        </Button>
+      </div>
+    );
+  }
 
   const displayName = profileData?.full_name || authDisplayName || "";
   const username = profileData?.username || authProfile?.username || "";
@@ -360,24 +409,6 @@ const Profile = () => {
     await navigator.clipboard.writeText(url);
     toast.success(`Profile link copied! tiikme.in/${username}`);
   };
-
-  // Show skeleton if profile not loaded yet
-  if (!profileData && !authProfile) {
-    return (
-      <div className="max-w-[760px] mx-auto px-4 py-7 space-y-4">
-        <div className="t-card p-6 animate-pulse">
-          <div className="h-24 rounded-xl" style={{ background: "var(--surface-2)" }} />
-          <div className="flex items-end gap-4 -mt-12 px-6">
-            <div className="w-24 h-24 rounded-full" style={{ background: "var(--surface-2)" }} />
-            <div className="flex-1 space-y-2 pb-1">
-              <div className="h-6 w-40 rounded" style={{ background: "var(--surface-2)" }} />
-              <div className="h-4 w-24 rounded" style={{ background: "var(--surface-2)" }} />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-[760px] mx-auto px-0 md:px-4 py-0 md:py-7 space-y-0">
@@ -555,7 +586,7 @@ const Profile = () => {
             </div>
           )}
 
-          {activeTab === "Achievements" && <AchievementsTab isOwnProfile={true} />}
+          {activeTab === "Achievements" && <AchievementsTab isOwnProfile={true} achievements={achievements} userId={user?.id} onRefresh={loadProfile} />}
 
           {activeTab === "Posts" && (
             userPosts.length === 0 ? (
