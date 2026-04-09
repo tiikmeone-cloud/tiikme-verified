@@ -319,7 +319,7 @@ const Profile = () => {
     const userId = currentUser.id;
 
     const [{ data: profile }, { data: ws }, { data: items }, { count: strandCount }, { data: posts }, { data: achvs }] = await Promise.all([
-      supabase.from("profiles").select("id, full_name, first_name, last_name, username, role, role_subtype, headline, bio, avatar_url, institution_name, location_city, location_state, activity_score, is_public, custom_links, open_to_work, designation, sector, languages, department, is_verified, role_metadata, about_qa, verification_badge_text, verification_type, created_at, updated_at").eq("id", userId).single(),
+      supabase.from("profiles").select("id, full_name, first_name, last_name, username, role, role_subtype, headline, bio, avatar_url, institution_name, location_city, location_state, activity_score, is_public, custom_links, open_to_work, designation, sector, languages, department, is_verified, role_metadata, about_qa, verification_badge_text, verification_type, created_at, updated_at").eq("id", userId).maybeSingle(),
       supabase.from("workspace_members").select("*, workspace:workspaces(name, type)").eq("user_id", userId),
       supabase.from("work_items").select("*").eq("owner_id", userId).order("created_at", { ascending: false }),
       supabase.from("strands").select("*", { count: "exact", head: true }).or(`requester_id.eq.${userId},receiver_id.eq.${userId}`).eq("status", "accepted"),
@@ -370,16 +370,19 @@ const Profile = () => {
     return null;
   }
 
-  // If user exists but no profile row
-  if (!profileData && !authProfile) {
+  // If user exists but no profile row or no name set
+  if (!profileData?.full_name && !authProfile?.full_name) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
-        <span className="text-6xl mb-4">👤</span>
-        <h1 className="text-[22px] font-extrabold mb-2" style={{ color: "var(--text-1)" }}>Complete your profile</h1>
-        <p className="text-[14px] mb-6" style={{ color: "var(--text-3)" }}>Tell the community who you are</p>
-        <Button onClick={() => navigate("/welcome")} style={{ background: "var(--brand)" }} className="text-white px-6 py-3 rounded-xl font-bold">
-          Set up my profile →
-        </Button>
+        <div className="w-20 h-20 rounded-full flex items-center justify-center text-[28px] font-bold text-white mb-4" style={{ background: "var(--brand)" }}>
+          {user.email?.[0]?.toUpperCase() || "U"}
+        </div>
+        <h1 className="text-[22px] font-extrabold mb-2" style={{ color: "var(--text-1)" }}>Set up your profile</h1>
+        <p className="text-[14px] mb-2" style={{ color: "var(--text-2)" }}>{user.email}</p>
+        <p className="text-[13px] mb-6 text-center max-w-xs" style={{ color: "var(--text-3)" }}>Add your name, location, and details so people can find and connect with you.</p>
+        <button onClick={() => navigate("/signup")} className="px-6 py-3 rounded-xl font-bold text-sm text-white" style={{ background: "#E8580A" }}>
+          Complete your profile →
+        </button>
       </div>
     );
   }

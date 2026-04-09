@@ -80,10 +80,22 @@ const SignUp = () => {
 
   const strength = getStrength(password);
 
-  // Redirect if already logged in
+  // Redirect if already logged in AND has completed profile (not mid-onboarding)
   useEffect(() => {
-    if (user) navigate("/app/feed", { replace: true });
-  }, [user]);
+    if (user && step === 1) {
+      // Only redirect if user already has a name set (completed onboarding before)
+      const checkProfile = async () => {
+        const { data } = await supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
+        if (data?.full_name) {
+          navigate("/app/feed", { replace: true });
+        } else {
+          // User is logged in but hasn't completed onboarding — go to role step
+          setStep(3);
+        }
+      };
+      checkProfile();
+    }
+  }, [user, step]);
 
   // Resend cooldown timer
   useEffect(() => {

@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { X, Clock, Users, Shield, MapPin, Briefcase, CheckSquare, ToggleLeft, ToggleRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Opportunity {
   type: string; typeLabel: string; typeColor: string; title: string;
@@ -12,36 +14,26 @@ interface Opportunity {
   deadline: string; daysLeft: string; solutions: number;
 }
 
-const mockWorkItems = [
-  { id: "w1", title: "TelemedicineRx", domain: "HealthTech", status: "Active" },
-  { id: "w2", title: "SmartGrid Monitor", domain: "IoT", status: "Completed" },
-  { id: "w3", title: "AgriSense Dashboard", domain: "AgriTech", status: "Active" },
-];
-
-const fullJD = `We are looking for innovative solutions that address real-world problems in this domain.
-
-Requirements:
-• Strong understanding of the problem domain
-• Demonstrated ability to build and ship products
-• Experience with modern tech stacks
-• Portfolio of relevant work on Tiikme
-
-What we offer:
-• Competitive compensation as listed
-• Mentorship from industry experts
-• Tiik Verified badge on completion`;
-
 const screeningQuestions = [
   { id: "q1", question: "Do you have prior experience in this domain?", type: "toggle" as const },
   { id: "q2", question: "Briefly describe your relevant experience", type: "text" as const },
 ];
 
 export function OpportunityDetailDrawer({ opp, onClose }: { opp: Opportunity; onClose: () => void }) {
+  const { user, profile } = useAuth();
   const [showApply, setShowApply] = useState(false);
+  const [workItems, setWorkItems] = useState<any[]>([]);
   const [selectedWork, setSelectedWork] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [screeningAnswers, setScreeningAnswers] = useState<Record<string, string | boolean>>({ q1: false, q2: "" });
   const [showConfirm, setShowConfirm] = useState(false);
+
+  // Fetch real work items
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("work_items").select("id, title, domain, status").eq("owner_id", user.id).order("created_at", { ascending: false }).limit(10)
+      .then(({ data }) => setWorkItems(data || []));
+  }, [user]);
 
   const toggleWork = (id: string) => {
     setSelectedWork(prev => prev.includes(id) ? prev.filter(w => w !== id) : [...prev, id]);
@@ -55,6 +47,10 @@ export function OpportunityDetailDrawer({ opp, onClose }: { opp: Opportunity; on
       onClose();
     }, 800);
   };
+
+  const displayName = profile?.full_name || "You";
+  const initials = displayName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+  const roleColor = "#4F46E5";
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end" style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(8px)" }} onClick={onClose}>
@@ -70,7 +66,6 @@ export function OpportunityDetailDrawer({ opp, onClose }: { opp: Opportunity; on
         }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4" style={{
           borderBottom: "1px solid var(--border)",
           background: "rgba(255,255,255,0.60)",
@@ -80,7 +75,7 @@ export function OpportunityDetailDrawer({ opp, onClose }: { opp: Opportunity; on
             <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: opp.typeColor }}>{opp.typeLabel}</span>
             {opp.verified && <Shield className="w-3.5 h-3.5" style={{ color: "#10B981" }} />}
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg cursor-pointer active:scale-95 transition-all duration-200 hover:bg-[var(--brand-dim)]" style={{ color: "var(--text-3)" }}>
+          <button onClick={onClose} className="p-2 rounded-lg cursor-pointer active:scale-95" style={{ color: "var(--text-3)" }}>
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -108,52 +103,45 @@ export function OpportunityDetailDrawer({ opp, onClose }: { opp: Opportunity; on
             ))}
           </div>
 
-          <div>
-            <h3 className="text-[14px] font-bold mb-3" style={{ color: "var(--text-1)" }}>Full Description</h3>
-            <div className="text-[14px] leading-[1.8] whitespace-pre-line" style={{ color: "var(--text-2)" }}>{fullJD}</div>
-          </div>
-
           {!showApply ? (
             <div className="flex gap-3">
               <Button className="flex-1 active:scale-95" onClick={() => setShowConfirm(true)}>
                 Apply via Tiikme
               </Button>
-              {opp.type === "funded" && (
-                <Button variant="secondary" className="active:scale-95" onClick={() => toast.success("Following updates")}>
-                  Follow updates
-                </Button>
-              )}
             </div>
           ) : (
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
               <h3 className="text-[16px] font-bold" style={{ color: "var(--text-1)" }}>Apply to {opp.title}</h3>
 
               <div className="glass-liquid rounded-xl flex items-center gap-3 p-3">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-bold text-white" style={{ background: "#4F46E5" }}>AK</div>
-                <div>
-                  <p className="text-[13px] font-bold" style={{ color: "var(--text-1)" }}>Arjun Kumar</p>
-                  <p className="text-[11px]" style={{ color: "var(--text-3)" }}>Student · DTU · Delhi</p>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-bold text-white overflow-hidden" style={{ background: roleColor }}>
+                  {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : initials}
                 </div>
-                <Shield className="w-3.5 h-3.5 ml-auto" style={{ color: "#F59E0B" }} />
+                <div>
+                  <p className="text-[13px] font-bold" style={{ color: "var(--text-1)" }}>{displayName}</p>
+                  <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{profile?.role || "User"} · {profile?.institution_name || ""}</p>
+                </div>
               </div>
 
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <CheckSquare className="w-4 h-4" style={{ color: "var(--text-2)" }} />
-                  <p className="text-[13px] font-semibold" style={{ color: "var(--text-1)" }}>Attach your proof</p>
+              {workItems.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <CheckSquare className="w-4 h-4" style={{ color: "var(--text-2)" }} />
+                    <p className="text-[13px] font-semibold" style={{ color: "var(--text-1)" }}>Attach your work</p>
+                  </div>
+                  <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
+                    {workItems.map(w => (
+                      <label key={w.id} className="flex items-center gap-3 glass-liquid rounded-lg p-3 cursor-pointer">
+                        <Checkbox checked={selectedWork.includes(w.id)} onCheckedChange={() => toggleWork(w.id)} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] font-semibold" style={{ color: "var(--text-1)" }}>{w.title}</p>
+                          <p className="text-[10px]" style={{ color: "var(--text-3)" }}>{w.domain || ""} · {w.status || ""}</p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
                 </div>
-                <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
-                  {mockWorkItems.map(w => (
-                    <label key={w.id} className="flex items-center gap-3 glass-liquid rounded-lg p-3 cursor-pointer hover:shadow-md transition-all duration-200 active:scale-[0.99]">
-                      <Checkbox checked={selectedWork.includes(w.id)} onCheckedChange={() => toggleWork(w.id)} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-semibold" style={{ color: "var(--text-1)" }}>{w.title}</p>
-                        <p className="text-[10px]" style={{ color: "var(--text-3)" }}>{w.domain} · {w.status}</p>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              </div>
+              )}
 
               <div>
                 <p className="text-[13px] font-semibold mb-3" style={{ color: "var(--text-1)" }}>Screening Questions</p>
@@ -183,7 +171,6 @@ export function OpportunityDetailDrawer({ opp, onClose }: { opp: Opportunity; on
             </motion.div>
           )}
 
-          {/* Confirmation modal */}
           {showConfirm && !showApply && (
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
               className="glass-liquid rounded-2xl p-6 text-center space-y-4">
