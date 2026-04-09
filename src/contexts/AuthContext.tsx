@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
@@ -26,6 +26,11 @@ export interface UserProfile {
   department: string | null;
   is_verified: boolean | null;
   role_metadata: Record<string, any> | null;
+  about_qa: Record<string, any> | null;
+  verification_badge_text: string | null;
+  verification_type: string | null;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 interface AuthContextValue {
@@ -55,55 +60,58 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = async (userId: string, meta?: any) => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .single();
+  const fetchProfile = useCallback(async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .maybeSingle();
 
-    if (data) {
-      setProfile(data as any);
-    } else if (error?.code === "PGRST116") {
-      const fallbackName = meta?.full_name || meta?.first_name || "";
-      const { data: newProfile } = await supabase.from("profiles").insert({
-        id: userId,
-        full_name: fallbackName,
-        first_name: meta?.first_name || null,
-        last_name: meta?.last_name || null,
-        role: meta?.role || "student",
-        username: (meta?.first_name || "user").toLowerCase().replace(/[^a-z0-9]/g, "") + "_" + userId.substring(0, 6),
-      }).select().single();
-      if (newProfile) setProfile(newProfile as any);
+      if (error) {
+        console.error("Profile fetch error:", error);
+        setProfile(null);
+      } else {
+        setProfile(data as any);
+      }
+    } catch (e) {
+      console.error("Profile fetch exception:", e);
+      setProfile(null);
     }
-  };
-
-  const refreshProfile = async () => {
-    if (user?.id) await fetchProfile(user.id, user.user_metadata);
-  };
+  }, []);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        setUser(session.user);
-        await fetchProfile(session.user.id, session.user.user_metadata);
+    // Get existing session first
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser) {
+        fetchProfile(currentUser.id).finally(() => setLoading(false));
       } else {
-        setUser(null);
-        setProfile(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setUser(session.user);
-        fetchProfile(session.user.id, session.user.user_metadata);
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+        if (currentUser) {
+          await fetchProfile(currentUser.id);
+        } else {
+          setProfile(null);
+        }
+        setLoading(false);
       }
-      setLoading(false);
-    });
+    );
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [fetchProfile]);
+
+  const refreshProfile = useCallback(async () => {
+    if (user?.id) await fetchProfile(user.id);
+  }, [user?.id, fetchProfile]);
 
   const displayName = profile?.full_name || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "";
   const initials = displayName
