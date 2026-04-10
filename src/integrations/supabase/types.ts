@@ -923,6 +923,7 @@ export type Database = {
           role_metadata: Json | null
           role_subtype: string | null
           sector: string | null
+          skills: string[] | null
           status: string | null
           theme_preference: string | null
           updated_at: string | null
@@ -959,6 +960,7 @@ export type Database = {
           role_metadata?: Json | null
           role_subtype?: string | null
           sector?: string | null
+          skills?: string[] | null
           status?: string | null
           theme_preference?: string | null
           updated_at?: string | null
@@ -995,6 +997,7 @@ export type Database = {
           role_metadata?: Json | null
           role_subtype?: string | null
           sector?: string | null
+          skills?: string[] | null
           status?: string | null
           theme_preference?: string | null
           updated_at?: string | null
@@ -1178,6 +1181,7 @@ export type Database = {
           is_current: boolean | null
           is_tiik_approved: boolean | null
           is_tiiked: boolean | null
+          item_type: string | null
           links: Json | null
           owner_id: string | null
           project_type: string | null
@@ -1207,6 +1211,7 @@ export type Database = {
           is_current?: boolean | null
           is_tiik_approved?: boolean | null
           is_tiiked?: boolean | null
+          item_type?: string | null
           links?: Json | null
           owner_id?: string | null
           project_type?: string | null
@@ -1236,6 +1241,7 @@ export type Database = {
           is_current?: boolean | null
           is_tiik_approved?: boolean | null
           is_tiiked?: boolean | null
+          item_type?: string | null
           links?: Json | null
           owner_id?: string | null
           project_type?: string | null
