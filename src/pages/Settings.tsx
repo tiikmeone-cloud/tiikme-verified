@@ -493,24 +493,8 @@ const SettingsPage = () => {
         </div>
       </div>
 
-      {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} onClick={() => setShowDeleteModal(false)}>
-          <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-            className="glass-card p-6 max-w-md w-full" onClick={e => e.stopPropagation()}>
-            <AlertTriangle className="w-10 h-10 mx-auto mb-4" style={{ color: "#DC2626" }} />
-            <h3 className="text-[18px] font-bold text-center mb-2" style={{ color: "var(--text-1)" }}>Delete account?</h3>
-            <p className="text-[13px] text-center mb-1" style={{ color: "var(--text-2)" }}>Type DELETE to confirm.</p>
-            <p className="text-[12px] text-center mb-4" style={{ color: "var(--text-3)" }}>30-day hold period — you can cancel by signing in.</p>
-            <Input value={deleteText} onChange={e => setDeleteText(e.target.value)} placeholder="DELETE" className="mb-4" />
-            <div className="flex gap-3">
-              <Button variant="ghost" className="flex-1" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
-              <Button variant="destructive" disabled={deleteText !== "DELETE"} className="flex-1" onClick={handleDeleteAccount}>
-                Confirm deletion
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      )}
+
+
     </motion.div>
   );
 };
