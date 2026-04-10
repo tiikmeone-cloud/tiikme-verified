@@ -45,6 +45,7 @@ const Workspace = () => {
   const [createPrivacy, setCreatePrivacy] = useState("members_only");
   const [searchWs, setSearchWs] = useState("");
   const [mobileShowRight, setMobileShowRight] = useState(false);
+  const [nameSuggestions, setNameSuggestions] = useState<string[]>([]);
 
   const [composeOpen, setComposeOpen] = useState(false);
   const [composeText, setComposeText] = useState("");
@@ -238,8 +239,7 @@ const Workspace = () => {
           ))}
 
 
-          <div className="p-4 space-y-2">
-            <button onClick={() => { setShowCreate(true); setCreateStep(0); }} className="w-full text-[12px] font-semibold py-2 rounded-xl cursor-pointer" style={{ border: "1.5px dashed var(--border-2)", color: "var(--text-3)" }}>+ Create workspace</button>
+          <div className="p-4">
             <button onClick={() => tiikToast("Enter invite code")} className="w-full text-[11px] cursor-pointer" style={{ color: "var(--brand)" }}>+ Join with code</button>
           </div>
         </div>

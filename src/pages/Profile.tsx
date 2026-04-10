@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { MapPin, Copy, Shield, Layers, X, Settings, MessageCircle, CheckCircle, Building2, Link2, Plus, Pencil, Trash2, Briefcase, GraduationCap, Award, Code2 } from "lucide-react";
+import GetTiikedModal from "@/components/profile/GetTiikedModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -193,6 +194,7 @@ const Profile = () => {
   const [showAddSkill, setShowAddSkill] = useState(false);
   const [newSkill, setNewSkill] = useState("");
   const [saving, setSaving] = useState(false);
+  const [showGetTiiked, setShowGetTiiked] = useState(false);
 
   // Form data
   const [expForm, setExpForm] = useState({ company: "", title: "", type: "Full-time", industry: "", city: "", isCurrent: true, startMonth: "", startYear: "", endMonth: "", endYear: "", description: "", skills: "" });
@@ -348,7 +350,7 @@ const Profile = () => {
     loadProfile();
   };
 
-  const deleteItem = async (id: string, table: string) => {
+  const deleteItem = async (id: string, table: "work_items" | "achievements") => {
     if (!confirm("Delete this item?")) return;
     await supabase.from(table).delete().eq("id", id);
     toast.success("Deleted");
@@ -399,6 +401,17 @@ const Profile = () => {
                 {bioExpanded || bio.length <= 150 ? bio : bio.slice(0, 150) + "..."}
               </p>
               {bio.length > 150 && <button onClick={() => setBioExpanded(!bioExpanded)} className="text-[12px] font-semibold cursor-pointer" style={{ color: "var(--brand)" }}>{bioExpanded ? "show less" : "...see more"}</button>}
+            </div>
+          )}
+
+          {/* Get Tiiked Banner */}
+          {isOwnProfile && !isVerified && (
+            <div className="flex items-center justify-between p-3 rounded-xl mt-3" style={{ background: "rgba(245,158,11,0.07)", border: "1px solid rgba(245,158,11,0.18)" }}>
+              <div className="flex items-center gap-2">
+                <Shield className="w-4 h-4" style={{ color: "#F59E0B" }} />
+                <p className="text-[12px]" style={{ color: "rgba(245,158,11,0.9)" }}>Your profile is not yet Tiiked. Get verified to unlock the gold badge.</p>
+              </div>
+              <button onClick={() => setShowGetTiiked(true)} className="text-[11px] font-bold px-3 py-1.5 rounded-full cursor-pointer shrink-0" style={{ background: "#F59E0B", color: "white" }}>Get Tiiked →</button>
             </div>
           )}
 
@@ -648,6 +661,7 @@ const Profile = () => {
       )}
 
       <EditProfileDrawer open={editOpen} onClose={() => setEditOpen(false)} onSaved={loadProfile} />
+      {user && <GetTiikedModal open={showGetTiiked} onClose={() => setShowGetTiiked(false)} userId={user.id} userRole={role} onVerified={loadProfile} />}
     </div>
   );
 };
