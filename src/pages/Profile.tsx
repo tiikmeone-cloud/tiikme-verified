@@ -312,7 +312,20 @@ const Profile = () => {
   const projects = workItems.filter((w: any) => w.item_type === "project" || (!w.item_type && w.title));
 
   const handleCopyLink = () => { navigator.clipboard.writeText(window.location.origin + "/" + username); toast.success("Link copied!"); };
-  const handleStrand = async () => { if (!user || !targetUserId) return; await supabase.from("strands").insert({ requester_id: user.id, receiver_id: targetUserId }); toast.success("Strand request sent ✓"); };
+  const handleStrand = async () => {
+    if (!user || !targetUserId) return;
+    const { error } = await supabase.from("strands").insert({ requester_id: user.id, receiver_id: targetUserId });
+    if (error) { toast.error(error.message); return; }
+    // Create alert for receiver
+    await supabase.from("alerts").insert({
+      user_id: targetUserId,
+      type: "strand",
+      title: `${authProfile?.full_name || "Someone"} wants to connect with you`,
+      body: `${authProfile?.full_name || "Someone"} sent you a strand request`,
+      link: `/app/profile/${user.id}`,
+    });
+    toast.success("Strand request sent ✓");
+  };
 
   const saveExperience = async () => {
     if (!expForm.company.trim() || !expForm.title.trim() || !user) return;
