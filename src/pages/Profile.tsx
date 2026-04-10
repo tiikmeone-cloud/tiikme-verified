@@ -822,6 +822,6 @@ const Profile = () => {
       {user && <GetTiikedModal open={showGetTiiked} onClose={() => setShowGetTiiked(false)} userId={user.id} userRole={role} onVerified={loadProfile} />}
     </div>
   );
-;
+};
 
 export default Profile;
