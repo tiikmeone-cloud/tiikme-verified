@@ -194,6 +194,8 @@ const Profile = () => {
   const [showAddSkill, setShowAddSkill] = useState(false);
   const [newSkill, setNewSkill] = useState("");
   const [saving, setSaving] = useState(false);
+  const [showGetTiiked, setShowGetTiiked] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   // Form data
   const [expForm, setExpForm] = useState({ company: "", title: "", type: "Full-time", industry: "", city: "", isCurrent: true, startMonth: "", startYear: "", endMonth: "", endYear: "", description: "", skills: "" });
