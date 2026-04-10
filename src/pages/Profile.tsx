@@ -607,8 +607,14 @@ const Profile = () => {
             <div className="flex-1 min-w-0">
               <p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>{a.title}</p>
               <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{[a.issued_by, a.achievement_date].filter(Boolean).join(" · ")}</p>
+              {isOwnProfile && <span className="text-[10px] block" style={{ color: "var(--text-3)" }}>{a.visibility === "public" ? "👁 Public" : "🔒 Only me"}</span>}
             </div>
             {a.certificate_url && <a href={a.certificate_url} target="_blank" rel="noopener" className="text-[11px] font-bold" style={{ color: "var(--brand)" }}>View ↗</a>}
+            {isOwnProfile && (
+              <button onClick={() => toggleVisibility(a.id, "achievements", a.visibility || "public")} className="p-1 cursor-pointer opacity-0 group-hover:opacity-100" style={{ color: "var(--text-3)" }}>
+                {a.visibility === "public" ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+              </button>
+            )}
             {isOwnProfile && <button onClick={() => deleteItem(a.id, "achievements")} className="opacity-0 group-hover:opacity-100 p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><Trash2 className="w-3.5 h-3.5" /></button>}
           </div>
         ))}
