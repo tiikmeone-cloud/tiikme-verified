@@ -352,18 +352,18 @@ const Feed = () => {
             </div>
           </div>
 
-          {!loading && livePosts.length > 0 && (
+          {!loading && visiblePosts.length > 0 && (
             <div className="flex items-center gap-3 my-4">
               <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
               <span className="text-[11px] font-semibold px-4 py-1.5 rounded-full" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-2)" }}>
-                Today · {livePosts.length} posts
+                Today · {visiblePosts.length} posts
               </span>
               <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
             </div>
           )}
 
           {loading && <SkeletonCard count={3} />}
-          {!loading && livePosts.map((post: any) => (
+          {!loading && visiblePosts.map((post: any) => (
             <LivePostCard
               key={post.id}
               post={post}
@@ -382,7 +382,7 @@ const Feed = () => {
             />
           ))}
 
-          {!loading && livePosts.length === 0 && (
+          {!loading && visiblePosts.length === 0 && (
             <div className="glass-liquid rounded-2xl p-10 text-center">
               <MessageSquare className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
               <p className="text-[16px] font-bold mb-1" style={{ color: "var(--text-1)" }}>Nothing here yet</p>
@@ -393,7 +393,7 @@ const Feed = () => {
 
           <div ref={sentinelRef} className="h-1" />
           {loadingMore && <SkeletonCard count={2} />}
-          {!loading && !hasMore && livePosts.length > 0 && (
+          {!loading && !hasMore && visiblePosts.length > 0 && (
             <div className="flex items-center justify-center py-8">
               <span className="text-[12px] font-medium px-5 py-2 rounded-full" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-3)" }}>You're caught up ✓</span>
             </div>
