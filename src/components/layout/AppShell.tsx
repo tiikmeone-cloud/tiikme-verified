@@ -64,16 +64,27 @@ const AppShell = ({ children }: { children: ReactNode }) => {
   // Fetch real unread counts
   useEffect(() => {
     if (!user?.id) return;
+    // Alerts count
     supabase.from("alerts").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("is_read", false).then(({ count }) => setUnreadAlerts(count || 0));
+    // Pings count
     supabase.from("pings").select("*", { count: "exact", head: true }).eq("is_read", false).neq("sender_id", user.id).then(({ count }) => setUnreadPings(count || 0));
 
-    // Live unread pings
-    const channel = supabase.channel("unread-pings-" + user.id)
+    // Live alerts
+    const alertsCh = supabase.channel("unread-alerts-" + user.id)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "alerts", filter: `user_id=eq.${user.id}` }, () => {
+        setUnreadAlerts(p => p + 1);
+      }).subscribe();
+
+    // Live pings
+    const pingsCh = supabase.channel("unread-pings-" + user.id)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "pings" }, payload => {
         if ((payload.new as any).sender_id !== user.id) setUnreadPings(p => p + 1);
       }).subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(alertsCh);
+      supabase.removeChannel(pingsCh);
+    };
   }, [user?.id]);
 
   // Reset pings unread when on pings page
