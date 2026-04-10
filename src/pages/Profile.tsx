@@ -211,7 +211,51 @@ const SortableSection = ({ id, children, isOwn }: { id: string; children: React.
   );
 };
 
-const Profile = () => {
+function getTimeAgo(d: Date): string {
+  const s = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (s < 60) return "just now";
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+
+const ProfilePostsSection = ({ posts, isOwnProfile }: { posts: any[]; isOwnProfile: boolean }) => {
+  const postIds = useMemo(() => posts.map((p: any) => p.id), [posts]);
+  const { counts, myLikes, toggle } = useLikes(postIds);
+
+  return (
+    <div className="t-card p-5">
+      <SectionHeader title="Posts" icon={MessageCircle} showAdd={false} />
+      {posts.map((p: any) => {
+        const likeCount = counts[p.id] || 0;
+        const liked = myLikes[p.id] || false;
+        return (
+          <div key={p.id} className="py-3 group" style={{ borderBottom: "1px solid var(--border)" }}>
+            <p className="text-[13px] line-clamp-3" style={{ color: "var(--text-2)" }}>{p.content}</p>
+            {p.image_urls?.length > 0 && (
+              <div className="mt-2 rounded-xl overflow-hidden">
+                <img src={p.image_urls[0]} alt="Post" className="w-full max-h-48 object-cover rounded-xl" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              </div>
+            )}
+            <div className="flex items-center gap-3 mt-1.5">
+              <span className="text-[11px]" style={{ color: "var(--text-3)" }}>{p.created_at ? getTimeAgo(new Date(p.created_at)) : ""}</span>
+              {isOwnProfile && (
+                <button onClick={() => toggle(p.id)} className="flex items-center gap-1 text-[11px] cursor-pointer" style={{ color: liked ? "var(--brand)" : "var(--text-3)" }}>
+                  <Heart className="w-3 h-3" style={{ fill: liked ? "var(--brand)" : "none" }} /> {likeCount > 0 ? likeCount : ""}
+                </button>
+              )}
+              {!isOwnProfile && likeCount > 0 && <span className="text-[11px]" style={{ color: "var(--text-3)" }}>♥ {likeCount}</span>}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+
   const { id: urlUserId } = useParams<{ id: string }>();
   const [editOpen, setEditOpen] = useState(false);
   const { profile: authProfile, initials: authInitials, displayName: authDisplayName, refreshProfile, user, loading: authLoading } = useAuth();
