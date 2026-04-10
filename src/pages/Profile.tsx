@@ -454,8 +454,18 @@ const Profile = () => {
               <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{formatDuration(exp.start_date, exp.end_date, exp.is_current)}</p>
               {exp.description && <p className="text-[12px] mt-1" style={{ color: "var(--text-2)" }}>{exp.description}</p>}
               {exp.tech_stack?.length > 0 && <div className="flex flex-wrap gap-1 mt-1">{exp.tech_stack.map((s: string) => <span key={s} className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--brand-dim)", color: "var(--brand)" }}>{s}</span>)}</div>}
+              {exp.verification_status === "verified" && <span className="flex items-center gap-1 text-[10px] font-bold mt-1" style={{ color: "#10B981" }}>✓ Verified</span>}
+              {exp.verification_status === "unverified" && isOwnProfile && <span className="text-[10px] mt-1" style={{ color: "var(--text-3)" }}>○ Unverified</span>}
+              {isOwnProfile && <span className="text-[10px] mt-0.5 block" style={{ color: "var(--text-3)" }}>{exp.visibility === "public" ? "👁 Public" : "🔒 Only me"}</span>}
             </div>
-            {isOwnProfile && <button onClick={() => deleteItem(exp.id, "work_items")} className="opacity-0 group-hover:opacity-100 p-1 cursor-pointer self-start" style={{ color: "var(--text-3)" }}><Trash2 className="w-3.5 h-3.5" /></button>}
+            <div className="flex flex-col gap-1 items-end">
+              {isOwnProfile && (
+                <button onClick={() => toggleVisibility(exp.id, "work_items", exp.visibility || "public")} className="p-1 cursor-pointer opacity-0 group-hover:opacity-100" style={{ color: "var(--text-3)" }} title={exp.visibility === "public" ? "Make private" : "Make public"}>
+                  {exp.visibility === "public" ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                </button>
+              )}
+              {isOwnProfile && <button onClick={() => deleteItem(exp.id, "work_items")} className="opacity-0 group-hover:opacity-100 p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><Trash2 className="w-3.5 h-3.5" /></button>}
+            </div>
           </div>
         ))}
         <AnimatePresence>
