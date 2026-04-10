@@ -25,7 +25,7 @@ interface Opp {
 }
 
 const Opportunities = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [activeType, setActiveType] = useState("All");
   const [search, setSearch] = useState("");
   const [opps, setOpps] = useState<Opp[]>([]);
@@ -35,6 +35,10 @@ const Opportunities = () => {
   const [mobileDetail, setMobileDetail] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [showApply, setShowApply] = useState(false);
+  const [applyMsg, setApplyMsg] = useState("");
+  const [applying, setApplying] = useState(false);
+  const [appliedIds, setAppliedIds] = useState<string[]>([]);
 
   // Create form
   const [cTitle, setCTitle] = useState("");
@@ -61,6 +65,44 @@ const Opportunities = () => {
   }, [search, activeType]);
 
   useEffect(() => { const t = setTimeout(fetchOpps, 300); return () => clearTimeout(t); }, [fetchOpps]);
+
+  // Load user's existing applications
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("opportunity_applications").select("opportunity_id").eq("applicant_id", user.id)
+      .then(({ data }) => setAppliedIds((data || []).map((a: any) => a.opportunity_id)));
+  }, [user]);
+
+  const handleApply = async () => {
+    if (!user || !selectedId) return;
+    setApplying(true);
+    const { error } = await supabase.from("opportunity_applications").insert({
+      opportunity_id: selectedId,
+      applicant_id: user.id,
+      cover_note: applyMsg.trim() || null,
+      status: "applied",
+    });
+    setApplying(false);
+    if (error) {
+      if (error.code === "23505") toast.error("You already applied");
+      else toast.error(error.message);
+      return;
+    }
+    // Send alert to poster
+    const opp = opps.find(o => o.id === selectedId);
+    if (opp?.poster_id) {
+      await supabase.from("alerts").insert({
+        user_id: opp.poster_id, type: "opportunity",
+        title: `New application for "${opp.title}"`,
+        body: `${profile?.full_name || "Someone"} applied for your opportunity.`,
+        link: `/app/opportunities`,
+      });
+    }
+    setAppliedIds(prev => [...prev, selectedId]);
+    toast.success("Application sent ✓");
+    setShowApply(false);
+    setApplyMsg("");
+  };
 
   const selected = opps.find(o => o.id === selectedId);
   const toggleSave = (id: string) => { setSaved(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]); toast.success(saved.includes(id) ? "Removed from saved" : "Saved for later"); };
@@ -178,9 +220,49 @@ const Opportunities = () => {
                 <div className="mt-5"><p className="micro-label mb-2">DESCRIPTION</p><p className="text-[14px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text-2)" }}>{selected.description}</p></div>
               )}
               <div className="flex gap-3 mt-6">
-                <Button className="flex-1">Apply now</Button>
+                {appliedIds.includes(selected.id) ? (
+                  <Button className="flex-1" disabled>✓ Applied</Button>
+                ) : (
+                  <Button className="flex-1" onClick={() => setShowApply(!showApply)}>Apply now</Button>
+                )}
                 <Button variant="secondary" onClick={() => toggleSave(selected.id)}><Bookmark className="w-4 h-4 mr-1" /> {saved.includes(selected.id) ? "Saved" : "Save"}</Button>
               </div>
+
+              {/* Inline apply form */}
+              <AnimatePresence>
+                {showApply && (
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+                    className="mt-4 p-4 rounded-2xl" style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)" }}>
+                    <p className="text-[14px] font-bold mb-3" style={{ color: "var(--text-1)" }}>Apply for this opportunity</p>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+                        <div className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold text-white overflow-hidden" style={{ background: "var(--brand)" }}>
+                          {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : (profile?.full_name || "U").slice(0, 2).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="text-[13px] font-bold" style={{ color: "var(--text-1)" }}>{profile?.full_name || "You"}</p>
+                          <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{profile?.headline || profile?.role || ""}</p>
+                        </div>
+                      </div>
+                      <textarea
+                        value={applyMsg} onChange={e => setApplyMsg(e.target.value.slice(0, 300))}
+                        placeholder="Message to the poster (optional)"
+                        rows={3} maxLength={300}
+                        className="w-full rounded-xl p-3 text-[13px] outline-none resize-none"
+                        style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-1)" }}
+                      />
+                      <p className="text-[10px] text-right" style={{ color: "var(--text-3)" }}>{applyMsg.length}/300</p>
+                      <div className="flex items-center gap-2 text-[12px]" style={{ color: "var(--text-2)" }}>
+                        <input type="checkbox" defaultChecked disabled /> Share my Tíikme profile
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={handleApply} disabled={applying} className="flex-1">{applying ? "Sending..." : "Submit Application"}</Button>
+                        <Button size="sm" variant="ghost" onClick={() => setShowApply(false)}>Cancel</Button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           ) : (
             <div className="flex-1 flex items-center justify-center p-8">

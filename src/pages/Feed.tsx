@@ -3,7 +3,7 @@ import { Heart, MessageSquare, Repeat2, MoreHorizontal, Flag, Send, FileText, Ch
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
-import NewPostModal from "@/components/NewPostModal";
+import { useNavigate } from "react-router-dom";
 import ImageGrid from "@/components/feed/ImageGrid";
 import MentionText from "@/components/feed/MentionText";
 import ActivityScoreRing from "@/components/ActivityScoreRing";
@@ -264,7 +264,7 @@ const SuggestedWidget = () => {
 
 /* ─── FEED PAGE ─── */
 const Feed = () => {
-  const [postModalOpen, setPostModalOpen] = useState(false);
+  const feedNavigate = useNavigate();
   const { posts: livePosts, loading, loadingMore, hasMore, loadMore, refresh } = useFeedPosts();
   const sentinelRef = useRef<HTMLDivElement>(null);
   const { profile, initials } = useAuth();
@@ -305,7 +305,7 @@ const Feed = () => {
               <div className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: "var(--brand)" }}>
                 {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : initials}
               </div>
-              <button onClick={() => setPostModalOpen(true)} className="flex-1 text-left text-[13px] h-10 glass-input px-4 cursor-pointer" style={{ color: "var(--text-3)" }}>
+              <button onClick={() => feedNavigate("/post/create")} className="flex-1 text-left text-[13px] h-10 glass-input px-4 cursor-pointer" style={{ color: "var(--text-3)" }}>
                 What's on your mind?
               </button>
             </div>
@@ -329,7 +329,7 @@ const Feed = () => {
               <MessageSquare className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
               <p className="text-[16px] font-bold mb-1" style={{ color: "var(--text-1)" }}>Nothing here yet</p>
               <p className="text-[13px] mb-4" style={{ color: "var(--text-3)" }}>Be the first to post something.</p>
-              <Button onClick={() => setPostModalOpen(true)} className="rounded-full">Write a post →</Button>
+              <Button onClick={() => feedNavigate("/post/create")} className="rounded-full">Write a post →</Button>
             </div>
           )}
 
@@ -347,7 +347,7 @@ const Feed = () => {
           <SuggestedWidget />
         </aside>
       </div>
-      <NewPostModal open={postModalOpen} onClose={() => setPostModalOpen(false)} onPublished={refresh} />
+      {/* Post creation is now a full page at /post/create */}
     </main>
   );
 };
