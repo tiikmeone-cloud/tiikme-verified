@@ -68,7 +68,7 @@ export function usePostReactions(
       setLiked(true);
       setLikeCount(p => p + 1);
       const { error } = await supabase.from("post_reactions")
-        .upsert({ post_id: postId, user_id: userId, reaction_type: "like" }, { onConflict: "post_id,user_id" });
+        .upsert({ post_id: postId, user_id: userId, reaction_type: "useful" }, { onConflict: "post_id,user_id" });
       if (error) { setLiked(false); setLikeCount(p => Math.max(0, p - 1)); }
     }
   }, [postId, userId, liked]);

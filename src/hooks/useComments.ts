@@ -2,6 +2,20 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
+// Helper: fetch profiles for a list of user IDs and attach as `author`
+async function attachAuthors(comments: any[]): Promise<any[]> {
+  if (!comments.length) return comments;
+  const uids = [...new Set(comments.map((c) => c.user_id).filter(Boolean))];
+  if (!uids.length) return comments;
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, full_name, avatar_url, role")
+    .in("id", uids);
+  const map: Record<string, any> = {};
+  for (const p of profiles || []) map[p.id] = p;
+  return comments.map((c) => ({ ...c, author: map[c.user_id] || null }));
+}
+
 export function useComments() {
   const { user, profile } = useAuth();
   const [all, setAll] = useState<Record<string, any[]>>({});
@@ -36,13 +50,12 @@ export function useComments() {
         // Load comments for this post
         supabase
           .from("post_comments")
-          .select(
-            "*, author:profiles!user_id(id, full_name, avatar_url, role)"
-          )
+          .select("*")
           .eq("post_id", postId)
           .order("created_at", { ascending: true })
-          .then(({ data }) => {
-            setAll((prev) => ({ ...prev, [postId]: data || [] }));
+          .then(async ({ data }) => {
+            const withAuthors = await attachAuthors(data || []);
+            setAll((prev) => ({ ...prev, [postId]: withAuthors }));
           });
       }
       return s;
@@ -77,9 +90,7 @@ export function useComments() {
       const { data, error } = await supabase
         .from("post_comments")
         .insert({ post_id: postId, user_id: user.id, content })
-        .select(
-          "*, author:profiles!user_id(id, full_name, avatar_url, role)"
-        )
+        .select("*")
         .single();
 
       if (error) {
@@ -95,11 +106,21 @@ export function useComments() {
         return;
       }
 
+      // Attach author info from our own profile
+      const enriched = {
+        ...data,
+        author: {
+          id: user.id,
+          full_name: profile?.full_name || "You",
+          avatar_url: profile?.avatar_url || null,
+          role: profile?.role || null,
+        },
+      };
       setAll((p) => ({
         ...p,
         [postId]: (p[postId] || []).some((c) => c.id === temp.id)
-          ? (p[postId] || []).map((c) => (c.id === temp.id ? data : c))
-          : [...(p[postId] || []), data],
+          ? (p[postId] || []).map((c) => (c.id === temp.id ? enriched : c))
+          : [...(p[postId] || []), enriched],
       }));
     },
     [inputs, user, profile]
@@ -145,17 +166,16 @@ export function useComments() {
 
             const { data } = await supabase
               .from("post_comments")
-              .select(
-                "*, author:profiles!user_id(id, full_name, avatar_url, role)"
-              )
+              .select("*")
               .eq("id", newComment.id)
               .single();
 
             if (data) {
+              const withAuthor = await attachAuthors([data]);
               setAll((prev) => {
                 const ex = prev[pid] || [];
                 if (ex.some((c: any) => c.id === data.id)) return prev;
-                return { ...prev, [pid]: [...ex, data] };
+                return { ...prev, [pid]: [...ex, ...withAuthor] };
               });
             }
           }

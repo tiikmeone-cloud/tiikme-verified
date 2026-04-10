@@ -99,7 +99,10 @@ export function useLikes(postIds: string[]) {
       } else {
         const { error } = await supabase
           .from("post_reactions")
-          .insert({ post_id: postId, user_id: user.id, reaction_type: "like" });
+          .upsert(
+            { post_id: postId, user_id: user.id, reaction_type: "useful" },
+            { onConflict: "post_id,user_id", ignoreDuplicates: true }
+          );
         if (error) {
           setMyLikes((p) => ({ ...p, [postId]: false }));
           setCounts((p) => ({
