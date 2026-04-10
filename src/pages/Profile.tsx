@@ -348,7 +348,7 @@ const Profile = () => {
     loadProfile();
   };
 
-  const deleteItem = async (id: string, table: string) => {
+  const deleteItem = async (id: string, table: "work_items" | "achievements") => {
     if (!confirm("Delete this item?")) return;
     await supabase.from(table).delete().eq("id", id);
     toast.success("Deleted");
