@@ -392,16 +392,17 @@ const Profile = () => {
   const saveAchievement = async () => {
     if (!achForm.title.trim() || !user) return;
     setSaving(true);
-    const { error } = await supabase.from("achievements").insert({
+    const { data, error } = await supabase.from("achievements").insert({
       user_id: user.id, title: achForm.title.trim(), issued_by: achForm.issuedBy,
       achievement_date: achForm.date || null, description: achForm.description,
       certificate_url: achForm.url || null, type: "award",
-    });
+    }).select().single();
     setSaving(false);
-    if (error) { toast.error("Failed: " + error.message); return; }
+    if (error) { toast.error("Failed: " + error.message); console.error(error); return; }
     toast.success("Achievement added ✓");
+    if (data) setAchievements(prev => [data, ...prev]);
     setShowAddAchievement(false);
-    loadProfile();
+    setAchForm({ title: "", issuedBy: "", date: "", description: "", url: "" });
   };
 
   const addSkill = async () => {
