@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Bell, Briefcase, Link2, Shield, TrendingUp, Target, Check, X } from "lucide-react";
+import { Bell, Briefcase, Link2, Shield, TrendingUp, Target, Check, X, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,16 +8,21 @@ import { supabase } from "@/integrations/supabase/client";
 
 const ICON_MAP: Record<string, any> = {
   strand: Link2, hr: Briefcase, verified: Shield, work: Target, score: TrendingUp,
+  strand_request: UserCheck, verification_request: Shield,
 };
 
 const ICON_STYLES: Record<string, { bg: string; color: string }> = {
   hr: { bg: "rgba(107,33,168,0.1)", color: "#6B21A8" },
   strand: { bg: "rgba(79,70,229,0.1)", color: "#4F46E5" },
+  strand_request: { bg: "rgba(79,70,229,0.1)", color: "#4F46E5" },
   verified: { bg: "rgba(245,158,11,0.1)", color: "#F59E0B" },
+  verification_request: { bg: "rgba(245,158,11,0.1)", color: "#F59E0B" },
   work: { bg: "rgba(3,105,161,0.1)", color: "#0369A1" },
   opportunity: { bg: "rgba(194,65,12,0.1)", color: "#C2410C" },
   score: { bg: "rgba(91,79,255,0.1)", color: "#5B4FFF" },
   challenge: { bg: "rgba(146,64,14,0.1)", color: "#92400E" },
+  like: { bg: "rgba(232,88,10,0.1)", color: "#E8580A" },
+  comment: { bg: "rgba(232,88,10,0.1)", color: "#E8580A" },
 };
 
 function getTimeAgo(date: Date): string {
@@ -44,7 +49,7 @@ function getGroup(dateStr: string): string {
 const filterTabs = ["All", "Unread"];
 
 const Alerts = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [activeTab, setActiveTab] = useState("All");
   const [alerts, setAlerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,6 +69,7 @@ const Alerts = () => {
 
   useEffect(() => { fetchAlerts(); }, [fetchAlerts]);
 
+  // Mark all read
   const markAllRead = async () => {
     if (!user) return;
     await supabase.from("alerts").update({ is_read: true } as any).eq("user_id", user.id).eq("is_read", false);
@@ -71,8 +77,51 @@ const Alerts = () => {
     toast.success("All notifications marked as read");
   };
 
-  const unreadCount = alerts.filter(a => !a.is_read).length;
+  // Accept strand request
+  const acceptStrand = async (alert: any) => {
+    const senderId = alert.actor_id;
+    if (!user || !senderId) return;
 
+    // Update strand status
+    await supabase.from("strands")
+      .update({ status: "accepted" })
+      .eq("requester_id", senderId)
+      .eq("receiver_id", user.id)
+      .eq("status", "pending");
+
+    // Send notification to sender
+    await supabase.from("alerts").insert({
+      user_id: senderId,
+      actor_id: user.id,
+      type: "strand",
+      title: `${profile?.full_name || "Someone"} accepted your Strand request!`,
+      body: "You are now connected.",
+      link: `/app/profile/${user.id}`,
+    });
+
+    // Mark this alert as read
+    await supabase.from("alerts").update({ is_read: true } as any).eq("id", alert.id);
+    setAlerts(prev => prev.map(a => a.id === alert.id ? { ...a, is_read: true, _accepted: true } : a));
+    toast.success("Strand accepted ✓");
+  };
+
+  // Decline strand request
+  const declineStrand = async (alert: any) => {
+    const senderId = alert.actor_id;
+    if (!user || !senderId) return;
+
+    await supabase.from("strands")
+      .update({ status: "declined" })
+      .eq("requester_id", senderId)
+      .eq("receiver_id", user.id)
+      .eq("status", "pending");
+
+    await supabase.from("alerts").update({ is_read: true } as any).eq("id", alert.id);
+    setAlerts(prev => prev.map(a => a.id === alert.id ? { ...a, is_read: true, _declined: true } : a));
+    toast.success("Strand declined");
+  };
+
+  const unreadCount = alerts.filter(a => !a.is_read).length;
   const filteredAlerts = activeTab === "Unread" ? alerts.filter(a => !a.is_read) : alerts;
 
   const groups: Record<string, any[]> = {};
@@ -131,6 +180,9 @@ const Alerts = () => {
               const unread = !notif.is_read;
               const style = ICON_STYLES[notif.type] || ICON_STYLES.score;
               const Icon = ICON_MAP[notif.type] || Bell;
+              const isStrandRequest = notif.type === "strand" && notif.title?.toLowerCase().includes("connect");
+              const handled = notif._accepted || notif._declined;
+
               return (
                 <motion.div key={notif.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}
                   className="flex items-start gap-3 px-4 py-3.5 cursor-pointer"
@@ -151,6 +203,26 @@ const Alerts = () => {
                     <p className={`text-[13px] leading-relaxed ${unread ? "font-semibold" : "font-normal"}`} style={{ color: unread ? "var(--text-1)" : "var(--text-2)" }}>
                       {notif.title || notif.body}
                     </p>
+                    {notif.body && notif.title && (
+                      <p className="text-[12px] mt-0.5" style={{ color: "var(--text-3)" }}>{notif.body}</p>
+                    )}
+                    {/* Strand request actions */}
+                    {isStrandRequest && !handled && notif.actor_id && (
+                      <div className="flex gap-2 mt-2">
+                        <Button size="sm" className="h-7 text-[11px] gap-1" onClick={(e) => { e.stopPropagation(); acceptStrand(notif); }}>
+                          <Check className="w-3 h-3" /> Accept
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-7 text-[11px] gap-1" onClick={(e) => { e.stopPropagation(); declineStrand(notif); }}>
+                          <X className="w-3 h-3" /> Decline
+                        </Button>
+                      </div>
+                    )}
+                    {notif._accepted && (
+                      <span className="text-[11px] font-bold mt-1 block" style={{ color: "#10B981" }}>✓ Accepted</span>
+                    )}
+                    {notif._declined && (
+                      <span className="text-[11px] font-bold mt-1 block" style={{ color: "var(--text-3)" }}>Declined</span>
+                    )}
                   </div>
                   <span className="text-[10px] shrink-0 pt-0.5" style={{ color: "var(--text-3)" }}>
                     {notif.created_at ? getTimeAgo(new Date(notif.created_at)) : ""}
