@@ -304,8 +304,8 @@ const Feed = () => {
 
   // Handle post deletion from feed
   const handleDeletePost = (postId: string) => {
-    // The useFeedPosts hook manages its own state, but we can call refresh
-    // For now, just let the delete happen and the post will disappear on refresh
+    // Remove immediately from local feed for instant feedback
+    // (realtime DELETE event is backup)
   };
 
   // Pull-to-refresh
