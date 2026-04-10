@@ -51,6 +51,7 @@ export type Database = {
           certificate_url: string | null
           created_at: string | null
           description: string | null
+          display_order: number | null
           icon_emoji: string | null
           id: string
           is_shared_to_feed: boolean | null
@@ -73,6 +74,7 @@ export type Database = {
           certificate_url?: string | null
           created_at?: string | null
           description?: string | null
+          display_order?: number | null
           icon_emoji?: string | null
           id?: string
           is_shared_to_feed?: boolean | null
@@ -95,6 +97,7 @@ export type Database = {
           certificate_url?: string | null
           created_at?: string | null
           description?: string | null
+          display_order?: number | null
           icon_emoji?: string | null
           id?: string
           is_shared_to_feed?: boolean | null
@@ -645,6 +648,10 @@ export type Database = {
       }
       pings: {
         Row: {
+          attachment_name: string | null
+          attachment_size: number | null
+          attachment_type: string | null
+          attachment_url: string | null
           content: string
           conversation_id: string | null
           created_at: string | null
@@ -656,6 +663,10 @@ export type Database = {
           work_item_id: string | null
         }
         Insert: {
+          attachment_name?: string | null
+          attachment_size?: number | null
+          attachment_type?: string | null
+          attachment_url?: string | null
           content: string
           conversation_id?: string | null
           created_at?: string | null
@@ -667,6 +678,10 @@ export type Database = {
           work_item_id?: string | null
         }
         Update: {
+          attachment_name?: string | null
+          attachment_size?: number | null
+          attachment_type?: string | null
+          attachment_url?: string | null
           content?: string
           conversation_id?: string | null
           created_at?: string | null
@@ -922,6 +937,7 @@ export type Database = {
           role: string | null
           role_metadata: Json | null
           role_subtype: string | null
+          section_order: Json | null
           sector: string | null
           skills: string[] | null
           status: string | null
@@ -959,6 +975,7 @@ export type Database = {
           role?: string | null
           role_metadata?: Json | null
           role_subtype?: string | null
+          section_order?: Json | null
           sector?: string | null
           skills?: string[] | null
           status?: string | null
@@ -996,6 +1013,7 @@ export type Database = {
           role?: string | null
           role_metadata?: Json | null
           role_subtype?: string | null
+          section_order?: Json | null
           sector?: string | null
           skills?: string[] | null
           status?: string | null
@@ -1173,7 +1191,9 @@ export type Database = {
           approved_by: string | null
           created_at: string | null
           description: string | null
+          display_order: number | null
           domain: string | null
+          employment_type: string | null
           end_date: string | null
           id: string
           institution_id: string | null
@@ -1203,7 +1223,9 @@ export type Database = {
           approved_by?: string | null
           created_at?: string | null
           description?: string | null
+          display_order?: number | null
           domain?: string | null
+          employment_type?: string | null
           end_date?: string | null
           id?: string
           institution_id?: string | null
@@ -1233,7 +1255,9 @@ export type Database = {
           approved_by?: string | null
           created_at?: string | null
           description?: string | null
+          display_order?: number | null
           domain?: string | null
+          employment_type?: string | null
           end_date?: string | null
           id?: string
           institution_id?: string | null
