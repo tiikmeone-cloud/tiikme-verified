@@ -188,10 +188,29 @@ const SettingsPage = () => {
   };
 
   const handleDeleteAccount = async () => {
+    if (!user) return;
     setShowDeleteModal(false);
-    await supabase.auth.signOut();
-    tiikToast.success("Account scheduled for deletion in 30 days");
-    navigate("/");
+    try {
+      // Delete all user data
+      await Promise.all([
+        supabase.from("posts").delete().eq("author_id", user.id),
+        supabase.from("work_items").delete().eq("owner_id", user.id),
+        supabase.from("achievements").delete().eq("user_id", user.id),
+        supabase.from("post_reactions").delete().eq("user_id", user.id),
+        supabase.from("post_comments").delete().eq("user_id", user.id),
+        supabase.from("strands").delete().eq("requester_id", user.id),
+      ]);
+      // Delete profile
+      await supabase.from("profiles").delete().eq("id", user.id);
+      await supabase.auth.signOut();
+      const savedTheme = localStorage.getItem("tiikme-theme");
+      localStorage.clear();
+      if (savedTheme) localStorage.setItem("tiikme-theme", savedTheme);
+      tiikToast.success("Account deleted");
+      navigate("/");
+    } catch {
+      tiikToast.error("Failed to delete account");
+    }
   };
 
   return (
@@ -452,33 +471,30 @@ const SettingsPage = () => {
                 </Button>
               </div>
               <div className="rounded-2xl p-5" style={{ background: "rgba(220,38,38,0.04)", border: "1px solid rgba(220,38,38,0.12)" }}>
-                <h3 className="text-[16px] font-bold mb-1" style={{ color: "#DC2626" }}>Delete Account</h3>
-                <p className="text-[13px] mb-4" style={{ color: "var(--text-2)" }}>Permanently removes all your data after 30 days.</p>
-                <Button variant="destructive" onClick={() => setShowDeleteModal(true)}>Delete my account</Button>
+                <h3 className="text-[16px] font-bold mb-1" style={{ color: "#DC2626" }}>Danger Zone</h3>
+                <p className="text-[13px] mb-2" style={{ color: "var(--text-2)" }}>This will permanently delete your profile, posts, and all data.</p>
+                <p className="text-[13px] mb-4" style={{ color: "var(--text-3)" }}>Type <strong>DELETE</strong> below to confirm.</p>
+                {!showDeleteModal ? (
+                  <Button variant="destructive" onClick={() => setShowDeleteModal(true)}>Delete my account</Button>
+                ) : (
+                  <div className="space-y-3">
+                    <Input value={deleteText} onChange={e => setDeleteText(e.target.value)} placeholder="Type DELETE" />
+                    <div className="flex gap-2">
+                      <Button variant="ghost" size="sm" onClick={() => { setShowDeleteModal(false); setDeleteText(""); }}>Cancel</Button>
+                      <Button variant="destructive" size="sm" disabled={deleteText !== "DELETE"} onClick={handleDeleteAccount}>
+                        Permanently delete account
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
         </div>
       </div>
 
-      {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} onClick={() => setShowDeleteModal(false)}>
-          <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-            className="glass-card p-6 max-w-md w-full" onClick={e => e.stopPropagation()}>
-            <AlertTriangle className="w-10 h-10 mx-auto mb-4" style={{ color: "#DC2626" }} />
-            <h3 className="text-[18px] font-bold text-center mb-2" style={{ color: "var(--text-1)" }}>Delete account?</h3>
-            <p className="text-[13px] text-center mb-1" style={{ color: "var(--text-2)" }}>Type DELETE to confirm.</p>
-            <p className="text-[12px] text-center mb-4" style={{ color: "var(--text-3)" }}>30-day hold period — you can cancel by signing in.</p>
-            <Input value={deleteText} onChange={e => setDeleteText(e.target.value)} placeholder="DELETE" className="mb-4" />
-            <div className="flex gap-3">
-              <Button variant="ghost" className="flex-1" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
-              <Button variant="destructive" disabled={deleteText !== "DELETE"} className="flex-1" onClick={handleDeleteAccount}>
-                Confirm deletion
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      )}
+
+
     </motion.div>
   );
 };

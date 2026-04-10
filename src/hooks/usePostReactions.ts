@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 export function usePostReactions(
   postId: string,
   userId: string | undefined,
-  initialCounts?: Record<string, number> | null
+  _initialCounts?: Record<string, number> | null
 ) {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
@@ -16,32 +16,25 @@ export function usePostReactions(
     return () => { mountedRef.current = false; };
   }, []);
 
-  // Derive initial like count from old reaction format or new
+  // Load REAL like count from post_reactions table — NOT from cached JSON
   useEffect(() => {
-    const total = (initialCounts?.insightful || 0) + (initialCounts?.useful || 0) + (initialCounts?.inspiring || 0) + (initialCounts?.like || 0);
-    setLikeCount(total);
-  }, [initialCounts, postId]);
-
-  // Check if user has liked
-  useEffect(() => {
-    if (!postId || !userId) {
-      setLiked(false);
-      setLoaded(true);
-      return;
-    }
+    if (!postId) { setLoaded(true); return; }
     let cancelled = false;
-    setLoaded(false);
-    supabase
-      .from("post_reactions")
-      .select("id")
-      .eq("post_id", postId)
-      .eq("user_id", userId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (cancelled) return;
-        setLiked(!!data);
-        setLoaded(true);
-      });
+
+    (async () => {
+      const [countRes, likedRes] = await Promise.all([
+        supabase.from("post_reactions").select("*", { count: "exact", head: true }).eq("post_id", postId),
+        userId
+          ? supabase.from("post_reactions").select("id").eq("post_id", postId).eq("user_id", userId).maybeSingle()
+          : Promise.resolve({ data: null }),
+      ]);
+
+      if (cancelled || !mountedRef.current) return;
+      setLikeCount(countRes.count || 0);
+      setLiked(!!likedRes.data);
+      setLoaded(true);
+    })();
+
     return () => { cancelled = true; };
   }, [postId, userId]);
 
@@ -50,27 +43,33 @@ export function usePostReactions(
     if (!postId) return;
     const channel = supabase
       .channel(`likes-${postId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "post_reactions", filter: `post_id=eq.${postId}` }, async () => {
-        const { count } = await supabase
-          .from("post_reactions")
-          .select("*", { count: "exact", head: true })
-          .eq("post_id", postId);
-        if (mountedRef.current) setLikeCount(count || 0);
+      .on("postgres_changes", { event: "*", schema: "public", table: "post_reactions", filter: `post_id=eq.${postId}` }, (payload) => {
+        if (!mountedRef.current) return;
+        if (payload.eventType === "INSERT") {
+          setLikeCount(p => p + 1);
+          if ((payload.new as any).user_id === userId) setLiked(true);
+        } else if (payload.eventType === "DELETE") {
+          setLikeCount(p => Math.max(0, p - 1));
+          if ((payload.old as any).user_id === userId) setLiked(false);
+        }
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [postId]);
+  }, [postId, userId]);
 
   const toggleLike = useCallback(async () => {
     if (!userId) return;
     if (liked) {
       setLiked(false);
       setLikeCount(p => Math.max(0, p - 1));
-      await supabase.from("post_reactions").delete().eq("post_id", postId).eq("user_id", userId);
+      const { error } = await supabase.from("post_reactions").delete().eq("post_id", postId).eq("user_id", userId);
+      if (error) { setLiked(true); setLikeCount(p => p + 1); }
     } else {
       setLiked(true);
       setLikeCount(p => p + 1);
-      await supabase.from("post_reactions").insert({ post_id: postId, user_id: userId, reaction_type: "like" });
+      const { error } = await supabase.from("post_reactions")
+        .upsert({ post_id: postId, user_id: userId, reaction_type: "like" }, { onConflict: "post_id,user_id" });
+      if (error) { setLiked(false); setLikeCount(p => Math.max(0, p - 1)); }
     }
   }, [postId, userId, liked]);
 

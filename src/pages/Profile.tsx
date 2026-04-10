@@ -303,53 +303,70 @@ const Profile = () => {
   const skills: string[] = profileData.skills || [];
 
   // Sort experiences: current first, then by start_date desc
-  const experiences = workItems.filter((w: any) => w.item_type === "experience").sort((a: any, b: any) => {
+  // Filter by visibility: own profile shows all, other profiles only public
+  const visFilter = (items: any[]) => isOwnProfile ? items : items.filter((w: any) => w.visibility === "public" || !w.visibility);
+  
+  const experiences = visFilter(workItems.filter((w: any) => w.item_type === "experience")).sort((a: any, b: any) => {
     if (a.is_current && !b.is_current) return -1;
     if (!a.is_current && b.is_current) return 1;
     return (b.start_date || "").localeCompare(a.start_date || "");
   });
-  const education = workItems.filter((w: any) => w.item_type === "education");
-  const projects = workItems.filter((w: any) => w.item_type === "project" || (!w.item_type && w.title));
+  const education = visFilter(workItems.filter((w: any) => w.item_type === "education"));
+  const projects = visFilter(workItems.filter((w: any) => w.item_type === "project" || (!w.item_type && w.title)));
 
   const handleCopyLink = () => { navigator.clipboard.writeText(window.location.origin + "/" + username); toast.success("Link copied!"); };
-  const handleStrand = async () => { if (!user || !targetUserId) return; await supabase.from("strands").insert({ requester_id: user.id, receiver_id: targetUserId }); toast.success("Strand request sent ✓"); };
+  const handleStrand = async () => {
+    if (!user || !targetUserId) return;
+    const { error } = await supabase.from("strands").insert({ requester_id: user.id, receiver_id: targetUserId });
+    if (error) { toast.error(error.message); return; }
+    // Create alert for receiver
+    await supabase.from("alerts").insert({
+      user_id: targetUserId,
+      type: "strand",
+      title: `${authProfile?.full_name || "Someone"} wants to connect with you`,
+      body: `${authProfile?.full_name || "Someone"} sent you a strand request`,
+      link: `/app/profile/${user.id}`,
+    });
+    toast.success("Strand request sent ✓");
+  };
 
   const saveExperience = async () => {
     if (!expForm.company.trim() || !expForm.title.trim() || !user) return;
     setSaving(true);
     const startDate = expForm.startMonth && expForm.startYear ? `${expForm.startYear}-${String(months.indexOf(expForm.startMonth) + 1).padStart(2, "0")}-01` : null;
     const endDate = !expForm.isCurrent && expForm.endMonth && expForm.endYear ? `${expForm.endYear}-${String(months.indexOf(expForm.endMonth) + 1).padStart(2, "0")}-01` : null;
-    const { error } = await supabase.from("work_items").insert({
+    const { data, error } = await supabase.from("work_items").insert({
       owner_id: user.id, title: expForm.title.trim(), description: expForm.description.trim(),
       institution_name: expForm.company.trim(), type: expForm.type, item_type: "experience",
       start_date: startDate, end_date: endDate, is_current: expForm.isCurrent,
       tech_stack: expForm.skills ? expForm.skills.split(",").map(s => s.trim()).filter(Boolean) : [],
       status: "active", visibility: "public",
-    });
+    }).select().single();
     setSaving(false);
-    if (error) { toast.error("Failed: " + error.message); return; }
+    if (error) { toast.error("Failed: " + error.message); console.error(error); return; }
     toast.success("Experience added ✓");
+    if (data) setWorkItems(prev => [data, ...prev]);
     setShowAddExp(false);
     setExpForm({ company: "", title: "", type: "Full-time", industry: "", city: "", isCurrent: true, startMonth: "", startYear: "", endMonth: "", endYear: "", description: "", skills: "" });
-    loadProfile();
   };
 
   const saveEducation = async () => {
     if (!eduForm.institution.trim() || !user) return;
     setSaving(true);
-    const { error } = await supabase.from("work_items").insert({
+    const { data, error } = await supabase.from("work_items").insert({
       owner_id: user.id, title: eduForm.degree + (eduForm.branch ? ` · ${eduForm.branch}` : ""),
       institution_name: eduForm.institution.trim(), item_type: "education",
       start_date: eduForm.startYear ? `${eduForm.startYear}-01-01` : null,
       end_date: !eduForm.isCurrent && eduForm.endYear ? `${eduForm.endYear}-01-01` : null,
       is_current: eduForm.isCurrent, description: eduForm.grade ? `Grade: ${eduForm.grade}` : "",
       status: "active", visibility: "public",
-    });
+    }).select().single();
     setSaving(false);
-    if (error) { toast.error("Failed: " + error.message); return; }
+    if (error) { toast.error("Failed: " + error.message); console.error(error); return; }
     toast.success("Education added ✓");
+    if (data) setWorkItems(prev => [data, ...prev]);
     setShowAddEdu(false);
-    loadProfile();
+    setEduForm({ institution: "", degree: "", branch: "", startYear: "", endYear: "", isCurrent: false, grade: "" });
   };
 
   const saveProject = async () => {
@@ -357,33 +374,35 @@ const Profile = () => {
     setSaving(true);
     const startDate = projForm.startMonth && projForm.startYear ? `${projForm.startYear}-${String(months.indexOf(projForm.startMonth) + 1).padStart(2, "0")}-01` : null;
     const endDate = !projForm.isCurrent && projForm.endMonth && projForm.endYear ? `${projForm.endYear}-${String(months.indexOf(projForm.endMonth) + 1).padStart(2, "0")}-01` : null;
-    const { error } = await supabase.from("work_items").insert({
+    const { data, error } = await supabase.from("work_items").insert({
       owner_id: user.id, title: projForm.title.trim(), description: projForm.description.trim(),
       type: projForm.type, item_type: "project",
       tech_stack: projForm.techStack ? projForm.techStack.split(",").map(s => s.trim()).filter(Boolean) : [],
       start_date: startDate, end_date: endDate, is_current: projForm.isCurrent,
       status: "active", visibility: "public",
-    });
+    }).select().single();
     setSaving(false);
-    if (error) { toast.error("Failed: " + error.message); return; }
+    if (error) { toast.error("Failed: " + error.message); console.error(error); return; }
     toast.success("Project added ✓");
+    if (data) setWorkItems(prev => [data, ...prev]);
     setShowAddProject(false);
-    loadProfile();
+    setProjForm({ title: "", type: "software", description: "", techStack: "", startMonth: "", startYear: "", endMonth: "", endYear: "", isCurrent: false });
   };
 
   const saveAchievement = async () => {
     if (!achForm.title.trim() || !user) return;
     setSaving(true);
-    const { error } = await supabase.from("achievements").insert({
+    const { data, error } = await supabase.from("achievements").insert({
       user_id: user.id, title: achForm.title.trim(), issued_by: achForm.issuedBy,
       achievement_date: achForm.date || null, description: achForm.description,
       certificate_url: achForm.url || null, type: "award",
-    });
+    }).select().single();
     setSaving(false);
-    if (error) { toast.error("Failed: " + error.message); return; }
+    if (error) { toast.error("Failed: " + error.message); console.error(error); return; }
     toast.success("Achievement added ✓");
+    if (data) setAchievements(prev => [data, ...prev]);
     setShowAddAchievement(false);
-    loadProfile();
+    setAchForm({ title: "", issuedBy: "", date: "", description: "", url: "" });
   };
 
   const addSkill = async () => {
@@ -409,7 +428,16 @@ const Profile = () => {
     if (!confirm("Delete this item?")) return;
     await supabase.from(table).delete().eq("id", id);
     toast.success("Deleted");
-    loadProfile();
+    if (table === "work_items") setWorkItems(prev => prev.filter(w => w.id !== id));
+    else setAchievements(prev => prev.filter(a => a.id !== id));
+  };
+
+  const toggleVisibility = async (id: string, table: "work_items" | "achievements", currentVis: string) => {
+    const newVis = currentVis === "public" ? "private" : "public";
+    if (table === "work_items") setWorkItems(prev => prev.map(w => w.id === id ? { ...w, visibility: newVis } : w));
+    else setAchievements(prev => prev.map(a => a.id === id ? { ...a, visibility: newVis } : a));
+    await supabase.from(table).update({ visibility: newVis }).eq("id", id);
+    toast.success(newVis === "public" ? "Now visible to everyone" : "Now hidden");
   };
 
   const handleSectionDragEnd = async (event: DragEndEvent) => {
@@ -445,8 +473,18 @@ const Profile = () => {
               <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{formatDuration(exp.start_date, exp.end_date, exp.is_current)}</p>
               {exp.description && <p className="text-[12px] mt-1" style={{ color: "var(--text-2)" }}>{exp.description}</p>}
               {exp.tech_stack?.length > 0 && <div className="flex flex-wrap gap-1 mt-1">{exp.tech_stack.map((s: string) => <span key={s} className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--brand-dim)", color: "var(--brand)" }}>{s}</span>)}</div>}
+              {exp.verification_status === "verified" && <span className="flex items-center gap-1 text-[10px] font-bold mt-1" style={{ color: "#10B981" }}>✓ Verified</span>}
+              {exp.verification_status === "unverified" && isOwnProfile && <span className="text-[10px] mt-1" style={{ color: "var(--text-3)" }}>○ Unverified</span>}
+              {isOwnProfile && <span className="text-[10px] mt-0.5 block" style={{ color: "var(--text-3)" }}>{exp.visibility === "public" ? "👁 Public" : "🔒 Only me"}</span>}
             </div>
-            {isOwnProfile && <button onClick={() => deleteItem(exp.id, "work_items")} className="opacity-0 group-hover:opacity-100 p-1 cursor-pointer self-start" style={{ color: "var(--text-3)" }}><Trash2 className="w-3.5 h-3.5" /></button>}
+            <div className="flex flex-col gap-1 items-end">
+              {isOwnProfile && (
+                <button onClick={() => toggleVisibility(exp.id, "work_items", exp.visibility || "public")} className="p-1 cursor-pointer opacity-0 group-hover:opacity-100" style={{ color: "var(--text-3)" }} title={exp.visibility === "public" ? "Make private" : "Make public"}>
+                  {exp.visibility === "public" ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                </button>
+              )}
+              {isOwnProfile && <button onClick={() => deleteItem(exp.id, "work_items")} className="opacity-0 group-hover:opacity-100 p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><Trash2 className="w-3.5 h-3.5" /></button>}
+            </div>
           </div>
         ))}
         <AnimatePresence>
@@ -498,8 +536,16 @@ const Profile = () => {
               <p className="text-[13px]" style={{ color: "var(--text-2)" }}>{edu.title}</p>
               <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{formatDuration(edu.start_date, edu.end_date, edu.is_current)}</p>
               {edu.description && <p className="text-[12px] mt-1" style={{ color: "var(--text-3)" }}>{edu.description}</p>}
+              {isOwnProfile && <span className="text-[10px] mt-0.5 block" style={{ color: "var(--text-3)" }}>{edu.visibility === "public" ? "👁 Public" : "🔒 Only me"}</span>}
             </div>
-            {isOwnProfile && <button onClick={() => deleteItem(edu.id, "work_items")} className="opacity-0 group-hover:opacity-100 p-1 cursor-pointer self-start" style={{ color: "var(--text-3)" }}><Trash2 className="w-3.5 h-3.5" /></button>}
+            <div className="flex flex-col gap-1 items-end">
+              {isOwnProfile && (
+                <button onClick={() => toggleVisibility(edu.id, "work_items", edu.visibility || "public")} className="p-1 cursor-pointer opacity-0 group-hover:opacity-100" style={{ color: "var(--text-3)" }}>
+                  {edu.visibility === "public" ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                </button>
+              )}
+              {isOwnProfile && <button onClick={() => deleteItem(edu.id, "work_items")} className="opacity-0 group-hover:opacity-100 p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><Trash2 className="w-3.5 h-3.5" /></button>}
+            </div>
           </div>
         ))}
         <AnimatePresence>
@@ -540,8 +586,16 @@ const Profile = () => {
               <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{formatDuration(p.start_date, p.end_date, p.is_current)}</p>
               {p.description && <p className="text-[12px] mt-1 line-clamp-2" style={{ color: "var(--text-2)" }}>{p.description}</p>}
               {p.tech_stack?.length > 0 && <div className="flex flex-wrap gap-1 mt-1">{p.tech_stack.map((s: string) => <span key={s} className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--brand-dim)", color: "var(--brand)" }}>{s}</span>)}</div>}
+              {isOwnProfile && <span className="text-[10px] mt-0.5 block" style={{ color: "var(--text-3)" }}>{p.visibility === "public" ? "👁 Public" : "🔒 Only me"}</span>}
             </div>
-            {isOwnProfile && <button onClick={() => deleteItem(p.id, "work_items")} className="opacity-0 group-hover:opacity-100 p-1 cursor-pointer self-start" style={{ color: "var(--text-3)" }}><Trash2 className="w-3.5 h-3.5" /></button>}
+            <div className="flex flex-col gap-1 items-end">
+              {isOwnProfile && (
+                <button onClick={() => toggleVisibility(p.id, "work_items", p.visibility || "public")} className="p-1 cursor-pointer opacity-0 group-hover:opacity-100" style={{ color: "var(--text-3)" }}>
+                  {p.visibility === "public" ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                </button>
+              )}
+              {isOwnProfile && <button onClick={() => deleteItem(p.id, "work_items")} className="opacity-0 group-hover:opacity-100 p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><Trash2 className="w-3.5 h-3.5" /></button>}
+            </div>
           </div>
         ))}
         <AnimatePresence>
@@ -572,8 +626,14 @@ const Profile = () => {
             <div className="flex-1 min-w-0">
               <p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>{a.title}</p>
               <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{[a.issued_by, a.achievement_date].filter(Boolean).join(" · ")}</p>
+              {isOwnProfile && <span className="text-[10px] block" style={{ color: "var(--text-3)" }}>{a.visibility === "public" ? "👁 Public" : "🔒 Only me"}</span>}
             </div>
             {a.certificate_url && <a href={a.certificate_url} target="_blank" rel="noopener" className="text-[11px] font-bold" style={{ color: "var(--brand)" }}>View ↗</a>}
+            {isOwnProfile && (
+              <button onClick={() => toggleVisibility(a.id, "achievements", a.visibility || "public")} className="p-1 cursor-pointer opacity-0 group-hover:opacity-100" style={{ color: "var(--text-3)" }}>
+                {a.visibility === "public" ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+              </button>
+            )}
             {isOwnProfile && <button onClick={() => deleteItem(a.id, "achievements")} className="opacity-0 group-hover:opacity-100 p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><Trash2 className="w-3.5 h-3.5" /></button>}
           </div>
         ))}
