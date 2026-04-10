@@ -517,8 +517,16 @@ const Profile = () => {
               <p className="text-[13px]" style={{ color: "var(--text-2)" }}>{edu.title}</p>
               <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{formatDuration(edu.start_date, edu.end_date, edu.is_current)}</p>
               {edu.description && <p className="text-[12px] mt-1" style={{ color: "var(--text-3)" }}>{edu.description}</p>}
+              {isOwnProfile && <span className="text-[10px] mt-0.5 block" style={{ color: "var(--text-3)" }}>{edu.visibility === "public" ? "👁 Public" : "🔒 Only me"}</span>}
             </div>
-            {isOwnProfile && <button onClick={() => deleteItem(edu.id, "work_items")} className="opacity-0 group-hover:opacity-100 p-1 cursor-pointer self-start" style={{ color: "var(--text-3)" }}><Trash2 className="w-3.5 h-3.5" /></button>}
+            <div className="flex flex-col gap-1 items-end">
+              {isOwnProfile && (
+                <button onClick={() => toggleVisibility(edu.id, "work_items", edu.visibility || "public")} className="p-1 cursor-pointer opacity-0 group-hover:opacity-100" style={{ color: "var(--text-3)" }}>
+                  {edu.visibility === "public" ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                </button>
+              )}
+              {isOwnProfile && <button onClick={() => deleteItem(edu.id, "work_items")} className="opacity-0 group-hover:opacity-100 p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><Trash2 className="w-3.5 h-3.5" /></button>}
+            </div>
           </div>
         ))}
         <AnimatePresence>
@@ -559,8 +567,16 @@ const Profile = () => {
               <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{formatDuration(p.start_date, p.end_date, p.is_current)}</p>
               {p.description && <p className="text-[12px] mt-1 line-clamp-2" style={{ color: "var(--text-2)" }}>{p.description}</p>}
               {p.tech_stack?.length > 0 && <div className="flex flex-wrap gap-1 mt-1">{p.tech_stack.map((s: string) => <span key={s} className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--brand-dim)", color: "var(--brand)" }}>{s}</span>)}</div>}
+              {isOwnProfile && <span className="text-[10px] mt-0.5 block" style={{ color: "var(--text-3)" }}>{p.visibility === "public" ? "👁 Public" : "🔒 Only me"}</span>}
             </div>
-            {isOwnProfile && <button onClick={() => deleteItem(p.id, "work_items")} className="opacity-0 group-hover:opacity-100 p-1 cursor-pointer self-start" style={{ color: "var(--text-3)" }}><Trash2 className="w-3.5 h-3.5" /></button>}
+            <div className="flex flex-col gap-1 items-end">
+              {isOwnProfile && (
+                <button onClick={() => toggleVisibility(p.id, "work_items", p.visibility || "public")} className="p-1 cursor-pointer opacity-0 group-hover:opacity-100" style={{ color: "var(--text-3)" }}>
+                  {p.visibility === "public" ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                </button>
+              )}
+              {isOwnProfile && <button onClick={() => deleteItem(p.id, "work_items")} className="opacity-0 group-hover:opacity-100 p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><Trash2 className="w-3.5 h-3.5" /></button>}
+            </div>
           </div>
         ))}
         <AnimatePresence>
