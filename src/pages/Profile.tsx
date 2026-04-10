@@ -353,19 +353,20 @@ const Profile = () => {
   const saveEducation = async () => {
     if (!eduForm.institution.trim() || !user) return;
     setSaving(true);
-    const { error } = await supabase.from("work_items").insert({
+    const { data, error } = await supabase.from("work_items").insert({
       owner_id: user.id, title: eduForm.degree + (eduForm.branch ? ` · ${eduForm.branch}` : ""),
       institution_name: eduForm.institution.trim(), item_type: "education",
       start_date: eduForm.startYear ? `${eduForm.startYear}-01-01` : null,
       end_date: !eduForm.isCurrent && eduForm.endYear ? `${eduForm.endYear}-01-01` : null,
       is_current: eduForm.isCurrent, description: eduForm.grade ? `Grade: ${eduForm.grade}` : "",
       status: "active", visibility: "public",
-    });
+    }).select().single();
     setSaving(false);
-    if (error) { toast.error("Failed: " + error.message); return; }
+    if (error) { toast.error("Failed: " + error.message); console.error(error); return; }
     toast.success("Education added ✓");
+    if (data) setWorkItems(prev => [data, ...prev]);
     setShowAddEdu(false);
-    loadProfile();
+    setEduForm({ institution: "", degree: "", branch: "", startYear: "", endYear: "", isCurrent: false, grade: "" });
   };
 
   const saveProject = async () => {
@@ -373,18 +374,19 @@ const Profile = () => {
     setSaving(true);
     const startDate = projForm.startMonth && projForm.startYear ? `${projForm.startYear}-${String(months.indexOf(projForm.startMonth) + 1).padStart(2, "0")}-01` : null;
     const endDate = !projForm.isCurrent && projForm.endMonth && projForm.endYear ? `${projForm.endYear}-${String(months.indexOf(projForm.endMonth) + 1).padStart(2, "0")}-01` : null;
-    const { error } = await supabase.from("work_items").insert({
+    const { data, error } = await supabase.from("work_items").insert({
       owner_id: user.id, title: projForm.title.trim(), description: projForm.description.trim(),
       type: projForm.type, item_type: "project",
       tech_stack: projForm.techStack ? projForm.techStack.split(",").map(s => s.trim()).filter(Boolean) : [],
       start_date: startDate, end_date: endDate, is_current: projForm.isCurrent,
       status: "active", visibility: "public",
-    });
+    }).select().single();
     setSaving(false);
-    if (error) { toast.error("Failed: " + error.message); return; }
+    if (error) { toast.error("Failed: " + error.message); console.error(error); return; }
     toast.success("Project added ✓");
+    if (data) setWorkItems(prev => [data, ...prev]);
     setShowAddProject(false);
-    loadProfile();
+    setProjForm({ title: "", type: "software", description: "", techStack: "", startMonth: "", startYear: "", endMonth: "", endYear: "", isCurrent: false });
   };
 
   const saveAchievement = async () => {
