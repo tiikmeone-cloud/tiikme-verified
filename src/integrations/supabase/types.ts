@@ -916,6 +916,7 @@ export type Database = {
           last_name: string | null
           location_city: string | null
           location_state: string | null
+          onboarding_complete: boolean | null
           open_to_work: boolean | null
           phone_hash: string | null
           role: string | null
@@ -951,6 +952,7 @@ export type Database = {
           last_name?: string | null
           location_city?: string | null
           location_state?: string | null
+          onboarding_complete?: boolean | null
           open_to_work?: boolean | null
           phone_hash?: string | null
           role?: string | null
@@ -986,6 +988,7 @@ export type Database = {
           last_name?: string | null
           location_city?: string | null
           location_state?: string | null
+          onboarding_complete?: boolean | null
           open_to_work?: boolean | null
           phone_hash?: string | null
           role?: string | null

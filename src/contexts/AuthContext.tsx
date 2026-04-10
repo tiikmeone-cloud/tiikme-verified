@@ -31,6 +31,7 @@ export interface UserProfile {
   verification_type: string | null;
   created_at: string | null;
   updated_at: string | null;
+  onboarding_complete: boolean | null;
 }
 
 interface AuthContextValue {
