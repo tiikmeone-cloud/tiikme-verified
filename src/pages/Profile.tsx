@@ -335,19 +335,19 @@ const Profile = () => {
     setSaving(true);
     const startDate = expForm.startMonth && expForm.startYear ? `${expForm.startYear}-${String(months.indexOf(expForm.startMonth) + 1).padStart(2, "0")}-01` : null;
     const endDate = !expForm.isCurrent && expForm.endMonth && expForm.endYear ? `${expForm.endYear}-${String(months.indexOf(expForm.endMonth) + 1).padStart(2, "0")}-01` : null;
-    const { error } = await supabase.from("work_items").insert({
+    const { data, error } = await supabase.from("work_items").insert({
       owner_id: user.id, title: expForm.title.trim(), description: expForm.description.trim(),
       institution_name: expForm.company.trim(), type: expForm.type, item_type: "experience",
       start_date: startDate, end_date: endDate, is_current: expForm.isCurrent,
       tech_stack: expForm.skills ? expForm.skills.split(",").map(s => s.trim()).filter(Boolean) : [],
       status: "active", visibility: "public",
-    });
+    }).select().single();
     setSaving(false);
-    if (error) { toast.error("Failed: " + error.message); return; }
+    if (error) { toast.error("Failed: " + error.message); console.error(error); return; }
     toast.success("Experience added ✓");
+    if (data) setWorkItems(prev => [data, ...prev]);
     setShowAddExp(false);
     setExpForm({ company: "", title: "", type: "Full-time", industry: "", city: "", isCurrent: true, startMonth: "", startYear: "", endMonth: "", endYear: "", description: "", skills: "" });
-    loadProfile();
   };
 
   const saveEducation = async () => {
