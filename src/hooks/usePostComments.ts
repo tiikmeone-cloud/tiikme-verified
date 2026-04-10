@@ -44,7 +44,7 @@ export function usePostComments(postId: string, enabled: boolean) {
 
   useEffect(() => { fetchComments(); }, [fetchComments]);
 
-  // Realtime subscription for new comments on this post
+  // Realtime subscription for new/deleted comments
   useEffect(() => {
     if (!enabled || !postId) return;
     const channel = supabase
@@ -73,17 +73,38 @@ export function usePostComments(postId: string, enabled: boolean) {
     return () => { supabase.removeChannel(channel); };
   }, [postId, enabled]);
 
-  const addComment = useCallback(async (userId: string, content: string) => {
+  const addComment = useCallback(async (userId: string, content: string, profile?: { full_name?: string; avatar_url?: string; role?: string }) => {
+    // Optimistic add
+    const tempId = `temp-${Date.now()}`;
+    const optimistic: Comment = {
+      id: tempId,
+      post_id: postId,
+      user_id: userId,
+      content,
+      created_at: new Date().toISOString(),
+      parent_id: null,
+      author: {
+        id: userId,
+        full_name: profile?.full_name || "You",
+        username: null,
+        avatar_url: profile?.avatar_url || null,
+        role: profile?.role || null,
+      },
+    };
+    setComments(prev => [...prev, optimistic]);
+
     const { data, error } = await supabase
       .from("post_comments")
       .insert({ post_id: postId, user_id: userId, content })
       .select("*, author:profiles!user_id(id, full_name, username, avatar_url, role)")
       .single();
+
     if (!error && data && mountedRef.current) {
-      setComments(prev => {
-        if (prev.some(c => c.id === (data as any).id)) return prev;
-        return [...prev, data as any];
-      });
+      // Replace optimistic with real
+      setComments(prev => prev.map(c => c.id === tempId ? (data as any) : c));
+    } else if (error && mountedRef.current) {
+      // Remove optimistic on error
+      setComments(prev => prev.filter(c => c.id !== tempId));
     }
     return { data, error };
   }, [postId]);

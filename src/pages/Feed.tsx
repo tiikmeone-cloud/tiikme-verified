@@ -34,7 +34,7 @@ const LivePostCard = ({ post }: { post: any }) => {
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
   const { user, profile: authProfile, initials: userInitials } = useAuth();
-  const { liked, likeCount, toggleLike } = usePostReactions(post.id, user?.id, post.reactions);
+  const { liked, likeCount, toggleLike } = usePostReactions(post.id, user?.id);
   const { comments, loading: commentsLoading, addComment } = usePostComments(post.id, showComments);
 
   const author = post.author;
@@ -47,7 +47,11 @@ const LivePostCard = ({ post }: { post: any }) => {
 
   const handleComment = async () => {
     if (!commentText.trim() || !user) return;
-    await addComment(user.id, commentText.trim());
+    await addComment(user.id, commentText.trim(), {
+      full_name: authProfile?.full_name || undefined,
+      avatar_url: authProfile?.avatar_url || undefined,
+      role: authProfile?.role || undefined,
+    });
     setCommentText("");
   };
 
