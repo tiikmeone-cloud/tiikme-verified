@@ -429,6 +429,340 @@ export type Database = {
           },
         ]
       }
+      org_contacts: {
+        Row: {
+          address: string | null
+          city: string | null
+          email: string | null
+          id: string
+          is_primary: boolean | null
+          label: string | null
+          org_id: string
+          phone: string | null
+          pincode: string | null
+          state: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          email?: string | null
+          id?: string
+          is_primary?: boolean | null
+          label?: string | null
+          org_id: string
+          phone?: string | null
+          pincode?: string | null
+          state?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          email?: string | null
+          id?: string
+          is_primary?: boolean | null
+          label?: string | null
+          org_id?: string
+          phone?: string | null
+          pincode?: string | null
+          state?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_contacts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_followers: {
+        Row: {
+          followed_at: string | null
+          id: string
+          org_id: string
+          user_id: string
+        }
+        Insert: {
+          followed_at?: string | null
+          id?: string
+          org_id: string
+          user_id: string
+        }
+        Update: {
+          followed_at?: string | null
+          id?: string
+          org_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_followers_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_followers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_members: {
+        Row: {
+          id: string
+          is_verified: boolean | null
+          joined_at: string | null
+          org_id: string
+          role: string | null
+          title: string | null
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          id?: string
+          is_verified?: boolean | null
+          joined_at?: string | null
+          org_id: string
+          role?: string | null
+          title?: string | null
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          id?: string
+          is_verified?: boolean | null
+          joined_at?: string | null
+          org_id?: string
+          role?: string | null
+          title?: string | null
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_members_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_metadata: {
+        Row: {
+          id: string
+          key: string
+          org_id: string
+          value: string
+        }
+        Insert: {
+          id?: string
+          key: string
+          org_id: string
+          value: string
+        }
+        Update: {
+          id?: string
+          key?: string
+          org_id?: string
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_metadata_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_verif_requests: {
+        Row: {
+          created_at: string | null
+          id: string
+          member_type: string | null
+          message: string | null
+          org_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string | null
+          title_at_org: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          member_type?: string | null
+          message?: string | null
+          org_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          title_at_org?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          member_type?: string | null
+          message?: string | null
+          org_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          title_at_org?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_verif_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_verif_requests_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_verif_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          allow_employee_requests: boolean | null
+          allow_messages: boolean | null
+          city: string | null
+          country: string | null
+          cover_url: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          district: string | null
+          email: string | null
+          email_domain: string | null
+          employee_count: string | null
+          followers_count: number | null
+          founded_year: number | null
+          full_address: string | null
+          id: string
+          is_verified: boolean | null
+          logo_url: string | null
+          maps_url: string | null
+          name: string
+          phone: string | null
+          pincode: string | null
+          slug: string
+          social_links: Json | null
+          state: string | null
+          subtype: string | null
+          tagline: string | null
+          type: string
+          updated_at: string | null
+          verification_type: string | null
+          village: string | null
+          website_url: string | null
+        }
+        Insert: {
+          allow_employee_requests?: boolean | null
+          allow_messages?: boolean | null
+          city?: string | null
+          country?: string | null
+          cover_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          district?: string | null
+          email?: string | null
+          email_domain?: string | null
+          employee_count?: string | null
+          followers_count?: number | null
+          founded_year?: number | null
+          full_address?: string | null
+          id?: string
+          is_verified?: boolean | null
+          logo_url?: string | null
+          maps_url?: string | null
+          name: string
+          phone?: string | null
+          pincode?: string | null
+          slug: string
+          social_links?: Json | null
+          state?: string | null
+          subtype?: string | null
+          tagline?: string | null
+          type: string
+          updated_at?: string | null
+          verification_type?: string | null
+          village?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          allow_employee_requests?: boolean | null
+          allow_messages?: boolean | null
+          city?: string | null
+          country?: string | null
+          cover_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          district?: string | null
+          email?: string | null
+          email_domain?: string | null
+          employee_count?: string | null
+          followers_count?: number | null
+          founded_year?: number | null
+          full_address?: string | null
+          id?: string
+          is_verified?: boolean | null
+          logo_url?: string | null
+          maps_url?: string | null
+          name?: string
+          phone?: string | null
+          pincode?: string | null
+          slug?: string
+          social_links?: Json | null
+          state?: string | null
+          subtype?: string | null
+          tagline?: string | null
+          type?: string
+          updated_at?: string | null
+          verification_type?: string | null
+          village?: string | null
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organizations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       page_admins: {
         Row: {
           created_at: string | null

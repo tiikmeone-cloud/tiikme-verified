@@ -42,6 +42,9 @@ const VerifyInvite = lazy(() => import("./pages/VerifyInvite.tsx"));
 const Privacy = lazy(() => import("./pages/Privacy.tsx"));
 const Terms = lazy(() => import("./pages/Terms.tsx"));
 const JoinAsInstitution = lazy(() => import("./pages/JoinAsInstitution.tsx"));
+const CreateOrganization = lazy(() => import("./pages/CreateOrganization.tsx"));
+const OrganizationPage = lazy(() => import("./pages/OrganizationPage.tsx"));
+const OrgAdmin = lazy(() => import("./pages/OrgAdmin.tsx"));
 
 const queryClient = new QueryClient();
 
@@ -71,6 +74,9 @@ const App = () => (
             <Route path="/join-as-institution" element={<JoinAsInstitution />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
+            <Route path="/create-organization" element={<ProtectedRoute><CreateOrganization /></ProtectedRoute>} />
+            <Route path="/org/:slug" element={<OrganizationPage />} />
+            <Route path="/org/:slug/admin" element={<ProtectedRoute><OrgAdmin /></ProtectedRoute>} />
             <Route path="/create-page" element={<Shell><CreatePage /></Shell>} />
             {/* App (protected) */}
             <Route path="/app/feed" element={<Shell><Feed /></Shell>} />
