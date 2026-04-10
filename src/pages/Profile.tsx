@@ -250,7 +250,7 @@ const Profile = () => {
       isOwnProfile ? Promise.resolve({ data: authProfile }) : supabase.from("profiles").select("*").eq("id", targetUserId).maybeSingle(),
       supabase.from("work_items").select("*").eq("owner_id", targetUserId).order("is_current", { ascending: false }).order("start_date", { ascending: false }),
       supabase.from("strands").select("*", { count: "exact", head: true }).or(`requester_id.eq.${targetUserId},receiver_id.eq.${targetUserId}`).eq("status", "accepted"),
-      supabase.from("posts").select("id, content, created_at, reactions, comment_count").eq("author_id", targetUserId).order("created_at", { ascending: false }).limit(20),
+      supabase.from("posts").select("id, content, created_at, image_urls, comment_count, reactions:post_reactions(user_id)").eq("author_id", targetUserId).order("created_at", { ascending: false }).limit(20),
       supabase.from("achievements").select("*").eq("user_id", targetUserId).order("created_at", { ascending: false }),
     ]);
     const profile = profileRes.status === "fulfilled" ? (profileRes.value as any).data : null;
@@ -615,15 +615,24 @@ const Profile = () => {
     posts: userPosts.length > 0 ? (
       <div className="t-card p-5">
         <SectionHeader title="Posts" icon={MessageCircle} showAdd={false} />
-        {userPosts.map((p: any) => (
-          <div key={p.id} className="py-3 group" style={{ borderBottom: "1px solid var(--border)" }}>
-            <p className="text-[13px] line-clamp-2" style={{ color: "var(--text-2)" }}>{p.content}</p>
-            <div className="flex items-center gap-3 mt-1">
-              <span className="text-[11px]" style={{ color: "var(--text-3)" }}>{p.created_at ? getTimeAgo(new Date(p.created_at)) : ""}</span>
-              {isOwnProfile && <span className="text-[11px]" style={{ color: "var(--text-3)" }}>♥ {(p.reactions?.like || 0) + (p.reactions?.insightful || 0) + (p.reactions?.useful || 0) + (p.reactions?.inspiring || 0)}</span>}
+        {userPosts.map((p: any) => {
+          const likeCount = Array.isArray(p.reactions) ? p.reactions.length : ((p.reactions?.like || 0) + (p.reactions?.insightful || 0) + (p.reactions?.useful || 0) + (p.reactions?.inspiring || 0));
+          return (
+            <div key={p.id} className="py-3 group" style={{ borderBottom: "1px solid var(--border)" }}>
+              <p className="text-[13px] line-clamp-3" style={{ color: "var(--text-2)" }}>{p.content}</p>
+              {p.image_urls?.length > 0 && (
+                <div className="mt-2 rounded-xl overflow-hidden">
+                  <img src={p.image_urls[0]} alt="Post" className="w-full max-h-48 object-cover rounded-xl" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                </div>
+              )}
+              <div className="flex items-center gap-3 mt-1.5">
+                <span className="text-[11px]" style={{ color: "var(--text-3)" }}>{p.created_at ? getTimeAgo(new Date(p.created_at)) : ""}</span>
+                {likeCount > 0 && <span className="text-[11px]" style={{ color: "var(--text-3)" }}>♥ {likeCount}</span>}
+                {(p.comment_count || 0) > 0 && <span className="text-[11px]" style={{ color: "var(--text-3)" }}>💬 {p.comment_count}</span>}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     ) : null,
   };
