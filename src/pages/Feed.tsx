@@ -287,9 +287,13 @@ const Feed = () => {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const { profile, initials } = useAuth();
   const feedRef = useRef<HTMLDivElement>(null);
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
+
+  // Filter out locally deleted posts for instant feedback
+  const visiblePosts = useMemo(() => livePosts.filter((p: any) => !deletedIds.has(p.id)), [livePosts, deletedIds]);
 
   // Batch like/comment hooks
-  const postIds = useMemo(() => livePosts.map((p: any) => p.id), [livePosts]);
+  const postIds = useMemo(() => visiblePosts.map((p: any) => p.id), [visiblePosts]);
   const { counts: likeCounts, myLikes, toggle: toggleLike } = useLikes(postIds);
   const {
     all: commentsData, inputs: commentInputs, setInputs: setCommentInputs,
@@ -302,10 +306,9 @@ const Feed = () => {
     if (postIds.length) loadCommentCounts(postIds);
   }, [postIds.length]);
 
-  // Handle post deletion from feed
+  // Handle post deletion from feed — instant removal
   const handleDeletePost = (postId: string) => {
-    // Remove immediately from local feed for instant feedback
-    // (realtime DELETE event is backup)
+    setDeletedIds(prev => new Set(prev).add(postId));
   };
 
   // Pull-to-refresh
