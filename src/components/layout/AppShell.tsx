@@ -1,11 +1,10 @@
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutGrid, Compass, Users, Target, User,
   Link2, MessageCircle, Bell, SlidersHorizontal, PencilLine, Plus, LogOut,
 } from "lucide-react";
 import ThemeLogo from "@/components/ThemeLogo";
-import NewPostModal from "@/components/NewPostModal";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
@@ -54,7 +53,7 @@ const mobileNav = [
 const AppShell = ({ children }: { children: ReactNode }) => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const [postModalOpen, setPostModalOpen] = useState(false);
+  const openPostCreate = () => navigate("/post/create");
   const { profile, initials, displayName, user } = useAuth();
   const [unreadAlerts, setUnreadAlerts] = useState(0);
   const [unreadPings, setUnreadPings] = useState(0);
@@ -139,7 +138,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             </div>
           ))}
           <div className="px-0 mt-2">
-            <button onClick={() => setPostModalOpen(true)}
+            <button onClick={openPostCreate}
               className="w-full h-[52px] rounded-[14px] flex items-center justify-center gap-2 text-[15px] font-bold text-white active:scale-[0.97]"
               style={{ background: "linear-gradient(135deg, var(--brand), var(--brand-2))", boxShadow: "0 2px 8px var(--brand-glow), inset 0 1px 0 rgba(255,255,255,0.1)", transition: "all 0.15s" }}>
               <PencilLine className="w-4 h-4" /> New Post
@@ -189,7 +188,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             );
           })}
         </nav>
-        <button onClick={() => setPostModalOpen(true)} className="w-10 h-10 rounded-full flex items-center justify-center mb-2 active:scale-[0.92]"
+        <button onClick={openPostCreate} className="w-10 h-10 rounded-full flex items-center justify-center mb-2 active:scale-[0.92]"
           style={{ background: "linear-gradient(135deg, var(--brand), var(--brand-2))", boxShadow: "0 4px 12px var(--brand-glow)" }}>
           <PencilLine className="w-4 h-4 text-white" />
         </button>
@@ -226,7 +225,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           {mobileNav.map((item) => {
             if (item.path === "__post__") {
               return (
-                <button key="post" onClick={() => setPostModalOpen(true)}
+                <button key="post" onClick={openPostCreate}
                   className="w-12 h-12 rounded-full flex items-center justify-center -mt-6 active:scale-[0.92]"
                   style={{ background: "linear-gradient(135deg, var(--brand), var(--brand-2))", boxShadow: "0 4px 16px var(--brand-glow), 0 0 0 4px var(--bg)" }}>
                   <Plus className="w-[22px] h-[22px] text-white" />
@@ -249,7 +248,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
         </div>
       </nav>
 
-      <NewPostModal open={postModalOpen} onClose={() => setPostModalOpen(false)} />
+      {/* Post creation is now at /post/create */}
     </div>
   );
 };
