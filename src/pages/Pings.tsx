@@ -238,12 +238,15 @@ const Pings = () => {
                       <p className="text-[14px] leading-[1.6]">{msg.content}</p>
                       <div className="flex items-center justify-end gap-1 mt-1">
                         <p className="text-[10px] opacity-0 group-hover:opacity-60 transition-opacity" style={{ color: isMe ? "rgba(255,255,255,0.7)" : "var(--text-3)" }}>{time}</p>
-                        {isMe && (
-                          <span className="text-[9px]" style={{ color: msg.status === "read" ? "var(--brand)" : "rgba(255,255,255,0.5)" }}>
-                            {msg.status === "sending" ? "✓" : "✓✓"}
-                          </span>
-                        )}
                       </div>
+                      {/* LinkedIn-style read receipt: show other user's avatar at the last read message */}
+                      {isMe && msg.status === "read" && i === messages.length - 1 && activeConvo?.other_user && (
+                        <div className="flex justify-end mt-0.5">
+                          <div className="w-[14px] h-[14px] rounded-full overflow-hidden flex items-center justify-center text-[6px] font-bold text-white" style={{ backgroundColor: ROLE_COLORS[activeConvo.other_user.role || ""] || "#6B7280" }}>
+                            {activeConvo.other_user.avatar_url ? <img src={activeConvo.other_user.avatar_url} alt="" className="w-full h-full object-cover" /> : (activeConvo.other_user.full_name || "U")[0]}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
