@@ -294,6 +294,7 @@ const Feed = () => {
 
   // Batch like/comment hooks
   const postIds = useMemo(() => visiblePosts.map((p: any) => p.id), [visiblePosts]);
+  const postIdsKey = useMemo(() => postIds.join(","), [postIds]);
   const { counts: likeCounts, myLikes, toggle: toggleLike } = useLikes(postIds);
   const {
     all: commentsData, inputs: commentInputs, setInputs: setCommentInputs,
@@ -303,8 +304,8 @@ const Feed = () => {
 
   // Load comment counts when posts change
   useEffect(() => {
-    if (postIds.length) loadCommentCounts(postIds);
-  }, [postIds.length]);
+    loadCommentCounts(postIds);
+  }, [postIdsKey, loadCommentCounts]);
 
   // Handle post deletion from feed — instant removal
   const handleDeletePost = (postId: string) => {
