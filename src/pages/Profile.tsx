@@ -303,13 +303,16 @@ const Profile = () => {
   const skills: string[] = profileData.skills || [];
 
   // Sort experiences: current first, then by start_date desc
-  const experiences = workItems.filter((w: any) => w.item_type === "experience").sort((a: any, b: any) => {
+  // Filter by visibility: own profile shows all, other profiles only public
+  const visFilter = (items: any[]) => isOwnProfile ? items : items.filter((w: any) => w.visibility === "public" || !w.visibility);
+  
+  const experiences = visFilter(workItems.filter((w: any) => w.item_type === "experience")).sort((a: any, b: any) => {
     if (a.is_current && !b.is_current) return -1;
     if (!a.is_current && b.is_current) return 1;
     return (b.start_date || "").localeCompare(a.start_date || "");
   });
-  const education = workItems.filter((w: any) => w.item_type === "education");
-  const projects = workItems.filter((w: any) => w.item_type === "project" || (!w.item_type && w.title));
+  const education = visFilter(workItems.filter((w: any) => w.item_type === "education"));
+  const projects = visFilter(workItems.filter((w: any) => w.item_type === "project" || (!w.item_type && w.title)));
 
   const handleCopyLink = () => { navigator.clipboard.writeText(window.location.origin + "/" + username); toast.success("Link copied!"); };
   const handleStrand = async () => {
