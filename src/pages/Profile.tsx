@@ -409,7 +409,16 @@ const Profile = () => {
     if (!confirm("Delete this item?")) return;
     await supabase.from(table).delete().eq("id", id);
     toast.success("Deleted");
-    loadProfile();
+    if (table === "work_items") setWorkItems(prev => prev.filter(w => w.id !== id));
+    else setAchievements(prev => prev.filter(a => a.id !== id));
+  };
+
+  const toggleVisibility = async (id: string, table: "work_items" | "achievements", currentVis: string) => {
+    const newVis = currentVis === "public" ? "private" : "public";
+    if (table === "work_items") setWorkItems(prev => prev.map(w => w.id === id ? { ...w, visibility: newVis } : w));
+    else setAchievements(prev => prev.map(a => a.id === id ? { ...a, visibility: newVis } : a));
+    await supabase.from(table).update({ visibility: newVis }).eq("id", id);
+    toast.success(newVis === "public" ? "Now visible to everyone" : "Now hidden");
   };
 
   const handleSectionDragEnd = async (event: DragEndEvent) => {
