@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -6,13 +6,13 @@ export function useLikes(postIds: string[]) {
   const { user } = useAuth();
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [myLikes, setMyLikes] = useState<Record<string, boolean>>({});
-  const keyRef = useRef("");
+
+  // Stable key that doesn't mutate the source array
+  const key = useMemo(() => [...postIds].sort().join(","), [postIds]);
 
   // Load initial like data from DB
   useEffect(() => {
-    const key = postIds.sort().join(",");
-    if (!postIds.length || key === keyRef.current) return;
-    keyRef.current = key;
+    if (!postIds.length) return;
 
     supabase
       .from("post_reactions")
@@ -28,7 +28,7 @@ export function useLikes(postIds: string[]) {
         setCounts(c);
         setMyLikes(l);
       });
-  }, [postIds.length, user?.id]);
+  }, [key, user?.id]);
 
   // Realtime subscription
   useEffect(() => {
