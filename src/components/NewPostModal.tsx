@@ -29,8 +29,9 @@ const NewPostModal = ({ open, onClose, onPublished }: NewPostModalProps) => {
   const [showMentions, setShowMentions] = useState(false);
   const [mentionFilter, setMentionFilter] = useState("");
   const [mentionResults, setMentionResults] = useState<MentionUser[]>([]);
-  const [images, setImages] = useState<string[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imageUploading, setImageUploading] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -70,21 +71,24 @@ const NewPostModal = ({ open, onClose, onPublished }: NewPostModalProps) => {
   };
 
   const handleImageUpload = () => {
-    if (images.length >= 4) { toast.info("Maximum 4 images"); return; }
+    if (imagePreviews.length >= 4) { toast.info("Maximum 4 images"); return; }
     fileInputRef.current?.click();
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-    Array.from(files).slice(0, 4 - images.length).forEach(file => {
-      setImages(prev => [...prev, URL.createObjectURL(file)].slice(0, 4));
+    Array.from(files).slice(0, 4 - imagePreviews.length).forEach(file => {
+      if (!file.type.startsWith("image/")) { toast.error("Only images allowed"); return; }
+      if (file.size > 10 * 1024 * 1024) { toast.error("Image must be under 10MB"); return; }
+      setImagePreviews(prev => [...prev, URL.createObjectURL(file)].slice(0, 4));
       setImageFiles(prev => [...prev, file].slice(0, 4));
     });
+    e.target.value = "";
   };
 
   const removeImage = (idx: number) => {
-    setImages(prev => prev.filter((_, i) => i !== idx));
+    setImagePreviews(prev => prev.filter((_, i) => i !== idx));
     setImageFiles(prev => prev.filter((_, i) => i !== idx));
   };
 
@@ -94,23 +98,37 @@ const NewPostModal = ({ open, onClose, onPublished }: NewPostModalProps) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { toast.error("Please sign in"); setPublishing(false); return; }
+
+      // Upload images to post-images bucket
       const uploadedUrls: string[] = [];
-      for (const file of imageFiles) {
-        const ext = file.name.split(".").pop();
-        const path = `${user.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-        const { error: uploadError } = await supabase.storage.from("work-assets").upload(path, file);
-        if (!uploadError) {
-          const { data: signedData } = await supabase.storage.from("work-assets").createSignedUrl(path, 60 * 60 * 24 * 365);
-          if (signedData?.signedUrl) uploadedUrls.push(signedData.signedUrl);
+      if (imageFiles.length > 0) {
+        setImageUploading(true);
+        for (const file of imageFiles) {
+          const safeName = file.name.replace(/[^a-z0-9.]/gi, "_");
+          const path = `${user.id}/${Date.now()}-${safeName}`;
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from("post-images")
+            .upload(path, file, { upsert: false, contentType: file.type });
+          if (uploadError) {
+            console.error("Upload error:", uploadError);
+            toast.error("Image upload failed: " + uploadError.message);
+            continue;
+          }
+          const { data: urlData } = supabase.storage
+            .from("post-images")
+            .getPublicUrl(uploadData.path);
+          if (urlData?.publicUrl) uploadedUrls.push(urlData.publicUrl);
         }
+        setImageUploading(false);
       }
+
       const { error } = await supabase.from("posts").insert({
         author_id: user.id, content: content.trim(), post_type: "thought", type: "thought",
         visibility, hashtags: extractHashtags(content),
         image_urls: uploadedUrls.length > 0 ? uploadedUrls : [],
       } as any).select().single();
       if (error) throw error;
-      onClose(); setContent(""); setImages([]); setImageFiles([]);
+      onClose(); setContent(""); setImagePreviews([]); setImageFiles([]);
       toast.success("Posted ✓"); onPublished?.();
     } catch (err: any) { toast.error("Failed to post"); console.error(err); }
     finally { setPublishing(false); }
@@ -144,9 +162,9 @@ const NewPostModal = ({ open, onClose, onPublished }: NewPostModalProps) => {
               ))}
             </div>
           )}
-          {images.length > 0 && (
-            <div className={`grid ${images.length === 1 ? "grid-cols-1" : "grid-cols-2"} gap-2 mt-3`}>
-              {images.map((img, i) => (
+          {imagePreviews.length > 0 && (
+            <div className={`grid ${imagePreviews.length === 1 ? "grid-cols-1" : "grid-cols-2"} gap-2 mt-3`}>
+              {imagePreviews.map((img, i) => (
                 <div key={i} className="relative rounded-xl overflow-hidden aspect-video" style={{ background: "var(--surface-2)" }}>
                   <img src={img} alt="" className="w-full h-full object-cover" />
                   <button onClick={() => removeImage(i)} className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/50 flex items-center justify-center cursor-pointer"><X className="w-3 h-3 text-white" /></button>
@@ -154,12 +172,17 @@ const NewPostModal = ({ open, onClose, onPublished }: NewPostModalProps) => {
               ))}
             </div>
           )}
+          {imageUploading && (
+            <div className="flex items-center gap-2 mt-2 text-[12px]" style={{ color: "var(--text-3)" }}>
+              <Loader2 className="w-3 h-3 animate-spin" /> Uploading images...
+            </div>
+          )}
         </div>
         <div className="flex items-center justify-between px-5 py-3 border-t" style={{ borderColor: "var(--border)" }}>
           <button onClick={handleImageUpload} className="p-2 rounded-lg cursor-pointer active:scale-95" style={{ color: "var(--text-3)" }}><ImageIcon className="w-5 h-5" /></button>
           <div className="flex items-center gap-3">
             <span className="text-[12px]" style={{ color: "var(--text-3)" }}>{content.length}/{charLimit}</span>
-            <Button onClick={handlePublish} disabled={publishing || !content.trim()} className="active:scale-95">
+            <Button onClick={handlePublish} disabled={publishing || imageUploading || !content.trim()} className="active:scale-95">
               {publishing ? <Loader2 className="w-4 h-4 animate-spin" /> : "Publish"}
             </Button>
           </div>

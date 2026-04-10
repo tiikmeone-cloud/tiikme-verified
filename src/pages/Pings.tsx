@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { MessageCircle, Search, Send, Paperclip, Layers, PenSquare, Check, X, Shield, ArrowLeft, FileText, Briefcase } from "lucide-react";
+import { MessageCircle, Search, Send, Paperclip, PenSquare, X, Shield, ArrowLeft, FileText, Briefcase, Image as ImageIcon, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
@@ -11,24 +11,31 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 
 const ROLE_COLORS: Record<string, string> = { faculty: "#92400E", professional: "#0369A1", doctor: "#0E7490", student: "#4F46E5", skilled_trade: "#C2410C", hr: "#6B21A8", government: "#166534" };
-const ALLOWED_TYPES = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_ATTACH = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "image/jpeg", "image/png", "image/webp", "image/gif"];
 
 const ringStyle = (verified: boolean): React.CSSProperties => {
   if (verified) return { boxShadow: "0 0 0 2px var(--surface), 0 0 0 4.5px #F59E0B, 0 0 12px rgba(245,158,11,0.45)" };
   return {};
 };
 
-function getTimeAgo(date: Date): string {
+function shortTimeAgo(date: Date): string {
   const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
-  if (seconds < 60) return "just now";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days === 1) return "Yesterday";
-  return `${days}d ago`;
+  if (seconds < 60) return "now";
+  const m = Math.floor(seconds / 60);
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  const d = Math.floor(h / 24);
+  if (d === 1) return "1d";
+  return `${d}d`;
+}
+
+function getLastMessagePreview(convo: any): string {
+  if (!convo.last_message && !convo.last_message_type) return "";
+  if (convo.last_message_type === "pdf" || convo.last_message_type === "document") return "📄 Document";
+  if (convo.last_message_type === "image") return "🖼 Photo";
+  const msg = convo.last_message || "";
+  return msg.length > 35 ? msg.substring(0, 35) + "..." : msg;
 }
 
 const Pings = () => {
@@ -39,10 +46,10 @@ const Pings = () => {
   const [newMsg, setNewMsg] = useState("");
   const [showMobileList, setShowMobileList] = useState(true);
   const [dismissedBanner, setDismissedBanner] = useState(false);
-  const [attachedFile, setAttachedFile] = useState<File | null>(null);
   const [showNewPing, setShowNewPing] = useState(false);
   const [newPingSearch, setNewPingSearch] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [uploading, setUploading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -54,19 +61,31 @@ const Pings = () => {
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
   const handleSend = async () => {
-    if (!newMsg.trim() && !attachedFile) return;
+    if (!newMsg.trim()) return;
     await sendMessage(newMsg.trim());
     setNewMsg("");
-    if (attachedFile) { toast.success(`Sent "${attachedFile.name}"`); setAttachedFile(null); }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    if (!ALLOWED_TYPES.includes(file.type)) { toast.error("Only PDF and DOC files allowed"); return; }
-    if (file.size > MAX_FILE_SIZE) { toast.error("File size must be under 5MB"); return; }
-    setAttachedFile(file);
-    toast.success(`"${file.name}" attached`);
+    if (!file || !user || !activeConvoId) return;
+    if (!ALLOWED_ATTACH.includes(file.type)) { toast.error("Only images, PDFs and documents allowed"); return; }
+    if (file.size > 25 * 1024 * 1024) { toast.error("File must be under 25MB"); return; }
+
+    setUploading(true);
+    const isImage = file.type.startsWith("image/");
+    const isPDF = file.type === "application/pdf";
+    const ext = file.name.split(".").pop();
+    const path = `${user.id}/${Date.now()}.${ext}`;
+
+    const { data, error } = await supabase.storage.from("message-attachments").upload(path, file, { contentType: file.type });
+    if (error) { toast.error("Upload failed: " + error.message); setUploading(false); return; }
+
+    const { data: urlData } = supabase.storage.from("message-attachments").getPublicUrl(data.path);
+    const attachType = isImage ? "image" : isPDF ? "pdf" : "document";
+
+    await sendMessage(file.name, { url: urlData.publicUrl, type: attachType, name: file.name, size: file.size });
+    setUploading(false);
     e.target.value = "";
   };
 
@@ -87,17 +106,12 @@ const Pings = () => {
 
   const startConversation = async (otherUserId: string) => {
     const convoId = await findOrCreateConversation(otherUserId);
-    if (convoId) {
-      loadMessages(convoId);
-      setShowMobileList(false);
-      setShowNewPing(false);
-      setNewPingSearch("");
-    }
+    if (convoId) { loadMessages(convoId); setShowMobileList(false); setShowNewPing(false); setNewPingSearch(""); }
   };
 
   return (
     <div className="flex" style={{ height: "calc(100vh - 64px)" }}>
-      <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={handleFileSelect} />
+      <input ref={fileInputRef} type="file" accept="image/*,.pdf,.doc,.docx" className="hidden" onChange={handleFileSelect} />
 
       {/* Left panel */}
       <div className={`w-full md:w-[340px] flex flex-col shrink-0 ${!showMobileList ? "hidden md:flex" : "flex"}`} style={{ background: "var(--glass-bg)", backdropFilter: "blur(20px) saturate(180%)", WebkitBackdropFilter: "blur(20px) saturate(180%)", borderRight: "1px solid var(--glass-border)" }}>
@@ -126,9 +140,7 @@ const Pings = () => {
         <div className="flex-1 overflow-y-auto">
           {loading && <div className="flex items-center justify-center py-10"><div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: "var(--brand)", borderTopColor: "transparent" }} /></div>}
           {!loading && tab === "chats" && filteredConvos.length === 0 && (
-            <div className="p-6">
-              <EmptyState icon={MessageCircle} title="No conversations yet" description="Start a Ping by clicking the compose button above." />
-            </div>
+            <div className="p-6"><EmptyState icon={MessageCircle} title="No conversations yet" description="Start a Ping by clicking the compose button above." /></div>
           )}
           {tab === "applications" && <div className="p-6"><EmptyState icon={Briefcase} title="No applications" description="Application messages will appear here." /></div>}
           {tab === "requests" && <div className="p-6"><EmptyState icon={MessageCircle} title="No requests" description="Ping requests will appear here." /></div>}
@@ -137,8 +149,9 @@ const Pings = () => {
             const name = other?.full_name || other?.username || "User";
             const initials = name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
             const roleColor = ROLE_COLORS[other?.role || ""] || "#6B7280";
-            const timeAgo = convo.last_message_at ? getTimeAgo(new Date(convo.last_message_at)) : "";
+            const timeAgo = convo.last_message_at ? shortTimeAgo(new Date(convo.last_message_at)) : "";
             const active = activeConvoId === convo.id;
+            const preview = getLastMessagePreview(convo);
 
             return (
               <button key={convo.id} onClick={() => { loadMessages(convo.id); setShowMobileList(false); }}
@@ -149,7 +162,7 @@ const Pings = () => {
                   borderBottom: "1px solid var(--border)",
                 }}>
                 <div className="relative">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: roleColor, ...ringStyle(other?.is_verified || false) }}>
+                  <div className="w-11 h-11 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: roleColor, ...ringStyle(other?.is_verified || false) }}>
                     {other?.avatar_url ? <img src={other.avatar_url} alt="" className="w-full h-full object-cover" /> : initials}
                   </div>
                   {convo.unread_count > 0 && <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full" style={{ background: "var(--open-green)", border: "2px solid var(--surface)" }} />}
@@ -160,7 +173,7 @@ const Pings = () => {
                     <span className="text-[10px] shrink-0 ml-2" style={{ color: "var(--text-3)" }}>{timeAgo}</span>
                   </div>
                   <p className="text-[12px] truncate" style={{ color: convo.unread_count > 0 ? "var(--text-1)" : "var(--text-2)", fontWeight: convo.unread_count > 0 ? 600 : 400 }}>
-                    {convo.last_message || "Start a conversation"}
+                    {preview || "No messages yet"}
                   </p>
                 </div>
                 {convo.unread_count > 0 && <span className="w-[18px] h-[18px] rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0" style={{ background: "var(--brand)" }}>{convo.unread_count}</span>}
@@ -197,7 +210,6 @@ const Pings = () => {
               )}
             </div>
 
-            {/* Verification banner */}
             {!dismissedBanner && activeConvo?.other_user?.is_verified && (
               <div className="px-5 py-2 flex items-center justify-between" style={{ background: "rgba(245,158,11,0.07)", borderBottom: "1px solid rgba(245,158,11,0.18)" }}>
                 <p className="text-[12px]" style={{ color: "rgba(245,158,11,0.9)" }}><Shield className="w-3.5 h-3.5 inline mr-1" style={{ color: "#F59E0B" }} />{activeConvo.other_user.full_name} is Tiik Approved</p>
@@ -218,6 +230,14 @@ const Pings = () => {
                 const bottomRight = isMe ? (nextSame ? 4 : 18) : 18;
                 const time = msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "";
 
+                // Read receipt: show other user's avatar at the last read message from me
+                const isLastRead = (() => {
+                  if (!isMe || !activeConvo?.other_user) return false;
+                  const myReadMessages = messages.filter(m => m.sender_id === user?.id && m.status === "read");
+                  const lastReadMsg = myReadMessages.length > 0 ? myReadMessages[myReadMessages.length - 1] : null;
+                  return lastReadMsg?.id === msg.id;
+                })();
+
                 return (
                   <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"} mb-1`}>
                     {!isMe && !prevSame && activeConvo?.other_user && (
@@ -235,25 +255,34 @@ const Pings = () => {
                       color: isMe ? "white" : "var(--text-1)",
                       boxShadow: isMe ? "inset 0 1px 1px rgba(255,255,255,0.4), 0 4px 16px var(--brand-glow)" : "var(--glass-shadow)",
                     }}>
-                      <p className="text-[14px] leading-[1.6]">{msg.content}</p>
+                      {/* Attachment rendering */}
+                      {msg.attachment_type === "image" && msg.attachment_url && (
+                        <img src={msg.attachment_url} alt="" className="w-full max-w-[280px] rounded-lg mb-2 cursor-pointer" onClick={() => window.open(msg.attachment_url!, "_blank")} onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                      )}
+                      {(msg.attachment_type === "pdf" || msg.attachment_type === "document") && msg.attachment_url && (
+                        <a href={msg.attachment_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 rounded-lg mb-2" style={{ background: isMe ? "rgba(255,255,255,0.15)" : "var(--surface-2)" }}>
+                          <FileText className="w-8 h-8 shrink-0" style={{ color: isMe ? "white" : "var(--brand)" }} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[12px] font-bold truncate">{msg.attachment_name || "Document"}</p>
+                            {msg.attachment_size && <p className="text-[10px] opacity-70">{(msg.attachment_size / 1024).toFixed(0)} KB</p>}
+                          </div>
+                          <Download className="w-4 h-4 shrink-0" />
+                        </a>
+                      )}
+                      {/* Text content (skip if it's just the filename for attachments) */}
+                      {(!msg.attachment_type || msg.content !== msg.attachment_name) && (
+                        <p className="text-[14px] leading-[1.6]">{msg.content}</p>
+                      )}
                       <div className="flex items-center justify-end gap-1 mt-1">
                         <p className="text-[10px] opacity-0 group-hover:opacity-60 transition-opacity" style={{ color: isMe ? "rgba(255,255,255,0.7)" : "var(--text-3)" }}>{time}</p>
                       </div>
-                      {/* LinkedIn-style read receipt: show other user's avatar at the last read message from me */}
-                      {(() => {
-                        if (!isMe || !activeConvo?.other_user) return null;
-                        // Find the last message I sent that has been read
-                        const myReadMessages = messages.filter((m, idx) => m.sender_id === user?.id && m.status === "read");
-                        const lastReadMsg = myReadMessages.length > 0 ? myReadMessages[myReadMessages.length - 1] : null;
-                        if (!lastReadMsg || lastReadMsg.id !== msg.id) return null;
-                        return (
-                          <div className="flex justify-end mt-0.5">
-                            <div className="w-[14px] h-[14px] rounded-full overflow-hidden flex items-center justify-center text-[6px] font-bold text-white" style={{ backgroundColor: ROLE_COLORS[activeConvo.other_user.role || ""] || "#6B7280" }}>
-                              {activeConvo.other_user.avatar_url ? <img src={activeConvo.other_user.avatar_url} alt="" className="w-full h-full object-cover" /> : (activeConvo.other_user.full_name || "U")[0]}
-                            </div>
+                      {isLastRead && activeConvo?.other_user && (
+                        <div className="flex justify-end mt-0.5">
+                          <div className="w-[14px] h-[14px] rounded-full overflow-hidden flex items-center justify-center text-[6px] font-bold text-white" style={{ backgroundColor: ROLE_COLORS[activeConvo.other_user.role || ""] || "#6B7280" }}>
+                            {activeConvo.other_user.avatar_url ? <img src={activeConvo.other_user.avatar_url} alt="" className="w-full h-full object-cover" /> : (activeConvo.other_user.full_name || "U")[0]}
                           </div>
-                        );
-                      })()}
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -263,24 +292,18 @@ const Pings = () => {
 
             {/* Input area */}
             <div className="px-4 py-3" style={{ background: "var(--glass-bg)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderTop: "1px solid var(--glass-border)" }}>
-              {attachedFile && (
+              {uploading && (
                 <div className="flex items-center gap-2 mb-2 px-3 py-2 rounded-xl" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
-                  <FileText className="w-4 h-4 shrink-0" style={{ color: "var(--brand)" }} />
-                  <span className="text-[12px] font-medium truncate flex-1" style={{ color: "var(--text-1)" }}>{attachedFile.name}</span>
-                  <button onClick={() => setAttachedFile(null)} className="p-1 rounded cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-3.5 h-3.5" /></button>
+                  <div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: "var(--brand)", borderTopColor: "transparent" }} />
+                  <span className="text-[12px]" style={{ color: "var(--text-2)" }}>Uploading...</span>
                 </div>
               )}
               <div className="flex items-center gap-1 mb-2">
                 <Tooltip><TooltipTrigger asChild>
-                  <button className="p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-95" style={{ color: "var(--text-2)" }} onClick={() => fileInputRef.current?.click()}>
+                  <button className="p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-95" style={{ color: "var(--text-2)" }} onClick={() => fileInputRef.current?.click()} disabled={uploading}>
                     <Paperclip className="w-4 h-4" />
                   </button>
-                </TooltipTrigger><TooltipContent>Attach PDF or DOC</TooltipContent></Tooltip>
-                <Tooltip><TooltipTrigger asChild>
-                  <button className="p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-95" style={{ color: "var(--text-2)" }} onClick={() => toast.info("Share work item")}>
-                    <Layers className="w-4 h-4" />
-                  </button>
-                </TooltipTrigger><TooltipContent>Share work</TooltipContent></Tooltip>
+                </TooltipTrigger><TooltipContent>Attach file or image</TooltipContent></Tooltip>
               </div>
               <div className="flex items-center gap-2.5">
                 <textarea value={newMsg} onChange={e => setNewMsg(e.target.value)}
@@ -289,7 +312,7 @@ const Pings = () => {
                   className="flex-1 min-h-[42px] max-h-[160px] rounded-2xl px-3.5 py-2.5 text-[14px] resize-none outline-none transition-all duration-150"
                   style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", color: "var(--text-1)" }}
                   rows={1} />
-                <button onClick={handleSend} disabled={!newMsg.trim() && !attachedFile}
+                <button onClick={handleSend} disabled={!newMsg.trim()}
                   className="w-[42px] h-[42px] rounded-full flex items-center justify-center transition-all duration-200 disabled:opacity-40 active:scale-95 cursor-pointer"
                   style={{ background: "var(--brand)", boxShadow: "0 3px 10px var(--brand-glow)" }}>
                   <Send className="w-[18px] h-[18px] text-white" />
