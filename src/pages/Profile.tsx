@@ -255,6 +255,7 @@ const ProfilePostsSection = ({ posts, isOwnProfile }: { posts: any[]; isOwnProfi
   );
 };
 
+const Profile = () => {
 
   const { id: urlUserId } = useParams<{ id: string }>();
   const [editOpen, setEditOpen] = useState(false);
