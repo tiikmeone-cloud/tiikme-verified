@@ -318,6 +318,108 @@ export type Database = {
           },
         ]
       }
+      item_verification_requests: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string | null
+          org_id: string | null
+          requester_id: string
+          status: string | null
+          verifier_email: string | null
+          verifier_id: string | null
+          work_item_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          org_id?: string | null
+          requester_id: string
+          status?: string | null
+          verifier_email?: string | null
+          verifier_id?: string | null
+          work_item_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          org_id?: string | null
+          requester_id?: string
+          status?: string | null
+          verifier_email?: string | null
+          verifier_id?: string | null
+          work_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_verification_requests_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_verification_requests_verifier_id_fkey"
+            columns: ["verifier_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_verification_requests_work_item_id_fkey"
+            columns: ["work_item_id"]
+            isOneToOne: false
+            referencedRelation: "work_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          action_url: string | null
+          body: string | null
+          created_at: string | null
+          data: Json | null
+          id: string
+          is_read: boolean | null
+          title: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          action_url?: string | null
+          body?: string | null
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          is_read?: boolean | null
+          title?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          action_url?: string | null
+          body?: string | null
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          is_read?: boolean | null
+          title?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       opportunities: {
         Row: {
           company_id: string | null
@@ -1523,26 +1625,37 @@ export type Database = {
         Row: {
           approved_at: string | null
           approved_by: string | null
+          company_name: string | null
           created_at: string | null
+          degree_type: string | null
           description: string | null
           display_order: number | null
           domain: string | null
           employment_type: string | null
           end_date: string | null
+          end_month: string | null
+          end_year: number | null
+          field_of_study: string | null
+          grade_score: string | null
           id: string
           institution_id: string | null
           institution_name: string | null
+          institution_name_edu: string | null
           is_current: boolean | null
           is_tiik_approved: boolean | null
           is_tiiked: boolean | null
           item_type: string | null
+          job_title: string | null
           links: Json | null
           owner_id: string | null
           project_type: string | null
           recruiter_views: number | null
           role_in_work: string | null
+          skills_used: string[] | null
           slug: string | null
           start_date: string | null
+          start_month: string | null
+          start_year: number | null
           status: string | null
           tech_stack: string[] | null
           tiiked_by: string | null
@@ -1550,31 +1663,46 @@ export type Database = {
           total_views: number | null
           type: string | null
           updated_at: string | null
+          verification_status: string | null
+          verified_at: string | null
+          verified_by_user: string | null
           visibility: string | null
+          work_location: string | null
         }
         Insert: {
           approved_at?: string | null
           approved_by?: string | null
+          company_name?: string | null
           created_at?: string | null
+          degree_type?: string | null
           description?: string | null
           display_order?: number | null
           domain?: string | null
           employment_type?: string | null
           end_date?: string | null
+          end_month?: string | null
+          end_year?: number | null
+          field_of_study?: string | null
+          grade_score?: string | null
           id?: string
           institution_id?: string | null
           institution_name?: string | null
+          institution_name_edu?: string | null
           is_current?: boolean | null
           is_tiik_approved?: boolean | null
           is_tiiked?: boolean | null
           item_type?: string | null
+          job_title?: string | null
           links?: Json | null
           owner_id?: string | null
           project_type?: string | null
           recruiter_views?: number | null
           role_in_work?: string | null
+          skills_used?: string[] | null
           slug?: string | null
           start_date?: string | null
+          start_month?: string | null
+          start_year?: number | null
           status?: string | null
           tech_stack?: string[] | null
           tiiked_by?: string | null
@@ -1582,31 +1710,46 @@ export type Database = {
           total_views?: number | null
           type?: string | null
           updated_at?: string | null
+          verification_status?: string | null
+          verified_at?: string | null
+          verified_by_user?: string | null
           visibility?: string | null
+          work_location?: string | null
         }
         Update: {
           approved_at?: string | null
           approved_by?: string | null
+          company_name?: string | null
           created_at?: string | null
+          degree_type?: string | null
           description?: string | null
           display_order?: number | null
           domain?: string | null
           employment_type?: string | null
           end_date?: string | null
+          end_month?: string | null
+          end_year?: number | null
+          field_of_study?: string | null
+          grade_score?: string | null
           id?: string
           institution_id?: string | null
           institution_name?: string | null
+          institution_name_edu?: string | null
           is_current?: boolean | null
           is_tiik_approved?: boolean | null
           is_tiiked?: boolean | null
           item_type?: string | null
+          job_title?: string | null
           links?: Json | null
           owner_id?: string | null
           project_type?: string | null
           recruiter_views?: number | null
           role_in_work?: string | null
+          skills_used?: string[] | null
           slug?: string | null
           start_date?: string | null
+          start_month?: string | null
+          start_year?: number | null
           status?: string | null
           tech_stack?: string[] | null
           tiiked_by?: string | null
@@ -1614,7 +1757,11 @@ export type Database = {
           total_views?: number | null
           type?: string | null
           updated_at?: string | null
+          verification_status?: string | null
+          verified_at?: string | null
+          verified_by_user?: string | null
           visibility?: string | null
+          work_location?: string | null
         }
         Relationships: [
           {
