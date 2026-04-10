@@ -12,7 +12,11 @@ export function useLikes(postIds: string[]) {
 
   // Load initial like data from DB
   useEffect(() => {
-    if (!postIds.length) return;
+    if (!postIds.length) {
+      setCounts({});
+      setMyLikes({});
+      return;
+    }
 
     supabase
       .from("post_reactions")
@@ -95,10 +99,7 @@ export function useLikes(postIds: string[]) {
       } else {
         const { error } = await supabase
           .from("post_reactions")
-          .upsert(
-            { post_id: postId, user_id: user.id, reaction_type: "like" },
-            { onConflict: "post_id,user_id" }
-          );
+          .insert({ post_id: postId, user_id: user.id, reaction_type: "like" });
         if (error) {
           setMyLikes((p) => ({ ...p, [postId]: false }));
           setCounts((p) => ({
