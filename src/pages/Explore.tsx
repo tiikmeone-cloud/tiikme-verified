@@ -72,7 +72,7 @@ const Explore = () => {
     let query = supabase.from("profiles")
       .select("id, full_name, username, avatar_url, role, headline, institution_name, location_city, is_verified, activity_score")
       .eq("is_public", true).not("full_name", "is", null)
-      .order("activity_score", { ascending: false }).order("is_verified", { ascending: false }).limit(24);
+      .order("activity_score", { ascending: false }).limit(24);
     if (search.trim().length >= 2) query = query.or(`full_name.ilike.%${search}%,username.ilike.%${search}%,institution_name.ilike.%${search}%`);
     if (roleFilter !== "All" && roleMap[roleFilter]) query = query.eq("role", roleMap[roleFilter]);
     if (verifiedOnly) query = query.eq("is_verified", true);
