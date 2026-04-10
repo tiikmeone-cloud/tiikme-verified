@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import ThemeLogo from "@/components/ThemeLogo";
 
 interface Props {
   step: number;
@@ -16,7 +17,6 @@ export default function OnboardingShell({ step, totalSteps = 5, showBack = false
 
   return (
     <div className="min-h-screen flex flex-col items-center px-4 py-8 sm:py-12 relative" style={{ background: "#FFF8F2" }}>
-      {/* Back button */}
       {showBack && backTo && (
         <button
           onClick={() => navigate(backTo)}
@@ -27,13 +27,9 @@ export default function OnboardingShell({ step, totalSteps = 5, showBack = false
         </button>
       )}
 
-      {/* Logo */}
-      <div className="flex items-center gap-1.5 mb-6">
-        <span style={{ fontFamily: "'Press Start 2P', cursive", fontSize: 18, color: "#111827" }}>tiikme</span>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="12" fill="#E8580A" />
-          <path d="M7 12.5l3.5 3.5 6.5-7" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+      {/* Logo — same as sidebar */}
+      <div className="mb-6">
+        <ThemeLogo className="h-8 w-auto" />
       </div>
 
       {/* Progress dots */}
@@ -54,7 +50,6 @@ export default function OnboardingShell({ step, totalSteps = 5, showBack = false
         ))}
       </div>
 
-      {/* Content */}
       <div className="w-full max-w-[600px]">
         {children}
       </div>

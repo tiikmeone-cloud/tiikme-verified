@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Check, X } from "lucide-react";
 import { toast } from "sonner";
@@ -8,14 +8,59 @@ import OnboardingShell from "@/components/onboarding/OnboardingShell";
 
 // ═══ CONSTANTS ═══
 
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const currentYear = new Date().getFullYear();
+const yearRange = (start: number, end: number) => Array.from({ length: end - start + 1 }, (_, i) => String(start + i));
+
+const COUNTRIES_TOP = ["India","United States","United Kingdom","UAE","Canada","Australia","Singapore","Germany"];
+const COUNTRIES_REST = [
+  "Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia","Austria","Azerbaijan",
+  "Bahrain","Bangladesh","Belarus","Belgium","Bhutan","Bolivia","Bosnia","Brazil","Brunei","Bulgaria",
+  "Cambodia","Cameroon","Chile","China","Colombia","Costa Rica","Croatia","Cuba","Cyprus","Czech Republic",
+  "Denmark","Dominican Republic","Ecuador","Egypt","Estonia","Ethiopia","Fiji","Finland","France",
+  "Georgia","Ghana","Greece","Guatemala","Honduras","Hong Kong","Hungary","Iceland","Indonesia","Iran",
+  "Iraq","Ireland","Israel","Italy","Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kuwait",
+  "Kyrgyzstan","Laos","Latvia","Lebanon","Libya","Lithuania","Luxembourg","Macau","Malaysia","Maldives",
+  "Malta","Mauritius","Mexico","Moldova","Mongolia","Montenegro","Morocco","Mozambique","Myanmar",
+  "Nepal","Netherlands","New Zealand","Nicaragua","Nigeria","North Korea","North Macedonia","Norway",
+  "Oman","Pakistan","Palestine","Panama","Paraguay","Peru","Philippines","Poland","Portugal","Qatar",
+  "Romania","Russia","Rwanda","Saudi Arabia","Senegal","Serbia","South Africa","South Korea","Spain",
+  "Sri Lanka","Sudan","Sweden","Switzerland","Syria","Taiwan","Tajikistan","Tanzania","Thailand",
+  "Trinidad & Tobago","Tunisia","Turkey","Turkmenistan","Uganda","Ukraine","Uruguay","Uzbekistan",
+  "Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"
+];
+const ALL_COUNTRIES = [...COUNTRIES_TOP, "──────────", ...COUNTRIES_REST];
+
 const INDIAN_STATES = [
   "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Goa","Gujarat","Haryana",
   "Himachal Pradesh","Jharkhand","Karnataka","Kerala","Madhya Pradesh","Maharashtra","Manipur",
   "Meghalaya","Mizoram","Nagaland","Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana",
   "Tripura","Uttar Pradesh","Uttarakhand","West Bengal",
   "Andaman & Nicobar Islands","Chandigarh","Dadra & Nagar Haveli","Daman & Diu","Delhi (NCT)",
-  "Jammu & Kashmir","Ladakh","Lakshadweep","Puducherry","Outside India"
+  "Jammu & Kashmir","Ladakh","Lakshadweep","Puducherry"
 ];
+
+const CITY_SUGGESTIONS: Record<string, string[]> = {
+  "Telangana": ["Hyderabad","Warangal","Khammam","Nizamabad","Karimnagar","Nalgonda","Mahbubnagar","Adilabad","Medak","Suryapet","Jagtial","Korutla","Siddipet"],
+  "Maharashtra": ["Mumbai","Pune","Nagpur","Nashik","Aurangabad","Thane","Solapur","Kolhapur","Sangli","Satara","Amravati","Nanded"],
+  "Karnataka": ["Bengaluru","Mysuru","Mangaluru","Hubli","Dharwad","Belgaum","Gulbarga","Shimoga","Tumkur","Davanagere"],
+  "Tamil Nadu": ["Chennai","Coimbatore","Madurai","Tiruchirappalli","Salem","Erode","Tirunelveli","Vellore","Thanjavur"],
+  "Delhi (NCT)": ["New Delhi","Dwarka","Rohini","Saket","Janakpuri","Pitampura","Laxmi Nagar"],
+  "Uttar Pradesh": ["Lucknow","Noida","Ghaziabad","Agra","Varanasi","Kanpur","Prayagraj","Meerut","Aligarh","Bareilly"],
+  "Gujarat": ["Ahmedabad","Surat","Vadodara","Rajkot","Gandhinagar","Bhavnagar","Junagadh","Jamnagar"],
+  "Rajasthan": ["Jaipur","Jodhpur","Udaipur","Kota","Ajmer","Bikaner","Alwar","Bharatpur"],
+  "West Bengal": ["Kolkata","Howrah","Durgapur","Asansol","Siliguri","Bardhaman","Malda","Kharagpur"],
+  "Kerala": ["Thiruvananthapuram","Kochi","Kozhikode","Thrissur","Kannur","Kollam","Alappuzha","Palakkad"],
+  "Madhya Pradesh": ["Bhopal","Indore","Jabalpur","Gwalior","Ujjain","Sagar","Rewa","Satna"],
+  "Punjab": ["Chandigarh","Ludhiana","Amritsar","Jalandhar","Patiala","Bathinda","Mohali"],
+  "Haryana": ["Gurugram","Faridabad","Ambala","Hisar","Panipat","Karnal","Rohtak","Sonipat"],
+  "Bihar": ["Patna","Gaya","Muzaffarpur","Bhagalpur","Darbhanga","Purnia","Arrah"],
+  "Odisha": ["Bhubaneswar","Cuttack","Rourkela","Berhampur","Sambalpur","Puri"],
+  "Andhra Pradesh": ["Visakhapatnam","Vijayawada","Guntur","Nellore","Tirupati","Kurnool","Rajahmundry","Kakinada"],
+  "Jharkhand": ["Ranchi","Jamshedpur","Dhanbad","Bokaro","Hazaribagh","Deoghar"],
+  "Chhattisgarh": ["Raipur","Bhilai","Bilaspur","Korba","Durg","Rajnandgaon"],
+  "Assam": ["Guwahati","Dibrugarh","Silchar","Jorhat","Nagaon","Tezpur"],
+};
 
 const DEGREES = [
   "── ENGINEERING & TECHNOLOGY ──",
@@ -24,21 +69,18 @@ const DEGREES = [
   "── MEDICAL & HEALTHCARE ──",
   "MBBS","BDS","BAMS","BHMS","BUMS","BNYS","B.Pharm","D.Pharm","B.Sc Nursing","GNM","ANM",
   "BPT","BOT","B.Sc Medical Lab Technology","B.Sc Radiology","B.Sc Optometry","BMLT",
-  "B.Sc Anesthesia Technology","B.Sc Dialysis Technology","B.Sc Cardiac Technology",
   "BASLP","BVSc & AH",
   "── SCIENCE ──",
   "B.Sc","B.Sc (Hons.)","Integrated B.Sc + M.Sc","B.Sc Agriculture","B.Sc Horticulture",
   "B.Sc Forestry","B.Sc Home Science","B.Sc Food Technology","B.Sc Microbiology",
-  "B.Sc Genetics","B.Sc Environmental Science",
   "── COMMERCE & MANAGEMENT ──",
   "B.Com","B.Com (Hons.)","BBA","BMS","BBA LLB","BBM","BAF","BFM","BBI",
   "── ARTS & HUMANITIES ──",
   "BA","BA (Hons.)","BA LLB","BSW","B.Lib.I.Sc",
   "── LAW ──",
-  "LLB (3 yrs)","BA LLB (5 yrs)","BBA LLB (5 yrs)","B.Com LLB (5 yrs)","BSc LLB (5 yrs)",
+  "LLB (3 yrs)","BA LLB (5 yrs)","BBA LLB (5 yrs)","B.Com LLB (5 yrs)",
   "── DESIGN & CREATIVE ARTS ──",
-  "B.Des","BFA","B.Sc Interior Design","B.Arch","B.Plan","BMMMC","BA Journalism",
-  "B.Sc Animation & Multimedia","BFA (Visual / Performing Arts)",
+  "B.Des","BFA","B.Arch","B.Plan","BMMMC","BA Journalism","B.Sc Animation",
   "── EDUCATION ──",
   "B.Ed","D.El.Ed","B.P.Ed","B.El.Ed",
   "── COMPUTER & IT ──",
@@ -68,40 +110,57 @@ const BTECH_BRANCHES = [
   "Textile Engineering","Agricultural Engineering","Food Technology","Marine Engineering",
   "Instrumentation Engineering","Robotics & Automation","Other"
 ];
-
-const MBBS_BRANCHES = [
-  "General Medicine","Surgery","Paediatrics","Obstetrics & Gynaecology","Orthopaedics",
-  "Dermatology","Ophthalmology","ENT","Radiology","Anesthesiology","Pathology",
-  "Microbiology","Pharmacology","Psychiatry","Forensic Medicine","Community Medicine","Other"
-];
-
+const MBBS_BRANCHES = ["General Medicine","Surgery","Paediatrics","Obstetrics & Gynaecology","Orthopaedics","Dermatology","Ophthalmology","ENT","Radiology","Anesthesiology","Pathology","Microbiology","Pharmacology","Psychiatry","Forensic Medicine","Community Medicine","Other"];
 const BSC_BRANCHES = ["Physics","Chemistry","Mathematics","Biology / Zoology / Botany","Biotechnology","Microbiology","Computer Science","Electronics","Statistics","Other"];
 const MBA_BRANCHES = ["Marketing","Finance","HR","Operations","IT / Systems","Healthcare","International Business","Entrepreneurship","Other"];
 const BA_BRANCHES = ["Economics","History","Political Science","Sociology","Psychology","Philosophy","English","Hindi","Regional Language","Geography","Other"];
 
-const YEAR_OF_STUDY = ["1st Year","2nd Year","3rd Year","4th Year","5th Year","6th Year (MBBS)","Postgraduate 1st Year","Postgraduate 2nd Year","PhD / Research","Alumni / Graduated"];
-
 const INDUSTRIES = [
-  "Information Technology (IT) & Software","Product & SaaS","Consulting & Advisory","Banking & Financial Services",
-  "Insurance","Investment & Wealth Management","Manufacturing (Automotive)","Manufacturing (Electronics)",
-  "Manufacturing (FMCG)","Manufacturing (Chemicals)","Manufacturing (Metals & Mining)",
-  "Manufacturing (Textiles)","Manufacturing (Heavy / Defence)","Healthcare & Hospitals",
-  "Pharmaceuticals & Biotech","Medical Devices","Retail & E-Commerce","Real Estate & Construction",
-  "Infrastructure & Urban Development","Oil & Gas / Energy","Renewable Energy",
-  "Telecom & Networking","Media, Advertising & PR","Entertainment, Film & OTT",
-  "Publishing & Journalism","Education & EdTech","Research & Development",
-  "Agriculture & Agri-tech","Food & Beverage","Logistics, Supply Chain & Warehousing",
-  "Aviation & Aerospace","Shipping & Maritime","Railways & Transportation",
-  "Government & Public Sector (Central)","Government & Public Sector (State)",
-  "Defence & Armed Forces","Law Enforcement","Legal & Compliance","Non-Profit / NGO",
-  "Hospitality & Tourism","Events & Entertainment","Fashion & Lifestyle",
-  "Design & Creative Studio","Digital Marketing Agency","Accounting & Audit Firm",
-  "Staffing & Recruitment","Freelancing / Independent","Other"
+  "── TECHNOLOGY & SOFTWARE ──",
+  "Software Product (SaaS / Platform)","IT Services & Consulting","Startup / New-age Tech",
+  "Semiconductors & Hardware","Cybersecurity","Artificial Intelligence / ML","Cloud Computing",
+  "── MEDIA, DESIGN & CREATIVE ──",
+  "Digital Media & OTT","Print & Broadcast Media","Advertising & PR Agency",
+  "Creative / Design Studio","Film & Television Production","Gaming & Animation",
+  "── MANUFACTURING ──",
+  "Automotive & EV","Aerospace & Defence Manufacturing","Electronics & Consumer Goods",
+  "FMCG & Packaged Goods","Chemicals & Petrochemicals","Textiles & Apparel",
+  "Metals, Steel & Mining","Pharmaceuticals Manufacturing","Food Processing & Beverage",
+  "Heavy Machinery & Equipment","Rubber & Plastics",
+  "── SERVICES ──",
+  "Management Consulting","Legal & Compliance Services","Accounting & Audit Firm",
+  "Staffing & Recruitment Agency","Market Research & Analytics",
+  "── HEALTHCARE ──",
+  "Hospitals & Clinics","Diagnostics & Pathology Labs","Medical Devices & Equipment",
+  "Pharmaceutical (R&D/Sales)","Telemedicine & Health Tech",
+  "── FINANCIAL SERVICES ──",
+  "Banking (Public Sector)","Banking (Private Sector)","Insurance",
+  "NBFCs & Microfinance","Stock Broking & Wealth Management","Fintech (Payments, Lending, WealthTech)",
+  "Venture Capital & Private Equity",
+  "── INFRASTRUCTURE & CONSTRUCTION ──",
+  "Real Estate & Property Development","Construction & EPC Projects",
+  "Roads, Highways & Bridges","Urban Infrastructure & Smart Cities","Water & Sanitation",
+  "── ENERGY & UTILITIES ──",
+  "Oil & Gas","Power Generation (Thermal / Nuclear)","Renewable Energy (Solar / Wind / Hydro)",
+  "EV Infrastructure & Charging","Water Utilities",
+  "── GOVERNMENT & PUBLIC SECTOR ──",
+  "Central Government Ministries","State Government Departments","Public Sector Enterprises (PSU)",
+  "Defence & Armed Forces","Law Enforcement & Paramilitary",
+  "── EDUCATION ──",
+  "K-12 Schools","Higher Education (Colleges / Universities)","EdTech / Online Learning",
+  "Coaching & Test Prep","Vocational Training & Skill Development",
+  "── RETAIL & CONSUMER ──",
+  "E-Commerce & Marketplace","Retail (Offline Stores / Chains)","D2C Brands","Luxury & Lifestyle",
+  "── AGRICULTURE & ENVIRONMENT ──",
+  "Agriculture & Agri-tech","Animal Husbandry & Dairy","Horticulture & Floriculture",
+  "Forestry & Environment","Fisheries & Aquaculture",
+  "── SOCIAL SECTOR ──",
+  "NGO / Non-Profit / Trust","Government Welfare Schemes","Social Enterprise",
+  "Other"
 ];
 
 const COMPANY_TYPES = ["MNC","Indian Startup","Indian Enterprise","Public Sector / PSU","Family Business / SME","Agency / Studio / Firm","Freelancer / Self-employed","NGO / Non-profit"];
-const EXPERIENCE_LEVELS = ["Less than 1 year","1–2 years","3–5 years","5–8 years","8–12 years","12+ years"];
-const DESIGNATION_LEVELS = ["Intern / Trainee","Junior / Associate (0–2 yrs)","Mid-level / IC (2–5 yrs)","Senior / Specialist (5–10 yrs)","Lead / Principal","Manager / Team Lead","Senior Manager","Director / VP / AVP","C-Suite (CXO)","Founder / Co-founder"];
+const EMPLOYMENT_TYPES = ["Full-time","Part-time","Contract","Freelance","Internship"];
 
 const DOCTOR_SPECIALISATIONS = [
   "General Physician (MBBS)","General Surgeon","Cardiologist","Neurologist","Orthopaedic Surgeon",
@@ -113,46 +172,48 @@ const DOCTOR_SPECIALISATIONS = [
   "Veterinary Doctor","Public Health Specialist","Hospital Administrator","Medical Research","Other"
 ];
 const DOCTOR_DEGREES = ["MBBS","BDS","BAMS","BHMS","BUMS","BNYS","BPT","MD","MS","MDS","DM","M.Ch","FICS / FRCS / Fellowship","PhD","Other"];
-const HOSPITAL_TYPES = ["Government / Public Hospital","Private Hospital","Medical College Hospital","Clinic / Polyclinic","Telemedicine / Online","Research Institution","Other"];
+const DOCTOR_ROLES = ["Junior Resident","Senior Resident","Consultant","Senior Consultant","Professor","HOD","Medical Director","Other"];
 
-const GOVT_DESIGNATIONS = [
-  "IAS Officer","IPS Officer","IFS (Foreign Service)","IRS","IFoS","Section Officer",
-  "Under Secretary","Deputy Secretary","Joint Secretary","Additional Secretary","Secretary",
-  "SDM / SDO","DM / District Collector","Commissioner","BDO","Tahsildar","Revenue Inspector",
-  "Municipal Commissioner","GST Inspector","Customs Officer","SEBI / RBI / NABARD Officer",
-  "Bank PO / Manager (PSU)","LIC Officer","Sub-Inspector (Police)","DSP / SP / DIG / IG / DGP",
-  "Army Officer","Navy Officer","Air Force Officer","BSF / CRPF / CISF Officer",
-  "Forest Officer","Postal Inspector","ASHA / ANM Health Worker","Government Teacher",
-  "Professor (Central University)","Scientist (DRDO / ISRO / CSIR)","Other"
-];
-const GOVT_MINISTRIES = [
-  "Ministry of Finance","Ministry of Home Affairs","Ministry of External Affairs","Ministry of Defence",
-  "Ministry of Education","Ministry of Health","Ministry of Agriculture","Ministry of Commerce",
-  "Ministry of Railways","Ministry of Road Transport","Ministry of Petroleum","Ministry of Power",
-  "Ministry of Environment","Ministry of Jal Shakti","Ministry of Rural Development",
-  "Ministry of Electronics & IT (MeitY)","State Government","Armed Forces","Judiciary","Other"
+const GOVT_CADRES = [
+  "── All India Services ──",
+  "IAS (Indian Administrative Service)","IPS (Indian Police Service)","IFoS (Indian Forest Service)",
+  "── Central Services Group A ──",
+  "IRS (Income Tax)","IRS (Customs & Indirect Taxes)","IFS (Foreign Service)","IRAS","IRTS","IRSME",
+  "IAAS","IIS","ICAS","IOFS","IPOS","IDES","ITS (Telecom)","IDAS",
+  "Indian Statistical Service","Indian Economic Service","CSS / CSSS / CSCS",
+  "CBI","Intelligence Bureau","RAW",
+  "── Central Services Group B & C ──",
+  "SSC CGL recruited","RRB recruited","NDA / CDS recruited",
+  "── Armed Forces ──",
+  "Indian Army (Officer)","Indian Army (JCO)","Indian Army (OR)",
+  "Indian Navy (Officer)","Indian Navy (Sailor)",
+  "Indian Air Force (Officer)","Indian Air Force (Airman)",
+  "Defence Civilian (DRDO / Ordnance)",
+  "── Paramilitary / CAPF ──",
+  "BSF","CRPF","CISF","ITBP","SSB","NSG","Assam Rifles",
+  "── Police (State) ──",
+  "State Police (Constable to DGP)","Home Guard / SPO",
+  "── Government Health ──",
+  "ASHA Worker","ANM","Staff Nurse (Govt)","Medical Officer",
+  "── Government Education ──",
+  "Government School Teacher (PRT/TGT/PGT)","KVS / NVS Teacher","Govt College Lecturer / Professor",
+  "── Government Banking / Finance ──",
+  "SBI / PSU Bank Officer","RBI / NABARD / SEBI Officer","LIC / GIC Officer",
+  "── Government Local Bodies ──",
+  "Municipal Corporation","Panchayat Development Officer","Gram Sevak / VAO",
+  "── PSU ──",
+  "ONGC / BPCL / HPCL / IOC / GAIL","NTPC / Power Grid / NHPC","BHEL / BEL / HAL","BSNL / MTNL",
+  "Coal India / NALCO / SAIL","AAI / Indian Railways","Other PSU",
+  "── Judiciary ──",
+  "District Court Staff","High Court Staff","Supreme Court Staff",
+  "Other"
 ];
 
-const FACULTY_INST_TYPES = [
-  "IIT","NIT","IIM","AIIMS / Medical College","Central University","State University",
-  "Deemed University","Private Engineering College","Private Medical College",
-  "Government Degree College","Private College","Polytechnic / Diploma Institute",
-  "School (Class 1–12)","International School","Research Institute (CSIR / DRDO)",
-  "Law School","Design Institute (NID / NIFT)","Other"
-];
-const FACULTY_DEPTS = [
-  "Computer Science","IT","AI & ML","Data Science","Electronics & Communication","Electrical",
-  "Mechanical","Civil","Chemical","Aerospace","Biotechnology","Physics","Chemistry","Mathematics",
-  "Statistics","Biology","Medicine","Surgery","Nursing","Pharmacy","Commerce","Management",
-  "Economics","History","Political Science","Sociology","Psychology","English","Hindi",
-  "Law","Architecture","Design","Agriculture","Education","Journalism","Environmental Science","Other"
-];
-const FACULTY_DESIGNATIONS = [
-  "Lecturer (ad-hoc)","Assistant Professor","Associate Professor","Professor",
-  "Professor of Practice","Visiting Professor","Research Associate","Postdoctoral Fellow",
-  "Senior Research Fellow","Junior Research Fellow","HOD","Principal / Vice-Principal",
-  "Director / VC","Dean","School Teacher (PGT / TGT / PRT)","Other"
-];
+const GOVT_POSTING_TYPES = ["District HQ","Taluka / Block","Village / Gram Panchayat","State Capital","Central Govt (Delhi)","Field posting"];
+
+const FACULTY_INST_TYPES = ["IIT","NIT","IIM","AIIMS / Medical College","Central University","State University","Deemed University","Private Engineering College","Private Medical College","Government Degree College","Private College","Polytechnic / Diploma Institute","School (Class 1–12)","International School","Research Institute (CSIR / DRDO)","Law School","Design Institute (NID / NIFT)","Other"];
+const FACULTY_DEPTS = ["Computer Science","IT","AI & ML","Data Science","Electronics & Communication","Electrical","Mechanical","Civil","Chemical","Aerospace","Biotechnology","Physics","Chemistry","Mathematics","Statistics","Biology","Medicine","Surgery","Nursing","Pharmacy","Commerce","Management","Economics","History","Political Science","Sociology","Psychology","English","Hindi","Law","Architecture","Design","Agriculture","Education","Journalism","Environmental Science","Other"];
+const FACULTY_DESIGNATIONS = ["Lecturer (ad-hoc)","Assistant Professor","Associate Professor","Professor","Professor of Practice","Visiting Professor","Research Associate","Postdoctoral Fellow","Senior Research Fellow","Junior Research Fellow","HOD","Principal / Vice-Principal","Director / VC","Dean","School Teacher (PGT / TGT / PRT)","Other"];
 
 const BUILDER_STAGES = ["💡 Idea Stage","🔨 Building","🚀 Launched","📈 Scaling"];
 const BUILDER_ROLES = ["Founder (Solo)","Co-founder (Technical)","Co-founder (Business)","Founding Engineer","Founding Designer","CTO","CEO","CPO","COO","CMO"];
@@ -190,10 +251,7 @@ const ASPIRANT_EXAMS = [
   "Other"
 ];
 
-const currentYear = new Date().getFullYear();
-const yearRange = (start: number, end: number) => Array.from({ length: end - start + 1 }, (_, i) => String(start + i));
-
-// ═══ HELPERS ═══
+// ═══ UI HELPERS ═══
 
 const inputStyle: React.CSSProperties = {
   background: "#fff", border: "1.5px solid #E5E7EB", borderRadius: 14,
@@ -203,12 +261,36 @@ const inputStyle: React.CSSProperties = {
 const selectStyle: React.CSSProperties = { ...inputStyle, cursor: "pointer" };
 const labelStyle: React.CSSProperties = { fontSize: 12, fontWeight: 600, color: "#6B7280", marginBottom: 6, display: "block" };
 
+const SectionBlock = ({ title, children }: { title: string; children: React.ReactNode }) => (
+  <div className="pb-5 mb-5" style={{ borderLeft: "3px solid #E8580A", paddingLeft: 16 }}>
+    <p className="text-[11px] font-bold uppercase tracking-wider mb-4" style={{ color: "#E8580A" }}>{title}</p>
+    <div className="space-y-4">{children}</div>
+  </div>
+);
+
+const MonthYearPicker = ({ monthKey, yearKey, rd, u, labelText, yearStart = 1970, yearEnd = currentYear + 10 }: {
+  monthKey: string; yearKey: string; rd: Record<string, string>; u: (k: string, v: string) => void;
+  labelText: string; yearStart?: number; yearEnd?: number;
+}) => (
+  <div>
+    <label style={labelStyle}>{labelText}</label>
+    <div className="grid grid-cols-2 gap-3">
+      <select value={rd[monthKey] || ""} onChange={e => u(monthKey, e.target.value)} style={selectStyle}>
+        <option value="">Month</option>
+        {MONTHS.map((m, i) => <option key={m} value={String(i + 1).padStart(2, "0")}>{m}</option>)}
+      </select>
+      <select value={rd[yearKey] || ""} onChange={e => u(yearKey, e.target.value)} style={selectStyle}>
+        <option value="">Year</option>
+        {yearRange(yearStart, yearEnd).reverse().map(y => <option key={y}>{y}</option>)}
+      </select>
+    </div>
+  </div>
+);
+
 const SearchableSelect = ({ options, value, onChange, placeholder }: { options: string[]; value: string; onChange: (v: string) => void; placeholder: string }) => {
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
-  const filtered = options.filter(o => !o.startsWith("──") || true).filter(o =>
-    o.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = options.filter(o => o.toLowerCase().includes(search.toLowerCase()));
   return (
     <div className="relative">
       <input
@@ -242,29 +324,39 @@ const SearchableSelect = ({ options, value, onChange, placeholder }: { options: 
   );
 };
 
+const OtherTextInput = ({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) => (
+  <div className="mt-2">
+    <label style={labelStyle}>Please specify *</label>
+    <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} style={inputStyle} />
+  </div>
+);
+
 // ═══ MAIN COMPONENT ═══
 
 export default function OnboardingDetails() {
   const navigate = useNavigate();
-  const { user, refetchProfile } = useAuth();
+  const { user, profile, refetchProfile } = useAuth();
   const role = sessionStorage.getItem("ob_role") || "student";
   const [submitting, setSubmitting] = useState(false);
 
-  // Block A: Identity
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  // Identity
+  const isReturning = !!(profile?.first_name && profile?.onboarding_complete);
+  const [firstName, setFirstName] = useState(isReturning ? (profile?.first_name || "") : "");
+  const [lastName, setLastName] = useState(isReturning ? (profile?.last_name || "") : "");
   const [username, setUsername] = useState("");
   const [usernameStatus, setUsernameStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
 
-  // Block B: Location
-  const [city, setCity] = useState("");
+  // Location — hierarchical
+  const [country, setCountry] = useState("India");
   const [state, setState] = useState("");
+  const [city, setCity] = useState("");
+  const [cityManual, setCityManual] = useState(false);
 
-  // Block C: Role-specific
+  // Role-specific data
   const [rd, setRd] = useState<Record<string, string>>({});
   const u = (k: string, v: string) => setRd(p => ({ ...p, [k]: v }));
 
-  // Block D: Headline
+  // Headline
   const [headline, setHeadline] = useState("");
 
   // Auto-generate username
@@ -275,7 +367,7 @@ export default function OnboardingDetails() {
     setUsername(base + "-" + suffix);
   }, [firstName, lastName, user?.id]);
 
-  // Check username availability
+  // Check username
   useEffect(() => {
     if (!username || username.length < 3) { setUsernameStatus("idle"); return; }
     const timer = setTimeout(async () => {
@@ -286,6 +378,10 @@ export default function OnboardingDetails() {
     }, 500);
     return () => clearTimeout(timer);
   }, [username, user?.id]);
+
+  // Reset state/city when country changes
+  useEffect(() => { setState(""); setCity(""); setCityManual(false); }, [country]);
+  useEffect(() => { setCity(""); setCityManual(false); }, [state]);
 
   const getTitle = () => {
     const map: Record<string, string> = {
@@ -323,15 +419,15 @@ export default function OnboardingDetails() {
     return [...BTECH_BRANCHES, ...BSC_BRANCHES];
   };
 
+  const citySuggestions = country === "India" && state ? (CITY_SUGGESTIONS[state] || []) : [];
+
   const handleComplete = async () => {
     if (!firstName.trim() || !lastName.trim()) { toast.info("First and last name are required"); return; }
-    if (!city.trim() || !state) { toast.info("City and state are required"); return; }
+    if (!country || !state || !city.trim()) { toast.info("Location is required"); return; }
     if (!user) { toast.error("Not authenticated"); return; }
 
     setSubmitting(true);
     const roleMetadata: Record<string, any> = {};
-
-    // Copy all rd fields into roleMetadata
     Object.entries(rd).forEach(([k, v]) => { if (v) roleMetadata[k] = v; });
 
     const { error } = await supabase.from("profiles").upsert({
@@ -348,7 +444,7 @@ export default function OnboardingDetails() {
       department: rd.branch || rd.department || "",
       designation: rd.jobTitle || rd.designation || rd.faculty_designation || "",
       sector: rd.industry || "",
-      role_metadata: roleMetadata as any,
+      role_metadata: { ...roleMetadata, country } as any,
       onboarding_complete: true,
       updated_at: new Date().toISOString(),
     } as any, { onConflict: "id" });
@@ -376,16 +472,74 @@ export default function OnboardingDetails() {
     navigate("/app/feed");
   };
 
-  // ═══ ROLE-SPECIFIC FIELD RENDERERS ═══
+  // ═══ LOCATION BLOCK ═══
+  const renderLocation = () => (
+    <>
+      <div>
+        <label style={labelStyle}>Country *</label>
+        <SearchableSelect options={ALL_COUNTRIES} value={country} onChange={setCountry} placeholder="Search country..." />
+      </div>
+      {country && (
+        <div>
+          <label style={labelStyle}>State / Province *</label>
+          {country === "India" ? (
+            <SearchableSelect options={INDIAN_STATES} value={state} onChange={setState} placeholder="Search state..." />
+          ) : (
+            <input value={state} onChange={e => setState(e.target.value)} placeholder="e.g. California, Ontario..." style={inputStyle} />
+          )}
+        </div>
+      )}
+      {state && (
+        <div>
+          <label style={labelStyle}>City / District / Village *</label>
+          {citySuggestions.length > 0 && !cityManual ? (
+            <>
+              <SearchableSelect
+                options={[...citySuggestions, "── My place is not listed ──"]}
+                value={city}
+                onChange={v => {
+                  if (v === "── My place is not listed ──") { setCityManual(true); setCity(""); }
+                  else setCity(v);
+                }}
+                placeholder="Search city or village..."
+              />
+            </>
+          ) : (
+            <input value={city} onChange={e => setCity(e.target.value)} placeholder="e.g. Korutla, Jagtial District" style={inputStyle} />
+          )}
+          {cityManual && (
+            <button onClick={() => setCityManual(false)} className="text-[11px] mt-1 cursor-pointer hover:underline" style={{ color: "#E8580A" }}>← Back to suggestions</button>
+          )}
+        </div>
+      )}
+    </>
+  );
+
+  // ═══ ROLE-SPECIFIC RENDERERS ═══
 
   const renderStudent = () => (
     <>
       <div><label style={labelStyle}>College / University name *</label><input value={rd.institution || ""} onChange={e => u("institution", e.target.value)} placeholder="e.g. IIT Delhi" style={inputStyle} /></div>
-      <div><label style={labelStyle}>Degree / Program *</label><SearchableSelect options={DEGREES} value={rd.degree || ""} onChange={v => u("degree", v)} placeholder="Search degree..." /></div>
-      <div><label style={labelStyle}>Branch / Specialisation *</label><SearchableSelect options={getBranchOptions()} value={rd.branch || ""} onChange={v => u("branch", v)} placeholder="Select branch..." /></div>
-      <div className="grid grid-cols-2 gap-3">
-        <div><label style={labelStyle}>Year of Study *</label><select value={rd.yearOfStudy || ""} onChange={e => u("yearOfStudy", e.target.value)} style={selectStyle}><option value="">Select</option>{YEAR_OF_STUDY.map(y => <option key={y}>{y}</option>)}</select></div>
-        <div><label style={labelStyle}>Graduation Year</label><select value={rd.gradYear || ""} onChange={e => u("gradYear", e.target.value)} style={selectStyle}><option value="">Select</option>{yearRange(2010, 2035).map(y => <option key={y}>{y}</option>)}</select></div>
+      <div>
+        <label style={labelStyle}>Degree / Program *</label>
+        <SearchableSelect options={DEGREES} value={rd.degree || ""} onChange={v => u("degree", v)} placeholder="Search degree..." />
+        {rd.degree === "Other" && <OtherTextInput value={rd.degreeOther || ""} onChange={v => u("degreeOther", v)} placeholder="Enter your degree" />}
+      </div>
+      <div>
+        <label style={labelStyle}>Branch / Specialisation *</label>
+        <SearchableSelect options={getBranchOptions()} value={rd.branch || ""} onChange={v => u("branch", v)} placeholder="Select branch..." />
+        {rd.branch === "Other" && <OtherTextInput value={rd.branchOther || ""} onChange={v => u("branchOther", v)} placeholder="Enter your branch" />}
+      </div>
+      <MonthYearPicker monthKey="enrollMonth" yearKey="enrollYear" rd={rd} u={u} labelText="Enrolled in *" yearStart={2000} yearEnd={currentYear} />
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <input type="checkbox" checked={rd.alreadyGrad === "true"} onChange={e => u("alreadyGrad", e.target.checked ? "true" : "")}
+            className="w-4 h-4 accent-[#E8580A] rounded cursor-pointer" id="gradCheck" />
+          <label htmlFor="gradCheck" className="text-[13px] cursor-pointer" style={{ color: "#6B7280" }}>Already graduated</label>
+        </div>
+        {rd.alreadyGrad !== "true" && (
+          <MonthYearPicker monthKey="gradMonth" yearKey="gradYear" rd={rd} u={u} labelText="Expected graduation *" yearStart={currentYear} yearEnd={currentYear + 10} />
+        )}
       </div>
       <div><label style={labelStyle}>Student Email (optional)</label><input value={rd.studentEmail || ""} onChange={e => u("studentEmail", e.target.value)} placeholder="you@college.ac.in" style={inputStyle} /><p className="text-[11px] mt-1" style={{ color: "#9CA3AF" }}>Your @college.edu or .ac.in email for instant verification</p></div>
     </>
@@ -393,48 +547,116 @@ export default function OnboardingDetails() {
 
   const renderProfessional = () => (
     <>
-      <div><label style={labelStyle}>Company / Organisation Name *</label><input value={rd.company || ""} onChange={e => u("company", e.target.value)} placeholder="e.g. Infosys" style={inputStyle} /></div>
+      <div><label style={labelStyle}>Company Name *</label><input value={rd.company || ""} onChange={e => u("company", e.target.value)} placeholder="e.g. Infosys" style={inputStyle} /></div>
       <div><label style={labelStyle}>Job Title / Designation *</label><input value={rd.jobTitle || ""} onChange={e => u("jobTitle", e.target.value)} placeholder="e.g. Senior Software Engineer" style={inputStyle} /></div>
-      <div><label style={labelStyle}>Industry *</label><SearchableSelect options={INDUSTRIES} value={rd.industry || ""} onChange={v => u("industry", v)} placeholder="Search industry..." /></div>
-      <div><label style={labelStyle}>Company Type</label><select value={rd.companyType || ""} onChange={e => u("companyType", e.target.value)} style={selectStyle}><option value="">Select</option>{COMPANY_TYPES.map(c => <option key={c}>{c}</option>)}</select></div>
-      <div><label style={labelStyle}>Work Email (optional)</label><input value={rd.workEmail || ""} onChange={e => u("workEmail", e.target.value)} placeholder="you@company.com" style={inputStyle} /></div>
-      <div className="grid grid-cols-2 gap-3">
-        <div><label style={labelStyle}>Working Since *</label><select value={rd.workingSince || ""} onChange={e => u("workingSince", e.target.value)} style={selectStyle}><option value="">Year</option>{yearRange(1980, currentYear).reverse().map(y => <option key={y}>{y}</option>)}</select></div>
-        <div><label style={labelStyle}>Total Experience *</label><select value={rd.experience || ""} onChange={e => u("experience", e.target.value)} style={selectStyle}><option value="">Select</option>{EXPERIENCE_LEVELS.map(e => <option key={e}>{e}</option>)}</select></div>
+      <div>
+        <label style={labelStyle}>Industry *</label>
+        <SearchableSelect options={INDUSTRIES} value={rd.industry || ""} onChange={v => u("industry", v)} placeholder="Search industry..." />
+        {rd.industry === "Other" && <OtherTextInput value={rd.industryOther || ""} onChange={v => u("industryOther", v)} placeholder="Enter your industry" />}
       </div>
-      <div><label style={labelStyle}>Designation Level *</label><select value={rd.designationLevel || ""} onChange={e => u("designationLevel", e.target.value)} style={selectStyle}><option value="">Select</option>{DESIGNATION_LEVELS.map(d => <option key={d}>{d}</option>)}</select></div>
+      <div className="grid grid-cols-2 gap-3">
+        <div><label style={labelStyle}>Employment Type</label><select value={rd.empType || ""} onChange={e => u("empType", e.target.value)} style={selectStyle}><option value="">Select</option>{EMPLOYMENT_TYPES.map(t => <option key={t}>{t}</option>)}</select></div>
+        <div><label style={labelStyle}>Company Type</label><select value={rd.companyType || ""} onChange={e => u("companyType", e.target.value)} style={selectStyle}><option value="">Select</option>{COMPANY_TYPES.map(c => <option key={c}>{c}</option>)}</select></div>
+      </div>
+      <MonthYearPicker monthKey="startMonth" yearKey="startYear" rd={rd} u={u} labelText="Start date *" yearStart={1980} yearEnd={currentYear} />
+      <div className="flex items-center gap-2">
+        <input type="checkbox" checked={rd.currentlyHere !== "false"} onChange={e => u("currentlyHere", e.target.checked ? "true" : "false")}
+          className="w-4 h-4 accent-[#E8580A] rounded cursor-pointer" id="currentWork" />
+        <label htmlFor="currentWork" className="text-[13px] cursor-pointer" style={{ color: "#6B7280" }}>I currently work here</label>
+      </div>
+      {rd.currentlyHere === "false" && (
+        <MonthYearPicker monthKey="endMonth" yearKey="endYear" rd={rd} u={u} labelText="End date" yearStart={1980} yearEnd={currentYear} />
+      )}
+      <div><label style={labelStyle}>Work Email (optional)</label><input value={rd.workEmail || ""} onChange={e => u("workEmail", e.target.value)} placeholder="you@company.com" style={inputStyle} /></div>
+      <p className="text-[11px] p-3 rounded-lg" style={{ background: "#FFF8F2", color: "#9CA3AF", border: "1px dashed #E5E7EB" }}>
+        You can add previous companies and experience from your profile after signup →
+      </p>
     </>
   );
 
   const renderDoctor = () => (
     <>
-      <div><label style={labelStyle}>Hospital / Clinic / Institution *</label><input value={rd.hospital || ""} onChange={e => u("hospital", e.target.value)} placeholder="e.g. Apollo Hospitals" style={inputStyle} /></div>
-      <div><label style={labelStyle}>Specialisation *</label><SearchableSelect options={DOCTOR_SPECIALISATIONS} value={rd.specialisation || ""} onChange={v => u("specialisation", v)} placeholder="Search..." /></div>
-      <div><label style={labelStyle}>Degree *</label><select value={rd.medicalDegree || ""} onChange={e => u("medicalDegree", e.target.value)} style={selectStyle}><option value="">Select</option>{DOCTOR_DEGREES.map(d => <option key={d}>{d}</option>)}</select></div>
+      <div><label style={labelStyle}>Hospital / Clinic Name *</label><input value={rd.hospital || ""} onChange={e => u("hospital", e.target.value)} placeholder="e.g. Apollo Hospitals" style={inputStyle} /></div>
+      <div>
+        <label style={labelStyle}>Specialisation *</label>
+        <SearchableSelect options={DOCTOR_SPECIALISATIONS} value={rd.specialisation || ""} onChange={v => u("specialisation", v)} placeholder="Search..." />
+        {rd.specialisation === "Other" && <OtherTextInput value={rd.specOther || ""} onChange={v => u("specOther", v)} placeholder="Enter your specialisation" />}
+      </div>
+      <div>
+        <label style={labelStyle}>Degree *</label>
+        <select value={rd.medicalDegree || ""} onChange={e => u("medicalDegree", e.target.value)} style={selectStyle}>
+          <option value="">Select</option>{DOCTOR_DEGREES.map(d => <option key={d}>{d}</option>)}
+        </select>
+        {rd.medicalDegree === "Other" && <OtherTextInput value={rd.degreeOther || ""} onChange={v => u("degreeOther", v)} placeholder="Enter your degree" />}
+      </div>
+      <div><label style={labelStyle}>Role *</label><select value={rd.doctorRole || ""} onChange={e => u("doctorRole", e.target.value)} style={selectStyle}><option value="">Select</option>{DOCTOR_ROLES.map(r => <option key={r}>{r}</option>)}</select></div>
+      <MonthYearPicker monthKey="practiceStartMonth" yearKey="practiceStartYear" rd={rd} u={u} labelText="Start of practice *" yearStart={1970} yearEnd={currentYear} />
+      <div className="flex items-center gap-2">
+        <input type="checkbox" checked={rd.currentlyPractising !== "false"} onChange={e => u("currentlyPractising", e.target.checked ? "true" : "false")}
+          className="w-4 h-4 accent-[#E8580A] rounded cursor-pointer" id="currentPractice" />
+        <label htmlFor="currentPractice" className="text-[13px] cursor-pointer" style={{ color: "#6B7280" }}>Currently practising here</label>
+      </div>
       <div><label style={labelStyle}>Registration Number (optional)</label><input value={rd.regNumber || ""} onChange={e => u("regNumber", e.target.value)} placeholder="NMC / State Medical Council" style={inputStyle} /></div>
-      <div><label style={labelStyle}>Practising Since *</label><select value={rd.practicingSince || ""} onChange={e => u("practicingSince", e.target.value)} style={selectStyle}><option value="">Year</option>{yearRange(1970, currentYear).reverse().map(y => <option key={y}>{y}</option>)}</select></div>
-      <div><label style={labelStyle}>Hospital Type</label><select value={rd.hospitalType || ""} onChange={e => u("hospitalType", e.target.value)} style={selectStyle}><option value="">Select</option>{HOSPITAL_TYPES.map(h => <option key={h}>{h}</option>)}</select></div>
     </>
   );
 
   const renderGovernment = () => (
     <>
-      <div><label style={labelStyle}>Ministry / Department / Organisation *</label><input value={rd.institution || ""} onChange={e => u("institution", e.target.value)} placeholder="e.g. Ministry of Finance" style={inputStyle} /></div>
-      <div><label style={labelStyle}>Designation / Post *</label><SearchableSelect options={GOVT_DESIGNATIONS} value={rd.designation || ""} onChange={v => u("designation", v)} placeholder="Search..." /></div>
-      <div><label style={labelStyle}>Ministry / Sector *</label><SearchableSelect options={GOVT_MINISTRIES} value={rd.ministry || ""} onChange={v => u("ministry", v)} placeholder="Search..." /></div>
-      <div><label style={labelStyle}>Service / Cadre</label><select value={rd.cadre || ""} onChange={e => u("cadre", e.target.value)} style={selectStyle}><option value="">Select</option><option>All India Services (IAS/IPS/IFoS)</option><option>Central Services (Group A/B/C)</option><option>State Civil Services</option><option>Police Services</option><option>Armed Forces</option><option>PSU Employee</option><option>Other</option></select></div>
+      <div><label style={labelStyle}>Ministry / Department *</label><input value={rd.institution || ""} onChange={e => u("institution", e.target.value)} placeholder="e.g. Ministry of Finance" style={inputStyle} /></div>
+      <div><label style={labelStyle}>Post / Designation *</label><input value={rd.designation || ""} onChange={e => u("designation", e.target.value)} placeholder="e.g. Section Officer" style={inputStyle} /></div>
+      <div>
+        <label style={labelStyle}>Service / Cadre *</label>
+        <SearchableSelect options={GOVT_CADRES} value={rd.cadre || ""} onChange={v => u("cadre", v)} placeholder="Search service..." />
+        {rd.cadre === "Other" && <OtherTextInput value={rd.cadreOther || ""} onChange={v => u("cadreOther", v)} placeholder="Enter your service/cadre" />}
+      </div>
+      <div>
+        <label style={labelStyle}>Posting location type</label>
+        <div className="flex flex-wrap gap-2">
+          {GOVT_POSTING_TYPES.map(t => (
+            <button key={t} onClick={() => u("postingType", t)}
+              className="px-3 py-1.5 rounded-lg text-[12px] font-medium cursor-pointer transition-all"
+              style={{ border: `1.5px solid ${rd.postingType === t ? "#E8580A" : "#E5E7EB"}`, background: rd.postingType === t ? "#FFF8F2" : "#fff", color: rd.postingType === t ? "#E8580A" : "#6B7280" }}
+            >{t}</button>
+          ))}
+        </div>
+      </div>
+      {rd.postingType === "Village / Gram Panchayat" && (
+        <>
+          <div><label style={labelStyle}>Village / Gram Panchayat name *</label><input value={rd.villageName || ""} onChange={e => u("villageName", e.target.value)} placeholder="e.g. Maddur Gram Panchayat" style={inputStyle} /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><label style={labelStyle}>District *</label><input value={rd.postingDistrict || ""} onChange={e => u("postingDistrict", e.target.value)} placeholder="e.g. Jagtial" style={inputStyle} /></div>
+            <div><label style={labelStyle}>Block / Taluka *</label><input value={rd.postingBlock || ""} onChange={e => u("postingBlock", e.target.value)} placeholder="e.g. Korutla" style={inputStyle} /></div>
+          </div>
+        </>
+      )}
+      <MonthYearPicker monthKey="joinMonth" yearKey="joinYear" rd={rd} u={u} labelText="Since joining *" yearStart={1970} yearEnd={currentYear} />
       <div><label style={labelStyle}>Official Email (optional)</label><input value={rd.officialEmail || ""} onChange={e => u("officialEmail", e.target.value)} placeholder="you@gov.in" style={inputStyle} /><p className="text-[11px] mt-1" style={{ color: "#9CA3AF" }}>Add .gov.in or .nic.in email for instant verification</p></div>
-      <div><label style={labelStyle}>Serving Since *</label><select value={rd.servingSince || ""} onChange={e => u("servingSince", e.target.value)} style={selectStyle}><option value="">Year</option>{yearRange(1970, currentYear).reverse().map(y => <option key={y}>{y}</option>)}</select></div>
     </>
   );
 
   const renderFaculty = () => (
     <>
       <div><label style={labelStyle}>Institution Name *</label><input value={rd.institution || ""} onChange={e => u("institution", e.target.value)} placeholder="e.g. IIT Bombay" style={inputStyle} /></div>
-      <div><label style={labelStyle}>Type of Institution</label><select value={rd.instType || ""} onChange={e => u("instType", e.target.value)} style={selectStyle}><option value="">Select</option>{FACULTY_INST_TYPES.map(t => <option key={t}>{t}</option>)}</select></div>
-      <div><label style={labelStyle}>Department *</label><SearchableSelect options={FACULTY_DEPTS} value={rd.department || ""} onChange={v => u("department", v)} placeholder="Search..." /></div>
-      <div><label style={labelStyle}>Designation *</label><select value={rd.faculty_designation || ""} onChange={e => u("faculty_designation", e.target.value)} style={selectStyle}><option value="">Select</option>{FACULTY_DESIGNATIONS.map(d => <option key={d}>{d}</option>)}</select></div>
-      <div><label style={labelStyle}>Teaching Since *</label><select value={rd.teachingSince || ""} onChange={e => u("teachingSince", e.target.value)} style={selectStyle}><option value="">Year</option>{yearRange(1970, currentYear).reverse().map(y => <option key={y}>{y}</option>)}</select></div>
+      <div>
+        <label style={labelStyle}>Type of Institution</label>
+        <select value={rd.instType || ""} onChange={e => u("instType", e.target.value)} style={selectStyle}>
+          <option value="">Select</option>{FACULTY_INST_TYPES.map(t => <option key={t}>{t}</option>)}
+        </select>
+        {rd.instType === "Other" && <OtherTextInput value={rd.instTypeOther || ""} onChange={v => u("instTypeOther", v)} placeholder="Enter institution type" />}
+      </div>
+      <div>
+        <label style={labelStyle}>Department *</label>
+        <SearchableSelect options={FACULTY_DEPTS} value={rd.department || ""} onChange={v => u("department", v)} placeholder="Search..." />
+        {rd.department === "Other" && <OtherTextInput value={rd.deptOther || ""} onChange={v => u("deptOther", v)} placeholder="Enter your department" />}
+      </div>
+      <div>
+        <label style={labelStyle}>Designation *</label>
+        <select value={rd.faculty_designation || ""} onChange={e => u("faculty_designation", e.target.value)} style={selectStyle}>
+          <option value="">Select</option>{FACULTY_DESIGNATIONS.map(d => <option key={d}>{d}</option>)}
+        </select>
+        {rd.faculty_designation === "Other" && <OtherTextInput value={rd.facDesigOther || ""} onChange={v => u("facDesigOther", v)} placeholder="Enter your designation" />}
+      </div>
+      <MonthYearPicker monthKey="teachStartMonth" yearKey="teachStartYear" rd={rd} u={u} labelText="Teaching Since *" yearStart={1970} yearEnd={currentYear} />
       <div><label style={labelStyle}>Institution Email (optional)</label><input value={rd.instEmail || ""} onChange={e => u("instEmail", e.target.value)} placeholder="you@college.ac.in" style={inputStyle} /></div>
     </>
   );
@@ -444,7 +666,11 @@ export default function OnboardingDetails() {
       <div><label style={labelStyle}>Startup / Company Name</label><input value={rd.company || ""} onChange={e => u("company", e.target.value)} placeholder="Optional" style={inputStyle} /></div>
       <div><label style={labelStyle}>What are you building? *</label><input value={rd.whatBuilding || ""} onChange={e => u("whatBuilding", e.target.value.slice(0, 100))} placeholder="e.g. An AI-powered crop disease detection app" maxLength={100} style={inputStyle} /><p className="text-[11px] text-right mt-1" style={{ color: "#9CA3AF" }}>{(rd.whatBuilding || "").length}/100</p></div>
       <div><label style={labelStyle}>Stage *</label><select value={rd.stage || ""} onChange={e => u("stage", e.target.value)} style={selectStyle}><option value="">Select</option>{BUILDER_STAGES.map(s => <option key={s}>{s}</option>)}</select></div>
-      <div><label style={labelStyle}>Industry / Domain *</label><SearchableSelect options={INDUSTRIES} value={rd.industry || ""} onChange={v => u("industry", v)} placeholder="Search..." /></div>
+      <div>
+        <label style={labelStyle}>Industry / Domain *</label>
+        <SearchableSelect options={INDUSTRIES} value={rd.industry || ""} onChange={v => u("industry", v)} placeholder="Search..." />
+        {rd.industry === "Other" && <OtherTextInput value={rd.industryOther || ""} onChange={v => u("industryOther", v)} placeholder="Enter your industry" />}
+      </div>
       <div><label style={labelStyle}>Role in the startup *</label><select value={rd.builderRole || ""} onChange={e => u("builderRole", e.target.value)} style={selectStyle}><option value="">Select</option>{BUILDER_ROLES.map(r => <option key={r}>{r}</option>)}</select></div>
       <div className="grid grid-cols-2 gap-3">
         <div><label style={labelStyle}>Team size</label><select value={rd.teamSize || ""} onChange={e => u("teamSize", e.target.value)} style={selectStyle}><option value="">Select</option>{TEAM_SIZES.map(t => <option key={t}>{t}</option>)}</select></div>
@@ -457,25 +683,37 @@ export default function OnboardingDetails() {
     <>
       <div><label style={labelStyle}>Company Name *</label><input value={rd.company || ""} onChange={e => u("company", e.target.value)} style={inputStyle} /></div>
       <div><label style={labelStyle}>Job Title *</label><select value={rd.hrTitle || ""} onChange={e => u("hrTitle", e.target.value)} style={selectStyle}><option value="">Select</option>{HR_TITLES.map(t => <option key={t}>{t}</option>)}</select></div>
-      <div><label style={labelStyle}>Industry *</label><SearchableSelect options={INDUSTRIES} value={rd.industry || ""} onChange={v => u("industry", v)} placeholder="Search..." /></div>
+      <div>
+        <label style={labelStyle}>Industry *</label>
+        <SearchableSelect options={INDUSTRIES} value={rd.industry || ""} onChange={v => u("industry", v)} placeholder="Search..." />
+        {rd.industry === "Other" && <OtherTextInput value={rd.industryOther || ""} onChange={v => u("industryOther", v)} placeholder="Enter your industry" />}
+      </div>
       <div><label style={labelStyle}>Company Type</label><select value={rd.companyType || ""} onChange={e => u("companyType", e.target.value)} style={selectStyle}><option value="">Select</option>{COMPANY_TYPES.map(c => <option key={c}>{c}</option>)}</select></div>
+      <MonthYearPicker monthKey="startMonth" yearKey="startYear" rd={rd} u={u} labelText="Working Since *" yearStart={1980} yearEnd={currentYear} />
       <div><label style={labelStyle}>Work Email (optional)</label><input value={rd.workEmail || ""} onChange={e => u("workEmail", e.target.value)} placeholder="you@company.com" style={inputStyle} /></div>
-      <div><label style={labelStyle}>Working Since *</label><select value={rd.workingSince || ""} onChange={e => u("workingSince", e.target.value)} style={selectStyle}><option value="">Year</option>{yearRange(1980, currentYear).reverse().map(y => <option key={y}>{y}</option>)}</select></div>
     </>
   );
 
   const renderTrade = () => (
     <>
-      <div><label style={labelStyle}>Trade / Skill Type *</label><SearchableSelect options={TRADE_TYPES} value={rd.tradeType || ""} onChange={v => u("tradeType", v)} placeholder="Search..." /></div>
-      <div><label style={labelStyle}>Working in this trade since *</label><select value={rd.tradeSince || ""} onChange={e => u("tradeSince", e.target.value)} style={selectStyle}><option value="">Year</option>{yearRange(1970, currentYear).reverse().map(y => <option key={y}>{y}</option>)}</select></div>
+      <div>
+        <label style={labelStyle}>Trade / Skill Type *</label>
+        <SearchableSelect options={TRADE_TYPES} value={rd.tradeType || ""} onChange={v => u("tradeType", v)} placeholder="Search..." />
+        {rd.tradeType === "Other" && <OtherTextInput value={rd.tradeOther || ""} onChange={v => u("tradeOther", v)} placeholder="Enter your trade" />}
+      </div>
+      <MonthYearPicker monthKey="tradeStartMonth" yearKey="tradeStartYear" rd={rd} u={u} labelText="Working in this trade since *" yearStart={1970} yearEnd={currentYear} />
     </>
   );
 
   const renderAspirant = () => (
     <>
-      <div><label style={labelStyle}>Target Exam / Goal *</label><SearchableSelect options={ASPIRANT_EXAMS} value={rd.targetExam || ""} onChange={v => u("targetExam", v)} placeholder="Search..." /></div>
+      <div>
+        <label style={labelStyle}>Target Exam / Goal *</label>
+        <SearchableSelect options={ASPIRANT_EXAMS} value={rd.targetExam || ""} onChange={v => u("targetExam", v)} placeholder="Search..." />
+        {rd.targetExam === "Other" && <OtherTextInput value={rd.examOther || ""} onChange={v => u("examOther", v)} placeholder="Enter your target exam" />}
+      </div>
       <div><label style={labelStyle}>Currently preparing at</label><input value={rd.prepCentre || ""} onChange={e => u("prepCentre", e.target.value)} placeholder="Coaching centre or college (optional)" style={inputStyle} /></div>
-      <div><label style={labelStyle}>Preparation Started Since *</label><select value={rd.prepSince || ""} onChange={e => u("prepSince", e.target.value)} style={selectStyle}><option value="">Year</option>{yearRange(2010, currentYear).reverse().map(y => <option key={y}>{y}</option>)}</select></div>
+      <MonthYearPicker monthKey="prepStartMonth" yearKey="prepStartYear" rd={rd} u={u} labelText="Preparation Started Since *" yearStart={2010} yearEnd={currentYear} />
     </>
   );
 
@@ -485,64 +723,59 @@ export default function OnboardingDetails() {
     hr: renderHR, skilled_trade: renderTrade, aspirant: renderAspirant,
   };
 
+  const roleSectionTitle: Record<string, string> = {
+    student: "Education", professional: "Current Job", doctor: "Practice",
+    government: "Service Details", faculty: "Teaching", builder: "Venture",
+    hr: "Hiring Details", skilled_trade: "Trade", aspirant: "Preparation",
+  };
+
   return (
     <OnboardingShell step={4} showBack backTo="/onboarding/role">
       <div className="rounded-3xl p-6 sm:p-8" style={{ background: "#fff", border: "1px solid #F3F4F6", boxShadow: "0 4px 24px rgba(0,0,0,0.06)" }}>
         <h1 className="text-[24px] sm:text-[28px] font-extrabold text-center mb-1" style={{ color: "#111827" }}>{getTitle()}</h1>
         <p className="text-center text-[13px] mb-7" style={{ color: "#6B7280" }}>This helps your community know who you are. You can edit this anytime.</p>
 
-        <div className="space-y-5">
-          {/* Block A: Identity */}
-          <div className="pb-4" style={{ borderBottom: "1px solid #F3F4F6" }}>
-            <p className="text-[11px] font-bold uppercase tracking-wider mb-4" style={{ color: "#E8580A" }}>Your Identity</p>
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <div><label style={labelStyle}>First name *</label><input value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="Sai" style={inputStyle} /></div>
-              <div><label style={labelStyle}>Last name *</label><input value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Pudhari" style={inputStyle} /></div>
-            </div>
-            <div>
-              <label style={labelStyle}>@username *</label>
-              <div className="relative">
-                <input value={username} onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 30))} placeholder="your-username" style={inputStyle} />
-                {usernameStatus === "available" && <Check className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: "#10B981" }} />}
-                {usernameStatus === "taken" && <X className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: "#DC2626" }} />}
-              </div>
-              <p className="text-[11px] mt-1" style={{ color: usernameStatus === "taken" ? "#DC2626" : "#9CA3AF" }}>
-                {usernameStatus === "taken" ? "Username taken" : `Your profile: tiikme.in/${username || "..."}`}
-              </p>
-            </div>
+        {/* Section 1: Your Name */}
+        <SectionBlock title="Your Name">
+          <div className="grid grid-cols-2 gap-3">
+            <div><label style={labelStyle}>First name *</label><input value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="e.g. Rahul" style={inputStyle} /></div>
+            <div><label style={labelStyle}>Last name *</label><input value={lastName} onChange={e => setLastName(e.target.value)} placeholder="e.g. Sharma" style={inputStyle} /></div>
           </div>
-
-          {/* Block B: Location */}
-          <div className="pb-4" style={{ borderBottom: "1px solid #F3F4F6" }}>
-            <p className="text-[11px] font-bold uppercase tracking-wider mb-4" style={{ color: "#E8580A" }}>Location</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div><label style={labelStyle}>City *</label><input value={city} onChange={e => setCity(e.target.value)} placeholder="e.g. Hyderabad" style={inputStyle} /></div>
-              <div><label style={labelStyle}>State *</label><SearchableSelect options={INDIAN_STATES} value={state} onChange={setState} placeholder="Search state..." /></div>
-            </div>
-          </div>
-
-          {/* Block C: Role-specific */}
-          <div className="pb-4" style={{ borderBottom: "1px solid #F3F4F6" }}>
-            <p className="text-[11px] font-bold uppercase tracking-wider mb-4" style={{ color: "#E8580A" }}>
-              {role === "student" ? "Education" : role === "professional" ? "Work" : role === "doctor" ? "Practice" : role === "government" ? "Service" : role === "faculty" ? "Teaching" : role === "builder" ? "Venture" : role === "hr" ? "Hiring" : role === "skilled_trade" ? "Trade" : "Preparation"}
-            </p>
-            <div className="space-y-4">
-              {(roleRenderers[role] || renderStudent)()}
-            </div>
-          </div>
-
-          {/* Block D: Headline */}
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider mb-4" style={{ color: "#E8580A" }}>Profile Headline</p>
+            <label style={labelStyle}>@username *</label>
+            <div className="relative">
+              <input value={username} onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 30))} placeholder="your-username" style={inputStyle} />
+              {usernameStatus === "available" && <Check className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: "#10B981" }} />}
+              {usernameStatus === "taken" && <X className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: "#DC2626" }} />}
+            </div>
+            <p className="text-[11px] mt-1" style={{ color: usernameStatus === "taken" ? "#DC2626" : "#9CA3AF" }}>
+              {usernameStatus === "taken" ? "Username taken" : `Your profile: tiikme.in/${username || "..."}`}
+            </p>
+          </div>
+        </SectionBlock>
+
+        {/* Section 2: Location */}
+        <SectionBlock title="Where Are You?">
+          {renderLocation()}
+        </SectionBlock>
+
+        {/* Section 3: Role-specific */}
+        <SectionBlock title={roleSectionTitle[role] || "Details"}>
+          {(roleRenderers[role] || renderStudent)()}
+        </SectionBlock>
+
+        {/* Section 4: Headline */}
+        <SectionBlock title="Profile Headline">
+          <div>
             <label style={labelStyle}>Short bio / Headline (optional)</label>
             <input value={headline} onChange={e => setHeadline(e.target.value.slice(0, 80))} placeholder={getHeadlinePlaceholder()} maxLength={80} style={inputStyle} />
             <p className="text-[11px] text-right mt-1" style={{ color: "#9CA3AF" }}>{headline.length}/80</p>
           </div>
-        </div>
+        </SectionBlock>
 
         <button
           onClick={handleComplete} disabled={submitting}
-          className="w-full h-12 rounded-2xl text-[15px] font-bold text-white cursor-pointer transition-all hover:opacity-90 disabled:opacity-50 mt-6 flex items-center justify-center gap-2"
+          className="w-full h-12 rounded-2xl text-[15px] font-bold text-white cursor-pointer transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
           style={{ background: "#E8580A" }}
         >
           {submitting ? "Saving..." : "Complete profile →"}
