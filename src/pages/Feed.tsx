@@ -138,6 +138,7 @@ const LivePostCard = ({
         <button onClick={() => toggleLike(post.id)} className="h-9 px-3 rounded-xl text-[13px] font-medium flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all" style={{ color: liked ? "var(--brand)" : "var(--text-2)" }}>
           <Heart className="w-4 h-4" style={{ fill: liked ? "var(--brand)" : "none", color: liked ? "var(--brand)" : "var(--text-2)" }} />
           {likeCount > 0 && <span>{likeCount}</span>}
+          {likeCount === 0 && <span>0</span>}
         </button>
         <button onClick={() => toggleComments(post.id)} className="h-9 px-3 rounded-xl text-[13px] font-medium flex items-center gap-1.5 cursor-pointer hover:bg-[var(--brand-dim)]" style={{ color: "var(--text-2)" }}>
           <MessageSquare className="w-4 h-4" /> {commentCount || ""}
