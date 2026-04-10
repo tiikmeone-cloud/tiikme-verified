@@ -404,6 +404,17 @@ const Profile = () => {
             </div>
           )}
 
+          {/* Get Tiiked Banner */}
+          {isOwnProfile && !isVerified && (
+            <div className="flex items-center justify-between p-3 rounded-xl mt-3" style={{ background: "rgba(245,158,11,0.07)", border: "1px solid rgba(245,158,11,0.18)" }}>
+              <div className="flex items-center gap-2">
+                <Shield className="w-4 h-4" style={{ color: "#F59E0B" }} />
+                <p className="text-[12px]" style={{ color: "rgba(245,158,11,0.9)" }}>Your profile is not yet Tiiked. Get verified to unlock the gold badge.</p>
+              </div>
+              <button onClick={() => setShowGetTiiked(true)} className="text-[11px] font-bold px-3 py-1.5 rounded-full cursor-pointer shrink-0" style={{ background: "#F59E0B", color: "white" }}>Get Tiiked →</button>
+            </div>
+          )}
+
           <div className="flex gap-2 mt-4">
             {isOwnProfile ? (
               <>
