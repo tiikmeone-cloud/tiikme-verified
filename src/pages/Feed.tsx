@@ -1,9 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Heart, MessageSquare, Repeat2, MoreHorizontal, Flag, Send, FileText, ChevronDown, ArrowUpRight, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import ImageGrid from "@/components/feed/ImageGrid";
 import MentionText from "@/components/feed/MentionText";
 import ActivityScoreRing from "@/components/ActivityScoreRing";
@@ -11,8 +10,8 @@ import SkeletonCard from "@/components/SkeletonCard";
 import { useFeedPosts } from "@/hooks/useFeedPosts";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { usePostReactions } from "@/hooks/usePostReactions";
-import { usePostComments } from "@/hooks/usePostComments";
+import { useLikes } from "@/hooks/useLikes";
+import { useComments } from "@/hooks/useComments";
 
 const roleColorMap: Record<string, string> = {
   student: "#4F46E5", professional: "#0369A1", doctor: "#0E7490",
@@ -29,13 +28,29 @@ function getTimeAgo(date: Date): string {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
-const LivePostCard = ({ post }: { post: any }) => {
+interface PostCardProps {
+  post: any;
+  likeCounts: Record<string, number>;
+  myLikes: Record<string, boolean>;
+  toggleLike: (postId: string) => void;
+  commentCounts: Record<string, number>;
+  commentsData: Record<string, any[]>;
+  commentsOpen: Set<string>;
+  commentInputs: Record<string, string>;
+  setCommentInputs: (fn: (prev: Record<string, string>) => Record<string, string>) => void;
+  toggleComments: (postId: string) => void;
+  submitComment: (postId: string) => void;
+  deleteComment: (postId: string, commentId: string) => void;
+  onDelete: (postId: string) => void;
+}
+
+const LivePostCard = ({
+  post, likeCounts, myLikes, toggleLike,
+  commentCounts, commentsData, commentsOpen, commentInputs,
+  setCommentInputs, toggleComments, submitComment, deleteComment, onDelete,
+}: PostCardProps) => {
   const [showMenu, setShowMenu] = useState(false);
-  const [showComments, setShowComments] = useState(false);
-  const [commentText, setCommentText] = useState("");
   const { user, profile: authProfile, initials: userInitials } = useAuth();
-  const { liked, likeCount, toggleLike } = usePostReactions(post.id, user?.id);
-  const { comments, loading: commentsLoading, addComment } = usePostComments(post.id, showComments);
 
   const author = post.author;
   const name = author?.full_name || author?.username || "Unknown";
@@ -45,18 +60,15 @@ const LivePostCard = ({ post }: { post: any }) => {
   const timeAgo = post.created_at ? getTimeAgo(new Date(post.created_at)) : "";
   const isOwn = user?.id === post.author_id;
 
-  const handleComment = async () => {
-    if (!commentText.trim() || !user) return;
-    await addComment(user.id, commentText.trim(), {
-      full_name: authProfile?.full_name || undefined,
-      avatar_url: authProfile?.avatar_url || undefined,
-      role: authProfile?.role || undefined,
-    });
-    setCommentText("");
-  };
+  const liked = myLikes[post.id] || false;
+  const likeCount = likeCounts[post.id] || 0;
+  const commentCount = commentCounts[post.id] || 0;
+  const isOpen = commentsOpen.has(post.id);
+  const comments = commentsData[post.id] || [];
+  const commentText = commentInputs[post.id] || "";
 
   const handleDelete = async () => {
-    if (!confirm("Delete this post?")) return;
+    onDelete(post.id);
     await supabase.from("posts").delete().eq("id", post.id);
     toast.success("Post deleted");
     setShowMenu(false);
@@ -71,11 +83,6 @@ const LivePostCard = ({ post }: { post: any }) => {
       image_urls: post.image_urls || [],
     } as any);
     toast.success("Reposted ✓");
-  };
-
-  const handleDeleteComment = async (commentId: string) => {
-    await supabase.from("post_comments").delete().eq("id", commentId);
-    toast.success("Comment deleted");
   };
 
   return (
@@ -117,24 +124,24 @@ const LivePostCard = ({ post }: { post: any }) => {
 
       {post.pdf_url && (
         <div className="mx-4 mb-3">
-          <div className="flex items-center gap-3 glass-liquid rounded-xl p-3">
+          <a href={post.pdf_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 glass-liquid rounded-xl p-3">
             <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: "rgba(220,38,38,0.1)" }}>
               <FileText className="w-5 h-5" style={{ color: "#DC2626" }} />
             </div>
-            <p className="text-[13px] font-bold truncate flex-1" style={{ color: "var(--text-1)" }}>Attached PDF</p>
-          </div>
+            <p className="text-[13px] font-bold truncate flex-1" style={{ color: "var(--text-1)" }}>Attached PDF · Tap to open ↗</p>
+          </a>
         </div>
       )}
 
       {/* Like / Comment / Repost */}
       <div className="flex items-center px-4 py-2" style={{ borderTop: "1px solid var(--border)" }}>
-        <button onClick={toggleLike} className="h-9 px-3 rounded-xl text-[13px] font-medium flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all" style={{ color: liked ? "var(--brand)" : "var(--text-2)" }}>
+        <button onClick={() => toggleLike(post.id)} className="h-9 px-3 rounded-xl text-[13px] font-medium flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all" style={{ color: liked ? "var(--brand)" : "var(--text-2)" }}>
           <Heart className="w-4 h-4" style={{ fill: liked ? "var(--brand)" : "none", color: liked ? "var(--brand)" : "var(--text-2)" }} />
           {likeCount > 0 && <span>{likeCount}</span>}
         </button>
-        <button onClick={() => setShowComments(!showComments)} className="h-9 px-3 rounded-xl text-[13px] font-medium flex items-center gap-1.5 cursor-pointer hover:bg-[var(--brand-dim)]" style={{ color: "var(--text-2)" }}>
-          <MessageSquare className="w-4 h-4" /> {post.comment_count || comments.length || ""}
-          <ChevronDown className={`w-3 h-3 transition-transform ${showComments ? "rotate-180" : ""}`} />
+        <button onClick={() => toggleComments(post.id)} className="h-9 px-3 rounded-xl text-[13px] font-medium flex items-center gap-1.5 cursor-pointer hover:bg-[var(--brand-dim)]" style={{ color: "var(--text-2)" }}>
+          <MessageSquare className="w-4 h-4" /> {commentCount || ""}
+          <ChevronDown className={`w-3 h-3 transition-transform ${isOpen ? "rotate-180" : ""}`} />
         </button>
         <button onClick={handleRepost} className="h-9 px-3 rounded-xl text-[13px] font-medium flex items-center gap-1.5 cursor-pointer hover:bg-[var(--brand-dim)]" style={{ color: "var(--text-2)" }}>
           <Repeat2 className="w-4 h-4" /> Repost
@@ -142,9 +149,9 @@ const LivePostCard = ({ post }: { post: any }) => {
       </div>
 
       {/* Comments */}
-      {showComments && (
+      {isOpen && (
         <div className="px-4 pb-4 pt-3 space-y-3" style={{ borderTop: "1px solid var(--border)" }}>
-          {commentsLoading && <p className="text-[12px]" style={{ color: "var(--text-3)" }}>Loading...</p>}
+          {comments.length === 0 && <p className="text-[12px]" style={{ color: "var(--text-3)" }}>No comments yet. Be the first!</p>}
           {comments.map((c: any) => {
             const cName = c.author?.full_name || "User";
             const cInitials = cName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
@@ -161,7 +168,7 @@ const LivePostCard = ({ post }: { post: any }) => {
                     <Link to={`/app/profile/${c.author?.id || c.user_id}`} className="text-[13px] font-bold hover:underline" style={{ color: "var(--text-1)" }}>{cName}</Link>
                     <span className="text-[11px]" style={{ color: "var(--text-3)" }}>{cTime}</span>
                     {isOwnComment && (
-                      <button onClick={() => handleDeleteComment(c.id)} className="opacity-0 group-hover:opacity-100 p-0.5 cursor-pointer" style={{ color: "var(--text-3)" }}>
+                      <button onClick={() => deleteComment(post.id, c.id)} className="opacity-0 group-hover:opacity-100 p-0.5 cursor-pointer" style={{ color: "var(--text-3)" }}>
                         <Trash2 className="w-3 h-3" />
                       </button>
                     )}
@@ -171,16 +178,23 @@ const LivePostCard = ({ post }: { post: any }) => {
               </div>
             );
           })}
-          {!commentsLoading && comments.length === 0 && <p className="text-[12px]" style={{ color: "var(--text-3)" }}>No comments yet. Be the first!</p>}
           <div className="flex items-center gap-2 mt-2">
             <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden" style={{ background: "var(--brand)" }}>
               {authProfile?.avatar_url ? <img src={authProfile.avatar_url} alt="" className="w-full h-full object-cover" /> : userInitials}
             </div>
-            <input value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="Write a comment..."
-              className="flex-1 h-9 rounded-xl px-3 text-[13px] outline-none" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }}
-              onKeyDown={e => { if (e.key === "Enter" && commentText.trim()) handleComment(); }} />
-            <button onClick={handleComment} className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer active:scale-95"
-              style={{ background: commentText.trim() ? "var(--brand)" : "var(--surface-2)" }}>
+            <input
+              value={commentText}
+              onChange={(e) => setCommentInputs((p) => ({ ...p, [post.id]: e.target.value }))}
+              placeholder="Write a comment..."
+              className="flex-1 h-9 rounded-xl px-3 text-[13px] outline-none"
+              style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }}
+              onKeyDown={(e) => { if (e.key === "Enter" && commentText.trim()) submitComment(post.id); }}
+            />
+            <button
+              onClick={() => submitComment(post.id)}
+              className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer active:scale-95"
+              style={{ background: commentText.trim() ? "var(--brand)" : "var(--surface-2)" }}
+            >
               <Send className="w-3.5 h-3.5" style={{ color: commentText.trim() ? "white" : "var(--text-3)" }} />
             </button>
           </div>
@@ -274,6 +288,26 @@ const Feed = () => {
   const { profile, initials } = useAuth();
   const feedRef = useRef<HTMLDivElement>(null);
 
+  // Batch like/comment hooks
+  const postIds = useMemo(() => livePosts.map((p: any) => p.id), [livePosts]);
+  const { counts: likeCounts, myLikes, toggle: toggleLike } = useLikes(postIds);
+  const {
+    all: commentsData, inputs: commentInputs, setInputs: setCommentInputs,
+    open: commentsOpen, counts: commentCounts, toggleOpen: toggleComments,
+    submit: submitComment, deleteComment, loadCounts: loadCommentCounts,
+  } = useComments();
+
+  // Load comment counts when posts change
+  useEffect(() => {
+    if (postIds.length) loadCommentCounts(postIds);
+  }, [postIds.length]);
+
+  // Handle post deletion from feed
+  const handleDeletePost = (postId: string) => {
+    // The useFeedPosts hook manages its own state, but we can call refresh
+    // For now, just let the delete happen and the post will disappear on refresh
+  };
+
   // Pull-to-refresh
   const [pullY, setPullY] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
@@ -326,7 +360,24 @@ const Feed = () => {
           )}
 
           {loading && <SkeletonCard count={3} />}
-          {!loading && livePosts.map(post => <LivePostCard key={post.id} post={post} />)}
+          {!loading && livePosts.map((post: any) => (
+            <LivePostCard
+              key={post.id}
+              post={post}
+              likeCounts={likeCounts}
+              myLikes={myLikes}
+              toggleLike={toggleLike}
+              commentCounts={commentCounts}
+              commentsData={commentsData}
+              commentsOpen={commentsOpen}
+              commentInputs={commentInputs}
+              setCommentInputs={setCommentInputs}
+              toggleComments={toggleComments}
+              submitComment={submitComment}
+              deleteComment={deleteComment}
+              onDelete={handleDeletePost}
+            />
+          ))}
 
           {!loading && livePosts.length === 0 && (
             <div className="glass-liquid rounded-2xl p-10 text-center">
@@ -351,7 +402,6 @@ const Feed = () => {
           <SuggestedWidget />
         </aside>
       </div>
-      {/* Post creation is now a full page at /post/create */}
     </main>
   );
 };
