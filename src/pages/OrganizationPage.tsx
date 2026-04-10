@@ -370,7 +370,7 @@ export default function OrganizationPage() {
           </TabsContent>
 
           {/* Jobs Tab */}
-          <TabsContent value="team" className="mt-4">
+          <TabsContent value="jobs" className="mt-4">
             <p className="text-center py-8 text-sm" style={{ color: "var(--text-3)" }}>No opportunities posted yet</p>
           </TabsContent>
         </Tabs>
