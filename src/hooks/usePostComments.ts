@@ -1,6 +1,20 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+// Helper: fetch profiles for comment authors
+async function attachCommentAuthors(comments: any[]): Promise<any[]> {
+  if (!comments.length) return comments;
+  const uids = [...new Set(comments.map((c) => c.user_id).filter(Boolean))];
+  if (!uids.length) return comments;
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, full_name, username, avatar_url, role")
+    .in("id", uids);
+  const map: Record<string, any> = {};
+  for (const p of profiles || []) map[p.id] = p;
+  return comments.map((c) => ({ ...c, author: map[c.user_id] || null }));
+}
+
 interface Comment {
   id: string;
   content: string;
@@ -32,12 +46,13 @@ export function usePostComments(postId: string, enabled: boolean) {
     setLoading(true);
     const { data } = await supabase
       .from("post_comments")
-      .select("*, author:profiles!user_id(id, full_name, username, avatar_url, role)")
+      .select("*")
       .eq("post_id", postId)
       .order("created_at", { ascending: true })
       .limit(50);
     if (mountedRef.current) {
-      setComments((data as any[]) || []);
+      const withAuthors = await attachCommentAuthors((data as any[]) || []);
+      setComments(withAuthors);
       setLoading(false);
     }
   }, [postId, enabled]);
@@ -54,13 +69,14 @@ export function usePostComments(postId: string, enabled: boolean) {
         // Fetch with author join
         const { data } = await supabase
           .from("post_comments")
-          .select("*, author:profiles!user_id(id, full_name, username, avatar_url, role)")
+          .select("*")
           .eq("id", newComment.id)
           .single();
         if (data && mountedRef.current) {
+          const withAuthor = await attachCommentAuthors([data]);
           setComments(prev => {
             if (prev.some(c => c.id === data.id)) return prev;
-            return [...prev, data as any];
+            return [...prev, ...withAuthor];
           });
         }
       })
@@ -96,12 +112,22 @@ export function usePostComments(postId: string, enabled: boolean) {
     const { data, error } = await supabase
       .from("post_comments")
       .insert({ post_id: postId, user_id: userId, content })
-      .select("*, author:profiles!user_id(id, full_name, username, avatar_url, role)")
+      .select("*")
       .single();
 
     if (!error && data && mountedRef.current) {
+      const enriched = {
+        ...data,
+        author: {
+          id: userId,
+          full_name: profile?.full_name || "You",
+          username: null,
+          avatar_url: profile?.avatar_url || null,
+          role: profile?.role || null,
+        },
+      };
       // Replace optimistic with real
-      setComments(prev => prev.map(c => c.id === tempId ? (data as any) : c));
+      setComments(prev => prev.map(c => c.id === tempId ? (enriched as any) : c));
     } else if (error && mountedRef.current) {
       // Remove optimistic on error
       setComments(prev => prev.filter(c => c.id !== tempId));
