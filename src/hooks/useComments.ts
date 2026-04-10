@@ -1,0 +1,197 @@
+import { useState, useEffect, useCallback, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+
+export function useComments() {
+  const { user, profile } = useAuth();
+  const [all, setAll] = useState<Record<string, any[]>>({});
+  const [inputs, setInputs] = useState<Record<string, string>>({});
+  const [open, setOpen] = useState<Set<string>>(new Set());
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  const openRef = useRef(open);
+  openRef.current = open;
+
+  const loadCounts = useCallback(async (postIds: string[]) => {
+    if (!postIds.length) return;
+    const { data } = await supabase
+      .from("post_comments")
+      .select("post_id")
+      .in("post_id", postIds);
+    const c: Record<string, number> = {};
+    for (const r of data || []) c[r.post_id] = (c[r.post_id] || 0) + 1;
+    setCounts(c);
+  }, []);
+
+  const toggleOpen = useCallback((postId: string) => {
+    setOpen((prev) => {
+      const s = new Set(prev);
+      if (s.has(postId)) {
+        s.delete(postId);
+      } else {
+        s.add(postId);
+        // Load comments for this post
+        supabase
+          .from("post_comments")
+          .select(
+            "*, author:profiles!user_id(id, full_name, avatar_url, role)"
+          )
+          .eq("post_id", postId)
+          .order("created_at", { ascending: true })
+          .then(({ data }) => {
+            setAll((prev) => ({ ...prev, [postId]: data || [] }));
+          });
+      }
+      return s;
+    });
+  }, []);
+
+  const submit = useCallback(
+    async (postId: string) => {
+      const content = inputs[postId]?.trim();
+      if (!content || !user) return;
+
+      setInputs((p) => ({ ...p, [postId]: "" }));
+
+      const temp = {
+        id: "tmp-" + Date.now(),
+        post_id: postId,
+        user_id: user.id,
+        content,
+        created_at: new Date().toISOString(),
+        parent_id: null,
+        author: {
+          id: user.id,
+          full_name: profile?.full_name || "You",
+          avatar_url: profile?.avatar_url || null,
+          role: profile?.role || null,
+        },
+      };
+
+      setAll((p) => ({ ...p, [postId]: [...(p[postId] || []), temp] }));
+      setCounts((p) => ({ ...p, [postId]: (p[postId] || 0) + 1 }));
+
+      const { data, error } = await supabase
+        .from("post_comments")
+        .insert({ post_id: postId, user_id: user.id, content })
+        .select(
+          "*, author:profiles!user_id(id, full_name, avatar_url, role)"
+        )
+        .single();
+
+      if (error) {
+        setAll((p) => ({
+          ...p,
+          [postId]: (p[postId] || []).filter((c) => c.id !== temp.id),
+        }));
+        setCounts((p) => ({
+          ...p,
+          [postId]: Math.max(0, (p[postId] || 0) - 1),
+        }));
+        setInputs((p) => ({ ...p, [postId]: content }));
+        return;
+      }
+
+      setAll((p) => ({
+        ...p,
+        [postId]: (p[postId] || []).map((c) =>
+          c.id === temp.id ? data : c
+        ),
+      }));
+    },
+    [inputs, user, profile]
+  );
+
+  const deleteComment = useCallback(
+    async (postId: string, commentId: string) => {
+      setAll((p) => ({
+        ...p,
+        [postId]: (p[postId] || []).filter((c) => c.id !== commentId),
+      }));
+      setCounts((p) => ({
+        ...p,
+        [postId]: Math.max(0, (p[postId] || 0) - 1),
+      }));
+      await supabase.from("post_comments").delete().eq("id", commentId);
+    },
+    []
+  );
+
+  // Realtime comments
+  useEffect(() => {
+    if (!user) return;
+    let ch: ReturnType<typeof supabase.channel> | null = null;
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) return;
+      supabase.realtime.setAuth(session.access_token);
+
+      ch = supabase
+        .channel("comments-batch-" + user.id)
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "post_comments" },
+          async (payload) => {
+            const newComment = payload.new as any;
+            if (newComment.user_id === user.id) return;
+
+            const pid = newComment.post_id;
+            setCounts((prev) => ({ ...prev, [pid]: (prev[pid] || 0) + 1 }));
+
+            if (!openRef.current.has(pid)) return;
+
+            const { data } = await supabase
+              .from("post_comments")
+              .select(
+                "*, author:profiles!user_id(id, full_name, avatar_url, role)"
+              )
+              .eq("id", newComment.id)
+              .single();
+
+            if (data) {
+              setAll((prev) => {
+                const ex = prev[pid] || [];
+                if (ex.some((c: any) => c.id === data.id)) return prev;
+                return { ...prev, [pid]: [...ex, data] };
+              });
+            }
+          }
+        )
+        .on(
+          "postgres_changes",
+          { event: "DELETE", schema: "public", table: "post_comments" },
+          (payload) => {
+            const old = payload.old as any;
+            if (old.post_id) {
+              setCounts((prev) => ({
+                ...prev,
+                [old.post_id]: Math.max(0, (prev[old.post_id] || 0) - 1),
+              }));
+              setAll((prev) => ({
+                ...prev,
+                [old.post_id]: (prev[old.post_id] || []).filter(
+                  (c) => c.id !== old.id
+                ),
+              }));
+            }
+          }
+        )
+        .subscribe();
+    });
+
+    return () => {
+      if (ch) supabase.removeChannel(ch);
+    };
+  }, [user?.id]);
+
+  return {
+    all,
+    inputs,
+    setInputs,
+    open,
+    counts,
+    toggleOpen,
+    submit,
+    deleteComment,
+    loadCounts,
+  };
+}

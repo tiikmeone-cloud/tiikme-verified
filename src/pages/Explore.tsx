@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
-import { Search, X, Shield, Filter, Lock } from "lucide-react";
+import { Search, X, Shield, Filter, Lock, Building2, Users, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 const ROLE_COLORS: Record<string, string> = {
   student: "#4F46E5", professional: "#0369A1", government: "#166534",
@@ -14,6 +15,9 @@ const ROLE_COLORS: Record<string, string> = {
 
 const roleOptions = ["All", "Student", "Professional", "Doctor", "Government", "Faculty", "Builder"];
 const roleMap: Record<string, string> = { Student: "student", Professional: "professional", Doctor: "doctor", Government: "government", Faculty: "faculty", Builder: "builder" };
+
+const orgTypeOptions = ["All", "Company", "College", "Hospital", "Government", "NGO"];
+const orgTypeMap: Record<string, string> = { Company: "company", College: "college", Hospital: "hospital", Government: "government", NGO: "ngo" };
 
 interface ProfileResult {
   id: string; full_name: string | null; username: string | null; avatar_url: string | null;
@@ -47,7 +51,7 @@ function PersonCard({ p }: { p: ProfileResult }) {
       </div>
       {user?.id !== p.id && (
         <Button variant={connected ? "ghost" : "secondary"} size="sm" className="shrink-0 h-7 text-[11px] active:scale-95" disabled={connected}
-          onClick={e => { e.stopPropagation(); if (!user || connected) return; supabase.from("strands").insert({ requester_id: user.id, receiver_id: p.id }); setConnected(true); }}>
+          onClick={e => { e.stopPropagation(); if (!user || connected) return; supabase.from("strands").insert({ requester_id: user.id, receiver_id: p.id }); setConnected(true); toast.success("Request sent"); }}>
           {connected ? "Pending" : "Strand →"}
         </Button>
       )}
@@ -55,13 +59,70 @@ function PersonCard({ p }: { p: ProfileResult }) {
   );
 }
 
+function OrgCard({ org }: { org: any }) {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [following, setFollowing] = useState(false);
+  const initials = (org.name || "?").slice(0, 2).toUpperCase();
+
+  const toggleFollow = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) return;
+    if (following) {
+      await supabase.from("org_followers").delete().eq("org_id", org.id).eq("user_id", user.id);
+      setFollowing(false);
+    } else {
+      await supabase.from("org_followers").insert({ org_id: org.id, user_id: user.id });
+      setFollowing(true);
+    }
+  };
+
+  // Check follow status
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("org_followers").select("id").eq("org_id", org.id).eq("user_id", user.id).maybeSingle().then(({ data }) => {
+      if (data) setFollowing(true);
+    });
+  }, [org.id, user?.id]);
+
+  return (
+    <article className="glass-liquid glass-liquid-hover rounded-xl p-3 flex items-center gap-3 cursor-pointer"
+      onClick={() => navigate(`/org/${org.slug}`)}>
+      <div className="w-11 h-11 rounded-xl flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden" style={{ background: "var(--brand)" }}>
+        {org.logo_url ? <img src={org.logo_url} alt="" className="w-full h-full object-cover" /> : initials}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5">
+          <p className="text-[13px] font-bold truncate" style={{ color: "var(--text-1)" }}>{org.name}</p>
+          {org.is_verified && <Shield className="w-3 h-3 shrink-0" style={{ color: "#F59E0B" }} />}
+        </div>
+        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "var(--surface-2)", color: "var(--text-3)" }}>
+          {(org.type || "org").charAt(0).toUpperCase() + (org.type || "org").slice(1)}
+        </span>
+        <p className="text-[11px] truncate" style={{ color: "var(--text-3)" }}>
+          {[org.city, org.state].filter(Boolean).join(", ") || "—"}
+          {org.followers_count ? ` · ${org.followers_count} followers` : ""}
+        </p>
+      </div>
+      <Button variant={following ? "ghost" : "secondary"} size="sm" className="shrink-0 h-7 text-[11px] active:scale-95"
+        onClick={toggleFollow}>
+        {following ? "Following ✓" : "+ Follow"}
+      </Button>
+    </article>
+  );
+}
+
 const Explore = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const [tab, setTab] = useState<"people" | "organizations">("people");
   const [search, setSearch] = useState("");
   const [people, setPeople] = useState<ProfileResult[]>([]);
+  const [orgs, setOrgs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const [roleFilter, setRoleFilter] = useState("All");
+  const [orgTypeFilter, setOrgTypeFilter] = useState("All");
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const mountedRef = useRef(true);
 
@@ -81,16 +142,46 @@ const Explore = () => {
     if (mountedRef.current) { setPeople((data as ProfileResult[]) || []); setLoading(false); }
   }, [search, user?.id, roleFilter, verifiedOnly]);
 
-  useEffect(() => { const t = setTimeout(fetchPeople, 300); return () => clearTimeout(t); }, [fetchPeople]);
+  const fetchOrgs = useCallback(async () => {
+    setLoading(true);
+    let query = supabase.from("organizations")
+      .select("id, name, slug, type, subtype, logo_url, city, state, is_verified, followers_count")
+      .order("followers_count", { ascending: false }).limit(24);
+    if (search.trim().length >= 2) query = query.or(`name.ilike.%${search}%,city.ilike.%${search}%`);
+    if (orgTypeFilter !== "All" && orgTypeMap[orgTypeFilter]) query = query.eq("type", orgTypeMap[orgTypeFilter]);
+    const { data } = await query;
+    if (mountedRef.current) { setOrgs(data || []); setLoading(false); }
+  }, [search, orgTypeFilter]);
 
-  const hasFilters = roleFilter !== "All" || verifiedOnly || search;
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (tab === "people") fetchPeople();
+      else fetchOrgs();
+    }, 300);
+    return () => clearTimeout(t);
+  }, [tab, fetchPeople, fetchOrgs]);
+
+  const hasFilters = roleFilter !== "All" || orgTypeFilter !== "All" || verifiedOnly || search;
 
   return (
     <main className="max-w-[1100px] mx-auto px-3 md:px-6 py-7">
+      {/* Tab switcher */}
+      <div className="flex gap-1 mb-4 p-1 rounded-xl" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
+        <button onClick={() => setTab("people")} className="flex-1 flex items-center justify-center gap-2 h-9 rounded-lg text-[13px] font-bold cursor-pointer"
+          style={{ background: tab === "people" ? "var(--brand)" : "transparent", color: tab === "people" ? "white" : "var(--text-2)" }}>
+          <Users className="w-4 h-4" /> People
+        </button>
+        <button onClick={() => setTab("organizations")} className="flex-1 flex items-center justify-center gap-2 h-9 rounded-lg text-[13px] font-bold cursor-pointer"
+          style={{ background: tab === "organizations" ? "var(--brand)" : "transparent", color: tab === "organizations" ? "white" : "var(--text-2)" }}>
+          <Building2 className="w-4 h-4" /> Organizations
+        </button>
+      </div>
+
       <div className="flex gap-2 mb-5">
         <div className="relative flex-1">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: "var(--text-3)" }} />
-          <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name, institution..."
+          <input type="text" value={search} onChange={e => setSearch(e.target.value)}
+            placeholder={tab === "people" ? "Search by name, institution..." : "Search organizations by name or location..."}
             className="w-full h-[52px] glass-input pl-[52px] pr-12 text-[14px] outline-none" style={{ color: "var(--text-1)" }} />
           {search && <button onClick={() => setSearch("")} className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-4 h-4" /></button>}
         </div>
@@ -98,7 +189,7 @@ const Explore = () => {
           style={{ color: showFilters ? "var(--brand)" : "var(--text-3)" }}><Filter className="w-5 h-5" /></button>
       </div>
 
-      {showFilters && (
+      {showFilters && tab === "people" && (
         <div className="glass-liquid rounded-2xl p-4 mb-5 space-y-3">
           <div>
             <p className="micro-label mb-2">ROLE</p>
@@ -120,13 +211,29 @@ const Explore = () => {
         </div>
       )}
 
+      {showFilters && tab === "organizations" && (
+        <div className="glass-liquid rounded-2xl p-4 mb-5 space-y-3">
+          <div>
+            <p className="micro-label mb-2">TYPE</p>
+            <div className="flex gap-1.5 flex-wrap">
+              {orgTypeOptions.map(r => (
+                <button key={r} onClick={() => setOrgTypeFilter(r)} className="h-7 px-3 rounded-full text-[11px] font-bold cursor-pointer active:scale-95"
+                  style={{ background: orgTypeFilter === r ? "var(--brand)" : "var(--surface-2)", color: orgTypeFilter === r ? "white" : "var(--text-2)" }}>{r}</button>
+              ))}
+            </div>
+          </div>
+          {hasFilters && <button onClick={() => { setOrgTypeFilter("All"); setSearch(""); }} className="text-[12px] font-bold cursor-pointer" style={{ color: "#DC2626" }}>Clear all</button>}
+        </div>
+      )}
+
       {loading && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
           {[1,2,3,4,5,6,7,8].map(i => <div key={i} className="glass-liquid rounded-xl p-3 animate-pulse h-[72px]" />)}
         </div>
       )}
 
-      {!loading && people.length === 0 && (
+      {/* People tab */}
+      {!loading && tab === "people" && people.length === 0 && (
         <div className="text-center py-16">
           <Search className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
           <p className="text-[15px] font-bold mb-2" style={{ color: "var(--text-1)" }}>No profiles found</p>
@@ -134,7 +241,7 @@ const Explore = () => {
         </div>
       )}
 
-      {!loading && people.length > 0 && (
+      {!loading && tab === "people" && people.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
           {people.map(p => (
             <motion.div key={p.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}>
@@ -148,6 +255,35 @@ const Explore = () => {
             </div>
           )}
         </div>
+      )}
+
+      {/* Organizations tab */}
+      {!loading && tab === "organizations" && orgs.length === 0 && (
+        <div className="text-center py-16">
+          <Building2 className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
+          <p className="text-[15px] font-bold mb-2" style={{ color: "var(--text-1)" }}>No organizations found</p>
+          <p className="text-[13px] mb-4" style={{ color: "var(--text-3)" }}>Be the first to create one.</p>
+          <Button onClick={() => navigate("/create-organization")} className="gap-2">
+            <Plus className="w-4 h-4" /> Create organization →
+          </Button>
+        </div>
+      )}
+
+      {!loading && tab === "organizations" && orgs.length > 0 && (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+            {orgs.map(org => (
+              <motion.div key={org.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}>
+                <OrgCard org={org} />
+              </motion.div>
+            ))}
+          </div>
+          <div className="text-center mt-6">
+            <Button variant="secondary" onClick={() => navigate("/create-organization")} className="gap-2">
+              <Plus className="w-4 h-4" /> Create organization
+            </Button>
+          </div>
+        </>
       )}
     </main>
   );

@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { MapPin, Copy, Shield, Layers, X, MessageCircle, CheckCircle, Building2, Link2, Plus, Pencil, Trash2, Briefcase, GraduationCap, Award, Code2, GripVertical, Eye, EyeOff } from "lucide-react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { MapPin, Copy, Shield, Layers, X, MessageCircle, CheckCircle, Building2, Link2, Plus, Pencil, Trash2, Briefcase, GraduationCap, Award, Code2, GripVertical, Eye, EyeOff, Heart } from "lucide-react";
 import GetTiikedModal from "@/components/profile/GetTiikedModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useLikes } from "@/hooks/useLikes";
 
 const ROLE_COLOR_MAP: Record<string, string> = { student: "#4F46E5", professional: "#0369A1", doctor: "#0E7490", government: "#166534", skilled_trade: "#C2410C", hr: "#6B21A8", faculty: "#92400E", builder: "#7C3AED", aspirant: "#374151" };
 const allIndianStates = ["Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Delhi","Goa","Gujarat","Haryana","Himachal Pradesh","Jharkhand","Karnataka","Kerala","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal"];
@@ -210,7 +211,52 @@ const SortableSection = ({ id, children, isOwn }: { id: string; children: React.
   );
 };
 
+function getTimeAgo(d: Date): string {
+  const s = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (s < 60) return "just now";
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+
+const ProfilePostsSection = ({ posts, isOwnProfile }: { posts: any[]; isOwnProfile: boolean }) => {
+  const postIds = useMemo(() => posts.map((p: any) => p.id), [posts]);
+  const { counts, myLikes, toggle } = useLikes(postIds);
+
+  return (
+    <div className="t-card p-5">
+      <SectionHeader title="Posts" icon={MessageCircle} showAdd={false} />
+      {posts.map((p: any) => {
+        const likeCount = counts[p.id] || 0;
+        const liked = myLikes[p.id] || false;
+        return (
+          <div key={p.id} className="py-3 group" style={{ borderBottom: "1px solid var(--border)" }}>
+            <p className="text-[13px] line-clamp-3" style={{ color: "var(--text-2)" }}>{p.content}</p>
+            {p.image_urls?.length > 0 && (
+              <div className="mt-2 rounded-xl overflow-hidden">
+                <img src={p.image_urls[0]} alt="Post" className="w-full max-h-48 object-cover rounded-xl" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              </div>
+            )}
+            <div className="flex items-center gap-3 mt-1.5">
+              <span className="text-[11px]" style={{ color: "var(--text-3)" }}>{p.created_at ? getTimeAgo(new Date(p.created_at)) : ""}</span>
+              {isOwnProfile && (
+                <button onClick={() => toggle(p.id)} className="flex items-center gap-1 text-[11px] cursor-pointer" style={{ color: liked ? "var(--brand)" : "var(--text-3)" }}>
+                  <Heart className="w-3 h-3" style={{ fill: liked ? "var(--brand)" : "none" }} /> {likeCount > 0 ? likeCount : ""}
+                </button>
+              )}
+              {!isOwnProfile && likeCount > 0 && <span className="text-[11px]" style={{ color: "var(--text-3)" }}>♥ {likeCount}</span>}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 const Profile = () => {
+
   const { id: urlUserId } = useParams<{ id: string }>();
   const [editOpen, setEditOpen] = useState(false);
   const { profile: authProfile, initials: authInitials, displayName: authDisplayName, refreshProfile, user, loading: authLoading } = useAuth();
@@ -673,27 +719,7 @@ const Profile = () => {
       </div>
     ),
     posts: userPosts.length > 0 ? (
-      <div className="t-card p-5">
-        <SectionHeader title="Posts" icon={MessageCircle} showAdd={false} />
-        {userPosts.map((p: any) => {
-          const likeCount = Array.isArray(p.reactions) ? p.reactions.length : ((p.reactions?.like || 0) + (p.reactions?.insightful || 0) + (p.reactions?.useful || 0) + (p.reactions?.inspiring || 0));
-          return (
-            <div key={p.id} className="py-3 group" style={{ borderBottom: "1px solid var(--border)" }}>
-              <p className="text-[13px] line-clamp-3" style={{ color: "var(--text-2)" }}>{p.content}</p>
-              {p.image_urls?.length > 0 && (
-                <div className="mt-2 rounded-xl overflow-hidden">
-                  <img src={p.image_urls[0]} alt="Post" className="w-full max-h-48 object-cover rounded-xl" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                </div>
-              )}
-              <div className="flex items-center gap-3 mt-1.5">
-                <span className="text-[11px]" style={{ color: "var(--text-3)" }}>{p.created_at ? getTimeAgo(new Date(p.created_at)) : ""}</span>
-                {likeCount > 0 && <span className="text-[11px]" style={{ color: "var(--text-3)" }}>♥ {likeCount}</span>}
-                {(p.comment_count || 0) > 0 && <span className="text-[11px]" style={{ color: "var(--text-3)" }}>💬 {p.comment_count}</span>}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      <ProfilePostsSection posts={userPosts} isOwnProfile={isOwnProfile} />
     ) : null,
   };
 
@@ -797,15 +823,5 @@ const Profile = () => {
     </div>
   );
 };
-
-function getTimeAgo(date: Date): string {
-  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
-  if (seconds < 60) return "just now";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.floor(hours / 24)}d ago`;
-}
 
 export default Profile;
