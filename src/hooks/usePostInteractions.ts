@@ -51,7 +51,7 @@ export function usePostInteractions(postIds: string[]) {
       }
     } else {
       const { error } = await supabase.from("post_reactions").upsert(
-        { post_id: postId, user_id: user.id, reaction_type: "like" },
+        { post_id: postId, user_id: user.id, reaction_type: "useful" },
         { onConflict: "post_id,user_id" }
       );
       if (error) {
