@@ -45,6 +45,7 @@ const Workspace = () => {
   const [createPrivacy, setCreatePrivacy] = useState("members_only");
   const [searchWs, setSearchWs] = useState("");
   const [mobileShowRight, setMobileShowRight] = useState(false);
+  const [nameSuggestions, setNameSuggestions] = useState<string[]>([]);
 
   const [composeOpen, setComposeOpen] = useState(false);
   const [composeText, setComposeText] = useState("");
