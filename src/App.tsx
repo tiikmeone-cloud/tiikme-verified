@@ -12,10 +12,16 @@ import AppShell from "./components/layout/AppShell.tsx";
 // Eager load landing + auth (critical path)
 import Index from "./pages/Index.tsx";
 import SignIn from "./pages/SignIn.tsx";
-import SignUp from "./pages/SignUp.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
+// New onboarding pages (eager — critical path)
+import SignupPage from "./pages/SignupPage.tsx";
+import VerifyEmailPage from "./pages/VerifyEmailPage.tsx";
+import OnboardingRole from "./pages/OnboardingRole.tsx";
+
 // Lazy load everything else
+const OnboardingDetails = lazy(() => import("./pages/OnboardingDetails.tsx"));
+const OnboardingWelcome = lazy(() => import("./pages/OnboardingWelcome.tsx"));
 const Welcome = lazy(() => import("./pages/Welcome.tsx"));
 const Feed = lazy(() => import("./pages/Feed.tsx"));
 const Profile = lazy(() => import("./pages/Profile.tsx"));
@@ -37,7 +43,6 @@ const Privacy = lazy(() => import("./pages/Privacy.tsx"));
 const Terms = lazy(() => import("./pages/Terms.tsx"));
 const JoinAsInstitution = lazy(() => import("./pages/JoinAsInstitution.tsx"));
 
-
 const queryClient = new QueryClient();
 
 const Shell = ({ children }: { children: React.ReactNode }) => (
@@ -56,7 +61,11 @@ const App = () => (
             {/* Public */}
             <Route path="/" element={<Index />} />
             <Route path="/signin" element={<PublicOnlyRoute><SignIn /></PublicOnlyRoute>} />
-            <Route path="/signup" element={<PublicOnlyRoute><SignUp /></PublicOnlyRoute>} />
+            <Route path="/signup" element={<SignupPage />} />
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route path="/onboarding/role" element={<OnboardingRole />} />
+            <Route path="/onboarding/details" element={<OnboardingDetails />} />
+            <Route path="/onboarding/welcome" element={<OnboardingWelcome />} />
             <Route path="/welcome" element={<Welcome />} />
             <Route path="/verify-invite" element={<VerifyInvite />} />
             <Route path="/join-as-institution" element={<JoinAsInstitution />} />
@@ -78,7 +87,6 @@ const App = () => (
             <Route path="/app/settings" element={<Shell><SettingsPage /></Shell>} />
             <Route path="/app/institution/:id" element={<Shell><Institution /></Shell>} />
             <Route path="/app/workspace" element={<Shell><Workspace /></Shell>} />
-            {/* Academy removed from v1 */}
             {/* Pages (org profiles) */}
             <Route path="/p/:slug" element={<Shell><PageProfile /></Shell>} />
             {/* Legacy redirects */}
