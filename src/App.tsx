@@ -74,6 +74,9 @@ const App = () => (
             <Route path="/join-as-institution" element={<JoinAsInstitution />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
+            <Route path="/create-organization" element={<ProtectedRoute><CreateOrganization /></ProtectedRoute>} />
+            <Route path="/org/:slug" element={<OrganizationPage />} />
+            <Route path="/org/:slug/admin" element={<ProtectedRoute><OrgAdmin /></ProtectedRoute>} />
             <Route path="/create-page" element={<Shell><CreatePage /></Shell>} />
             {/* App (protected) */}
             <Route path="/app/feed" element={<Shell><Feed /></Shell>} />
