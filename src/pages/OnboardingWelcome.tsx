@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
+import ThemeLogo from "@/components/ThemeLogo";
 
 export default function OnboardingWelcome() {
   const navigate = useNavigate();
@@ -29,16 +30,10 @@ export default function OnboardingWelcome() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12" style={{ background: "#04061A" }}>
-      {/* Logo */}
-      <div className="flex items-center gap-1.5 mb-8">
-        <span style={{ fontFamily: "'Press Start 2P', cursive", fontSize: 16, color: "#fff" }}>tiikme</span>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="12" fill="#E8580A" />
-          <path d="M7 12.5l3.5 3.5 6.5-7" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+      <div className="mb-8">
+        <ThemeLogo className="h-8 w-auto" />
       </div>
 
-      {/* Animated checkmark */}
       {showCheck && (
         <motion.div
           initial={{ scale: 0 }} animate={{ scale: [0, 1.15, 1] }}
@@ -52,7 +47,6 @@ export default function OnboardingWelcome() {
         </motion.div>
       )}
 
-      {/* Title */}
       <h1 className="text-center mb-2" style={{ fontFamily: "'Press Start 2P', cursive", fontSize: 20, color: "#E8580A" }}>
         You're Tiiked. ✓
       </h1>
@@ -60,12 +54,10 @@ export default function OnboardingWelcome() {
         Welcome, {firstName}!
       </p>
 
-      {/* Role badge */}
       <div className="px-4 py-1.5 rounded-full mb-8" style={{ border: "1.5px solid rgba(255,255,255,0.3)", color: "#E8580A", fontSize: 13, fontWeight: 700 }}>
         {roleLabels[role] || role}
       </div>
 
-      {/* Action cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-[700px] mb-8">
         {cards.map((c, i) => (
           <button
@@ -84,7 +76,6 @@ export default function OnboardingWelcome() {
         ))}
       </div>
 
-      {/* Go to feed */}
       <button
         onClick={() => navigate("/app/feed")}
         className="h-12 px-8 rounded-2xl text-[15px] font-bold text-white cursor-pointer transition-all hover:opacity-90 flex items-center gap-2"
