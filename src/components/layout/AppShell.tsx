@@ -15,7 +15,7 @@ const navGroups = [
   {
     label: "MAIN",
     items: [
-      { label: "Feed", icon: LayoutGrid, path: "/app/feed" },
+      { label: "Home", icon: LayoutGrid, path: "/app/feed" },
       { label: "Explore", icon: Compass, path: "/app/explore" },
     ],
   },
@@ -44,7 +44,7 @@ const navGroups = [
 ];
 
 const mobileNav = [
-  { label: "Feed", icon: LayoutGrid, path: "/app/feed" },
+  { label: "Home", icon: LayoutGrid, path: "/app/feed" },
   { label: "Explore", icon: Compass, path: "/app/explore" },
   { label: "Post", icon: Plus, path: "__post__" },
   { label: "Pings", icon: MessageCircle, path: "/app/pings" },
