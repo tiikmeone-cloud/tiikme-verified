@@ -136,14 +136,12 @@ export function useConversations(userId: string | undefined) {
       status: m.is_read ? "read" as const : "delivered" as const,
     })));
     setMessagesLoading(false);
-
-    // Mark unread pings as read and clear local unread badge immediately
+    // Mark unread pings as read and clear badge instantly
     if (userId) {
-      supabase.from("pings").update({ is_read: true }).eq("conversation_id", convoId).neq("sender_id", userId).eq("is_read", false).then(() => {});
-      // Clear unread count in local state so badge disappears instantly
       setConversations(prev => prev.map(c =>
         c.id === convoId ? { ...c, unread_count: 0 } : c
       ));
+      void supabase.from("pings").update({ is_read: true }).eq("conversation_id", convoId).neq("sender_id", userId).eq("is_read", false);
     }
   }, [userId]);
 

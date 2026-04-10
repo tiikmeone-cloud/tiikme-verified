@@ -65,6 +65,9 @@ const Alerts = () => {
       .limit(50);
     setAlerts(data || []);
     setLoading(false);
+    if ((data || []).some((a: any) => !a.is_read)) {
+      void supabase.from("alerts").update({ is_read: true } as any).eq("user_id", user.id).eq("is_read", false);
+    }
   }, [user]);
 
   useEffect(() => { fetchAlerts(); }, [fetchAlerts]);

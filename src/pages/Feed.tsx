@@ -138,6 +138,7 @@ const LivePostCard = ({
         <button onClick={() => toggleLike(post.id)} className="h-9 px-3 rounded-xl text-[13px] font-medium flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all" style={{ color: liked ? "var(--brand)" : "var(--text-2)" }}>
           <Heart className="w-4 h-4" style={{ fill: liked ? "var(--brand)" : "none", color: liked ? "var(--brand)" : "var(--text-2)" }} />
           {likeCount > 0 && <span>{likeCount}</span>}
+          {likeCount === 0 && <span>0</span>}
         </button>
         <button onClick={() => toggleComments(post.id)} className="h-9 px-3 rounded-xl text-[13px] font-medium flex items-center gap-1.5 cursor-pointer hover:bg-[var(--brand-dim)]" style={{ color: "var(--text-2)" }}>
           <MessageSquare className="w-4 h-4" /> {commentCount || ""}
@@ -294,6 +295,7 @@ const Feed = () => {
 
   // Batch like/comment hooks
   const postIds = useMemo(() => visiblePosts.map((p: any) => p.id), [visiblePosts]);
+  const postIdsKey = useMemo(() => postIds.join(","), [postIds]);
   const { counts: likeCounts, myLikes, toggle: toggleLike } = useLikes(postIds);
   const {
     all: commentsData, inputs: commentInputs, setInputs: setCommentInputs,
@@ -303,8 +305,8 @@ const Feed = () => {
 
   // Load comment counts when posts change
   useEffect(() => {
-    if (postIds.length) loadCommentCounts(postIds);
-  }, [postIds.length]);
+    loadCommentCounts(postIds);
+  }, [postIdsKey, loadCommentCounts]);
 
   // Handle post deletion from feed — instant removal
   const handleDeletePost = (postId: string) => {

@@ -382,9 +382,17 @@ const Profile = () => {
     const startDate = expForm.startMonth && expForm.startYear ? `${expForm.startYear}-${String(months.indexOf(expForm.startMonth) + 1).padStart(2, "0")}-01` : null;
     const endDate = !expForm.isCurrent && expForm.endMonth && expForm.endYear ? `${expForm.endYear}-${String(months.indexOf(expForm.endMonth) + 1).padStart(2, "0")}-01` : null;
     const { data, error } = await supabase.from("work_items").insert({
-      owner_id: user.id, title: expForm.title.trim(), description: expForm.description.trim(),
-      institution_name: expForm.company.trim(), type: expForm.type, item_type: "experience",
+      owner_id: user.id, title: expForm.title.trim(), job_title: expForm.title.trim(),
+      description: expForm.description.trim(),
+      company_name: expForm.company.trim(), institution_name: expForm.company.trim(),
+      employment_type: expForm.type, type: expForm.type, item_type: "experience",
+      work_location: expForm.city.trim() || null,
+      start_month: expForm.startMonth || null,
+      start_year: expForm.startYear ? Number(expForm.startYear) : null,
+      end_month: !expForm.isCurrent ? (expForm.endMonth || null) : null,
+      end_year: !expForm.isCurrent && expForm.endYear ? Number(expForm.endYear) : null,
       start_date: startDate, end_date: endDate, is_current: expForm.isCurrent,
+      skills_used: expForm.skills ? expForm.skills.split(",").map(s => s.trim()).filter(Boolean) : [],
       tech_stack: expForm.skills ? expForm.skills.split(",").map(s => s.trim()).filter(Boolean) : [],
       status: "active", visibility: "public",
     }).select().single();
@@ -401,7 +409,11 @@ const Profile = () => {
     setSaving(true);
     const { data, error } = await supabase.from("work_items").insert({
       owner_id: user.id, title: eduForm.degree + (eduForm.branch ? ` · ${eduForm.branch}` : ""),
-      institution_name: eduForm.institution.trim(), item_type: "education",
+      degree_type: eduForm.degree.trim() || null, field_of_study: eduForm.branch.trim() || null,
+      institution_name_edu: eduForm.institution.trim(), institution_name: eduForm.institution.trim(),
+      grade_score: eduForm.grade.trim() || null, item_type: "education",
+      start_year: eduForm.startYear ? Number(eduForm.startYear) : null,
+      end_year: !eduForm.isCurrent && eduForm.endYear ? Number(eduForm.endYear) : null,
       start_date: eduForm.startYear ? `${eduForm.startYear}-01-01` : null,
       end_date: !eduForm.isCurrent && eduForm.endYear ? `${eduForm.endYear}-01-01` : null,
       is_current: eduForm.isCurrent, description: eduForm.grade ? `Grade: ${eduForm.grade}` : "",
@@ -422,8 +434,12 @@ const Profile = () => {
     const endDate = !projForm.isCurrent && projForm.endMonth && projForm.endYear ? `${projForm.endYear}-${String(months.indexOf(projForm.endMonth) + 1).padStart(2, "0")}-01` : null;
     const { data, error } = await supabase.from("work_items").insert({
       owner_id: user.id, title: projForm.title.trim(), description: projForm.description.trim(),
-      type: projForm.type, item_type: "project",
+      type: projForm.type, project_type: projForm.type, item_type: "project",
       tech_stack: projForm.techStack ? projForm.techStack.split(",").map(s => s.trim()).filter(Boolean) : [],
+      start_month: projForm.startMonth || null,
+      start_year: projForm.startYear ? Number(projForm.startYear) : null,
+      end_month: !projForm.isCurrent ? (projForm.endMonth || null) : null,
+      end_year: !projForm.isCurrent && projForm.endYear ? Number(projForm.endYear) : null,
       start_date: startDate, end_date: endDate, is_current: projForm.isCurrent,
       status: "active", visibility: "public",
     }).select().single();

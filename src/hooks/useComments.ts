@@ -12,12 +12,16 @@ export function useComments() {
   openRef.current = open;
 
   const loadCounts = useCallback(async (postIds: string[]) => {
-    if (!postIds.length) return;
+    if (!postIds.length) {
+      setCounts({});
+      return;
+    }
     const { data } = await supabase
       .from("post_comments")
       .select("post_id")
       .in("post_id", postIds);
     const c: Record<string, number> = {};
+    for (const pid of postIds) c[pid] = 0;
     for (const r of data || []) c[r.post_id] = (c[r.post_id] || 0) + 1;
     setCounts(c);
   }, []);
@@ -93,9 +97,9 @@ export function useComments() {
 
       setAll((p) => ({
         ...p,
-        [postId]: (p[postId] || []).map((c) =>
-          c.id === temp.id ? data : c
-        ),
+        [postId]: (p[postId] || []).some((c) => c.id === temp.id)
+          ? (p[postId] || []).map((c) => (c.id === temp.id ? data : c))
+          : [...(p[postId] || []), data],
       }));
     },
     [inputs, user, profile]
