@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { MapPin, Copy, Shield, Layers, X, MessageCircle, CheckCircle, Building2, Link2, Plus, Pencil, Trash2, Briefcase, GraduationCap, Award, Code2, GripVertical, Eye, EyeOff } from "lucide-react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { MapPin, Copy, Shield, Layers, X, MessageCircle, CheckCircle, Building2, Link2, Plus, Pencil, Trash2, Briefcase, GraduationCap, Award, Code2, GripVertical, Eye, EyeOff, Heart } from "lucide-react";
 import GetTiikedModal from "@/components/profile/GetTiikedModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useLikes } from "@/hooks/useLikes";
 
 const ROLE_COLOR_MAP: Record<string, string> = { student: "#4F46E5", professional: "#0369A1", doctor: "#0E7490", government: "#166534", skilled_trade: "#C2410C", hr: "#6B21A8", faculty: "#92400E", builder: "#7C3AED", aspirant: "#374151" };
 const allIndianStates = ["Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Delhi","Goa","Gujarat","Haryana","Himachal Pradesh","Jharkhand","Karnataka","Kerala","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal"];
@@ -673,27 +674,7 @@ const Profile = () => {
       </div>
     ),
     posts: userPosts.length > 0 ? (
-      <div className="t-card p-5">
-        <SectionHeader title="Posts" icon={MessageCircle} showAdd={false} />
-        {userPosts.map((p: any) => {
-          const likeCount = Array.isArray(p.reactions) ? p.reactions.length : ((p.reactions?.like || 0) + (p.reactions?.insightful || 0) + (p.reactions?.useful || 0) + (p.reactions?.inspiring || 0));
-          return (
-            <div key={p.id} className="py-3 group" style={{ borderBottom: "1px solid var(--border)" }}>
-              <p className="text-[13px] line-clamp-3" style={{ color: "var(--text-2)" }}>{p.content}</p>
-              {p.image_urls?.length > 0 && (
-                <div className="mt-2 rounded-xl overflow-hidden">
-                  <img src={p.image_urls[0]} alt="Post" className="w-full max-h-48 object-cover rounded-xl" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                </div>
-              )}
-              <div className="flex items-center gap-3 mt-1.5">
-                <span className="text-[11px]" style={{ color: "var(--text-3)" }}>{p.created_at ? getTimeAgo(new Date(p.created_at)) : ""}</span>
-                {likeCount > 0 && <span className="text-[11px]" style={{ color: "var(--text-3)" }}>♥ {likeCount}</span>}
-                {(p.comment_count || 0) > 0 && <span className="text-[11px]" style={{ color: "var(--text-3)" }}>💬 {p.comment_count}</span>}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      <ProfilePostsSection posts={userPosts} isOwnProfile={isOwnProfile} />
     ) : null,
   };
 
