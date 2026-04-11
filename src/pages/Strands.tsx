@@ -109,9 +109,9 @@ const Strands = () => {
         <h1 className="text-[20px] text-emboss">My Strands</h1>
       </div>
 
-      <div className="flex gap-0 border-b mb-5" style={{ borderColor: "var(--border)" }}>
+      <div className="flex gap-0 border-b mb-5 overflow-x-auto" style={{ borderColor: "var(--border)", scrollbarWidth: "none" }}>
         {tabs.map(t => (
-          <button key={t.key} onClick={() => setTab(t.key)} className="px-4 py-2.5 text-[12px] font-semibold relative cursor-pointer"
+          <button key={t.key} onClick={() => setTab(t.key)} className="flex-1 md:flex-none px-4 py-2.5 text-[12px] font-semibold relative cursor-pointer whitespace-nowrap min-h-[44px]"
             style={{ color: tab === t.key ? "var(--brand)" : "var(--text-3)" }}>
             {t.label}
             {tab === t.key && <div className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full" style={{ background: "var(--brand)" }} />}
@@ -165,8 +165,10 @@ const Strands = () => {
                 <p className="text-[13px] font-bold truncate" style={{ color: "var(--text-1)" }}>{s.requester?.full_name || "User"}</p>
                 <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{roleLabel(s.requester?.role || "")} · {s.requester?.institution_name || "—"}</p>
               </div>
-              <Button size="sm" className="h-7 text-[11px]" onClick={() => handleAccept(s)}><Check className="w-3 h-3 mr-1" /> Accept</Button>
-              <Button variant="ghost" size="sm" className="h-7 text-[11px]" onClick={() => handleDecline(s)}><X className="w-3 h-3" /></Button>
+              <div className="flex gap-1.5 shrink-0">
+                <Button size="sm" className="h-9 text-[11px] min-w-[70px]" onClick={() => handleAccept(s)}><Check className="w-3 h-3 mr-1" /> Accept</Button>
+                <Button variant="ghost" size="sm" className="h-9 text-[11px] min-w-[60px]" onClick={() => handleDecline(s)}><X className="w-3 h-3 mr-1" /> Decline</Button>
+              </div>
             </div>
           ))}
         </div>
