@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutGrid, Compass, Users, Target, User,
-  Link2, MessageCircle, Bell, SlidersHorizontal, PencilLine, Plus, LogOut,
+  Link2, MessageCircle, Bell, SlidersHorizontal, PencilLine, Plus, LogOut, Home,
 } from "lucide-react";
 import ThemeLogo from "@/components/ThemeLogo";
 import { toast } from "sonner";
@@ -43,7 +43,7 @@ const navGroups = [
 ];
 
 const mobileNav = [
-  { label: "Home", icon: LayoutGrid, path: "/app/feed" },
+  { label: "Home", icon: Home, path: "/app/feed" },
   { label: "Explore", icon: Compass, path: "/app/explore" },
   { label: "Post", icon: Plus, path: "__post__" },
   { label: "Pings", icon: MessageCircle, path: "/app/pings" },
@@ -61,21 +61,16 @@ const AppShell = ({ children }: { children: ReactNode }) => {
 
   const isActive = (path: string) => pathname === path || pathname.startsWith(path + "/");
 
-  // Fetch real unread counts
   useEffect(() => {
     if (!user?.id) return;
-    // Alerts count
     supabase.from("alerts").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("is_read", false).then(({ count }) => setUnreadAlerts(count || 0));
-    // Pings count
     supabase.from("pings").select("*", { count: "exact", head: true }).eq("is_read", false).neq("sender_id", user.id).then(({ count }) => setUnreadPings(count || 0));
 
-    // Live alerts
     const alertsCh = supabase.channel("unread-alerts-" + user.id)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "alerts", filter: `user_id=eq.${user.id}` }, () => {
         setUnreadAlerts(p => p + 1);
       }).subscribe();
 
-    // Live pings
     const pingsCh = supabase.channel("unread-pings-" + user.id)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "pings" }, payload => {
         if ((payload.new as any).sender_id !== user.id) setUnreadPings(p => p + 1);
@@ -87,7 +82,6 @@ const AppShell = ({ children }: { children: ReactNode }) => {
     };
   }, [user?.id]);
 
-  // Reset pings unread when on pings page
   useEffect(() => {
     if (isActive("/app/pings")) setUnreadPings(0);
     if (isActive("/app/alerts")) setUnreadAlerts(0);
@@ -106,16 +100,6 @@ const AppShell = ({ children }: { children: ReactNode }) => {
     if (savedTheme) localStorage.setItem("tiikme-theme", savedTheme);
     toast.success("Signed out");
     navigate("/signin");
-  };
-
-  const getPageTitle = () => {
-    for (const g of navGroups) {
-      for (const item of g.items) {
-        if (isActive(item.path)) return item.label;
-      }
-    }
-    if (isActive("/app/profile")) return "Profile";
-    return "";
   };
 
   return (
@@ -176,7 +160,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
         </div>
       </aside>
 
-      {/* ═══ TABLET SIDEBAR ═══ */}
+      {/* ═══ TABLET SIDEBAR (md–lg) ═══ */}
       <aside className="hidden md:flex lg:hidden flex-col items-center fixed inset-y-0 left-0 z-40 py-3"
         style={{ width: 64, background: "var(--glass-bg)", backdropFilter: "blur(24px) saturate(180%)", WebkitBackdropFilter: "blur(24px) saturate(180%)", borderRight: "1px solid var(--glass-border)" }}>
         <div className="mb-4"><Link to="/app/feed"><ThemeLogo className="h-9 w-auto" /></Link></div>
@@ -211,55 +195,80 @@ const AppShell = ({ children }: { children: ReactNode }) => {
       </aside>
 
       {/* ═══ MAIN CONTENT ═══ */}
-      <main className="flex-1 md:ml-16 lg:ml-[248px] pb-24 md:pb-0">
-        <header className="md:hidden sticky top-0 z-50 h-14 flex items-center justify-between px-4"
-          style={{ background: "var(--glass-bg)", backdropFilter: "blur(24px) saturate(180%)", WebkitBackdropFilter: "blur(24px) saturate(180%)", borderBottom: "1px solid var(--glass-border)" }}>
-          <span className="flex items-center"><ThemeLogo className="h-8 w-auto" /></span>
-          <span className="absolute left-1/2 -translate-x-1/2 text-[16px] font-bold" style={{ color: "var(--text-1)" }}>{getPageTitle()}</span>
-          <div className="flex items-center gap-2">
-            <Link to="/app/alerts" className="relative p-1.5">
-              <Bell className="w-5 h-5" style={{ color: "var(--text-2)" }} />
-              {unreadAlerts > 0 && <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full" style={{ background: "var(--danger)" }} />}
-            </Link>
-            <Link to="/app/profile" className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white overflow-hidden" style={{ backgroundColor: "var(--brand)" }}>
-              {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : initials}
+      <main className="flex-1 md:ml-16 lg:ml-[248px] pb-20 md:pb-0">
+        {/* Mobile top header — 52px, sticky */}
+        <header className="md:hidden sticky top-0 z-50 flex items-center justify-between px-4"
+          style={{ height: 52, background: "var(--glass-bg)", backdropFilter: "blur(24px) saturate(180%)", WebkitBackdropFilter: "blur(24px) saturate(180%)", borderBottom: "1px solid var(--glass-border)" }}>
+          <Link to="/app/feed" className="flex items-center">
+            <ThemeLogo className="h-7 w-auto" />
+          </Link>
+          <div className="flex items-center gap-1">
+            <Link to="/app/alerts" className="relative w-10 h-10 flex items-center justify-center rounded-full active:scale-95">
+              <Bell className="w-5 h-5" style={{ color: "var(--text-2)" }} strokeWidth={1.8} />
+              {unreadAlerts > 0 && <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full" style={{ background: "var(--danger)", border: "2px solid var(--bg)" }} />}
             </Link>
           </div>
         </header>
-        <div>{children}</div>
+        <div className="min-h-0">{children}</div>
       </main>
 
-      {/* ═══ MOBILE BOTTOM NAV ═══ */}
-      <nav className="flex md:hidden fixed bottom-3 left-3 right-3 z-50 glass-dock"
-        style={{ paddingBottom: "env(safe-area-inset-bottom)", boxShadow: "0 -4px 40px rgba(0,0,0,0.5), 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15)" }}>
-        <div className="flex items-center justify-around h-14 px-2">
+      {/* ═══ MOBILE BOTTOM NAV — fixed, 64px ═══ */}
+      <nav className="flex md:hidden fixed bottom-0 left-0 right-0 z-50"
+        style={{
+          height: "calc(64px + env(safe-area-inset-bottom))",
+          paddingBottom: "env(safe-area-inset-bottom)",
+          background: "var(--glass-bg)",
+          backdropFilter: "blur(48px) saturate(200%)",
+          WebkitBackdropFilter: "blur(48px) saturate(200%)",
+          borderTop: "1px solid var(--glass-border)",
+        }}>
+        <div className="flex items-center justify-around w-full h-16">
           {mobileNav.map((item) => {
             if (item.path === "__post__") {
               return (
                 <button key="post" onClick={openPostCreate}
-                  className="w-12 h-12 rounded-full flex items-center justify-center -mt-6 active:scale-[0.92]"
-                  style={{ background: "linear-gradient(135deg, var(--brand), var(--brand-2))", boxShadow: "0 4px 16px var(--brand-glow), 0 0 0 4px var(--bg)" }}>
-                  <Plus className="w-[22px] h-[22px] text-white" />
+                  className="w-[52px] h-[52px] rounded-full flex items-center justify-center -mt-5 active:scale-[0.92] shrink-0"
+                  style={{
+                    background: "linear-gradient(135deg, var(--brand), var(--brand-2))",
+                    boxShadow: "0 4px 16px var(--brand-glow), 0 0 0 4px var(--bg)",
+                  }}>
+                  <Plus className="w-6 h-6 text-white" strokeWidth={2.5} />
                 </button>
               );
             }
             const active = isActive(item.path);
             const badge = item.path === "/app/pings" ? unreadPings : undefined;
+
+            // Profile tab shows user avatar
+            if (item.path === "/app/profile") {
+              return (
+                <Link key={item.path} to={item.path} className="flex flex-col items-center justify-center gap-0.5 w-14 h-14">
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold text-white overflow-hidden shrink-0"
+                    style={{
+                      backgroundColor: "var(--brand)",
+                      border: active ? "2px solid var(--brand)" : "2px solid transparent",
+                    }}>
+                    {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : initials}
+                  </div>
+                </Link>
+              );
+            }
+
             return (
-              <Link key={item.path} to={item.path} className="flex-1 flex flex-col items-center gap-0.5 py-2">
+              <Link key={item.path} to={item.path} className="flex flex-col items-center justify-center gap-0.5 w-14 h-14">
                 <div className="relative">
-                  {active && <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-[3px] h-[3px] rounded-full" style={{ background: "var(--brand)" }} />}
-                  <item.icon className="w-[22px] h-[22px]" style={{ color: active ? "var(--brand)" : "var(--text-3)" }} />
-                  {badge && badge > 0 && <span className="absolute -top-1 -right-2 w-4 h-4 text-white text-[9px] font-bold rounded-full flex items-center justify-center" style={{ background: "var(--brand)" }}>{badge}</span>}
+                  <item.icon className="w-6 h-6" style={{ color: active ? "var(--brand)" : "var(--text-3)" }} strokeWidth={active ? 2.2 : 1.8} />
+                  {badge && badge > 0 && (
+                    <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1"
+                      style={{ background: "var(--danger)" }}>{badge > 9 ? "9+" : badge}</span>
+                  )}
                 </div>
-                <span className="text-[9px]" style={{ color: active ? "var(--brand)" : "var(--text-3)", fontWeight: active ? 700 : 600 }}>{item.label}</span>
+                <span className="text-[10px]" style={{ color: active ? "var(--brand)" : "var(--text-3)", fontWeight: active ? 700 : 500 }}>{item.label}</span>
               </Link>
             );
           })}
         </div>
       </nav>
-
-      {/* Post creation is now at /post/create */}
     </div>
   );
 };
