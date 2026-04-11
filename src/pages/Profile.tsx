@@ -416,6 +416,8 @@ const Profile = () => {
     setDataLoading(false);
   }, [targetUserId, isOwnProfile, authProfile]);
 
+  const [connectionStatus, setConnectionStatus] = useState<{ status: string | null; direction: string | null; id: string | null }>({ status: null, direction: null, id: null });
+  const [connectLoading, setConnectLoading] = useState(false);
   useEffect(() => { if (!authLoading) loadProfile(); }, [authLoading, loadProfile]);
 
   if (authLoading || dataLoading) return (
