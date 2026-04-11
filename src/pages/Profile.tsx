@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { MapPin, Copy, Shield, Layers, X, MessageCircle, CheckCircle, Building2, Link2, Plus, Pencil, Trash2, Briefcase, GraduationCap, Award, Code2, GripVertical, Eye, EyeOff, Heart, Rocket } from "lucide-react";
+import { MapPin, Copy, Shield, Layers, X, MessageCircle, CheckCircle, Building2, Link2, Plus, Pencil, Trash2, Briefcase, GraduationCap, Award, Code2, GripVertical, Eye, EyeOff, Heart, Rocket, Send, Share2, Users } from "lucide-react";
 import OrgSearchInput from "@/components/OrgSearchInput";
 import GetTiikedModal from "@/components/profile/GetTiikedModal";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,8 @@ import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEn
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useLikes } from "@/hooks/useLikes";
+import { useComments } from "@/hooks/useComments";
+import MentionText from "@/components/feed/MentionText";
 import VerificationRequest from "@/components/profile/VerificationRequest";
 import CertificatesSection from "@/components/profile/CertificatesSection";
 
@@ -257,29 +259,85 @@ const VisLabel = ({ vis }: { vis: string }) => (
 const ProfilePostsSection = ({ posts, isOwnProfile }: { posts: any[]; isOwnProfile: boolean }) => {
   const postIds = useMemo(() => posts.map((p: any) => p.id), [posts]);
   const { counts, myLikes, toggle } = useLikes(postIds);
+  const {
+    all: commentsData, inputs: commentInputs, setInputs: setCommentInputs,
+    open: commentsOpen, counts: commentCounts, toggleOpen: toggleComments,
+    submit: submitComment, deleteComment, loadCounts: loadCommentCounts,
+  } = useComments();
+  const { user, profile: authProfile, initials: userInitials } = useAuth();
+  const postIdsKey = useMemo(() => postIds.join(","), [postIds]);
+
+  useEffect(() => { loadCommentCounts(postIds); }, [postIdsKey, loadCommentCounts]);
+
+  const roleColorMap: Record<string, string> = { student: "#4F46E5", professional: "#0369A1", doctor: "#0E7490", government: "#166534", skilled_trade: "#C2410C", hr: "#6B21A8", faculty: "#92400E" };
+
   return (
     <div className="t-card p-5">
       <SectionHeader title="Posts" icon={MessageCircle} showAdd={false} />
       {posts.map((p: any) => {
         const likeCount = counts[p.id] || 0;
         const liked = myLikes[p.id] || false;
+        const commentCount = commentCounts[p.id] || 0;
+        const isOpen = commentsOpen.has(p.id);
+        const comments = commentsData[p.id] || [];
+        const commentText = commentInputs[p.id] || "";
         return (
-          <div key={p.id} className="py-3 group" style={{ borderBottom: "1px solid var(--border)" }}>
-            <p className="text-[13px] line-clamp-3" style={{ color: "var(--text-2)" }}>{p.content}</p>
+          <div key={p.id} className="py-3" style={{ borderBottom: "1px solid var(--border)" }}>
+            <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-2)" }}><MentionText text={p.content} /></p>
             {p.image_urls?.length > 0 && (
               <div className="mt-2 rounded-xl overflow-hidden">
                 <img src={p.image_urls[0]} alt="Post" className="w-full max-h-48 object-cover rounded-xl" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
               </div>
             )}
-            <div className="flex items-center gap-3 mt-1.5">
-              <span className="text-[11px]" style={{ color: "var(--text-3)" }}>{p.created_at ? getTimeAgo(new Date(p.created_at)) : ""}</span>
-              {isOwnProfile && (
-                <button onClick={() => toggle(p.id)} className="flex items-center gap-1 text-[11px] cursor-pointer" style={{ color: liked ? "var(--brand)" : "var(--text-3)" }}>
-                  <Heart className="w-3 h-3" style={{ fill: liked ? "var(--brand)" : "none" }} /> {likeCount}
-                </button>
-              )}
-              {!isOwnProfile && <span className="flex items-center gap-1 text-[11px]" style={{ color: "var(--text-3)" }}><Heart className="w-3 h-3" /> {likeCount}</span>}
+            <div className="flex items-center gap-1 mt-2">
+              <span className="text-[11px] mr-2" style={{ color: "var(--text-3)" }}>{p.created_at ? getTimeAgo(new Date(p.created_at)) : ""}</span>
+              <button onClick={() => toggle(p.id)} className="h-8 px-2 rounded-lg text-[12px] font-semibold flex items-center gap-1 cursor-pointer active:scale-95" style={{ color: liked ? "var(--brand)" : "var(--text-3)" }}>
+                <Heart className="w-3.5 h-3.5" style={{ fill: liked ? "var(--brand)" : "none" }} /> {likeCount}
+              </button>
+              <button onClick={() => toggleComments(p.id)} className="h-8 px-2 rounded-lg text-[12px] font-semibold flex items-center gap-1 cursor-pointer" style={{ color: "var(--text-3)" }}>
+                <MessageCircle className="w-3.5 h-3.5" /> {commentCount}
+              </button>
             </div>
+            {isOpen && (
+              <div className="mt-2 pt-2 space-y-2" style={{ borderTop: "1px solid var(--border)" }}>
+                {comments.length === 0 && <p className="text-[11px]" style={{ color: "var(--text-3)" }}>No comments yet</p>}
+                {comments.map((c: any) => {
+                  const cName = c.author?.full_name || "User";
+                  const cInitials = cName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
+                  const cColor = roleColorMap[c.author?.role || ""] || "#6B7280";
+                  const cTime = c.created_at ? getTimeAgo(new Date(c.created_at)) : "";
+                  const isOwnComment = user?.id === c.user_id;
+                  return (
+                    <div key={c.id} className="flex items-start gap-2 group">
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: cColor }}>
+                        {c.author?.avatar_url ? <img src={c.author.avatar_url} alt="" className="w-full h-full object-cover" /> : cInitials}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[12px] font-bold" style={{ color: "var(--text-1)" }}>{cName}</span>
+                          <span className="text-[10px]" style={{ color: "var(--text-3)" }}>{cTime}</span>
+                          {isOwnComment && <button onClick={() => deleteComment(p.id, c.id)} className="opacity-0 group-hover:opacity-100 p-0.5 cursor-pointer" style={{ color: "var(--text-3)" }}><Trash2 className="w-3 h-3" /></button>}
+                        </div>
+                        <p className="text-[12px]" style={{ color: "var(--text-2)" }}><MentionText text={c.content} /></p>
+                      </div>
+                    </div>
+                  );
+                })}
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0 overflow-hidden" style={{ background: "var(--brand)" }}>
+                    {authProfile?.avatar_url ? <img src={authProfile.avatar_url} alt="" className="w-full h-full object-cover" /> : userInitials}
+                  </div>
+                  <input value={commentText} onChange={e => setCommentInputs(prev => ({ ...prev, [p.id]: e.target.value }))}
+                    placeholder="Write a comment..." className="flex-1 h-8 rounded-lg px-3 text-[12px] outline-none"
+                    style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }}
+                    onKeyDown={e => { if (e.key === "Enter" && commentText.trim()) submitComment(p.id); }} />
+                  <button onClick={() => submitComment(p.id)} className="w-7 h-7 rounded-full flex items-center justify-center cursor-pointer active:scale-95"
+                    style={{ background: commentText.trim() ? "var(--brand)" : "var(--surface-2)" }}>
+                    <Send className="w-3 h-3" style={{ color: commentText.trim() ? "white" : "var(--text-3)" }} />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         );
       })}
@@ -310,6 +368,7 @@ const Profile = () => {
   const [newSkill, setNewSkill] = useState("");
   const [saving, setSaving] = useState(false);
   const [showGetTiiked, setShowGetTiiked] = useState(false);
+  const [showInvite, setShowInvite] = useState(false);
 
   const [expForm, setExpForm] = useState({ company: "", title: "", type: "Full-time", industry: "", city: "", isCurrent: true, startMonth: "", startYear: "", endMonth: "", endYear: "", description: "", skills: "" });
   const [eduForm, setEduForm] = useState({ institution: "", degree: "", branch: "", startYear: "", endYear: "", isCurrent: false, grade: "" });
@@ -357,6 +416,14 @@ const Profile = () => {
     setDataLoading(false);
   }, [targetUserId, isOwnProfile, authProfile]);
 
+  const [connectionStatus, setConnectionStatus] = useState<{ status: string | null; direction: string | null; id: string | null }>({ status: null, direction: null, id: null });
+  const [connectLoading, setConnectLoading] = useState(false);
+  useEffect(() => {
+    if (!user || !targetUserId || isOwnProfile) return;
+    supabase.from("strands").select("id, status, requester_id, receiver_id")
+      .or(`and(requester_id.eq.${user.id},receiver_id.eq.${targetUserId}),and(requester_id.eq.${targetUserId},receiver_id.eq.${user.id})`)
+      .maybeSingle().then(({ data }) => { if (data) { setConnectionStatus({ status: data.status, direction: data.requester_id === user.id ? "sent" : "received", id: data.id }); } });
+  }, [user, targetUserId, isOwnProfile]);
   useEffect(() => { if (!authLoading) loadProfile(); }, [authLoading, loadProfile]);
 
   if (authLoading || dataLoading) return (
@@ -397,17 +464,51 @@ const Profile = () => {
   const projects = visFilter(workItems.filter((w: any) => w.item_type === "project" || (!w.item_type && w.title)));
 
   const handleCopyLink = () => { navigator.clipboard.writeText(window.location.origin + "/" + username); toast.success("Link copied"); };
-  const handleStrand = async () => {
-    if (!user || !targetUserId) return;
+
+
+  const handleConnect = async () => {
+    if (!user || !targetUserId || connectLoading) return;
+    setConnectLoading(true);
     const { error } = await supabase.from("strands").insert({ requester_id: user.id, receiver_id: targetUserId });
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(error.message); setConnectLoading(false); return; }
     await supabase.from("alerts").insert({
       user_id: targetUserId, type: "strand",
       title: `${authProfile?.full_name || "Someone"} wants to connect with you`,
-      body: `${authProfile?.full_name || "Someone"} sent you a strand request`,
+      body: `${authProfile?.full_name || "Someone"} sent you a connection request`,
       link: `/app/profile/${user.id}`,
     });
-    toast.success("Strand request sent");
+    setConnectionStatus({ status: "pending", direction: "sent", id: null });
+    setConnectLoading(false);
+    toast.success("Connection request sent");
+    try { await supabase.rpc("increment_score", { uid: user.id, amount: 3 }); } catch {}
+  };
+
+  const handleAcceptConnection = async () => {
+    if (!connectionStatus.id) return;
+    await supabase.from("strands").update({ status: "accepted" }).eq("id", connectionStatus.id);
+    setConnectionStatus({ ...connectionStatus, status: "accepted" });
+    toast.success("Connected!");
+    try { if (user) await supabase.rpc("increment_score", { uid: user.id, amount: 3 }); } catch {}
+  };
+
+  const handleDeclineConnection = async () => {
+    if (!connectionStatus.id) return;
+    await supabase.from("strands").delete().eq("id", connectionStatus.id);
+    setConnectionStatus({ status: null, direction: null, id: null });
+    toast.success("Declined");
+  };
+
+  const renderConnectButton = () => {
+    const { status, direction } = connectionStatus;
+    if (status === "accepted") return <Button variant="secondary" size="sm" className="flex-1 md:flex-none gap-1.5 rounded-full h-11 md:h-auto text-[13px]" disabled><CheckCircle className="w-3.5 h-3.5" style={{ color: "#10B981" }} /> Connected</Button>;
+    if (status === "pending" && direction === "sent") return <Button variant="secondary" size="sm" className="flex-1 md:flex-none gap-1.5 rounded-full h-11 md:h-auto text-[13px] opacity-60" disabled>Requested →</Button>;
+    if (status === "pending" && direction === "received") return (
+      <div className="flex gap-1.5 flex-1 md:flex-none">
+        <Button size="sm" className="flex-1 gap-1 rounded-full h-11 md:h-auto text-[13px]" onClick={handleAcceptConnection}>Accept</Button>
+        <Button variant="ghost" size="sm" className="gap-1 rounded-full h-11 md:h-auto text-[13px]" onClick={handleDeclineConnection}>Decline</Button>
+      </div>
+    );
+    return <Button size="sm" className="flex-1 md:flex-none gap-1.5 rounded-full h-11 md:h-auto text-[13px]" onClick={handleConnect} disabled={connectLoading}><Users className="w-3.5 h-3.5" /> Connect</Button>;
   };
 
   const saveExperience = async () => {
@@ -914,12 +1015,13 @@ const Profile = () => {
           <div className="flex gap-2 mt-4">
             {isOwnProfile ? (
               <>
-                <Button variant="secondary" size="sm" className="flex-1 md:flex-none gap-1.5 rounded-full h-11 md:h-auto text-[13px]" onClick={() => setEditOpen(!editOpen)}><Pencil className="w-3.5 h-3.5" /> Edit profile</Button>
+                <Button variant="secondary" size="sm" className="flex-1 md:flex-none gap-1.5 rounded-full h-11 md:h-auto text-[13px]" onClick={() => navigate("/app/settings")}><Pencil className="w-3.5 h-3.5" /> Edit profile</Button>
                 <Button variant="ghost" size="sm" className="flex-1 md:flex-none gap-1.5 rounded-full h-11 md:h-auto text-[13px]" onClick={handleCopyLink}><Copy className="w-3.5 h-3.5" /> Copy link</Button>
+                <Button variant="ghost" size="sm" className="flex-1 md:flex-none gap-1.5 rounded-full h-11 md:h-auto text-[13px]" onClick={() => setShowInvite(true)}><Share2 className="w-3.5 h-3.5" /> Invite</Button>
               </>
             ) : (
               <>
-                <Button size="sm" className="flex-1 md:flex-none gap-1.5 rounded-full h-11 md:h-auto text-[13px]" onClick={handleStrand}><Link2 className="w-3.5 h-3.5" /> Strand</Button>
+                {renderConnectButton()}
                 <Button variant="secondary" size="sm" className="flex-1 md:flex-none gap-1.5 rounded-full h-11 md:h-auto text-[13px]" onClick={() => navigate("/app/pings")}><MessageCircle className="w-3.5 h-3.5" /> Ping</Button>
               </>
             )}
@@ -962,6 +1064,37 @@ const Profile = () => {
       )}
 
       {user && <GetTiikedModal open={showGetTiiked} onClose={() => setShowGetTiiked(false)} userId={user.id} userRole={role} onVerified={loadProfile} />}
+
+      {/* Invite Modal */}
+      {showInvite && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowInvite(false)}>
+          <div className="t-card p-6 max-w-[400px] w-[90vw] mx-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-[18px] font-extrabold" style={{ color: "var(--text-1)" }}>Invite Friends</h2>
+              <button onClick={() => setShowInvite(false)} className="p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
+            </div>
+            <div className="rounded-xl p-3 mb-4" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
+              <p className="text-[12px] break-all" style={{ color: "var(--text-2)" }}>{window.location.origin}/join?ref={username}</p>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Button className="w-full" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/join?ref=${username}`); toast.success("Link copied!"); }}>
+                <Copy className="w-4 h-4 mr-2" /> Copy Link
+              </Button>
+              <Button variant="secondary" className="w-full" onClick={() => { window.open(`https://wa.me/?text=${encodeURIComponent(`Hey! I'm on Tiikme — India's first verified professional identity platform. Your work, your degree, your skills — all verified by the people who were actually there. Join me here: ${window.location.origin}/join?ref=${username}`)}`, "_blank"); }}>
+                Share via WhatsApp
+              </Button>
+              {navigator.share && (
+                <Button variant="ghost" className="w-full" onClick={() => { navigator.share({ title: "Join Tiikme", text: `Join me on Tiikme!`, url: `${window.location.origin}/join?ref=${username}` }); }}>
+                  Share via Other Apps
+                </Button>
+              )}
+            </div>
+            <p className="text-[11px] mt-3 text-center" style={{ color: "var(--text-3)" }}>
+              Hey! I'm on Tiikme — India's first verified professional identity platform. Join me!
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -8,10 +8,20 @@ interface ActivityScoreRingProps {
   percentile?: string;
 }
 
-const ActivityScoreRing = ({ score, size = 80, strokeWidth = 6, trend = "+5 this week", percentile = "Top 15% of Students" }: ActivityScoreRingProps) => {
+function getTierInfo(score: number): { label: string; emoji: string } {
+  if (score >= 500) return { label: "Tiiked Elite", emoji: "🏅" };
+  if (score >= 301) return { label: "Trailblazer", emoji: "🚀" };
+  if (score >= 151) return { label: "Achiever", emoji: "⭐" };
+  if (score >= 51) return { label: "Builder", emoji: "🔨" };
+  return { label: "Explorer", emoji: "🌱" };
+}
+
+const ActivityScoreRing = ({ score, size = 80, strokeWidth = 6, trend = "+5 this week" }: ActivityScoreRingProps) => {
+  const maxScore = Math.max(score, 100);
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const progress = (score / 100) * circumference;
+  const progress = (Math.min(score, maxScore) / maxScore) * circumference;
+  const tier = getTierInfo(score);
 
   return (
     <div className="flex items-center gap-4">
@@ -28,7 +38,7 @@ const ActivityScoreRing = ({ score, size = 80, strokeWidth = 6, trend = "+5 this
       </div>
       <div>
         <p className="text-[13px] font-bold text-t1">Activity Score</p>
-        <p className="text-[11px] text-t3 mb-0.5">{percentile}</p>
+        <p className="text-[12px] font-semibold" style={{ color: "var(--brand)" }}>{tier.emoji} {tier.label}</p>
         <div className="flex items-center gap-1 text-[11px] font-semibold" style={{ color: "var(--open-green)" }}>
           <TrendingUp className="w-3 h-3" />
           <span>{trend}</span>
