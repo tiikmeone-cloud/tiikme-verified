@@ -494,7 +494,7 @@ const Profile = () => {
   };
 
   const deleteItem = async (id: string, table: "work_items" | "achievements") => {
-    if (!confirm("Delete this item?")) return;
+    // Inline confirmation — the button itself will handle this with state
     await supabase.from(table).delete().eq("id", id);
     toast.success("Deleted");
     if (table === "work_items") setWorkItems(prev => prev.filter(w => w.id !== id));
@@ -646,7 +646,7 @@ const Profile = () => {
         <AnimatePresence>
           {showAddEdu && (
             <InlineForm title="Add Education" saving={saving} onSave={saveEducation} onCancel={() => setShowAddEdu(false)} fields={<>
-              <Input placeholder="Institution Name *" value={eduForm.institution} onChange={e => setEduForm({ ...eduForm, institution: e.target.value })} style={inputStyle} />
+              <OrgSearchInput value={eduForm.institution} onChange={(name) => setEduForm({ ...eduForm, institution: name })} placeholder="Institution Name *" style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", borderRadius: 12, color: "var(--text-1)" }} />
               <Input placeholder="Degree / Program *" value={eduForm.degree} onChange={e => setEduForm({ ...eduForm, degree: e.target.value })} style={inputStyle} />
               <Input placeholder="Branch / Specialisation" value={eduForm.branch} onChange={e => setEduForm({ ...eduForm, branch: e.target.value })} style={inputStyle} />
               <div className="grid grid-cols-2 gap-2">
