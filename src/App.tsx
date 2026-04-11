@@ -88,6 +88,7 @@ const App = () => (
             <Route path="/certificate/:id" element={<CertificatePage />} />
             <Route path="/create-page" element={<Shell><CreatePage /></Shell>} />
             <Route path="/post/create" element={<Shell><PostCreate /></Shell>} />
+            <Route path="/post/:postId" element={<Shell><PostDetail /></Shell>} />
             {/* App (protected) */}
             <Route path="/app/feed" element={<Shell><Feed /></Shell>} />
             <Route path="/app/explore" element={<Shell><Explore /></Shell>} />
