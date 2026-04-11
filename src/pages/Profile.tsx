@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { MapPin, Copy, Shield, Layers, X, MessageCircle, CheckCircle, Building2, Link2, Plus, Pencil, Trash2, Briefcase, GraduationCap, Award, Code2, GripVertical, Eye, EyeOff, Heart } from "lucide-react";
+import OrgSearchInput from "@/components/OrgSearchInput";
 import GetTiikedModal from "@/components/profile/GetTiikedModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
