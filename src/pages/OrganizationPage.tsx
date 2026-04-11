@@ -24,6 +24,21 @@ export default function OrganizationPage() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Force light mode on org pages
+  useEffect(() => {
+    const html = document.documentElement;
+    const prevTheme = html.getAttribute("data-theme");
+    const prevClass = html.className;
+    html.setAttribute("data-theme", "light");
+    html.classList.remove("dark");
+    html.classList.add("light");
+    return () => {
+      if (prevTheme) html.setAttribute("data-theme", prevTheme);
+      else html.removeAttribute("data-theme");
+      html.className = prevClass;
+    };
+  }, []);
+
   const [org, setOrg] = useState<Org | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [metadata, setMeta] = useState<Record<string, string>>({});
