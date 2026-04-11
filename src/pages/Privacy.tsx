@@ -10,6 +10,10 @@ const Privacy = () => (
       <h1 className="text-[32px] font-extrabold mb-2" style={{ color: "var(--text-1)", letterSpacing: "-0.02em" }}>Privacy Policy</h1>
       <p className="text-[14px] mb-8" style={{ color: "var(--text-3)" }}>Last updated: 1 April 2026</p>
 
+      <p className="text-[14px] italic mb-8" style={{ color: "var(--text-2)" }}>
+        This platform is operated by Veenavarse Private Limited, Hyderabad, India.
+      </p>
+
       <div className="prose-sm space-y-6" style={{ color: "var(--text-2)" }}>
         <section>
           <h2 className="text-[18px] font-bold mb-2" style={{ color: "var(--text-1)" }}>1. Data We Collect</h2>
