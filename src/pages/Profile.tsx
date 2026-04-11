@@ -542,8 +542,10 @@ const Profile = () => {
               {exp.description && <p className="text-[12px] mt-1" style={{ color: "var(--text-2)" }}>{exp.description}</p>}
               {exp.tech_stack?.length > 0 && <div className="flex flex-wrap gap-1 mt-1">{exp.tech_stack.map((s: string) => <span key={s} className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--brand-dim)", color: "var(--brand)" }}>{s}</span>)}</div>}
               {exp.verification_status === "verified" && <span className="flex items-center gap-1 text-[10px] font-bold mt-1" style={{ color: "#10B981" }}>✓ Verified</span>}
-              {exp.verification_status === "unverified" && isOwnProfile && <span className="text-[10px] mt-1" style={{ color: "var(--text-3)" }}>○ Unverified</span>}
-              {isOwnProfile && <span className="text-[10px] mt-0.5 block" style={{ color: "var(--text-3)" }}>{exp.visibility === "public" ? "👁 Public" : "🔒 Only me"}</span>}
+              {isOwnProfile && exp.verification_status !== "verified" && (
+                <VerificationRequest item={exp} itemType="experience" onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
+              )}
+              {!isOwnProfile && exp.verification_status === "unverified" && <span className="text-[10px] mt-1" style={{ color: "var(--text-3)" }}>○ Unverified</span>}
             </div>
             <div className="flex flex-col gap-1 items-end">
               {isOwnProfile && (
