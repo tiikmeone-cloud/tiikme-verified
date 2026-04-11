@@ -1,20 +1,47 @@
-import { ArrowRight, Zap } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
 const CTASection = () => (
-  <section className="px-6 pb-20">
-    <div className="max-w-4xl mx-auto rounded-3xl p-14 text-center" style={{ background: "var(--brand-dim)", border: "1px solid var(--brand-glow)" }}>
-      <h2 className="text-[32px] font-extrabold mb-3" style={{ color: "var(--text-1)" }}>Ready to get Tiiked?</h2>
-      <p className="text-[16px] mb-8" style={{ color: "var(--text-2)" }}>Join 12,400+ professionals building verified identities.</p>
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-        <Link to="/signup">
-          <Button size="xl" className="gap-2"><Zap className="w-4 h-4" />Create your free profile<ArrowRight className="w-4 h-4" /></Button>
+  <section className="px-5 md:px-8 py-16 md:py-[100px]" style={{ backgroundColor: "#E8580A" }}>
+    <div className="max-w-[800px] mx-auto text-center">
+      <h2 className="font-extrabold text-[28px] md:text-[48px] leading-[1.15] text-white mb-5">
+        Stop explaining yourself to people
+        <br className="hidden md:block" />
+        {" "}who should already know.
+      </h2>
+      <p className="text-[16px] md:text-[20px] mb-10" style={{ color: "rgba(255,255,255,0.85)" }}>
+        Build your verified professional identity today.
+        <br />
+        Free. Ten minutes. Yours for life.
+      </p>
+
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-8">
+        <Link to="/signup" className="w-full sm:w-auto">
+          <button
+            className="w-full sm:w-auto h-[52px] px-8 rounded-xl font-bold text-[16px] cursor-pointer transition-colors"
+            style={{ backgroundColor: "#FFFFFF", color: "#E8580A" }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#FFF7ED")}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#FFFFFF")}
+          >
+            Create My Profile — Free
+          </button>
         </Link>
-        <a href="#features">
-          <Button size="xl" variant="outline" style={{ background: "var(--surface-2)", border: "1px solid var(--border-2)", color: "var(--text-1)" }}>Learn more</Button>
-        </a>
+        <Link to="/join-as-institution" className="w-full sm:w-auto">
+          <button
+            className="w-full sm:w-auto h-[52px] px-8 rounded-xl font-bold text-[16px] cursor-pointer transition-colors border-2"
+            style={{ borderColor: "#FFFFFF", color: "#FFFFFF", backgroundColor: "transparent" }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.1)")}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+          >
+            For Institutions →
+          </button>
+        </Link>
       </div>
+
+      <p className="text-[13px]" style={{ color: "rgba(255,255,255,0.6)" }}>
+        No credit card. No fake profiles. No nonsense.
+        <br />
+        Built by Veenavarse Private Limited, Hyderabad.
+      </p>
     </div>
   </section>
 );

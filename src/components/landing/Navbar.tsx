@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import ThemeLogo from "@/components/ThemeLogo";
 
@@ -17,11 +16,11 @@ const Navbar = () => {
   return (
     <>
       <nav
-        className="sticky top-0 z-50 h-16 flex items-center justify-between px-6"
+        className="sticky top-0 z-50 h-16 flex items-center justify-between px-5 md:px-8 max-w-[1200px] mx-auto w-full"
         style={{
-          background: scrolled ? "var(--glass-bg)" : "transparent",
-          backdropFilter: scrolled ? "var(--glass-blur)" : "none",
-          borderBottom: scrolled ? "1px solid var(--border)" : "none",
+          background: scrolled ? "rgba(255,248,242,0.95)" : "transparent",
+          backdropFilter: scrolled ? "blur(12px)" : "none",
+          borderBottom: scrolled ? "1px solid #E5E7EB" : "none",
           transition: "all 0.3s ease",
         }}
       >
@@ -29,61 +28,118 @@ const Navbar = () => {
           <ThemeLogo className="h-10 w-auto" />
         </Link>
 
-        <div className="hidden md:flex items-center gap-6">
-          {[{ label: "Features", href: "#features" }, { label: "How it works", href: "#how-it-works" }].map(l => (
-            <a key={l.label} href={l.href} className="text-[14px] font-medium transition-colors" style={{ color: "var(--text-2)" }}>{l.label}</a>
+        <div className="hidden md:flex items-center gap-8">
+          {[
+            { label: "Features", href: "#features" },
+            { label: "How it works", href: "#how-it-works" },
+          ].map((l) => (
+            <a
+              key={l.label}
+              href={l.href}
+              className="text-[14px] font-medium transition-colors"
+              style={{ color: "#374151" }}
+            >
+              {l.label}
+            </a>
           ))}
-          <Link to="/join-as-institution" className="text-[14px] font-medium transition-colors" style={{ color: "var(--text-2)" }}>For Institutions</Link>
+          <Link
+            to="/join-as-institution"
+            className="text-[14px] font-medium transition-colors"
+            style={{ color: "#374151" }}
+          >
+            For Institutions
+          </Link>
         </div>
 
-        <div className="hidden md:flex items-center gap-3">
-          <Link to="/signin"><Button variant="ghost" style={{ color: "var(--text-2)" }}>Sign in</Button></Link>
-          <Link to="/signup"><Button className="gap-1.5 font-['Silkscreen']"><span>Get Tiiked</span> <span className="opacity-80">✓</span></Button></Link>
+        <div className="hidden md:flex items-center gap-4">
+          <Link to="/signin" className="text-[14px] font-semibold" style={{ color: "#374151" }}>
+            Sign in
+          </Link>
+          <Link to="/signup">
+            <button
+              className="h-[44px] px-6 rounded-xl font-bold text-[14px] text-white transition-colors cursor-pointer"
+              style={{ backgroundColor: "#E8580A" }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#C94A07")}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#E8580A")}
+            >
+              Get Tiiked
+            </button>
+          </Link>
         </div>
 
-        <div className="flex md:hidden items-center gap-2">
-          <Link to="/signin" className="text-[13px] font-semibold" style={{ color: "var(--text-2)" }}>Sign in</Link>
-          <Link to="/signup"><Button size="sm" className="gap-1 font-['Silkscreen']">Get Tiiked ✓</Button></Link>
-          <button onClick={() => setMenuOpen(true)} className="p-1.5 ml-1 cursor-pointer" style={{ color: "var(--text-2)" }}>
-            <Menu className="w-6 h-6" />
-          </button>
-        </div>
+        <button
+          onClick={() => setMenuOpen(true)}
+          className="flex md:hidden p-2 cursor-pointer"
+          style={{ color: "#374151" }}
+        >
+          <Menu className="w-6 h-6" />
+        </button>
       </nav>
 
       {menuOpen && (
         <div className="fixed inset-0 z-[100] md:hidden" onClick={() => setMenuOpen(false)}>
-          <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }} />
+          <div className="absolute inset-0 bg-black/50" />
           <div
-            className="absolute right-0 top-0 h-full w-[280px] p-6 flex flex-col"
-            style={{
-              background: "var(--surface)",
-              borderLeft: "1px solid var(--border)",
-              animation: "slideInRight 0.25s ease-out",
-            }}
-            onClick={e => e.stopPropagation()}
+            className="absolute inset-0 bg-white flex flex-col p-6"
+            onClick={(e) => e.stopPropagation()}
+            style={{ animation: "fadeIn 0.2s ease-out" }}
           >
-            <button onClick={() => setMenuOpen(false)} className="self-end p-2 mb-6 cursor-pointer" style={{ color: "var(--text-2)" }}>
-              <X className="w-6 h-6" />
-            </button>
-            <div className="flex flex-col gap-1">
-              {[{ label: "Features", href: "#features" }, { label: "How it works", href: "#how-it-works" }].map(l => (
-                <a key={l.label} href={l.href} onClick={() => setMenuOpen(false)} className="text-[15px] font-medium py-3 px-3 rounded-xl transition-colors" style={{ color: "var(--text-2)" }}>{l.label}</a>
-              ))}
-              <Link to="/join-as-institution" onClick={() => setMenuOpen(false)} className="text-[15px] font-medium py-3 px-3 rounded-xl transition-colors" style={{ color: "var(--text-2)" }}>For Institutions</Link>
+            <div className="flex items-center justify-between mb-10">
+              <ThemeLogo className="h-10 w-auto" />
+              <button onClick={() => setMenuOpen(false)} className="p-2 cursor-pointer" style={{ color: "#374151" }}>
+                <X className="w-6 h-6" />
+              </button>
             </div>
-            <div className="h-px my-4" style={{ background: "var(--border)" }} />
-            <div className="flex flex-col gap-3">
-              <Link to="/signin" onClick={() => setMenuOpen(false)}><Button variant="ghost" className="w-full" style={{ color: "var(--text-2)" }}>Sign in</Button></Link>
-              <Link to="/signup" onClick={() => setMenuOpen(false)}><Button className="w-full gap-1.5 font-['Silkscreen']">Get Tiiked ✓</Button></Link>
+            <div className="flex flex-col gap-2">
+              {[
+                { label: "Features", href: "#features" },
+                { label: "How it works", href: "#how-it-works" },
+              ].map((l) => (
+                <a
+                  key={l.label}
+                  href={l.href}
+                  onClick={() => setMenuOpen(false)}
+                  className="text-[18px] font-medium py-3 px-2 rounded-lg"
+                  style={{ color: "#04061A" }}
+                >
+                  {l.label}
+                </a>
+              ))}
+              <Link
+                to="/join-as-institution"
+                onClick={() => setMenuOpen(false)}
+                className="text-[18px] font-medium py-3 px-2 rounded-lg"
+                style={{ color: "#04061A" }}
+              >
+                For Institutions
+              </Link>
+            </div>
+            <div className="mt-auto flex flex-col gap-3">
+              <Link to="/signin" onClick={() => setMenuOpen(false)}>
+                <button
+                  className="w-full h-[52px] rounded-xl font-bold text-[16px] border-2 cursor-pointer"
+                  style={{ borderColor: "#E8580A", color: "#E8580A", backgroundColor: "transparent" }}
+                >
+                  Sign in
+                </button>
+              </Link>
+              <Link to="/signup" onClick={() => setMenuOpen(false)}>
+                <button
+                  className="w-full h-[52px] rounded-xl font-bold text-[16px] text-white cursor-pointer"
+                  style={{ backgroundColor: "#E8580A" }}
+                >
+                  Get Tiiked
+                </button>
+              </Link>
             </div>
           </div>
         </div>
       )}
 
       <style>{`
-        @keyframes slideInRight {
-          from { transform: translateX(100%); }
-          to { transform: translateX(0); }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
       `}</style>
     </>

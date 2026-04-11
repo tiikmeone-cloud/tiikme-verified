@@ -2,18 +2,23 @@ import { Link } from "react-router-dom";
 import ThemeLogo from "@/components/ThemeLogo";
 
 const Footer = () => (
-  <footer className="border-t px-6 py-12" style={{ borderColor: "var(--border)" }}>
-    <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-      <div className="flex items-center gap-3">
-        <ThemeLogo className="h-8 w-auto" />
-        <span className="text-[13px] font-['Silkscreen']" style={{ color: "var(--text-3)" }}>Get Tiiked. ✓</span>
+  <footer className="px-5 md:px-8 py-10 md:py-14" style={{ backgroundColor: "#04061A" }}>
+    <div className="max-w-[1200px] mx-auto">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
+        <ThemeLogo className="h-8 w-auto brightness-0 invert" />
+        <div className="flex flex-wrap items-center justify-center gap-6 text-[13px]">
+          <Link to="/privacy" className="text-white/70 hover:text-white transition-colors">Privacy</Link>
+          <Link to="/terms" className="text-white/70 hover:text-white transition-colors">Terms</Link>
+          <Link to="/grievance" className="text-white/70 hover:text-white transition-colors">Grievance Officer</Link>
+          <a href="mailto:hello@tiikme.in" className="text-white/70 hover:text-white transition-colors">Contact</a>
+        </div>
+        <span className="text-[12px] text-white/50">
+          © 2026 Veenavarse Private Limited
+        </span>
       </div>
-      <div className="flex items-center gap-6 text-[13px]" style={{ color: "var(--text-2)" }}>
-        <Link to="/privacy" className="hover:opacity-80 transition-colors">Privacy</Link>
-        <Link to="/terms" className="hover:opacity-80 transition-colors">Terms</Link>
-        <Link to="/grievance" className="hover:opacity-80 transition-colors">Grievance Officer</Link>
-      </div>
-      <span className="text-[12px]" style={{ color: "var(--text-3)" }}>© 2025 Tiikme · tiikme.in</span>
+      <p className="text-center text-[12px] text-white/30">
+        Built in Hyderabad. For India. tiikme.in · tiikme.com
+      </p>
     </div>
   </footer>
 );

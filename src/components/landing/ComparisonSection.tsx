@@ -1,34 +1,63 @@
 import { Check, X } from "lucide-react";
 
 const rows = [
-  { feature: "Profile without work history", trad: "Invisible", tiik: "Project-first identity" },
-  { feature: "Student verification", trad: "None", tiik: "Faculty Tiik Approval" },
-  { feature: "Skilled trade workers", trad: "Not supported", tiik: "First-class portfolios" },
-  { feature: "Regional languages", trad: "English only", tiik: "Telugu, Tamil, Hindi, Kannada, Marathi" },
-  { feature: "Government employees", trad: "Not suitable", tiik: "Department-aware workflows" },
-  { feature: "Verification depth", trad: "Self-declared only", tiik: "4-level verified identity" },
+  { feature: "Verified credentials", trad: "Self-declared only", tiik: "Verified by your institution" },
+  { feature: "Works for non-corporate India", trad: "No", tiik: "Yes \u2014 built for it" },
+  { feature: "Institutional routing", trad: "Not possible", tiik: "Department-level control" },
+  { feature: "Regional language support", trad: "English only", tiik: "Telugu, Tamil, Hindi + growing" },
+  { feature: "Certificate issuance", trad: "Not available", tiik: "Organisations issue directly" },
+  { feature: "Free for individuals", trad: "Limited", tiik: "Always free" },
+  { feature: "Monthly cost for organisations", trad: "Expensive", tiik: "\u20B9299/month" },
 ];
 
 const ComparisonSection = () => (
-  <section id="how-it-works" className="px-4 py-24 max-w-5xl mx-auto">
-    <h2 className="text-center font-extrabold text-[32px] mb-12 tracking-tight" style={{ color: "var(--text-1)" }}>Built differently.</h2>
-    <div className="rounded-[20px] overflow-hidden" style={{ background: "var(--glass-bg)", border: "1px solid var(--border)" }}>
-      <div className="grid grid-cols-3 text-[13px] font-bold border-b" style={{ borderColor: "var(--border)" }}>
-        <div className="px-5 py-4" style={{ color: "var(--text-2)" }}>Feature</div>
-        <div className="px-5 py-4" style={{ color: "var(--text-2)" }}>Traditional Platforms</div>
-        <div className="px-5 py-4" style={{ background: "var(--brand-dim)", color: "var(--brand)" }}>Tiikme</div>
+  <section className="bg-white px-5 md:px-8 py-16 md:py-[100px]">
+    <div className="max-w-[1000px] mx-auto">
+      <h2
+        className="text-center font-extrabold text-[28px] md:text-[48px] mb-12 md:mb-16"
+        style={{ color: "#04061A" }}
+      >
+        The honest comparison.
+      </h2>
+
+      <div className="overflow-x-auto -mx-5 px-5 md:mx-0 md:px-0" style={{ scrollbarWidth: "none" }}>
+        <table className="w-full min-w-[600px] text-left border-collapse">
+          <thead>
+            <tr style={{ borderBottom: "2px solid #E5E7EB" }}>
+              <th className="py-4 pr-4 text-[13px] font-bold" style={{ color: "#6B7280" }}>
+                Feature
+              </th>
+              <th className="py-4 pr-4 text-[13px] font-bold" style={{ color: "#6B7280" }}>
+                Traditional Platforms
+              </th>
+              <th className="py-4 text-[13px] font-bold" style={{ color: "#E8580A" }}>
+                Tiikme
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.feature} style={{ borderBottom: "1px solid #F3F4F6" }}>
+                <td className="py-3.5 pr-4 text-[14px] font-medium" style={{ color: "#374151" }}>
+                  {r.feature}
+                </td>
+                <td className="py-3.5 pr-4 text-[14px]" style={{ color: "#9CA3AF" }}>
+                  <span className="flex items-center gap-2">
+                    <X className="w-4 h-4 flex-shrink-0" style={{ color: "#EF4444" }} />
+                    {r.trad}
+                  </span>
+                </td>
+                <td className="py-3.5 text-[14px] font-medium" style={{ color: "#04061A" }}>
+                  <span className="flex items-center gap-2">
+                    <Check className="w-4 h-4 flex-shrink-0" style={{ color: "#22C55E" }} />
+                    {r.tiik}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
-      {rows.map((r, i) => (
-        <div key={r.feature} className="grid grid-cols-3 text-[13px]" style={{ background: i % 2 ? "var(--surface-2)" : "transparent", borderBottom: "1px solid var(--border)" }}>
-          <div className="px-5 py-3.5" style={{ color: "var(--text-2)" }}>{r.feature}</div>
-          <div className="px-5 py-3.5 flex items-center gap-2" style={{ color: "var(--text-3)" }}>
-            <X className="w-3.5 h-3.5" style={{ color: "var(--text-3)" }} /> {r.trad}
-          </div>
-          <div className="px-5 py-3.5 flex items-center gap-2" style={{ color: "var(--open-green)", background: "var(--brand-dim)" }}>
-            <Check className="w-3.5 h-3.5" /> {r.tiik}
-          </div>
-        </div>
-      ))}
     </div>
   </section>
 );
