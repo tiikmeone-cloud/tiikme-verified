@@ -418,6 +418,12 @@ const Profile = () => {
 
   const [connectionStatus, setConnectionStatus] = useState<{ status: string | null; direction: string | null; id: string | null }>({ status: null, direction: null, id: null });
   const [connectLoading, setConnectLoading] = useState(false);
+  useEffect(() => {
+    if (!user || !targetUserId || isOwnProfile) return;
+    supabase.from("strands").select("id, status, requester_id, receiver_id")
+      .or(`and(requester_id.eq.${user.id},receiver_id.eq.${targetUserId}),and(requester_id.eq.${targetUserId},receiver_id.eq.${user.id})`)
+      .maybeSingle().then(({ data }) => { if (data) { setConnectionStatus({ status: data.status, direction: data.requester_id === user.id ? "sent" : "received", id: data.id }); } });
+  }, [user, targetUserId, isOwnProfile]);
   useEffect(() => { if (!authLoading) loadProfile(); }, [authLoading, loadProfile]);
 
   if (authLoading || dataLoading) return (
@@ -459,19 +465,6 @@ const Profile = () => {
 
   const handleCopyLink = () => { navigator.clipboard.writeText(window.location.origin + "/" + username); toast.success("Link copied"); };
 
-  useEffect(() => {
-    if (!user || !targetUserId || isOwnProfile) return;
-    supabase.from("strands")
-      .select("id, status, requester_id, receiver_id")
-      .or(`and(requester_id.eq.${user.id},receiver_id.eq.${targetUserId}),and(requester_id.eq.${targetUserId},receiver_id.eq.${user.id})`)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data) {
-          const dir = data.requester_id === user.id ? "sent" : "received";
-          setConnectionStatus({ status: data.status, direction: dir, id: data.id });
-        }
-      });
-  }, [user, targetUserId, isOwnProfile]);
 
   const handleConnect = async () => {
     if (!user || !targetUserId || connectLoading) return;
