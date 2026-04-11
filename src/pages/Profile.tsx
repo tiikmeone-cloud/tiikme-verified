@@ -1064,6 +1064,37 @@ const Profile = () => {
       )}
 
       {user && <GetTiikedModal open={showGetTiiked} onClose={() => setShowGetTiiked(false)} userId={user.id} userRole={role} onVerified={loadProfile} />}
+
+      {/* Invite Modal */}
+      {showInvite && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowInvite(false)}>
+          <div className="t-card p-6 max-w-[400px] w-[90vw] mx-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-[18px] font-extrabold" style={{ color: "var(--text-1)" }}>Invite Friends</h2>
+              <button onClick={() => setShowInvite(false)} className="p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
+            </div>
+            <div className="rounded-xl p-3 mb-4" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
+              <p className="text-[12px] break-all" style={{ color: "var(--text-2)" }}>{window.location.origin}/join?ref={username}</p>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Button className="w-full" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/join?ref=${username}`); toast.success("Link copied!"); }}>
+                <Copy className="w-4 h-4 mr-2" /> Copy Link
+              </Button>
+              <Button variant="secondary" className="w-full" onClick={() => { window.open(`https://wa.me/?text=${encodeURIComponent(`Hey! I'm on Tiikme — India's first verified professional identity platform. Your work, your degree, your skills — all verified by the people who were actually there. Join me here: ${window.location.origin}/join?ref=${username}`)}`, "_blank"); }}>
+                Share via WhatsApp
+              </Button>
+              {navigator.share && (
+                <Button variant="ghost" className="w-full" onClick={() => { navigator.share({ title: "Join Tiikme", text: `Join me on Tiikme!`, url: `${window.location.origin}/join?ref=${username}` }); }}>
+                  Share via Other Apps
+                </Button>
+              )}
+            </div>
+            <p className="text-[11px] mt-3 text-center" style={{ color: "var(--text-3)" }}>
+              Hey! I'm on Tiikme — India's first verified professional identity platform. Join me!
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
