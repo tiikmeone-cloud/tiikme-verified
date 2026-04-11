@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Search, X, Shield, Filter, Lock, Building2, Users, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,7 +27,7 @@ interface ProfileResult {
 }
 
 function PersonCard({ p }: { p: ProfileResult }) {
-  const [connected, setConnected] = useState(false);
+  const [strandStatus, setStrandStatus] = useState<"none" | "pending" | "accepted">("none");
   const navigate = useNavigate();
   const { user } = useAuth();
   const name = p.full_name || p.username || "User";
@@ -34,6 +35,22 @@ function PersonCard({ p }: { p: ProfileResult }) {
   const role = p.role || "student";
   const roleLabel = role.charAt(0).toUpperCase() + role.slice(1).replace(/_/g, " ");
   const color = ROLE_COLORS[role] || "#6B7280";
+
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase.from("strands").select("status").or(`and(requester_id.eq.${user.id},receiver_id.eq.${p.id}),and(requester_id.eq.${p.id},receiver_id.eq.${user.id})`).maybeSingle().then(({ data }) => {
+      if (data?.status === "accepted") setStrandStatus("accepted");
+      else if (data?.status === "pending") setStrandStatus("pending");
+    });
+  }, [user?.id, p.id]);
+
+  const handleStrand = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user || strandStatus !== "none") return;
+    await supabase.from("strands").insert({ requester_id: user.id, receiver_id: p.id });
+    setStrandStatus("pending");
+    toast.success("Request sent");
+  };
 
   return (
     <article className="glass-liquid glass-liquid-hover rounded-xl p-3 flex items-center gap-3 cursor-pointer"
@@ -50,9 +67,13 @@ function PersonCard({ p }: { p: ProfileResult }) {
         <p className="text-[11px] truncate" style={{ color: "var(--text-3)" }}>{[p.institution_name, p.location_city].filter(Boolean).join(" · ") || "—"}</p>
       </div>
       {user?.id !== p.id && (
-        <Button variant={connected ? "ghost" : "secondary"} size="sm" className="shrink-0 h-7 text-[11px] active:scale-95" disabled={connected}
-          onClick={e => { e.stopPropagation(); if (!user || connected) return; supabase.from("strands").insert({ requester_id: user.id, receiver_id: p.id }); setConnected(true); toast.success("Request sent"); }}>
-          {connected ? "Pending" : "Strand →"}
+        <Button
+          variant={strandStatus === "accepted" ? "ghost" : strandStatus === "pending" ? "ghost" : "secondary"}
+          size="sm" className="shrink-0 h-7 text-[11px] active:scale-95"
+          disabled={strandStatus !== "none"}
+          onClick={handleStrand}
+          style={strandStatus === "accepted" ? { color: "#10B981" } : strandStatus === "pending" ? { color: "var(--text-3)" } : {}}>
+          {strandStatus === "accepted" ? "Connected ✓" : strandStatus === "pending" ? "Requested ✓" : "Strand →"}
         </Button>
       )}
     </article>
@@ -115,7 +136,8 @@ function OrgCard({ org }: { org: any }) {
 const Explore = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"people" | "organizations">("people");
+  const [searchParams] = useSearchParams();
+  const [tab, setTab] = useState<"people" | "organizations">(() => searchParams.get("tab") === "orgs" ? "organizations" : "people");
   const [search, setSearch] = useState("");
   const [people, setPeople] = useState<ProfileResult[]>([]);
   const [orgs, setOrgs] = useState<any[]>([]);
