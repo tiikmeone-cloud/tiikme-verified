@@ -1,18 +1,26 @@
 import Navbar from "@/components/landing/Navbar";
 import HeroSection from "@/components/landing/HeroSection";
+import ProblemSection from "@/components/landing/ProblemSection";
+import HowItWorksSection from "@/components/landing/HowItWorksSection";
+import WhoIsForSection from "@/components/landing/WhoIsForSection";
+import InstitutionsSection from "@/components/landing/InstitutionsSection";
 import ComparisonSection from "@/components/landing/ComparisonSection";
-import FeaturesSection from "@/components/landing/FeaturesSection";
+import VisionSection from "@/components/landing/VisionSection";
 import CTASection from "@/components/landing/CTASection";
 import Footer from "@/components/landing/Footer";
 import AuthThemeToggle from "@/components/AuthThemeToggle";
 
 const Index = () => {
   return (
-    <div className="min-h-screen" style={{ background: "var(--bg)", color: "var(--text-1)" }}>
+    <div className="min-h-screen bg-white" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
       <Navbar />
       <HeroSection />
+      <ProblemSection />
+      <HowItWorksSection />
+      <WhoIsForSection />
+      <InstitutionsSection />
       <ComparisonSection />
-      <FeaturesSection />
+      <VisionSection />
       <CTASection />
       <Footer />
       <AuthThemeToggle />
