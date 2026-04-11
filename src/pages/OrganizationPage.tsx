@@ -127,7 +127,7 @@ export default function OrganizationPage() {
       org_id: org.id, user_id: user.id,
       title_at_org: verifTitle, member_type: verifType, message: verifMsg || null,
     } as any);
-    if (error) toast({ title: "Request failed", description: error.message, variant: "destructive" });
+    if (error) { toast({ title: "Request failed", description: error.message, variant: "destructive" }); }
     else { toast({ title: "Verification request sent ✓" }); setShowVerifForm(false); }
     setVerifSubmitting(false);
   };
@@ -402,6 +402,11 @@ export default function OrganizationPage() {
             <p className="text-center py-8 text-sm" style={{ color: "var(--text-3)" }}>No opportunities posted yet</p>
           </TabsContent>
         </Tabs>
+      </div>
+
+      {/* Footer branding */}
+      <div className="text-center py-6 border-t border-gray-100 text-xs text-gray-400 mt-8">
+        Tiikme is a product of Veenavarse Private Limited
       </div>
     </div>
   );
