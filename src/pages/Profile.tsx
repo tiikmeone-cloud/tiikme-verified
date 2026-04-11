@@ -457,9 +457,7 @@ const Profile = () => {
 
   const handleCopyLink = () => { navigator.clipboard.writeText(window.location.origin + "/" + username); toast.success("Link copied"); };
 
-  // Connection state
-  const [connectionStatus, setConnectionStatus] = useState<{ status: string | null; direction: string | null; id: string | null }>({ status: null, direction: null, id: null });
-  const [connectLoading, setConnectLoading] = useState(false);
+  const handleCopyLink2 = handleCopyLink; // keep reference
 
   useEffect(() => {
     if (!user || !targetUserId || isOwnProfile) return;
