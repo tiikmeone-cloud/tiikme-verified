@@ -752,6 +752,41 @@ export type Database = {
           },
         ]
       }
+      org_verif_routes: {
+        Row: {
+          assigned_to_user_id: string | null
+          condition_type: string | null
+          condition_value: string | null
+          created_at: string | null
+          id: string
+          org_id: string | null
+        }
+        Insert: {
+          assigned_to_user_id?: string | null
+          condition_type?: string | null
+          condition_value?: string | null
+          created_at?: string | null
+          id?: string
+          org_id?: string | null
+        }
+        Update: {
+          assigned_to_user_id?: string | null
+          condition_type?: string | null
+          condition_value?: string | null
+          created_at?: string | null
+          id?: string
+          org_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_verif_routes_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           allow_employee_requests: boolean | null
