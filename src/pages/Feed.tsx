@@ -74,15 +74,17 @@ const LivePostCard = ({
     setShowMenu(false);
   };
 
+  const [confirmRepost, setConfirmRepost] = useState(false);
   const handleRepost = async () => {
     if (!user) return;
-    if (!confirm("Repost to your feed?")) return;
+    if (!confirmRepost) { setConfirmRepost(true); return; }
     await supabase.from("posts").insert({
       author_id: user.id, content: post.content, repost_of: post.id,
       post_type: "thought", type: "thought", visibility: "everyone",
       image_urls: post.image_urls || [],
     } as any);
-    toast.success("Reposted ✓");
+    toast.success("Reposted");
+    setConfirmRepost(false);
   };
 
   return (
@@ -142,9 +144,18 @@ const LivePostCard = ({
         <button onClick={() => toggleComments(post.id)} className="h-9 px-3 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer hover:bg-[var(--brand-dim)]" style={{ color: "var(--text-2)" }}>
           <MessageSquare className="w-4 h-4" /> {commentCount}
         </button>
-        <button onClick={handleRepost} className="h-9 px-3 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer hover:bg-[var(--brand-dim)]" style={{ color: "var(--text-2)" }}>
-          <Repeat2 className="w-4 h-4" />
-        </button>
+        <div className="relative">
+          <button onClick={handleRepost} className="h-9 px-3 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer hover:bg-[var(--brand-dim)]" style={{ color: "var(--text-2)" }}>
+            <Repeat2 className="w-4 h-4" />
+          </button>
+          {confirmRepost && (
+            <div className="absolute bottom-full left-0 mb-1 flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] whitespace-nowrap" style={{ background: "var(--surface)", border: "1px solid var(--border)", zIndex: 10 }}>
+              <span style={{ color: "var(--text-2)" }}>Repost?</span>
+              <button onClick={handleRepost} className="font-bold px-1.5 cursor-pointer" style={{ color: "var(--brand)" }}>Yes</button>
+              <button onClick={() => setConfirmRepost(false)} className="px-1.5 cursor-pointer" style={{ color: "var(--text-3)" }}>No</button>
+            </div>
+          )}
+        </div>
         <button onClick={() => { navigator.clipboard.writeText(window.location.origin + "/post/" + post.id); toast.success("Link copied!"); }} className="h-9 px-3 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer hover:bg-[var(--brand-dim)] ml-auto" style={{ color: "var(--text-2)" }}>
           <ArrowUpRight className="w-4 h-4" />
         </button>

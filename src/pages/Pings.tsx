@@ -114,7 +114,7 @@ const Pings = () => {
       <input ref={fileInputRef} type="file" accept="image/*,.pdf,.doc,.docx" className="hidden" onChange={handleFileSelect} />
 
       {/* Left panel */}
-      <div className={`w-full md:w-[340px] flex flex-col shrink-0 ${!showMobileList ? "hidden md:flex" : "flex"}`} style={{ background: "var(--glass-bg)", backdropFilter: "blur(20px) saturate(180%)", WebkitBackdropFilter: "blur(20px) saturate(180%)", borderRight: "1px solid var(--glass-border)" }}>
+      <div className={`w-full md:w-[340px] flex flex-col shrink-0 relative ${!showMobileList ? "hidden md:flex" : "flex"}`} style={{ background: "var(--glass-bg)", backdropFilter: "blur(20px) saturate(180%)", WebkitBackdropFilter: "blur(20px) saturate(180%)", borderRight: "1px solid var(--glass-border)" }}>
         <div className="p-4" style={{ borderBottom: "1px solid var(--border)" }}>
           <div className="flex items-center justify-between mb-3">
             <h1 className="text-[20px] font-extrabold" style={{ color: "var(--text-1)", letterSpacing: "-0.01em" }}>Pings</h1>
@@ -325,32 +325,30 @@ const Pings = () => {
         )}
       </div>
 
-      {/* New Ping — inline panel at top of conversation list */}
+      {/* New Ping — inline panel above conversation list */}
       {showNewPing && (
-        <div className="fixed inset-0 z-50 flex" style={{ background: "var(--bg)" }}>
-          <div className="w-full max-w-md mx-auto p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[17px] font-extrabold" style={{ color: "var(--text-1)" }}>New Ping</h2>
-              <button onClick={() => setShowNewPing(false)} className="p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
-            </div>
-            <Input value={newPingSearch} onChange={e => setNewPingSearch(e.target.value)} placeholder="Search by name or @username..." autoFocus />
-            <div className="mt-3 max-h-[60vh] overflow-y-auto space-y-1">
-              {searchResults.map((u: any) => (
-                <button key={u.id} onClick={() => startConversation(u.id)}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left cursor-pointer transition-all duration-150 hover:bg-[var(--surface-2)]">
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: ROLE_COLORS[u.role || ""] || "#6B7280" }}>
-                    {u.avatar_url ? <img src={u.avatar_url} alt="" className="w-full h-full object-cover" /> : (u.full_name || "U").split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-bold truncate" style={{ color: "var(--text-1)" }}>{u.full_name || u.username}</p>
-                    <p className="text-[11px]" style={{ color: "var(--text-3)" }}>@{u.username} · {u.role} {u.institution_name ? `· ${u.institution_name}` : ""}</p>
-                  </div>
-                </button>
-              ))}
-              {newPingSearch.length >= 2 && searchResults.length === 0 && (
-                <p className="text-[12px] text-center py-4" style={{ color: "var(--text-3)" }}>No users found</p>
-              )}
-            </div>
+        <div className="absolute top-0 left-0 right-0 z-20 p-3" style={{ background: "var(--surface)", borderBottom: "1px solid var(--border)" }}>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-[15px] font-extrabold" style={{ color: "var(--text-1)" }}>New Ping</h2>
+            <button onClick={() => setShowNewPing(false)} className="p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-4 h-4" /></button>
+          </div>
+          <Input value={newPingSearch} onChange={e => setNewPingSearch(e.target.value)} placeholder="Search by name or @username..." autoFocus />
+          <div className="mt-2 max-h-[300px] overflow-y-auto space-y-0.5">
+            {searchResults.map((u: any) => (
+              <button key={u.id} onClick={() => startConversation(u.id)}
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left cursor-pointer hover:bg-[var(--surface-2)]">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: ROLE_COLORS[u.role || ""] || "#6B7280" }}>
+                  {u.avatar_url ? <img src={u.avatar_url} alt="" className="w-full h-full object-cover" /> : (u.full_name || "U").split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-bold truncate" style={{ color: "var(--text-1)" }}>{u.full_name || u.username}</p>
+                  <p className="text-[11px]" style={{ color: "var(--text-3)" }}>@{u.username} · {u.role}</p>
+                </div>
+              </button>
+            ))}
+            {newPingSearch.length >= 2 && searchResults.length === 0 && (
+              <p className="text-[12px] text-center py-3" style={{ color: "var(--text-3)" }}>No users found</p>
+            )}
           </div>
         </div>
       )}
