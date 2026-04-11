@@ -78,6 +78,7 @@ const App = () => (
             <Route path="/onboarding/welcome" element={<OnboardingWelcome />} />
             <Route path="/welcome" element={<Welcome />} />
             <Route path="/verify-invite" element={<VerifyInvite />} />
+            <Route path="/join" element={<JoinRedirect />} />
             <Route path="/join-as-institution" element={<JoinAsInstitution />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
