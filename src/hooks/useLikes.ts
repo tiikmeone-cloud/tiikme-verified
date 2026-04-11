@@ -118,7 +118,6 @@ export function useLikes(postIds: string[]) {
           }
         }
       }
-      }
     },
     [user, myLikes]
   );
