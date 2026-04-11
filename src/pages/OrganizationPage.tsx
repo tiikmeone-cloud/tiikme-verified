@@ -10,7 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import PageLoader from "@/components/PageLoader";
-import { MapPin, Globe, Calendar, Users, Heart, MessageCircle, Settings, Plus, CheckCircle, Search } from "lucide-react";
+import ThemeLogo from "@/components/ThemeLogo";
+import { MapPin, Globe, Calendar, Users, Heart, MessageCircle, Settings, Plus, CheckCircle, Search, ArrowLeft } from "lucide-react";
 import { ORG_TYPES, MEMBER_LABELS, MEMBER_TYPE_OPTIONS } from "@/lib/orgConstants";
 import { formatDistanceToNow } from "date-fns";
 
