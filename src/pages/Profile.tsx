@@ -742,6 +742,9 @@ const Profile = () => {
         )}
       </div>
     ),
+    certificates: (
+      <CertificatesSection certificates={certificates} setCertificates={setCertificates} isOwnProfile={isOwnProfile} />
+    ),
     posts: userPosts.length > 0 ? (
       <ProfilePostsSection posts={userPosts} isOwnProfile={isOwnProfile} />
     ) : null,
