@@ -1654,6 +1654,7 @@ export type Database = {
           activity_score: number | null
           avatar_url: string | null
           bio: string | null
+          cover_url: string | null
           created_at: string | null
           custom_links: Json | null
           department: string | null
@@ -1673,6 +1674,7 @@ export type Database = {
           onboarding_complete: boolean | null
           open_to_work: boolean | null
           phone_hash: string | null
+          referred_by: string | null
           role: string | null
           role_metadata: Json | null
           role_subtype: string | null
@@ -1692,6 +1694,7 @@ export type Database = {
           activity_score?: number | null
           avatar_url?: string | null
           bio?: string | null
+          cover_url?: string | null
           created_at?: string | null
           custom_links?: Json | null
           department?: string | null
@@ -1711,6 +1714,7 @@ export type Database = {
           onboarding_complete?: boolean | null
           open_to_work?: boolean | null
           phone_hash?: string | null
+          referred_by?: string | null
           role?: string | null
           role_metadata?: Json | null
           role_subtype?: string | null
@@ -1730,6 +1734,7 @@ export type Database = {
           activity_score?: number | null
           avatar_url?: string | null
           bio?: string | null
+          cover_url?: string | null
           created_at?: string | null
           custom_links?: Json | null
           department?: string | null
@@ -1749,6 +1754,7 @@ export type Database = {
           onboarding_complete?: boolean | null
           open_to_work?: boolean | null
           phone_hash?: string | null
+          referred_by?: string | null
           role?: string | null
           role_metadata?: Json | null
           role_subtype?: string | null
@@ -2321,6 +2327,10 @@ export type Database = {
           role: string
           user_id: string
         }[]
+      }
+      increment_score: {
+        Args: { amount: number; uid: string }
+        Returns: undefined
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }

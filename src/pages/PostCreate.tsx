@@ -6,51 +6,64 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
+const MAX_IMAGES = 20;
+
 const PostCreate = () => {
   const navigate = useNavigate();
   const { user, profile, initials } = useAuth();
   const [content, setContent] = useState("");
   const [publishing, setPublishing] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const charLimit = 3000;
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith("image/")) { toast.error("Only images allowed"); return; }
-    if (file.size > 10 * 1024 * 1024) { toast.error("Image must be under 10MB"); return; }
-    setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    const remaining = MAX_IMAGES - imageFiles.length;
+    if (remaining <= 0) { toast.error(`Max ${MAX_IMAGES} images`); return; }
+    const toAdd = files.slice(0, remaining);
+    const valid: File[] = [];
+    const previews: string[] = [];
+    for (const file of toAdd) {
+      if (!file.type.startsWith("image/")) continue;
+      if (file.size > 10 * 1024 * 1024) { toast.error(`${file.name} is over 10MB`); continue; }
+      valid.push(file);
+      previews.push(URL.createObjectURL(file));
+    }
+    setImageFiles(prev => [...prev, ...valid]);
+    setImagePreviews(prev => [...prev, ...previews]);
     e.target.value = "";
   };
 
-  const removeImage = () => {
-    setImageFile(null);
-    if (imagePreview) URL.revokeObjectURL(imagePreview);
-    setImagePreview(null);
+  const removeImage = (idx: number) => {
+    URL.revokeObjectURL(imagePreviews[idx]);
+    setImageFiles(prev => prev.filter((_, i) => i !== idx));
+    setImagePreviews(prev => prev.filter((_, i) => i !== idx));
   };
 
   const handlePublish = async () => {
-    if (!content.trim()) { toast.error("Write something first"); return; }
+    if (!content.trim() && imageFiles.length === 0) { toast.error("Write something or add an image"); return; }
     if (!user) { toast.error("Please sign in"); return; }
     setPublishing(true);
     try {
       let imageUrls: string[] = [];
 
-      if (imageFile) {
+      if (imageFiles.length > 0) {
         setUploading(true);
-        const safeName = imageFile.name.replace(/[^a-z0-9.]/gi, "_");
-        const path = `${user.id}/${Date.now()}-${safeName}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from("post-images")
-          .upload(path, imageFile, { upsert: false, contentType: imageFile.type });
-        if (uploadError) { toast.error("Upload failed: " + uploadError.message); setPublishing(false); setUploading(false); return; }
-        const { data: urlData } = supabase.storage.from("post-images").getPublicUrl(uploadData.path);
-        if (urlData?.publicUrl) imageUrls.push(urlData.publicUrl);
+        for (const file of imageFiles) {
+          const safeName = file.name.replace(/[^a-z0-9.]/gi, "_");
+          const path = `${user.id}/${Date.now()}-${safeName}`;
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from("post-images")
+            .upload(path, file, { upsert: false, contentType: file.type });
+          if (uploadError) { toast.error("Upload failed: " + uploadError.message); setPublishing(false); setUploading(false); return; }
+          const { data: urlData } = supabase.storage.from("post-images").getPublicUrl(uploadData.path);
+          if (urlData?.publicUrl) imageUrls.push(urlData.publicUrl);
+        }
         setUploading(false);
       }
 
@@ -65,7 +78,11 @@ const PostCreate = () => {
       } as any).select().single();
 
       if (error) throw error;
-      toast.success("Posted ✓");
+
+      // Award activity score
+      await supabase.rpc("increment_score", { uid: user.id, amount: 5 });
+
+      toast.success("Posted");
       navigate("/app/feed");
     } catch (err: any) {
       toast.error("Failed to post");
@@ -87,7 +104,7 @@ const PostCreate = () => {
         <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-[14px] font-semibold cursor-pointer min-h-[44px]" style={{ color: "var(--text-2)" }}>
           <ArrowLeft className="w-5 h-5" /> Create Post
         </button>
-        <Button onClick={handlePublish} disabled={publishing || uploading || !content.trim()} className="rounded-full px-6 h-11">
+        <Button onClick={handlePublish} disabled={publishing || uploading || (!content.trim() && imageFiles.length === 0)} className="rounded-full px-6 h-11">
           {publishing ? <Loader2 className="w-4 h-4 animate-spin" /> : "Publish"}
         </Button>
       </div>
@@ -115,21 +132,26 @@ const PostCreate = () => {
       />
       <div className="flex items-center justify-between mt-2 px-1">
         <span className="text-[11px]" style={{ color: "var(--text-3)" }}>{content.length}/{charLimit}</span>
+        {imageFiles.length > 0 && <span className="text-[11px] font-bold" style={{ color: "var(--brand)" }}>{imageFiles.length}/{MAX_IMAGES} images</span>}
       </div>
 
-      {/* Image preview */}
-      {imagePreview && (
-        <div className="relative mt-4 rounded-2xl overflow-hidden" style={{ background: "var(--surface-2)" }}>
-          <img src={imagePreview} alt="Preview" className="w-full max-h-96 object-cover rounded-2xl" />
-          <button onClick={removeImage} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center cursor-pointer">
-            <X className="w-4 h-4 text-white" />
-          </button>
+      {/* Image previews — horizontal scroll */}
+      {imagePreviews.length > 0 && (
+        <div className="flex gap-2 mt-4 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
+          {imagePreviews.map((preview, idx) => (
+            <div key={idx} className="relative shrink-0 w-24 h-24 rounded-xl overflow-hidden" style={{ background: "var(--surface-2)" }}>
+              <img src={preview} alt="" className="w-full h-full object-cover" />
+              <button onClick={() => removeImage(idx)} className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 flex items-center justify-center cursor-pointer">
+                <X className="w-3 h-3 text-white" />
+              </button>
+            </div>
+          ))}
         </div>
       )}
 
       {uploading && (
         <div className="flex items-center gap-2 mt-3 text-[12px]" style={{ color: "var(--text-3)" }}>
-          <Loader2 className="w-3 h-3 animate-spin" /> Uploading image...
+          <Loader2 className="w-3 h-3 animate-spin" /> Uploading images...
         </div>
       )}
 
@@ -137,11 +159,11 @@ const PostCreate = () => {
       <div className="flex items-center gap-3 mt-4 pt-4" style={{ borderTop: "1px solid var(--border)" }}>
         <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-4 py-2.5 rounded-xl cursor-pointer active:scale-95 transition-all min-h-[44px]" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-2)" }}>
           <ImageIcon className="w-4 h-4" />
-          <span className="text-[13px] font-medium">{imageFile ? "Change Photo" : "Add Photo"}</span>
+          <span className="text-[13px] font-medium">{imageFiles.length > 0 ? "Add More" : "Add Photos"}</span>
         </button>
       </div>
 
-      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
+      <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageSelect} />
     </main>
   );
 };

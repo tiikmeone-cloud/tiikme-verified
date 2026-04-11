@@ -77,7 +77,7 @@ export default function OnboardingWelcome() {
       </div>
 
       <button
-        onClick={() => navigate("/app/feed")}
+        onClick={() => navigate("/app/feed", { replace: true })}
         className="h-12 px-8 rounded-2xl text-[15px] font-bold text-white cursor-pointer transition-all hover:opacity-90 flex items-center gap-2"
         style={{ background: "#E8580A" }}
       >
