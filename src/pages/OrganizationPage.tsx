@@ -170,7 +170,19 @@ export default function OrganizationPage() {
   const locationParts = [org.village, org.city, org.district, org.state].filter(Boolean);
 
   return (
-    <div className="min-h-screen" style={{ background: "#FFF8F2" }} data-theme="light">
+    <div className="min-h-screen bg-[#FFF8F2]" style={{ colorScheme: "light" }}>
+      {/* Back button + branding header */}
+      <div className="sticky top-0 z-20 bg-[#FFF8F2] border-b border-gray-100 px-4 py-3 flex items-center gap-3">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-sm text-gray-600 hover:text-[#E8580A] transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back</span>
+        </button>
+        <div className="flex-1" />
+        <span className="text-xs text-gray-400">A Veenavarse Private Limited product</span>
+      </div>
       {/* Cover */}
       <div className="w-full h-48 md:h-56 relative" style={{
         background: org.cover_url
