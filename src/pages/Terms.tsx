@@ -28,7 +28,7 @@ const Terms = () => (
 
         <section>
           <h2 className="text-[18px] font-bold mb-2" style={{ color: "var(--text-1)" }}>4. Verification System</h2>
-          <p className="text-[14px] leading-[1.75]">Tiikme's verification system (Tiik Approved, Institution Verification) is designed to validate the authenticity of work and credentials. Attempting to falsify verification status, impersonate verifiers, or manipulate the approval process is strictly prohibited.</p>
+          <p className="text-[14px] leading-[1.75]">Tiikme's verification system (Tiik Approved, Institution Verification) is designed to validate the authenticity of work and credentials. Tiikme verification indicates community-based trust signals. It does not constitute a government or legal endorsement. Attempting to falsify verification status, impersonate verifiers, or manipulate the approval process is strictly prohibited.</p>
         </section>
 
         <section>
@@ -37,19 +37,30 @@ const Terms = () => (
         </section>
 
         <section>
-          <h2 className="text-[18px] font-bold mb-2" style={{ color: "var(--text-1)" }}>6. Prohibited Conduct</h2>
+          <h2 className="text-[18px] font-bold mb-2" style={{ color: "var(--text-1)" }}>6. Organization Pages</h2>
+          <p className="text-[14px] leading-[1.75]">Organizations creating pages on Tiikme must be legitimate entities. Pages representing companies, institutions, hospitals, or government bodies must be created by authorised representatives. False claims, impersonation of organisations, or misleading page content will result in immediate page removal and potential account suspension.</p>
+        </section>
+
+        <section>
+          <h2 className="text-[18px] font-bold mb-2" style={{ color: "var(--text-1)" }}>7. Prohibited Conduct</h2>
           <p className="text-[14px] leading-[1.75]">Users may not: spam or send unsolicited messages, scrape or harvest data from the platform, create fake accounts, post misleading job opportunities, or engage in harassment of any kind.</p>
         </section>
 
         <section>
-          <h2 className="text-[18px] font-bold mb-2" style={{ color: "var(--text-1)" }}>7. Termination</h2>
+          <h2 className="text-[18px] font-bold mb-2" style={{ color: "var(--text-1)" }}>8. Termination</h2>
           <p className="text-[14px] leading-[1.75]">We may suspend or terminate accounts that violate these terms. You may delete your account at any time through Settings → Account. Deletion takes effect after a 30-day hold period during which you can cancel by signing back in.</p>
         </section>
 
         <section>
-          <h2 className="text-[18px] font-bold mb-2" style={{ color: "var(--text-1)" }}>8. Governing Law</h2>
+          <h2 className="text-[18px] font-bold mb-2" style={{ color: "var(--text-1)" }}>9. Governing Law</h2>
           <p className="text-[14px] leading-[1.75]">These terms are governed by the laws of India. Any disputes shall be subject to the exclusive jurisdiction of the courts in New Delhi.</p>
         </section>
+      </div>
+
+      <div className="flex gap-4 mt-10 pt-6 text-[13px]" style={{ borderTop: "1px solid var(--border)", color: "var(--text-3)" }}>
+        <Link to="/privacy" style={{ color: "var(--brand)" }}>Privacy</Link>
+        <Link to="/terms" style={{ color: "var(--brand)" }}>Terms</Link>
+        <Link to="/grievance" style={{ color: "var(--brand)" }}>Grievance Officer</Link>
       </div>
     </div>
   </div>

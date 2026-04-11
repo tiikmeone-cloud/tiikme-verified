@@ -50,9 +50,8 @@ export function usePostInteractions(postIds: string[]) {
         setLikes(prev => ({ ...prev, [postId]: (prev[postId] || 0) + 1 }));
       }
     } else {
-      const { error } = await supabase.from("post_reactions").upsert(
-        { post_id: postId, user_id: user.id, reaction_type: "useful" },
-        { onConflict: "post_id,user_id" }
+      const { error } = await supabase.from("post_reactions").insert(
+        { post_id: postId, user_id: user.id, reaction_type: "like" }
       );
       if (error) {
         setLiked(prev => ({ ...prev, [postId]: false }));

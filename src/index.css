@@ -19,9 +19,9 @@
     --brand-dim: rgba(232,88,10,0.10);
     --brand-glow: rgba(232,88,10,0.18);
     --brand-hover: #F97316;
-    --text-1: #111827;
-    --text-2: #6B7280;
-    --text-3: #9CA3AF;
+    --text-1: #0A0A0A;
+    --text-2: #374151;
+    --text-3: #6B7280;
     --tiik-gold: #F59E0B;
     --tiik-grey: #6B7280;
     --open-green: #10B981;
@@ -73,9 +73,9 @@
     --brand-dim: rgba(61,90,241,0.14);
     --brand-glow: rgba(61,90,241,0.28);
     --brand-hover: #5B73F5;
-    --text-1: #EEF0FF;
-    --text-2: rgba(238,240,255,0.58);
-    --text-3: rgba(238,240,255,0.32);
+    --text-1: #F9FAFB;
+    --text-2: #D1D5DB;
+    --text-3: #9CA3AF;
     --tiik-gold: #F59E0B;
     --tiik-grey: #6B7280;
     --open-green: #10B981;

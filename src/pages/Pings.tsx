@@ -190,7 +190,6 @@ const Pings = () => {
             <div className="text-center">
               <MessageCircle className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
               <p className="text-[15px] font-bold" style={{ color: "var(--text-1)" }}>Select a conversation</p>
-              <p className="text-[13px]" style={{ color: "var(--text-3)" }}>Or start a new Ping</p>
             </div>
           </div>
         ) : (

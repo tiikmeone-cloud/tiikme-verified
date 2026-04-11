@@ -97,18 +97,25 @@ export function useLikes(postIds: string[]) {
           setCounts((p) => ({ ...p, [postId]: (p[postId] || 0) + 1 }));
         }
       } else {
-        const { error } = await supabase
+        // Check if already liked first
+        const { data: existing } = await supabase
           .from("post_reactions")
-          .upsert(
-            { post_id: postId, user_id: user.id, reaction_type: "useful" },
-            { onConflict: "post_id,user_id", ignoreDuplicates: true }
-          );
-        if (error) {
-          setMyLikes((p) => ({ ...p, [postId]: false }));
-          setCounts((p) => ({
-            ...p,
-            [postId]: Math.max(0, (p[postId] || 0) - 1),
-          }));
+          .select("id")
+          .eq("post_id", postId)
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (!existing) {
+          const { error } = await supabase
+            .from("post_reactions")
+            .insert({ post_id: postId, user_id: user.id, reaction_type: "like" });
+          if (error) {
+            setMyLikes((p) => ({ ...p, [postId]: false }));
+            setCounts((p) => ({
+              ...p,
+              [postId]: Math.max(0, (p[postId] || 0) - 1),
+            }));
+          }
         }
       }
     },

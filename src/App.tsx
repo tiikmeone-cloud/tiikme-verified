@@ -42,6 +42,7 @@ const PageProfile = lazyWithRetry(() => import("./pages/PageProfile.tsx"), "Page
 const VerifyInvite = lazyWithRetry(() => import("./pages/VerifyInvite.tsx"), "VerifyInvite");
 const Privacy = lazyWithRetry(() => import("./pages/Privacy.tsx"), "Privacy");
 const Terms = lazyWithRetry(() => import("./pages/Terms.tsx"), "Terms");
+const Grievance = lazyWithRetry(() => import("./pages/Grievance.tsx"), "Grievance");
 const JoinAsInstitution = lazyWithRetry(() => import("./pages/JoinAsInstitution.tsx"), "JoinAsInstitution");
 const CreateOrganization = lazyWithRetry(() => import("./pages/CreateOrganization.tsx"), "CreateOrganization");
 const OrganizationPage = lazyWithRetry(() => import("./pages/OrganizationPage.tsx"), "OrganizationPage");
@@ -76,6 +77,7 @@ const App = () => (
             <Route path="/join-as-institution" element={<JoinAsInstitution />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
+            <Route path="/grievance" element={<Grievance />} />
             <Route path="/create-organization" element={<ProtectedRoute><CreateOrganization /></ProtectedRoute>} />
             <Route path="/org/:slug" element={<OrganizationPage />} />
             <Route path="/org/:slug/admin" element={<ProtectedRoute><OrgAdmin /></ProtectedRoute>} />

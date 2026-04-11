@@ -32,19 +32,30 @@ const Privacy = () => (
         </section>
 
         <section>
-          <h2 className="text-[18px] font-bold mb-2" style={{ color: "var(--text-1)" }}>5. Your Rights</h2>
+          <h2 className="text-[18px] font-bold mb-2" style={{ color: "var(--text-1)" }}>5. Data Retention</h2>
+          <p className="text-[14px] leading-[1.75]">You may request deletion of your account and all associated data at any time from Settings → Danger Zone. Upon deletion, your data will be permanently removed within 30 days. We do not retain personal data beyond the purpose for which it was collected.</p>
+        </section>
+
+        <section>
+          <h2 className="text-[18px] font-bold mb-2" style={{ color: "var(--text-1)" }}>6. Cookies</h2>
+          <p className="text-[14px] leading-[1.75]">We use essential cookies for authentication and session management only. No advertising or tracking cookies are used. We do not share cookie data with any third parties.</p>
+        </section>
+
+        <section>
+          <h2 className="text-[18px] font-bold mb-2" style={{ color: "var(--text-1)" }}>7. Your Rights</h2>
           <p className="text-[14px] leading-[1.75]">You may request access to, correction of, or deletion of your personal data at any time through Settings → Account → Download my data, or by contacting privacy@tiikme.in. Account deletion requests are processed within 30 days.</p>
         </section>
 
         <section>
-          <h2 className="text-[18px] font-bold mb-2" style={{ color: "var(--text-1)" }}>6. Cookies & Analytics</h2>
-          <p className="text-[14px] leading-[1.75]">We use essential cookies for authentication and session management. Analytics cookies help us understand platform usage. You can manage cookie preferences in your browser settings.</p>
+          <h2 className="text-[18px] font-bold mb-2" style={{ color: "var(--text-1)" }}>8. Contact</h2>
+          <p className="text-[14px] leading-[1.75]">For privacy-related queries, contact our Data Protection Officer at <a href="mailto:privacy@tiikme.in" style={{ color: "var(--brand)" }}>privacy@tiikme.in</a>.</p>
         </section>
+      </div>
 
-        <section>
-          <h2 className="text-[18px] font-bold mb-2" style={{ color: "var(--text-1)" }}>7. Contact</h2>
-          <p className="text-[14px] leading-[1.75]">For privacy-related queries, contact our Data Protection Officer at privacy@tiikme.in.</p>
-        </section>
+      <div className="flex gap-4 mt-10 pt-6 text-[13px]" style={{ borderTop: "1px solid var(--border)", color: "var(--text-3)" }}>
+        <Link to="/privacy" style={{ color: "var(--brand)" }}>Privacy</Link>
+        <Link to="/terms" style={{ color: "var(--brand)" }}>Terms</Link>
+        <Link to="/grievance" style={{ color: "var(--brand)" }}>Grievance Officer</Link>
       </div>
     </div>
   </div>
