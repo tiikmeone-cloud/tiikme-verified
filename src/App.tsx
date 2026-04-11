@@ -50,6 +50,7 @@ const OrgAdmin = lazyWithRetry(() => import("./pages/OrgAdmin.tsx"), "OrgAdmin")
 const PostCreate = lazyWithRetry(() => import("./pages/PostCreate.tsx"), "PostCreate");
 const CertificatePage = lazyWithRetry(() => import("./pages/CertificatePage.tsx"), "CertificatePage");
 const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword.tsx"), "ResetPassword");
+const PostDetail = lazyWithRetry(() => import("./pages/PostDetail.tsx"), "PostDetail");
 
 const queryClient = new QueryClient();
 
