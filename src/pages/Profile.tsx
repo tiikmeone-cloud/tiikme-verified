@@ -21,7 +21,7 @@ const allIndianStates = ["Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","C
 const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const years = Array.from({ length: 20 }, (_, i) => String(2026 - i));
 
-const DEFAULT_SECTION_ORDER = ["experience","education","projects","achievements","skills","posts"];
+const DEFAULT_SECTION_ORDER = ["experience","education","projects","achievements","certificates","skills","posts"];
 
 /* ── Section Header ── */
 const SectionHeader = ({ title, icon: Icon, onAdd, showAdd }: { title: string; icon: any; onAdd?: () => void; showAdd?: boolean }) => (
@@ -266,6 +266,7 @@ const Profile = () => {
   const [workItems, setWorkItems] = useState<any[]>([]);
   const [userPosts, setUserPosts] = useState<any[]>([]);
   const [achievements, setAchievements] = useState<any[]>([]);
+  const [certificates, setCertificates] = useState<any[]>([]);
   const [stats, setStats] = useState({ projects: 0, strands: 0, posts: 0 });
   const [dataLoading, setDataLoading] = useState(true);
   const [bioExpanded, setBioExpanded] = useState(false);
