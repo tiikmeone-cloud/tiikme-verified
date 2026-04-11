@@ -103,7 +103,7 @@ const LivePostCard = ({
           <span className="text-[11px]" style={{ color: "var(--text-3)" }}>{timeAgo}</span>
         </div>
         <div className="relative">
-          <button onClick={() => setShowMenu(!showMenu)} className="p-1.5 rounded-lg cursor-pointer" style={{ color: "var(--text-3)" }}><MoreHorizontal className="w-4 h-4" /></button>
+          <button onClick={() => setShowMenu(!showMenu)} className="p-2 md:p-1.5 rounded-lg cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center" style={{ color: "var(--text-3)" }}><MoreHorizontal className="w-4 h-4" /></button>
           {showMenu && (
             <div className="absolute right-0 top-8 glass-liquid rounded-xl p-1 min-w-[160px] z-10">
               {isOwn ? (
@@ -344,7 +344,7 @@ const Feed = () => {
   }, [hasMore, loadingMore, loadMore]);
 
   return (
-    <main className="max-w-[960px] mx-auto px-4 md:px-6 py-7" ref={feedRef}
+    <main className="max-w-[960px] mx-auto px-3 md:px-6 py-4 md:py-7" ref={feedRef}
       onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
       {/* Pull-to-refresh */}
       <div className="md:hidden flex items-center justify-center overflow-hidden transition-all duration-200"

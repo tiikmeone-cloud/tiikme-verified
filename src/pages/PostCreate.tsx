@@ -81,13 +81,13 @@ const PostCreate = () => {
   };
 
   return (
-    <main className="max-w-[660px] mx-auto px-4 py-4">
+    <main className="max-w-[660px] mx-auto px-4 py-3 md:py-4">
       {/* Header */}
-      <div className="flex items-center justify-between mb-5">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-[14px] font-semibold cursor-pointer" style={{ color: "var(--text-2)" }}>
+      <div className="flex items-center justify-between mb-4 md:mb-5">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-[14px] font-semibold cursor-pointer min-h-[44px]" style={{ color: "var(--text-2)" }}>
           <ArrowLeft className="w-5 h-5" /> Create Post
         </button>
-        <Button onClick={handlePublish} disabled={publishing || uploading || !content.trim()} className="rounded-full px-6">
+        <Button onClick={handlePublish} disabled={publishing || uploading || !content.trim()} className="rounded-full px-6 h-11">
           {publishing ? <Loader2 className="w-4 h-4 animate-spin" /> : "Publish"}
         </Button>
       </div>
@@ -135,7 +135,7 @@ const PostCreate = () => {
 
       {/* Actions bar */}
       <div className="flex items-center gap-3 mt-4 pt-4" style={{ borderTop: "1px solid var(--border)" }}>
-        <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-4 py-2.5 rounded-xl cursor-pointer active:scale-95 transition-all" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-2)" }}>
+        <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-4 py-2.5 rounded-xl cursor-pointer active:scale-95 transition-all min-h-[44px]" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-2)" }}>
           <ImageIcon className="w-4 h-4" />
           <span className="text-[13px] font-medium">{imageFile ? "Change Photo" : "Add Photo"}</span>
         </button>

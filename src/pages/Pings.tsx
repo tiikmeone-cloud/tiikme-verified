@@ -110,7 +110,8 @@ const Pings = () => {
   };
 
   return (
-    <div className="flex" style={{ height: "calc(100vh - 64px)" }}>
+    <div className="flex" style={{ height: "calc(100vh - 52px)", maxHeight: "calc(100dvh - 52px)" }}>
+      <input ref={fileInputRef} type="file" accept="image/*,.pdf,.doc,.docx" className="hidden" onChange={handleFileSelect} />
       <input ref={fileInputRef} type="file" accept="image/*,.pdf,.doc,.docx" className="hidden" onChange={handleFileSelect} />
 
       {/* Left panel */}
@@ -292,30 +293,26 @@ const Pings = () => {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input area */}
-            <div className="px-4 py-3" style={{ background: "var(--glass-bg)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderTop: "1px solid var(--glass-border)" }}>
+            {/* Input area — fixed at bottom, respects keyboard */}
+            <div className="px-3 md:px-4 py-2 md:py-3" style={{ background: "var(--glass-bg)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderTop: "1px solid var(--glass-border)", paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
               {uploading && (
                 <div className="flex items-center gap-2 mb-2 px-3 py-2 rounded-xl" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
                   <div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: "var(--brand)", borderTopColor: "transparent" }} />
                   <span className="text-[12px]" style={{ color: "var(--text-2)" }}>Uploading...</span>
                 </div>
               )}
-              <div className="flex items-center gap-1 mb-2">
-                <Tooltip><TooltipTrigger asChild>
-                  <button className="p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-95" style={{ color: "var(--text-2)" }} onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-                    <Paperclip className="w-4 h-4" />
-                  </button>
-                </TooltipTrigger><TooltipContent>Attach file or image</TooltipContent></Tooltip>
-              </div>
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2">
+                <button className="w-10 h-10 md:w-auto md:h-auto md:p-2 rounded-full md:rounded-lg flex items-center justify-center transition-all duration-150 cursor-pointer active:scale-95 shrink-0" style={{ color: "var(--text-2)", background: "var(--surface-2)" }} onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+                  <Paperclip className="w-5 h-5 md:w-4 md:h-4" />
+                </button>
                 <textarea value={newMsg} onChange={e => setNewMsg(e.target.value)}
                   onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                   placeholder={activeConvo?.other_user ? `Ping ${activeConvo.other_user.full_name || ""}...` : "Type a message..."}
-                  className="flex-1 min-h-[42px] max-h-[160px] rounded-2xl px-3.5 py-2.5 text-[14px] resize-none outline-none transition-all duration-150"
+                  className="flex-1 min-h-[42px] max-h-[120px] md:max-h-[160px] rounded-2xl px-3.5 py-2.5 text-[14px] resize-none outline-none transition-all duration-150"
                   style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", color: "var(--text-1)" }}
                   rows={1} />
                 <button onClick={handleSend} disabled={!newMsg.trim()}
-                  className="w-[42px] h-[42px] rounded-full flex items-center justify-center transition-all duration-200 disabled:opacity-40 active:scale-95 cursor-pointer"
+                  className="w-[42px] h-[42px] rounded-full flex items-center justify-center transition-all duration-200 disabled:opacity-40 active:scale-95 cursor-pointer shrink-0"
                   style={{ background: "var(--brand)", boxShadow: "0 3px 10px var(--brand-glow)" }}>
                   <Send className="w-[18px] h-[18px] text-white" />
                 </button>

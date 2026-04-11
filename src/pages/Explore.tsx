@@ -29,13 +29,15 @@ function PersonCard({ p, strandStatus, onStrand }: { p: ProfileResult; strandSta
   const color = ROLE_COLORS[role] || "#6B7280";
 
   return (
-    <article className="glass-liquid glass-liquid-hover rounded-xl p-3 flex items-center gap-3 cursor-pointer"
+    <article className="glass-liquid glass-liquid-hover rounded-xl p-3 cursor-pointer
+      min-w-[160px] w-[160px] md:min-w-0 md:w-auto shrink-0 md:shrink
+      flex flex-col md:flex-row items-center md:items-center gap-2 md:gap-3"
       onClick={() => navigate(`/app/profile/${p.id}`)}>
       <div className="w-11 h-11 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: color }}>
         {p.avatar_url ? <img src={p.avatar_url} alt="" className="w-full h-full object-cover" /> : initials}
       </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5">
+      <div className="flex-1 min-w-0 text-center md:text-left">
+        <div className="flex items-center justify-center md:justify-start gap-1.5">
           <p className="text-[13px] font-bold truncate" style={{ color: "var(--text-1)" }}>{name}</p>
           {p.is_verified && <Shield className="w-3 h-3 shrink-0" style={{ color: "#F59E0B" }} />}
         </div>
@@ -45,7 +47,7 @@ function PersonCard({ p, strandStatus, onStrand }: { p: ProfileResult; strandSta
       {user?.id !== p.id && (
         <Button
           variant={strandStatus === "accepted" ? "ghost" : strandStatus === "pending" ? "ghost" : "secondary"}
-          size="sm" className="shrink-0 h-7 text-[11px] active:scale-95"
+          size="sm" className="shrink-0 h-8 md:h-7 text-[11px] active:scale-95 w-full md:w-auto min-h-[36px] md:min-h-0"
           disabled={strandStatus !== "none"}
           onClick={(e) => { e.stopPropagation(); onStrand(); }}
           style={strandStatus === "accepted" ? { color: "#10B981" } : strandStatus === "pending" ? { color: "var(--text-3)" } : {}}>
@@ -108,12 +110,12 @@ function OrgCard({ org }: { org: any }) {
   );
 }
 
-/* Section wrapper with horizontal scroll on desktop */
+/* Section wrapper — horizontal scroll on mobile, grid on desktop */
 const ExploreSection = ({ title, icon: Icon, children, count, onViewAll }: { title: string; icon: any; children: React.ReactNode; count: number; onViewAll?: () => void }) => {
   if (count === 0) return null;
   return (
-    <section className="mb-8">
-      <div className="flex items-center justify-between mb-3">
+    <section className="mb-6 md:mb-8">
+      <div className="flex items-center justify-between mb-3 px-4 md:px-0">
         <div className="flex items-center gap-2">
           <div className="w-1 h-5 rounded-full" style={{ background: "var(--brand)" }} />
           <Icon className="w-4 h-4" style={{ color: "var(--brand)" }} />
@@ -126,7 +128,11 @@ const ExploreSection = ({ title, icon: Icon, children, count, onViewAll }: { tit
           </button>
         )}
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+      {/* Mobile: horizontal scroll; Desktop: grid */}
+      <div className="flex md:hidden gap-2 overflow-x-auto scrollbar-hide px-4 pb-2">
+        {children}
+      </div>
+      <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
         {children}
       </div>
     </section>
@@ -259,15 +265,15 @@ const Explore = () => {
     ));
 
   return (
-    <main className="max-w-[1100px] mx-auto px-3 md:px-6 py-7">
+    <main className="max-w-[1100px] mx-auto px-0 md:px-6 py-4 md:py-7">
       {/* Search */}
-      <div className="flex gap-2 mb-6">
+      <div className="flex gap-2 mb-5 md:mb-6 px-4 md:px-0">
         <div className="relative flex-1">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: "var(--text-3)" }} />
           <input type="text" value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Search people, organizations..."
-            className="w-full h-[52px] glass-input pl-[52px] pr-12 text-[14px] outline-none" style={{ color: "var(--text-1)" }} />
-          {search && <button onClick={() => setSearch("")} className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-4 h-4" /></button>}
+            className="w-full h-[48px] md:h-[52px] glass-input pl-[52px] pr-12 text-[14px] outline-none" style={{ color: "var(--text-1)" }} />
+          {search && <button onClick={() => setSearch("")} className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer w-10 h-10 flex items-center justify-center" style={{ color: "var(--text-3)" }}><X className="w-4 h-4" /></button>}
         </div>
       </div>
 
