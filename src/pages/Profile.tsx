@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { MapPin, Copy, Shield, Layers, X, MessageCircle, CheckCircle, Building2, Link2, Plus, Pencil, Trash2, Briefcase, GraduationCap, Award, Code2, GripVertical, Eye, EyeOff, Heart } from "lucide-react";
+import { MapPin, Copy, Shield, Layers, X, MessageCircle, CheckCircle, Building2, Link2, Plus, Pencil, Trash2, Briefcase, GraduationCap, Award, Code2, GripVertical, Eye, EyeOff, Heart, Rocket } from "lucide-react";
 import OrgSearchInput from "@/components/OrgSearchInput";
 import GetTiikedModal from "@/components/profile/GetTiikedModal";
 import { Button } from "@/components/ui/button";
@@ -20,11 +20,11 @@ import CertificatesSection from "@/components/profile/CertificatesSection";
 const ROLE_COLOR_MAP: Record<string, string> = { student: "#4F46E5", professional: "#0369A1", doctor: "#0E7490", government: "#166534", skilled_trade: "#C2410C", hr: "#6B21A8", faculty: "#92400E", builder: "#7C3AED", aspirant: "#374151" };
 const allIndianStates = ["Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Delhi","Goa","Gujarat","Haryana","Himachal Pradesh","Jharkhand","Karnataka","Kerala","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal"];
 const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-const years = Array.from({ length: 20 }, (_, i) => String(2026 - i));
+const years = Array.from({ length: 67 }, (_, i) => String(2026 - i));
 
 const DEFAULT_SECTION_ORDER = ["experience","education","projects","achievements","certificates","skills","posts"];
 
-/* ── Section Header ── */
+/* -- Section Header -- */
 const SectionHeader = ({ title, icon: Icon, onAdd, showAdd }: { title: string; icon: any; onAdd?: () => void; showAdd?: boolean }) => (
   <div className="flex items-center justify-between mb-4">
     <div className="flex items-center gap-2">
@@ -40,8 +40,8 @@ const SectionHeader = ({ title, icon: Icon, onAdd, showAdd }: { title: string; i
   </div>
 );
 
-/* ── Edit Profile Drawer ── */
-const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose: () => void; onSaved: () => void }) => {
+/* -- Edit Profile INLINE -- */
+const EditProfileInline = ({ open, onClose, onSaved }: { open: boolean; onClose: () => void; onSaved: () => void }) => {
   const { refreshProfile } = useAuth();
   const [form, setForm] = useState({ name: "", headline: "", bio: "", city: "", state: "", username: "", open_to_work: false, avatar_url: "" });
   const [saving, setSaving] = useState(false);
@@ -83,7 +83,7 @@ const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose:
     const avatarUrl = urlData.publicUrl + "?t=" + Date.now();
     await supabase.from("profiles").update({ avatar_url: avatarUrl }).eq("id", userId);
     setForm(p => ({ ...p, avatar_url: avatarUrl }));
-    toast.success("Avatar updated ✓");
+    toast.success("Avatar updated");
   };
 
   const handleSave = async () => {
@@ -96,72 +96,70 @@ const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose:
       custom_links: customLinks.filter(l => l.url) as any,
     }).eq("id", userId);
     setSaving(false);
-    toast.success("Profile updated ✓");
+    toast.success("Profile updated");
     await refreshProfile();
     onSaved(); onClose();
   };
 
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-end" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} onClick={onClose}>
-      <motion.div initial={{ x: 400 }} animate={{ x: 0 }} exit={{ x: 400 }}
-        className="w-full sm:w-[400px] h-full sm:h-auto sm:max-h-[90vh] rounded-l-[24px] sm:rounded-[20px] p-6 overflow-y-auto glass-card" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-[20px] font-extrabold" style={{ color: "var(--text-1)" }}>Edit profile</h2>
-          <button onClick={onClose} className="p-2 rounded-lg cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
+    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+      className="t-card p-6 overflow-hidden" style={{ borderLeft: "3px solid var(--brand)" }}>
+      <div className="flex items-center justify-between mb-5">
+        <h2 className="text-[18px] font-extrabold" style={{ color: "var(--text-1)" }}>Edit profile</h2>
+        <button onClick={onClose} className="p-2 rounded-lg cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
+      </div>
+      <div className="flex items-center gap-4 mb-5 cursor-pointer" onClick={() => avatarRef.current?.click()}>
+        <div className="w-16 h-16 rounded-full flex items-center justify-center text-[20px] font-bold text-white overflow-hidden" style={{ backgroundColor: "var(--brand)" }}>
+          {form.avatar_url ? <img src={form.avatar_url} alt="" className="w-full h-full object-cover" /> : form.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "U"}
         </div>
-        <div className="flex items-center gap-4 mb-5 cursor-pointer" onClick={() => avatarRef.current?.click()}>
-          <div className="w-16 h-16 rounded-full flex items-center justify-center text-[20px] font-bold text-white overflow-hidden" style={{ backgroundColor: "var(--brand)" }}>
-            {form.avatar_url ? <img src={form.avatar_url} alt="" className="w-full h-full object-cover" /> : form.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "U"}
-          </div>
-          <p className="text-[12px]" style={{ color: "var(--text-3)" }}>Click to change avatar</p>
-          <input ref={avatarRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+        <p className="text-[12px]" style={{ color: "var(--text-3)" }}>Click to change avatar</p>
+        <input ref={avatarRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+      </div>
+      <div className="space-y-4">
+        <div><label className="micro-label block mb-1.5">Display name</label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
+        <div><label className="micro-label block mb-1.5">Headline (80 chars)</label><Input value={form.headline} onChange={e => setForm({ ...form, headline: e.target.value.slice(0, 80) })} maxLength={80} /></div>
+        <div><label className="micro-label block mb-1.5">Bio (300 chars)</label>
+          <textarea value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value.slice(0, 300) })} rows={3} maxLength={300}
+            className="w-full rounded-xl p-3.5 text-[14px] outline-none resize-none" style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", color: "var(--text-1)" }} />
         </div>
-        <div className="space-y-4">
-          <div><label className="micro-label block mb-1.5">Display name</label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
-          <div><label className="micro-label block mb-1.5">Headline (80 chars)</label><Input value={form.headline} onChange={e => setForm({ ...form, headline: e.target.value.slice(0, 80) })} maxLength={80} /></div>
-          <div><label className="micro-label block mb-1.5">Bio (300 chars)</label>
-            <textarea value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value.slice(0, 300) })} rows={3} maxLength={300}
-              className="w-full rounded-xl p-3.5 text-[14px] outline-none resize-none" style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", color: "var(--text-1)" }} />
+        <div className="flex items-center gap-2"><span className="text-[13px]" style={{ color: "var(--text-3)" }}>@</span><Input value={form.username} onChange={e => setForm({ ...form, username: e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, "") })} className="flex-1" /></div>
+        <div className="grid grid-cols-2 gap-4">
+          <div><label className="micro-label block mb-1.5">City</label><Input value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} /></div>
+          <div><label className="micro-label block mb-1.5">State</label>
+            <select value={form.state} onChange={e => setForm({ ...form, state: e.target.value })} className="w-full h-10 rounded-xl px-3 text-[14px] outline-none cursor-pointer" style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", color: "var(--text-1)" }}>
+              <option value="">Select</option>{allIndianStates.map(s => <option key={s}>{s}</option>)}
+            </select>
           </div>
-          <div className="flex items-center gap-2"><span className="text-[13px]" style={{ color: "var(--text-3)" }}>@</span><Input value={form.username} onChange={e => setForm({ ...form, username: e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, "") })} className="flex-1" /></div>
-          <div className="grid grid-cols-2 gap-4">
-            <div><label className="micro-label block mb-1.5">City</label><Input value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} /></div>
-            <div><label className="micro-label block mb-1.5">State</label>
-              <select value={form.state} onChange={e => setForm({ ...form, state: e.target.value })} className="w-full h-10 rounded-xl px-3 text-[14px] outline-none cursor-pointer" style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", color: "var(--text-1)" }}>
-                <option value="">Select</option>{allIndianStates.map(s => <option key={s}>{s}</option>)}
-              </select>
+        </div>
+        <div className="flex items-center justify-between py-3" style={{ borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)" }}>
+          <span className="text-[14px] font-medium" style={{ color: "var(--text-1)" }}>Open to work</span>
+          <button onClick={() => setForm({ ...form, open_to_work: !form.open_to_work })} className="w-11 h-6 rounded-full flex items-center px-0.5 cursor-pointer"
+            style={{ background: form.open_to_work ? "var(--brand)" : "var(--border-2)" }}>
+            <div className="w-5 h-5 rounded-full bg-white" style={{ transform: form.open_to_work ? "translateX(20px)" : "translateX(0)", transition: "transform 0.2s" }} />
+          </button>
+        </div>
+        <div>
+          <label className="micro-label block mb-1.5">Custom Links</label>
+          {customLinks.map((link, i) => (
+            <div key={i} className="flex gap-2 items-center mb-2">
+              <Input placeholder="URL" value={link.url} onChange={e => { const u = [...customLinks]; u[i] = { ...u[i], url: e.target.value }; setCustomLinks(u); }} className="flex-1" />
+              <Input placeholder="Label" value={link.label} onChange={e => { const u = [...customLinks]; u[i] = { ...u[i], label: e.target.value }; setCustomLinks(u); }} className="flex-1" />
+              <button onClick={() => setCustomLinks(customLinks.filter((_, idx) => idx !== i))} className="p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-4 h-4" /></button>
             </div>
-          </div>
-          <div className="flex items-center justify-between py-3" style={{ borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)" }}>
-            <span className="text-[14px] font-medium" style={{ color: "var(--text-1)" }}>Open to work</span>
-            <button onClick={() => setForm({ ...form, open_to_work: !form.open_to_work })} className="w-11 h-6 rounded-full flex items-center px-0.5 cursor-pointer"
-              style={{ background: form.open_to_work ? "var(--brand)" : "var(--border-2)" }}>
-              <div className="w-5 h-5 rounded-full bg-white" style={{ transform: form.open_to_work ? "translateX(20px)" : "translateX(0)", transition: "transform 0.2s" }} />
-            </button>
-          </div>
-          <div>
-            <label className="micro-label block mb-1.5">Custom Links</label>
-            {customLinks.map((link, i) => (
-              <div key={i} className="flex gap-2 items-center mb-2">
-                <Input placeholder="URL" value={link.url} onChange={e => { const u = [...customLinks]; u[i] = { ...u[i], url: e.target.value }; setCustomLinks(u); }} className="flex-1" />
-                <Input placeholder="Label" value={link.label} onChange={e => { const u = [...customLinks]; u[i] = { ...u[i], label: e.target.value }; setCustomLinks(u); }} className="flex-1" />
-                <button onClick={() => setCustomLinks(customLinks.filter((_, idx) => idx !== i))} className="p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-4 h-4" /></button>
-              </div>
-            ))}
-            {customLinks.length < 5 && <button onClick={() => setCustomLinks([...customLinks, { url: "", label: "" }])} className="text-[12px] font-semibold cursor-pointer" style={{ color: "var(--brand)" }}>+ Add link</button>}
-          </div>
-          <div className="flex gap-3 pt-2">
-            <Button variant="ghost" className="flex-1" onClick={onClose}>Cancel</Button>
-            <Button className="flex-1" onClick={handleSave} disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
-          </div>
+          ))}
+          {customLinks.length < 5 && <button onClick={() => setCustomLinks([...customLinks, { url: "", label: "" }])} className="text-[12px] font-semibold cursor-pointer" style={{ color: "var(--brand)" }}>+ Add link</button>}
         </div>
-      </motion.div>
-    </div>
+        <div className="flex gap-3 pt-2">
+          <Button variant="ghost" className="flex-1" onClick={onClose}>Cancel</Button>
+          <Button className="flex-1" onClick={handleSave} disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
+        </div>
+      </div>
+    </motion.div>
   );
 };
 
-/* ── Inline Add Form ── */
+/* -- Inline Add Form -- */
 const InlineForm = ({ title, fields, onSave, onCancel, saving }: { title: string; fields: React.ReactNode; onSave: () => void; onCancel: () => void; saving: boolean }) => (
   <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
     className="t-card p-4 mt-3" style={{ borderLeft: "3px solid var(--brand)" }}>
@@ -198,7 +196,7 @@ const formatDuration = (start: string | null, end: string | null, isCurrent: boo
 
 const inputStyle: React.CSSProperties = { background: "var(--surface-2)", border: "1.5px solid var(--border-2)", borderRadius: 12, color: "var(--text-1)", height: 44 };
 
-/* ── Sortable Section Wrapper ── */
+/* -- Sortable Section Wrapper -- */
 const SortableSection = ({ id, children, isOwn }: { id: string; children: React.ReactNode; isOwn: boolean }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
@@ -224,10 +222,41 @@ function getTimeAgo(d: Date): string {
   return `${Math.floor(h / 24)}d ago`;
 }
 
+/* -- Verification badge inline component -- */
+const VerifBadge = ({ item, isOwn, onStatusChange }: { item: any; isOwn: boolean; onStatusChange?: (id: string, status: string) => void }) => {
+  const status = item.verification_status || "unverified";
+  if (status === "verified") {
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] font-semibold mt-1 px-2.5 py-0.5 rounded-full"
+        style={{ background: "rgba(16,185,129,0.08)", color: "#059669", border: "1px solid rgba(16,185,129,0.2)" }}>
+        <CheckCircle className="w-3 h-3" /> Verified
+      </span>
+    );
+  }
+  if (status === "pending") {
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] mt-1 px-2.5 py-0.5 rounded-full"
+        style={{ background: "rgba(245,158,11,0.08)", color: "#D97706", border: "1px solid rgba(245,158,11,0.2)" }}>
+        Verification pending
+      </span>
+    );
+  }
+  if (isOwn) {
+    return <VerificationRequest item={item} itemType={item.item_type || "experience"} onStatusChange={onStatusChange!} />;
+  }
+  return <span className="text-[10px] mt-1 block" style={{ color: "var(--text-3)" }}>Unverified</span>;
+};
+
+/* -- Visibility label -- */
+const VisLabel = ({ vis }: { vis: string }) => (
+  <span className="text-[10px] mt-0.5 flex items-center gap-1" style={{ color: "var(--text-3)" }}>
+    {vis === "public" ? <><Eye className="w-3 h-3" /> Public</> : <><EyeOff className="w-3 h-3" /> Only me</>}
+  </span>
+);
+
 const ProfilePostsSection = ({ posts, isOwnProfile }: { posts: any[]; isOwnProfile: boolean }) => {
   const postIds = useMemo(() => posts.map((p: any) => p.id), [posts]);
   const { counts, myLikes, toggle } = useLikes(postIds);
-
   return (
     <div className="t-card p-5">
       <SectionHeader title="Posts" icon={MessageCircle} showAdd={false} />
@@ -249,7 +278,7 @@ const ProfilePostsSection = ({ posts, isOwnProfile }: { posts: any[]; isOwnProfi
                   <Heart className="w-3 h-3" style={{ fill: liked ? "var(--brand)" : "none" }} /> {likeCount}
                 </button>
               )}
-              {!isOwnProfile && <span className="text-[11px]" style={{ color: "var(--text-3)" }}>♥ {likeCount}</span>}
+              {!isOwnProfile && <span className="flex items-center gap-1 text-[11px]" style={{ color: "var(--text-3)" }}><Heart className="w-3 h-3" /> {likeCount}</span>}
             </div>
           </div>
         );
@@ -259,7 +288,6 @@ const ProfilePostsSection = ({ posts, isOwnProfile }: { posts: any[]; isOwnProfi
 };
 
 const Profile = () => {
-
   const { id: urlUserId } = useParams<{ id: string }>();
   const [editOpen, setEditOpen] = useState(false);
   const { profile: authProfile, initials: authInitials, displayName: authDisplayName, refreshProfile, user, loading: authLoading } = useAuth();
@@ -285,8 +313,12 @@ const Profile = () => {
 
   const [expForm, setExpForm] = useState({ company: "", title: "", type: "Full-time", industry: "", city: "", isCurrent: true, startMonth: "", startYear: "", endMonth: "", endYear: "", description: "", skills: "" });
   const [eduForm, setEduForm] = useState({ institution: "", degree: "", branch: "", startYear: "", endYear: "", isCurrent: false, grade: "" });
-  const [projForm, setProjForm] = useState({ title: "", type: "software", description: "", techStack: "", startMonth: "", startYear: "", endMonth: "", endYear: "", isCurrent: false });
-  const [achForm, setAchForm] = useState({ title: "", issuedBy: "", date: "", description: "", url: "" });
+  const [projForm, setProjForm] = useState({ title: "", org: "", type: "software", description: "", techStack: "", startMonth: "", startYear: "", endMonth: "", endYear: "", isCurrent: false });
+  const [achForm, setAchForm] = useState({ title: "", issuedBy: "", dateMonth: "", dateYear: "", description: "", url: "" });
+
+  // Delete confirmation state
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [confirmDeleteTable, setConfirmDeleteTable] = useState<"work_items" | "achievements" | null>(null);
 
   const isOwnProfile = !urlUserId || urlUserId === user?.id;
   const targetUserId = isOwnProfile ? user?.id : urlUserId;
@@ -298,7 +330,7 @@ const Profile = () => {
     setDataLoading(true);
     const [profileRes, itemsRes, strandCountRes, postsRes, achvsRes, certsRes] = await Promise.allSettled([
       isOwnProfile ? Promise.resolve({ data: authProfile }) : supabase.from("profiles").select("*").eq("id", targetUserId).maybeSingle(),
-      supabase.from("work_items").select("*").eq("owner_id", targetUserId).order("is_current", { ascending: false }).order("start_date", { ascending: false }),
+      supabase.from("work_items").select("*").eq("owner_id", targetUserId).order("is_current", { ascending: false }).order("created_at", { ascending: false }),
       supabase.from("strands").select("*", { count: "exact", head: true }).or(`requester_id.eq.${targetUserId},receiver_id.eq.${targetUserId}`).eq("status", "accepted"),
       supabase.from("posts").select("id, content, created_at, image_urls, comment_count, reactions:post_reactions(user_id)").eq("author_id", targetUserId).order("created_at", { ascending: false }).limit(20),
       supabase.from("achievements").select("*").eq("user_id", targetUserId).order("created_at", { ascending: false }),
@@ -317,7 +349,6 @@ const Profile = () => {
     setAchievements(achvs);
     setCertificates(certs);
     setStats({ projects: items.filter((i: any) => i.item_type === "experience").length, strands: strandCount, posts: posts.length });
-    // Load section order
     if (p?.section_order && Array.isArray(p.section_order)) {
       setSectionOrder(p.section_order as string[]);
     } else {
@@ -337,7 +368,7 @@ const Profile = () => {
   if (!profileData) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
       <p className="text-[16px] font-bold" style={{ color: "var(--text-1)" }}>Profile not found</p>
-      <button onClick={() => navigate("/app/explore")} className="text-[13px] mt-2" style={{ color: "var(--brand)" }}>← Back to Explore</button>
+      <button onClick={() => navigate("/app/explore")} className="text-[13px] mt-2" style={{ color: "var(--brand)" }}>Back to Explore</button>
     </div>
   );
 
@@ -355,32 +386,28 @@ const Profile = () => {
   const isVerified = profileData.is_verified === true;
   const skills: string[] = profileData.skills || [];
 
-  // Sort experiences: current first, then by start_date desc
-  // Filter by visibility: own profile shows all, other profiles only public
   const visFilter = (items: any[]) => isOwnProfile ? items : items.filter((w: any) => w.visibility === "public" || !w.visibility);
-  
+
   const experiences = visFilter(workItems.filter((w: any) => w.item_type === "experience")).sort((a: any, b: any) => {
     if (a.is_current && !b.is_current) return -1;
     if (!a.is_current && b.is_current) return 1;
-    return (b.start_date || "").localeCompare(a.start_date || "");
+    return (b.start_year || 0) - (a.start_year || 0);
   });
   const education = visFilter(workItems.filter((w: any) => w.item_type === "education"));
   const projects = visFilter(workItems.filter((w: any) => w.item_type === "project" || (!w.item_type && w.title)));
 
-  const handleCopyLink = () => { navigator.clipboard.writeText(window.location.origin + "/" + username); toast.success("Link copied!"); };
+  const handleCopyLink = () => { navigator.clipboard.writeText(window.location.origin + "/" + username); toast.success("Link copied"); };
   const handleStrand = async () => {
     if (!user || !targetUserId) return;
     const { error } = await supabase.from("strands").insert({ requester_id: user.id, receiver_id: targetUserId });
     if (error) { toast.error(error.message); return; }
-    // Create alert for receiver
     await supabase.from("alerts").insert({
-      user_id: targetUserId,
-      type: "strand",
+      user_id: targetUserId, type: "strand",
       title: `${authProfile?.full_name || "Someone"} wants to connect with you`,
       body: `${authProfile?.full_name || "Someone"} sent you a strand request`,
       link: `/app/profile/${user.id}`,
     });
-    toast.success("Strand request sent ✓");
+    toast.success("Strand request sent");
   };
 
   const saveExperience = async () => {
@@ -404,8 +431,8 @@ const Profile = () => {
       status: "active", visibility: "public",
     }).select().single();
     setSaving(false);
-    if (error) { toast.error("Failed: " + error.message); console.error(error); return; }
-    toast.success("Experience added ✓");
+    if (error) { toast.error("Failed: " + error.message); return; }
+    toast.success("Saved");
     if (data) setWorkItems(prev => [data, ...prev]);
     setShowAddExp(false);
     setExpForm({ company: "", title: "", type: "Full-time", industry: "", city: "", isCurrent: true, startMonth: "", startYear: "", endMonth: "", endYear: "", description: "", skills: "" });
@@ -415,7 +442,7 @@ const Profile = () => {
     if (!eduForm.institution.trim() || !user) return;
     setSaving(true);
     const { data, error } = await supabase.from("work_items").insert({
-      owner_id: user.id, title: eduForm.degree + (eduForm.branch ? ` · ${eduForm.branch}` : ""),
+      owner_id: user.id, title: eduForm.degree + (eduForm.branch ? ` - ${eduForm.branch}` : ""),
       degree_type: eduForm.degree.trim() || null, field_of_study: eduForm.branch.trim() || null,
       institution_name_edu: eduForm.institution.trim(), institution_name: eduForm.institution.trim(),
       grade_score: eduForm.grade.trim() || null, item_type: "education",
@@ -427,8 +454,8 @@ const Profile = () => {
       status: "active", visibility: "public",
     }).select().single();
     setSaving(false);
-    if (error) { toast.error("Failed: " + error.message); console.error(error); return; }
-    toast.success("Education added ✓");
+    if (error) { toast.error("Failed: " + error.message); return; }
+    toast.success("Saved");
     if (data) setWorkItems(prev => [data, ...prev]);
     setShowAddEdu(false);
     setEduForm({ institution: "", degree: "", branch: "", startYear: "", endYear: "", isCurrent: false, grade: "" });
@@ -440,9 +467,12 @@ const Profile = () => {
     const startDate = projForm.startMonth && projForm.startYear ? `${projForm.startYear}-${String(months.indexOf(projForm.startMonth) + 1).padStart(2, "0")}-01` : null;
     const endDate = !projForm.isCurrent && projForm.endMonth && projForm.endYear ? `${projForm.endYear}-${String(months.indexOf(projForm.endMonth) + 1).padStart(2, "0")}-01` : null;
     const { data, error } = await supabase.from("work_items").insert({
-      owner_id: user.id, title: projForm.title.trim(), description: projForm.description.trim(),
+      owner_id: user.id, title: projForm.title.trim(), job_title: projForm.title.trim(),
+      description: projForm.description.trim(),
+      company_name: projForm.org.trim() || null,
       type: projForm.type, project_type: projForm.type, item_type: "project",
       tech_stack: projForm.techStack ? projForm.techStack.split(",").map(s => s.trim()).filter(Boolean) : [],
+      skills_used: projForm.techStack ? projForm.techStack.split(",").map(s => s.trim()).filter(Boolean) : [],
       start_month: projForm.startMonth || null,
       start_year: projForm.startYear ? Number(projForm.startYear) : null,
       end_month: !projForm.isCurrent ? (projForm.endMonth || null) : null,
@@ -451,27 +481,28 @@ const Profile = () => {
       status: "active", visibility: "public",
     }).select().single();
     setSaving(false);
-    if (error) { toast.error("Failed: " + error.message); console.error(error); return; }
-    toast.success("Project added ✓");
+    if (error) { toast.error("Failed: " + error.message); return; }
+    toast.success("Saved");
     if (data) setWorkItems(prev => [data, ...prev]);
     setShowAddProject(false);
-    setProjForm({ title: "", type: "software", description: "", techStack: "", startMonth: "", startYear: "", endMonth: "", endYear: "", isCurrent: false });
+    setProjForm({ title: "", org: "", type: "software", description: "", techStack: "", startMonth: "", startYear: "", endMonth: "", endYear: "", isCurrent: false });
   };
 
   const saveAchievement = async () => {
     if (!achForm.title.trim() || !user) return;
     setSaving(true);
+    const dateStr = achForm.dateYear ? `${achForm.dateYear}-${achForm.dateMonth ? String(months.indexOf(achForm.dateMonth) + 1).padStart(2, "0") : "01"}-01` : null;
     const { data, error } = await supabase.from("achievements").insert({
       user_id: user.id, title: achForm.title.trim(), issued_by: achForm.issuedBy,
-      achievement_date: achForm.date || null, description: achForm.description,
+      achievement_date: dateStr, description: achForm.description,
       certificate_url: achForm.url || null, type: "award",
     }).select().single();
     setSaving(false);
-    if (error) { toast.error("Failed: " + error.message); console.error(error); return; }
-    toast.success("Achievement added ✓");
+    if (error) { toast.error("Failed: " + error.message); return; }
+    toast.success("Saved");
     if (data) setAchievements(prev => [data, ...prev]);
     setShowAddAchievement(false);
-    setAchForm({ title: "", issuedBy: "", date: "", description: "", url: "" });
+    setAchForm({ title: "", issuedBy: "", dateMonth: "", dateYear: "", description: "", url: "" });
   };
 
   const addSkill = async () => {
@@ -494,11 +525,12 @@ const Profile = () => {
   };
 
   const deleteItem = async (id: string, table: "work_items" | "achievements") => {
-    // Inline confirmation — the button itself will handle this with state
     await supabase.from(table).delete().eq("id", id);
     toast.success("Deleted");
     if (table === "work_items") setWorkItems(prev => prev.filter(w => w.id !== id));
     else setAchievements(prev => prev.filter(a => a.id !== id));
+    setConfirmDeleteId(null);
+    setConfirmDeleteTable(null);
   };
 
   const toggleVisibility = async (id: string, table: "work_items" | "achievements", currentVis: string) => {
@@ -519,6 +551,25 @@ const Profile = () => {
     await supabase.from("profiles").update({ section_order: newOrder } as any).eq("id", user.id);
   };
 
+  /* -- Inline delete confirmation -- */
+  const DeleteConfirm = ({ id, table }: { id: string; table: "work_items" | "achievements" }) => {
+    if (confirmDeleteId !== id) {
+      return (
+        <button onClick={() => { setConfirmDeleteId(id); setConfirmDeleteTable(table); }} className="opacity-0 group-hover:opacity-100 p-1 cursor-pointer" style={{ color: "var(--text-3)" }}>
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      );
+    }
+    return (
+      <div className="flex items-center gap-1">
+        <button onClick={() => deleteItem(id, table)} className="text-[10px] font-bold px-2 py-0.5 rounded cursor-pointer" style={{ color: "#DC2626", border: "1px solid #DC2626" }}>Delete</button>
+        <button onClick={() => setConfirmDeleteId(null)} className="text-[10px] px-2 py-0.5 rounded cursor-pointer" style={{ color: "var(--text-3)" }}>Cancel</button>
+      </div>
+    );
+  };
+
+  const selectStyle: React.CSSProperties = { background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" };
+
   const sectionComponents: Record<string, React.ReactNode> = {
     experience: (
       <div className="t-card p-5">
@@ -530,11 +581,9 @@ const Profile = () => {
         )}
         {experiences.length > 0 && (
           <div className="relative pl-6">
-            {/* Vertical timeline line */}
             <div className="absolute left-[15px] top-2 bottom-2 w-[2px]" style={{ background: "linear-gradient(to bottom, var(--brand), var(--border))" }} />
             {experiences.map((exp: any, idx: number) => (
               <div key={exp.id} className="relative flex gap-3 py-3 group" style={{ borderBottom: idx < experiences.length - 1 ? "1px solid var(--border)" : "none" }}>
-                {/* Timeline dot */}
                 <div className="absolute -left-6 top-4 w-[12px] h-[12px] rounded-full border-2 z-10" style={{ background: exp.is_current ? "var(--brand)" : "var(--surface)", borderColor: "var(--brand)" }} />
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--surface-2)" }}>
                   <Briefcase className="w-4 h-4" style={{ color: "var(--text-3)" }} />
@@ -549,17 +598,11 @@ const Profile = () => {
                     {exp.start_month && exp.start_year ? `${exp.start_month} ${exp.start_year}` : exp.start_date ? formatDuration(exp.start_date, exp.end_date, exp.is_current) : ""}
                     {exp.start_month && exp.start_year ? ` – ${exp.is_current ? "Present" : exp.end_month && exp.end_year ? `${exp.end_month} ${exp.end_year}` : ""}` : ""}
                   </p>
-                  {exp.work_location && <p className="text-[11px]" style={{ color: "var(--text-3)" }}>📍 {exp.work_location}</p>}
+                  {exp.work_location && <p className="text-[11px] flex items-center gap-1" style={{ color: "var(--text-3)" }}><MapPin className="w-3 h-3" /> {exp.work_location}</p>}
                   {exp.description && <p className="text-[12px] mt-1" style={{ color: "var(--text-2)" }}>{exp.description}</p>}
                   {(exp.skills_used?.length > 0 || exp.tech_stack?.length > 0) && <div className="flex flex-wrap gap-1 mt-1">{(exp.skills_used || exp.tech_stack || []).map((s: string) => <span key={s} className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--brand-dim)", color: "var(--brand)" }}>{s}</span>)}</div>}
-                  {/* Verification status */}
-                  {exp.verification_status === "verified" && <span className="inline-flex items-center gap-1 text-[10px] font-bold mt-1 px-2.5 py-0.5 rounded-full" style={{ background: "rgba(16,185,129,0.08)", color: "#10B981", border: "1px solid rgba(16,185,129,0.2)" }}>✅ Verified{exp.verified_by_user ? "" : ""}</span>}
-                  {exp.verification_status === "pending" && <span className="inline-flex items-center gap-1 text-[10px] mt-1 px-2.5 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.08)", color: "#D97706", border: "1px solid rgba(245,158,11,0.2)" }}>🟡 Verification pending</span>}
-                  {isOwnProfile && (!exp.verification_status || exp.verification_status === "unverified") && (
-                    <VerificationRequest item={exp} itemType="experience" onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
-                  )}
-                  {!isOwnProfile && (!exp.verification_status || exp.verification_status === "unverified") && <span className="text-[10px] mt-1 block" style={{ color: "var(--text-3)" }}>⚪ Unverified</span>}
-                  {isOwnProfile && <span className="text-[10px] mt-0.5 block" style={{ color: "var(--text-3)" }}>{exp.visibility === "public" ? "👁 Public" : "🔒 Only me"}</span>}
+                  <VerifBadge item={exp} isOwn={isOwnProfile} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
+                  {isOwnProfile && <VisLabel vis={exp.visibility || "public"} />}
                 </div>
                 <div className="flex flex-col gap-1 items-end">
                   {isOwnProfile && (
@@ -567,7 +610,7 @@ const Profile = () => {
                       {exp.visibility === "public" ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                     </button>
                   )}
-                  {isOwnProfile && <button onClick={() => deleteItem(exp.id, "work_items")} className="opacity-0 group-hover:opacity-100 p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><Trash2 className="w-3.5 h-3.5" /></button>}
+                  {isOwnProfile && <DeleteConfirm id={exp.id} table="work_items" />}
                 </div>
               </div>
             ))}
@@ -582,22 +625,23 @@ const Profile = () => {
                 {["Full-time","Part-time","Contract","Freelance","Internship","Apprenticeship"].map(t => <option key={t}>{t}</option>)}
               </select>
               <div className="grid grid-cols-2 gap-2">
-                <select value={expForm.startMonth} onChange={e => setExpForm({ ...expForm, startMonth: e.target.value })} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }}>
+                <select value={expForm.startMonth} onChange={e => setExpForm({ ...expForm, startMonth: e.target.value })} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={selectStyle}>
                   <option value="">Start month</option>{months.map(m => <option key={m}>{m}</option>)}
                 </select>
-                <select value={expForm.startYear} onChange={e => setExpForm({ ...expForm, startYear: e.target.value })} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }}>
+                <select value={expForm.startYear} onChange={e => setExpForm({ ...expForm, startYear: e.target.value })} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={selectStyle}>
                   <option value="">Start year</option>{years.map(y => <option key={y}>{y}</option>)}
                 </select>
               </div>
               <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={expForm.isCurrent} onChange={e => setExpForm({ ...expForm, isCurrent: e.target.checked })} /><span className="text-[12px]" style={{ color: "var(--text-2)" }}>I currently work here</span></label>
               {!expForm.isCurrent && <div className="grid grid-cols-2 gap-2">
-                <select value={expForm.endMonth} onChange={e => setExpForm({ ...expForm, endMonth: e.target.value })} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }}>
+                <select value={expForm.endMonth} onChange={e => setExpForm({ ...expForm, endMonth: e.target.value })} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={selectStyle}>
                   <option value="">End month</option>{months.map(m => <option key={m}>{m}</option>)}
                 </select>
-                <select value={expForm.endYear} onChange={e => setExpForm({ ...expForm, endYear: e.target.value })} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }}>
+                <select value={expForm.endYear} onChange={e => setExpForm({ ...expForm, endYear: e.target.value })} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={selectStyle}>
                   <option value="">End year</option>{years.map(y => <option key={y}>{y}</option>)}
                 </select>
               </div>}
+              <Input placeholder="Location (optional)" value={expForm.city} onChange={e => setExpForm({ ...expForm, city: e.target.value })} style={inputStyle} />
               <textarea value={expForm.description} onChange={e => setExpForm({ ...expForm, description: e.target.value.slice(0, 500) })} placeholder="Description (optional)" rows={2} maxLength={500}
                 className="w-full rounded-xl p-3 text-[13px] outline-none resize-none" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }} />
               <Input placeholder="Skills used (comma separated)" value={expForm.skills} onChange={e => setExpForm({ ...expForm, skills: e.target.value })} style={inputStyle} />
@@ -629,7 +673,8 @@ const Profile = () => {
                   </p>
                   {edu.grade_score && <p className="text-[11px]" style={{ color: "var(--text-3)" }}>Grade: {edu.grade_score}</p>}
                   {edu.description && !edu.description.startsWith("Grade:") && <p className="text-[12px] mt-1" style={{ color: "var(--text-3)" }}>{edu.description}</p>}
-                  {isOwnProfile && <span className="text-[10px] mt-0.5 block" style={{ color: "var(--text-3)" }}>{edu.visibility === "public" ? "👁 Public" : "🔒 Only me"}</span>}
+                  <VerifBadge item={{ ...edu, item_type: "education" }} isOwn={isOwnProfile} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
+                  {isOwnProfile && <VisLabel vis={edu.visibility || "public"} />}
                 </div>
                 <div className="flex flex-col gap-1 items-end">
                   {isOwnProfile && (
@@ -637,7 +682,7 @@ const Profile = () => {
                       {edu.visibility === "public" ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                     </button>
                   )}
-                  {isOwnProfile && <button onClick={() => deleteItem(edu.id, "work_items")} className="opacity-0 group-hover:opacity-100 p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><Trash2 className="w-3.5 h-3.5" /></button>}
+                  {isOwnProfile && <DeleteConfirm id={edu.id} table="work_items" />}
                 </div>
               </div>
             ))}
@@ -650,12 +695,12 @@ const Profile = () => {
               <Input placeholder="Degree / Program *" value={eduForm.degree} onChange={e => setEduForm({ ...eduForm, degree: e.target.value })} style={inputStyle} />
               <Input placeholder="Branch / Specialisation" value={eduForm.branch} onChange={e => setEduForm({ ...eduForm, branch: e.target.value })} style={inputStyle} />
               <div className="grid grid-cols-2 gap-2">
-                <select value={eduForm.startYear} onChange={e => setEduForm({ ...eduForm, startYear: e.target.value })} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }}>
+                <select value={eduForm.startYear} onChange={e => setEduForm({ ...eduForm, startYear: e.target.value })} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={selectStyle}>
                   <option value="">Start year</option>{years.map(y => <option key={y}>{y}</option>)}
                 </select>
-                <select value={eduForm.endYear} onChange={e => setEduForm({ ...eduForm, endYear: e.target.value })} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }}>
+                {!eduForm.isCurrent && <select value={eduForm.endYear} onChange={e => setEduForm({ ...eduForm, endYear: e.target.value })} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={selectStyle}>
                   <option value="">End year</option>{years.map(y => <option key={y}>{y}</option>)}
-                </select>
+                </select>}
               </div>
               <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={eduForm.isCurrent} onChange={e => setEduForm({ ...eduForm, isCurrent: e.target.checked })} /><span className="text-[12px]" style={{ color: "var(--text-2)" }}>Currently studying here</span></label>
               <Input placeholder="Grade / CGPA (optional)" value={eduForm.grade} onChange={e => setEduForm({ ...eduForm, grade: e.target.value })} style={inputStyle} />
@@ -666,7 +711,7 @@ const Profile = () => {
     ),
     projects: (
       <div className="t-card p-5">
-        <SectionHeader title="Projects" icon={Layers} onAdd={() => setShowAddProject(true)} showAdd={isOwnProfile} />
+        <SectionHeader title="Projects" icon={Rocket} onAdd={() => setShowAddProject(true)} showAdd={isOwnProfile} />
         {projects.length === 0 && !showAddProject && (
           <div className="rounded-xl p-6 text-center" style={{ border: "2px dashed var(--border-2)" }}><p className="text-[13px]" style={{ color: "var(--text-3)" }}>{isOwnProfile ? "Add your first project" : "No projects yet"}</p></div>
         )}
@@ -676,23 +721,21 @@ const Profile = () => {
             {projects.map((p: any, idx: number) => (
               <div key={p.id} className="relative flex gap-3 py-3 group" style={{ borderBottom: idx < projects.length - 1 ? "1px solid var(--border)" : "none" }}>
                 <div className="absolute -left-6 top-4 w-[12px] h-[12px] rounded-full border-2 z-10" style={{ background: p.is_current ? "var(--brand)" : "var(--surface)", borderColor: "var(--brand)" }} />
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--brand-dim)" }}><Layers className="w-4 h-4" style={{ color: "var(--brand)" }} /></div>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--brand-dim)" }}><Rocket className="w-4 h-4" style={{ color: "var(--brand)" }} /></div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2"><p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>{p.title}</p>
                     {p.is_tiik_approved && <span className="flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.12)", color: "#F59E0B" }}><Shield className="w-2.5 h-2.5" /> Tiiked</span>}
                   </div>
+                  {p.company_name && <p className="text-[12px]" style={{ color: "var(--text-2)" }}>{p.company_name}</p>}
                   {p.type && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "var(--surface-2)", color: "var(--text-3)" }}>{p.type}</span>}
-                  <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{formatDuration(p.start_date, p.end_date, p.is_current)}</p>
+                  <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
+                    {p.start_month && p.start_year ? `${p.start_month} ${p.start_year}` : p.start_date ? formatDuration(p.start_date, p.end_date, p.is_current) : ""}
+                    {p.start_month && p.start_year ? ` – ${p.is_current ? "Present" : p.end_month && p.end_year ? `${p.end_month} ${p.end_year}` : ""}` : ""}
+                  </p>
                   {p.description && <p className="text-[12px] mt-1 line-clamp-2" style={{ color: "var(--text-2)" }}>{p.description}</p>}
-                  {p.tech_stack?.length > 0 && <div className="flex flex-wrap gap-1 mt-1">{p.tech_stack.map((s: string) => <span key={s} className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--brand-dim)", color: "var(--brand)" }}>{s}</span>)}</div>}
-                  {/* Verification status */}
-                  {p.verification_status === "verified" && <span className="inline-flex items-center gap-1 text-[10px] font-bold mt-1 px-2.5 py-0.5 rounded-full" style={{ background: "rgba(16,185,129,0.08)", color: "#10B981", border: "1px solid rgba(16,185,129,0.2)" }}>✅ Verified</span>}
-                  {p.verification_status === "pending" && <span className="inline-flex items-center gap-1 text-[10px] mt-1 px-2.5 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.08)", color: "#D97706", border: "1px solid rgba(245,158,11,0.2)" }}>🟡 Verification pending</span>}
-                  {isOwnProfile && (!p.verification_status || p.verification_status === "unverified") && (
-                    <VerificationRequest item={p} itemType="project" onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
-                  )}
-                  {!isOwnProfile && (!p.verification_status || p.verification_status === "unverified") && <span className="text-[10px] mt-1 block" style={{ color: "var(--text-3)" }}>⚪ Unverified</span>}
-                  {isOwnProfile && <span className="text-[10px] mt-0.5 block" style={{ color: "var(--text-3)" }}>{p.visibility === "public" ? "👁 Public" : "🔒 Only me"}</span>}
+                  {(p.tech_stack?.length > 0 || p.skills_used?.length > 0) && <div className="flex flex-wrap gap-1 mt-1">{(p.tech_stack || p.skills_used || []).map((s: string) => <span key={s} className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--brand-dim)", color: "var(--brand)" }}>{s}</span>)}</div>}
+                  <VerifBadge item={{ ...p, item_type: "project" }} isOwn={isOwnProfile} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
+                  {isOwnProfile && <VisLabel vis={p.visibility || "public"} />}
                 </div>
                 <div className="flex flex-col gap-1 items-end">
                   {isOwnProfile && (
@@ -700,7 +743,7 @@ const Profile = () => {
                       {p.visibility === "public" ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                     </button>
                   )}
-                  {isOwnProfile && <button onClick={() => deleteItem(p.id, "work_items")} className="opacity-0 group-hover:opacity-100 p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><Trash2 className="w-3.5 h-3.5" /></button>}
+                  {isOwnProfile && <DeleteConfirm id={p.id} table="work_items" />}
                 </div>
               </div>
             ))}
@@ -710,13 +753,30 @@ const Profile = () => {
           {showAddProject && (
             <InlineForm title="Add Project" saving={saving} onSave={saveProject} onCancel={() => setShowAddProject(false)} fields={<>
               <Input placeholder="Project title *" value={projForm.title} onChange={e => setProjForm({ ...projForm, title: e.target.value })} style={inputStyle} />
+              <OrgSearchInput value={projForm.org} onChange={(name) => setProjForm({ ...projForm, org: name })} placeholder="Organisation (optional)" style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", borderRadius: 12, color: "var(--text-1)" }} />
               <select value={projForm.type} onChange={e => setProjForm({ ...projForm, type: e.target.value })} className="w-full px-3 text-[14px] outline-none cursor-pointer" style={inputStyle}>
-                <option value="software">💻 Software</option><option value="research">🔬 Research</option><option value="hardware">⚡ Hardware</option><option value="design">📐 Design</option><option value="other">📝 Other</option>
+                <option value="software">Software</option><option value="research">Research</option><option value="hardware">Hardware</option><option value="design">Design</option><option value="other">Other</option>
               </select>
               <textarea value={projForm.description} onChange={e => setProjForm({ ...projForm, description: e.target.value.slice(0, 300) })} placeholder="Description" rows={2} maxLength={300}
                 className="w-full rounded-xl p-3 text-[13px] outline-none resize-none" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }} />
               <Input placeholder="Tech stack (comma separated)" value={projForm.techStack} onChange={e => setProjForm({ ...projForm, techStack: e.target.value })} style={inputStyle} />
+              <div className="grid grid-cols-2 gap-2">
+                <select value={projForm.startMonth} onChange={e => setProjForm({ ...projForm, startMonth: e.target.value })} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={selectStyle}>
+                  <option value="">Start month</option>{months.map(m => <option key={m}>{m}</option>)}
+                </select>
+                <select value={projForm.startYear} onChange={e => setProjForm({ ...projForm, startYear: e.target.value })} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={selectStyle}>
+                  <option value="">Start year</option>{years.map(y => <option key={y}>{y}</option>)}
+                </select>
+              </div>
               <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={projForm.isCurrent} onChange={e => setProjForm({ ...projForm, isCurrent: e.target.checked })} /><span className="text-[12px]" style={{ color: "var(--text-2)" }}>Ongoing</span></label>
+              {!projForm.isCurrent && <div className="grid grid-cols-2 gap-2">
+                <select value={projForm.endMonth} onChange={e => setProjForm({ ...projForm, endMonth: e.target.value })} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={selectStyle}>
+                  <option value="">End month</option>{months.map(m => <option key={m}>{m}</option>)}
+                </select>
+                <select value={projForm.endYear} onChange={e => setProjForm({ ...projForm, endYear: e.target.value })} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={selectStyle}>
+                  <option value="">End year</option>{years.map(y => <option key={y}>{y}</option>)}
+                </select>
+              </div>}
             </>} />
           )}
         </AnimatePresence>
@@ -730,19 +790,21 @@ const Profile = () => {
         )}
         {achievements.map((a: any) => (
           <div key={a.id} className="flex items-center gap-3 py-3 group" style={{ borderBottom: "1px solid var(--border)" }}>
-            <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: "var(--brand-dim)" }}><span className="text-[16px]">{a.icon_emoji || "🏆"}</span></div>
+            <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: "var(--brand-dim)" }}>
+              <Award className="w-5 h-5" style={{ color: "var(--brand)" }} />
+            </div>
             <div className="flex-1 min-w-0">
               <p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>{a.title}</p>
               <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{[a.issued_by, a.achievement_date].filter(Boolean).join(" · ")}</p>
-              {isOwnProfile && <span className="text-[10px] block" style={{ color: "var(--text-3)" }}>{a.visibility === "public" ? "👁 Public" : "🔒 Only me"}</span>}
+              {isOwnProfile && <VisLabel vis={a.visibility || "public"} />}
             </div>
-            {a.certificate_url && <a href={a.certificate_url} target="_blank" rel="noopener" className="text-[11px] font-bold" style={{ color: "var(--brand)" }}>View ↗</a>}
+            {a.certificate_url && <a href={a.certificate_url} target="_blank" rel="noopener" className="text-[11px] font-bold" style={{ color: "var(--brand)" }}>View</a>}
             {isOwnProfile && (
               <button onClick={() => toggleVisibility(a.id, "achievements", a.visibility || "public")} className="p-1 cursor-pointer opacity-0 group-hover:opacity-100" style={{ color: "var(--text-3)" }}>
                 {a.visibility === "public" ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
               </button>
             )}
-            {isOwnProfile && <button onClick={() => deleteItem(a.id, "achievements")} className="opacity-0 group-hover:opacity-100 p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><Trash2 className="w-3.5 h-3.5" /></button>}
+            {isOwnProfile && <DeleteConfirm id={a.id} table="achievements" />}
           </div>
         ))}
         <AnimatePresence>
@@ -751,17 +813,10 @@ const Profile = () => {
               <Input placeholder="Title *" value={achForm.title} onChange={e => setAchForm({ ...achForm, title: e.target.value })} style={inputStyle} />
               <Input placeholder="Issued by *" value={achForm.issuedBy} onChange={e => setAchForm({ ...achForm, issuedBy: e.target.value })} style={inputStyle} />
               <div className="grid grid-cols-2 gap-2">
-                <select value={achForm.date ? new Date(achForm.date).toLocaleString("en", { month: "short" }) : ""} onChange={e => {
-                  const yr = achForm.date ? new Date(achForm.date).getFullYear() : new Date().getFullYear();
-                  const moIdx = months.indexOf(e.target.value);
-                  if (moIdx >= 0) setAchForm({ ...achForm, date: `${yr}-${String(moIdx + 1).padStart(2, "0")}-01` });
-                }} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }}>
+                <select value={achForm.dateMonth} onChange={e => setAchForm({ ...achForm, dateMonth: e.target.value })} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={selectStyle}>
                   <option value="">Month</option>{months.map(m => <option key={m}>{m}</option>)}
                 </select>
-                <select value={achForm.date ? String(new Date(achForm.date).getFullYear()) : ""} onChange={e => {
-                  const moStr = achForm.date ? String(new Date(achForm.date).getMonth() + 1).padStart(2, "0") : "01";
-                  setAchForm({ ...achForm, date: `${e.target.value}-${moStr}-01` });
-                }} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }}>
+                <select value={achForm.dateYear} onChange={e => setAchForm({ ...achForm, dateYear: e.target.value })} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={selectStyle}>
                   <option value="">Year</option>{years.map(y => <option key={y}>{y}</option>)}
                 </select>
               </div>
@@ -809,7 +864,7 @@ const Profile = () => {
         <div className="h-[140px]" style={{ background: `linear-gradient(135deg, #FFF8F2 0%, color-mix(in srgb, ${roleColor} 20%, #FFF8F2) 50%, var(--brand) 100%)` }} />
         <div className="px-6 pb-6 relative">
           <div className="flex items-end gap-4 -mt-12">
-            <div className={`relative ${isOwnProfile ? "group cursor-pointer" : ""}`} onClick={() => isOwnProfile && setEditOpen(true)}>
+            <div className={`relative ${isOwnProfile ? "group cursor-pointer" : ""}`} onClick={() => isOwnProfile && setEditOpen(!editOpen)}>
               <div className="w-[88px] h-[88px] rounded-full flex items-center justify-center text-[28px] font-extrabold text-white shrink-0 overflow-hidden"
                 style={{ backgroundColor: roleColor, border: "4px solid var(--surface)", boxShadow: isVerified ? "0 0 0 3px #F59E0B, 0 0 12px rgba(245,158,11,0.45)" : "0 4px 12px rgba(0,0,0,0.15)" }}>
                 {profileData.avatar_url ? <img src={profileData.avatar_url} alt="" className="w-full h-full object-cover" /> : initials}
@@ -850,13 +905,13 @@ const Profile = () => {
                 <Shield className="w-4 h-4" style={{ color: "#F59E0B" }} />
                 <p className="text-[12px]" style={{ color: "rgba(245,158,11,0.9)" }}>Your profile is not yet Tiiked. Get verified to unlock the gold badge.</p>
               </div>
-              <button onClick={() => setShowGetTiiked(true)} className="text-[11px] font-bold px-3 py-1.5 rounded-full cursor-pointer shrink-0" style={{ background: "#F59E0B", color: "white" }}>Get Tiiked →</button>
+              <button onClick={() => setShowGetTiiked(true)} className="text-[11px] font-bold px-3 py-1.5 rounded-full cursor-pointer shrink-0" style={{ background: "#F59E0B", color: "white" }}>Get Tiiked</button>
             </div>
           )}
           <div className="flex gap-2 mt-4">
             {isOwnProfile ? (
               <>
-                <Button variant="secondary" size="sm" className="gap-1.5 rounded-full" onClick={() => setEditOpen(true)}><Pencil className="w-3.5 h-3.5" /> Edit profile</Button>
+                <Button variant="secondary" size="sm" className="gap-1.5 rounded-full" onClick={() => setEditOpen(!editOpen)}><Pencil className="w-3.5 h-3.5" /> Edit profile</Button>
                 <Button variant="ghost" size="sm" className="gap-1.5 rounded-full" onClick={handleCopyLink}><Copy className="w-3.5 h-3.5" /> Copy link</Button>
               </>
             ) : (
@@ -873,6 +928,11 @@ const Profile = () => {
           </div>
         </div>
       </div>
+
+      {/* EDIT PROFILE INLINE */}
+      <AnimatePresence>
+        {editOpen && <EditProfileInline open={editOpen} onClose={() => setEditOpen(false)} onSaved={loadProfile} />}
+      </AnimatePresence>
 
       {/* SECTIONS with drag reorder (own profile only) */}
       {isOwnProfile ? (
@@ -897,7 +957,6 @@ const Profile = () => {
         })
       )}
 
-      <EditProfileDrawer open={editOpen} onClose={() => setEditOpen(false)} onSaved={loadProfile} />
       {user && <GetTiikedModal open={showGetTiiked} onClose={() => setShowGetTiiked(false)} userId={user.id} userRole={role} onVerified={loadProfile} />}
     </div>
   );
