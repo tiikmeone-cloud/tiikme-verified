@@ -52,7 +52,7 @@ const Navbar = () => {
         </div>
 
         <div className="hidden md:flex items-center gap-4">
-          <Link to="/signin" className="text-[14px] font-semibold" style={{ color: "#374151" }}>
+          <Link to="/signin" className="text-[14px] font-semibold h-[44px] px-4 flex items-center rounded-lg transition-colors hover:bg-[#FFF7ED]" style={{ color: "#374151" }}>
             Sign in
           </Link>
           <Link to="/signup">

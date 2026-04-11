@@ -16,8 +16,12 @@ const Grievance = () => {
       toast.error("Please fill all fields");
       return;
     }
+    // Open mailto with form data
+    const subject = encodeURIComponent(`Grievance: ${form.type}`);
+    const body = encodeURIComponent(`Name: ${form.name}\nEmail: ${form.email}\nIssue Type: ${form.type}\n\nDescription:\n${form.description}`);
+    window.open(`mailto:grievance@tiikme.com?subject=${subject}&body=${body}`, "_self");
     setSubmitted(true);
-    toast.success("Grievance submitted. We'll respond within 30 days.");
+    toast.success("Grievance submitted. We'll respond within 30 working days.");
   };
 
   return (
@@ -33,9 +37,9 @@ const Grievance = () => {
           <section className="t-card p-6">
             <h2 className="text-[18px] font-bold mb-3" style={{ color: "var(--text-1)" }}>Grievance Officer Details</h2>
             <div className="space-y-2 text-[14px]">
-              <p><strong>Name:</strong> Tiikme Grievance Officer</p>
-              <p><strong>Email:</strong> <a href="mailto:grievance@tiikme.in" style={{ color: "var(--brand)" }}>grievance@tiikme.in</a></p>
-              <p><strong>Response Time:</strong> Within 24 hours of acknowledgment, resolution within 30 days</p>
+              <p><strong>Name:</strong> [To be appointed]</p>
+              <p><strong>Email:</strong> <a href="mailto:grievance@tiikme.com" style={{ color: "var(--brand)" }}>grievance@tiikme.com</a></p>
+              <p><strong>Response Time:</strong> Within 30 working days as per IT Act 2021</p>
               <p><strong>Working Hours:</strong> Monday to Friday, 10:00 AM – 6:00 PM IST</p>
             </div>
           </section>
@@ -74,16 +78,20 @@ const Grievance = () => {
             </section>
           ) : (
             <section className="t-card p-6 text-center">
-              <p className="text-[18px] font-bold mb-2" style={{ color: "var(--text-1)" }}>✓ Grievance Submitted</p>
-              <p className="text-[14px]" style={{ color: "var(--text-2)" }}>We will acknowledge your grievance within 24 hours and resolve it within 30 days. You will receive updates at {form.email}.</p>
+              <p className="text-[18px] font-bold mb-2" style={{ color: "var(--text-1)" }}>Grievance Submitted</p>
+              <p className="text-[14px]" style={{ color: "var(--text-2)" }}>We will acknowledge your grievance within 24 hours and resolve it within 30 working days. You will receive updates at {form.email}.</p>
             </section>
           )}
         </div>
 
-        <div className="flex gap-4 mt-10 pt-6 text-[13px]" style={{ borderTop: "1px solid var(--border)", color: "var(--text-3)" }}>
+        <p className="text-[13px] mt-8 italic" style={{ color: "var(--text-3)" }}>
+          Tiikme is a product of Veenavarse Private Limited, Hyderabad, India.
+        </p>
+
+        <div className="flex gap-4 mt-6 pt-6 text-[13px]" style={{ borderTop: "1px solid var(--border)", color: "var(--text-3)" }}>
           <Link to="/privacy" style={{ color: "var(--brand)" }}>Privacy</Link>
           <Link to="/terms" style={{ color: "var(--brand)" }}>Terms</Link>
-          <Link to="/grievance" style={{ color: "var(--brand)" }}>Grievance Officer</Link>
+          <Link to="/grievance" style={{ color: "var(--brand)" }}>Grievance</Link>
         </div>
       </div>
     </div>

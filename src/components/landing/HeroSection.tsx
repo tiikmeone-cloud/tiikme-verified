@@ -39,9 +39,7 @@ const HeroSection = () => {
 
         {/* Supporting note */}
         <p className="text-[14px] mb-10 md:mb-12" style={{ color: "#6B7280" }}>
-          We are building this in public, from Hyderabad, for every working Indian.
-          <br />
-          Join us from day one.
+          We are building this for every working Indian. Join us from day one.
         </p>
 
         {/* CTAs */}
@@ -52,9 +50,12 @@ const HeroSection = () => {
               style={{ backgroundColor: "#E8580A" }}
               onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#C94A07")}
               onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#E8580A")}
-            >
+             >
               Get Tiiked — It's Free
             </button>
+            <p className="text-[12px] mt-2 w-full text-center" style={{ color: "#6B7280" }}>
+              No credit card required. Free forever for individuals.
+            </p>
           </Link>
           <a href="#how-it-works" className="w-full sm:w-auto">
             <button

@@ -132,7 +132,7 @@ const JoinAsInstitution = () => {
           </Link>
           <h1 className="text-[32px] font-extrabold text-[#EEF0FF] mb-8 leading-tight">Your institution<br />on Tiikme</h1>
           <div className="space-y-4">
-            {["Verified presence — trusted by 12,400+ professionals", "Post opportunities seen by role-matched candidates", "6 months free for founding institutions"].map((t, i) => (
+            {["Verified presence — trusted by professionals across India", "Post opportunities seen by role-matched candidates", "6 months free for founding institutions"].map((t, i) => (
               <div key={i} className="flex items-start gap-3">
                 <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5" style={{ background: "rgba(16,185,129,0.15)" }}>
                   <Check className="w-3 h-3" style={{ color: "#10B981" }} />
@@ -140,6 +140,22 @@ const JoinAsInstitution = () => {
                 <p className="text-[14px]" style={{ color: "rgba(238,240,255,0.7)" }}>{t}</p>
               </div>
             ))}
+          </div>
+
+          {/* Pricing section */}
+          <div className="mt-10 pt-8" style={{ borderTop: "1px solid rgba(238,240,255,0.1)" }}>
+            <h3 className="text-[18px] font-extrabold text-[#EEF0FF] mb-4">Simple pricing</h3>
+            <div className="space-y-3">
+              <div className="rounded-xl p-4" style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)" }}>
+                <p className="text-[14px] font-bold" style={{ color: "#10B981" }}>Free — First 6 months</p>
+                <p className="text-[12px] mt-1" style={{ color: "rgba(238,240,255,0.5)" }}>Full access. No credit card needed. No commitments.</p>
+              </div>
+              <div className="rounded-xl p-4" style={{ background: "rgba(238,240,255,0.04)", border: "1px solid rgba(238,240,255,0.1)" }}>
+                <p className="text-[14px] font-bold text-[#EEF0FF]">₹299/month — From month 7</p>
+                <p className="text-[12px] mt-1" style={{ color: "rgba(238,240,255,0.5)" }}>50% off for months 7–9 (₹149/mo). Full ₹299/month from month 10.</p>
+                <p className="text-[11px] mt-1" style={{ color: "rgba(238,240,255,0.35)" }}>After 6 months you enter payment details — terms apply.</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

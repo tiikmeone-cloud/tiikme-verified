@@ -7,11 +7,11 @@ const cols = [
   },
   {
     title: "Your Brand Travels With Every Verified Profile.",
-    body: "When your organisation verifies someone, that verification shows on their profile everywhere. Your name, your logo, your stamp of approval \u2014 permanently visible.",
+    body: "When your organisation verifies someone, that verification shows on their profile everywhere. Your name, your logo, your stamp of approval — permanently visible.",
   },
   {
-    title: "\u20B9299 Per Month. That\u2019s It.",
-    body: "One background check from a BGV company costs more than this. Your first six months are completely free. No long contracts. No enterprise pricing. Just \u20B9299.",
+    title: "Free to Start. Built for Scale.",
+    body: "Create your organisation page for free. No upfront cost, no contracts. Start verifying your people from day one and see the value before you commit to anything.",
   },
 ];
 

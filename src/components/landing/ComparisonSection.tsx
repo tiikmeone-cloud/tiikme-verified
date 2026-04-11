@@ -2,12 +2,10 @@ import { Check, X } from "lucide-react";
 
 const rows = [
   { feature: "Verified credentials", trad: "Self-declared only", tiik: "Verified by your institution" },
-  { feature: "Works for non-corporate India", trad: "No", tiik: "Yes \u2014 built for it" },
+  { feature: "Works for non-corporate India", trad: "No", tiik: "Yes — built for it" },
   { feature: "Institutional routing", trad: "Not possible", tiik: "Department-level control" },
-  { feature: "Regional language support", trad: "English only", tiik: "Telugu, Tamil, Hindi + growing" },
   { feature: "Certificate issuance", trad: "Not available", tiik: "Organisations issue directly" },
   { feature: "Free for individuals", trad: "Limited", tiik: "Always free" },
-  { feature: "Monthly cost for organisations", trad: "Expensive", tiik: "\u20B9299/month" },
 ];
 
 const ComparisonSection = () => (

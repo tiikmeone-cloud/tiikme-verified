@@ -110,7 +110,7 @@ const Pings = () => {
   };
 
   return (
-    <div className="flex" style={{ height: "calc(100vh - 52px)", maxHeight: "calc(100dvh - 52px)" }}>
+    <div className="flex relative" style={{ height: "calc(100vh - 52px)", maxHeight: "calc(100dvh - 52px)" }}>
       <input ref={fileInputRef} type="file" accept="image/*,.pdf,.doc,.docx" className="hidden" onChange={handleFileSelect} />
       <input ref={fileInputRef} type="file" accept="image/*,.pdf,.doc,.docx" className="hidden" onChange={handleFileSelect} />
 
@@ -166,7 +166,7 @@ const Pings = () => {
                   <div className="w-11 h-11 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: roleColor, ...ringStyle(other?.is_verified || false) }}>
                     {other?.avatar_url ? <img src={other.avatar_url} alt="" className="w-full h-full object-cover" /> : initials}
                   </div>
-                  {convo.unread_count > 0 && <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full" style={{ background: "var(--open-green)", border: "2px solid var(--surface)" }} />}
+                  {convo.unread_count > 0 && <span className="absolute -top-0.5 -right-0.5 w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-bold text-white" style={{ background: "var(--brand)" }}>{convo.unread_count}</span>}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
@@ -218,7 +218,7 @@ const Pings = () => {
             )}
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-5 py-5 space-y-2">
+            <div className="flex-1 overflow-y-auto px-5 py-5 pb-[140px] md:pb-5 space-y-2">
               {messagesLoading && <div className="flex justify-center py-10"><div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: "var(--brand)", borderTopColor: "transparent" }} /></div>}
               {messages.map((msg, i) => {
                 const isMe = msg.sender_id === user?.id;
@@ -294,7 +294,7 @@ const Pings = () => {
             </div>
 
             {/* Input area — fixed at bottom, respects keyboard */}
-            <div className="px-3 md:px-4 py-2 md:py-3" style={{ background: "var(--glass-bg)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderTop: "1px solid var(--glass-border)", paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
+            <div className="fixed md:sticky bottom-[calc(64px+env(safe-area-inset-bottom))] md:bottom-0 left-0 right-0 md:left-auto md:right-auto px-3 md:px-4 py-2 md:py-3 z-30" style={{ background: "var(--glass-bg)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderTop: "1px solid var(--glass-border)", paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
               {uploading && (
                 <div className="flex items-center gap-2 mb-2 px-3 py-2 rounded-xl" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
                   <div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: "var(--brand)", borderTopColor: "transparent" }} />
