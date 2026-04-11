@@ -245,10 +245,10 @@ const ProfilePostsSection = ({ posts, isOwnProfile }: { posts: any[]; isOwnProfi
               <span className="text-[11px]" style={{ color: "var(--text-3)" }}>{p.created_at ? getTimeAgo(new Date(p.created_at)) : ""}</span>
               {isOwnProfile && (
                 <button onClick={() => toggle(p.id)} className="flex items-center gap-1 text-[11px] cursor-pointer" style={{ color: liked ? "var(--brand)" : "var(--text-3)" }}>
-                  <Heart className="w-3 h-3" style={{ fill: liked ? "var(--brand)" : "none" }} /> {likeCount > 0 ? likeCount : ""}
+                  <Heart className="w-3 h-3" style={{ fill: liked ? "var(--brand)" : "none" }} /> {likeCount}
                 </button>
               )}
-              {!isOwnProfile && likeCount > 0 && <span className="text-[11px]" style={{ color: "var(--text-3)" }}>♥ {likeCount}</span>}
+              {!isOwnProfile && <span className="text-[11px]" style={{ color: "var(--text-3)" }}>♥ {likeCount}</span>}
             </div>
           </div>
         );
@@ -527,36 +527,51 @@ const Profile = () => {
             <p className="text-[13px]" style={{ color: "var(--text-3)" }}>{isOwnProfile ? "Add your work experience" : "No experience added yet"}</p>
           </div>
         )}
-        {experiences.map((exp: any) => (
-          <div key={exp.id} className="flex gap-3 py-3 group" style={{ borderBottom: "1px solid var(--border)" }}>
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--surface-2)" }}>
-              <Briefcase className="w-4 h-4" style={{ color: "var(--text-3)" }} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>{exp.title}</p>
-                {exp.is_current && <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(16,185,129,0.1)", color: "#10B981" }}>Current</span>}
+        {experiences.length > 0 && (
+          <div className="relative pl-6">
+            {/* Vertical timeline line */}
+            <div className="absolute left-[15px] top-2 bottom-2 w-[2px]" style={{ background: "linear-gradient(to bottom, var(--brand), var(--border))" }} />
+            {experiences.map((exp: any, idx: number) => (
+              <div key={exp.id} className="relative flex gap-3 py-3 group" style={{ borderBottom: idx < experiences.length - 1 ? "1px solid var(--border)" : "none" }}>
+                {/* Timeline dot */}
+                <div className="absolute -left-6 top-4 w-[12px] h-[12px] rounded-full border-2 z-10" style={{ background: exp.is_current ? "var(--brand)" : "var(--surface)", borderColor: "var(--brand)" }} />
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--surface-2)" }}>
+                  <Briefcase className="w-4 h-4" style={{ color: "var(--text-3)" }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>{exp.job_title || exp.title}</p>
+                    {exp.is_current && <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(16,185,129,0.1)", color: "#10B981" }}>Current</span>}
+                  </div>
+                  <p className="text-[13px]" style={{ color: "var(--text-2)" }}>{exp.company_name || exp.institution_name}{exp.employment_type ? ` · ${exp.employment_type}` : exp.type ? ` · ${exp.type}` : ""}</p>
+                  <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
+                    {exp.start_month && exp.start_year ? `${exp.start_month} ${exp.start_year}` : exp.start_date ? formatDuration(exp.start_date, exp.end_date, exp.is_current) : ""}
+                    {exp.start_month && exp.start_year ? ` – ${exp.is_current ? "Present" : exp.end_month && exp.end_year ? `${exp.end_month} ${exp.end_year}` : ""}` : ""}
+                  </p>
+                  {exp.work_location && <p className="text-[11px]" style={{ color: "var(--text-3)" }}>📍 {exp.work_location}</p>}
+                  {exp.description && <p className="text-[12px] mt-1" style={{ color: "var(--text-2)" }}>{exp.description}</p>}
+                  {(exp.skills_used?.length > 0 || exp.tech_stack?.length > 0) && <div className="flex flex-wrap gap-1 mt-1">{(exp.skills_used || exp.tech_stack || []).map((s: string) => <span key={s} className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--brand-dim)", color: "var(--brand)" }}>{s}</span>)}</div>}
+                  {/* Verification status */}
+                  {exp.verification_status === "verified" && <span className="inline-flex items-center gap-1 text-[10px] font-bold mt-1 px-2.5 py-0.5 rounded-full" style={{ background: "rgba(16,185,129,0.08)", color: "#10B981", border: "1px solid rgba(16,185,129,0.2)" }}>✅ Verified{exp.verified_by_user ? "" : ""}</span>}
+                  {exp.verification_status === "pending" && <span className="inline-flex items-center gap-1 text-[10px] mt-1 px-2.5 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.08)", color: "#D97706", border: "1px solid rgba(245,158,11,0.2)" }}>🟡 Verification pending</span>}
+                  {isOwnProfile && (!exp.verification_status || exp.verification_status === "unverified") && (
+                    <VerificationRequest item={exp} itemType="experience" onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
+                  )}
+                  {!isOwnProfile && (!exp.verification_status || exp.verification_status === "unverified") && <span className="text-[10px] mt-1 block" style={{ color: "var(--text-3)" }}>⚪ Unverified</span>}
+                  {isOwnProfile && <span className="text-[10px] mt-0.5 block" style={{ color: "var(--text-3)" }}>{exp.visibility === "public" ? "👁 Public" : "🔒 Only me"}</span>}
+                </div>
+                <div className="flex flex-col gap-1 items-end">
+                  {isOwnProfile && (
+                    <button onClick={() => toggleVisibility(exp.id, "work_items", exp.visibility || "public")} className="p-1 cursor-pointer opacity-0 group-hover:opacity-100" style={{ color: "var(--text-3)" }} title={exp.visibility === "public" ? "Make private" : "Make public"}>
+                      {exp.visibility === "public" ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                    </button>
+                  )}
+                  {isOwnProfile && <button onClick={() => deleteItem(exp.id, "work_items")} className="opacity-0 group-hover:opacity-100 p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><Trash2 className="w-3.5 h-3.5" /></button>}
+                </div>
               </div>
-              <p className="text-[13px]" style={{ color: "var(--text-2)" }}>{exp.institution_name}{exp.type ? ` · ${exp.type}` : ""}</p>
-              <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{formatDuration(exp.start_date, exp.end_date, exp.is_current)}</p>
-              {exp.description && <p className="text-[12px] mt-1" style={{ color: "var(--text-2)" }}>{exp.description}</p>}
-              {exp.tech_stack?.length > 0 && <div className="flex flex-wrap gap-1 mt-1">{exp.tech_stack.map((s: string) => <span key={s} className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--brand-dim)", color: "var(--brand)" }}>{s}</span>)}</div>}
-              {exp.verification_status === "verified" && <span className="flex items-center gap-1 text-[10px] font-bold mt-1" style={{ color: "#10B981" }}>✓ Verified</span>}
-              {isOwnProfile && exp.verification_status !== "verified" && (
-                <VerificationRequest item={exp} itemType="experience" onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
-              )}
-              {!isOwnProfile && exp.verification_status === "unverified" && <span className="text-[10px] mt-1" style={{ color: "var(--text-3)" }}>○ Unverified</span>}
-            </div>
-            <div className="flex flex-col gap-1 items-end">
-              {isOwnProfile && (
-                <button onClick={() => toggleVisibility(exp.id, "work_items", exp.visibility || "public")} className="p-1 cursor-pointer opacity-0 group-hover:opacity-100" style={{ color: "var(--text-3)" }} title={exp.visibility === "public" ? "Make private" : "Make public"}>
-                  {exp.visibility === "public" ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                </button>
-              )}
-              {isOwnProfile && <button onClick={() => deleteItem(exp.id, "work_items")} className="opacity-0 group-hover:opacity-100 p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><Trash2 className="w-3.5 h-3.5" /></button>}
-            </div>
+            ))}
           </div>
-        ))}
+        )}
         <AnimatePresence>
           {showAddExp && (
             <InlineForm title="Add Experience" saving={saving} onSave={saveExperience} onCancel={() => setShowAddExp(false)} fields={<>
@@ -598,26 +613,35 @@ const Profile = () => {
             <p className="text-[13px]" style={{ color: "var(--text-3)" }}>{isOwnProfile ? "Add your education" : "No education added yet"}</p>
           </div>
         )}
-        {education.map((edu: any) => (
-          <div key={edu.id} className="flex gap-3 py-3 group" style={{ borderBottom: "1px solid var(--border)" }}>
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--surface-2)" }}><GraduationCap className="w-4 h-4" style={{ color: "var(--text-3)" }} /></div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>{edu.institution_name}</p>
-              <p className="text-[13px]" style={{ color: "var(--text-2)" }}>{edu.title}</p>
-              <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{formatDuration(edu.start_date, edu.end_date, edu.is_current)}</p>
-              {edu.description && <p className="text-[12px] mt-1" style={{ color: "var(--text-3)" }}>{edu.description}</p>}
-              {isOwnProfile && <span className="text-[10px] mt-0.5 block" style={{ color: "var(--text-3)" }}>{edu.visibility === "public" ? "👁 Public" : "🔒 Only me"}</span>}
-            </div>
-            <div className="flex flex-col gap-1 items-end">
-              {isOwnProfile && (
-                <button onClick={() => toggleVisibility(edu.id, "work_items", edu.visibility || "public")} className="p-1 cursor-pointer opacity-0 group-hover:opacity-100" style={{ color: "var(--text-3)" }}>
-                  {edu.visibility === "public" ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                </button>
-              )}
-              {isOwnProfile && <button onClick={() => deleteItem(edu.id, "work_items")} className="opacity-0 group-hover:opacity-100 p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><Trash2 className="w-3.5 h-3.5" /></button>}
-            </div>
+        {education.length > 0 && (
+          <div className="relative pl-6">
+            <div className="absolute left-[15px] top-2 bottom-2 w-[2px]" style={{ background: "linear-gradient(to bottom, var(--brand), var(--border))" }} />
+            {education.map((edu: any, idx: number) => (
+              <div key={edu.id} className="relative flex gap-3 py-3 group" style={{ borderBottom: idx < education.length - 1 ? "1px solid var(--border)" : "none" }}>
+                <div className="absolute -left-6 top-4 w-[12px] h-[12px] rounded-full border-2 z-10" style={{ background: edu.is_current ? "var(--brand)" : "var(--surface)", borderColor: "var(--brand)" }} />
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--surface-2)" }}><GraduationCap className="w-4 h-4" style={{ color: "var(--text-3)" }} /></div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>{edu.institution_name_edu || edu.institution_name}</p>
+                  <p className="text-[13px]" style={{ color: "var(--text-2)" }}>{edu.degree_type || edu.title}{edu.field_of_study ? ` · ${edu.field_of_study}` : ""}</p>
+                  <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
+                    {edu.start_year ? `${edu.start_year}` : ""}{edu.start_year && (edu.is_current || edu.end_year) ? " – " : ""}{edu.is_current ? "Present" : edu.end_year || ""}
+                  </p>
+                  {edu.grade_score && <p className="text-[11px]" style={{ color: "var(--text-3)" }}>Grade: {edu.grade_score}</p>}
+                  {edu.description && !edu.description.startsWith("Grade:") && <p className="text-[12px] mt-1" style={{ color: "var(--text-3)" }}>{edu.description}</p>}
+                  {isOwnProfile && <span className="text-[10px] mt-0.5 block" style={{ color: "var(--text-3)" }}>{edu.visibility === "public" ? "👁 Public" : "🔒 Only me"}</span>}
+                </div>
+                <div className="flex flex-col gap-1 items-end">
+                  {isOwnProfile && (
+                    <button onClick={() => toggleVisibility(edu.id, "work_items", edu.visibility || "public")} className="p-1 cursor-pointer opacity-0 group-hover:opacity-100" style={{ color: "var(--text-3)" }}>
+                      {edu.visibility === "public" ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                    </button>
+                  )}
+                  {isOwnProfile && <button onClick={() => deleteItem(edu.id, "work_items")} className="opacity-0 group-hover:opacity-100 p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><Trash2 className="w-3.5 h-3.5" /></button>}
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
+        )}
         <AnimatePresence>
           {showAddEdu && (
             <InlineForm title="Add Education" saving={saving} onSave={saveEducation} onCancel={() => setShowAddEdu(false)} fields={<>
@@ -645,29 +669,42 @@ const Profile = () => {
         {projects.length === 0 && !showAddProject && (
           <div className="rounded-xl p-6 text-center" style={{ border: "2px dashed var(--border-2)" }}><p className="text-[13px]" style={{ color: "var(--text-3)" }}>{isOwnProfile ? "Add your first project" : "No projects yet"}</p></div>
         )}
-        {projects.map((p: any) => (
-          <div key={p.id} className="flex gap-3 py-3 group" style={{ borderBottom: "1px solid var(--border)" }}>
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--brand-dim)" }}><Layers className="w-4 h-4" style={{ color: "var(--brand)" }} /></div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2"><p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>{p.title}</p>
-                {p.is_tiik_approved && <span className="flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.12)", color: "#F59E0B" }}><Shield className="w-2.5 h-2.5" /> Tiiked</span>}
+        {projects.length > 0 && (
+          <div className="relative pl-6">
+            <div className="absolute left-[15px] top-2 bottom-2 w-[2px]" style={{ background: "linear-gradient(to bottom, var(--brand), var(--border))" }} />
+            {projects.map((p: any, idx: number) => (
+              <div key={p.id} className="relative flex gap-3 py-3 group" style={{ borderBottom: idx < projects.length - 1 ? "1px solid var(--border)" : "none" }}>
+                <div className="absolute -left-6 top-4 w-[12px] h-[12px] rounded-full border-2 z-10" style={{ background: p.is_current ? "var(--brand)" : "var(--surface)", borderColor: "var(--brand)" }} />
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--brand-dim)" }}><Layers className="w-4 h-4" style={{ color: "var(--brand)" }} /></div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2"><p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>{p.title}</p>
+                    {p.is_tiik_approved && <span className="flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.12)", color: "#F59E0B" }}><Shield className="w-2.5 h-2.5" /> Tiiked</span>}
+                  </div>
+                  {p.type && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "var(--surface-2)", color: "var(--text-3)" }}>{p.type}</span>}
+                  <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{formatDuration(p.start_date, p.end_date, p.is_current)}</p>
+                  {p.description && <p className="text-[12px] mt-1 line-clamp-2" style={{ color: "var(--text-2)" }}>{p.description}</p>}
+                  {p.tech_stack?.length > 0 && <div className="flex flex-wrap gap-1 mt-1">{p.tech_stack.map((s: string) => <span key={s} className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--brand-dim)", color: "var(--brand)" }}>{s}</span>)}</div>}
+                  {/* Verification status */}
+                  {p.verification_status === "verified" && <span className="inline-flex items-center gap-1 text-[10px] font-bold mt-1 px-2.5 py-0.5 rounded-full" style={{ background: "rgba(16,185,129,0.08)", color: "#10B981", border: "1px solid rgba(16,185,129,0.2)" }}>✅ Verified</span>}
+                  {p.verification_status === "pending" && <span className="inline-flex items-center gap-1 text-[10px] mt-1 px-2.5 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.08)", color: "#D97706", border: "1px solid rgba(245,158,11,0.2)" }}>🟡 Verification pending</span>}
+                  {isOwnProfile && (!p.verification_status || p.verification_status === "unverified") && (
+                    <VerificationRequest item={p} itemType="project" onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
+                  )}
+                  {!isOwnProfile && (!p.verification_status || p.verification_status === "unverified") && <span className="text-[10px] mt-1 block" style={{ color: "var(--text-3)" }}>⚪ Unverified</span>}
+                  {isOwnProfile && <span className="text-[10px] mt-0.5 block" style={{ color: "var(--text-3)" }}>{p.visibility === "public" ? "👁 Public" : "🔒 Only me"}</span>}
+                </div>
+                <div className="flex flex-col gap-1 items-end">
+                  {isOwnProfile && (
+                    <button onClick={() => toggleVisibility(p.id, "work_items", p.visibility || "public")} className="p-1 cursor-pointer opacity-0 group-hover:opacity-100" style={{ color: "var(--text-3)" }}>
+                      {p.visibility === "public" ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                    </button>
+                  )}
+                  {isOwnProfile && <button onClick={() => deleteItem(p.id, "work_items")} className="opacity-0 group-hover:opacity-100 p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><Trash2 className="w-3.5 h-3.5" /></button>}
+                </div>
               </div>
-              {p.type && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "var(--surface-2)", color: "var(--text-3)" }}>{p.type}</span>}
-              <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{formatDuration(p.start_date, p.end_date, p.is_current)}</p>
-              {p.description && <p className="text-[12px] mt-1 line-clamp-2" style={{ color: "var(--text-2)" }}>{p.description}</p>}
-              {p.tech_stack?.length > 0 && <div className="flex flex-wrap gap-1 mt-1">{p.tech_stack.map((s: string) => <span key={s} className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--brand-dim)", color: "var(--brand)" }}>{s}</span>)}</div>}
-              {isOwnProfile && <span className="text-[10px] mt-0.5 block" style={{ color: "var(--text-3)" }}>{p.visibility === "public" ? "👁 Public" : "🔒 Only me"}</span>}
-            </div>
-            <div className="flex flex-col gap-1 items-end">
-              {isOwnProfile && (
-                <button onClick={() => toggleVisibility(p.id, "work_items", p.visibility || "public")} className="p-1 cursor-pointer opacity-0 group-hover:opacity-100" style={{ color: "var(--text-3)" }}>
-                  {p.visibility === "public" ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                </button>
-              )}
-              {isOwnProfile && <button onClick={() => deleteItem(p.id, "work_items")} className="opacity-0 group-hover:opacity-100 p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><Trash2 className="w-3.5 h-3.5" /></button>}
-            </div>
+            ))}
           </div>
-        ))}
+        )}
         <AnimatePresence>
           {showAddProject && (
             <InlineForm title="Add Project" saving={saving} onSave={saveProject} onCancel={() => setShowAddProject(false)} fields={<>
@@ -712,7 +749,21 @@ const Profile = () => {
             <InlineForm title="Add Achievement" saving={saving} onSave={saveAchievement} onCancel={() => setShowAddAchievement(false)} fields={<>
               <Input placeholder="Title *" value={achForm.title} onChange={e => setAchForm({ ...achForm, title: e.target.value })} style={inputStyle} />
               <Input placeholder="Issued by *" value={achForm.issuedBy} onChange={e => setAchForm({ ...achForm, issuedBy: e.target.value })} style={inputStyle} />
-              <Input placeholder="Date (e.g. June 2024)" value={achForm.date} onChange={e => setAchForm({ ...achForm, date: e.target.value })} style={inputStyle} />
+              <div className="grid grid-cols-2 gap-2">
+                <select value={achForm.date ? new Date(achForm.date).toLocaleString("en", { month: "short" }) : ""} onChange={e => {
+                  const yr = achForm.date ? new Date(achForm.date).getFullYear() : new Date().getFullYear();
+                  const moIdx = months.indexOf(e.target.value);
+                  if (moIdx >= 0) setAchForm({ ...achForm, date: `${yr}-${String(moIdx + 1).padStart(2, "0")}-01` });
+                }} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }}>
+                  <option value="">Month</option>{months.map(m => <option key={m}>{m}</option>)}
+                </select>
+                <select value={achForm.date ? String(new Date(achForm.date).getFullYear()) : ""} onChange={e => {
+                  const moStr = achForm.date ? String(new Date(achForm.date).getMonth() + 1).padStart(2, "0") : "01";
+                  setAchForm({ ...achForm, date: `${e.target.value}-${moStr}-01` });
+                }} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }}>
+                  <option value="">Year</option>{years.map(y => <option key={y}>{y}</option>)}
+                </select>
+              </div>
               <Input placeholder="Credential URL (optional)" value={achForm.url} onChange={e => setAchForm({ ...achForm, url: e.target.value })} style={inputStyle} />
             </>} />
           )}

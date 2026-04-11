@@ -273,7 +273,10 @@ const Pings = () => {
                         <p className="text-[14px] leading-[1.6]">{msg.content}</p>
                       )}
                       <div className="flex items-center justify-end gap-1 mt-1">
-                        <p className="text-[10px] opacity-0 group-hover:opacity-60 transition-opacity" style={{ color: isMe ? "rgba(255,255,255,0.7)" : "var(--text-3)" }}>{time}</p>
+                        <p className="text-[10px] opacity-60" style={{ color: isMe ? "rgba(255,255,255,0.7)" : "var(--text-3)" }}>{time}</p>
+                        {isMe && <span className="text-[9px]" style={{ color: isMe ? "rgba(255,255,255,0.5)" : "var(--text-3)" }}>
+                          {msg.status === "sending" ? "Sending…" : msg.status === "read" ? "Seen" : "Delivered"}
+                        </span>}
                       </div>
                       {isLastRead && activeConvo?.other_user && (
                         <div className="flex justify-end mt-0.5">
@@ -322,16 +325,16 @@ const Pings = () => {
         )}
       </div>
 
-      {/* New Ping Modal */}
+      {/* New Ping — inline panel at top of conversation list */}
       {showNewPing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} onClick={() => setShowNewPing(false)}>
-          <div className="glass-card p-6 max-w-md w-full" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex" style={{ background: "var(--bg)" }}>
+          <div className="w-full max-w-md mx-auto p-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-[17px] font-extrabold" style={{ color: "var(--text-1)" }}>New Ping</h2>
               <button onClick={() => setShowNewPing(false)} className="p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
             </div>
             <Input value={newPingSearch} onChange={e => setNewPingSearch(e.target.value)} placeholder="Search by name or @username..." autoFocus />
-            <div className="mt-3 max-h-[300px] overflow-y-auto space-y-1">
+            <div className="mt-3 max-h-[60vh] overflow-y-auto space-y-1">
               {searchResults.map((u: any) => (
                 <button key={u.id} onClick={() => startConversation(u.id)}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left cursor-pointer transition-all duration-150 hover:bg-[var(--surface-2)]">
