@@ -114,7 +114,7 @@ const LivePostCard = ({
         </div>
       </div>
 
-      <div className="px-4 py-2.5" style={{ fontSize: "14px", lineHeight: 1.75, color: "var(--text-2)" }}>
+      <div className="px-4 py-2.5" style={{ fontSize: "14px", lineHeight: 1.75, color: "var(--text-1)" }}>
         <MentionText text={post.content} />
       </div>
 
@@ -135,17 +135,18 @@ const LivePostCard = ({
 
       {/* Like / Comment / Repost */}
       <div className="flex items-center px-4 py-2" style={{ borderTop: "1px solid var(--border)" }}>
-        <button onClick={() => toggleLike(post.id)} className="h-9 px-3 rounded-xl text-[13px] font-medium flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all" style={{ color: liked ? "var(--brand)" : "var(--text-2)" }}>
+        <button onClick={() => toggleLike(post.id)} className="h-9 px-3 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all" style={{ color: liked ? "var(--brand)" : "var(--text-2)" }}>
           <Heart className="w-4 h-4" style={{ fill: liked ? "var(--brand)" : "none", color: liked ? "var(--brand)" : "var(--text-2)" }} />
-          {likeCount > 0 && <span>{likeCount}</span>}
-          {likeCount === 0 && <span>0</span>}
+          Like {likeCount}
         </button>
-        <button onClick={() => toggleComments(post.id)} className="h-9 px-3 rounded-xl text-[13px] font-medium flex items-center gap-1.5 cursor-pointer hover:bg-[var(--brand-dim)]" style={{ color: "var(--text-2)" }}>
-          <MessageSquare className="w-4 h-4" /> {commentCount || ""}
-          <ChevronDown className={`w-3 h-3 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+        <button onClick={() => toggleComments(post.id)} className="h-9 px-3 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer hover:bg-[var(--brand-dim)]" style={{ color: "var(--text-2)" }}>
+          <MessageSquare className="w-4 h-4" /> Comment {commentCount}
         </button>
-        <button onClick={handleRepost} className="h-9 px-3 rounded-xl text-[13px] font-medium flex items-center gap-1.5 cursor-pointer hover:bg-[var(--brand-dim)]" style={{ color: "var(--text-2)" }}>
+        <button onClick={handleRepost} className="h-9 px-3 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer hover:bg-[var(--brand-dim)]" style={{ color: "var(--text-2)" }}>
           <Repeat2 className="w-4 h-4" /> Repost
+        </button>
+        <button onClick={() => { navigator.clipboard.writeText(window.location.origin + "/post/" + post.id); toast.success("Link copied!"); }} className="h-9 px-3 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer hover:bg-[var(--brand-dim)] ml-auto" style={{ color: "var(--text-2)" }}>
+          <ArrowUpRight className="w-4 h-4" /> Share
         </button>
       </div>
 
