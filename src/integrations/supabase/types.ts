@@ -175,6 +175,118 @@ export type Database = {
           },
         ]
       }
+      assessment_attempts: {
+        Row: {
+          answers: Json | null
+          assessment_id: string | null
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          passed: boolean | null
+          score: number | null
+          user_id: string | null
+        }
+        Insert: {
+          answers?: Json | null
+          assessment_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          passed?: boolean | null
+          score?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          answers?: Json | null
+          assessment_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          passed?: boolean | null
+          score?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_attempts_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "hiring_assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_attempts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      certificates: {
+        Row: {
+          certificate_url: string | null
+          created_at: string | null
+          description: string | null
+          expiry_date: string | null
+          id: string
+          is_verified: boolean | null
+          issued_by: string | null
+          issued_date: string | null
+          issued_to: string | null
+          org_id: string | null
+          title: string
+        }
+        Insert: {
+          certificate_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          expiry_date?: string | null
+          id?: string
+          is_verified?: boolean | null
+          issued_by?: string | null
+          issued_date?: string | null
+          issued_to?: string | null
+          org_id?: string | null
+          title: string
+        }
+        Update: {
+          certificate_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          expiry_date?: string | null
+          id?: string
+          is_verified?: boolean | null
+          issued_by?: string | null
+          issued_date?: string | null
+          issued_to?: string | null
+          org_id?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificates_issued_by_fkey"
+            columns: ["issued_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificates_issued_to_fkey"
+            columns: ["issued_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificates_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           created_at: string | null
@@ -213,6 +325,60 @@ export type Database = {
             columns: ["participant_2"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hiring_assessments: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          job_id: string | null
+          org_id: string | null
+          pass_score: number | null
+          questions: Json | null
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          job_id?: string | null
+          org_id?: string | null
+          pass_score?: number | null
+          questions?: Json | null
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          job_id?: string | null
+          org_id?: string | null
+          pass_score?: number | null
+          questions?: Json | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hiring_assessments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hiring_assessments_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -422,54 +588,85 @@ export type Database = {
       }
       opportunities: {
         Row: {
+          assessment_id: string | null
           company_id: string | null
           compensation: string | null
           created_at: string | null
           deadline: string | null
           description: string | null
           domain: string | null
+          experience_min: number | null
           id: string
           is_cross_domain: boolean | null
           is_open: boolean | null
+          is_remote: boolean | null
           location: string | null
+          org_id: string | null
           poster_id: string | null
           responses_count: number | null
+          salary_currency: string | null
+          salary_max: number | null
+          salary_min: number | null
+          skills_required: string[] | null
           title: string
           type: string | null
         }
         Insert: {
+          assessment_id?: string | null
           company_id?: string | null
           compensation?: string | null
           created_at?: string | null
           deadline?: string | null
           description?: string | null
           domain?: string | null
+          experience_min?: number | null
           id?: string
           is_cross_domain?: boolean | null
           is_open?: boolean | null
+          is_remote?: boolean | null
           location?: string | null
+          org_id?: string | null
           poster_id?: string | null
           responses_count?: number | null
+          salary_currency?: string | null
+          salary_max?: number | null
+          salary_min?: number | null
+          skills_required?: string[] | null
           title: string
           type?: string | null
         }
         Update: {
+          assessment_id?: string | null
           company_id?: string | null
           compensation?: string | null
           created_at?: string | null
           deadline?: string | null
           description?: string | null
           domain?: string | null
+          experience_min?: number | null
           id?: string
           is_cross_domain?: boolean | null
           is_open?: boolean | null
+          is_remote?: boolean | null
           location?: string | null
+          org_id?: string | null
           poster_id?: string | null
           responses_count?: number | null
+          salary_currency?: string | null
+          salary_max?: number | null
+          salary_min?: number | null
+          skills_required?: string[] | null
           title?: string
           type?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "opportunities_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "hiring_assessments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "opportunities_company_id_fkey"
             columns: ["company_id"]
@@ -485,6 +682,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "opportunities_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "opportunities_poster_id_fkey"
             columns: ["poster_id"]
             isOneToOne: false
@@ -496,28 +700,40 @@ export type Database = {
       opportunity_applications: {
         Row: {
           applicant_id: string
+          assessment_passed: boolean | null
+          assessment_score: number | null
           cover_note: string | null
           created_at: string | null
           id: string
+          message: string | null
           opportunity_id: string
+          resume_url: string | null
           status: string | null
           work_items_attached: string[] | null
         }
         Insert: {
           applicant_id: string
+          assessment_passed?: boolean | null
+          assessment_score?: number | null
           cover_note?: string | null
           created_at?: string | null
           id?: string
+          message?: string | null
           opportunity_id: string
+          resume_url?: string | null
           status?: string | null
           work_items_attached?: string[] | null
         }
         Update: {
           applicant_id?: string
+          assessment_passed?: boolean | null
+          assessment_score?: number | null
           cover_note?: string | null
           created_at?: string | null
           id?: string
+          message?: string | null
           opportunity_id?: string
+          resume_url?: string | null
           status?: string | null
           work_items_attached?: string[] | null
         }
@@ -527,6 +743,58 @@ export type Database = {
             columns: ["opportunity_id"]
             isOneToOne: false
             referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_access_rules: {
+        Row: {
+          access_type: string
+          created_at: string | null
+          created_by: string | null
+          department_scope: string | null
+          id: string
+          member_id: string | null
+          org_id: string | null
+        }
+        Insert: {
+          access_type: string
+          created_at?: string | null
+          created_by?: string | null
+          department_scope?: string | null
+          id?: string
+          member_id?: string | null
+          org_id?: string | null
+        }
+        Update: {
+          access_type?: string
+          created_at?: string | null
+          created_by?: string | null
+          department_scope?: string | null
+          id?: string
+          member_id?: string | null
+          org_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_access_rules_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_access_rules_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_access_rules_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]

@@ -34,7 +34,7 @@ export function useLikes(postIds: string[]) {
       });
   }, [key, user?.id]);
 
-  // Realtime subscription
+  // Realtime subscription with auth binding
   useEffect(() => {
     if (!user) return;
     let ch: ReturnType<typeof supabase.channel> | null = null;

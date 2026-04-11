@@ -13,13 +13,15 @@ import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEn
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useLikes } from "@/hooks/useLikes";
+import VerificationRequest from "@/components/profile/VerificationRequest";
+import CertificatesSection from "@/components/profile/CertificatesSection";
 
 const ROLE_COLOR_MAP: Record<string, string> = { student: "#4F46E5", professional: "#0369A1", doctor: "#0E7490", government: "#166534", skilled_trade: "#C2410C", hr: "#6B21A8", faculty: "#92400E", builder: "#7C3AED", aspirant: "#374151" };
 const allIndianStates = ["Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Delhi","Goa","Gujarat","Haryana","Himachal Pradesh","Jharkhand","Karnataka","Kerala","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal"];
 const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const years = Array.from({ length: 20 }, (_, i) => String(2026 - i));
 
-const DEFAULT_SECTION_ORDER = ["experience","education","projects","achievements","skills","posts"];
+const DEFAULT_SECTION_ORDER = ["experience","education","projects","achievements","certificates","skills","posts"];
 
 /* ── Section Header ── */
 const SectionHeader = ({ title, icon: Icon, onAdd, showAdd }: { title: string; icon: any; onAdd?: () => void; showAdd?: boolean }) => (
@@ -264,6 +266,7 @@ const Profile = () => {
   const [workItems, setWorkItems] = useState<any[]>([]);
   const [userPosts, setUserPosts] = useState<any[]>([]);
   const [achievements, setAchievements] = useState<any[]>([]);
+  const [certificates, setCertificates] = useState<any[]>([]);
   const [stats, setStats] = useState({ projects: 0, strands: 0, posts: 0 });
   const [dataLoading, setDataLoading] = useState(true);
   const [bioExpanded, setBioExpanded] = useState(false);
@@ -292,23 +295,26 @@ const Profile = () => {
   const loadProfile = useCallback(async () => {
     if (!targetUserId) { setDataLoading(false); return; }
     setDataLoading(true);
-    const [profileRes, itemsRes, strandCountRes, postsRes, achvsRes] = await Promise.allSettled([
+    const [profileRes, itemsRes, strandCountRes, postsRes, achvsRes, certsRes] = await Promise.allSettled([
       isOwnProfile ? Promise.resolve({ data: authProfile }) : supabase.from("profiles").select("*").eq("id", targetUserId).maybeSingle(),
       supabase.from("work_items").select("*").eq("owner_id", targetUserId).order("is_current", { ascending: false }).order("start_date", { ascending: false }),
       supabase.from("strands").select("*", { count: "exact", head: true }).or(`requester_id.eq.${targetUserId},receiver_id.eq.${targetUserId}`).eq("status", "accepted"),
       supabase.from("posts").select("id, content, created_at, image_urls, comment_count, reactions:post_reactions(user_id)").eq("author_id", targetUserId).order("created_at", { ascending: false }).limit(20),
       supabase.from("achievements").select("*").eq("user_id", targetUserId).order("created_at", { ascending: false }),
+      supabase.from("certificates").select("*, org:organizations(name, logo_url)").eq("issued_to", targetUserId).order("issued_date" as any, { ascending: false }),
     ]);
     const profile = profileRes.status === "fulfilled" ? (profileRes.value as any).data : null;
     const items = itemsRes.status === "fulfilled" ? (itemsRes.value as any).data || [] : [];
     const strandCount = strandCountRes.status === "fulfilled" ? (strandCountRes.value as any).count || 0 : 0;
     const posts = postsRes.status === "fulfilled" ? (postsRes.value as any).data || [] : [];
     const achvs = achvsRes.status === "fulfilled" ? (achvsRes.value as any).data || [] : [];
+    const certs = certsRes.status === "fulfilled" ? (certsRes.value as any).data || [] : [];
     const p = profile || (isOwnProfile ? authProfile : null);
     setViewedProfile(p);
     setWorkItems(items);
     setUserPosts(posts);
     setAchievements(achvs);
+    setCertificates(certs);
     setStats({ projects: items.filter((i: any) => i.item_type === "experience").length, strands: strandCount, posts: posts.length });
     // Load section order
     if (p?.section_order && Array.isArray(p.section_order)) {
@@ -536,8 +542,10 @@ const Profile = () => {
               {exp.description && <p className="text-[12px] mt-1" style={{ color: "var(--text-2)" }}>{exp.description}</p>}
               {exp.tech_stack?.length > 0 && <div className="flex flex-wrap gap-1 mt-1">{exp.tech_stack.map((s: string) => <span key={s} className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--brand-dim)", color: "var(--brand)" }}>{s}</span>)}</div>}
               {exp.verification_status === "verified" && <span className="flex items-center gap-1 text-[10px] font-bold mt-1" style={{ color: "#10B981" }}>✓ Verified</span>}
-              {exp.verification_status === "unverified" && isOwnProfile && <span className="text-[10px] mt-1" style={{ color: "var(--text-3)" }}>○ Unverified</span>}
-              {isOwnProfile && <span className="text-[10px] mt-0.5 block" style={{ color: "var(--text-3)" }}>{exp.visibility === "public" ? "👁 Public" : "🔒 Only me"}</span>}
+              {isOwnProfile && exp.verification_status !== "verified" && (
+                <VerificationRequest item={exp} itemType="experience" onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
+              )}
+              {!isOwnProfile && exp.verification_status === "unverified" && <span className="text-[10px] mt-1" style={{ color: "var(--text-3)" }}>○ Unverified</span>}
             </div>
             <div className="flex flex-col gap-1 items-end">
               {isOwnProfile && (
@@ -733,6 +741,9 @@ const Profile = () => {
           </div>
         )}
       </div>
+    ),
+    certificates: (
+      <CertificatesSection certificates={certificates} setCertificates={setCertificates} isOwnProfile={isOwnProfile} />
     ),
     posts: userPosts.length > 0 ? (
       <ProfilePostsSection posts={userPosts} isOwnProfile={isOwnProfile} />
