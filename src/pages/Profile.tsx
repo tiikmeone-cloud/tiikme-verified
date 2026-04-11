@@ -309,7 +309,7 @@ const Profile = () => {
     setWorkItems(items);
     setUserPosts(posts);
     setAchievements(achvs);
-    setStats({ projects: items.filter((i: any) => i.item_type === "project" || !i.item_type).length, strands: strandCount, posts: posts.length });
+    setStats({ projects: items.filter((i: any) => i.item_type === "experience").length, strands: strandCount, posts: posts.length });
     // Load section order
     if (p?.section_order && Array.isArray(p.section_order)) {
       setSectionOrder(p.section_order as string[]);
