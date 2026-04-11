@@ -576,7 +576,7 @@ const Profile = () => {
         <AnimatePresence>
           {showAddExp && (
             <InlineForm title="Add Experience" saving={saving} onSave={saveExperience} onCancel={() => setShowAddExp(false)} fields={<>
-              <Input placeholder="Company / Organisation *" value={expForm.company} onChange={e => setExpForm({ ...expForm, company: e.target.value })} style={inputStyle} />
+              <OrgSearchInput value={expForm.company} onChange={(name) => setExpForm({ ...expForm, company: name })} placeholder="Company / Organisation *" style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", borderRadius: 12, color: "var(--text-1)" }} />
               <Input placeholder="Job Title / Designation *" value={expForm.title} onChange={e => setExpForm({ ...expForm, title: e.target.value })} style={inputStyle} />
               <select value={expForm.type} onChange={e => setExpForm({ ...expForm, type: e.target.value })} className="w-full px-3 text-[14px] outline-none cursor-pointer" style={inputStyle}>
                 {["Full-time","Part-time","Contract","Freelance","Internship","Apprenticeship"].map(t => <option key={t}>{t}</option>)}
