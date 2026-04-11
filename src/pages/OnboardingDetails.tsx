@@ -430,6 +430,9 @@ export default function OnboardingDetails() {
     const roleMetadata: Record<string, any> = {};
     Object.entries(rd).forEach(([k, v]) => { if (v) roleMetadata[k] = v; });
 
+    // Check for referrer from invite link
+    const referredBy = localStorage.getItem("tiikme-referrer") || null;
+
     const { error } = await supabase.from("profiles").upsert({
       id: user.id,
       full_name: `${firstName.trim()} ${lastName.trim()}`,
@@ -446,6 +449,7 @@ export default function OnboardingDetails() {
       sector: rd.industry || "",
       role_metadata: { ...roleMetadata, country } as any,
       onboarding_complete: true,
+      referred_by: referredBy,
       updated_at: new Date().toISOString(),
     } as any, { onConflict: "id" });
 
@@ -454,6 +458,7 @@ export default function OnboardingDetails() {
 
     sessionStorage.removeItem("ob_role");
     sessionStorage.removeItem("ob_email");
+    if (referredBy) localStorage.removeItem("tiikme-referrer");
     await refetchProfile();
     navigate("/onboarding/welcome");
   };
