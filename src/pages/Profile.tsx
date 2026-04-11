@@ -858,22 +858,24 @@ const Profile = () => {
   };
 
   return (
-    <div className="max-w-[760px] mx-auto px-0 md:px-4 py-0 md:py-7 space-y-4 md:pl-8">
+    <div className="max-w-[760px] mx-auto px-0 md:px-4 py-0 md:py-7 space-y-3 md:space-y-4 md:pl-8">
       {/* HEADER */}
       <div className="t-card overflow-hidden">
-        <div className="h-[140px]" style={{ background: `linear-gradient(135deg, #FFF8F2 0%, color-mix(in srgb, ${roleColor} 20%, #FFF8F2) 50%, var(--brand) 100%)` }} />
-        <div className="px-6 pb-6 relative">
-          <div className="flex items-end gap-4 -mt-12">
+        {/* Cover — shorter on mobile */}
+        <div className="h-[120px] md:h-[140px]" style={{ background: `linear-gradient(135deg, #FFF8F2 0%, color-mix(in srgb, ${roleColor} 20%, #FFF8F2) 50%, var(--brand) 100%)` }} />
+        <div className="px-4 md:px-6 pb-5 md:pb-6 relative">
+          {/* Mobile: centered avatar + name; Desktop: side-by-side */}
+          <div className="flex flex-col items-center md:items-start md:flex-row md:items-end gap-2 md:gap-4 -mt-10 md:-mt-12">
             <div className={`relative ${isOwnProfile ? "group cursor-pointer" : ""}`} onClick={() => isOwnProfile && setEditOpen(!editOpen)}>
-              <div className="w-[88px] h-[88px] rounded-full flex items-center justify-center text-[28px] font-extrabold text-white shrink-0 overflow-hidden"
+              <div className="w-[72px] h-[72px] md:w-[88px] md:h-[88px] rounded-full flex items-center justify-center text-[24px] md:text-[28px] font-extrabold text-white shrink-0 overflow-hidden"
                 style={{ backgroundColor: roleColor, border: "4px solid var(--surface)", boxShadow: isVerified ? "0 0 0 3px #F59E0B, 0 0 12px rgba(245,158,11,0.45)" : "0 4px 12px rgba(0,0,0,0.15)" }}>
                 {profileData.avatar_url ? <img src={profileData.avatar_url} alt="" className="w-full h-full object-cover" /> : initials}
               </div>
               {isOwnProfile && <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><Pencil className="w-4 h-4 text-white" /></div>}
             </div>
-            <div className="flex-1 min-w-0 pb-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-[22px] font-extrabold" style={{ color: "var(--text-1)" }}>{displayName}</h1>
+            <div className="flex-1 min-w-0 pb-1 text-center md:text-left">
+              <div className="flex items-center justify-center md:justify-start gap-2 flex-wrap">
+                <h1 className="text-[20px] md:text-[22px] font-extrabold" style={{ color: "var(--text-1)" }}>{displayName}</h1>
                 <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full" style={{ background: `${roleColor}1A`, color: roleColor }}>{roleLabel}</span>
                 {isVerified ? (
                   <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.12)", color: "#F59E0B", border: "1px solid rgba(245,158,11,0.3)" }}>
@@ -908,23 +910,25 @@ const Profile = () => {
               <button onClick={() => setShowGetTiiked(true)} className="text-[11px] font-bold px-3 py-1.5 rounded-full cursor-pointer shrink-0" style={{ background: "#F59E0B", color: "white" }}>Get Tiiked</button>
             </div>
           )}
+          {/* Action buttons — full width on mobile */}
           <div className="flex gap-2 mt-4">
             {isOwnProfile ? (
               <>
-                <Button variant="secondary" size="sm" className="gap-1.5 rounded-full" onClick={() => setEditOpen(!editOpen)}><Pencil className="w-3.5 h-3.5" /> Edit profile</Button>
-                <Button variant="ghost" size="sm" className="gap-1.5 rounded-full" onClick={handleCopyLink}><Copy className="w-3.5 h-3.5" /> Copy link</Button>
+                <Button variant="secondary" size="sm" className="flex-1 md:flex-none gap-1.5 rounded-full h-11 md:h-auto text-[13px]" onClick={() => setEditOpen(!editOpen)}><Pencil className="w-3.5 h-3.5" /> Edit profile</Button>
+                <Button variant="ghost" size="sm" className="flex-1 md:flex-none gap-1.5 rounded-full h-11 md:h-auto text-[13px]" onClick={handleCopyLink}><Copy className="w-3.5 h-3.5" /> Copy link</Button>
               </>
             ) : (
               <>
-                <Button size="sm" className="gap-1.5 rounded-full" onClick={handleStrand}><Link2 className="w-3.5 h-3.5" /> Strand</Button>
-                <Button variant="secondary" size="sm" className="gap-1.5 rounded-full" onClick={() => navigate("/app/pings")}><MessageCircle className="w-3.5 h-3.5" /> Ping</Button>
+                <Button size="sm" className="flex-1 md:flex-none gap-1.5 rounded-full h-11 md:h-auto text-[13px]" onClick={handleStrand}><Link2 className="w-3.5 h-3.5" /> Strand</Button>
+                <Button variant="secondary" size="sm" className="flex-1 md:flex-none gap-1.5 rounded-full h-11 md:h-auto text-[13px]" onClick={() => navigate("/app/pings")}><MessageCircle className="w-3.5 h-3.5" /> Ping</Button>
               </>
             )}
           </div>
-          <div className="flex items-center gap-6 mt-4 pt-4" style={{ borderTop: "1px solid var(--border)" }}>
-            <div className="text-center"><p className="text-[20px] font-extrabold" style={{ color: "var(--text-1)" }}>{stats.strands}</p><p className="micro-label mt-0.5">Connections</p></div>
-            <div className="text-center"><p className="text-[20px] font-extrabold" style={{ color: "var(--text-1)" }}>{stats.projects}</p><p className="micro-label mt-0.5">Experience</p></div>
-            <div className="text-center"><p className="text-[20px] font-extrabold" style={{ color: "var(--text-1)" }}>{stats.posts}</p><p className="micro-label mt-0.5">Posts</p></div>
+          {/* Stats row — 3 equal columns */}
+          <div className="grid grid-cols-3 gap-2 mt-4 pt-4" style={{ borderTop: "1px solid var(--border)" }}>
+            <div className="text-center"><p className="text-[18px] md:text-[20px] font-extrabold" style={{ color: "var(--text-1)" }}>{stats.strands}</p><p className="micro-label mt-0.5">Connections</p></div>
+            <div className="text-center"><p className="text-[18px] md:text-[20px] font-extrabold" style={{ color: "var(--text-1)" }}>{stats.projects}</p><p className="micro-label mt-0.5">Experience</p></div>
+            <div className="text-center"><p className="text-[18px] md:text-[20px] font-extrabold" style={{ color: "var(--text-1)" }}>{stats.posts}</p><p className="micro-label mt-0.5">Posts</p></div>
           </div>
         </div>
       </div>
