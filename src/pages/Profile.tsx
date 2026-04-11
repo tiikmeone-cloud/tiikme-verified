@@ -805,7 +805,7 @@ const Profile = () => {
           </div>
           <div className="flex items-center gap-6 mt-4 pt-4" style={{ borderTop: "1px solid var(--border)" }}>
             <div className="text-center"><p className="text-[20px] font-extrabold" style={{ color: "var(--text-1)" }}>{stats.strands}</p><p className="micro-label mt-0.5">Connections</p></div>
-            <div className="text-center"><p className="text-[20px] font-extrabold" style={{ color: "var(--text-1)" }}>{stats.projects}</p><p className="micro-label mt-0.5">Projects</p></div>
+            <div className="text-center"><p className="text-[20px] font-extrabold" style={{ color: "var(--text-1)" }}>{stats.projects}</p><p className="micro-label mt-0.5">Experience</p></div>
             <div className="text-center"><p className="text-[20px] font-extrabold" style={{ color: "var(--text-1)" }}>{stats.posts}</p><p className="micro-label mt-0.5">Posts</p></div>
           </div>
         </div>
