@@ -16,11 +16,8 @@ const Footer = () => (
           © 2026 Veenavarse Private Limited
         </span>
       </div>
-      <p className="text-center text-[12px] text-white/40 mb-4">
-        Tiikme is a product of Veenavarse Private Limited
-      </p>
-      <p className="text-center text-[12px] text-white/30">
-        A Veenavarse Private Limited product · tiikme.in · tiikme.com
+      <p className="text-center text-[12px] text-white/40">
+        A Veenavarse Private Limited product
       </p>
     </div>
   </footer>
