@@ -65,10 +65,33 @@ const Strands = () => {
   useEffect(() => { fetchStrands(); }, [fetchStrands]);
 
   const getOther = (s: StrandRow) => s.requester_id === user?.id ? s.receiver : s.requester;
-  const handleAccept = async (s: StrandRow) => { await supabase.from("strands").update({ status: "accepted" }).eq("id", s.id); toast.success("Accepted!"); fetchStrands(); };
+  const handleAccept = async (s: StrandRow) => {
+    await supabase.from("strands").update({ status: "accepted" }).eq("id", s.id);
+    // Award score for accepted connection
+    if (user) {
+      await supabase.rpc("increment_score", { uid: user.id, amount: 3 });
+      await supabase.rpc("increment_score", { uid: s.requester_id === user.id ? s.receiver_id : s.requester_id, amount: 3 });
+    }
+    toast.success("Connected!");
+    fetchStrands();
+  };
   const handleDecline = async (s: StrandRow) => { await supabase.from("strands").update({ status: "declined" }).eq("id", s.id); toast.info("Declined"); fetchStrands(); };
   const handleCancel = async (s: StrandRow) => { await supabase.from("strands").delete().eq("id", s.id); toast.info("Request cancelled"); fetchStrands(); };
-  const handleConnect = async (profileId: string) => { if (!user) return; await supabase.from("strands").insert({ requester_id: user.id, receiver_id: profileId }); toast.success("Request sent!"); fetchStrands(); };
+  const handleConnect = async (profileId: string) => {
+    if (!user) return;
+    // Check for existing strand
+    const { data: existing } = await supabase.from("strands")
+      .select("id, status, requester_id")
+      .or(`and(requester_id.eq.${user.id},receiver_id.eq.${profileId}),and(requester_id.eq.${profileId},receiver_id.eq.${user.id})`)
+      .maybeSingle();
+    if (existing) {
+      if (existing.status === "pending") { toast.info("Request already sent"); return; }
+      if (existing.status === "accepted") { toast.info("Already connected"); return; }
+    }
+    await supabase.from("strands").insert({ requester_id: user.id, receiver_id: profileId });
+    toast.success("Request sent!");
+    fetchStrands();
+  };
 
   const filteredConnected = connected.filter(s => {
     if (!search) return true;
@@ -106,7 +129,7 @@ const Strands = () => {
     <main className="max-w-4xl mx-auto px-4 py-6">
       <div className="flex items-center gap-3 mb-2">
         <Link2 className="w-6 h-6" style={{ color: "var(--brand)" }} />
-        <h1 className="text-[20px] text-emboss">My Strands</h1>
+        <h1 className="text-[20px] text-emboss">Connections</h1>
       </div>
 
       <div className="flex gap-0 border-b mb-5 overflow-x-auto" style={{ borderColor: "var(--border)", scrollbarWidth: "none" }}>
@@ -147,7 +170,7 @@ const Strands = () => {
           ) : (
             <div className="text-center py-12">
               <Link2 className="w-10 h-10 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
-              <p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>No strands yet</p>
+              <p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>No connections yet</p>
               <Button variant="secondary" className="mt-3" onClick={() => navigate("/app/explore")}><Compass className="w-4 h-4 mr-1" /> Explore</Button>
             </div>
           )}

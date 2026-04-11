@@ -50,6 +50,7 @@ const OrgAdmin = lazyWithRetry(() => import("./pages/OrgAdmin.tsx"), "OrgAdmin")
 const PostCreate = lazyWithRetry(() => import("./pages/PostCreate.tsx"), "PostCreate");
 const CertificatePage = lazyWithRetry(() => import("./pages/CertificatePage.tsx"), "CertificatePage");
 const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword.tsx"), "ResetPassword");
+const PostDetail = lazyWithRetry(() => import("./pages/PostDetail.tsx"), "PostDetail");
 
 const queryClient = new QueryClient();
 
@@ -87,6 +88,7 @@ const App = () => (
             <Route path="/certificate/:id" element={<CertificatePage />} />
             <Route path="/create-page" element={<Shell><CreatePage /></Shell>} />
             <Route path="/post/create" element={<Shell><PostCreate /></Shell>} />
+            <Route path="/post/:postId" element={<Shell><PostDetail /></Shell>} />
             {/* App (protected) */}
             <Route path="/app/feed" element={<Shell><Feed /></Shell>} />
             <Route path="/app/explore" element={<Shell><Explore /></Shell>} />
