@@ -40,7 +40,7 @@ const CTASection = () => (
       <p className="text-[13px]" style={{ color: "rgba(255,255,255,0.6)" }}>
         No credit card. No fake profiles. No nonsense.
         <br />
-        Built by Veenavarse Private Limited, Hyderabad.
+        A Veenavarse Private Limited product.
       </p>
     </div>
   </section>
