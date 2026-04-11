@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { ChevronLeft, ChevronRight, Building2 } from "lucide-react";
-import { ORG_TYPES, SUBTYPES, EMPLOYEE_SIZES, INDIAN_STATES, NAAC_GRADES, slugify } from "@/lib/orgConstants";
+import { ORG_TYPES, SUBTYPES, EMPLOYEE_SIZES, INDIAN_STATES, NAAC_GRADES } from "@/lib/orgConstants";
 
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: currentYear - 1799 }, (_, i) => currentYear - i);
