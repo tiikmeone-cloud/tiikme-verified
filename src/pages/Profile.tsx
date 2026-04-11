@@ -295,23 +295,26 @@ const Profile = () => {
   const loadProfile = useCallback(async () => {
     if (!targetUserId) { setDataLoading(false); return; }
     setDataLoading(true);
-    const [profileRes, itemsRes, strandCountRes, postsRes, achvsRes] = await Promise.allSettled([
+    const [profileRes, itemsRes, strandCountRes, postsRes, achvsRes, certsRes] = await Promise.allSettled([
       isOwnProfile ? Promise.resolve({ data: authProfile }) : supabase.from("profiles").select("*").eq("id", targetUserId).maybeSingle(),
       supabase.from("work_items").select("*").eq("owner_id", targetUserId).order("is_current", { ascending: false }).order("start_date", { ascending: false }),
       supabase.from("strands").select("*", { count: "exact", head: true }).or(`requester_id.eq.${targetUserId},receiver_id.eq.${targetUserId}`).eq("status", "accepted"),
       supabase.from("posts").select("id, content, created_at, image_urls, comment_count, reactions:post_reactions(user_id)").eq("author_id", targetUserId).order("created_at", { ascending: false }).limit(20),
       supabase.from("achievements").select("*").eq("user_id", targetUserId).order("created_at", { ascending: false }),
+      supabase.from("certificates").select("*, org:organizations(name, logo_url)").eq("issued_to", targetUserId).order("issued_date" as any, { ascending: false }),
     ]);
     const profile = profileRes.status === "fulfilled" ? (profileRes.value as any).data : null;
     const items = itemsRes.status === "fulfilled" ? (itemsRes.value as any).data || [] : [];
     const strandCount = strandCountRes.status === "fulfilled" ? (strandCountRes.value as any).count || 0 : 0;
     const posts = postsRes.status === "fulfilled" ? (postsRes.value as any).data || [] : [];
     const achvs = achvsRes.status === "fulfilled" ? (achvsRes.value as any).data || [] : [];
+    const certs = certsRes.status === "fulfilled" ? (certsRes.value as any).data || [] : [];
     const p = profile || (isOwnProfile ? authProfile : null);
     setViewedProfile(p);
     setWorkItems(items);
     setUserPosts(posts);
     setAchievements(achvs);
+    setCertificates(certs);
     setStats({ projects: items.filter((i: any) => i.item_type === "experience").length, strands: strandCount, posts: posts.length });
     // Load section order
     if (p?.section_order && Array.isArray(p.section_order)) {
