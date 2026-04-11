@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Search, X, Shield, Filter, Lock, Building2, Users, Plus } from "lucide-react";
+import { Search, X, Shield, Building2, Users, Plus, Lock, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,20 +13,13 @@ const ROLE_COLORS: Record<string, string> = {
   hr: "#6B21A8", aspirant: "#374151", builder: "#7C3AED",
 };
 
-const roleOptions = ["All", "Student", "Professional", "Doctor", "Government", "Faculty", "Builder"];
-const roleMap: Record<string, string> = { Student: "student", Professional: "professional", Doctor: "doctor", Government: "government", Faculty: "faculty", Builder: "builder" };
-
-const orgTypeOptions = ["All", "Company", "College", "Hospital", "Government", "NGO"];
-const orgTypeMap: Record<string, string> = { Company: "company", College: "college", Hospital: "hospital", Government: "government", NGO: "ngo" };
-
 interface ProfileResult {
   id: string; full_name: string | null; username: string | null; avatar_url: string | null;
   role: string | null; headline: string | null; institution_name: string | null;
   location_city: string | null; is_verified: boolean | null; activity_score: number | null;
 }
 
-function PersonCard({ p }: { p: ProfileResult }) {
-  const [strandStatus, setStrandStatus] = useState<"none" | "pending" | "accepted">("none");
+function PersonCard({ p, strandStatus, onStrand }: { p: ProfileResult; strandStatus: string; onStrand: () => void }) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const name = p.full_name || p.username || "User";
@@ -35,22 +27,6 @@ function PersonCard({ p }: { p: ProfileResult }) {
   const role = p.role || "student";
   const roleLabel = role.charAt(0).toUpperCase() + role.slice(1).replace(/_/g, " ");
   const color = ROLE_COLORS[role] || "#6B7280";
-
-  useEffect(() => {
-    if (!user?.id) return;
-    supabase.from("strands").select("status").or(`and(requester_id.eq.${user.id},receiver_id.eq.${p.id}),and(requester_id.eq.${p.id},receiver_id.eq.${user.id})`).maybeSingle().then(({ data }) => {
-      if (data?.status === "accepted") setStrandStatus("accepted");
-      else if (data?.status === "pending") setStrandStatus("pending");
-    });
-  }, [user?.id, p.id]);
-
-  const handleStrand = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!user || strandStatus !== "none") return;
-    await supabase.from("strands").insert({ requester_id: user.id, receiver_id: p.id });
-    setStrandStatus("pending");
-    toast.success("Request sent");
-  };
 
   return (
     <article className="glass-liquid glass-liquid-hover rounded-xl p-3 flex items-center gap-3 cursor-pointer"
@@ -71,9 +47,9 @@ function PersonCard({ p }: { p: ProfileResult }) {
           variant={strandStatus === "accepted" ? "ghost" : strandStatus === "pending" ? "ghost" : "secondary"}
           size="sm" className="shrink-0 h-7 text-[11px] active:scale-95"
           disabled={strandStatus !== "none"}
-          onClick={handleStrand}
+          onClick={(e) => { e.stopPropagation(); onStrand(); }}
           style={strandStatus === "accepted" ? { color: "#10B981" } : strandStatus === "pending" ? { color: "var(--text-3)" } : {}}>
-          {strandStatus === "accepted" ? "Connected ✓" : strandStatus === "pending" ? "Requested ✓" : "Strand →"}
+          {strandStatus === "accepted" ? "Connected" : strandStatus === "pending" ? "Requested" : "Strand"}
         </Button>
       )}
     </article>
@@ -98,7 +74,6 @@ function OrgCard({ org }: { org: any }) {
     }
   };
 
-  // Check follow status
   useEffect(() => {
     if (!user) return;
     supabase.from("org_followers").select("id").eq("org_id", org.id).eq("user_id", user.id).maybeSingle().then(({ data }) => {
@@ -127,126 +102,174 @@ function OrgCard({ org }: { org: any }) {
       </div>
       <Button variant={following ? "ghost" : "secondary"} size="sm" className="shrink-0 h-7 text-[11px] active:scale-95"
         onClick={toggleFollow}>
-        {following ? "Following ✓" : "+ Follow"}
+        {following ? "Following" : "Follow"}
       </Button>
     </article>
   );
 }
 
+/* Section wrapper with horizontal scroll on desktop */
+const ExploreSection = ({ title, icon: Icon, children, count, onViewAll }: { title: string; icon: any; children: React.ReactNode; count: number; onViewAll?: () => void }) => {
+  if (count === 0) return null;
+  return (
+    <section className="mb-8">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <div className="w-1 h-5 rounded-full" style={{ background: "var(--brand)" }} />
+          <Icon className="w-4 h-4" style={{ color: "var(--brand)" }} />
+          <h2 className="text-[15px] font-extrabold" style={{ color: "var(--text-1)" }}>{title}</h2>
+          <span className="text-[11px] font-bold px-2 py-0.5 rounded-full" style={{ background: "var(--surface-2)", color: "var(--text-3)" }}>{count}</span>
+        </div>
+        {onViewAll && (
+          <button onClick={onViewAll} className="flex items-center gap-0.5 text-[12px] font-bold cursor-pointer" style={{ color: "var(--brand)" }}>
+            View all <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+        {children}
+      </div>
+    </section>
+  );
+};
+
 const Explore = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const [tab, setTab] = useState<"people" | "organizations">(() => searchParams.get("tab") === "orgs" ? "organizations" : "people");
   const [search, setSearch] = useState("");
-  const [people, setPeople] = useState<ProfileResult[]>([]);
-  const [orgs, setOrgs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showFilters, setShowFilters] = useState(false);
-  const [roleFilter, setRoleFilter] = useState("All");
-  const [orgTypeFilter, setOrgTypeFilter] = useState("All");
-  const [verifiedOnly, setVerifiedOnly] = useState(false);
   const mountedRef = useRef(true);
+
+  // Data
+  const [sameOrg, setSameOrg] = useState<ProfileResult[]>([]);
+  const [sameRole, setSameRole] = useState<ProfileResult[]>([]);
+  const [nearYou, setNearYou] = useState<ProfileResult[]>([]);
+  const [allPeople, setAllPeople] = useState<ProfileResult[]>([]);
+  const [orgs, setOrgs] = useState<any[]>([]);
+  const [strandMap, setStrandMap] = useState<Record<string, string>>({});
 
   useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
-  const fetchPeople = useCallback(async () => {
+  const fetchAll = useCallback(async () => {
+    if (!user) return;
     setLoading(true);
-    let query = supabase.from("profiles")
+
+    // Fetch strands for current user
+    const { data: strands } = await supabase.from("strands")
+      .select("requester_id, receiver_id, status")
+      .or(`requester_id.eq.${user.id},receiver_id.eq.${user.id}`);
+
+    const sMap: Record<string, string> = {};
+    (strands || []).forEach(s => {
+      const otherId = s.requester_id === user.id ? s.receiver_id : s.requester_id;
+      if (otherId) sMap[otherId] = s.status || "pending";
+    });
+    setStrandMap(sMap);
+
+    // Fetch user's work items for org matching
+    const { data: myItems } = await supabase.from("work_items")
+      .select("company_name, institution_name_edu, institution_name")
+      .eq("owner_id", user.id);
+
+    const myOrgNames = new Set<string>();
+    (myItems || []).forEach(item => {
+      if (item.company_name) myOrgNames.add(item.company_name.toLowerCase());
+      if (item.institution_name_edu) myOrgNames.add(item.institution_name_edu.toLowerCase());
+      if (item.institution_name) myOrgNames.add(item.institution_name.toLowerCase());
+    });
+
+    // Fetch people
+    let peopleQuery = supabase.from("profiles")
       .select("id, full_name, username, avatar_url, role, headline, institution_name, location_city, is_verified, activity_score")
       .eq("is_public", true).not("full_name", "is", null)
-      .order("activity_score", { ascending: false }).limit(24);
-    if (search.trim().length >= 2) query = query.or(`full_name.ilike.%${search}%,username.ilike.%${search}%,institution_name.ilike.%${search}%`);
-    if (roleFilter !== "All" && roleMap[roleFilter]) query = query.eq("role", roleMap[roleFilter]);
-    if (verifiedOnly) query = query.eq("is_verified", true);
-    if (user?.id) query = query.neq("id", user.id);
-    const { data } = await query;
-    if (mountedRef.current) { setPeople((data as ProfileResult[]) || []); setLoading(false); }
-  }, [search, user?.id, roleFilter, verifiedOnly]);
+      .neq("id", user.id)
+      .order("activity_score", { ascending: false }).limit(50);
 
-  const fetchOrgs = useCallback(async () => {
-    setLoading(true);
-    let query = supabase.from("organizations")
-      .select("id, name, slug, type, subtype, logo_url, city, state, is_verified, followers_count")
-      .order("followers_count", { ascending: false }).limit(24);
-    if (search.trim().length >= 2) query = query.or(`name.ilike.%${search}%,city.ilike.%${search}%`);
-    if (orgTypeFilter !== "All" && orgTypeMap[orgTypeFilter]) query = query.eq("type", orgTypeMap[orgTypeFilter]);
-    const { data } = await query;
-    if (mountedRef.current) { setOrgs(data || []); setLoading(false); }
-  }, [search, orgTypeFilter]);
+    if (search.trim().length >= 2) {
+      peopleQuery = peopleQuery.or(`full_name.ilike.%${search}%,username.ilike.%${search}%,institution_name.ilike.%${search}%`);
+    }
+
+    const [peopleRes, orgsRes] = await Promise.all([
+      peopleQuery,
+      supabase.from("organizations")
+        .select("id, name, slug, type, subtype, logo_url, city, state, is_verified, followers_count")
+        .order("followers_count", { ascending: false }).limit(20),
+    ]);
+
+    if (!mountedRef.current) return;
+
+    const people = (peopleRes.data as ProfileResult[]) || [];
+    setAllPeople(people);
+
+    // Categorize people
+    const fromOrg: ProfileResult[] = [];
+    const byRole: ProfileResult[] = [];
+    const nearby: ProfileResult[] = [];
+    const seenIds = new Set<string>();
+
+    people.forEach(p => {
+      // Same org: check if their institution matches any of our orgs
+      if (p.institution_name && myOrgNames.has(p.institution_name.toLowerCase()) && !seenIds.has(p.id)) {
+        fromOrg.push(p);
+        seenIds.add(p.id);
+      }
+    });
+
+    people.forEach(p => {
+      if (seenIds.has(p.id)) return;
+      if (p.role === profile?.role) {
+        byRole.push(p);
+        seenIds.add(p.id);
+      }
+    });
+
+    people.forEach(p => {
+      if (seenIds.has(p.id)) return;
+      if (profile?.location_city && p.location_city &&
+        p.location_city.toLowerCase() === profile.location_city.toLowerCase()) {
+        nearby.push(p);
+        seenIds.add(p.id);
+      }
+    });
+
+    setSameOrg(fromOrg.slice(0, 8));
+    setSameRole(byRole.slice(0, 8));
+    setNearYou(nearby.slice(0, 8));
+    setOrgs(orgsRes.data || []);
+    setLoading(false);
+  }, [user, profile, search]);
 
   useEffect(() => {
-    const t = setTimeout(() => {
-      if (tab === "people") fetchPeople();
-      else fetchOrgs();
-    }, 300);
+    const t = setTimeout(fetchAll, 300);
     return () => clearTimeout(t);
-  }, [tab, fetchPeople, fetchOrgs]);
+  }, [fetchAll]);
 
-  const hasFilters = roleFilter !== "All" || orgTypeFilter !== "All" || verifiedOnly || search;
+  const handleStrand = async (personId: string) => {
+    if (!user) return;
+    await supabase.from("strands").insert({ requester_id: user.id, receiver_id: personId });
+    setStrandMap(prev => ({ ...prev, [personId]: "pending" }));
+    toast.success("Request sent");
+  };
+
+  const renderPeople = (list: ProfileResult[]) =>
+    list.map(p => (
+      <motion.div key={p.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}>
+        <PersonCard p={p} strandStatus={strandMap[p.id] || "none"} onStrand={() => handleStrand(p.id)} />
+      </motion.div>
+    ));
 
   return (
     <main className="max-w-[1100px] mx-auto px-3 md:px-6 py-7">
-      {/* Tab switcher */}
-      <div className="flex gap-1 mb-4 p-1 rounded-xl" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
-        <button onClick={() => setTab("people")} className="flex-1 flex items-center justify-center gap-2 h-9 rounded-lg text-[13px] font-bold cursor-pointer"
-          style={{ background: tab === "people" ? "var(--brand)" : "transparent", color: tab === "people" ? "white" : "var(--text-2)" }}>
-          <Users className="w-4 h-4" /> People
-        </button>
-        <button onClick={() => setTab("organizations")} className="flex-1 flex items-center justify-center gap-2 h-9 rounded-lg text-[13px] font-bold cursor-pointer"
-          style={{ background: tab === "organizations" ? "var(--brand)" : "transparent", color: tab === "organizations" ? "white" : "var(--text-2)" }}>
-          <Building2 className="w-4 h-4" /> Organizations
-        </button>
-      </div>
-
-      <div className="flex gap-2 mb-5">
+      {/* Search */}
+      <div className="flex gap-2 mb-6">
         <div className="relative flex-1">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: "var(--text-3)" }} />
           <input type="text" value={search} onChange={e => setSearch(e.target.value)}
-            placeholder={tab === "people" ? "Search by name, institution..." : "Search organizations by name or location..."}
+            placeholder="Search people, organizations..."
             className="w-full h-[52px] glass-input pl-[52px] pr-12 text-[14px] outline-none" style={{ color: "var(--text-1)" }} />
           {search && <button onClick={() => setSearch("")} className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-4 h-4" /></button>}
         </div>
-        <button onClick={() => setShowFilters(!showFilters)} className="w-[52px] h-[52px] glass-input flex items-center justify-center cursor-pointer shrink-0 rounded-xl"
-          style={{ color: showFilters ? "var(--brand)" : "var(--text-3)" }}><Filter className="w-5 h-5" /></button>
       </div>
-
-      {showFilters && tab === "people" && (
-        <div className="glass-liquid rounded-2xl p-4 mb-5 space-y-3">
-          <div>
-            <p className="micro-label mb-2">ROLE</p>
-            <div className="flex gap-1.5 flex-wrap">
-              {roleOptions.map(r => (
-                <button key={r} onClick={() => setRoleFilter(r)} className="h-7 px-3 rounded-full text-[11px] font-bold cursor-pointer active:scale-95"
-                  style={{ background: roleFilter === r ? "var(--brand)" : "var(--surface-2)", color: roleFilter === r ? "white" : "var(--text-2)" }}>{r}</button>
-              ))}
-            </div>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-[13px]" style={{ color: "var(--text-1)" }}>Verified only</span>
-            <button onClick={() => setVerifiedOnly(!verifiedOnly)} className="w-11 h-6 rounded-full flex items-center px-0.5 cursor-pointer"
-              style={{ background: verifiedOnly ? "var(--brand)" : "var(--border-2)" }}>
-              <div className="w-5 h-5 rounded-full bg-white" style={{ transition: "transform 0.2s", transform: verifiedOnly ? "translateX(20px)" : "translateX(0)" }} />
-            </button>
-          </div>
-          {hasFilters && <button onClick={() => { setRoleFilter("All"); setVerifiedOnly(false); setSearch(""); }} className="text-[12px] font-bold cursor-pointer" style={{ color: "#DC2626" }}>Clear all</button>}
-        </div>
-      )}
-
-      {showFilters && tab === "organizations" && (
-        <div className="glass-liquid rounded-2xl p-4 mb-5 space-y-3">
-          <div>
-            <p className="micro-label mb-2">TYPE</p>
-            <div className="flex gap-1.5 flex-wrap">
-              {orgTypeOptions.map(r => (
-                <button key={r} onClick={() => setOrgTypeFilter(r)} className="h-7 px-3 rounded-full text-[11px] font-bold cursor-pointer active:scale-95"
-                  style={{ background: orgTypeFilter === r ? "var(--brand)" : "var(--surface-2)", color: orgTypeFilter === r ? "white" : "var(--text-2)" }}>{r}</button>
-              ))}
-            </div>
-          </div>
-          {hasFilters && <button onClick={() => { setOrgTypeFilter("All"); setSearch(""); }} className="text-[12px] font-bold cursor-pointer" style={{ color: "#DC2626" }}>Clear all</button>}
-        </div>
-      )}
 
       {loading && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
@@ -254,55 +277,51 @@ const Explore = () => {
         </div>
       )}
 
-      {/* People tab */}
-      {!loading && tab === "people" && people.length === 0 && (
-        <div className="text-center py-16">
-          <Search className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
-          <p className="text-[15px] font-bold mb-2" style={{ color: "var(--text-1)" }}>No profiles found</p>
-          {hasFilters && <Button variant="secondary" onClick={() => { setRoleFilter("All"); setVerifiedOnly(false); setSearch(""); }}>Clear filters</Button>}
-        </div>
-      )}
-
-      {!loading && tab === "people" && people.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
-          {people.map(p => (
-            <motion.div key={p.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}>
-              <PersonCard p={p} />
-            </motion.div>
-          ))}
-          {people.length < 4 && (
-            <div className="glass-liquid rounded-xl p-3 flex items-center gap-3 opacity-50" style={{ filter: "blur(1px)" }}>
-              <div className="w-11 h-11 rounded-full flex items-center justify-center shrink-0" style={{ background: "var(--surface-2)" }}><Lock className="w-4 h-4" style={{ color: "var(--text-3)" }} /></div>
-              <p className="text-[12px]" style={{ color: "var(--text-3)" }}>More profiles coming soon</p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Organizations tab */}
-      {!loading && tab === "organizations" && orgs.length === 0 && (
-        <div className="text-center py-16">
-          <Building2 className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
-          <p className="text-[15px] font-bold mb-2" style={{ color: "var(--text-1)" }}>No organizations found</p>
-          <p className="text-[13px] mb-4" style={{ color: "var(--text-3)" }}>Be the first to create one.</p>
-          <Button onClick={() => navigate("/create-organization")} className="gap-2">
-            <Plus className="w-4 h-4" /> Create organization →
-          </Button>
-        </div>
-      )}
-
-      {!loading && tab === "organizations" && orgs.length > 0 && (
+      {!loading && (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+          {/* From Your Organisation */}
+          <ExploreSection title="From Your Organisation" icon={Building2} count={sameOrg.length}>
+            {renderPeople(sameOrg)}
+          </ExploreSection>
+
+          {/* People Like You */}
+          <ExploreSection title="People Like You" icon={Users} count={sameRole.length}>
+            {renderPeople(sameRole)}
+          </ExploreSection>
+
+          {/* Near You */}
+          <ExploreSection title="Near You" icon={Users} count={nearYou.length}>
+            {renderPeople(nearYou)}
+          </ExploreSection>
+
+          {/* Organisations You May Follow */}
+          <ExploreSection title="Organisations You May Follow" icon={Building2} count={orgs.length}>
             {orgs.map(org => (
               <motion.div key={org.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}>
                 <OrgCard org={org} />
               </motion.div>
             ))}
-          </div>
-          <div className="text-center mt-6">
+          </ExploreSection>
+
+          {/* Show all people if no sections matched */}
+          {sameOrg.length === 0 && sameRole.length === 0 && nearYou.length === 0 && allPeople.length > 0 && (
+            <ExploreSection title="Discover People" icon={Users} count={allPeople.length}>
+              {renderPeople(allPeople)}
+            </ExploreSection>
+          )}
+
+          {allPeople.length === 0 && orgs.length === 0 && (
+            <div className="text-center py-16">
+              <Search className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
+              <p className="text-[15px] font-bold mb-2" style={{ color: "var(--text-1)" }}>No results found</p>
+              <p className="text-[13px]" style={{ color: "var(--text-3)" }}>Try a different search term</p>
+            </div>
+          )}
+
+          {/* Create org CTA */}
+          <div className="text-center mt-4 mb-8">
             <Button variant="secondary" onClick={() => navigate("/create-organization")} className="gap-2">
-              <Plus className="w-4 h-4" /> Create organization
+              <Plus className="w-4 h-4" /> Create organisation
             </Button>
           </div>
         </>
