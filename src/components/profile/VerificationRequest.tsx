@@ -96,11 +96,11 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
       type: "verification_request",
       title: "Verification Request",
       body: `${profile?.full_name || "Someone"} wants you to verify their ${itemType} at ${companyName}`,
-    });
+    } as any);
 
     // Update work item status
     const table = itemType === "achievement" ? "achievements" : "work_items";
-    await supabase.from(table).update({ verification_status: "pending" }).eq("id", item.id);
+    await supabase.from(table).update({ verification_status: "pending" } as any).eq("id", item.id);
 
     onStatusChange(item.id, "pending");
     toast.success("Verification request sent ✓");
@@ -116,9 +116,9 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
       work_item_id: item.id,
       verifier_email: directEmail,
       message: message.trim() || null,
-    });
+    } as any);
     const table = itemType === "achievement" ? "achievements" : "work_items";
-    await supabase.from(table).update({ verification_status: "pending" }).eq("id", item.id);
+    await supabase.from(table).update({ verification_status: "pending" } as any).eq("id", item.id);
     onStatusChange(item.id, "pending");
     toast.success("Invite sent ✓");
     setExpanded(false);
