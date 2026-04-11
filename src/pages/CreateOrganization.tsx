@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { ChevronLeft, ChevronRight, Building2 } from "lucide-react";
-import { ORG_TYPES, SUBTYPES, EMPLOYEE_SIZES, INDIAN_STATES, NAAC_GRADES, slugify } from "@/lib/orgConstants";
+import { ORG_TYPES, SUBTYPES, EMPLOYEE_SIZES, INDIAN_STATES, NAAC_GRADES } from "@/lib/orgConstants";
 
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: currentYear - 1799 }, (_, i) => currentYear - i);
@@ -65,52 +65,68 @@ export default function CreateOrganization() {
   const handleSubmit = async () => {
     if (!user) return;
     setSubmitting(true);
-    try {
-      const slug = slugify(name) + "-" + Date.now().toString(36).slice(-4);
-      const { data: org, error } = await supabase.from("organizations" as any).insert({
-        slug,
-        name: name.trim(),
-        type: orgType,
-        subtype: subtype || null,
-        tagline: tagline.trim() || null,
-        description: description.trim(),
-        founded_year: foundedYear || null,
-        state, district: district || null, city: city || null,
-        village: village || null, pincode, full_address: fullAddress || null,
-        phone, email, website_url: website || null,
-        employee_count: employeeCount || null,
-        allow_employee_requests: allowRequests,
-        allow_messages: allowMessages,
-        created_by: user.id,
-      } as any).select().single();
 
-      if (error) throw error;
+    const baseSlug = name.trim().toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+    const slug = `${baseSlug}-${Date.now().toString(36)}`;
 
-      // Insert owner member
-      await supabase.from("org_members" as any).insert({
-        org_id: (org as any).id,
-        user_id: user.id,
-        role: "owner",
-        title: roleTitle.trim(),
-        is_verified: true,
-        verified_at: new Date().toISOString(),
-      } as any);
+    const { data: org, error: orgError } = await supabase.from("organizations" as any).insert({
+      slug,
+      name: name.trim(),
+      type: orgType,
+      subtype: subtype || null,
+      tagline: tagline.trim() || null,
+      description: description.trim() || null,
+      founded_year: foundedYear || null,
+      state: state || null,
+      district: district || null,
+      city: city || null,
+      village: village || null,
+      pincode: pincode || null,
+      full_address: fullAddress || null,
+      phone: phone || null,
+      email: email || null,
+      website_url: website || null,
+      employee_count: employeeCount || null,
+      allow_employee_requests: allowRequests,
+      allow_messages: allowMessages,
+      created_by: user.id,
+    } as any).select().single();
 
-      // Insert type-specific metadata
-      const metaEntries = Object.entries(metaFields).filter(([, v]) => v.trim());
-      if (metaEntries.length > 0) {
-        await supabase.from("org_metadata" as any).insert(
-          metaEntries.map(([key, value]) => ({ org_id: (org as any).id, key, value })) as any
-        );
-      }
-
-      toast({ title: "Organization created! 🎉" });
-      navigate(`/org/${slug}`);
-    } catch (e: any) {
-      toast({ title: "Error creating organization", description: e.message, variant: "destructive" });
-    } finally {
+    if (orgError) {
+      console.error("Organization create error:", orgError);
+      toast({ title: "Failed to create organization", description: orgError.message, variant: "destructive" });
       setSubmitting(false);
+      return;
     }
+
+    // Add creator as owner
+    const { error: memberError } = await supabase.from("org_members" as any).insert({
+      org_id: (org as any).id,
+      user_id: user.id,
+      role: "owner",
+      title: roleTitle.trim() || "Owner",
+      is_verified: true,
+    } as any);
+
+    if (memberError) {
+      console.error("Member insert error:", memberError);
+    }
+
+    // Insert type-specific metadata
+    const metaEntries = Object.entries(metaFields).filter(([, v]) => v.trim());
+    if (metaEntries.length > 0) {
+      await supabase.from("org_metadata" as any).insert(
+        metaEntries.map(([key, value]) => ({ org_id: (org as any).id, key, value })) as any
+      );
+    }
+
+    toast({ title: "Organisation page created! ✓" });
+    navigate(`/org/${slug}`);
+    setSubmitting(false);
   };
 
   const setMeta = (key: string, value: string) => setMetaFields(prev => ({ ...prev, [key]: value }));

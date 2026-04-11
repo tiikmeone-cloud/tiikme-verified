@@ -10,7 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import PageLoader from "@/components/PageLoader";
-import { MapPin, Globe, Calendar, Users, Heart, MessageCircle, Settings, Plus, CheckCircle, Search } from "lucide-react";
+import ThemeLogo from "@/components/ThemeLogo";
+import { MapPin, Globe, Calendar, Users, Heart, MessageCircle, Settings, Plus, CheckCircle, Search, ArrowLeft } from "lucide-react";
 import { ORG_TYPES, MEMBER_LABELS, MEMBER_TYPE_OPTIONS } from "@/lib/orgConstants";
 import { formatDistanceToNow } from "date-fns";
 
@@ -22,6 +23,21 @@ export default function OrganizationPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Force light mode on org pages
+  useEffect(() => {
+    const html = document.documentElement;
+    const prevTheme = html.getAttribute("data-theme");
+    const prevClass = html.className;
+    html.setAttribute("data-theme", "light");
+    html.classList.remove("dark");
+    html.classList.add("light");
+    return () => {
+      if (prevTheme) html.setAttribute("data-theme", prevTheme);
+      else html.removeAttribute("data-theme");
+      html.className = prevClass;
+    };
+  }, []);
 
   const [org, setOrg] = useState<Org | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
@@ -111,7 +127,7 @@ export default function OrganizationPage() {
       org_id: org.id, user_id: user.id,
       title_at_org: verifTitle, member_type: verifType, message: verifMsg || null,
     } as any);
-    if (error) toast({ title: "Request failed", description: error.message, variant: "destructive" });
+    if (error) { toast({ title: "Request failed", description: error.message, variant: "destructive" }); }
     else { toast({ title: "Verification request sent ✓" }); setShowVerifForm(false); }
     setVerifSubmitting(false);
   };
@@ -154,7 +170,19 @@ export default function OrganizationPage() {
   const locationParts = [org.village, org.city, org.district, org.state].filter(Boolean);
 
   return (
-    <div className="min-h-screen" style={{ background: "#FFF8F2" }} data-theme="light">
+    <div className="min-h-screen bg-[#FFF8F2]" style={{ colorScheme: "light" }}>
+      {/* Back button + branding header */}
+      <div className="sticky top-0 z-20 bg-[#FFF8F2] border-b border-gray-100 px-4 py-3 flex items-center gap-3">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-sm text-gray-600 hover:text-[#E8580A] transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back</span>
+        </button>
+        <div className="flex-1" />
+        <span className="text-xs text-gray-400">A Veenavarse Private Limited product</span>
+      </div>
       {/* Cover */}
       <div className="w-full h-48 md:h-56 relative" style={{
         background: org.cover_url
@@ -374,6 +402,11 @@ export default function OrganizationPage() {
             <p className="text-center py-8 text-sm" style={{ color: "var(--text-3)" }}>No opportunities posted yet</p>
           </TabsContent>
         </Tabs>
+      </div>
+
+      {/* Footer branding */}
+      <div className="text-center py-6 border-t border-gray-100 text-xs text-gray-400 mt-8">
+        Tiikme is a product of Veenavarse Private Limited
       </div>
     </div>
   );
