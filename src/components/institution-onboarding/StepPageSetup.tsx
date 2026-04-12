@@ -60,6 +60,23 @@ export default function StepPageSetup({
 
       if (!user) { toast.error("Please complete email verification first"); setSubmitting(false); return; }
 
+      // Ensure profile exists before creating org (FK constraint)
+      const { data: existingProfile } = await supabase.from("profiles").select("id").eq("id", user.id).maybeSingle();
+      if (!existingProfile) {
+        // Profile not yet created by trigger — create it manually
+        const { error: profileErr } = await supabase.from("profiles").insert({
+          id: user.id,
+          full_name: user.user_metadata?.full_name || "",
+          username: user.user_metadata?.username || `user-${user.id.slice(0, 8)}`,
+          role: "institution_admin",
+        } as any);
+        if (profileErr && !profileErr.message.includes("duplicate")) {
+          console.warn("[StepPageSetup] profile create error:", profileErr);
+        }
+        // Small delay to let DB settle
+        await new Promise(r => setTimeout(r, 500));
+      }
+
       const baseSlug = generateSlug(orgName);
       const slug = `${baseSlug}-${Date.now().toString(36)}`;
 
