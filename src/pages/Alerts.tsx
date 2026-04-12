@@ -322,6 +322,7 @@ const Alerts = () => {
                         </Button>
                       </div>
                     )}
+                    {notif._accepted && (
                       <span className="text-[11px] font-bold mt-1 block" style={{ color: "#10B981" }}>✓ {isOffer ? "Joined" : "Accepted"}</span>
                     )}
                     {notif._declined && (
