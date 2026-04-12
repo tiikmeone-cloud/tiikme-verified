@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { storageImageUrl } from "@/lib/imageTransform";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Heart, MessageSquare, Send, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -111,7 +112,7 @@ const PostDetail = () => {
         <div className="flex items-center gap-3 px-4 pt-4 pb-2">
           <Link to={`/app/profile/${author?.id || ""}`}>
             <div className="w-11 h-11 rounded-full flex items-center justify-center text-[14px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: roleColor }}>
-              {author?.avatar_url ? <img src={author.avatar_url} alt="" className="w-full h-full object-cover" /> : initials}
+              {author?.avatar_url ? <img src={storageImageUrl(author.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials}
             </div>
           </Link>
           <div>
@@ -146,7 +147,7 @@ const PostDetail = () => {
             return (
               <div key={c.id} className="flex items-start gap-2">
                 <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: cColor }}>
-                  {c.author?.avatar_url ? <img src={c.author.avatar_url} alt="" className="w-full h-full object-cover" /> : cInit}
+                  {c.author?.avatar_url ? <img src={storageImageUrl(c.author.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : cInit}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
@@ -161,7 +162,7 @@ const PostDetail = () => {
           {user && (
             <div className="flex items-center gap-2 mt-2">
               <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden" style={{ background: "var(--brand)" }}>
-                {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : userInitials}
+                {profile?.avatar_url ? <img src={storageImageUrl(profile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : userInitials}
               </div>
               <input value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="Write a comment..."
                 className="flex-1 h-9 rounded-xl px-3 text-[13px] outline-none"

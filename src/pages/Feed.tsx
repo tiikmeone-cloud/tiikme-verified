@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import { storageImageUrl } from "@/lib/imageTransform";
 import { Heart, MessageSquare, Repeat2, MoreHorizontal, Flag, Send, FileText, ChevronDown, ArrowUpRight, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -92,7 +93,7 @@ const LivePostCard = ({
       <div className="flex items-center gap-3 px-4 pt-4 pb-1">
         <Link to={`/app/profile/${author?.id || ""}`}>
           <div className="w-11 h-11 rounded-full flex items-center justify-center text-[14px] font-bold text-white shrink-0 hover:scale-105 transition-transform overflow-hidden" style={{ backgroundColor: roleColor }}>
-            {author?.avatar_url ? <img src={author.avatar_url} alt="" className="w-full h-full rounded-full object-cover" /> : initials}
+            {author?.avatar_url ? <img src={storageImageUrl(author.avatar_url, "avatar")} alt="" className="w-full h-full rounded-full object-cover" /> : initials}
           </div>
         </Link>
         <div className="min-w-0 flex-1">
