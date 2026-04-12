@@ -311,7 +311,7 @@ const ProfilePostsSection = ({ posts, isOwnProfile }: { posts: any[]; isOwnProfi
                   return (
                     <div key={c.id} className="flex items-start gap-2 group">
                       <div className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: cColor }}>
-                        {c.author?.avatar_url ? <img src={c.author.avatar_url} alt="" className="w-full h-full object-cover" /> : cInitials}
+                        {c.author?.avatar_url ? <img src={storageImageUrl(c.author.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : cInitials}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
@@ -326,7 +326,7 @@ const ProfilePostsSection = ({ posts, isOwnProfile }: { posts: any[]; isOwnProfi
                 })}
                 <div className="flex items-center gap-2 mt-1">
                   <div className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0 overflow-hidden" style={{ background: "var(--brand)" }}>
-                    {authProfile?.avatar_url ? <img src={authProfile.avatar_url} alt="" className="w-full h-full object-cover" /> : userInitials}
+                    {authProfile?.avatar_url ? <img src={storageImageUrl(authProfile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : userInitials}
                   </div>
                   <input value={commentText} onChange={e => setCommentInputs(prev => ({ ...prev, [p.id]: e.target.value }))}
                     placeholder="Write a comment..." className="flex-1 h-8 rounded-lg px-3 text-[12px] outline-none"
