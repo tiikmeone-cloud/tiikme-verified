@@ -7,6 +7,7 @@ import { tiikToast } from "@/components/ui/tiik-toast";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
+import { useOrgIdentity } from "@/contexts/OrgIdentityContext";
 import { useWorkspaces } from "@/hooks/useWorkspaces";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
