@@ -149,11 +149,12 @@ const MyWork = () => {
   const fetchWork = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("work_items")
       .select("id, title, description, type, status, institution_name, tech_stack, links, visibility, is_tiiked, is_tiik_approved, total_views, recruiter_views, created_at, updated_at")
       .eq("owner_id", user.id)
       .order("created_at", { ascending: false });
+    if (error) console.warn("[MyWork] fetch failed:", error.message);
     setWorkItems(data || []);
     setLoading(false);
   }, [user]);
