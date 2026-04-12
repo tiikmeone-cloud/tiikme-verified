@@ -70,25 +70,25 @@ const App = () => (
         <Suspense fallback={<PageLoader />}>
           <Routes>
             {/* Public */}
-            <Route path="/" element={<Index />} />
-            <Route path="/signin" element={<PublicOnlyRoute><SignIn /></PublicOnlyRoute>} />
-            <Route path="/signup" element={<SignupPage />} />
-            <Route path="/verify-email" element={<VerifyEmailPage />} />
-            <Route path="/onboarding/role" element={<OnboardingRole />} />
-            <Route path="/onboarding/details" element={<OnboardingDetails />} />
-            <Route path="/onboarding/welcome" element={<OnboardingWelcome />} />
-            <Route path="/welcome" element={<Welcome />} />
-            <Route path="/verify-invite" element={<VerifyInvite />} />
-            <Route path="/join" element={<JoinRedirect />} />
-            <Route path="/join-as-institution" element={<JoinAsInstitution />} />
-            <Route path="/privacy" element={<Privacy />} />
-            <Route path="/terms" element={<Terms />} />
-            <Route path="/grievance" element={<Grievance />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/create-organization" element={<ProtectedRoute><CreateOrganization /></ProtectedRoute>} />
-            <Route path="/org/:slug" element={<OrganizationPage />} />
-            <Route path="/org/:slug/admin" element={<ProtectedRoute><OrgAdmin /></ProtectedRoute>} />
-            <Route path="/certificate/:id" element={<CertificatePage />} />
+            <Route path="/" element={<PageErrorBoundary><Index /></PageErrorBoundary>} />
+            <Route path="/signin" element={<PublicOnlyRoute><PageErrorBoundary><SignIn /></PageErrorBoundary></PublicOnlyRoute>} />
+            <Route path="/signup" element={<PageErrorBoundary><SignupPage /></PageErrorBoundary>} />
+            <Route path="/verify-email" element={<PageErrorBoundary><VerifyEmailPage /></PageErrorBoundary>} />
+            <Route path="/onboarding/role" element={<PageErrorBoundary><OnboardingRole /></PageErrorBoundary>} />
+            <Route path="/onboarding/details" element={<PageErrorBoundary><OnboardingDetails /></PageErrorBoundary>} />
+            <Route path="/onboarding/welcome" element={<PageErrorBoundary><OnboardingWelcome /></PageErrorBoundary>} />
+            <Route path="/welcome" element={<PageErrorBoundary><Welcome /></PageErrorBoundary>} />
+            <Route path="/verify-invite" element={<PageErrorBoundary><VerifyInvite /></PageErrorBoundary>} />
+            <Route path="/join" element={<PageErrorBoundary><JoinRedirect /></PageErrorBoundary>} />
+            <Route path="/join-as-institution" element={<PageErrorBoundary><JoinAsInstitution /></PageErrorBoundary>} />
+            <Route path="/privacy" element={<PageErrorBoundary><Privacy /></PageErrorBoundary>} />
+            <Route path="/terms" element={<PageErrorBoundary><Terms /></PageErrorBoundary>} />
+            <Route path="/grievance" element={<PageErrorBoundary><Grievance /></PageErrorBoundary>} />
+            <Route path="/reset-password" element={<PageErrorBoundary><ResetPassword /></PageErrorBoundary>} />
+            <Route path="/create-organization" element={<ProtectedRoute><PageErrorBoundary><CreateOrganization /></PageErrorBoundary></ProtectedRoute>} />
+            <Route path="/org/:slug" element={<PageErrorBoundary><OrganizationPage /></PageErrorBoundary>} />
+            <Route path="/org/:slug/admin" element={<ProtectedRoute><PageErrorBoundary><OrgAdmin /></PageErrorBoundary></ProtectedRoute>} />
+            <Route path="/certificate/:id" element={<PageErrorBoundary><CertificatePage /></PageErrorBoundary>} />
             <Route path="/create-page" element={<Shell><CreatePage /></Shell>} />
             <Route path="/post/create" element={<Shell><PostCreate /></Shell>} />
             <Route path="/post/:postId" element={<Shell><PostDetail /></Shell>} />
@@ -117,8 +117,8 @@ const App = () => (
             <Route path="/app/challenges" element={<Shell><Opportunities /></Shell>} />
             <Route path="/app/messages" element={<Shell><Pings /></Shell>} />
             {/* Public profile */}
-            <Route path="/:username/:slug" element={<WorkDetail />} />
-            <Route path="/:username" element={<Profile />} />
+            <Route path="/:username/:slug" element={<PageErrorBoundary><WorkDetail /></PageErrorBoundary>} />
+            <Route path="/:username" element={<PageErrorBoundary><Profile /></PageErrorBoundary>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
