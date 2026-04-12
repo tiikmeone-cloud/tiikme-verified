@@ -5,6 +5,7 @@ import { Image, FileText, Briefcase, Megaphone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatDistanceToNow } from "date-fns";
+import { toast } from "sonner";
 
 interface HomeTabProps {
   org: any;
@@ -51,7 +52,8 @@ export default function HomeTab({ org, posts, isAdmin, onPostCreated }: HomeTabP
             <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: "1px solid #F0E8E0" }}>
               <div className="flex gap-1">
                 {[{ icon: Image, label: "Photo" }, { icon: FileText, label: "Document" }, { icon: Briefcase, label: "Opportunity" }, { icon: Megaphone, label: "Townhall" }].map(({ icon: Icon, label }) => (
-                  <button key={label} type="button" className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[12px] font-medium hover:bg-gray-50" style={{ color: "#6B6B6B" }}>
+                  <button key={label} type="button" className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[12px] font-medium hover:bg-gray-50" style={{ color: "#6B6B6B" }}
+                    onClick={() => toast.info("This feature is coming soon. Stay Tiiked!")}>
                     <Icon className="w-4 h-4" /> {label}
                   </button>
                 ))}

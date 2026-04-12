@@ -17,6 +17,8 @@ export default function OrgVerifyPage() {
   const [selected, setSelected] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [rejectNote, setRejectNote] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [requesterProfiles, setRequesterProfiles] = useState<Record<string, any>>({});
 
   useEffect(() => {
     const load = async () => {
@@ -26,6 +28,12 @@ export default function OrgVerifyPage() {
         if (!orgData) { setLoading(false); return; }
         setOrg(orgData);
 
+        // Check admin permission
+        const { data: member } = await supabase.from("org_members").select("role").eq("org_id", orgData.id).eq("user_id", user.id).maybeSingle();
+        const admin = member?.role === "owner" || member?.role === "admin" || orgData.created_by === user.id;
+        setIsAdmin(admin);
+        if (!admin) { setLoading(false); return; }
+
         const { data: reqs } = await supabase.from("verification_requests")
           .select("*")
           .eq("org_id", orgData.id)
@@ -33,6 +41,17 @@ export default function OrgVerifyPage() {
           .order("created_at", { ascending: false });
         setRequests(reqs || []);
         if (reqs?.length) setSelected(reqs[0]);
+
+        // Fetch requester profiles
+        if (reqs?.length) {
+          const ids = [...new Set(reqs.map(r => r.requester_id))];
+          const { data: profiles } = await supabase.from("profiles").select("id, full_name, avatar_url, username").in("id", ids);
+          if (profiles) {
+            const map: Record<string, any> = {};
+            profiles.forEach(p => { map[p.id] = p; });
+            setRequesterProfiles(map);
+          }
+        }
       } catch (e) { console.warn("[OrgVerify] error:", e); }
       setLoading(false);
     };
@@ -44,7 +63,7 @@ export default function OrgVerifyPage() {
       await supabase.from("verification_requests").update({ status: "approved", reviewed_by: user!.id, updated_at: new Date().toISOString() }).eq("id", req.id);
       toast.success("Verification approved");
       setRequests(prev => prev.filter(r => r.id !== req.id));
-      setSelected(null);
+      setSelected(requests.find(r => r.id !== req.id) || null);
     } catch (e) { console.warn("[OrgVerify] approve error:", e); }
   };
 
@@ -53,13 +72,22 @@ export default function OrgVerifyPage() {
       await supabase.from("verification_requests").update({ status: "rejected", reviewed_by: user!.id, review_note: rejectNote || null, updated_at: new Date().toISOString() }).eq("id", req.id);
       toast.success("Request rejected");
       setRequests(prev => prev.filter(r => r.id !== req.id));
-      setSelected(null);
+      setSelected(requests.find(r => r.id !== req.id) || null);
       setRejectNote("");
     } catch (e) { console.warn("[OrgVerify] reject error:", e); }
   };
 
   if (loading) return <PageLoader />;
   if (!org) return <div className="min-h-screen flex items-center justify-center" style={{ background: "#FFF8F2" }}><p>Not found</p></div>;
+  if (!isAdmin) return (
+    <div className="min-h-screen flex items-center justify-center" style={{ background: "#FFF8F2" }}>
+      <div className="text-center">
+        <p className="text-[16px] font-bold" style={{ color: "#1A1A1A" }}>Access Denied</p>
+        <p className="text-[13px] mt-1" style={{ color: "#9CA3AF" }}>Only admins can review verification requests</p>
+        <button type="button" onClick={() => navigate(`/org/${slug}`)} className="text-[13px] mt-3 font-semibold" style={{ color: "#E8580A" }}>← Back to page</button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen" style={{ background: "#FFF8F2" }}>
@@ -82,15 +110,18 @@ export default function OrgVerifyPage() {
           <div className="flex flex-col md:flex-row gap-4">
             {/* Left panel */}
             <div className="w-full md:w-[380px] shrink-0 space-y-2">
-              {requests.map(req => (
-                <button key={req.id} type="button" onClick={() => setSelected(req)}
-                  className="w-full text-left rounded-xl p-4 transition-colors"
-                  style={{ background: selected?.id === req.id ? "rgba(232,88,10,0.06)" : "#fff", border: `1px solid ${selected?.id === req.id ? "#E8580A" : "#F0E8E0"}` }}>
-                  <p className="text-[14px] font-semibold" style={{ color: "#1A1A1A" }}>{req.item_type}: {req.submitted_id}</p>
-                  <p className="text-[12px]" style={{ color: "#9CA3AF" }}>Requester: {req.requester_id.slice(0, 8)}...</p>
-                  <p className="text-[11px]" style={{ color: "#9CA3AF" }}>{new Date(req.created_at).toLocaleDateString()}</p>
-                </button>
-              ))}
+              {requests.map(req => {
+                const profile = requesterProfiles[req.requester_id];
+                return (
+                  <button key={req.id} type="button" onClick={() => setSelected(req)}
+                    className="w-full text-left rounded-xl p-4 transition-colors"
+                    style={{ background: selected?.id === req.id ? "rgba(232,88,10,0.06)" : "#fff", border: `1px solid ${selected?.id === req.id ? "#E8580A" : "#F0E8E0"}` }}>
+                    <p className="text-[14px] font-semibold" style={{ color: "#1A1A1A" }}>{req.item_type}: {req.submitted_id}</p>
+                    <p className="text-[12px]" style={{ color: "#9CA3AF" }}>By: {profile?.full_name || req.requester_id.slice(0, 8) + "..."}</p>
+                    <p className="text-[11px]" style={{ color: "#9CA3AF" }}>{new Date(req.created_at).toLocaleDateString()}</p>
+                  </button>
+                );
+              })}
             </div>
 
             {/* Right panel */}
@@ -100,6 +131,7 @@ export default function OrgVerifyPage() {
                 <div className="space-y-3 mb-6">
                   <DetailRow label="Type" value={selected.item_type} />
                   <DetailRow label="Submitted ID" value={selected.submitted_id} />
+                  <DetailRow label="Requester" value={requesterProfiles[selected.requester_id]?.full_name || selected.requester_id} />
                   {selected.context_note && <DetailRow label="Context" value={selected.context_note} />}
                   {selected.supporting_doc_url && (
                     <div>
@@ -123,7 +155,7 @@ export default function OrgVerifyPage() {
                   <Button size="sm" className="gap-1" style={{ background: "#16A34A", color: "#fff" }} onClick={() => handleApprove(selected)}>
                     <CheckCircle className="w-3.5 h-3.5" /> Approve
                   </Button>
-                  <Button variant="ghost" size="sm" className="gap-1">
+                  <Button variant="ghost" size="sm" className="gap-1" onClick={() => toast.info("This feature is coming soon. Stay Tiiked!")}>
                     <MessageCircle className="w-3.5 h-3.5" /> Request More Info
                   </Button>
                 </div>

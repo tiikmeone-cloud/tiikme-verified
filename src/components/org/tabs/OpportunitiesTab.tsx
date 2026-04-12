@@ -14,7 +14,12 @@ interface OpportunitiesTabProps {
 }
 
 const TYPE_OPTIONS = ["Full-time", "Part-time", "Internship", "Contract", "Volunteer"];
-const EXP_OPTIONS = ["Fresher", "1–3 yrs", "3–5 yrs", "5+ yrs"];
+const EXP_OPTIONS = [
+  { label: "Fresher", value: 0 },
+  { label: "1–3 yrs", value: 1 },
+  { label: "3–5 yrs", value: 3 },
+  { label: "5+ yrs", value: 5 },
+];
 
 export default function OpportunitiesTab({ org, isAdmin }: OpportunitiesTabProps) {
   const { user } = useAuth();
@@ -25,7 +30,7 @@ export default function OpportunitiesTab({ org, isAdmin }: OpportunitiesTabProps
   const [showApply, setShowApply] = useState<string | null>(null);
 
   // Form state
-  const [form, setForm] = useState({ title: "", description: "", type: "Full-time", location: "", is_remote: false, experience: "Fresher", salary_min: "", salary_max: "", skills: "" as string, deadline: "" });
+  const [form, setForm] = useState({ title: "", description: "", type: "Full-time", location: "", is_remote: false, experience_min: 0, salary_min: "", salary_max: "", skills: "" as string, deadline: "" });
   const [submitting, setSubmitting] = useState(false);
 
   // Apply state
@@ -60,6 +65,7 @@ export default function OpportunitiesTab({ org, isAdmin }: OpportunitiesTabProps
       const { error } = await supabase.from("opportunities").insert({
         title: form.title, description: form.description, type: form.type,
         location: form.location, is_remote: form.is_remote,
+        experience_min: form.experience_min,
         skills_required: skills.length > 0 ? skills : null,
         salary_min: form.salary_min ? Number(form.salary_min) : null,
         salary_max: form.salary_max ? Number(form.salary_max) : null,
@@ -69,7 +75,7 @@ export default function OpportunitiesTab({ org, isAdmin }: OpportunitiesTabProps
       if (error) { toast.error(error.message); } else {
         toast.success("Opportunity posted!");
         setShowForm(false);
-        setForm({ title: "", description: "", type: "Full-time", location: "", is_remote: false, experience: "Fresher", salary_min: "", salary_max: "", skills: "", deadline: "" });
+        setForm({ title: "", description: "", type: "Full-time", location: "", is_remote: false, experience_min: 0, salary_min: "", salary_max: "", skills: "", deadline: "" });
         fetchOpportunities();
       }
     } catch (e) { console.warn("[Opps] post failed:", e); }
@@ -96,7 +102,11 @@ export default function OpportunitiesTab({ org, isAdmin }: OpportunitiesTabProps
     setApplying(false);
   };
 
-  const filtered = filter === "All" ? opportunities : opportunities.filter(o => o.type === filter);
+  const filtered = filter === "All"
+    ? opportunities
+    : filter === "Remote"
+      ? opportunities.filter(o => o.is_remote === true)
+      : opportunities.filter(o => o.type === filter);
 
   return (
     <div>
@@ -139,8 +149,8 @@ export default function OpportunitiesTab({ org, isAdmin }: OpportunitiesTabProps
               </div>
               <div><label className="text-[13px] font-medium" style={{ color: "#1A1A1A" }}>Experience level</label>
                 <div className="flex gap-1.5 mt-1">{EXP_OPTIONS.map(e => (
-                  <button key={e} type="button" onClick={() => setForm(p => ({ ...p, experience: e }))} className="text-[12px] px-3 py-1.5 rounded-full font-medium"
-                    style={{ background: form.experience === e ? "rgba(232,88,10,0.1)" : "#F3F4F6", color: form.experience === e ? "#E8580A" : "#6B6B6B" }}>{e}</button>
+                  <button key={e.label} type="button" onClick={() => setForm(p => ({ ...p, experience_min: e.value }))} className="text-[12px] px-3 py-1.5 rounded-full font-medium"
+                    style={{ background: form.experience_min === e.value ? "rgba(232,88,10,0.1)" : "#F3F4F6", color: form.experience_min === e.value ? "#E8580A" : "#6B6B6B" }}>{e.label}</button>
                 ))}</div>
               </div>
               <div className="flex gap-3">
@@ -231,7 +241,9 @@ export default function OpportunitiesTab({ org, isAdmin }: OpportunitiesTabProps
               {opp.deadline && <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {Math.max(0, Math.ceil((new Date(opp.deadline).getTime() - Date.now()) / 86400000))} days left</span>}
             </div>
             <div className="flex gap-2">
-              <button type="button" className="p-2 rounded-lg hover:bg-gray-50"><Bookmark className="w-4 h-4" style={{ color: "#9CA3AF" }} /></button>
+              <button type="button" className="p-2 rounded-lg hover:bg-gray-50" onClick={() => toast.info("This feature is coming soon. Stay Tiiked!")}>
+                <Bookmark className="w-4 h-4" style={{ color: "#9CA3AF" }} />
+              </button>
               {appliedIds.has(opp.id) ? (
                 <Button size="sm" disabled className="h-10" style={{ background: "#16A34A", color: "#fff" }}>Applied ✓</Button>
               ) : (
