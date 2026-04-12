@@ -25,7 +25,7 @@ interface Props {
 }
 
 export default function PostOpportunityModal({ open, onClose, onCreated }: Props) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [title, setTitle] = useState("");
   const [department, setDepartment] = useState("");
   const [locType, setLocType] = useState("Remote");
@@ -98,7 +98,7 @@ export default function PostOpportunityModal({ open, onClose, onCreated }: Props
         compensation: comp,
         deadline: deadline || null,
         poster_id: user.id,
-        org_id: (user as any)?.org_id || null,
+        org_id: profile?.org_id || null,
         domain: department.trim() || null,
         skills_required: skills.length ? skills : null,
         experience_min: expLevel === "Fresher" ? 0 : parseInt(expLevel) || 0,
