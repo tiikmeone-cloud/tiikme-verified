@@ -1,6 +1,6 @@
 import { storageImageUrl } from "@/lib/imageTransform";
 import { useState, useEffect } from "react";
-import { Plus, Users, Layers, MessageCircle, Settings, Hash, Send, Crown, Lock, Rocket, Building2, ChevronDown, Globe, ArrowRight, X, Link2, Copy, Search } from "lucide-react";
+import { Plus, Users, Layers, MessageCircle, Settings, Hash, Send, Crown, Lock, Rocket, Building2, ChevronDown, Globe, ArrowRight, X, Link2, Copy, Search, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { tiikToast } from "@/components/ui/tiik-toast";
@@ -148,7 +148,7 @@ const Workspace = () => {
   }));
 
   const activeWs = displayWorkspaces.find(w => w.id === selected);
-  const tabs = ["Feed", "Projects", "Members", "About"];
+  const tabs = ["Feed", "Projects", "Members", "Access", "About"];
 
   useEffect(() => {
     if (selected && realWorkspaces.some(w => w.id === selected)) fetchMembers(selected);
