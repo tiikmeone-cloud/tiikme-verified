@@ -89,7 +89,7 @@ const Alerts = () => {
 
   // Accept strand request
   const acceptStrand = async (alert: any) => {
-    const senderId = alert.actor_id;
+    const senderId = alert.data?.actor_id || alert.actor_id;
     if (!user || !senderId) return;
 
     // Update strand status
@@ -117,7 +117,7 @@ const Alerts = () => {
 
   // Decline strand request
   const declineStrand = async (alert: any) => {
-    const senderId = alert.actor_id;
+    const senderId = alert.data?.actor_id || alert.actor_id;
     if (!user || !senderId) return;
 
     await supabase.from("strands")
@@ -217,7 +217,7 @@ const Alerts = () => {
                       <p className="text-[12px] mt-0.5" style={{ color: "var(--text-3)" }}>{notif.body}</p>
                     )}
                     {/* Strand request actions */}
-                    {isStrandRequest && !handled && notif.actor_id && (
+                    {isStrandRequest && !handled && (notif.data?.actor_id || notif.actor_id) && (
                       <div className="flex gap-2 mt-2">
                         <Button size="sm" className="h-7 text-[11px] gap-1" onClick={(e) => { e.stopPropagation(); acceptStrand(notif); }}>
                           <Check className="w-3 h-3" /> Accept
