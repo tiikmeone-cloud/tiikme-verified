@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { useOrgIdentity } from "@/contexts/OrgIdentityContext";
 import { storageImageUrl } from "@/lib/imageTransform";
 import { MapPin, Copy, Shield, Layers, X, MessageCircle, CheckCircle, Building2, Link2, Plus, Pencil, Trash2, Briefcase, GraduationCap, Award, Code2, GripVertical, Eye, EyeOff, Heart, Rocket, Send, Share2, Users } from "lucide-react";
-import OrgSearchInput from "@/components/OrgSearchInput";
 import GetTiikedModal from "@/components/profile/GetTiikedModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -347,230 +345,11 @@ const ProfilePostsSection = ({ posts, isOwnProfile }: { posts: any[]; isOwnProfi
   );
 };
 
-/* ══════════════════════════════════════════════════════════════
-   INSTITUTION PROFILE VIEW — full tabbed layout
-   ══════════════════════════════════════════════════════════════ */
-const InstitutionProfileView = ({ org, userPosts, stats, navigate, user }: { org: any; userPosts: any[]; stats: any; navigate: any; user: any }) => {
-  const [activeTab, setActiveTab] = useState<"posts" | "about" | "team" | "opportunities" | "verified">("posts");
-  const [members, setMembers] = useState<any[]>([]);
-  const [opps, setOpps] = useState<any[]>([]);
-  const [verified, setVerified] = useState<any[]>([]);
-  const [memberCount, setMemberCount] = useState(0);
-  const [tabLoading, setTabLoading] = useState(false);
-
-  const orgInitials = org.name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
-  const tabs = [
-    { key: "posts" as const, label: "Posts" },
-    { key: "about" as const, label: "About" },
-    { key: "team" as const, label: "Team" },
-    { key: "opportunities" as const, label: "Opportunities" },
-    { key: "verified" as const, label: "Verified" },
-  ];
-
-  useEffect(() => {
-    // Fetch member count always
-    supabase.from("org_members").select("*", { count: "exact", head: true }).eq("org_id", org.id).eq("approval_status", "approved")
-      .then(({ count }) => setMemberCount(count || 0));
-  }, [org.id]);
-
-  useEffect(() => {
-    if (activeTab === "team") {
-      setTabLoading(true);
-      supabase.from("org_members").select("*, member:profiles(id, full_name, avatar_url, role, headline, designation)")
-        .eq("org_id", org.id).eq("approval_status", "approved").order("joined_at", { ascending: true })
-        .then(({ data, error }) => { if (error) console.warn("[Profile] team:", error.message); setMembers(data || []); setTabLoading(false); });
-    } else if (activeTab === "opportunities") {
-      setTabLoading(true);
-      supabase.from("opportunities").select("*").eq("org_id", org.id).eq("is_open", true).order("created_at", { ascending: false })
-        .then(({ data, error }) => { if (error) console.warn("[Profile] opps:", error.message); setOpps(data || []); setTabLoading(false); });
-    } else if (activeTab === "verified") {
-      setTabLoading(true);
-      supabase.from("org_members").select("*, member:profiles(id, full_name, avatar_url, role, headline)")
-        .eq("org_id", org.id).eq("is_verified", true)
-        .then(({ data, error }) => { if (error) console.warn("[Profile] verified:", error.message); setVerified(data || []); setTabLoading(false); });
-    }
-  }, [activeTab, org.id]);
-
-  const ROLE_BADGE: Record<string, { bg: string; text: string }> = {
-    owner: { bg: "#FFF3EC", text: "#E8580A" },
-    admin: { bg: "#EFF6FF", text: "#2563EB" },
-    recruiter: { bg: "#F0FDF4", text: "#16A34A" },
-    verifier: { bg: "#FAF5FF", text: "#7C3AED" },
-  };
-
-  return (
-    <div className="max-w-[760px] mx-auto px-0 md:px-4 py-0 md:py-7 space-y-3 md:space-y-4 md:pl-8">
-      {/* Header Card */}
-      <div className="t-card overflow-hidden">
-        <div className="h-[120px] md:h-[160px]" style={{ background: org.cover_url ? `url(${storageImageUrl(org.cover_url, "cover")}) center/cover` : "linear-gradient(135deg, #FFF8F2 0%, #E8580A33 50%, #E8580A 100%)" }} />
-        <div className="px-4 md:px-6 pb-5 md:pb-6 relative">
-          <div className="flex flex-col items-center md:items-start md:flex-row md:items-end gap-2 md:gap-4 -mt-12 md:-mt-14">
-            <div className="w-24 h-24 rounded-full flex items-center justify-center text-[24px] font-bold shrink-0 overflow-hidden"
-              style={{ background: org.logo_url ? "#fff" : "#E8580A", color: org.logo_url ? undefined : "#fff", border: "3px solid #fff", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
-              {org.logo_url ? <img src={storageImageUrl(org.logo_url, "avatar")} alt="" className="w-full h-full object-cover" /> : orgInitials}
-            </div>
-            <div className="flex-1 min-w-0 pb-1 text-center md:text-left">
-              <div className="flex items-center justify-center md:justify-start gap-2 flex-wrap">
-                <h1 className="text-[24px] font-extrabold" style={{ color: "var(--text-1)" }}>{org.name}</h1>
-                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full" style={{ background: "#E8580A1A", color: "#E8580A" }}>{org.type?.charAt(0).toUpperCase() + org.type?.slice(1)}</span>
-                {org.is_verified && <Shield className="w-4 h-4" style={{ color: "#F59E0B" }} />}
-              </div>
-              {org.tagline && <p className="text-[14px] italic mt-0.5" style={{ color: "var(--text-2)" }}>{org.tagline}</p>}
-            </div>
-          </div>
-
-          {/* Action buttons */}
-          <div className="flex gap-2 mt-4">
-            <Button variant="secondary" size="sm" className="gap-1.5 rounded-full h-11 md:h-auto text-[13px]" onClick={() => navigate("/app/settings")}><Pencil className="w-3.5 h-3.5" /> Edit Page</Button>
-            <Button variant="ghost" size="sm" className="gap-1.5 rounded-full h-11 md:h-auto text-[13px]" onClick={() => { navigator.clipboard.writeText(window.location.origin + "/org/" + org.slug); toast.success("Link copied"); }}><Copy className="w-3.5 h-3.5" /> Share</Button>
-            <Button variant="ghost" size="sm" className="gap-1.5 rounded-full h-11 md:h-auto text-[13px]" onClick={() => navigate(`/org/${org.slug}`)}><Link2 className="w-3.5 h-3.5" /> View public page</Button>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-2 mt-4 pt-4" style={{ borderTop: "1px solid var(--border)" }}>
-            <div className="text-center"><p className="text-[20px] font-extrabold" style={{ color: "var(--text-1)" }}>{org.followers_count || 0}</p><p className="micro-label mt-0.5">Followers</p></div>
-            <div className="text-center"><p className="text-[20px] font-extrabold" style={{ color: "var(--text-1)" }}>{memberCount}</p><p className="micro-label mt-0.5">Members</p></div>
-            <div className="text-center"><p className="text-[20px] font-extrabold" style={{ color: "var(--text-1)" }}>{stats.posts}</p><p className="micro-label mt-0.5">Posts</p></div>
-          </div>
-        </div>
-      </div>
-
-      {/* Tab bar */}
-      <div className="t-card px-2 flex gap-0 overflow-x-auto scrollbar-hide">
-        {tabs.map(t => (
-          <button key={t.key} type="button" onClick={() => setActiveTab(t.key)}
-            className="px-4 py-3 text-[13px] font-semibold whitespace-nowrap cursor-pointer relative"
-            style={{ color: activeTab === t.key ? "var(--brand)" : "var(--text-3)" }}>
-            {t.label}
-            {activeTab === t.key && <div className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full" style={{ background: "var(--brand)" }} />}
-          </button>
-        ))}
-      </div>
-
-      {/* Tab content */}
-      {tabLoading && <div className="t-card p-6 animate-pulse"><div className="h-32 rounded-xl" style={{ background: "var(--surface-2)" }} /></div>}
-
-      {!tabLoading && activeTab === "posts" && (
-        userPosts.length > 0 ? <ProfilePostsSection posts={userPosts} isOwnProfile={true} />
-        : <div className="t-card p-8 text-center"><MessageCircle className="w-10 h-10 mx-auto mb-2" style={{ color: "var(--text-3)" }} /><p className="text-[14px] font-semibold" style={{ color: "var(--text-1)" }}>No posts yet</p><p className="text-[13px] mt-1" style={{ color: "var(--text-3)" }}>Share updates as {org.name}</p><Button className="mt-3 rounded-full" onClick={() => navigate("/post/create")}>Create Post</Button></div>
-      )}
-
-      {!tabLoading && activeTab === "about" && (
-        <div className="t-card p-5 space-y-4">
-          {org.description && <div><p className="micro-label mb-1.5">About</p><p className="text-[14px] leading-relaxed" style={{ color: "var(--text-2)" }}>{org.description}</p></div>}
-          <div className="grid grid-cols-2 gap-4">
-            {org.type && <div><p className="micro-label mb-0.5">Type</p><p className="text-[14px] font-semibold capitalize" style={{ color: "var(--text-1)" }}>{org.type}</p></div>}
-            {org.founded_year && <div><p className="micro-label mb-0.5">Founded</p><p className="text-[14px] font-semibold" style={{ color: "var(--text-1)" }}>{org.founded_year}</p></div>}
-            {org.employee_count && <div><p className="micro-label mb-0.5">Size</p><p className="text-[14px] font-semibold" style={{ color: "var(--text-1)" }}>{org.employee_count}</p></div>}
-            {(org.city || org.state) && <div><p className="micro-label mb-0.5">Location</p><p className="text-[14px] font-semibold" style={{ color: "var(--text-1)" }}>{[org.city, org.state].filter(Boolean).join(", ")}</p></div>}
-          </div>
-          {org.website_url && <div><p className="micro-label mb-0.5">Website</p><a href={org.website_url} target="_blank" rel="noopener noreferrer" className="text-[14px] font-semibold" style={{ color: "var(--brand)" }}>{org.website_url}</a></div>}
-          {org.email && <div><p className="micro-label mb-0.5">Email</p><p className="text-[14px]" style={{ color: "var(--text-2)" }}>{org.email}</p></div>}
-          {org.phone && <div><p className="micro-label mb-0.5">Phone</p><p className="text-[14px]" style={{ color: "var(--text-2)" }}>{org.phone}</p></div>}
-          {org.social_links && typeof org.social_links === "object" && Object.keys(org.social_links).length > 0 && (
-            <div><p className="micro-label mb-1.5">Social Links</p>
-              <div className="flex flex-wrap gap-2">{Object.entries(org.social_links).filter(([, v]) => v).map(([k, v]) => (
-                <a key={k} href={v as string} target="_blank" rel="noopener noreferrer" className="text-[12px] font-semibold px-3 py-1.5 rounded-full" style={{ background: "var(--brand-dim)", color: "var(--brand)" }}>{k}</a>
-              ))}</div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {!tabLoading && activeTab === "team" && (
-        <div className="space-y-3">
-          <div className="flex justify-end"><Button size="sm" className="gap-1.5 rounded-full" style={{ background: "#E8580A", color: "#fff" }} onClick={() => navigate(`/org/${org.slug}/settings`)}><Plus className="w-3.5 h-3.5" /> Add Member</Button></div>
-          {members.length === 0 ? (
-            <div className="t-card p-8 text-center"><Users className="w-10 h-10 mx-auto mb-2" style={{ color: "var(--text-3)" }} /><p className="text-[14px] font-semibold" style={{ color: "var(--text-1)" }}>No team members yet</p></div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {members.map((m: any) => {
-                const member = m.member || {};
-                const badge = ROLE_BADGE[m.role || ""] || null;
-                const mInitials = (member.full_name || "U").split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
-                return (
-                  <div key={m.id} className="t-card p-4 flex flex-col items-center text-center" style={{ minHeight: 200 }}>
-                    <div className="w-14 h-14 rounded-full flex items-center justify-center text-[14px] font-bold text-white shrink-0 overflow-hidden mb-2" style={{ background: "#E8580A" }}>
-                      {member.avatar_url ? <img src={storageImageUrl(member.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : mInitials}
-                    </div>
-                    <p className="text-[15px] font-semibold line-clamp-2" style={{ color: "var(--text-1)" }}>{member.full_name || "Unknown"}</p>
-                    <p className="text-[13px] truncate w-full" style={{ color: "var(--text-3)" }}>{m.title || member.designation || member.headline || ""}</p>
-                    {m.department && <span className="text-[11px] px-2.5 py-0.5 rounded-full mt-1" style={{ background: "#F3F4F6", color: "#374151" }}>{m.department}</span>}
-                    {badge && <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full mt-1 capitalize" style={{ background: badge.bg, color: badge.text }}>{m.role}</span>}
-                    {m.is_verified && <span className="text-[10px] mt-0.5 flex items-center gap-0.5" style={{ color: "#10B981" }}><CheckCircle className="w-3 h-3" /> Verified</span>}
-                    <div className="flex-1" />
-                    <Button variant="outline" size="sm" className="w-full mt-2 rounded-xl text-[12px] h-8" onClick={() => navigate(`/app/profile/${member.id}`)}>View Profile</Button>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
-
-      {!tabLoading && activeTab === "opportunities" && (
-        <div className="space-y-3">
-          <div className="flex justify-end"><Button size="sm" className="gap-1.5 rounded-full" style={{ background: "#E8580A", color: "#fff" }} onClick={() => navigate("/app/opportunities")}><Plus className="w-3.5 h-3.5" /> Post Opportunity</Button></div>
-          {opps.length === 0 ? (
-            <div className="t-card p-8 text-center"><Briefcase className="w-10 h-10 mx-auto mb-2" style={{ color: "var(--text-3)" }} /><p className="text-[14px] font-semibold" style={{ color: "var(--text-1)" }}>No open opportunities</p><p className="text-[13px] mt-1" style={{ color: "var(--text-3)" }}>Post your first role</p></div>
-          ) : opps.map((o: any) => (
-            <div key={o.id} className="t-card p-5">
-              <h3 className="text-[18px] font-bold" style={{ color: "var(--text-1)" }}>{o.title}</h3>
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {o.type && <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full" style={{ background: "#E8580A1A", color: "#E8580A" }}>{o.type}</span>}
-                {o.location && <span className="text-[11px] px-2.5 py-0.5 rounded-full" style={{ background: "#F0FDF4", color: "#16A34A" }}>{o.location}</span>}
-                {o.compensation && <span className="text-[11px] px-2.5 py-0.5 rounded-full" style={{ background: "#FFF3EC", color: "#E8580A" }}>{o.compensation}</span>}
-              </div>
-              {o.description && <p className="text-[14px] mt-2 line-clamp-2" style={{ color: "var(--text-2)" }}>{o.description}</p>}
-              {o.skills_required?.length > 0 && <div className="flex flex-wrap gap-1 mt-2">{(o.skills_required as string[]).slice(0, 5).map((s: string) => <span key={s} className="text-[11px] px-2.5 py-0.5 rounded-full" style={{ background: "#F3F4F6", color: "#374151" }}>{s}</span>)}</div>}
-              <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
-                <span className="text-[12px]" style={{ color: "var(--text-3)" }}>{o.responses_count || 0} applicants</span>
-                <Button size="sm" variant="outline" onClick={() => navigate(`/app/opportunities/${o.id}/applications`)} style={{ borderColor: "#E8580A", color: "#E8580A", borderRadius: 12 }}>View Applications</Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {!tabLoading && activeTab === "verified" && (
-        verified.length === 0 ? (
-          <div className="t-card p-8 text-center"><Shield className="w-10 h-10 mx-auto mb-2" style={{ color: "var(--text-3)" }} /><p className="text-[14px] font-semibold" style={{ color: "var(--text-1)" }}>No verified members yet</p><p className="text-[13px] mt-1" style={{ color: "var(--text-3)" }}>Verified members and alumni will appear here</p></div>
-        ) : (
-          <div className="t-card overflow-hidden">{verified.map((v: any, i: number) => {
-            const m = v.member || {};
-            return (
-              <div key={v.id} className="flex items-center gap-3 px-4 py-3 cursor-pointer" style={{ borderBottom: i < verified.length - 1 ? "1px solid var(--border)" : "none" }} onClick={() => navigate(`/app/profile/${m.id}`)}>
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0 overflow-hidden" style={{ background: "#E8580A" }}>
-                  {m.avatar_url ? <img src={storageImageUrl(m.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (m.full_name || "U").slice(0, 2).toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[14px] font-semibold" style={{ color: "var(--text-1)" }}>{m.full_name || "Unknown"}</p>
-                  <p className="text-[12px]" style={{ color: "var(--text-3)" }}>{v.title || m.role || ""}</p>
-                </div>
-                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full" style={{ background: "rgba(16,185,129,0.1)", color: "#10B981" }}>Verified ✓</span>
-              </div>
-            );
-          })}</div>
-        )
-      )}
-    </div>
-  );
-};
-
 const Profile = () => {
   const { id: urlUserId } = useParams<{ id: string }>();
   const [editOpen, setEditOpen] = useState(false);
   const { profile: authProfile, initials: authInitials, displayName: authDisplayName, refreshProfile, user, loading: authLoading } = useAuth();
-  const { isInstitution, org, loading: orgLoading } = useOrgIdentity();
   const navigate = useNavigate();
-
-  // Institution accounts visiting /app/profile → redirect to /org/{slug}
-  const isOwnInstitutionProfile = isInstitution && (!urlUserId || urlUserId === user?.id);
-  useEffect(() => {
-    if (isOwnInstitutionProfile && org?.slug && org.slug.length > 0) {
-      navigate(`/org/${org.slug}`, { replace: true });
-    }
-  }, [isOwnInstitutionProfile, org, navigate]);
   const [viewedProfile, setViewedProfile] = useState<any>(null);
   const [workItems, setWorkItems] = useState<any[]>([]);
   const [userPosts, setUserPosts] = useState<any[]>([]);
@@ -610,10 +389,7 @@ const Profile = () => {
     if (!targetUserId) { setDataLoading(false); return; }
     setDataLoading(true);
 
-    // For institution accounts, query posts by posted_by_org instead of author_id
-    const postsQuery = isOwnInstitutionProfile && authProfile?.org_id
-      ? supabase.from("posts").select("id, content, created_at, image_urls, comment_count, reactions:post_reactions(user_id)").eq("posted_by_org", authProfile.org_id).order("created_at", { ascending: false }).limit(20)
-      : supabase.from("posts").select("id, content, created_at, image_urls, comment_count, reactions:post_reactions(user_id)").eq("author_id", targetUserId).order("created_at", { ascending: false }).limit(20);
+    const postsQuery = supabase.from("posts").select("id, content, created_at, image_urls, comment_count, reactions:post_reactions(user_id)").eq("author_id", targetUserId).order("created_at", { ascending: false }).limit(20);
 
     const [profileRes, itemsRes, strandCountRes, postsRes, achvsRes, certsRes] = await Promise.allSettled([
       isOwnProfile ? Promise.resolve({ data: authProfile }) : supabase.from("profiles").select("*").eq("id", targetUserId).maybeSingle(),
@@ -642,7 +418,7 @@ const Profile = () => {
       setSectionOrder(DEFAULT_SECTION_ORDER);
     }
     setDataLoading(false);
-  }, [targetUserId, isOwnProfile, authProfile, isOwnInstitutionProfile]);
+  }, [targetUserId, isOwnProfile, authProfile]);
 
   const [connectionStatus, setConnectionStatus] = useState<{ status: string | null; direction: string | null; id: string | null }>({ status: null, direction: null, id: null });
   const [connectLoading, setConnectLoading] = useState(false);
@@ -657,17 +433,12 @@ const Profile = () => {
   }, [user, targetUserId, isOwnProfile]);
   useEffect(() => { if (!authLoading) loadProfile(); }, [authLoading, loadProfile]);
 
-  if (authLoading || dataLoading || (isOwnInstitutionProfile && orgLoading)) return (
+  if (authLoading || dataLoading) return (
     <div className="max-w-[760px] mx-auto px-4 py-7"><div className="t-card p-6 animate-pulse"><div className="h-[140px] rounded-xl" style={{ background: "var(--surface-2)" }} /><div className="h-6 w-48 rounded mt-4" style={{ background: "var(--surface-2)" }} /><div className="h-4 w-32 rounded mt-2" style={{ background: "var(--surface-2)" }} /></div></div>
   );
   if (!user && isOwnProfile) return null;
 
   const profileData = viewedProfile || authProfile;
-
-  // Institution accounts: render org profile immediately — don't fall through to personal profile fields
-  if (isOwnInstitutionProfile && org) {
-    return <InstitutionProfileView org={org} userPosts={userPosts} stats={stats} navigate={navigate} user={user} />;
-  }
 
   if (!profileData) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
@@ -958,7 +729,7 @@ const Profile = () => {
         <AnimatePresence>
           {showAddExp && (
             <InlineForm title="Add Experience" saving={saving} onSave={saveExperience} onCancel={() => setShowAddExp(false)} fields={<>
-              <OrgSearchInput value={expForm.company} onChange={(name) => setExpForm({ ...expForm, company: name })} placeholder="Company / Organisation *" style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", borderRadius: 12, color: "var(--text-1)" }} />
+              <Input value={expForm.company} onChange={e => setExpForm({ ...expForm, company: e.target.value })} placeholder="Company / Organisation *" style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", borderRadius: 12, color: "var(--text-1)" }} />
               <Input placeholder="Job Title / Designation *" value={expForm.title} onChange={e => setExpForm({ ...expForm, title: e.target.value })} style={inputStyle} />
               <select value={expForm.type} onChange={e => setExpForm({ ...expForm, type: e.target.value })} className="w-full px-3 text-[14px] outline-none cursor-pointer" style={inputStyle}>
                 {["Full-time","Part-time","Contract","Freelance","Internship","Apprenticeship"].map(t => <option key={t}>{t}</option>)}
@@ -1030,7 +801,7 @@ const Profile = () => {
         <AnimatePresence>
           {showAddEdu && (
             <InlineForm title="Add Education" saving={saving} onSave={saveEducation} onCancel={() => setShowAddEdu(false)} fields={<>
-              <OrgSearchInput value={eduForm.institution} onChange={(name) => setEduForm({ ...eduForm, institution: name })} placeholder="Institution Name *" style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", borderRadius: 12, color: "var(--text-1)" }} />
+              <Input value={eduForm.institution} onChange={e => setEduForm({ ...eduForm, institution: e.target.value })} placeholder="Institution Name *" style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", borderRadius: 12, color: "var(--text-1)" }} />
               <Input placeholder="Degree / Program *" value={eduForm.degree} onChange={e => setEduForm({ ...eduForm, degree: e.target.value })} style={inputStyle} />
               <Input placeholder="Branch / Specialisation" value={eduForm.branch} onChange={e => setEduForm({ ...eduForm, branch: e.target.value })} style={inputStyle} />
               <div className="grid grid-cols-2 gap-2">
@@ -1092,7 +863,7 @@ const Profile = () => {
           {showAddProject && (
             <InlineForm title="Add Project" saving={saving} onSave={saveProject} onCancel={() => setShowAddProject(false)} fields={<>
               <Input placeholder="Project title *" value={projForm.title} onChange={e => setProjForm({ ...projForm, title: e.target.value })} style={inputStyle} />
-              <OrgSearchInput value={projForm.org} onChange={(name) => setProjForm({ ...projForm, org: name })} placeholder="Organisation (optional)" style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", borderRadius: 12, color: "var(--text-1)" }} />
+              <Input value={projForm.org} onChange={e => setProjForm({ ...projForm, org: e.target.value })} placeholder="Organisation (optional)" style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", borderRadius: 12, color: "var(--text-1)" }} />
               <select value={projForm.type} onChange={e => setProjForm({ ...projForm, type: e.target.value })} className="w-full px-3 text-[14px] outline-none cursor-pointer" style={inputStyle}>
                 <option value="software">Software</option><option value="research">Research</option><option value="hardware">Hardware</option><option value="design">Design</option><option value="other">Other</option>
               </select>

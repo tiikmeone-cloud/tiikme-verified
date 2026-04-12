@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useOrgIdentity } from "@/contexts/OrgIdentityContext";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
@@ -27,7 +26,6 @@ interface Props {
 
 export default function PostOpportunityModal({ open, onClose, onCreated }: Props) {
   const { user } = useAuth();
-  const { isInstitution, org } = useOrgIdentity();
   const [title, setTitle] = useState("");
   const [department, setDepartment] = useState("");
   const [locType, setLocType] = useState("Remote");
@@ -100,7 +98,7 @@ export default function PostOpportunityModal({ open, onClose, onCreated }: Props
         compensation: comp,
         deadline: deadline || null,
         poster_id: user.id,
-        org_id: isInstitution && org ? org.id : null,
+        org_id: null,
         domain: department.trim() || null,
         skills_required: skills.length ? skills : null,
         experience_min: expLevel === "Fresher" ? 0 : parseInt(expLevel) || 0,
@@ -141,21 +139,6 @@ export default function PostOpportunityModal({ open, onClose, onCreated }: Props
           <button type="button" onClick={onClose} className="p-2 rounded-lg cursor-pointer" style={{ color: "#9CA3AF" }}><X className="w-5 h-5" /></button>
         </div>
 
-        {/* Company info card (auto-filled for institutions) */}
-        {isInstitution && org && (
-          <div className="rounded-xl p-4 mb-5 flex items-center gap-3" style={{ background: "#FFF3EC", border: "1px solid #F0E8E0" }}>
-            <div className="w-10 h-10 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 overflow-hidden"
-              style={{ background: org.logo_url ? "#fff" : "#E8580A", color: "#fff", border: org.logo_url ? "1px solid #F0E8E0" : "none" }}>
-              {org.logo_url ? <img src={org.logo_url} alt="" className="w-full h-full object-cover" /> : <Building2 className="w-5 h-5" />}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[14px] font-bold" style={{ color: "#1A1A1A" }}>{org.name}</p>
-              <p className="text-[11px]" style={{ color: "#6B6B6B" }}>
-                {[org.type, org.employee_count, org.city].filter(Boolean).join(" · ")}
-              </p>
-            </div>
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Title */}
@@ -346,9 +329,6 @@ export default function PostOpportunityModal({ open, onClose, onCreated }: Props
             </div>
           </div>
 
-          {isInstitution && org && (
-            <p className="text-[12px]" style={{ color: "#9CA3AF" }}>Posting as <strong style={{ color: "#E8580A" }}>{org.name}</strong></p>
-          )}
 
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="outline" className="flex-1" onClick={onClose} style={{ height: 40, borderRadius: 12, borderColor: "#F0E8E0" }}>Save as Draft</Button>
