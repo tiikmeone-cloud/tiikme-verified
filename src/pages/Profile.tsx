@@ -369,7 +369,7 @@ const Profile = () => {
   const [dataLoading, setDataLoading] = useState(true);
   const [bioExpanded, setBioExpanded] = useState(false);
   const [sectionOrder, setSectionOrder] = useState<string[]>(DEFAULT_SECTION_ORDER);
-  const navigate = useNavigate();
+  // navigate already declared above
 
   const [showAddExp, setShowAddExp] = useState(false);
   const [showAddEdu, setShowAddEdu] = useState(false);
