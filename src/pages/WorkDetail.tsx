@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const WorkDetail = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { slug } = useParams();
   const [work, setWork] = useState<any>(null);
