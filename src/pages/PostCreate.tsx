@@ -70,7 +70,7 @@ const PostCreate = () => {
         setUploading(false);
       }
 
-      const { error } = await supabase.from("posts").insert({
+      const postData: any = {
         author_id: user.id,
         content: content.trim(),
         post_type: "thought",
@@ -78,7 +78,15 @@ const PostCreate = () => {
         visibility: "everyone",
         hashtags: (content.match(/#\w+/g) || []).map(t => t.slice(1)),
         image_urls: imageUrls,
-      } as any).select().single();
+      };
+      // Institution accounts post as org
+      if (isInstitution && org) {
+        postData.posted_by_org = org.id;
+        postData.posted_by_user_id = user.id;
+        postData.workspace_name = `org:${org.id}`;
+      }
+
+      const { error } = await supabase.from("posts").insert(postData).select().single();
 
       if (error) throw error;
 
