@@ -969,7 +969,64 @@ const Profile = () => {
     ) : null,
   };
 
-  return (
+  // ── INSTITUTION PROFILE RENDERING ──
+  if (isOwnInstitutionProfile && org) {
+    const orgInitials = org.name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
+    return (
+      <div className="max-w-[760px] mx-auto px-0 md:px-4 py-0 md:py-7 space-y-3 md:space-y-4 md:pl-8">
+        <div className="t-card overflow-hidden">
+          <div className="h-[120px] md:h-[140px]" style={{ background: org.cover_url ? `url(${org.cover_url}) center/cover` : "linear-gradient(135deg, #FFF8F2 0%, #E8580A33 50%, #E8580A 100%)" }} />
+          <div className="px-4 md:px-6 pb-5 md:pb-6 relative">
+            <div className="flex flex-col items-center md:items-start md:flex-row md:items-end gap-2 md:gap-4 -mt-10 md:-mt-12">
+              <div className="w-24 h-24 rounded-full flex items-center justify-center text-[24px] font-bold shrink-0 overflow-hidden"
+                style={{ background: org.logo_url ? "#fff" : "#E8580A", color: org.logo_url ? undefined : "#fff", border: "3px solid #fff", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
+                {org.logo_url ? <img src={storageImageUrl(org.logo_url, "avatar")} alt="" className="w-full h-full object-cover" /> : orgInitials}
+              </div>
+              <div className="flex-1 min-w-0 pb-1 text-center md:text-left">
+                <div className="flex items-center justify-center md:justify-start gap-2 flex-wrap">
+                  <h1 className="text-[22px] font-extrabold" style={{ color: "var(--text-1)" }}>{org.name}</h1>
+                  <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full" style={{ background: "#E8580A1A", color: "#E8580A" }}>{org.type?.charAt(0).toUpperCase() + org.type?.slice(1)}</span>
+                  {org.is_verified && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(232,88,10,0.1)", color: "#E8580A" }}>Verified</span>}
+                </div>
+                {org.tagline && <p className="text-[14px] italic mt-0.5" style={{ color: "var(--text-2)" }}>{org.tagline}</p>}
+              </div>
+            </div>
+            <div className="flex gap-2 mt-4">
+              <Button variant="secondary" size="sm" className="gap-1.5 rounded-full h-11 md:h-auto text-[13px]" onClick={() => navigate("/app/settings")}><Pencil className="w-3.5 h-3.5" /> Edit Page</Button>
+              <Button variant="ghost" size="sm" className="gap-1.5 rounded-full h-11 md:h-auto text-[13px]" onClick={() => { navigator.clipboard.writeText(window.location.origin + "/org/" + org.slug); toast.success("Link copied"); }}><Copy className="w-3.5 h-3.5" /> Copy link</Button>
+              <Button variant="ghost" size="sm" className="gap-1.5 rounded-full h-11 md:h-auto text-[13px]" onClick={() => navigate(`/org/${org.slug}`)}><Link2 className="w-3.5 h-3.5" /> View public page</Button>
+            </div>
+            <div className="grid grid-cols-3 gap-2 mt-4 pt-4" style={{ borderTop: "1px solid var(--border)" }}>
+              <div className="text-center"><p className="text-[20px] font-extrabold" style={{ color: "var(--text-1)" }}>{org.followers_count || 0}</p><p className="micro-label mt-0.5">Followers</p></div>
+              <div className="text-center"><p className="text-[20px] font-extrabold" style={{ color: "var(--text-1)" }}>0</p><p className="micro-label mt-0.5">Members</p></div>
+              <div className="text-center"><p className="text-[20px] font-extrabold" style={{ color: "var(--text-1)" }}>{stats.posts}</p><p className="micro-label mt-0.5">Posts</p></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick shortcuts for institution */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            { label: "View Org Page", icon: Building2, action: () => navigate(`/org/${org.slug}`) },
+            { label: "Workspace", icon: Layers, action: () => navigate("/app/workspace") },
+            { label: "Opportunities", icon: Briefcase, action: () => navigate("/app/opportunities") },
+            { label: "Settings", icon: Pencil, action: () => navigate("/app/settings") },
+          ].map(item => (
+            <button key={item.label} type="button" onClick={item.action}
+              className="t-card p-4 flex flex-col items-center gap-2 cursor-pointer hover:-translate-y-0.5 transition-transform">
+              <item.icon className="w-5 h-5" style={{ color: "var(--brand)" }} />
+              <span className="text-[12px] font-semibold" style={{ color: "var(--text-1)" }}>{item.label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Org posts */}
+        {userPosts.length > 0 && <ProfilePostsSection posts={userPosts} isOwnProfile={true} />}
+      </div>
+    );
+  }
+
+  
     <div className="max-w-[760px] mx-auto px-0 md:px-4 py-0 md:py-7 space-y-3 md:space-y-4 md:pl-8">
       {/* HEADER */}
       <div className="t-card overflow-hidden">
