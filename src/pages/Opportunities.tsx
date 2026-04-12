@@ -96,7 +96,7 @@ const Opportunities = () => {
         user_id: opp.poster_id, type: "opportunity",
         title: `New application for "${opp.title}"`,
         body: `${profile?.full_name || "Someone"} applied for your opportunity.`,
-        link: `/app/opportunities`,
+        action_url: `/app/opportunities`,
       });
     }
     setAppliedIds(prev => [...prev, selectedId]);

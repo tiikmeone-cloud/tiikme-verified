@@ -478,7 +478,8 @@ const Profile = () => {
       user_id: targetUserId, type: "strand",
       title: `${authProfile?.full_name || "Someone"} wants to connect with you`,
       body: `${authProfile?.full_name || "Someone"} sent you a connection request`,
-      link: `/app/profile/${user.id}`,
+      action_url: `/app/profile/${user.id}`,
+      data: { actor_id: user.id } as any,
     });
     setConnectionStatus({ status: "pending", direction: "sent", id: null });
     setConnectLoading(false);
