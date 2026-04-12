@@ -16,6 +16,9 @@ interface FeedPost {
   image_urls: string[] | null;
   visibility: string | null;
   author_id: string | null;
+  posted_by_org: string | null;
+  posted_by_user_id: string | null;
+  repost_count: number | null;
   author?: {
     id: string;
     username: string;
@@ -25,8 +28,21 @@ interface FeedPost {
     institution_name: string | null;
     activity_score: number | null;
   };
+  org?: {
+    id: string;
+    name: string;
+    logo_url: string | null;
+    type: string;
+    slug: string;
+  } | null;
+  poster_profile?: {
+    id: string;
+    full_name: string | null;
+  } | null;
   _score?: number;
 }
+
+const FEED_SELECT = `*, author:profiles!posts_author_id_fkey(id, username, full_name, role, avatar_url, institution_name, activity_score), org:organizations!posts_posted_by_org_fkey(id, name, logo_url, type, slug), poster_profile:profiles!posts_posted_by_user_id_fkey(id, full_name)`;
 
 function getRecencyWeight(createdAt: string | null): number {
   if (!createdAt) return 0.1;
@@ -89,7 +105,6 @@ export function useFeedPosts() {
     return () => { mountedRef.current = false; };
   }, []);
 
-  // Load strands once when user is ready
   useEffect(() => {
     if (!isReady || !user) return;
     supabase
@@ -117,7 +132,7 @@ export function useFeedPosts() {
       try {
         const { data, error } = await supabase
           .from("posts")
-          .select(`*, author:profiles!author_id (id, username, full_name, role, avatar_url, institution_name, activity_score)`)
+          .select(FEED_SELECT)
           .eq("visibility", "everyone")
           .order("created_at", { ascending: false })
           .range(pageNum * POSTS_PER_PAGE, (pageNum + 1) * POSTS_PER_PAGE - 1);
@@ -155,13 +170,11 @@ export function useFeedPosts() {
     [profile?.role, profile?.institution_name, strandIds]
   );
 
-  // Load posts only when auth is ready
   useEffect(() => {
     if (!isReady) return;
     loadPosts(0);
   }, [isReady, loadPosts]);
 
-  // Real-time subscription
   useEffect(() => {
     if (!isReady) return;
     const channel = supabase
@@ -172,7 +185,7 @@ export function useFeedPosts() {
 
         const { data } = await supabase
           .from("posts")
-          .select(`*, author:profiles!author_id (id, username, full_name, role, avatar_url, institution_name, activity_score)`)
+          .select(FEED_SELECT)
           .eq("id", newPost.id)
           .single();
 

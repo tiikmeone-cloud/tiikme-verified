@@ -280,7 +280,7 @@ const Explore = () => {
           {people.length > 0 && (
             <section className="mb-8">
               <SectionHeader title="People Like You" count={people.length} />
-              <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))" }}>
+              <div className="grid gap-3 grid-cols-2 md:grid-cols-3" style={{ alignItems: "start" }}>
                 {people.map(p => (
                   <motion.div key={p.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}>
                     <PersonCard p={p} strandStatus={strandMap[p.id] || "none"} onStrand={() => handleStrand(p.id)} />
@@ -293,7 +293,7 @@ const Explore = () => {
           {orgs.length > 0 && (
             <section className="mb-8">
               <SectionHeader title="Suggested Organisations" count={orgs.length} />
-              <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))" }}>
+              <div className="grid gap-3 grid-cols-2 md:grid-cols-3" style={{ alignItems: "start" }}>
                 {orgs.map(org => (
                   <motion.div key={org.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}>
                     <OrgCard org={org} />
