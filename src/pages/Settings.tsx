@@ -281,6 +281,9 @@ const SettingsPage = () => {
     >
       <h1 className="text-[20px] font-extrabold mb-5" style={{ color: "var(--text-1)", letterSpacing: "-0.01em" }}>Settings</h1>
 
+      {isInstitution ? (
+        <InstitutionSettings />
+      ) : (
       <div className="flex gap-6">
         <div className="hidden md:block w-[200px] shrink-0">
           <div className="sticky top-20 space-y-0.5">
@@ -601,6 +604,7 @@ const SettingsPage = () => {
           )}
         </div>
       </div>
+      )}
     </motion.div>
   );
 };
