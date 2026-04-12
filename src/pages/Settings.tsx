@@ -1,5 +1,5 @@
 import { storageImageUrl } from "@/lib/imageTransform";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { Check, GraduationCap, Briefcase, Rocket, Laptop, Coffee, Sun, Moon, Monitor, Palette, Mail, Key, Download, Trash2, AlertTriangle, Camera, User, Shield, Bell, Eye, Lock, LogOut, Users, Copy, Share2, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,8 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useOrgIdentity } from "@/contexts/OrgIdentityContext";
+import InstitutionSettings from "@/components/settings/InstitutionSettings";
 
 const navItems = [
   { id: "profile", label: "Profile", icon: User },
@@ -50,6 +52,7 @@ const Toggle = ({ label, desc, defaultOn = true }: { label: string; desc?: strin
 const SettingsPage = () => {
   const navigate = useNavigate();
   const { user, refreshProfile } = useAuth();
+  const { isInstitution } = useOrgIdentity();
   const [activeTab, setActiveTab] = useState("profile");
   const [journeyChoice, setJourneyChoice] = useState<string | null>(null);
   const [theme, setTheme] = useState(() => localStorage.getItem("tiikme-theme") || "light");
