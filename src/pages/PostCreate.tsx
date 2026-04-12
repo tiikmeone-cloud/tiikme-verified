@@ -5,15 +5,16 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useOrgIdentity } from "@/contexts/OrgIdentityContext";
 import { supabase } from "@/integrations/supabase/client";
 
 const MAX_IMAGES = 20;
 
 const PostCreate = () => {
   const navigate = useNavigate();
-  const { user, profile, initials } = useAuth();
-  const { isInstitution, org, identityName, identityAvatar, identityInitials } = useOrgIdentity();
+  const { user, profile, initials, displayName } = useAuth();
+  const identityAvatar = profile?.avatar_url || null;
+  const identityInitials = initials;
+  const identityName = displayName;
   const [content, setContent] = useState("");
   const [publishing, setPublishing] = useState(false);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
@@ -79,12 +80,6 @@ const PostCreate = () => {
         hashtags: (content.match(/#\w+/g) || []).map(t => t.slice(1)),
         image_urls: imageUrls,
       };
-      // Institution accounts post as org
-      if (isInstitution && org) {
-        postData.posted_by_org = org.id;
-        postData.posted_by_user_id = user.id;
-        postData.workspace_name = `org:${org.id}`;
-      }
 
       const { error } = await supabase.from("posts").insert(postData).select().single();
 
@@ -128,7 +123,7 @@ const PostCreate = () => {
         <div>
           <p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>{identityName || "You"}</p>
           <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
-            {isInstitution ? `Posting as ${org?.name || "Organisation"}` : "Posting to everyone"}
+            Posting to everyone
           </p>
         </div>
       </div>

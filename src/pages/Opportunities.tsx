@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { useOrgIdentity } from "@/contexts/OrgIdentityContext";
 import { supabase } from "@/integrations/supabase/client";
 import PostOpportunityModal from "@/components/opportunities/PostOpportunityModal";
 import ApplyModal from "@/components/opportunities/ApplyModal";
@@ -18,7 +17,7 @@ const typeColors: Record<string, string> = { fulltime: "#2563EB", "full-time": "
 
 const Opportunities = () => {
   const { user, profile } = useAuth();
-  const { isInstitution, org } = useOrgIdentity();
+  
   const navigate = useNavigate();
   const [activeType, setActiveType] = useState("All");
   const [search, setSearch] = useState("");
@@ -64,7 +63,7 @@ const Opportunities = () => {
     toast.success(saved.has(id) ? "Removed" : "Saved");
   };
 
-  const myOpps = opps.filter(o => o.poster_id === user?.id || (isInstitution && org && o.org_id === org.id));
+  const myOpps = opps.filter(o => o.poster_id === user?.id);
   const displayOpps = tab === "mine" ? myOpps : opps;
 
   const daysAgo = (d: string) => { const diff = Math.floor((Date.now() - new Date(d).getTime()) / 86400000); return diff === 0 ? "Today" : `${diff}d ago`; };
@@ -77,28 +76,11 @@ const Opportunities = () => {
         <div>
           <h1 className="text-[28px] font-bold" style={{ color: "var(--text-1)" }}>Opportunities</h1>
           <p className="text-[14px]" style={{ color: "var(--text-3)" }}>
-            {isInstitution ? "Post and manage roles for your organization" : "Roles matched to your profile and connections"}
+            Roles matched to your profile and connections
           </p>
         </div>
-        {isInstitution && (
-          <Button onClick={() => setShowCreate(true)} style={{ background: "#E8580A", color: "#fff", borderRadius: 12, height: 44 }}>
-            <Plus className="w-4 h-4 mr-1.5" /> Post Opportunity
-          </Button>
-        )}
       </div>
 
-      {/* Institution admin tabs */}
-      {isInstitution && (
-        <div className="flex gap-1 mt-4 mb-4">
-          {(["all", "mine"] as const).map(t => (
-            <button key={t} type="button" onClick={() => setTab(t)}
-              className="px-4 py-2 text-[13px] font-semibold rounded-lg cursor-pointer"
-              style={{ background: tab === t ? "var(--brand-dim)" : "transparent", color: tab === t ? "#E8580A" : "var(--text-3)" }}>
-              {t === "all" ? "All Opportunities" : "My Posted Roles"}
-            </button>
-          ))}
-        </div>
-      )}
 
       {/* Filter bar */}
       <div className="sticky top-0 z-10 py-3 flex items-center gap-3 flex-wrap" style={{ background: "var(--bg)" }}>
@@ -130,7 +112,7 @@ const Opportunities = () => {
         <div className="text-center py-16">
           <Briefcase className="w-12 h-12 mx-auto mb-3" style={{ color: "#9CA3AF" }} />
           <p className="text-[16px] font-bold" style={{ color: "#1A1A1A" }}>No opportunities yet</p>
-          <p className="text-[13px] mt-1" style={{ color: "#9CA3AF" }}>{isInstitution ? "Post your first role" : "Check back later"}</p>
+          <p className="text-[13px] mt-1" style={{ color: "#9CA3AF" }}>Check back later</p>
         </div>
       ) : (
         <div className="space-y-3 mt-2">
@@ -185,7 +167,7 @@ const Opportunities = () => {
                     {o.deadline && <span><Clock className="w-3.5 h-3.5 inline mr-1" />{daysLeft(o.deadline)}</span>}
                   </div>
                   <div className="flex items-center gap-2">
-                    {(isInstitution && org && o.org_id === org.id) || o.poster_id === user?.id ? (
+                    {o.poster_id === user?.id ? (
                       <Button onClick={() => navigate(`/app/opportunities/${o.id}/applications`)}
                         variant="outline" style={{ height: 40, borderRadius: 12, borderColor: "#E8580A", color: "#E8580A" }}>
                         <Eye className="w-4 h-4 mr-1" /> Applications
