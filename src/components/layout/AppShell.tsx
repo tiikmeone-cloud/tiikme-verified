@@ -208,7 +208,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             return (
               <Tooltip key={item.path} delayDuration={0}>
                 <TooltipTrigger asChild>
-                  <Link to={item.path} className="w-10 h-10 rounded-xl flex items-center justify-center relative"
+                  <Link to={item.path === "/app/profile" ? profilePath : item.path} className="w-10 h-10 rounded-xl flex items-center justify-center relative"
                     style={{ background: active ? "var(--brand-dim)" : "transparent", color: active ? "var(--brand)" : "var(--text-2)", transition: "all 0.15s" }}>
                     {active && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[22px]" style={{ borderRadius: "0 3px 3px 0", background: "var(--brand)", boxShadow: "2px 0 8px var(--brand-glow)" }} />}
                     <item.icon className="w-[18px] h-[18px]" strokeWidth={1.8} />
