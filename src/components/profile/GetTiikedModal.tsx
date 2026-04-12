@@ -181,14 +181,14 @@ const GetTiikedModal = ({ open, onClose, userId, userRole, onVerified }: Props) 
                 input.accept = ".pdf,.jpg,.jpeg,.png";
                 input.onchange = async (e: any) => {
                   const file = e.target.files?.[0];
-                  if (!file || !user) return;
+                  if (!file || !userId) return;
                   if (file.size > 10 * 1024 * 1024) { toast.error("Max 10MB"); return; }
                   try {
-                    const path = `${user.id}/verify-${Date.now()}-${file.name.replace(/[^a-z0-9.]/gi, "_")}`;
+                    const path = `${userId}/verify-${Date.now()}-${file.name.replace(/[^a-z0-9.]/gi, "_")}`;
                     const { error: upErr } = await supabase.storage.from("work-assets").upload(path, file);
                     if (upErr) { toast.error("Upload failed"); return; }
                     const { data: urlData } = supabase.storage.from("work-assets").getPublicUrl(path);
-                    await supabase.from("alerts").insert({ user_id: user.id, type: "verification_request", title: "Document submitted for verification", body: "Your document has been uploaded. Our team will review it shortly.", data: { doc_url: urlData?.publicUrl } as any });
+                    await supabase.from("alerts").insert({ user_id: userId, type: "verification_request", title: "Document submitted for verification", body: "Your document has been uploaded. Our team will review it shortly.", data: { doc_url: urlData?.publicUrl } as any });
                     toast.success("Document uploaded! We'll review it shortly.");
                     onClose();
                     setStep("choose");
