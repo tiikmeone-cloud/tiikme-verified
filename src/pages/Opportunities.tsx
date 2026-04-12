@@ -2,9 +2,10 @@ import { storageImageUrl } from "@/lib/imageTransform";
 import { useState, useEffect, useCallback } from "react";
 import { AnimatePresence } from "framer-motion";
 import {
-  Search, Briefcase, MapPin, Bookmark, Clock, Plus, Building2, Users as UsersIcon
+  Search, Briefcase, MapPin, Bookmark, Clock, Plus, Building2, Users as UsersIcon, Eye
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrgIdentity } from "@/contexts/OrgIdentityContext";
@@ -18,6 +19,7 @@ const typeColors: Record<string, string> = { fulltime: "#2563EB", "full-time": "
 const Opportunities = () => {
   const { user, profile } = useAuth();
   const { isInstitution, org } = useOrgIdentity();
+  const navigate = useNavigate();
   const [activeType, setActiveType] = useState("All");
   const [search, setSearch] = useState("");
   const [opps, setOpps] = useState<any[]>([]);
@@ -183,14 +185,23 @@ const Opportunities = () => {
                     {o.deadline && <span><Clock className="w-3.5 h-3.5 inline mr-1" />{daysLeft(o.deadline)}</span>}
                   </div>
                   <div className="flex items-center gap-2">
-                    <button type="button" onClick={() => toggleSave(o.id)} className="w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer"
-                      style={{ border: "1.5px solid #F0E8E0" }}>
-                      <Bookmark className="w-4 h-4" style={{ color: saved.has(o.id) ? "#E8580A" : "#9CA3AF", fill: saved.has(o.id) ? "#E8580A" : "none" }} />
-                    </button>
-                    {applied ? (
-                      <Button disabled style={{ height: 40, borderRadius: 12, background: "#F0FDF4", color: "#16A34A", border: "1.5px solid #16A34A" }}>Applied ✓</Button>
+                    {(isInstitution && org && o.org_id === org.id) || o.poster_id === user?.id ? (
+                      <Button onClick={() => navigate(`/app/opportunities/${o.id}/applications`)}
+                        variant="outline" style={{ height: 40, borderRadius: 12, borderColor: "#E8580A", color: "#E8580A" }}>
+                        <Eye className="w-4 h-4 mr-1" /> Applications
+                      </Button>
                     ) : (
-                      <Button onClick={() => setShowApply(o)} style={{ height: 40, borderRadius: 12, background: "#E8580A", color: "#fff" }}>Apply Now →</Button>
+                      <>
+                        <button type="button" onClick={() => toggleSave(o.id)} className="w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer"
+                          style={{ border: "1.5px solid #F0E8E0" }}>
+                          <Bookmark className="w-4 h-4" style={{ color: saved.has(o.id) ? "#E8580A" : "#9CA3AF", fill: saved.has(o.id) ? "#E8580A" : "none" }} />
+                        </button>
+                        {applied ? (
+                          <Button disabled style={{ height: 40, borderRadius: 12, background: "#F0FDF4", color: "#16A34A", border: "1.5px solid #16A34A" }}>Applied ✓</Button>
+                        ) : (
+                          <Button onClick={() => setShowApply(o)} style={{ height: 40, borderRadius: 12, background: "#E8580A", color: "#fff" }}>Apply Now →</Button>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
