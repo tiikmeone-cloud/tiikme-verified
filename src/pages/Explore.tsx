@@ -1,3 +1,4 @@
+import { storageImageUrl } from "@/lib/imageTransform";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { Search, X, Shield, Building2, Users, Plus, Lock, ChevronRight } from "lucide-react";
@@ -34,7 +35,7 @@ function PersonCard({ p, strandStatus, onStrand }: { p: ProfileResult; strandSta
       flex flex-col md:flex-row items-center md:items-center gap-2 md:gap-3"
       onClick={() => navigate(`/app/profile/${p.id}`)}>
       <div className="w-11 h-11 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: color }}>
-        {p.avatar_url ? <img src={p.avatar_url} alt="" className="w-full h-full object-cover" /> : initials}
+        {p.avatar_url ? <img src={storageImageUrl(p.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials}
       </div>
       <div className="flex-1 min-w-0 text-center md:text-left">
         <div className="flex items-center justify-center md:justify-start gap-1.5">

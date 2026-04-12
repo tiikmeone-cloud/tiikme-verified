@@ -1,3 +1,4 @@
+import { storageImageUrl } from "@/lib/imageTransform";
 import { useState, useEffect } from "react";
 import { Search, Send, CheckCircle, Clock, XCircle, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -206,7 +207,7 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
                   className="flex items-center gap-2 w-full p-2 rounded-lg cursor-pointer"
                   style={{ background: selectedVerifier?.user_id === v.user_id ? "var(--brand-dim)" : "var(--surface)", border: `1px solid ${selectedVerifier?.user_id === v.user_id ? "var(--brand)" : "var(--border)"}` }}>
                   <div className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold text-white overflow-hidden" style={{ background: "var(--brand)" }}>
-                    {v.profile?.avatar_url ? <img src={v.profile.avatar_url} className="w-full h-full object-cover" /> : (v.profile?.full_name || "U").slice(0, 2).toUpperCase()}
+                    {v.profile?.avatar_url ? <img src={storageImageUrl(v.profile.avatar_url, "avatar")} className="w-full h-full object-cover" /> : (v.profile?.full_name || "U").slice(0, 2).toUpperCase()}
                   </div>
                   <div>
                     <p className="text-[11px] font-semibold" style={{ color: "var(--text-1)" }}>{v.profile?.full_name}</p>
@@ -244,7 +245,7 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
                   className="flex items-center gap-2 w-full p-2 rounded-lg cursor-pointer"
                   style={{ background: selectedVerifier?.user_id === p.id ? "var(--brand-dim)" : "var(--surface)", border: `1px solid ${selectedVerifier?.user_id === p.id ? "var(--brand)" : "var(--border)"}` }}>
                   <div className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold text-white overflow-hidden" style={{ background: "var(--brand)" }}>
-                    {p.avatar_url ? <img src={p.avatar_url} className="w-full h-full object-cover" /> : (p.full_name || "U").slice(0, 2).toUpperCase()}
+                    {p.avatar_url ? <img src={storageImageUrl(p.avatar_url, "avatar")} className="w-full h-full object-cover" /> : (p.full_name || "U").slice(0, 2).toUpperCase()}
                   </div>
                   <p className="text-[11px] font-semibold" style={{ color: "var(--text-1)" }}>{p.full_name}</p>
                 </button>

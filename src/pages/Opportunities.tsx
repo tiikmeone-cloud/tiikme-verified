@@ -1,3 +1,4 @@
+import { storageImageUrl } from "@/lib/imageTransform";
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -238,7 +239,7 @@ const Opportunities = () => {
                     <div className="space-y-3">
                       <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
                         <div className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold text-white overflow-hidden" style={{ background: "var(--brand)" }}>
-                          {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : (profile?.full_name || "U").slice(0, 2).toUpperCase()}
+                          {profile?.avatar_url ? <img src={storageImageUrl(profile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (profile?.full_name || "U").slice(0, 2).toUpperCase()}
                         </div>
                         <div>
                           <p className="text-[13px] font-bold" style={{ color: "var(--text-1)" }}>{profile?.full_name || "You"}</p>

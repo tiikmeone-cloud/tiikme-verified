@@ -178,7 +178,7 @@ const LivePostCard = ({
             return (
               <div key={c.id} className="flex items-start gap-2 group">
                 <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: cColor }}>
-                  {c.author?.avatar_url ? <img src={c.author.avatar_url} alt="" className="w-full h-full rounded-full object-cover" /> : cInitials}
+                  {c.author?.avatar_url ? <img src={storageImageUrl(c.author.avatar_url, "avatar")} alt="" className="w-full h-full rounded-full object-cover" /> : cInitials}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
@@ -197,7 +197,7 @@ const LivePostCard = ({
           })}
           <div className="flex items-center gap-2 mt-2">
             <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden" style={{ background: "var(--brand)" }}>
-              {authProfile?.avatar_url ? <img src={authProfile.avatar_url} alt="" className="w-full h-full object-cover" /> : userInitials}
+              {authProfile?.avatar_url ? <img src={storageImageUrl(authProfile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : userInitials}
             </div>
             <input
               value={commentText}
@@ -280,7 +280,7 @@ const SuggestedWidget = () => {
             <div key={s.id} className="flex items-center gap-2.5">
               <Link to={`/app/profile/${s.id}`}>
                 <div className="w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-bold text-white overflow-hidden" style={{ backgroundColor: color }}>
-                  {s.avatar_url ? <img src={s.avatar_url} alt="" className="w-full h-full object-cover" /> : init}
+                  {s.avatar_url ? <img src={storageImageUrl(s.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : init}
                 </div>
               </Link>
               <div className="flex-1 min-w-0">
@@ -362,7 +362,7 @@ const Feed = () => {
           <div className="glass-liquid rounded-2xl md:rounded-3xl p-3 mb-4">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: "var(--brand)" }}>
-                {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : initials}
+                {profile?.avatar_url ? <img src={storageImageUrl(profile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials}
               </div>
               <button type="button" onClick={() => feedNavigate("/post/create")} className="flex-1 text-left text-[13px] h-10 glass-input px-4 cursor-pointer" style={{ color: "var(--text-3)" }}>
                 What's on your mind?
