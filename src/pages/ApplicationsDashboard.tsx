@@ -85,27 +85,62 @@ export default function ApplicationsDashboard() {
     return true;
   });
 
+  const [showSelectModal, setShowSelectModal] = useState<any>(null);
+  const [offerMessage, setOfferMessage] = useState("");
+
   const handleStatusChange = async (appId: string, status: string) => {
+    if (status === "selected") {
+      const app = apps.find(a => a.id === appId);
+      setOfferMessage(`Congratulations! 🎉 We're thrilled to select you for the ${opp?.title} role at ${org?.name || "our organization"}. We'd love to have you on board. Please confirm your acceptance.`);
+      setShowSelectModal(app);
+      return;
+    }
     try {
       const updates: any = { status };
-      if (status === "selected") updates.selected_at = new Date().toISOString();
       await supabase.from("opportunity_applications").update(updates).eq("id", appId);
       setApps(prev => prev.map(a => a.id === appId ? { ...a, ...updates } : a));
       if (selectedApp?.id === appId) setSelectedApp((prev: any) => ({ ...prev, ...updates }));
       toast.success(`Status updated to ${status}`);
-
-      // Create alert for applicant
-      const app = apps.find(a => a.id === appId);
-      if (app && status === "selected") {
-        await supabase.from("alerts").insert({
-          user_id: app.applicant_id,
-          type: "opportunity",
-          title: `${org?.name || "An organization"} selected you for ${opp?.title}`,
-          body: "Congratulations! Check the opportunity details.",
-          action_url: `/app/opportunities`,
-        });
-      }
     } catch (e) { console.warn("[AppsDashboard] status update:", e); }
+  };
+
+  const confirmSelect = async () => {
+    if (!showSelectModal || !opp) return;
+    const app = showSelectModal;
+    try {
+      await supabase.from("opportunity_applications").update({ status: "selected", selected_at: new Date().toISOString() }).eq("id", app.id);
+      setApps(prev => prev.map(a => a.id === app.id ? { ...a, status: "selected" } : a));
+      if (selectedApp?.id === app.id) setSelectedApp((prev: any) => ({ ...prev, status: "selected" }));
+
+      // Create offer alert for the applicant
+      await supabase.from("alerts").insert({
+        user_id: app.applicant_id,
+        type: "offer",
+        title: `You've been selected! 🎉`,
+        body: `${org?.name || "An organization"} has selected you for ${opp.title}`,
+        action_url: `/app/opportunities`,
+        data: { org_id: org?.id, org_name: org?.name, opportunity_id: opp.id, role_title: opp.title, application_id: app.id } as any,
+      });
+
+      // Send Ping to applicant
+      try {
+        const ownerId = user?.id;
+        if (ownerId && app.applicant_id) {
+          const { data: conv } = await supabase.from("conversations").insert({
+            participant_1: ownerId, participant_2: app.applicant_id,
+          }).select().single();
+          if (conv) {
+            await supabase.from("pings").insert({
+              conversation_id: conv.id, sender_id: ownerId,
+              content: offerMessage, is_opener: true,
+            });
+          }
+        }
+      } catch (pingErr) { console.warn("[AppsDashboard] ping send:", pingErr); }
+
+      toast.success(`Offer sent to ${app.profile?.full_name || "applicant"}!`);
+      setShowSelectModal(null);
+    } catch (e) { console.warn("[AppsDashboard] select:", e); toast.error("Failed to send offer"); }
   };
 
   const handleSaveNote = async () => {
