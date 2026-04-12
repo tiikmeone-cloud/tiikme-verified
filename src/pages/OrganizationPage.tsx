@@ -117,11 +117,10 @@ export default function OrganizationPage() {
 
   if (loading) return <PageLoader />;
   if (!org) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: "#FFF8F2", color: "#1A1A1A" }}>
-      <div className="text-center">
-        <p className="text-[16px] font-bold">Organisation not found</p>
-        <button type="button" onClick={() => navigate("/app/explore")} className="text-[13px] mt-2" style={{ color: "#E8580A" }}>← Explore</button>
-      </div>
+    <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: "#FFF8F2", color: "#1A1A1A" }}>
+      <p className="text-lg font-semibold">Organisation not found</p>
+      <p className="text-sm text-gray-500 mt-2">Slug: {slug}</p>
+      <button type="button" onClick={() => navigate(-1)} className="text-[13px] mt-4 underline" style={{ color: "#E8580A" }}>Go back</button>
     </div>
   );
 

@@ -15,13 +15,25 @@ export default function InstitutionProfile() {
 
   useEffect(() => {
     if (loading || orgLoading) return;
-    if (isInstitution && org?.slug) {
+    if (isInstitution && org?.slug && org.slug.length > 0) {
       navigate(`/org/${org.slug}`, { replace: true });
-    } else {
-      // Fallback — shouldn't happen but safety net
+      return;
+    }
+    // If not institution, go to feed immediately
+    if (!isInstitution) {
       navigate("/app/feed", { replace: true });
     }
   }, [loading, orgLoading, isInstitution, org, navigate]);
+
+  // Safety timeout: if org slug never resolves after 3s, bail to feed
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!org?.slug || org.slug.length === 0) {
+        navigate("/app/feed", { replace: true });
+      }
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [org, navigate]);
 
   return <PageLoader />;
 }
