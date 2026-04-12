@@ -67,6 +67,20 @@ const Workspace = () => {
   const [memberResults, setMemberResults] = useState<any[]>([]);
   const [addingMember, setAddingMember] = useState(false);
 
+  const { isInstitution, org } = useOrgIdentity();
+
+  // Auto-create workspace for institution accounts
+  useEffect(() => {
+    if (!isInstitution || !org || !user || wsLoading || autoCreated || realWorkspaces.length > 0) return;
+    setAutoCreated(true);
+    (async () => {
+      try {
+        const ws = await createWorkspace(`${org.name} Workspace`, `Internal workspace for ${org.name}`, "institution", "members_only");
+        if (ws) { setSelected(ws.id); setMobileShowRight(true); }
+      } catch (e) { console.warn("[Workspace] auto-create failed:", e); }
+    })();
+  }, [isInstitution, org, user, wsLoading, autoCreated, realWorkspaces.length, createWorkspace]);
+
   // Workspace name autocomplete
   useEffect(() => {
     if (createName.length < 4) { setNameSuggestions([]); return; }
