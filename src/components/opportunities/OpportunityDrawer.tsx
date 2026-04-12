@@ -75,7 +75,7 @@ export function OpportunityDetailDrawer({ opp, onClose }: { opp: Opportunity; on
             <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: opp.typeColor }}>{opp.typeLabel}</span>
             {opp.verified && <Shield className="w-3.5 h-3.5" style={{ color: "#10B981" }} />}
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg cursor-pointer active:scale-95" style={{ color: "var(--text-3)" }}>
+          <button type="button" onClick={onClose} className="p-2 rounded-lg cursor-pointer active:scale-95" style={{ color: "var(--text-3)" }}>
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -150,7 +150,7 @@ export function OpportunityDetailDrawer({ opp, onClose }: { opp: Opportunity; on
                     <div key={q.id} className="glass-liquid rounded-xl p-3.5">
                       <p className="text-[13px] mb-2" style={{ color: "var(--text-1)" }}>{q.question}</p>
                       {q.type === "toggle" ? (
-                        <button onClick={() => setScreeningAnswers(prev => ({ ...prev, [q.id]: !prev[q.id] }))} className="flex items-center gap-2 cursor-pointer active:scale-95">
+                        <button type="button" onClick={() => setScreeningAnswers(prev => ({ ...prev, [q.id]: !prev[q.id] }))} className="flex items-center gap-2 cursor-pointer active:scale-95">
                           {screeningAnswers[q.id] ? <ToggleRight className="w-6 h-6" style={{ color: "var(--brand)" }} /> : <ToggleLeft className="w-6 h-6" style={{ color: "var(--text-3)" }} />}
                           <span className="text-[12px] font-semibold" style={{ color: "var(--text-2)" }}>{screeningAnswers[q.id] ? "Yes" : "No"}</span>
                         </button>

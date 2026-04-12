@@ -130,7 +130,7 @@ const Opportunities = () => {
     const color = typeColors[o.type || ""] || "#6B7280";
     const Icon = typeIcons[o.type || ""] || Briefcase;
     return (
-      <button onClick={() => selectOpp(o.id)}
+      <button type="button" onClick={() => selectOpp(o.id)}
         className={`w-full text-left p-4 transition-all duration-150 cursor-pointer ${selectedId === o.id ? "" : "hover:bg-[var(--surface-2)]"}`}
         style={{ borderBottom: "1px solid var(--border)", background: selectedId === o.id ? "var(--brand-dim)" : "transparent", borderLeft: selectedId === o.id ? "3px solid var(--brand)" : "3px solid transparent" }}>
         <div className="flex items-start gap-3">
@@ -146,7 +146,7 @@ const Opportunities = () => {
             {o.description && <p className="text-[11px] mt-1 line-clamp-2" style={{ color: "var(--text-2)" }}>{o.description}</p>}
             {o.compensation && <p className="text-[12px] font-bold mt-1" style={{ color: "#F59E0B" }}>{o.compensation}</p>}
           </div>
-          <button onClick={(e) => { e.stopPropagation(); toggleSave(o.id); }} className="p-1 cursor-pointer">
+          <button type="button" onClick={(e) => { e.stopPropagation(); toggleSave(o.id); }} className="p-1 cursor-pointer">
             <Bookmark className="w-4 h-4" style={{ color: saved.includes(o.id) ? "var(--brand)" : "var(--text-3)", fill: saved.includes(o.id) ? "var(--brand)" : "none" }} />
           </button>
         </div>
@@ -167,7 +167,7 @@ const Opportunities = () => {
                 <Target className="w-6 h-6" style={{ color: "var(--brand)" }} />
                 <h1 className="text-[20px] text-emboss">Opportunities</h1>
               </div>
-              <button onClick={() => setShowCreate(true)} className="flex items-center gap-1 text-[12px] font-bold px-3 py-1.5 rounded-full cursor-pointer active:scale-95" style={{ background: "var(--brand)", color: "white" }}>
+              <button type="button" onClick={() => setShowCreate(true)} className="flex items-center gap-1 text-[12px] font-bold px-3 py-1.5 rounded-full cursor-pointer active:scale-95" style={{ background: "var(--brand)", color: "white" }}>
                 <Plus className="w-3 h-3" /> Post
               </button>
             </div>
@@ -178,7 +178,7 @@ const Opportunities = () => {
             </div>
             <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
               {typeFilters.map(f => (
-                <button key={f} onClick={() => setActiveType(f)}
+                <button type="button" key={f} onClick={() => setActiveType(f)}
                   className="shrink-0 h-7 px-3 rounded-full text-[11px] font-bold cursor-pointer active:scale-95"
                   style={{ background: activeType === f ? "var(--brand)" : "var(--surface-2)", color: activeType === f ? "white" : "var(--text-2)", border: activeType === f ? "none" : "1px solid var(--border)" }}>
                   {f}
@@ -206,7 +206,7 @@ const Opportunities = () => {
         <div className={`flex-1 overflow-y-auto ${!mobileDetail && !selectedId ? "hidden md:flex" : "flex"} flex-col`}>
           {selected ? (
             <div className="p-6">
-              <button onClick={() => setMobileDetail(false)} className="md:hidden flex items-center gap-1 mb-4 text-[13px] font-semibold cursor-pointer" style={{ color: "var(--brand)" }}><ArrowLeft className="w-4 h-4" /> Back</button>
+              <button type="button" onClick={() => setMobileDetail(false)} className="md:hidden flex items-center gap-1 mb-4 text-[13px] font-semibold cursor-pointer" style={{ color: "var(--brand)" }}><ArrowLeft className="w-4 h-4" /> Back</button>
               <span className="text-[10px] font-bold px-2.5 py-1 rounded-full" style={{ background: `${typeColors[selected.type || ""] || "#6B7280"}1A`, color: typeColors[selected.type || ""] || "#6B7280" }}>{(selected.type || "job").toUpperCase()}</span>
               <h2 className="text-[22px] font-extrabold mt-3" style={{ color: "var(--text-1)" }}>{selected.title}</h2>
               <div className="flex flex-wrap gap-3 mt-3">
@@ -285,7 +285,7 @@ const Opportunities = () => {
               className="glass-card p-6 max-w-lg w-full max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-[18px] font-extrabold" style={{ color: "var(--text-1)" }}>Post Opportunity</h2>
-                <button onClick={() => setShowCreate(false)} className="p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
+                <button type="button" onClick={() => setShowCreate(false)} className="p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
               </div>
               <div className="space-y-3">
                 <Input placeholder="Title *" value={cTitle} onChange={e => setCTitle(e.target.value)} style={inputStyle} />
@@ -293,7 +293,7 @@ const Opportunities = () => {
                   <label className="micro-label block mb-1.5">Type *</label>
                   <div className="flex flex-wrap gap-1.5">
                     {oppTypes.map(t => (
-                      <button key={t} onClick={() => setCType(t)}
+                      <button type="button" key={t} onClick={() => setCType(t)}
                         className="text-[11px] font-bold px-3 py-1.5 rounded-full cursor-pointer active:scale-95"
                         style={{ background: cType === t ? "var(--brand)" : "var(--surface-2)", color: cType === t ? "white" : "var(--text-2)", border: cType === t ? "none" : "1px solid var(--border)" }}>
                         {t}
@@ -312,7 +312,7 @@ const Opportunities = () => {
                   <label className="micro-label block mb-1.5">Location</label>
                   <div className="flex gap-1.5 mb-2">
                     {locationTypes.map(l => (
-                      <button key={l} onClick={() => setCLocType(l)}
+                      <button type="button" key={l} onClick={() => setCLocType(l)}
                         className="text-[11px] font-bold px-3 py-1.5 rounded-full cursor-pointer"
                         style={{ background: cLocType === l ? "var(--brand-dim)" : "var(--surface-2)", color: cLocType === l ? "var(--brand)" : "var(--text-2)", border: `1px solid ${cLocType === l ? "var(--brand)" : "var(--border)"}` }}>
                         {l}

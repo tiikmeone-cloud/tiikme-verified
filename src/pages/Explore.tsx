@@ -123,7 +123,7 @@ const ExploreSection = ({ title, icon: Icon, children, count, onViewAll }: { tit
           <span className="text-[11px] font-bold px-2 py-0.5 rounded-full" style={{ background: "var(--surface-2)", color: "var(--text-3)" }}>{count}</span>
         </div>
         {onViewAll && (
-          <button onClick={onViewAll} className="flex items-center gap-0.5 text-[12px] font-bold cursor-pointer" style={{ color: "var(--brand)" }}>
+          <button type="button" onClick={onViewAll} className="flex items-center gap-0.5 text-[12px] font-bold cursor-pointer" style={{ color: "var(--brand)" }}>
             View all <ChevronRight className="w-3.5 h-3.5" />
           </button>
         )}
@@ -277,7 +277,7 @@ const Explore = () => {
           <input type="text" value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Search people, organizations..."
             className="w-full h-[48px] md:h-[52px] glass-input pl-[52px] pr-12 text-[14px] outline-none" style={{ color: "var(--text-1)" }} />
-          {search && <button onClick={() => setSearch("")} className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer w-10 h-10 flex items-center justify-center" style={{ color: "var(--text-3)" }}><X className="w-4 h-4" /></button>}
+          {search && <button type="button" onClick={() => setSearch("")} className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer w-10 h-10 flex items-center justify-center" style={{ color: "var(--text-3)" }}><X className="w-4 h-4" /></button>}
         </div>
       </div>
 

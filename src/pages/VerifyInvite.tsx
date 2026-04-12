@@ -31,7 +31,7 @@ const OTPModal = ({ open, onClose }: { open: boolean; onClose: () => void }) => 
       >
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-[18px] font-extrabold text-t1">{step === "phone" ? "Quick Login" : "Enter OTP"}</h2>
-          <button onClick={onClose} className="p-2 rounded-lg text-t3 hover:text-t1 cursor-pointer active:scale-95"><X className="w-5 h-5" /></button>
+          <button type="button" onClick={onClose} className="p-2 rounded-lg text-t3 hover:text-t1 cursor-pointer active:scale-95"><X className="w-5 h-5" /></button>
         </div>
 
         {step === "phone" ? (
@@ -70,7 +70,7 @@ const OTPModal = ({ open, onClose }: { open: boolean; onClose: () => void }) => 
             >
               Verify & Continue <Shield className="w-4 h-4" />
             </Button>
-            <button onClick={() => { setStep("phone"); setOtp(""); }} className="block mx-auto text-[12px] text-t3 hover:text-t1 cursor-pointer active:scale-95 transition-all duration-200">
+            <button type="button" onClick={() => { setStep("phone"); setOtp(""); }} className="block mx-auto text-[12px] text-t3 hover:text-t1 cursor-pointer active:scale-95 transition-all duration-200">
               Change number
             </button>
           </div>

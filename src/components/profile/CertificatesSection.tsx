@@ -51,7 +51,7 @@ export default function CertificatesSection({ certificates, setCertificates, isO
           <h2 className="text-[16px] font-extrabold" style={{ color: "var(--text-1)" }}>Certificates</h2>
         </div>
         {isOwnProfile && (
-          <button onClick={() => setShowAdd(true)} className="flex items-center gap-1 text-[12px] font-bold px-3 py-1.5 rounded-full cursor-pointer active:scale-95" style={{ background: "var(--brand-dim)", color: "var(--brand)", border: "1px solid var(--brand)" }}>
+          <button type="button" onClick={() => setShowAdd(true)} className="flex items-center gap-1 text-[12px] font-bold px-3 py-1.5 rounded-full cursor-pointer active:scale-95" style={{ background: "var(--brand-dim)", color: "var(--brand)", border: "1px solid var(--brand)" }}>
             <Plus className="w-3 h-3" /> Add
           </button>
         )}

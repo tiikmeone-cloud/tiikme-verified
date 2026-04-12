@@ -162,7 +162,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             </div>
           ))}
           <div className="px-0 mt-2">
-            <button onClick={openPostCreate}
+            <button type="button" onClick={openPostCreate}
               className="w-full h-[52px] rounded-[14px] flex items-center justify-center gap-2 text-[15px] font-bold text-white active:scale-[0.97]"
               style={{ background: "linear-gradient(135deg, var(--brand), var(--brand-2))", boxShadow: "0 2px 8px var(--brand-glow), inset 0 1px 0 rgba(255,255,255,0.1)", transition: "all 0.15s" }}>
               <PencilLine className="w-4 h-4" /> New Post
@@ -179,7 +179,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "var(--brand-dim)", color: "var(--brand)" }}>{roleLabel}</span>
             </div>
           </Link>
-          <button onClick={handleSignOut}
+          <button type="button" onClick={handleSignOut}
             className="w-full flex items-center gap-2.5 px-3 py-2 mt-1 rounded-xl text-[13px] font-medium cursor-pointer active:scale-[0.97]"
             style={{ color: "var(--text-3)", transition: "all 0.15s" }}
             onMouseEnter={e => { e.currentTarget.style.background = "rgba(220,38,38,0.06)"; e.currentTarget.style.color = "#DC2626"; }}
@@ -212,7 +212,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             );
           })}
         </nav>
-        <button onClick={openPostCreate} className="w-10 h-10 rounded-full flex items-center justify-center mb-2 active:scale-[0.92]"
+        <button type="button" onClick={openPostCreate} className="w-10 h-10 rounded-full flex items-center justify-center mb-2 active:scale-[0.92]"
           style={{ background: "linear-gradient(135deg, var(--brand), var(--brand-2))", boxShadow: "0 4px 12px var(--brand-glow)" }}>
           <PencilLine className="w-4 h-4 text-white" />
         </button>
@@ -255,7 +255,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           {mobileNav.map((item) => {
             if (item.path === "__post__") {
               return (
-                <button key="post" onClick={openPostCreate}
+                <button type="button" key="post" onClick={openPostCreate}
                   className="w-[52px] h-[52px] rounded-full flex items-center justify-center -mt-5 active:scale-[0.92] shrink-0"
                   style={{
                     background: "linear-gradient(135deg, var(--brand), var(--brand-2))",

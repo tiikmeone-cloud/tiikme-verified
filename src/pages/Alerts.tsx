@@ -173,7 +173,7 @@ const Alerts = () => {
 
       <div className="flex gap-0 border-b mb-6" style={{ borderColor: "var(--border)" }}>
         {filterTabs.map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)}
+          <button type="button" key={tab} onClick={() => setActiveTab(tab)}
             className="px-4 py-2.5 text-[12px] font-semibold transition-all duration-200 relative cursor-pointer"
             style={{ color: activeTab === tab ? "var(--brand)" : "var(--text-3)" }}>
             {tab === "Unread" ? `Unread (${unreadCount})` : tab}

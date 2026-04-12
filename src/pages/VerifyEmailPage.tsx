@@ -126,11 +126,11 @@ export default function VerifyEmailPage() {
 
         <p className="text-[13px]" style={{ color: "#9CA3AF" }}>
           {cooldown > 0 ? `Resend code in ${cooldown}s...` : (
-            <button onClick={handleResend} className="font-semibold cursor-pointer hover:underline" style={{ color: "#E8580A" }}>Resend code →</button>
+            <button type="button" onClick={handleResend} className="font-semibold cursor-pointer hover:underline" style={{ color: "#E8580A" }}>Resend code →</button>
           )}
         </p>
 
-        <button onClick={() => navigate("/signup")} className="text-[13px] mt-3 cursor-pointer hover:underline" style={{ color: "#6B7280" }}>
+        <button type="button" onClick={() => navigate("/signup")} className="text-[13px] mt-3 cursor-pointer hover:underline" style={{ color: "#6B7280" }}>
           Wrong email? ← Change it
         </button>
       </div>

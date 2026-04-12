@@ -80,7 +80,7 @@ const Welcome = () => {
           style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
           <Link2 className="w-4 h-4" style={{ color: "var(--brand)" }} />
           <span className="text-[14px] font-mono" style={{ color: "var(--text-1)" }}>{linkText}<span className="animate-pulse">|</span></span>
-          <button onClick={copyLink} className="p-1.5 rounded-lg transition-all duration-200 cursor-pointer active:scale-95" style={{ color: "var(--text-3)" }}><Copy className="w-4 h-4" /></button>
+          <button type="button" onClick={copyLink} className="p-1.5 rounded-lg transition-all duration-200 cursor-pointer active:scale-95" style={{ color: "var(--text-3)" }}><Copy className="w-4 h-4" /></button>
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="grid grid-cols-3 gap-3 mb-8">

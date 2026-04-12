@@ -69,7 +69,7 @@ const CreatePage = () => {
                   {pageTypes.map(pt => {
                     const sel = selectedType === pt.id;
                     return (
-                      <button key={pt.id} onClick={() => setSelectedType(pt.id)}
+                      <button type="button" key={pt.id} onClick={() => setSelectedType(pt.id)}
                         className="t-card t-card-hover p-4 text-center cursor-pointer relative"
                         style={{ border: sel ? "1.5px solid var(--brand)" : undefined, background: sel ? "var(--brand-dim)" : undefined }}>
                         {sel && <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: "var(--brand)" }}><Check className="w-3 h-3 text-white" /></div>}
@@ -88,7 +88,7 @@ const CreatePage = () => {
           {/* Step 1: Details */}
           {step === 1 && (
             <motion.div key="s1" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
-              <button onClick={() => setStep(0)} className="flex items-center gap-1 text-[13px] mb-4 cursor-pointer" style={{ color: "var(--text-2)" }}><ArrowLeft className="w-4 h-4" /> Back</button>
+              <button type="button" onClick={() => setStep(0)} className="flex items-center gap-1 text-[13px] mb-4 cursor-pointer" style={{ color: "var(--text-2)" }}><ArrowLeft className="w-4 h-4" /> Back</button>
               <div className="glass-card p-8 max-h-[75vh] overflow-y-auto">
                 <h2 className="text-[20px] font-extrabold text-center mb-6" style={{ color: "var(--text-1)" }}>Page details</h2>
                 <div className="space-y-3">
@@ -131,7 +131,7 @@ const CreatePage = () => {
                         <p className="text-[11px] font-semibold mb-2" style={{ color: "var(--text-3)" }}>Work culture</p>
                         <div className="flex flex-wrap gap-1.5">
                           {cultureTags.map(t => (
-                            <button key={t} onClick={() => toggleTag(t)} className="text-[11px] font-semibold px-2.5 py-1 rounded-full cursor-pointer"
+                            <button type="button" key={t} onClick={() => toggleTag(t)} className="text-[11px] font-semibold px-2.5 py-1 rounded-full cursor-pointer"
                               style={{ background: selectedTags.includes(t) ? "var(--brand-dim)" : "var(--surface-2)", border: selectedTags.includes(t) ? "1px solid var(--brand)" : "1px solid var(--border)", color: selectedTags.includes(t) ? "var(--brand)" : "var(--text-2)" }}>
                               {t}
                             </button>
@@ -162,7 +162,7 @@ const CreatePage = () => {
           {/* Step 2: Media & Links */}
           {step === 2 && (
             <motion.div key="s2" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
-              <button onClick={() => setStep(1)} className="flex items-center gap-1 text-[13px] mb-4 cursor-pointer" style={{ color: "var(--text-2)" }}><ArrowLeft className="w-4 h-4" /> Back</button>
+              <button type="button" onClick={() => setStep(1)} className="flex items-center gap-1 text-[13px] mb-4 cursor-pointer" style={{ color: "var(--text-2)" }}><ArrowLeft className="w-4 h-4" /> Back</button>
               <div className="glass-card p-8 max-h-[75vh] overflow-y-auto">
                 <h2 className="text-[20px] font-extrabold text-center mb-6" style={{ color: "var(--text-1)" }}>Media & Links</h2>
                 <div className="space-y-4">
@@ -184,11 +184,11 @@ const CreatePage = () => {
                       <div key={i} className="flex gap-2 mb-2 items-center">
                         <Input placeholder="URL" value={link.url} onChange={e => { const updated = [...customLinks]; updated[i].url = e.target.value; setCustomLinks(updated); }} className="flex-1" />
                         <Input placeholder="Display text" value={link.label} onChange={e => { const updated = [...customLinks]; updated[i].label = e.target.value; setCustomLinks(updated); }} className="flex-1" />
-                        <button onClick={() => setCustomLinks(customLinks.filter((_, idx) => idx !== i))} className="p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-4 h-4" /></button>
+                        <button type="button" onClick={() => setCustomLinks(customLinks.filter((_, idx) => idx !== i))} className="p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-4 h-4" /></button>
                       </div>
                     ))}
                     {customLinks.length < 5 && (
-                      <button onClick={() => setCustomLinks([...customLinks, { url: "", label: "" }])} className="text-[12px] font-semibold cursor-pointer" style={{ color: "var(--brand)" }}>+ Add link</button>
+                      <button type="button" onClick={() => setCustomLinks([...customLinks, { url: "", label: "" }])} className="text-[12px] font-semibold cursor-pointer" style={{ color: "var(--brand)" }}>+ Add link</button>
                     )}
                   </div>
                 </div>
@@ -203,7 +203,7 @@ const CreatePage = () => {
           {/* Step 3: Admin permissions */}
           {step === 3 && (
             <motion.div key="s3" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
-              <button onClick={() => setStep(2)} className="flex items-center gap-1 text-[13px] mb-4 cursor-pointer" style={{ color: "var(--text-2)" }}><ArrowLeft className="w-4 h-4" /> Back</button>
+              <button type="button" onClick={() => setStep(2)} className="flex items-center gap-1 text-[13px] mb-4 cursor-pointer" style={{ color: "var(--text-2)" }}><ArrowLeft className="w-4 h-4" /> Back</button>
               <div className="glass-card p-8">
                 <h2 className="text-[20px] font-extrabold text-center mb-2" style={{ color: "var(--text-1)" }}>Admin permissions</h2>
                 <p className="text-[14px] text-center mb-6" style={{ color: "var(--text-2)" }}>Who else can manage this Page?</p>

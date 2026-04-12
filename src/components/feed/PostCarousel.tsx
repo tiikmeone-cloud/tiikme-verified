@@ -48,7 +48,7 @@ const PostCarousel = ({ images }: PostCarouselProps) => {
         />
         {lightbox && (
           <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center" onClick={() => setLightbox(false)}>
-            <button className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center cursor-pointer z-10" onClick={() => setLightbox(false)}>
+            <button type="button" className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center cursor-pointer z-10" onClick={() => setLightbox(false)}>
               <X className="w-6 h-6 text-white" />
             </button>
             <img src={images[0]} alt="" className="max-w-[95vw] max-h-[90vh] object-contain" onClick={e => e.stopPropagation()} />
@@ -80,13 +80,13 @@ const PostCarousel = ({ images }: PostCarouselProps) => {
         </span>
         {/* Arrows */}
         {current > 0 && (
-          <button onClick={(e) => { e.stopPropagation(); prev(); }}
+          <button type="button" onClick={(e) => { e.stopPropagation(); prev(); }}
             className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 cursor-pointer">
             <ChevronLeft className="w-5 h-5" />
           </button>
         )}
         {current < images.length - 1 && (
-          <button onClick={(e) => { e.stopPropagation(); next(); }}
+          <button type="button" onClick={(e) => { e.stopPropagation(); next(); }}
             className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 cursor-pointer">
             <ChevronRight className="w-5 h-5" />
           </button>
@@ -94,7 +94,7 @@ const PostCarousel = ({ images }: PostCarouselProps) => {
         {/* Dots */}
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
           {images.map((_, i) => (
-            <button key={i} onClick={(e) => { e.stopPropagation(); setCurrent(i); }}
+            <button type="button" key={i} onClick={(e) => { e.stopPropagation(); setCurrent(i); }}
               className="w-2 h-2 rounded-full cursor-pointer transition-all"
               style={{ background: i === current ? "white" : "rgba(255,255,255,0.4)", transform: i === current ? "scale(1.3)" : "scale(1)" }} />
           ))}
@@ -104,18 +104,18 @@ const PostCarousel = ({ images }: PostCarouselProps) => {
       {/* Lightbox */}
       {lightbox && (
         <div className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center" onClick={() => setLightbox(false)}>
-          <button className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center cursor-pointer z-10" onClick={() => setLightbox(false)}>
+          <button type="button" className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center cursor-pointer z-10" onClick={() => setLightbox(false)}>
             <X className="w-6 h-6 text-white" />
           </button>
           <span className="absolute top-5 left-1/2 -translate-x-1/2 text-white text-[14px] font-bold">{current + 1} / {images.length}</span>
           {current > 0 && (
-            <button onClick={(e) => { e.stopPropagation(); prev(); }}
+            <button type="button" onClick={(e) => { e.stopPropagation(); prev(); }}
               className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20 cursor-pointer">
               <ChevronLeft className="w-6 h-6" />
             </button>
           )}
           {current < images.length - 1 && (
-            <button onClick={(e) => { e.stopPropagation(); next(); }}
+            <button type="button" onClick={(e) => { e.stopPropagation(); next(); }}
               className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20 cursor-pointer">
               <ChevronRight className="w-6 h-6" />
             </button>
@@ -123,7 +123,7 @@ const PostCarousel = ({ images }: PostCarouselProps) => {
           <img src={images[current]} alt="" className="max-w-[95vw] max-h-[85vh] object-contain" onClick={e => e.stopPropagation()} />
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
             {images.map((_, i) => (
-              <button key={i} onClick={(e) => { e.stopPropagation(); setCurrent(i); }}
+              <button type="button" key={i} onClick={(e) => { e.stopPropagation(); setCurrent(i); }}
                 className="w-2.5 h-2.5 rounded-full cursor-pointer transition-all"
                 style={{ background: i === current ? "white" : "rgba(255,255,255,0.3)", transform: i === current ? "scale(1.3)" : "scale(1)" }} />
             ))}

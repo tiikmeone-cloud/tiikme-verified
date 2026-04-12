@@ -119,13 +119,13 @@ const Pings = () => {
         <div className="p-4" style={{ borderBottom: "1px solid var(--border)" }}>
           <div className="flex items-center justify-between mb-3">
             <h1 className="text-[20px] font-extrabold" style={{ color: "var(--text-1)", letterSpacing: "-0.01em" }}>Pings</h1>
-            <button className="w-9 h-9 rounded-full flex items-center justify-center transition-all duration-150 cursor-pointer active:scale-95" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }} onClick={() => setShowNewPing(true)}>
+            <button type="button" className="w-9 h-9 rounded-full flex items-center justify-center transition-all duration-150 cursor-pointer active:scale-95" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }} onClick={() => setShowNewPing(true)}>
               <PenSquare className="w-4 h-4" style={{ color: "var(--text-2)" }} />
             </button>
           </div>
           <div className="flex gap-1 mb-3">
             {(["chats", "applications", "requests"] as const).map(t => (
-              <button key={t} onClick={() => setTab(t)}
+              <button type="button" key={t} onClick={() => setTab(t)}
                 className="text-[12px] font-bold px-3.5 py-1.5 rounded-full transition-all duration-200 cursor-pointer active:scale-95 capitalize"
                 style={{ background: tab === t ? "var(--brand)" : "var(--surface-2)", color: tab === t ? "white" : "var(--text-2)", border: `1px solid ${tab === t ? "var(--brand)" : "var(--border)"}` }}>
                 {t === "requests" ? "Requests" : t === "applications" ? "Applications" : "Chats"}
@@ -155,7 +155,7 @@ const Pings = () => {
             const preview = getLastMessagePreview(convo);
 
             return (
-              <button key={convo.id} onClick={() => { loadMessages(convo.id); setShowMobileList(false); }}
+              <button type="button" key={convo.id} onClick={() => { loadMessages(convo.id); setShowMobileList(false); }}
                 className="w-full flex items-center gap-3 px-4 py-3 text-left transition-all duration-150 cursor-pointer active:scale-[0.99]"
                 style={{
                   background: convo.unread_count > 0 ? "linear-gradient(90deg, var(--brand-dim) 0%, transparent 100%)" : active ? "var(--brand-dim)" : "transparent",
@@ -196,7 +196,7 @@ const Pings = () => {
         ) : (
           <>
             <div className="flex items-center gap-3 px-5 h-16 shrink-0" style={{ background: "var(--glass-bg)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderBottom: "1px solid var(--glass-border)" }}>
-              <button onClick={() => setShowMobileList(true)} className="md:hidden p-1.5 rounded-lg cursor-pointer active:scale-95" style={{ color: "var(--text-2)" }}><ArrowLeft className="w-5 h-5" /></button>
+              <button type="button" onClick={() => setShowMobileList(true)} className="md:hidden p-1.5 rounded-lg cursor-pointer active:scale-95" style={{ color: "var(--text-2)" }}><ArrowLeft className="w-5 h-5" /></button>
               {activeConvo?.other_user && (
                 <Link to={`/app/profile/${activeConvo.other_user.id}`} className="flex items-center gap-3 flex-1 min-w-0">
                   <div className="w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold text-white overflow-hidden" style={{ backgroundColor: ROLE_COLORS[activeConvo.other_user.role || ""] || "#6B7280", ...ringStyle(activeConvo.other_user.is_verified || false) }}>
@@ -213,7 +213,7 @@ const Pings = () => {
             {!dismissedBanner && activeConvo?.other_user?.is_verified && (
               <div className="px-5 py-2 flex items-center justify-between" style={{ background: "rgba(245,158,11,0.07)", borderBottom: "1px solid rgba(245,158,11,0.18)" }}>
                 <p className="text-[12px]" style={{ color: "rgba(245,158,11,0.9)" }}><Shield className="w-3.5 h-3.5 inline mr-1" style={{ color: "#F59E0B" }} />{activeConvo.other_user.full_name} is Tiik Approved</p>
-                <button onClick={() => setDismissedBanner(true)} className="cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-4 h-4" /></button>
+                <button type="button" onClick={() => setDismissedBanner(true)} className="cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-4 h-4" /></button>
               </div>
             )}
 
@@ -302,7 +302,7 @@ const Pings = () => {
                 </div>
               )}
               <div className="flex items-center gap-2">
-                <button className="w-10 h-10 md:w-auto md:h-auto md:p-2 rounded-full md:rounded-lg flex items-center justify-center transition-all duration-150 cursor-pointer active:scale-95 shrink-0" style={{ color: "var(--text-2)", background: "var(--surface-2)" }} onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+                <button type="button" className="w-10 h-10 md:w-auto md:h-auto md:p-2 rounded-full md:rounded-lg flex items-center justify-center transition-all duration-150 cursor-pointer active:scale-95 shrink-0" style={{ color: "var(--text-2)", background: "var(--surface-2)" }} onClick={() => fileInputRef.current?.click()} disabled={uploading}>
                   <Paperclip className="w-5 h-5 md:w-4 md:h-4" />
                 </button>
                 <textarea value={newMsg} onChange={e => setNewMsg(e.target.value)}
@@ -311,7 +311,7 @@ const Pings = () => {
                   className="flex-1 min-h-[42px] max-h-[120px] md:max-h-[160px] rounded-2xl px-3.5 py-2.5 text-[14px] resize-none outline-none transition-all duration-150"
                   style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", color: "var(--text-1)" }}
                   rows={1} />
-                <button onClick={handleSend} disabled={!newMsg.trim()}
+                <button type="button" onClick={handleSend} disabled={!newMsg.trim()}
                   className="w-[42px] h-[42px] rounded-full flex items-center justify-center transition-all duration-200 disabled:opacity-40 active:scale-95 cursor-pointer shrink-0"
                   style={{ background: "var(--brand)", boxShadow: "0 3px 10px var(--brand-glow)" }}>
                   <Send className="w-[18px] h-[18px] text-white" />
@@ -327,12 +327,12 @@ const Pings = () => {
         <div className="absolute top-0 left-0 right-0 z-20 p-3" style={{ background: "var(--surface)", borderBottom: "1px solid var(--border)" }}>
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-[15px] font-extrabold" style={{ color: "var(--text-1)" }}>New Ping</h2>
-            <button onClick={() => setShowNewPing(false)} className="p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-4 h-4" /></button>
+            <button type="button" onClick={() => setShowNewPing(false)} className="p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-4 h-4" /></button>
           </div>
           <Input value={newPingSearch} onChange={e => setNewPingSearch(e.target.value)} placeholder="Search by name or @username..." autoFocus />
           <div className="mt-2 max-h-[300px] overflow-y-auto space-y-0.5">
             {searchResults.map((u: any) => (
-              <button key={u.id} onClick={() => startConversation(u.id)}
+              <button type="button" key={u.id} onClick={() => startConversation(u.id)}
                 className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left cursor-pointer hover:bg-[var(--surface-2)]">
                 <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: ROLE_COLORS[u.role || ""] || "#6B7280" }}>
                   {u.avatar_url ? <img src={u.avatar_url} alt="" className="w-full h-full object-cover" /> : (u.full_name || "U").split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}

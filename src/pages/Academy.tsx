@@ -223,7 +223,7 @@ const Academy = () => {
   if (mod) {
     return (
       <main className="max-w-[720px] mx-auto px-4 md:px-6 py-7">
-        <button onClick={() => { setActiveModule(null); setShowQuiz(false); setQuizAnswers([]); }}
+        <button type="button" onClick={() => { setActiveModule(null); setShowQuiz(false); setQuizAnswers([]); }}
           className="text-[13px] font-semibold mb-4 cursor-pointer flex items-center gap-1" style={{ color: "var(--brand)" }}>
           ← Back to Academy
         </button>
@@ -268,7 +268,7 @@ const Academy = () => {
                   <p className="text-[14px] font-bold mb-3" style={{ color: "var(--text-1)" }}>{qi + 1}. {q.q}</p>
                   <div className="space-y-2">
                     {q.options.map((opt, oi) => (
-                      <button key={oi} onClick={() => { const a = [...quizAnswers]; a[qi] = oi; setQuizAnswers(a); }}
+                      <button type="button" key={oi} onClick={() => { const a = [...quizAnswers]; a[qi] = oi; setQuizAnswers(a); }}
                         className="w-full text-left px-3 py-2.5 rounded-lg text-[13px] cursor-pointer transition-all"
                         style={{
                           background: quizAnswers[qi] === oi ? "var(--brand-dim)" : "transparent",
@@ -322,7 +322,7 @@ const Academy = () => {
         {modules.map(m => {
           const done = completed.has(m.id);
           return (
-            <button key={m.id} onClick={() => setActiveModule(m.id)}
+            <button type="button" key={m.id} onClick={() => setActiveModule(m.id)}
               className="t-card t-card-hover p-5 text-left cursor-pointer active:scale-[0.98] transition-all"
               style={{ borderTop: done ? "3px solid #10B981" : "3px solid var(--brand)" }}>
               <div className="flex items-center justify-between mb-3">

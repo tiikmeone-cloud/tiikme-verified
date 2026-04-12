@@ -35,7 +35,7 @@ const SectionHeader = ({ title, icon: Icon, onAdd, showAdd }: { title: string; i
       <h2 className="text-[16px] font-extrabold" style={{ color: "var(--text-1)" }}>{title}</h2>
     </div>
     {showAdd && onAdd && (
-      <button onClick={onAdd} className="flex items-center gap-1 text-[12px] font-bold px-3 py-1.5 rounded-full cursor-pointer active:scale-95" style={{ background: "var(--brand-dim)", color: "var(--brand)", border: "1px solid var(--brand)" }}>
+      <button type="button" onClick={onAdd} className="flex items-center gap-1 text-[12px] font-bold px-3 py-1.5 rounded-full cursor-pointer active:scale-95" style={{ background: "var(--brand-dim)", color: "var(--brand)", border: "1px solid var(--brand)" }}>
         <Plus className="w-3 h-3" /> Add
       </button>
     )}
@@ -109,7 +109,7 @@ const EditProfileInline = ({ open, onClose, onSaved }: { open: boolean; onClose:
       className="t-card p-6 overflow-hidden" style={{ borderLeft: "3px solid var(--brand)" }}>
       <div className="flex items-center justify-between mb-5">
         <h2 className="text-[18px] font-extrabold" style={{ color: "var(--text-1)" }}>Edit profile</h2>
-        <button onClick={onClose} className="p-2 rounded-lg cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
+        <button type="button" onClick={onClose} className="p-2 rounded-lg cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
       </div>
       <div className="flex items-center gap-4 mb-5 cursor-pointer" onClick={() => avatarRef.current?.click()}>
         <div className="w-16 h-16 rounded-full flex items-center justify-center text-[20px] font-bold text-white overflow-hidden" style={{ backgroundColor: "var(--brand)" }}>
@@ -136,7 +136,7 @@ const EditProfileInline = ({ open, onClose, onSaved }: { open: boolean; onClose:
         </div>
         <div className="flex items-center justify-between py-3" style={{ borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)" }}>
           <span className="text-[14px] font-medium" style={{ color: "var(--text-1)" }}>Open to work</span>
-          <button onClick={() => setForm({ ...form, open_to_work: !form.open_to_work })} className="w-11 h-6 rounded-full flex items-center px-0.5 cursor-pointer"
+          <button type="button" onClick={() => setForm({ ...form, open_to_work: !form.open_to_work })} className="w-11 h-6 rounded-full flex items-center px-0.5 cursor-pointer"
             style={{ background: form.open_to_work ? "var(--brand)" : "var(--border-2)" }}>
             <div className="w-5 h-5 rounded-full bg-white" style={{ transform: form.open_to_work ? "translateX(20px)" : "translateX(0)", transition: "transform 0.2s" }} />
           </button>
@@ -147,10 +147,10 @@ const EditProfileInline = ({ open, onClose, onSaved }: { open: boolean; onClose:
             <div key={i} className="flex gap-2 items-center mb-2">
               <Input placeholder="URL" value={link.url} onChange={e => { const u = [...customLinks]; u[i] = { ...u[i], url: e.target.value }; setCustomLinks(u); }} className="flex-1" />
               <Input placeholder="Label" value={link.label} onChange={e => { const u = [...customLinks]; u[i] = { ...u[i], label: e.target.value }; setCustomLinks(u); }} className="flex-1" />
-              <button onClick={() => setCustomLinks(customLinks.filter((_, idx) => idx !== i))} className="p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-4 h-4" /></button>
+              <button type="button" onClick={() => setCustomLinks(customLinks.filter((_, idx) => idx !== i))} className="p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-4 h-4" /></button>
             </div>
           ))}
-          {customLinks.length < 5 && <button onClick={() => setCustomLinks([...customLinks, { url: "", label: "" }])} className="text-[12px] font-semibold cursor-pointer" style={{ color: "var(--brand)" }}>+ Add link</button>}
+          {customLinks.length < 5 && <button type="button" onClick={() => setCustomLinks([...customLinks, { url: "", label: "" }])} className="text-[12px] font-semibold cursor-pointer" style={{ color: "var(--brand)" }}>+ Add link</button>}
         </div>
         <div className="flex gap-3 pt-2">
           <Button variant="ghost" className="flex-1" onClick={onClose}>Cancel</Button>
@@ -291,10 +291,10 @@ const ProfilePostsSection = ({ posts, isOwnProfile }: { posts: any[]; isOwnProfi
             )}
             <div className="flex items-center gap-1 mt-2">
               <span className="text-[11px] mr-2" style={{ color: "var(--text-3)" }}>{p.created_at ? getTimeAgo(new Date(p.created_at)) : ""}</span>
-              <button onClick={() => toggle(p.id)} className="h-8 px-2 rounded-lg text-[12px] font-semibold flex items-center gap-1 cursor-pointer active:scale-95" style={{ color: liked ? "var(--brand)" : "var(--text-3)" }}>
+              <button type="button" onClick={() => toggle(p.id)} className="h-8 px-2 rounded-lg text-[12px] font-semibold flex items-center gap-1 cursor-pointer active:scale-95" style={{ color: liked ? "var(--brand)" : "var(--text-3)" }}>
                 <Heart className="w-3.5 h-3.5" style={{ fill: liked ? "var(--brand)" : "none" }} /> {likeCount}
               </button>
-              <button onClick={() => toggleComments(p.id)} className="h-8 px-2 rounded-lg text-[12px] font-semibold flex items-center gap-1 cursor-pointer" style={{ color: "var(--text-3)" }}>
+              <button type="button" onClick={() => toggleComments(p.id)} className="h-8 px-2 rounded-lg text-[12px] font-semibold flex items-center gap-1 cursor-pointer" style={{ color: "var(--text-3)" }}>
                 <MessageCircle className="w-3.5 h-3.5" /> {commentCount}
               </button>
             </div>
@@ -316,7 +316,7 @@ const ProfilePostsSection = ({ posts, isOwnProfile }: { posts: any[]; isOwnProfi
                         <div className="flex items-center gap-2">
                           <span className="text-[12px] font-bold" style={{ color: "var(--text-1)" }}>{cName}</span>
                           <span className="text-[10px]" style={{ color: "var(--text-3)" }}>{cTime}</span>
-                          {isOwnComment && <button onClick={() => deleteComment(p.id, c.id)} className="opacity-0 group-hover:opacity-100 p-0.5 cursor-pointer" style={{ color: "var(--text-3)" }}><Trash2 className="w-3 h-3" /></button>}
+                          {isOwnComment && <button type="button" onClick={() => deleteComment(p.id, c.id)} className="opacity-0 group-hover:opacity-100 p-0.5 cursor-pointer" style={{ color: "var(--text-3)" }}><Trash2 className="w-3 h-3" /></button>}
                         </div>
                         <p className="text-[12px]" style={{ color: "var(--text-2)" }}><MentionText text={c.content} /></p>
                       </div>
@@ -331,7 +331,7 @@ const ProfilePostsSection = ({ posts, isOwnProfile }: { posts: any[]; isOwnProfi
                     placeholder="Write a comment..." className="flex-1 h-8 rounded-lg px-3 text-[12px] outline-none"
                     style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }}
                     onKeyDown={e => { if (e.key === "Enter" && commentText.trim()) submitComment(p.id); }} />
-                  <button onClick={() => submitComment(p.id)} className="w-7 h-7 rounded-full flex items-center justify-center cursor-pointer active:scale-95"
+                  <button type="button" onClick={() => submitComment(p.id)} className="w-7 h-7 rounded-full flex items-center justify-center cursor-pointer active:scale-95"
                     style={{ background: commentText.trim() ? "var(--brand)" : "var(--surface-2)" }}>
                     <Send className="w-3 h-3" style={{ color: commentText.trim() ? "white" : "var(--text-3)" }} />
                   </button>
@@ -438,7 +438,7 @@ const Profile = () => {
   if (!profileData) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
       <p className="text-[16px] font-bold" style={{ color: "var(--text-1)" }}>Profile not found</p>
-      <button onClick={() => navigate("/app/explore")} className="text-[13px] mt-2" style={{ color: "var(--brand)" }}>Back to Explore</button>
+      <button type="button" onClick={() => navigate("/app/explore")} className="text-[13px] mt-2" style={{ color: "var(--brand)" }}>Back to Explore</button>
     </div>
   );
 
@@ -659,15 +659,15 @@ const Profile = () => {
   const DeleteConfirm = ({ id, table }: { id: string; table: "work_items" | "achievements" }) => {
     if (confirmDeleteId !== id) {
       return (
-        <button onClick={() => { setConfirmDeleteId(id); setConfirmDeleteTable(table); }} className="opacity-0 group-hover:opacity-100 p-1 cursor-pointer" style={{ color: "var(--text-3)" }}>
+        <button type="button" onClick={() => { setConfirmDeleteId(id); setConfirmDeleteTable(table); }} className="opacity-0 group-hover:opacity-100 p-1 cursor-pointer" style={{ color: "var(--text-3)" }}>
           <Trash2 className="w-3.5 h-3.5" />
         </button>
       );
     }
     return (
       <div className="flex items-center gap-1">
-        <button onClick={() => deleteItem(id, table)} className="text-[10px] font-bold px-2 py-0.5 rounded cursor-pointer" style={{ color: "#DC2626", border: "1px solid #DC2626" }}>Delete</button>
-        <button onClick={() => setConfirmDeleteId(null)} className="text-[10px] px-2 py-0.5 rounded cursor-pointer" style={{ color: "var(--text-3)" }}>Cancel</button>
+        <button type="button" onClick={() => deleteItem(id, table)} className="text-[10px] font-bold px-2 py-0.5 rounded cursor-pointer" style={{ color: "#DC2626", border: "1px solid #DC2626" }}>Delete</button>
+        <button type="button" onClick={() => setConfirmDeleteId(null)} className="text-[10px] px-2 py-0.5 rounded cursor-pointer" style={{ color: "var(--text-3)" }}>Cancel</button>
       </div>
     );
   };
@@ -710,7 +710,7 @@ const Profile = () => {
                 </div>
                 <div className="flex flex-col gap-1 items-end">
                   {isOwnProfile && (
-                    <button onClick={() => toggleVisibility(exp.id, "work_items", exp.visibility || "public")} className="p-1 cursor-pointer opacity-0 group-hover:opacity-100" style={{ color: "var(--text-3)" }} title={exp.visibility === "public" ? "Make private" : "Make public"}>
+                    <button type="button" onClick={() => toggleVisibility(exp.id, "work_items", exp.visibility || "public")} className="p-1 cursor-pointer opacity-0 group-hover:opacity-100" style={{ color: "var(--text-3)" }} title={exp.visibility === "public" ? "Make private" : "Make public"}>
                       {exp.visibility === "public" ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                     </button>
                   )}
@@ -782,7 +782,7 @@ const Profile = () => {
                 </div>
                 <div className="flex flex-col gap-1 items-end">
                   {isOwnProfile && (
-                    <button onClick={() => toggleVisibility(edu.id, "work_items", edu.visibility || "public")} className="p-1 cursor-pointer opacity-0 group-hover:opacity-100" style={{ color: "var(--text-3)" }}>
+                    <button type="button" onClick={() => toggleVisibility(edu.id, "work_items", edu.visibility || "public")} className="p-1 cursor-pointer opacity-0 group-hover:opacity-100" style={{ color: "var(--text-3)" }}>
                       {edu.visibility === "public" ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                     </button>
                   )}
@@ -843,7 +843,7 @@ const Profile = () => {
                 </div>
                 <div className="flex flex-col gap-1 items-end">
                   {isOwnProfile && (
-                    <button onClick={() => toggleVisibility(p.id, "work_items", p.visibility || "public")} className="p-1 cursor-pointer opacity-0 group-hover:opacity-100" style={{ color: "var(--text-3)" }}>
+                    <button type="button" onClick={() => toggleVisibility(p.id, "work_items", p.visibility || "public")} className="p-1 cursor-pointer opacity-0 group-hover:opacity-100" style={{ color: "var(--text-3)" }}>
                       {p.visibility === "public" ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                     </button>
                   )}
@@ -904,7 +904,7 @@ const Profile = () => {
             </div>
             {a.certificate_url && <a href={a.certificate_url} target="_blank" rel="noopener" className="text-[11px] font-bold" style={{ color: "var(--brand)" }}>View</a>}
             {isOwnProfile && (
-              <button onClick={() => toggleVisibility(a.id, "achievements", a.visibility || "public")} className="p-1 cursor-pointer opacity-0 group-hover:opacity-100" style={{ color: "var(--text-3)" }}>
+              <button type="button" onClick={() => toggleVisibility(a.id, "achievements", a.visibility || "public")} className="p-1 cursor-pointer opacity-0 group-hover:opacity-100" style={{ color: "var(--text-3)" }}>
                 {a.visibility === "public" ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
               </button>
             )}
@@ -940,7 +940,7 @@ const Profile = () => {
           {skills.map((s: string) => (
             <span key={s} className="flex items-center gap-1 text-[12px] font-semibold px-3 py-1.5 rounded-full" style={{ border: "1.5px solid var(--brand)", color: "var(--brand)", background: "var(--brand-dim)" }}>
               {s}
-              {isOwnProfile && <button onClick={() => removeSkill(s)} className="cursor-pointer ml-0.5"><X className="w-3 h-3" /></button>}
+              {isOwnProfile && <button type="button" onClick={() => removeSkill(s)} className="cursor-pointer ml-0.5"><X className="w-3 h-3" /></button>}
             </span>
           ))}
         </div>
@@ -1002,7 +1002,7 @@ const Profile = () => {
           {bio && (
             <div className="mt-2">
               <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-2)" }}>{bioExpanded || bio.length <= 150 ? bio : bio.slice(0, 150) + "..."}</p>
-              {bio.length > 150 && <button onClick={() => setBioExpanded(!bioExpanded)} className="text-[12px] font-semibold cursor-pointer" style={{ color: "var(--brand)" }}>{bioExpanded ? "show less" : "...see more"}</button>}
+              {bio.length > 150 && <button type="button" onClick={() => setBioExpanded(!bioExpanded)} className="text-[12px] font-semibold cursor-pointer" style={{ color: "var(--brand)" }}>{bioExpanded ? "show less" : "...see more"}</button>}
             </div>
           )}
           {isOwnProfile && !isVerified && (
@@ -1011,7 +1011,7 @@ const Profile = () => {
                 <Shield className="w-4 h-4" style={{ color: "#F59E0B" }} />
                 <p className="text-[12px]" style={{ color: "rgba(245,158,11,0.9)" }}>Your profile is not yet Tiiked. Get verified to unlock the gold badge.</p>
               </div>
-              <button onClick={() => setShowGetTiiked(true)} className="text-[11px] font-bold px-3 py-1.5 rounded-full cursor-pointer shrink-0" style={{ background: "#F59E0B", color: "white" }}>Get Tiiked</button>
+              <button type="button" onClick={() => setShowGetTiiked(true)} className="text-[11px] font-bold px-3 py-1.5 rounded-full cursor-pointer shrink-0" style={{ background: "#F59E0B", color: "white" }}>Get Tiiked</button>
             </div>
           )}
           {/* Action buttons — full width on mobile */}
@@ -1074,7 +1074,7 @@ const Profile = () => {
           <div className="t-card p-6 max-w-[400px] w-[90vw] mx-4" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-[18px] font-extrabold" style={{ color: "var(--text-1)" }}>Invite Friends</h2>
-              <button onClick={() => setShowInvite(false)} className="p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
+              <button type="button" onClick={() => setShowInvite(false)} className="p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
             </div>
             <div className="rounded-xl p-3 mb-4" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
               <p className="text-[12px] break-all" style={{ color: "var(--text-2)" }}>{window.location.origin}/join?ref={username}</p>

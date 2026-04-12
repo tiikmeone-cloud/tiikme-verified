@@ -101,7 +101,7 @@ const PostCreate = () => {
     <main className="max-w-[660px] mx-auto px-4 py-3 md:py-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-4 md:mb-5">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-[14px] font-semibold cursor-pointer min-h-[44px]" style={{ color: "var(--text-2)" }}>
+        <button type="button" onClick={() => navigate(-1)} className="flex items-center gap-2 text-[14px] font-semibold cursor-pointer min-h-[44px]" style={{ color: "var(--text-2)" }}>
           <ArrowLeft className="w-5 h-5" /> Create Post
         </button>
         <Button onClick={handlePublish} disabled={publishing || uploading || (!content.trim() && imageFiles.length === 0)} className="rounded-full px-6 h-11">
@@ -141,7 +141,7 @@ const PostCreate = () => {
           {imagePreviews.map((preview, idx) => (
             <div key={idx} className="relative shrink-0 w-24 h-24 rounded-xl overflow-hidden" style={{ background: "var(--surface-2)" }}>
               <img src={preview} alt="" className="w-full h-full object-cover" />
-              <button onClick={() => removeImage(idx)} className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 flex items-center justify-center cursor-pointer">
+              <button type="button" onClick={() => removeImage(idx)} className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 flex items-center justify-center cursor-pointer">
                 <X className="w-3 h-3 text-white" />
               </button>
             </div>
@@ -157,7 +157,7 @@ const PostCreate = () => {
 
       {/* Actions bar */}
       <div className="flex items-center gap-3 mt-4 pt-4" style={{ borderTop: "1px solid var(--border)" }}>
-        <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-4 py-2.5 rounded-xl cursor-pointer active:scale-95 transition-all min-h-[44px]" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-2)" }}>
+        <button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-4 py-2.5 rounded-xl cursor-pointer active:scale-95 transition-all min-h-[44px]" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-2)" }}>
           <ImageIcon className="w-4 h-4" />
           <span className="text-[13px] font-medium">{imageFiles.length > 0 ? "Add More" : "Add Photos"}</span>
         </button>

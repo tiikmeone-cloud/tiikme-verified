@@ -109,14 +109,14 @@ const GetTiikedModal = ({ open, onClose, userId, userRole, onVerified }: Props) 
               {step === "choose" ? "Get Tiiked" : step === "email" ? "Email Verification" : "Peer Verification"}
             </h2>
           </div>
-          <button onClick={() => { onClose(); setStep("choose"); }} className="p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
+          <button type="button" onClick={() => { onClose(); setStep("choose"); }} className="p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
         </div>
 
         {step === "choose" && (
           <div className="space-y-3">
             <p className="text-[13px] mb-3" style={{ color: "var(--text-2)" }}>Choose how you'd like to get verified:</p>
             {cards.map(c => (
-              <button key={c.id} onClick={c.action}
+              <button type="button" key={c.id} onClick={c.action}
                 className="w-full flex items-start gap-3 p-4 rounded-xl text-left cursor-pointer transition-all duration-150 hover:scale-[1.01]"
                 style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
                 <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgba(245,158,11,0.1)" }}>
@@ -148,7 +148,7 @@ const GetTiikedModal = ({ open, onClose, userId, userRole, onVerified }: Props) 
             <Input value={peerSearch} onChange={e => searchPeers(e.target.value)} placeholder="Search by name or @username..." autoFocus />
             <div className="max-h-[250px] overflow-y-auto space-y-1">
               {peerResults.map(u => (
-                <button key={u.id} onClick={() => sendPeerRequest(u.id, u.full_name || u.username)}
+                <button type="button" key={u.id} onClick={() => sendPeerRequest(u.id, u.full_name || u.username)}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left cursor-pointer transition-all hover:bg-[var(--surface-2)]"
                   disabled={sending}>
                   <div className="w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0" style={{ background: "var(--brand)" }}>

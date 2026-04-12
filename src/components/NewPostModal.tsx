@@ -145,7 +145,7 @@ const NewPostModal = ({ open, onClose, onPublished }: NewPostModalProps) => {
         <div className="sm:hidden flex justify-center pt-2"><div className="w-9 h-[5px] rounded-full" style={{ background: "var(--border-2)" }} /></div>
         <div className="flex items-center justify-between px-5 py-4 border-b border-border/30">
           <h2 className="text-[16px] font-bold" style={{ color: "var(--text-1)" }}>Create post</h2>
-          <button onClick={onClose} className="p-2 rounded-lg cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
+          <button type="button" onClick={onClose} className="p-2 rounded-lg cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
         </div>
         <div className="px-5 py-3 relative">
           <textarea ref={textareaRef} value={content} onChange={e => { handleContentChange(e.target.value); autoResize(); }}
@@ -154,7 +154,7 @@ const NewPostModal = ({ open, onClose, onPublished }: NewPostModalProps) => {
           {showMentions && mentionResults.length > 0 && (
             <div className="absolute left-5 right-5 z-50 rounded-xl border shadow-lg overflow-hidden" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
               {mentionResults.map(m => (
-                <button key={m.username} onClick={() => insertMention(m.username)}
+                <button type="button" key={m.username} onClick={() => insertMention(m.username)}
                   className="w-full flex items-center gap-3 px-3 py-2.5 text-left cursor-pointer hover:bg-[var(--surface-2)]">
                   {m.avatar_url ? <img src={m.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover" /> : <AtSign className="w-4 h-4" style={{ color: "var(--brand)" }} />}
                   <div><p className="text-[13px] font-bold" style={{ color: "var(--text-1)" }}>{m.full_name || m.username}</p><p className="text-[11px]" style={{ color: "var(--text-3)" }}>@{m.username}</p></div>
@@ -167,7 +167,7 @@ const NewPostModal = ({ open, onClose, onPublished }: NewPostModalProps) => {
               {imagePreviews.map((img, i) => (
                 <div key={i} className="relative rounded-xl overflow-hidden aspect-video" style={{ background: "var(--surface-2)" }}>
                   <img src={img} alt="" className="w-full h-full object-cover" />
-                  <button onClick={() => removeImage(i)} className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/50 flex items-center justify-center cursor-pointer"><X className="w-3 h-3 text-white" /></button>
+                  <button type="button" onClick={() => removeImage(i)} className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/50 flex items-center justify-center cursor-pointer"><X className="w-3 h-3 text-white" /></button>
                 </div>
               ))}
             </div>
@@ -179,7 +179,7 @@ const NewPostModal = ({ open, onClose, onPublished }: NewPostModalProps) => {
           )}
         </div>
         <div className="flex items-center justify-between px-5 py-3 border-t" style={{ borderColor: "var(--border)" }}>
-          <button onClick={handleImageUpload} className="p-2 rounded-lg cursor-pointer active:scale-95" style={{ color: "var(--text-3)" }}><ImageIcon className="w-5 h-5" /></button>
+          <button type="button" onClick={handleImageUpload} className="p-2 rounded-lg cursor-pointer active:scale-95" style={{ color: "var(--text-3)" }}><ImageIcon className="w-5 h-5" /></button>
           <div className="flex items-center gap-3">
             <span className="text-[12px]" style={{ color: "var(--text-3)" }}>{content.length}/{charLimit}</span>
             <Button onClick={handlePublish} disabled={publishing || imageUploading || !content.trim()} className="active:scale-95">
