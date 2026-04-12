@@ -60,11 +60,25 @@ export default function ApplicationsDashboard() {
 
       setOpp(oppData);
 
+      // Fetch applications
       const { data: appsData } = await supabase
         .from("opportunity_applications")
-        .select("*, profile:profiles!opportunity_applications_applicant_id_fkey(id, full_name, avatar_url, username, headline, role, activity_score, location_city, location_state, skills)")
+        .select("*")
         .eq("opportunity_id", id)
         .order("created_at", { ascending: false });
+
+      // Fetch profiles for applicants separately
+      const appsList = appsData || [];
+      const applicantIds = appsList.map(a => a.applicant_id).filter(Boolean);
+      let profilesMap: Record<string, any> = {};
+      if (applicantIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from("profiles")
+          .select("id, full_name, avatar_url, username, headline, role, activity_score, location_city, location_state, skills")
+          .in("id", applicantIds);
+        (profilesData || []).forEach(p => { profilesMap[p.id] = p; });
+      }
+      const appsWithProfiles = appsList.map(a => ({ ...a, profile: profilesMap[a.applicant_id] || null }));
 
       const appsList = appsData || [];
       setApps(appsList);
