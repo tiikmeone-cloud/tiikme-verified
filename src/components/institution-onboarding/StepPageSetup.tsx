@@ -143,12 +143,15 @@ export default function StepPageSetup({
         permissions: { all: true },
       } as any);
 
-      // Update profile with institution_admin role
+      // Update profile with institution account type and org link
       await supabase.from("profiles").update({
         designation: repDesignation,
         department: repDepartment || null,
         institution_name: orgName,
-      }).eq("id", user.id);
+        account_type: "institution",
+        org_id: org.id,
+        onboarding_complete: true,
+      } as any).eq("id", user.id);
 
       onComplete(slug);
     } catch (err: any) {
