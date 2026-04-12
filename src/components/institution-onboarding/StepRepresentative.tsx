@@ -27,38 +27,55 @@ export default function StepRepresentative({ orgName, orgType, onNext }: Props) 
 
   return (
     <form onSubmit={handleSubmit} style={cardStyle}>
-      <h2 style={{ fontSize: 24, fontWeight: 800, color: "#1A1A1A", textAlign: "center", marginBottom: 4 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 800, color: "#1A1A1A", textAlign: "center", marginBottom: 4 }}>
         Who are you at {orgName}?
       </h2>
       <p style={{ fontSize: 14, color: "#6B6B6B", textAlign: "center", marginBottom: 28 }}>
-        This becomes your verified role on the page
+        This becomes your verified role. Shown only in the Team tab.
       </p>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        <select value={role} onChange={e => setRole(e.target.value)}
-          style={{ ...inputStyle, width: "100%", paddingLeft: 12, paddingRight: 12 }} required>
-          <option value="">Select your role *</option>
-          {roles.map(r => <option key={r} value={r}>{r}</option>)}
-        </select>
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {/* Role pills */}
+        <div>
+          <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A1A", marginBottom: 8 }}>Your role *</p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {roles.map(r => (
+              <button type="button" key={r} onClick={() => setRole(r)}
+                style={{
+                  padding: "8px 16px", borderRadius: 999, fontSize: 13, fontWeight: 600,
+                  border: role === r ? "2px solid #E8580A" : "1.5px solid #E5E7EB",
+                  background: role === r ? "#E8580A" : "#FFFFFF",
+                  color: role === r ? "#FFFFFF" : "#1A1A1A",
+                  cursor: "pointer",
+                  transition: "all 0.15s",
+                }}>
+                {r}
+              </button>
+            ))}
+          </div>
+        </div>
 
-        <Input placeholder={`Your designation at ${orgName} *`} value={designation}
-          onChange={e => setDesignation(e.target.value.slice(0, 100))} style={inputStyle} required />
+        <Input placeholder={`Your designation *`} value={designation}
+          onChange={e => setDesignation(e.target.value.slice(0, 100))}
+          style={{ ...inputStyle, height: 48 }} required />
 
-        <Input placeholder="Your department (optional)" value={department}
-          onChange={e => setDepartment(e.target.value.slice(0, 100))} style={inputStyle} />
+        <Input placeholder="Department (optional)" value={department}
+          onChange={e => setDepartment(e.target.value.slice(0, 100))}
+          style={{ ...inputStyle, height: 48 }} />
 
         <div>
-          <Input placeholder="Employee / Staff ID (optional)" value={staffId}
-            onChange={e => setStaffId(e.target.value.slice(0, 50))} style={inputStyle} />
+          <Input placeholder="Staff / Employee ID (optional)" value={staffId}
+            onChange={e => setStaffId(e.target.value.slice(0, 50))}
+            style={{ ...inputStyle, height: 48 }} />
           <p style={{ fontSize: 11, color: "#9CA3AF", marginTop: 4 }}>
-            Adding your ID speeds up verification by team members
+            Helps team members verify you later. Not shown publicly.
           </p>
         </div>
       </div>
 
       <Button type="submit" className="w-full mt-6"
-        style={{ height: 52, background: "#E8580A", borderRadius: 8, fontSize: 15, fontWeight: 700 }}>
-        Continue →
+        style={{ height: 52, background: "#E8580A", borderRadius: 12, fontSize: 15, fontWeight: 700 }}>
+        Next →
       </Button>
     </form>
   );

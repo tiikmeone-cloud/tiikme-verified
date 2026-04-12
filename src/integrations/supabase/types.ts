@@ -1619,6 +1619,8 @@ export type Database = {
           is_shared_to_feed: boolean | null
           pdf_url: string | null
           post_type: string | null
+          posted_by_org: string | null
+          posted_by_user_id: string | null
           reactions: Json | null
           repost_of: string | null
           type: string | null
@@ -1638,6 +1640,8 @@ export type Database = {
           is_shared_to_feed?: boolean | null
           pdf_url?: string | null
           post_type?: string | null
+          posted_by_org?: string | null
+          posted_by_user_id?: string | null
           reactions?: Json | null
           repost_of?: string | null
           type?: string | null
@@ -1657,6 +1661,8 @@ export type Database = {
           is_shared_to_feed?: boolean | null
           pdf_url?: string | null
           post_type?: string | null
+          posted_by_org?: string | null
+          posted_by_user_id?: string | null
           reactions?: Json | null
           repost_of?: string | null
           type?: string | null
@@ -1669,6 +1675,20 @@ export type Database = {
           {
             foreignKeyName: "posts_author_id_fkey"
             columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "posts_posted_by_org_fkey"
+            columns: ["posted_by_org"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "posts_posted_by_user_id_fkey"
+            columns: ["posted_by_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -1729,6 +1749,7 @@ export type Database = {
       profiles: {
         Row: {
           about_qa: Json | null
+          account_type: string | null
           activity_score: number | null
           avatar_url: string | null
           bio: string | null
@@ -1749,6 +1770,7 @@ export type Database = {
           location_state: string | null
           onboarding_complete: boolean | null
           open_to_work: boolean | null
+          org_id: string | null
           phone_hash: string | null
           referred_by: string | null
           role: string | null
@@ -1767,6 +1789,7 @@ export type Database = {
         }
         Insert: {
           about_qa?: Json | null
+          account_type?: string | null
           activity_score?: number | null
           avatar_url?: string | null
           bio?: string | null
@@ -1787,6 +1810,7 @@ export type Database = {
           location_state?: string | null
           onboarding_complete?: boolean | null
           open_to_work?: boolean | null
+          org_id?: string | null
           phone_hash?: string | null
           referred_by?: string | null
           role?: string | null
@@ -1805,6 +1829,7 @@ export type Database = {
         }
         Update: {
           about_qa?: Json | null
+          account_type?: string | null
           activity_score?: number | null
           avatar_url?: string | null
           bio?: string | null
@@ -1825,6 +1850,7 @@ export type Database = {
           location_state?: string | null
           onboarding_complete?: boolean | null
           open_to_work?: boolean | null
+          org_id?: string | null
           phone_hash?: string | null
           referred_by?: string | null
           role?: string | null
@@ -1841,7 +1867,15 @@ export type Database = {
           verification_type?: string | null
           verified_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       strands: {
         Row: {

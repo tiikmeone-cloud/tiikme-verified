@@ -5,6 +5,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { OrgIdentityProvider } from "@/contexts/OrgIdentityContext";
 import { ProtectedRoute, PublicOnlyRoute } from "@/components/RouteGuard";
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
 import PageLoader from "@/components/PageLoader";
@@ -67,6 +68,7 @@ const Shell = ({ children }: { children: React.ReactNode }) => (
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
+    <OrgIdentityProvider>
     <TooltipProvider>
       <Toaster />
       <Sonner position="bottom-right" />
@@ -140,6 +142,7 @@ const App = () => (
         </Suspense>
       </BrowserRouter>
     </TooltipProvider>
+    </OrgIdentityProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

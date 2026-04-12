@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useOrgIdentity } from "@/contexts/OrgIdentityContext";
 
 const navGroups = [
   {
@@ -56,9 +57,12 @@ const AppShell = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
   const openPostCreate = () => navigate("/post/create");
   const { profile, initials, displayName, user } = useAuth();
+  const { isInstitution, org, identityName, identityAvatar, identityInitials } = useOrgIdentity();
   const [unreadAlerts, setUnreadAlerts] = useState(0);
   const [unreadPings, setUnreadPings] = useState(0);
-  const roleLabel = profile?.role ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1).replace(/_/g, " ") : "Member";
+  const roleLabel = isInstitution && org
+    ? (org.type || "org").charAt(0).toUpperCase() + (org.type || "org").slice(1)
+    : profile?.role ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1).replace(/_/g, " ") : "Member";
 
   const isActive = (path: string) => pathname === path || pathname.startsWith(path + "/");
 
@@ -171,12 +175,12 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           </div>
         </nav>
         <div className="px-2.5 pb-3 pt-2" style={{ borderTop: "1px solid var(--border)" }}>
-          <Link to="/app/profile" className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl">
+          <Link to={isInstitution && org ? `/org/${org.slug}` : "/app/profile"} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl">
             <div className="w-10 h-10 rounded-full flex items-center justify-center text-[13px] font-bold text-white overflow-hidden" style={{ backgroundColor: "var(--brand)" }}>
-              {profile?.avatar_url ? <img src={storageImageUrl(profile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials}
+              {identityAvatar ? <img src={storageImageUrl(identityAvatar, "avatar")} alt="" className="w-full h-full object-cover" /> : identityInitials}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[13px] font-bold truncate" style={{ color: "var(--text-1)" }}>{displayName || "Your Name"}</p>
+              <p className="text-[13px] font-bold truncate" style={{ color: "var(--text-1)" }}>{identityName || "Your Name"}</p>
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "var(--brand-dim)", color: "var(--brand)" }}>{roleLabel}</span>
             </div>
           </Link>
@@ -217,9 +221,9 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           style={{ background: "linear-gradient(135deg, var(--brand), var(--brand-2))", boxShadow: "0 4px 12px var(--brand-glow)" }}>
           <PencilLine className="w-4 h-4 text-white" />
         </button>
-        <Link to="/app/profile">
+        <Link to={isInstitution && org ? `/org/${org.slug}` : "/app/profile"}>
           <div className="w-10 h-10 rounded-full flex items-center justify-center text-[13px] font-bold text-white overflow-hidden" style={{ backgroundColor: "var(--brand)" }}>
-            {profile?.avatar_url ? <img src={storageImageUrl(profile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials}
+            {identityAvatar ? <img src={storageImageUrl(identityAvatar, "avatar")} alt="" className="w-full h-full object-cover" /> : identityInitials}
           </div>
         </Link>
       </aside>
@@ -272,13 +276,13 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             // Profile tab shows user avatar
             if (item.path === "/app/profile") {
               return (
-                <Link key={item.path} to={item.path} className="flex flex-col items-center justify-center gap-0.5 w-14 h-14">
+                <Link key={item.path} to={isInstitution && org ? `/org/${org.slug}` : item.path} className="flex flex-col items-center justify-center gap-0.5 w-14 h-14">
                   <div className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold text-white overflow-hidden shrink-0"
                     style={{
                       backgroundColor: "var(--brand)",
                       border: active ? "2px solid var(--brand)" : "2px solid transparent",
                     }}>
-                    {profile?.avatar_url ? <img src={storageImageUrl(profile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials}
+                    {identityAvatar ? <img src={storageImageUrl(identityAvatar, "avatar")} alt="" className="w-full h-full object-cover" /> : identityInitials}
                   </div>
                 </Link>
               );

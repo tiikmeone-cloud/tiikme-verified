@@ -30,6 +30,8 @@ export interface UserProfile {
   created_at: string | null;
   updated_at: string | null;
   onboarding_complete: boolean | null;
+  account_type: string | null;
+  org_id: string | null;
 }
 
 interface AuthContextValue {
