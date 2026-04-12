@@ -69,8 +69,7 @@ const SignUp = () => {
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
 
   // Profile fields
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const [fullName, setFullName] = useState("");
   const [headline, setHeadline] = useState("");
   const [institution, setInstitution] = useState("");
   const [city, setCity] = useState("");
@@ -171,14 +170,11 @@ const SignUp = () => {
     const { data: { user: currentUser } } = await supabase.auth.getUser();
     if (!currentUser) { toast.error("Not authenticated"); setIsSubmitting(false); return; }
 
-    const fullName = `${firstName} ${lastName}`.trim();
-    const username = (firstName || "user").toLowerCase().replace(/[^a-z0-9]/g, "") + "_" + currentUser.id.substring(0, 6);
+    const username = (fullName.split(" ")[0] || "user").toLowerCase().replace(/[^a-z0-9]/g, "") + "_" + currentUser.id.substring(0, 6);
 
     const { error } = await supabase.from("profiles").upsert({
       id: currentUser.id,
-      full_name: fullName,
-      first_name: firstName,
-      last_name: lastName,
+      full_name: fullName.trim(),
       role: selectedRole || "student",
       headline,
       institution_name: institution,
@@ -463,8 +459,7 @@ const SignUp = () => {
                 <p className="text-center mb-7 text-[14px]" style={{ color: "var(--text-2)" }}>This helps others find and verify you.</p>
                 <div className="space-y-3.5">
                   <div className="grid grid-cols-2 gap-3">
-                    <Input placeholder="First name *" value={firstName} onChange={e => setFirstName(e.target.value)} style={inputS} />
-                    <Input placeholder="Last name" value={lastName} onChange={e => setLastName(e.target.value)} style={inputS} />
+                    <Input placeholder="Full name *" value={fullName} onChange={e => setFullName(e.target.value)} style={inputS} />
                   </div>
                   <Input placeholder="Headline (80 chars)" value={headline} onChange={e => setHeadline(e.target.value.slice(0, 80))} maxLength={80} style={inputS} />
 
@@ -478,7 +473,7 @@ const SignUp = () => {
                     </select>
                   </div>
                 </div>
-                <Button size="xl" onClick={handleSaveProfile} disabled={isSubmitting || !firstName} className="w-full mt-5 active:scale-95 transition-all duration-200">
+                <Button size="xl" onClick={handleSaveProfile} disabled={isSubmitting || !fullName.trim()} className="w-full mt-5 active:scale-95 transition-all duration-200">
                   {isSubmitting ? "Saving..." : "Complete profile"} <ArrowRight className="w-4 h-4 ml-1" />
                 </Button>
                 <button type="button" onClick={handleSkip} className="block mx-auto mt-3 text-[13px] cursor-pointer hover:underline" style={{ color: "var(--brand)" }}>Skip for now</button>

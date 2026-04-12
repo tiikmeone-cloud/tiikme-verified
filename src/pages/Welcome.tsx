@@ -13,7 +13,7 @@ const Welcome = () => {
   const [linkText, setLinkText] = useState("");
   const [exiting, setExiting] = useState(false);
 
-  const firstName = profile?.first_name || profile?.full_name?.split(" ")[0] || user?.user_metadata?.first_name || "there";
+  const firstName = profile?.full_name?.split(" ")[0] || user?.user_metadata?.full_name?.split(" ")[0] || "there";
   const username = profile?.username || user?.id?.substring(0, 8) || "you";
   const fullLink = `tiikme.in/${username}`;
 
