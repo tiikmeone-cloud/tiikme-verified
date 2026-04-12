@@ -430,17 +430,12 @@ const Profile = () => {
   }, [user, targetUserId, isOwnProfile]);
   useEffect(() => { if (!authLoading) loadProfile(); }, [authLoading, loadProfile]);
 
-  if (authLoading || dataLoading || (isOwnInstitutionProfile && orgLoading)) return (
+  if (authLoading || dataLoading) return (
     <div className="max-w-[760px] mx-auto px-4 py-7"><div className="t-card p-6 animate-pulse"><div className="h-[140px] rounded-xl" style={{ background: "var(--surface-2)" }} /><div className="h-6 w-48 rounded mt-4" style={{ background: "var(--surface-2)" }} /><div className="h-4 w-32 rounded mt-2" style={{ background: "var(--surface-2)" }} /></div></div>
   );
   if (!user && isOwnProfile) return null;
 
   const profileData = viewedProfile || authProfile;
-
-  // Institution accounts: render org profile immediately — don't fall through to personal profile fields
-  if (isOwnInstitutionProfile && org) {
-    return <InstitutionProfileView org={org} userPosts={userPosts} stats={stats} navigate={navigate} user={user} />;
-  }
 
   if (!profileData) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
