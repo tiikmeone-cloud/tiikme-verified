@@ -7,6 +7,7 @@ import { tiikToast } from "@/components/ui/tiik-toast";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
+import { useOrgIdentity } from "@/contexts/OrgIdentityContext";
 import { useWorkspaces } from "@/hooks/useWorkspaces";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -34,6 +35,7 @@ const Workspace = () => {
   const { user, profile: authProfile, initials: userInitials } = useAuth();
   const { workspaces: realWorkspaces, loading: wsLoading, members: realMembers, fetchMembers, createWorkspace, refetch } = useWorkspaces(user?.id);
   const [selected, setSelected] = useState<string | null>(null);
+  const [autoCreated, setAutoCreated] = useState(false);
   const [activeTab, setActiveTab] = useState("Feed");
   const [showCreate, setShowCreate] = useState(false);
   const [createStep, setCreateStep] = useState(0);
@@ -64,6 +66,20 @@ const Workspace = () => {
   const [memberSearch, setMemberSearch] = useState("");
   const [memberResults, setMemberResults] = useState<any[]>([]);
   const [addingMember, setAddingMember] = useState(false);
+
+  const { isInstitution, org } = useOrgIdentity();
+
+  // Auto-create workspace for institution accounts
+  useEffect(() => {
+    if (!isInstitution || !org || !user || wsLoading || autoCreated || realWorkspaces.length > 0) return;
+    setAutoCreated(true);
+    (async () => {
+      try {
+        const ws = await createWorkspace(`${org.name} Workspace`, `Internal workspace for ${org.name}`, "institution", "members_only");
+        if (ws) { setSelected(ws.id); setMobileShowRight(true); }
+      } catch (e) { console.warn("[Workspace] auto-create failed:", e); }
+    })();
+  }, [isInstitution, org, user, wsLoading, autoCreated, realWorkspaces.length, createWorkspace]);
 
   // Workspace name autocomplete
   useEffect(() => {

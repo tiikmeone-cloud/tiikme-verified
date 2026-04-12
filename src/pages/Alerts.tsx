@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 const ICON_MAP: Record<string, any> = {
   strand: Link2, hr: Briefcase, verified: Shield, work: Target, score: TrendingUp,
-  strand_request: UserCheck, verification_request: Shield,
+  strand_request: UserCheck, verification_request: Shield, opportunity: Briefcase, offer: Briefcase,
 };
 
 const ICON_STYLES: Record<string, { bg: string; color: string }> = {
@@ -19,6 +20,7 @@ const ICON_STYLES: Record<string, { bg: string; color: string }> = {
   verification_request: { bg: "rgba(245,158,11,0.1)", color: "#F59E0B" },
   work: { bg: "rgba(3,105,161,0.1)", color: "#0369A1" },
   opportunity: { bg: "rgba(194,65,12,0.1)", color: "#C2410C" },
+  offer: { bg: "rgba(22,163,74,0.1)", color: "#16A34A" },
   score: { bg: "rgba(91,79,255,0.1)", color: "#5B4FFF" },
   challenge: { bg: "rgba(146,64,14,0.1)", color: "#92400E" },
   like: { bg: "rgba(232,88,10,0.1)", color: "#E8580A" },
@@ -50,9 +52,11 @@ const filterTabs = ["All", "Unread"];
 
 const Alerts = () => {
   const { user, profile } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("All");
   const [alerts, setAlerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showJoinModal, setShowJoinModal] = useState<any>(null);
 
   const fetchAlerts = useCallback(async () => {
     if (!user) return;
@@ -79,7 +83,6 @@ const Alerts = () => {
 
   useEffect(() => { fetchAlerts(); }, [fetchAlerts]);
 
-  // Mark all read
   const markAllRead = async () => {
     if (!user) return;
     await supabase.from("alerts").update({ is_read: true } as any).eq("user_id", user.id).eq("is_read", false);
@@ -87,48 +90,67 @@ const Alerts = () => {
     toast.success("All notifications marked as read");
   };
 
-  // Accept strand request
   const acceptStrand = async (alert: any) => {
-    const senderId = alert.data?.actor_id || alert.actor_id;
+    const senderId = alert.data?.actor_id;
     if (!user || !senderId) return;
-
-    // Update strand status
-    await supabase.from("strands")
-      .update({ status: "accepted" })
-      .eq("requester_id", senderId)
-      .eq("receiver_id", user.id)
-      .eq("status", "pending");
-
-    // Send notification to sender
-    await supabase.from("alerts").insert({
-      user_id: senderId,
-      type: "strand",
-      title: `${profile?.full_name || "Someone"} accepted your Strand request!`,
-      body: "You are now connected.",
-      action_url: `/app/profile/${user.id}`,
-      data: { actor_id: user.id } as any,
-    });
-
-    // Mark this alert as read
+    await supabase.from("strands").update({ status: "accepted" }).eq("requester_id", senderId).eq("receiver_id", user.id).eq("status", "pending");
+    await supabase.from("alerts").insert({ user_id: senderId, type: "strand", title: `${profile?.full_name || "Someone"} accepted your Strand request!`, body: "You are now connected.", action_url: `/app/profile/${user.id}`, data: { actor_id: user.id } as any });
     await supabase.from("alerts").update({ is_read: true } as any).eq("id", alert.id);
     setAlerts(prev => prev.map(a => a.id === alert.id ? { ...a, is_read: true, _accepted: true } : a));
     toast.success("Strand accepted ✓");
   };
 
-  // Decline strand request
   const declineStrand = async (alert: any) => {
-    const senderId = alert.data?.actor_id || alert.actor_id;
+    const senderId = alert.data?.actor_id;
     if (!user || !senderId) return;
-
-    await supabase.from("strands")
-      .update({ status: "declined" })
-      .eq("requester_id", senderId)
-      .eq("receiver_id", user.id)
-      .eq("status", "pending");
-
+    await supabase.from("strands").update({ status: "declined" }).eq("requester_id", senderId).eq("receiver_id", user.id).eq("status", "pending");
     await supabase.from("alerts").update({ is_read: true } as any).eq("id", alert.id);
     setAlerts(prev => prev.map(a => a.id === alert.id ? { ...a, is_read: true, _declined: true } : a));
     toast.success("Strand declined");
+  };
+
+  // Offer accept / decline
+  const acceptOffer = async (alert: any) => {
+    setShowJoinModal(alert);
+  };
+
+  const declineOffer = async (alert: any) => {
+    await supabase.from("alerts").update({ is_read: true } as any).eq("id", alert.id);
+    setAlerts(prev => prev.map(a => a.id === alert.id ? { ...a, is_read: true, _declined: true } : a));
+    toast.success("Offer declined");
+  };
+
+  const confirmJoin = async (alert: any) => {
+    if (!user) return;
+    try {
+      const oppId = alert.data?.opportunity_id;
+      const orgId = alert.data?.org_id;
+      const roleTitle = alert.data?.role_title || "Team Member";
+
+      // Update application
+      if (oppId) {
+        await supabase.from("opportunity_applications").update({ offer_accepted: true, joined_confirmed: true } as any)
+          .eq("opportunity_id", oppId).eq("applicant_id", user.id);
+      }
+
+      // Create work item
+      if (orgId) {
+        await supabase.from("work_items").insert({
+          owner_id: user.id, title: roleTitle, job_title: roleTitle,
+          item_type: "experience", is_current: true,
+          start_date: new Date().toISOString().split("T")[0],
+          status: "active", visibility: "public",
+          company_name: alert.data?.org_name || "Organization",
+        } as any);
+      }
+
+      // Increment score
+      try { await supabase.rpc("increment_score", { uid: user.id, amount: 15 }); } catch {}
+
+      setAlerts(prev => prev.map(a => a.id === alert.id ? { ...a, _accepted: true, is_read: true } : a));
+      setShowJoinModal(null);
+      toast.success("Experience updated! Check your profile. 🎉");
+    } catch (e) { console.warn("[Alerts] join failed:", e); toast.error("Something went wrong"); }
   };
 
   const unreadCount = alerts.filter(a => !a.is_read).length;
@@ -191,6 +213,7 @@ const Alerts = () => {
               const style = ICON_STYLES[notif.type] || ICON_STYLES.score;
               const Icon = ICON_MAP[notif.type] || Bell;
               const isStrandRequest = notif.type === "strand" && notif.title?.toLowerCase().includes("connect");
+              const isOffer = notif.type === "offer" || (notif.type === "opportunity" && notif.title?.toLowerCase().includes("selected"));
               const handled = notif._accepted || notif._declined;
 
               return (
@@ -202,12 +225,13 @@ const Alerts = () => {
                       await supabase.from("alerts").update({ is_read: true } as any).eq("id", notif.id);
                       setAlerts(prev => prev.map(a => a.id === notif.id ? { ...a, is_read: true } : a));
                     }
+                    if (notif.action_url && !isStrandRequest && !isOffer) navigate(notif.action_url);
                   }}>
                   <div className="w-2 flex items-start pt-2 shrink-0">
                     {unread && <span className="w-2 h-2 rounded-full" style={{ background: "var(--brand)" }} />}
                   </div>
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: style.bg }}>
-                    <Icon className="w-3.5 h-3.5" style={{ color: style.color }} />
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: isOffer ? "rgba(22,163,74,0.1)" : style.bg }}>
+                    <Icon className="w-3.5 h-3.5" style={{ color: isOffer ? "#16A34A" : style.color }} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className={`text-[13px] leading-relaxed ${unread ? "font-semibold" : "font-normal"}`} style={{ color: unread ? "var(--text-1)" : "var(--text-2)" }}>
@@ -217,7 +241,7 @@ const Alerts = () => {
                       <p className="text-[12px] mt-0.5" style={{ color: "var(--text-3)" }}>{notif.body}</p>
                     )}
                     {/* Strand request actions */}
-                    {isStrandRequest && !handled && (notif.data?.actor_id || notif.actor_id) && (
+                    {isStrandRequest && !handled && notif.data?.actor_id && (
                       <div className="flex gap-2 mt-2">
                         <Button size="sm" className="h-7 text-[11px] gap-1" onClick={(e) => { e.stopPropagation(); acceptStrand(notif); }}>
                           <Check className="w-3 h-3" /> Accept
@@ -227,8 +251,21 @@ const Alerts = () => {
                         </Button>
                       </div>
                     )}
+                    {/* Offer actions */}
+                    {isOffer && !handled && (
+                      <div className="flex gap-2 mt-2">
+                        <Button size="sm" className="h-8 text-[11px] gap-1" style={{ background: "#16A34A", color: "#fff" }}
+                          onClick={(e) => { e.stopPropagation(); acceptOffer(notif); }}>
+                          Accept Offer 🎉
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-8 text-[11px] gap-1"
+                          onClick={(e) => { e.stopPropagation(); declineOffer(notif); }}>
+                          Decline
+                        </Button>
+                      </div>
+                    )}
                     {notif._accepted && (
-                      <span className="text-[11px] font-bold mt-1 block" style={{ color: "#10B981" }}>✓ Accepted</span>
+                      <span className="text-[11px] font-bold mt-1 block" style={{ color: "#10B981" }}>✓ {isOffer ? "Joined" : "Accepted"}</span>
                     )}
                     {notif._declined && (
                       <span className="text-[11px] font-bold mt-1 block" style={{ color: "var(--text-3)" }}>Declined</span>
@@ -249,6 +286,23 @@ const Alerts = () => {
           <Bell className="w-10 h-10 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
           <p className="text-[15px] font-bold mb-1" style={{ color: "var(--text-1)" }}>No alerts yet</p>
           <p className="text-[13px]" style={{ color: "var(--text-3)" }}>You'll be notified about strands, opportunities, and activity here.</p>
+        </div>
+      )}
+
+      {/* Join confirmation modal */}
+      {showJoinModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.5)" }} onClick={() => setShowJoinModal(null)}>
+          <div className="rounded-2xl p-6 max-w-[400px] w-full" style={{ background: "#fff" }} onClick={e => e.stopPropagation()}>
+            <h2 className="text-[22px] font-bold mb-2" style={{ color: "#1A1A1A" }}>Did you join {showJoinModal.data?.org_name || "the organization"}?</h2>
+            <p className="text-[14px] mb-6" style={{ color: "#9CA3AF" }}>We'll update your profile automatically</p>
+            <Button className="w-full mb-3" style={{ height: 52, borderRadius: 12, background: "#16A34A", color: "#fff" }}
+              onClick={() => confirmJoin(showJoinModal)}>
+              Yes, I joined! 🎉
+            </Button>
+            <button type="button" onClick={() => setShowJoinModal(null)} className="w-full text-center text-[13px] cursor-pointer" style={{ color: "#9CA3AF" }}>
+              Not yet — I'll confirm later
+            </button>
+          </div>
         </div>
       )}
     </div>
