@@ -118,7 +118,7 @@ function OrgCard({ org }: { org: any }) {
       onClick={() => navigate(`/org/${org.slug}`)}>
       <div className="w-14 h-14 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0 overflow-hidden mb-2.5"
         style={{ background: org.logo_url ? "#fff" : "#E8580A", border: org.logo_url ? "2px solid #F0E8E0" : "none", boxShadow: "0 1px 4px rgba(0,0,0,0.08)" }}>
-        {org.logo_url ? <img src={org.logo_url} alt="" className="w-full h-full object-cover" /> : initials}
+        {org.logo_url ? <img src={storageImageUrl(org.logo_url, "avatar")} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} /> : initials}
       </div>
       <p className="text-[15px] font-semibold leading-tight w-full" style={{ color: "#1A1A1A", maxHeight: 40, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{org.name}</p>
       <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full mt-1 shrink-0" style={{ background: typeColors.bg, color: typeColors.text }}>{typeLabel}</span>
