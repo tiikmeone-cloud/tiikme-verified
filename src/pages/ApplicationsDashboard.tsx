@@ -78,9 +78,9 @@ export default function ApplicationsDashboard() {
           .in("id", applicantIds);
         (profilesData || []).forEach(p => { profilesMap[p.id] = p; });
       }
-
-      setApps(appsWithProfiles);
-      if (appsWithProfiles.length > 0 && !selectedApp) setSelectedApp(appsWithProfiles[0]);
+      const enrichedApps = appsList.map(a => ({ ...a, profile: profilesMap[a.applicant_id] || null }));
+      setApps(enrichedApps);
+      if (enrichedApps.length > 0 && !selectedApp) setSelectedApp(enrichedApps[0]);
     } catch (e) { console.warn("[AppsDashboard]", e); }
     setLoading(false);
   }, [id, user, isInstitution, org, navigate]);
