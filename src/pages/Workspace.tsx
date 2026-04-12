@@ -1,6 +1,6 @@
 import { storageImageUrl } from "@/lib/imageTransform";
 import { useState, useEffect } from "react";
-import { Plus, Users, Layers, MessageCircle, Settings, Hash, Send, Crown, Lock, Rocket, Building2, ChevronDown, Globe, ArrowRight, X, Link2, Copy, Search } from "lucide-react";
+import { Plus, Users, Layers, MessageCircle, Settings, Hash, Send, Crown, Lock, Rocket, Building2, ChevronDown, Globe, ArrowRight, X, Link2, Copy, Search, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { tiikToast } from "@/components/ui/tiik-toast";
@@ -11,6 +11,7 @@ import { useOrgIdentity } from "@/contexts/OrgIdentityContext";
 import { useWorkspaces } from "@/hooks/useWorkspaces";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import AccessManager from "@/components/workspace/AccessManager";
 
 const postTypes = [
   { emoji: "📢", label: "Announcement", type: "announcement" },
@@ -148,7 +149,7 @@ const Workspace = () => {
   }));
 
   const activeWs = displayWorkspaces.find(w => w.id === selected);
-  const tabs = ["Feed", "Projects", "Members", "About"];
+  const tabs = ["Feed", "Projects", "Members", "Access", "About"];
 
   useEffect(() => {
     if (selected && realWorkspaces.some(w => w.id === selected)) fetchMembers(selected);
@@ -390,6 +391,18 @@ const Workspace = () => {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {activeTab === "Access" && isInstitution && org && (
+              <div>
+                <AccessManager orgId={org.id} isOwner={members.some(m => m.role === "Admin" || realWorkspaces.find(w => w.id === selected))} />
+              </div>
+            )}
+            {activeTab === "Access" && !isInstitution && (
+              <div className="text-center py-10">
+                <Shield className="w-10 h-10 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
+                <p className="text-[14px] font-bold mb-1" style={{ color: "var(--text-1)" }}>Access management is available for institution accounts</p>
               </div>
             )}
 

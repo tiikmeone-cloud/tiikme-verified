@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Plus, ChevronDown, ChevronUp } from "lucide-react";
+import { X, Plus, ChevronDown, ChevronUp, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +12,7 @@ import { motion } from "framer-motion";
 const EMP_TYPES = ["Full-time", "Part-time", "Internship", "Contract", "Volunteer"];
 const LOC_TYPES = ["On-site", "Remote", "Hybrid"];
 const EXP_LEVELS = ["Fresher", "1–3 yrs", "3–5 yrs", "5–10 yrs", "10+ yrs"];
+const EDU_LEVELS = ["Any", "10th Pass", "12th Pass", "Diploma", "Bachelor's", "Master's", "PhD"];
 const VIS_OPTIONS = [
   { value: "public", label: "Public — all Tiikme users" },
   { value: "org_page", label: "Org page only — visible on your profile" },
@@ -45,9 +46,15 @@ export default function PostOpportunityModal({ open, onClose, onCreated }: Props
   const [skillsInput, setSkillsInput] = useState("");
   const [skills, setSkills] = useState<string[]>([]);
   const [showQuestions, setShowQuestions] = useState(false);
-  const [questions, setQuestions] = useState<{ text: string; type: string }[]>([]);
+  const [questions, setQuestions] = useState<{ text: string; type: string; required: boolean }[]>([]);
   const [visibility, setVisibility] = useState("public");
   const [submitting, setSubmitting] = useState(false);
+
+  // Qualification criteria
+  const [minEducation, setMinEducation] = useState("Any");
+  const [minActivityScore, setMinActivityScore] = useState("");
+  const [requireProfile, setRequireProfile] = useState(true);
+  const [showQualification, setShowQualification] = useState(false);
 
   const toggleEmpType = (t: string) => {
     setEmpTypes(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
@@ -67,7 +74,7 @@ export default function PostOpportunityModal({ open, onClose, onCreated }: Props
   };
 
   const addQuestion = () => {
-    if (questions.length < 5) setQuestions([...questions, { text: "", type: "Short text" }]);
+    if (questions.length < 5) setQuestions([...questions, { text: "", type: "Short text", required: false }]);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -77,6 +84,14 @@ export default function PostOpportunityModal({ open, onClose, onCreated }: Props
     try {
       const location = locType === "Remote" ? "Remote" : locType === "Hybrid" ? `Hybrid – ${city}` : city || "On-site";
       const comp = unpaid ? "Unpaid" : includeSalary && salaryMin ? `₹${salaryMin}${salaryMax ? ` – ₹${salaryMax}` : ""} per ${salaryPer}` : null;
+
+      const qualificationCriteria: Record<string, any> = {};
+      if (minEducation !== "Any") qualificationCriteria.min_education = minEducation;
+      if (minActivityScore) qualificationCriteria.min_activity_score = parseInt(minActivityScore);
+      if (requireProfile) qualificationCriteria.require_profile = true;
+      if (questions.length > 0) qualificationCriteria.screening_questions = questions;
+      if (requirements.length > 0) qualificationCriteria.requirements = requirements;
+
       const { data, error } = await supabase.from("opportunities").insert({
         title: title.trim(),
         type: empTypes[0]?.toLowerCase().replace("-", "") || "fulltime",
@@ -91,14 +106,15 @@ export default function PostOpportunityModal({ open, onClose, onCreated }: Props
         experience_min: expLevel === "Fresher" ? 0 : parseInt(expLevel) || 0,
         is_open: true,
         is_remote: locType === "Remote",
-      }).select().single();
+        qualification_criteria: Object.keys(qualificationCriteria).length > 0 ? qualificationCriteria : null,
+      } as any).select().single();
       if (error) throw error;
-      toast.success("Opportunity posted! 🎉");
+      toast.success("Opportunity posted!");
       onCreated(data);
       onClose();
-      // Reset
       setTitle(""); setDepartment(""); setDescription(""); setSkills([]); setCity("");
       setDeadline(""); setSalaryMin(""); setSalaryMax(""); setRequirements([]); setQuestions([]);
+      setMinEducation("Any"); setMinActivityScore(""); setRequireProfile(true);
     } catch (err: any) {
       toast.error(err.message || "Failed to post");
     }
@@ -124,6 +140,22 @@ export default function PostOpportunityModal({ open, onClose, onCreated }: Props
           <h2 className="text-[22px] font-bold" style={{ color: "#1A1A1A" }}>Post an Opportunity</h2>
           <button type="button" onClick={onClose} className="p-2 rounded-lg cursor-pointer" style={{ color: "#9CA3AF" }}><X className="w-5 h-5" /></button>
         </div>
+
+        {/* Company info card (auto-filled for institutions) */}
+        {isInstitution && org && (
+          <div className="rounded-xl p-4 mb-5 flex items-center gap-3" style={{ background: "#FFF3EC", border: "1px solid #F0E8E0" }}>
+            <div className="w-10 h-10 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 overflow-hidden"
+              style={{ background: org.logo_url ? "#fff" : "#E8580A", color: "#fff", border: org.logo_url ? "1px solid #F0E8E0" : "none" }}>
+              {org.logo_url ? <img src={org.logo_url} alt="" className="w-full h-full object-cover" /> : <Building2 className="w-5 h-5" />}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[14px] font-bold" style={{ color: "#1A1A1A" }}>{org.name}</p>
+              <p className="text-[11px]" style={{ color: "#6B6B6B" }}>
+                {[org.type, org.employee_count, org.city].filter(Boolean).join(" · ")}
+              </p>
+            </div>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Title */}
@@ -240,6 +272,35 @@ export default function PostOpportunityModal({ open, onClose, onCreated }: Props
             {skills.length >= 20 && <p className="text-[11px] mt-1" style={{ color: "#9CA3AF" }}>Maximum 20 skills</p>}
           </div>
 
+          {/* Qualification Criteria */}
+          <div>
+            <button type="button" onClick={() => setShowQualification(!showQualification)} className="flex items-center gap-2 text-[13px] font-semibold cursor-pointer" style={{ color: "#1A1A1A" }}>
+              {showQualification ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              Qualification criteria
+            </button>
+            {showQualification && (
+              <div className="mt-3 space-y-3 rounded-xl p-4" style={{ background: "#F9FAFB", border: "1px solid #F0E8E0" }}>
+                <div>
+                  <label className="text-[12px] font-semibold block mb-1" style={{ color: "#6B6B6B" }}>Minimum education</label>
+                  <div className="flex gap-1.5 flex-wrap">
+                    {EDU_LEVELS.map(e => (
+                      <button key={e} type="button" onClick={() => setMinEducation(e)} style={pillStyle(minEducation === e)} className="text-[11px]">{e}</button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[12px] font-semibold block mb-1" style={{ color: "#6B6B6B" }}>Minimum activity score</label>
+                  <Input value={minActivityScore} onChange={e => setMinActivityScore(e.target.value)} type="number" placeholder="e.g. 50 (optional)"
+                    style={{ height: 40, background: "#FFFFFF", border: "1.5px solid #E5E7EB", borderRadius: 8, width: 200 }} />
+                </div>
+                <label className="flex items-center gap-2 text-[12px] cursor-pointer" style={{ color: "#6B6B6B" }}>
+                  <input type="checkbox" checked={requireProfile} onChange={e => setRequireProfile(e.target.checked)} />
+                  Require profile sharing with application
+                </label>
+              </div>
+            )}
+          </div>
+
           {/* Screening questions */}
           <div>
             <button type="button" onClick={() => setShowQuestions(!showQuestions)} className="flex items-center gap-2 text-[13px] font-semibold cursor-pointer" style={{ color: "#6B6B6B" }}>
@@ -253,9 +314,13 @@ export default function PostOpportunityModal({ open, onClose, onCreated }: Props
                     <Input value={q.text} onChange={e => { const nq = [...questions]; nq[i] = { ...nq[i], text: e.target.value }; setQuestions(nq); }}
                       placeholder={`Question ${i + 1}`} style={{ height: 44, background: "#FFFFFF", border: "1.5px solid #E5E7EB", borderRadius: 8, flex: 1 }} />
                     <select value={q.type} onChange={e => { const nq = [...questions]; nq[i] = { ...nq[i], type: e.target.value }; setQuestions(nq); }}
-                      className="h-[44px] rounded-lg px-2 text-[12px]" style={{ background: "#FFFFFF", border: "1.5px solid #E5E7EB", color: "#1A1A1A", width: 130 }}>
+                      className="h-[44px] rounded-lg px-2 text-[12px]" style={{ background: "#FFFFFF", border: "1.5px solid #E5E7EB", color: "#1A1A1A", width: 110 }}>
                       <option>Short text</option><option>Yes or No</option>
                     </select>
+                    <label className="flex items-center gap-1 text-[10px] shrink-0 self-center cursor-pointer" style={{ color: "#6B6B6B" }}>
+                      <input type="checkbox" checked={q.required} onChange={e => { const nq = [...questions]; nq[i] = { ...nq[i], required: e.target.checked }; setQuestions(nq); }} />
+                      Req
+                    </label>
                     <button type="button" onClick={() => setQuestions(questions.filter((_, j) => j !== i))} className="p-2 cursor-pointer" style={{ color: "#9CA3AF" }}><X className="w-4 h-4" /></button>
                   </div>
                 ))}
