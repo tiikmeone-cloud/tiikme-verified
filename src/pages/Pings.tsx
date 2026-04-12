@@ -113,7 +113,6 @@ const Pings = () => {
   return (
     <div className="flex relative" style={{ height: "calc(100vh - 52px)", maxHeight: "calc(100dvh - 52px)" }}>
       <input ref={fileInputRef} type="file" accept="image/*,.pdf,.doc,.docx" className="hidden" onChange={handleFileSelect} />
-      <input ref={fileInputRef} type="file" accept="image/*,.pdf,.doc,.docx" className="hidden" onChange={handleFileSelect} />
 
       {/* Left panel */}
       <div className={`w-full md:w-[340px] flex flex-col shrink-0 relative ${!showMobileList ? "hidden md:flex" : "flex"}`} style={{ background: "var(--glass-bg)", backdropFilter: "blur(20px) saturate(180%)", WebkitBackdropFilter: "blur(20px) saturate(180%)", borderRight: "1px solid var(--glass-border)" }}>
@@ -167,7 +166,7 @@ const Pings = () => {
                   <div className="w-11 h-11 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: roleColor, ...ringStyle(other?.is_verified || false) }}>
                     {other?.avatar_url ? <img src={storageImageUrl(other.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials}
                   </div>
-                  {convo.unread_count > 0 && <span className="absolute -top-0.5 -right-0.5 w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-bold text-white" style={{ background: "var(--brand)" }}>{convo.unread_count}</span>}
+                  {convo.unread_count > 0 && <span className="absolute -top-0.5 -right-0.5 w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-bold text-white" style={{ background: "var(--danger, #DC2626)" }}>{convo.unread_count}</span>}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
@@ -178,7 +177,7 @@ const Pings = () => {
                     {preview || "No messages yet"}
                   </p>
                 </div>
-                {convo.unread_count > 0 && <span className="w-[18px] h-[18px] rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0" style={{ background: "var(--brand)" }}>{convo.unread_count}</span>}
+                
               </button>
             );
           })}
