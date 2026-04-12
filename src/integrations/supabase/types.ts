@@ -1111,6 +1111,8 @@ export type Database = {
           name: string
           phone: string | null
           pincode: string | null
+          pings_enabled: boolean | null
+          pings_visibility: string | null
           slug: string
           social_links: Json | null
           state: string | null
@@ -1145,6 +1147,8 @@ export type Database = {
           name: string
           phone?: string | null
           pincode?: string | null
+          pings_enabled?: boolean | null
+          pings_visibility?: string | null
           slug: string
           social_links?: Json | null
           state?: string | null
@@ -1179,6 +1183,8 @@ export type Database = {
           name?: string
           phone?: string | null
           pincode?: string | null
+          pings_enabled?: boolean | null
+          pings_visibility?: string | null
           slug?: string
           social_links?: Json | null
           state?: string | null
@@ -1614,6 +1620,7 @@ export type Database = {
           posted_by_org: string | null
           posted_by_user_id: string | null
           reactions: Json | null
+          repost_count: number | null
           repost_of: string | null
           type: string | null
           visibility: string | null
@@ -1635,6 +1642,7 @@ export type Database = {
           posted_by_org?: string | null
           posted_by_user_id?: string | null
           reactions?: Json | null
+          repost_count?: number | null
           repost_of?: string | null
           type?: string | null
           visibility?: string | null
@@ -1656,6 +1664,7 @@ export type Database = {
           posted_by_org?: string | null
           posted_by_user_id?: string | null
           reactions?: Json | null
+          repost_count?: number | null
           repost_of?: string | null
           type?: string | null
           visibility?: string | null
