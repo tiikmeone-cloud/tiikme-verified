@@ -144,8 +144,9 @@ const JoinAsInstitution = () => {
               {/* Step 0: Email + Smart Verification */}
               {step === 0 && (
                 <motion.div key="s0" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
-                  <StepEmail onNext={({ email: e, mobile }) => {
+                  <StepEmail onNext={({ email: e, password: p, mobile }) => {
                     setEmail(e);
+                    setPassword(p);
                     setHasMobile(!!mobile);
                     setStep(1);
                   }} />
@@ -155,7 +156,7 @@ const JoinAsInstitution = () => {
               {/* Step 1: OTP Verification */}
               {step === 1 && (
                 <motion.div key="s1" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
-                  <StepOTP email={email} hasMobile={hasMobile} onNext={() => setStep(2)} />
+                  <StepOTP email={email} hasMobile={hasMobile} password={password} onNext={() => setStep(2)} />
                 </motion.div>
               )}
 
