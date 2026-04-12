@@ -55,14 +55,28 @@ const AppShell = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
   const openPostCreate = () => navigate("/post/create");
   const { profile, initials, displayName, user } = useAuth();
+  const [orgData, setOrgData] = useState<{ name: string; logo_url: string | null; type: string; slug: string } | null>(null);
 
-  const profilePath = "/app/profile";
+  const isInstitution = profile?.account_type === "institution" && !!profile?.org_id;
+
+  // Fetch org data for institution accounts
+  useEffect(() => {
+    if (!isInstitution || !profile?.org_id) { setOrgData(null); return; }
+    supabase.from("organizations").select("name, logo_url, type, slug").eq("id", profile.org_id).maybeSingle()
+      .then(({ data }) => setOrgData(data || null));
+  }, [isInstitution, profile?.org_id]);
+
+  const profilePath = isInstitution && orgData?.slug ? `/org/${orgData.slug}` : "/app/profile";
   const [unreadAlerts, setUnreadAlerts] = useState(0);
   const [unreadPings, setUnreadPings] = useState(0);
-  const roleLabel = profile?.role ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1).replace(/_/g, " ") : "Member";
-  const identityName = displayName;
-  const identityAvatar = profile?.avatar_url || null;
-  const identityInitials = initials;
+  const roleLabel = isInstitution && orgData?.type
+    ? orgData.type.charAt(0).toUpperCase() + orgData.type.slice(1).replace(/_/g, " ")
+    : profile?.role ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1).replace(/_/g, " ") : "Member";
+  const identityName = isInstitution && orgData?.name ? orgData.name : displayName;
+  const identityAvatar = isInstitution && orgData?.logo_url ? orgData.logo_url : (profile?.avatar_url || null);
+  const identityInitials = isInstitution && orgData?.name
+    ? orgData.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()
+    : initials;
 
   const isActive = (path: string) => pathname === path || pathname.startsWith(path + "/");
 

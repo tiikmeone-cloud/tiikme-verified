@@ -98,7 +98,7 @@ export default function PostOpportunityModal({ open, onClose, onCreated }: Props
         compensation: comp,
         deadline: deadline || null,
         poster_id: user.id,
-        org_id: null,
+        org_id: (user as any)?.user_metadata?.org_id || null,
         domain: department.trim() || null,
         skills_required: skills.length ? skills : null,
         experience_min: expLevel === "Fresher" ? 0 : parseInt(expLevel) || 0,

@@ -46,6 +46,9 @@ const PostCreate = lazyWithRetry(() => import("./pages/PostCreate.tsx"), "PostCr
 const CertificatePage = lazyWithRetry(() => import("./pages/CertificatePage.tsx"), "CertificatePage");
 const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword.tsx"), "ResetPassword");
 const PostDetail = lazyWithRetry(() => import("./pages/PostDetail.tsx"), "PostDetail");
+const OrganizationPage = lazyWithRetry(() => import("./pages/OrganizationPage.tsx"), "OrganizationPage");
+const JoinAsInstitution = lazyWithRetry(() => import("./pages/JoinAsInstitution.tsx"), "JoinAsInstitution");
+const ApplicationsDashboard = lazyWithRetry(() => import("./pages/ApplicationsDashboard.tsx"), "ApplicationsDashboard");
 
 const queryClient = new QueryClient();
 
@@ -76,6 +79,7 @@ const App = () => (
             <Route path="/terms" element={<PageErrorBoundary><Terms /></PageErrorBoundary>} />
             <Route path="/grievance" element={<PageErrorBoundary><Grievance /></PageErrorBoundary>} />
             <Route path="/reset-password" element={<PageErrorBoundary><ResetPassword /></PageErrorBoundary>} />
+            <Route path="/join-as-institution" element={<PageErrorBoundary><JoinAsInstitution /></PageErrorBoundary>} />
 
             <Route path="/certificate/:id" element={<PageErrorBoundary><CertificatePage /></PageErrorBoundary>} />
             <Route path="/create-page" element={<Shell><CreatePage /></Shell>} />
@@ -90,11 +94,15 @@ const App = () => (
             <Route path="/app/teams" element={<Shell><MyWork /></Shell>} />
             <Route path="/app/teams/:projectId" element={<Shell><ProjectHub /></Shell>} />
             <Route path="/app/opportunities" element={<Shell><Opportunities /></Shell>} />
+            <Route path="/app/opportunities/:id/applications" element={<Shell><ApplicationsDashboard /></Shell>} />
             <Route path="/app/strands" element={<Shell><Strands /></Shell>} />
             <Route path="/app/pings" element={<Shell><Pings /></Shell>} />
             <Route path="/app/pings/:id" element={<Shell><Pings /></Shell>} />
             <Route path="/app/alerts" element={<Shell><Alerts /></Shell>} />
             <Route path="/app/settings" element={<Shell><SettingsPage /></Shell>} />
+
+            {/* Organization profiles */}
+            <Route path="/org/:slug" element={<Shell><OrganizationPage /></Shell>} />
 
             {/* Pages (org profiles) */}
             <Route path="/p/:slug" element={<Shell><PageProfile /></Shell>} />

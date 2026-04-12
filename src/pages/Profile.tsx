@@ -350,6 +350,16 @@ const Profile = () => {
   const [editOpen, setEditOpen] = useState(false);
   const { profile: authProfile, initials: authInitials, displayName: authDisplayName, refreshProfile, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect institution users viewing their own profile to org page
+  const isOwnProfile = !urlUserId || urlUserId === user?.id;
+  useEffect(() => {
+    if (isOwnProfile && authProfile?.account_type === "institution" && authProfile?.org_id) {
+      supabase.from("organizations").select("slug").eq("id", authProfile.org_id).maybeSingle()
+        .then(({ data }) => { if (data?.slug) navigate(`/org/${data.slug}`, { replace: true }); });
+    }
+  }, [isOwnProfile, authProfile?.account_type, authProfile?.org_id, navigate]);
+
   const [viewedProfile, setViewedProfile] = useState<any>(null);
   const [workItems, setWorkItems] = useState<any[]>([]);
   const [userPosts, setUserPosts] = useState<any[]>([]);
@@ -359,7 +369,6 @@ const Profile = () => {
   const [dataLoading, setDataLoading] = useState(true);
   const [bioExpanded, setBioExpanded] = useState(false);
   const [sectionOrder, setSectionOrder] = useState<string[]>(DEFAULT_SECTION_ORDER);
-  // navigate already declared above
 
   const [showAddExp, setShowAddExp] = useState(false);
   const [showAddEdu, setShowAddEdu] = useState(false);
@@ -380,7 +389,6 @@ const Profile = () => {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [confirmDeleteTable, setConfirmDeleteTable] = useState<"work_items" | "achievements" | null>(null);
 
-  const isOwnProfile = !urlUserId || urlUserId === user?.id;
   const targetUserId = isOwnProfile ? user?.id : urlUserId;
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
