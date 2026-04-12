@@ -349,14 +349,7 @@ const Profile = () => {
   const { id: urlUserId } = useParams<{ id: string }>();
   const [editOpen, setEditOpen] = useState(false);
   const { profile: authProfile, initials: authInitials, displayName: authDisplayName, refreshProfile, user, loading: authLoading } = useAuth();
-
-  // Institution accounts visiting /app/profile → redirect to /org/{slug}
-  const isOwnInstitutionProfile = isInstitution && (!urlUserId || urlUserId === user?.id);
-  useEffect(() => {
-    if (isOwnInstitutionProfile && org?.slug && org.slug.length > 0) {
-      navigate(`/org/${org.slug}`, { replace: true });
-    }
-  }, [isOwnInstitutionProfile, org, navigate]);
+  const navigate = useNavigate();
   const [viewedProfile, setViewedProfile] = useState<any>(null);
   const [workItems, setWorkItems] = useState<any[]>([]);
   const [userPosts, setUserPosts] = useState<any[]>([]);
@@ -396,13 +389,7 @@ const Profile = () => {
     if (!targetUserId) { setDataLoading(false); return; }
     setDataLoading(true);
 
-    // For institution accounts, query posts by posted_by_org instead of author_id
-    const postsQuery = isOwnInstitutionProfile && authProfile?.org_id
-      ? supabase.from("posts").select("id, content, created_at, image_urls, comment_count, reactions:post_reactions(user_id)").eq("posted_by_org", authProfile.org_id).order("created_at", { ascending: false }).limit(20)
-      : supabase.from("posts").select("id, content, created_at, image_urls, comment_count, reactions:post_reactions(user_id)").eq("author_id", targetUserId).order("created_at", { ascending: false }).limit(20);
-
-    const [profileRes, itemsRes, strandCountRes, postsRes, achvsRes, certsRes] = await Promise.allSettled([
-      isOwnProfile ? Promise.resolve({ data: authProfile }) : supabase.from("profiles").select("*").eq("id", targetUserId).maybeSingle(),
+    const postsQuery = supabase.from("posts").select("id, content, created_at, image_urls, comment_count, reactions:post_reactions(user_id)").eq("author_id", targetUserId).order("created_at", { ascending: false }).limit(20);
       supabase.from("work_items").select("*").eq("owner_id", targetUserId).order("is_current", { ascending: false }).order("created_at", { ascending: false }),
       supabase.from("strands").select("*", { count: "exact", head: true }).or(`requester_id.eq.${targetUserId},receiver_id.eq.${targetUserId}`).eq("status", "accepted"),
       postsQuery,
