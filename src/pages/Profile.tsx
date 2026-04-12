@@ -561,11 +561,11 @@ const Profile = () => {
   const { id: urlUserId } = useParams<{ id: string }>();
   const [editOpen, setEditOpen] = useState(false);
   const { profile: authProfile, initials: authInitials, displayName: authDisplayName, refreshProfile, user, loading: authLoading } = useAuth();
-  const { isInstitution, org } = useOrgIdentity();
+  const { isInstitution, org, loading: orgLoading } = useOrgIdentity();
   const navigate = useNavigate();
 
   // Institution accounts viewing own profile → render institution profile inline (no redirect)
-  const isOwnInstitutionProfile = isInstitution && org && (!urlUserId || urlUserId === user?.id);
+  const isOwnInstitutionProfile = isInstitution && (!urlUserId || urlUserId === user?.id);
   const [viewedProfile, setViewedProfile] = useState<any>(null);
   const [workItems, setWorkItems] = useState<any[]>([]);
   const [userPosts, setUserPosts] = useState<any[]>([]);
@@ -604,11 +604,17 @@ const Profile = () => {
   const loadProfile = useCallback(async () => {
     if (!targetUserId) { setDataLoading(false); return; }
     setDataLoading(true);
+
+    // For institution accounts, query posts by posted_by_org instead of author_id
+    const postsQuery = isOwnInstitutionProfile && authProfile?.org_id
+      ? supabase.from("posts").select("id, content, created_at, image_urls, comment_count, reactions:post_reactions(user_id)").eq("posted_by_org", authProfile.org_id).order("created_at", { ascending: false }).limit(20)
+      : supabase.from("posts").select("id, content, created_at, image_urls, comment_count, reactions:post_reactions(user_id)").eq("author_id", targetUserId).order("created_at", { ascending: false }).limit(20);
+
     const [profileRes, itemsRes, strandCountRes, postsRes, achvsRes, certsRes] = await Promise.allSettled([
       isOwnProfile ? Promise.resolve({ data: authProfile }) : supabase.from("profiles").select("*").eq("id", targetUserId).maybeSingle(),
       supabase.from("work_items").select("*").eq("owner_id", targetUserId).order("is_current", { ascending: false }).order("created_at", { ascending: false }),
       supabase.from("strands").select("*", { count: "exact", head: true }).or(`requester_id.eq.${targetUserId},receiver_id.eq.${targetUserId}`).eq("status", "accepted"),
-      supabase.from("posts").select("id, content, created_at, image_urls, comment_count, reactions:post_reactions(user_id)").eq("author_id", targetUserId).order("created_at", { ascending: false }).limit(20),
+      postsQuery,
       supabase.from("achievements").select("*").eq("user_id", targetUserId).order("created_at", { ascending: false }),
       supabase.from("certificates").select("*, org:organizations(name, logo_url)").eq("issued_to", targetUserId).order("issued_date" as any, { ascending: false }),
     ]);
@@ -631,7 +637,7 @@ const Profile = () => {
       setSectionOrder(DEFAULT_SECTION_ORDER);
     }
     setDataLoading(false);
-  }, [targetUserId, isOwnProfile, authProfile]);
+  }, [targetUserId, isOwnProfile, authProfile, isOwnInstitutionProfile]);
 
   const [connectionStatus, setConnectionStatus] = useState<{ status: string | null; direction: string | null; id: string | null }>({ status: null, direction: null, id: null });
   const [connectLoading, setConnectLoading] = useState(false);
@@ -646,13 +652,13 @@ const Profile = () => {
   }, [user, targetUserId, isOwnProfile]);
   useEffect(() => { if (!authLoading) loadProfile(); }, [authLoading, loadProfile]);
 
-  if (authLoading || dataLoading) return (
-    <div className="max-w-[760px] mx-auto px-4 py-7"><div className="t-card p-6 animate-pulse"><div className="h-[140px] rounded-xl" style={{ background: "var(--surface-2)" }} /></div></div>
+  if (authLoading || dataLoading || (isOwnInstitutionProfile && orgLoading)) return (
+    <div className="max-w-[760px] mx-auto px-4 py-7"><div className="t-card p-6 animate-pulse"><div className="h-[140px] rounded-xl" style={{ background: "var(--surface-2)" }} /><div className="h-6 w-48 rounded mt-4" style={{ background: "var(--surface-2)" }} /><div className="h-4 w-32 rounded mt-2" style={{ background: "var(--surface-2)" }} /></div></div>
   );
   if (!user && isOwnProfile) return null;
 
   const profileData = viewedProfile || authProfile;
-  if (!profileData) return (
+  if (!profileData && !isOwnInstitutionProfile) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
       <p className="text-[16px] font-bold" style={{ color: "var(--text-1)" }}>Profile not found</p>
       <button type="button" onClick={() => navigate("/app/explore")} className="text-[13px] mt-2" style={{ color: "var(--brand)" }}>Back to Explore</button>
