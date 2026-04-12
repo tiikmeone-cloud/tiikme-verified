@@ -174,9 +174,10 @@ const Explore = () => {
     setStrandMap(sMap);
 
     // Fetch user's work items for org matching
-    const { data: myItems } = await supabase.from("work_items")
+    const { data: myItems, error: itemsErr } = await supabase.from("work_items")
       .select("company_name, institution_name_edu, institution_name")
       .eq("owner_id", user.id);
+    if (itemsErr) console.warn("[Explore] work_items fetch failed:", itemsErr.message);
 
     const myOrgNames = new Set<string>();
     (myItems || []).forEach(item => {
@@ -196,7 +197,7 @@ const Explore = () => {
       peopleQuery = peopleQuery.or(`full_name.ilike.%${search}%,username.ilike.%${search}%,institution_name.ilike.%${search}%`);
     }
 
-    const [peopleRes, orgsRes] = await Promise.all([
+    const [peopleRes, orgsRes] = await Promise.allSettled([
       peopleQuery,
       supabase.from("organizations")
         .select("id, name, slug, type, subtype, logo_url, city, state, is_verified, followers_count")
@@ -205,7 +206,9 @@ const Explore = () => {
 
     if (!mountedRef.current) return;
 
-    const people = (peopleRes.data as ProfileResult[]) || [];
+    if (peopleRes.status === "rejected") console.warn("[Explore] people fetch failed:", peopleRes.reason);
+    if (orgsRes.status === "rejected") console.warn("[Explore] orgs fetch failed:", orgsRes.reason);
+    const people = (peopleRes.status === "fulfilled" ? (peopleRes.value as any).data : []) as ProfileResult[] || [];
     setAllPeople(people);
 
     // Categorize people
