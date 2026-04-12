@@ -658,7 +658,13 @@ const Profile = () => {
   if (!user && isOwnProfile) return null;
 
   const profileData = viewedProfile || authProfile;
-  if (!profileData && !isOwnInstitutionProfile) return (
+
+  // Institution accounts: render org profile immediately — don't fall through to personal profile fields
+  if (isOwnInstitutionProfile && org) {
+    return <InstitutionProfileView org={org} userPosts={userPosts} stats={stats} navigate={navigate} user={user} />;
+  }
+
+  if (!profileData) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
       <p className="text-[16px] font-bold" style={{ color: "var(--text-1)" }}>Profile not found</p>
       <button type="button" onClick={() => navigate("/app/explore")} className="text-[13px] mt-2" style={{ color: "var(--brand)" }}>Back to Explore</button>
