@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useOrgIdentity } from "@/contexts/OrgIdentityContext";
 import { supabase } from "@/integrations/supabase/client";
 
 const MAX_IMAGES = 20;
@@ -12,6 +13,7 @@ const MAX_IMAGES = 20;
 const PostCreate = () => {
   const navigate = useNavigate();
   const { user, profile, initials } = useAuth();
+  const { isInstitution, org, identityName, identityAvatar, identityInitials } = useOrgIdentity();
   const [content, setContent] = useState("");
   const [publishing, setPublishing] = useState(false);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
@@ -68,7 +70,7 @@ const PostCreate = () => {
         setUploading(false);
       }
 
-      const { error } = await supabase.from("posts").insert({
+      const postData: any = {
         author_id: user.id,
         content: content.trim(),
         post_type: "thought",
@@ -76,7 +78,15 @@ const PostCreate = () => {
         visibility: "everyone",
         hashtags: (content.match(/#\w+/g) || []).map(t => t.slice(1)),
         image_urls: imageUrls,
-      } as any).select().single();
+      };
+      // Institution accounts post as org
+      if (isInstitution && org) {
+        postData.posted_by_org = org.id;
+        postData.posted_by_user_id = user.id;
+        postData.workspace_name = `org:${org.id}`;
+      }
+
+      const { error } = await supabase.from("posts").insert(postData).select().single();
 
       if (error) throw error;
 
@@ -113,11 +123,13 @@ const PostCreate = () => {
       {/* Author */}
       <div className="flex items-center gap-3 mb-4">
         <div className="w-11 h-11 rounded-full flex items-center justify-center text-[14px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: "var(--brand)" }}>
-          {profile?.avatar_url ? <img src={storageImageUrl(profile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials}
+          {identityAvatar ? <img src={storageImageUrl(identityAvatar, "avatar")} alt="" className="w-full h-full object-cover" /> : identityInitials}
         </div>
         <div>
-          <p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>{profile?.full_name || "You"}</p>
-          <p className="text-[11px]" style={{ color: "var(--text-3)" }}>Posting to everyone</p>
+          <p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>{identityName || "You"}</p>
+          <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
+            {isInstitution ? `Posting as ${org?.name || "Organisation"}` : "Posting to everyone"}
+          </p>
         </div>
       </div>
 
