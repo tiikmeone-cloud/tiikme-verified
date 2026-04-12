@@ -1,0 +1,74 @@
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import type { InstitutionFormData } from "@/pages/JoinAsInstitution";
+
+const ROLES_BY_TYPE: Record<string, string[]> = {
+  company: ["Founder / CEO", "CTO", "CMO", "CXO", "HR Head", "Manager", "Admin", "Other"],
+  educational: ["Principal", "Dean", "HOD", "Professor", "Admin", "Other"],
+  hospital: ["Director", "Chief Medical Officer", "Admin", "HOD", "Other"],
+  government: ["Department Head", "Director", "Officer", "Admin", "Other"],
+  ngo: ["Founder", "Director", "Trustee", "Manager", "Other"],
+  individual: ["Owner", "Founder", "Other"],
+};
+
+const inputStyle: React.CSSProperties = {
+  background: "#fff", border: "1.5px solid #E5E7EB", borderRadius: 14,
+  color: "#111827", height: 48, width: "100%", padding: "0 14px", fontSize: 14,
+  outline: "none", fontFamily: "'Plus Jakarta Sans', sans-serif",
+};
+
+interface Props {
+  form: InstitutionFormData;
+  update: (p: Partial<InstitutionFormData>) => void;
+  onNext: () => void;
+}
+
+export default function StepRepresentative({ form, update, onNext }: Props) {
+  const roles = ROLES_BY_TYPE[form.orgType] || ROLES_BY_TYPE.company;
+
+  const handleNext = () => {
+    if (!form.repName.trim()) { toast.info("Enter your name"); return; }
+    if (!form.repRole) { toast.info("Select your role"); return; }
+    onNext();
+  };
+
+  return (
+    <div>
+      <h1 className="text-[22px] font-extrabold mb-1" style={{ color: "var(--text-1)" }}>Who are you?</h1>
+      <p className="text-[13px] mb-6" style={{ color: "var(--text-3)" }}>Tell us about yourself — you'll be the primary admin</p>
+
+      <div className="space-y-4">
+        <div>
+          <label className="text-[12px] font-bold mb-1 block" style={{ color: "var(--text-2)" }}>Your Full Name</label>
+          <input
+            type="text" placeholder="e.g. Rajesh Kumar"
+            value={form.repName} onChange={e => update({ repName: e.target.value })}
+            style={inputStyle}
+          />
+        </div>
+
+        <div>
+          <label className="text-[12px] font-bold mb-2 block" style={{ color: "var(--text-2)" }}>Your Role in the Organisation</label>
+          <div className="flex flex-wrap gap-2">
+            {roles.map(r => (
+              <button
+                key={r} type="button"
+                onClick={() => update({ repRole: r })}
+                className="px-3.5 py-1.5 rounded-full text-[12px] font-semibold cursor-pointer transition-all"
+                style={{
+                  background: form.repRole === r ? "var(--brand)" : "#fff",
+                  color: form.repRole === r ? "#fff" : "var(--text-2)",
+                  border: form.repRole === r ? "none" : "1.5px solid #E5E7EB",
+                }}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <Button onClick={handleNext} size="xl" className="w-full mt-2">Continue →</Button>
+      </div>
+    </div>
+  );
+}
