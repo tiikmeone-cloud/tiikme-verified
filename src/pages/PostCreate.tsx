@@ -123,11 +123,13 @@ const PostCreate = () => {
       {/* Author */}
       <div className="flex items-center gap-3 mb-4">
         <div className="w-11 h-11 rounded-full flex items-center justify-center text-[14px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: "var(--brand)" }}>
-          {profile?.avatar_url ? <img src={storageImageUrl(profile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials}
+          {identityAvatar ? <img src={storageImageUrl(identityAvatar, "avatar")} alt="" className="w-full h-full object-cover" /> : identityInitials}
         </div>
         <div>
-          <p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>{profile?.full_name || "You"}</p>
-          <p className="text-[11px]" style={{ color: "var(--text-3)" }}>Posting to everyone</p>
+          <p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>{identityName || "You"}</p>
+          <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
+            {isInstitution ? `Posting as ${org?.name || "Organisation"}` : "Posting to everyone"}
+          </p>
         </div>
       </div>
 
