@@ -557,7 +557,7 @@ const InstitutionProfileView = ({ org, userPosts, stats, navigate, user }: { org
   );
 };
 
-
+const Profile = () => {
   const { id: urlUserId } = useParams<{ id: string }>();
   const [editOpen, setEditOpen] = useState(false);
   const { profile: authProfile, initials: authInitials, displayName: authDisplayName, refreshProfile, user, loading: authLoading } = useAuth();
