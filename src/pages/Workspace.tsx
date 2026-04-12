@@ -34,6 +34,7 @@ const Workspace = () => {
   const { user, profile: authProfile, initials: userInitials } = useAuth();
   const { workspaces: realWorkspaces, loading: wsLoading, members: realMembers, fetchMembers, createWorkspace, refetch } = useWorkspaces(user?.id);
   const [selected, setSelected] = useState<string | null>(null);
+  const [autoCreated, setAutoCreated] = useState(false);
   const [activeTab, setActiveTab] = useState("Feed");
   const [showCreate, setShowCreate] = useState(false);
   const [createStep, setCreateStep] = useState(0);
