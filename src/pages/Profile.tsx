@@ -561,11 +561,11 @@ const Profile = () => {
   const { id: urlUserId } = useParams<{ id: string }>();
   const [editOpen, setEditOpen] = useState(false);
   const { profile: authProfile, initials: authInitials, displayName: authDisplayName, refreshProfile, user, loading: authLoading } = useAuth();
-  const { isInstitution, org } = useOrgIdentity();
+  const { isInstitution, org, loading: orgLoading } = useOrgIdentity();
   const navigate = useNavigate();
 
   // Institution accounts viewing own profile → render institution profile inline (no redirect)
-  const isOwnInstitutionProfile = isInstitution && org && (!urlUserId || urlUserId === user?.id);
+  const isOwnInstitutionProfile = isInstitution && (!urlUserId || urlUserId === user?.id);
   const [viewedProfile, setViewedProfile] = useState<any>(null);
   const [workItems, setWorkItems] = useState<any[]>([]);
   const [userPosts, setUserPosts] = useState<any[]>([]);
