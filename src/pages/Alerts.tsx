@@ -57,16 +57,23 @@ const Alerts = () => {
   const fetchAlerts = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    const { data } = await supabase
-      .from("alerts")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(50);
-    setAlerts(data || []);
-    setLoading(false);
-    if ((data || []).some((a: any) => !a.is_read)) {
-      void supabase.from("alerts").update({ is_read: true } as any).eq("user_id", user.id).eq("is_read", false);
+    try {
+      const { data, error } = await supabase
+        .from("alerts")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (error) { console.warn("[Alerts] fetch failed:", error.message); setAlerts([]); setLoading(false); return; }
+      setAlerts(data || []);
+      setLoading(false);
+      if ((data || []).some((a: any) => !a.is_read)) {
+        supabase.from("alerts").update({ is_read: true } as any).eq("user_id", user.id).eq("is_read", false).then(({ error: e }) => { if (e) console.warn("[Alerts] mark-read failed:", e.message); });
+      }
+    } catch (e) {
+      console.warn("[Alerts] fetch exception:", e);
+      setAlerts([]);
+      setLoading(false);
     }
   }, [user]);
 
