@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { storageImageUrl } from "@/lib/imageTransform";
 import { MapPin, Copy, Shield, Layers, X, MessageCircle, CheckCircle, Building2, Link2, Plus, Pencil, Trash2, Briefcase, GraduationCap, Award, Code2, GripVertical, Eye, EyeOff, Heart, Rocket, Send, Share2, Users } from "lucide-react";
 import OrgSearchInput from "@/components/OrgSearchInput";
 import GetTiikedModal from "@/components/profile/GetTiikedModal";
@@ -286,7 +287,7 @@ const ProfilePostsSection = ({ posts, isOwnProfile }: { posts: any[]; isOwnProfi
             <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-2)" }}><MentionText text={p.content} /></p>
             {p.image_urls?.length > 0 && (
               <div className="mt-2 rounded-xl overflow-hidden">
-                <img src={p.image_urls[0]} alt="Post" className="w-full max-h-48 object-cover rounded-xl" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                <img src={storageImageUrl(p.image_urls[0], "feed")} alt="Post" className="w-full max-h-48 object-cover rounded-xl" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
               </div>
             )}
             <div className="flex items-center gap-1 mt-2">
