@@ -32,7 +32,7 @@ export function usePostReactions(
 
         if (cancelled || !mountedRef.current) return;
         if (countRes.error) console.warn("[usePostReactions] count failed:", countRes.error.message);
-        if (likedRes.error) console.warn("[usePostReactions] liked check failed:", (likedRes as any).error.message);
+        if ('error' in likedRes && likedRes.error) console.warn("[usePostReactions] liked check failed:", (likedRes.error as any).message);
         setLikeCount(countRes.count || 0);
         setLiked(!!likedRes.data);
       } catch (e) {
