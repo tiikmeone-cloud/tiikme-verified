@@ -354,12 +354,8 @@ const Profile = () => {
   const { isInstitution, org } = useOrgIdentity();
   const navigate = useNavigate();
 
-  // Redirect institution accounts viewing own profile to org page
-  useEffect(() => {
-    if (!authLoading && isInstitution && org?.slug && (!urlUserId || urlUserId === user?.id)) {
-      navigate(`/org/${org.slug}`, { replace: true });
-    }
-  }, [authLoading, isInstitution, org, urlUserId, user?.id, navigate]);
+  // Institution accounts viewing own profile → render institution profile inline (no redirect)
+  const isOwnInstitutionProfile = isInstitution && org && (!urlUserId || urlUserId === user?.id);
   const [viewedProfile, setViewedProfile] = useState<any>(null);
   const [workItems, setWorkItems] = useState<any[]>([]);
   const [userPosts, setUserPosts] = useState<any[]>([]);
