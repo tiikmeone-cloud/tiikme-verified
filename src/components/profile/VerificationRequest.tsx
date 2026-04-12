@@ -43,26 +43,51 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
     return () => clearTimeout(t);
   }, [searchQuery]);
 
-  // Load verifiers for selected org
+  // Load verifiers for selected org — check org_verif_routes first, fallback to admins
   useEffect(() => {
     if (!selectedOrg) return;
     (async () => {
-      const { data } = await supabase.from("org_members")
-        .select("user_id, title, role")
-        .eq("org_id", selectedOrg.id)
-        .or("role.in.(owner,admin)");
-      if (!data?.length) return;
-      const uids = data.map(d => d.user_id);
-      const { data: profiles } = await supabase.from("profiles")
-        .select("id, full_name, avatar_url")
-        .in("id", uids);
-      const merged = data.map(d => ({
-        ...d,
-        profile: profiles?.find(p => p.id === d.user_id),
-      }));
-      setVerifiers(merged);
+      // Check for department-specific routing rules
+      const itemDept = item.department || "";
+      const { data: routes } = await supabase.from("org_verif_routes")
+        .select("assigned_to_user_id, condition_type, condition_value")
+        .eq("org_id", selectedOrg.id);
+
+      let assignedIds: string[] = [];
+      if (routes?.length) {
+        // Match by department if available
+        const matched = routes.filter(r =>
+          !r.condition_type || r.condition_type === "all" ||
+          (r.condition_type === "department" && r.condition_value?.toLowerCase() === itemDept.toLowerCase())
+        );
+        assignedIds = matched.map(r => r.assigned_to_user_id).filter(Boolean) as string[];
+      }
+
+      // If routes found specific verifiers, use those; otherwise fall back to admins
+      if (assignedIds.length > 0) {
+        const { data: profiles } = await supabase.from("profiles")
+          .select("id, full_name, avatar_url")
+          .in("id", assignedIds);
+        setVerifiers((profiles || []).map(p => ({ user_id: p.id, profile: p, title: "Assigned Verifier", role: "verifier" })));
+      } else {
+        // Fallback: load org admins/owners
+        const { data } = await supabase.from("org_members")
+          .select("user_id, title, role")
+          .eq("org_id", selectedOrg.id)
+          .or("role.in.(owner,admin)");
+        if (!data?.length) return;
+        const uids = data.map(d => d.user_id);
+        const { data: profiles } = await supabase.from("profiles")
+          .select("id, full_name, avatar_url")
+          .in("id", uids);
+        const merged = data.map(d => ({
+          ...d,
+          profile: profiles?.find(p => p.id === d.user_id),
+        }));
+        setVerifiers(merged);
+      }
     })();
-  }, [selectedOrg]);
+  }, [selectedOrg, item.department]);
 
   // Direct user search
   useEffect(() => {
