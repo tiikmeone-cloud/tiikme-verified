@@ -88,6 +88,10 @@ const PostCreate = () => {
         visibility: "everyone",
         hashtags: (content.match(/#\w+/g) || []).map(t => t.slice(1)),
         image_urls: imageUrls,
+        ...(isInstitution && profile?.org_id ? {
+          posted_by_org: profile.org_id,
+          posted_by_user_id: user.id,
+        } : {}),
       };
 
       const { error } = await supabase.from("posts").insert(postData).select().single();
