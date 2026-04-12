@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Briefcase, Plus, MapPin, Clock, DollarSign, Users, Bookmark, X } from "lucide-react";
+import { Briefcase, Plus, MapPin, Clock, DollarSign, Users, Bookmark, X, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -23,6 +24,7 @@ const EXP_OPTIONS = [
 
 export default function OpportunitiesTab({ org, isAdmin }: OpportunitiesTabProps) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [opportunities, setOpportunities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("All");
