@@ -100,7 +100,8 @@ const SettingsPage = () => {
 
         // Load invite count
         if (data.username) {
-          const { count } = await supabase.from("profiles").select("id", { count: "exact", head: true }).eq("referred_by", data.username);
+          const { count, error: countErr } = await supabase.from("profiles").select("id", { count: "exact", head: true }).eq("referred_by", data.username);
+          if (countErr) console.warn("[Settings] invite count failed:", countErr.message);
           setInviteCount(count || 0);
         }
       }

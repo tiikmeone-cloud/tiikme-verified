@@ -22,16 +22,25 @@ export function usePostReactions(
     let cancelled = false;
 
     (async () => {
-      const [countRes, likedRes] = await Promise.all([
-        supabase.from("post_reactions").select("*", { count: "exact", head: true }).eq("post_id", postId),
-        userId
-          ? supabase.from("post_reactions").select("id").eq("post_id", postId).eq("user_id", userId).maybeSingle()
-          : Promise.resolve({ data: null }),
-      ]);
+      try {
+        const [countRes, likedRes] = await Promise.all([
+          supabase.from("post_reactions").select("*", { count: "exact", head: true }).eq("post_id", postId),
+          userId
+            ? supabase.from("post_reactions").select("id").eq("post_id", postId).eq("user_id", userId).maybeSingle()
+            : Promise.resolve({ data: null }),
+        ]);
 
-      if (cancelled || !mountedRef.current) return;
-      setLikeCount(countRes.count || 0);
-      setLiked(!!likedRes.data);
+        if (cancelled || !mountedRef.current) return;
+        if (countRes.error) console.warn("[usePostReactions] count failed:", countRes.error.message);
+        if ('error' in likedRes && likedRes.error) console.warn("[usePostReactions] liked check failed:", (likedRes.error as any).message);
+        setLikeCount(countRes.count || 0);
+        setLiked(!!likedRes.data);
+      } catch (e) {
+        if (cancelled || !mountedRef.current) return;
+        console.warn("[usePostReactions] exception:", e);
+        setLikeCount(0);
+        setLiked(false);
+      }
       setLoaded(true);
     })();
 
