@@ -114,7 +114,7 @@ const EditProfileInline = ({ open, onClose, onSaved }: { open: boolean; onClose:
       </div>
       <div className="flex items-center gap-4 mb-5 cursor-pointer" onClick={() => avatarRef.current?.click()}>
         <div className="w-16 h-16 rounded-full flex items-center justify-center text-[20px] font-bold text-white overflow-hidden" style={{ backgroundColor: "var(--brand)" }}>
-          {form.avatar_url ? <img src={form.avatar_url} alt="" className="w-full h-full object-cover" /> : form.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "U"}
+          {form.avatar_url ? <img src={storageImageUrl(form.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : form.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "U"}
         </div>
         <p className="text-[12px]" style={{ color: "var(--text-3)" }}>Click to change avatar</p>
         <input ref={avatarRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
@@ -975,7 +975,7 @@ const Profile = () => {
             <div className={`relative ${isOwnProfile ? "group cursor-pointer" : ""}`} onClick={() => isOwnProfile && setEditOpen(!editOpen)}>
               <div className="w-[72px] h-[72px] md:w-[88px] md:h-[88px] rounded-full flex items-center justify-center text-[24px] md:text-[28px] font-extrabold text-white shrink-0 overflow-hidden"
                 style={{ backgroundColor: roleColor, border: "4px solid var(--surface)", boxShadow: isVerified ? "0 0 0 3px #F59E0B, 0 0 12px rgba(245,158,11,0.45)" : "0 4px 12px rgba(0,0,0,0.15)" }}>
-                {profileData.avatar_url ? <img src={profileData.avatar_url} alt="" className="w-full h-full object-cover" /> : initials}
+                {profileData.avatar_url ? <img src={storageImageUrl(profileData.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials}
               </div>
               {isOwnProfile && <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><Pencil className="w-4 h-4 text-white" /></div>}
             </div>
