@@ -729,7 +729,7 @@ const Profile = () => {
         <AnimatePresence>
           {showAddExp && (
             <InlineForm title="Add Experience" saving={saving} onSave={saveExperience} onCancel={() => setShowAddExp(false)} fields={<>
-              <OrgSearchInput value={expForm.company} onChange={(name) => setExpForm({ ...expForm, company: name })} placeholder="Company / Organisation *" style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", borderRadius: 12, color: "var(--text-1)" }} />
+              <Input value={expForm.company} onChange={e => setExpForm({ ...expForm, company: e.target.value })} placeholder="Company / Organisation *" style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", borderRadius: 12, color: "var(--text-1)" }} />
               <Input placeholder="Job Title / Designation *" value={expForm.title} onChange={e => setExpForm({ ...expForm, title: e.target.value })} style={inputStyle} />
               <select value={expForm.type} onChange={e => setExpForm({ ...expForm, type: e.target.value })} className="w-full px-3 text-[14px] outline-none cursor-pointer" style={inputStyle}>
                 {["Full-time","Part-time","Contract","Freelance","Internship","Apprenticeship"].map(t => <option key={t}>{t}</option>)}
@@ -801,7 +801,7 @@ const Profile = () => {
         <AnimatePresence>
           {showAddEdu && (
             <InlineForm title="Add Education" saving={saving} onSave={saveEducation} onCancel={() => setShowAddEdu(false)} fields={<>
-              <OrgSearchInput value={eduForm.institution} onChange={(name) => setEduForm({ ...eduForm, institution: name })} placeholder="Institution Name *" style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", borderRadius: 12, color: "var(--text-1)" }} />
+              <Input value={eduForm.institution} onChange={e => setEduForm({ ...eduForm, institution: e.target.value })} placeholder="Institution Name *" style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", borderRadius: 12, color: "var(--text-1)" }} />
               <Input placeholder="Degree / Program *" value={eduForm.degree} onChange={e => setEduForm({ ...eduForm, degree: e.target.value })} style={inputStyle} />
               <Input placeholder="Branch / Specialisation" value={eduForm.branch} onChange={e => setEduForm({ ...eduForm, branch: e.target.value })} style={inputStyle} />
               <div className="grid grid-cols-2 gap-2">
@@ -863,7 +863,7 @@ const Profile = () => {
           {showAddProject && (
             <InlineForm title="Add Project" saving={saving} onSave={saveProject} onCancel={() => setShowAddProject(false)} fields={<>
               <Input placeholder="Project title *" value={projForm.title} onChange={e => setProjForm({ ...projForm, title: e.target.value })} style={inputStyle} />
-              <OrgSearchInput value={projForm.org} onChange={(name) => setProjForm({ ...projForm, org: name })} placeholder="Organisation (optional)" style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", borderRadius: 12, color: "var(--text-1)" }} />
+              <Input value={projForm.org} onChange={e => setProjForm({ ...projForm, org: e.target.value })} placeholder="Organisation (optional)" style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", borderRadius: 12, color: "var(--text-1)" }} />
               <select value={projForm.type} onChange={e => setProjForm({ ...projForm, type: e.target.value })} className="w-full px-3 text-[14px] outline-none cursor-pointer" style={inputStyle}>
                 <option value="software">Software</option><option value="research">Research</option><option value="hardware">Hardware</option><option value="design">Design</option><option value="other">Other</option>
               </select>

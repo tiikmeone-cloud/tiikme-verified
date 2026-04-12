@@ -8,8 +8,6 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useOrgIdentity } from "@/contexts/OrgIdentityContext";
-import InstitutionSettings from "@/components/settings/InstitutionSettings";
 
 const navItems = [
   { id: "profile", label: "Profile", icon: User },
@@ -17,7 +15,7 @@ const navItems = [
   { id: "journey", label: "My Journey", icon: Rocket },
   { id: "appearance", label: "Appearance", icon: Palette },
   { id: "privacy", label: "Privacy", icon: Eye },
-  { id: "institution", label: "Institution", icon: Shield },
+  
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "account", label: "Account", icon: Lock },
 ];
@@ -52,7 +50,7 @@ const Toggle = ({ label, desc, defaultOn = true }: { label: string; desc?: strin
 const SettingsPage = () => {
   const navigate = useNavigate();
   const { user, refreshProfile } = useAuth();
-  const { isInstitution } = useOrgIdentity();
+  
   const [activeTab, setActiveTab] = useState("profile");
   const [journeyChoice, setJourneyChoice] = useState<string | null>(null);
   const [theme, setTheme] = useState(() => localStorage.getItem("tiikme-theme") || "light");
@@ -281,9 +279,6 @@ const SettingsPage = () => {
     >
       <h1 className="text-[20px] font-extrabold mb-5" style={{ color: "var(--text-1)", letterSpacing: "-0.01em" }}>Settings</h1>
 
-      {isInstitution ? (
-        <InstitutionSettings />
-      ) : (
       <div className="flex gap-6">
         <div className="hidden md:block w-[200px] shrink-0">
           <div className="sticky top-20 space-y-0.5">
