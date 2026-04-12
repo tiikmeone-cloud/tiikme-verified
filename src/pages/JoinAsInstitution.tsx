@@ -258,7 +258,7 @@ const JoinAsInstitution = () => {
                       {typeCards.map(t => {
                         const sel = instType === t.id;
                         return (
-                          <button key={t.id} onClick={() => setInstType(t.id)}
+                          <button type="button" key={t.id} onClick={() => setInstType(t.id)}
                             className="rounded-2xl p-4 text-left cursor-pointer active:scale-[0.98] relative"
                             style={{ background: sel ? "rgba(232,88,10,0.06)" : "#FAFAFA", border: `1.5px solid ${sel ? "#E8580A" : "#E5E7EB"}` }}>
                             {sel && <div className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: "#E8580A" }}><Check className="w-3 h-3 text-white" /></div>}
@@ -355,7 +355,7 @@ const JoinAsInstitution = () => {
 
                       {/* Logo */}
                       <div className="flex items-center gap-4">
-                        <button onClick={() => logoInputRef.current?.click()} className="w-16 h-16 rounded-full flex items-center justify-center cursor-pointer" style={{ background: "#F9FAFB", border: "1.5px dashed #D1D5DB" }}>
+                        <button type="button" onClick={() => logoInputRef.current?.click()} className="w-16 h-16 rounded-full flex items-center justify-center cursor-pointer" style={{ background: "#F9FAFB", border: "1.5px dashed #D1D5DB" }}>
                           {logoPreview ? <img src={logoPreview} alt="" className="w-full h-full rounded-full object-cover" /> : <Upload className="w-5 h-5" style={{ color: "#9CA3AF" }} />}
                         </button>
                         <div>
@@ -382,11 +382,11 @@ const JoinAsInstitution = () => {
                         <div key={i} className="flex gap-2">
                           <Input placeholder="URL" value={l.url} onChange={e => { const u = [...customLinks]; u[i].url = e.target.value; setCustomLinks(u); }} style={inputS} className="flex-1" />
                           <Input placeholder="Label" value={l.label} onChange={e => { const u = [...customLinks]; u[i].label = e.target.value; setCustomLinks(u); }} style={inputS} className="flex-1" />
-                          <button onClick={() => setCustomLinks(customLinks.filter((_, j) => j !== i))} className="p-2 cursor-pointer" style={{ color: "#9CA3AF" }}><X className="w-4 h-4" /></button>
+                          <button type="button" onClick={() => setCustomLinks(customLinks.filter((_, j) => j !== i))} className="p-2 cursor-pointer" style={{ color: "#9CA3AF" }}><X className="w-4 h-4" /></button>
                         </div>
                       ))}
                       {customLinks.length < 5 && (
-                        <button onClick={() => setCustomLinks([...customLinks, { url: "", label: "" }])}
+                        <button type="button" onClick={() => setCustomLinks([...customLinks, { url: "", label: "" }])}
                           className="text-[12px] font-semibold cursor-pointer flex items-center gap-1" style={{ color: "#E8580A" }}>
                           <Plus className="w-3 h-3" /> Add link
                         </button>
@@ -399,11 +399,11 @@ const JoinAsInstitution = () => {
                         <div key={i} className="flex gap-2">
                           <Input placeholder="Award name" value={a.name} onChange={e => { const u = [...awards]; u[i].name = e.target.value; setAwards(u); }} style={inputS} className="flex-1" />
                           <Input placeholder="Year" value={a.year} onChange={e => { const u = [...awards]; u[i].year = e.target.value.slice(0, 4); setAwards(u); }} style={inputS} className="w-20" />
-                          <button onClick={() => setAwards(awards.filter((_, j) => j !== i))} className="p-2 cursor-pointer" style={{ color: "#9CA3AF" }}><X className="w-4 h-4" /></button>
+                          <button type="button" onClick={() => setAwards(awards.filter((_, j) => j !== i))} className="p-2 cursor-pointer" style={{ color: "#9CA3AF" }}><X className="w-4 h-4" /></button>
                         </div>
                       ))}
                       {awards.length < 5 && (
-                        <button onClick={() => setAwards([...awards, { name: "", year: "" }])}
+                        <button type="button" onClick={() => setAwards([...awards, { name: "", year: "" }])}
                           className="text-[12px] font-semibold cursor-pointer flex items-center gap-1" style={{ color: "#E8580A" }}>
                           <Plus className="w-3 h-3" /> Add award
                         </button>

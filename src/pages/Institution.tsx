@@ -89,7 +89,7 @@ const Institution = () => {
         <div className="space-y-0">
           {[
             { icon: Globe, content: <a href={institution.website} target="_blank" rel="noopener" style={{ color: "var(--brand)" }}>{institution.website}</a>, extra: <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(16,185,129,0.1)", color: "#10B981" }}>Verified ✓</span> },
-            { icon: Mail, content: <span style={{ color: "var(--text-1)" }}>{institution.email}</span>, extra: <button onClick={() => { navigator.clipboard.writeText(institution.email); tiikToast.success("Copied"); }} className="text-[11px] font-semibold cursor-pointer" style={{ color: "var(--brand)" }}>Copy</button> },
+            { icon: Mail, content: <span style={{ color: "var(--text-1)" }}>{institution.email}</span>, extra: <button type="button" onClick={() => { navigator.clipboard.writeText(institution.email); tiikToast.success("Copied"); }} className="text-[11px] font-semibold cursor-pointer" style={{ color: "var(--brand)" }}>Copy</button> },
             { icon: Phone, content: <a href={`tel:${institution.phone}`} style={{ color: "var(--text-1)" }}>{institution.phone}</a> },
           ].map((row, i) => (
             <div key={i} className="flex items-center gap-3 h-11 px-3 rounded-xl text-[14px] cursor-pointer"
@@ -118,13 +118,13 @@ const Institution = () => {
             <Button variant="secondary" size="sm" className="gap-1" onClick={() => tiikToast("Opening Ping...")}><MessageCircle className="w-3 h-3" /> Ping</Button>
           </div>
         </div>
-        <button className="text-[12px] mt-4 cursor-pointer" style={{ color: "var(--text-3)" }} onClick={() => tiikToast("Report submitted")}>Report wrong info</button>
+        <button type="button" className="text-[12px] mt-4 cursor-pointer" style={{ color: "var(--text-3)" }} onClick={() => tiikToast("Report submitted")}>Report wrong info</button>
       </div>
 
       {/* Tabs */}
       <div className="flex mb-4" style={{ borderBottom: "1px solid var(--border)" }}>
         {["Members", "Work", "About"].map(t => (
-          <button key={t} onClick={() => setActiveTab(t)}
+          <button type="button" key={t} onClick={() => setActiveTab(t)}
             className="flex-1 py-3 text-[13px] font-semibold relative cursor-pointer"
             style={{ color: activeTab === t ? "var(--brand)" : "var(--text-2)", borderBottom: activeTab === t ? "3px solid var(--brand)" : "3px solid transparent", transition: "all 0.15s" }}>
             {t}
@@ -154,7 +154,7 @@ const Institution = () => {
 
           {/* Tier 2 — Senior Leadership */}
           <div className="t-card p-5">
-            <button onClick={() => setTier2Open(!tier2Open)} className="flex items-center justify-between w-full mb-3 cursor-pointer">
+            <button type="button" onClick={() => setTier2Open(!tier2Open)} className="flex items-center justify-between w-full mb-3 cursor-pointer">
               <p className="micro-label">SENIOR LEADERSHIP — {tier2.length} members</p>
               {tier2Open ? <ChevronUp className="w-4 h-4" style={{ color: "var(--text-3)" }} /> : <ChevronDown className="w-4 h-4" style={{ color: "var(--text-3)" }} />}
             </button>
@@ -179,7 +179,7 @@ const Institution = () => {
 
           {/* Tier 3 — Mid-level */}
           <div className="t-card p-5">
-            <button onClick={() => setTier3Open(!tier3Open)} className="flex items-center justify-between w-full mb-3 cursor-pointer">
+            <button type="button" onClick={() => setTier3Open(!tier3Open)} className="flex items-center justify-between w-full mb-3 cursor-pointer">
               <p className="micro-label">FACULTY — {tier3.length} members</p>
               {tier3Open ? <ChevronUp className="w-4 h-4" style={{ color: "var(--text-3)" }} /> : <ChevronDown className="w-4 h-4" style={{ color: "var(--text-3)" }} />}
             </button>
@@ -192,7 +192,7 @@ const Institution = () => {
                   </div>
                   <div className="flex gap-1">
                     {["All", "CSE", "ECE", "ME", "EE"].map(d => (
-                      <button key={d} onClick={() => setDeptFilter(d)}
+                      <button type="button" key={d} onClick={() => setDeptFilter(d)}
                         className="text-[11px] font-semibold px-2.5 h-9 rounded-lg cursor-pointer"
                         style={{
                           background: deptFilter === d ? "var(--brand)" : "var(--surface-2)",

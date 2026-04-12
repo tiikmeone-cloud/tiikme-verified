@@ -86,7 +86,7 @@ const Navbar = () => {
           >
             <div className="flex items-center justify-between mb-10">
               <ThemeLogo className="h-10 w-auto" />
-              <button onClick={() => setMenuOpen(false)} className="p-2 cursor-pointer" style={{ color: "#374151" }}>
+              <button type="button" onClick={() => setMenuOpen(false)} className="p-2 cursor-pointer" style={{ color: "#374151" }}>
                 <X className="w-6 h-6" />
               </button>
             </div>

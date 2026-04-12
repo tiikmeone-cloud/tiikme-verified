@@ -37,7 +37,7 @@ const Toggle = ({ label, desc, defaultOn = true }: { label: string; desc?: strin
   return (
     <div className="flex items-center justify-between py-3.5" style={{ borderBottom: "1px solid var(--border)" }}>
       <div><span className="text-[14px] font-medium" style={{ color: "var(--text-1)" }}>{label}</span>{desc && <p className="text-[12px] mt-0.5" style={{ color: "var(--text-3)" }}>{desc}</p>}</div>
-      <button onClick={() => { setOn(!on); tiikToast.success("Preference saved"); }}
+      <button type="button" onClick={() => { setOn(!on); tiikToast.success("Preference saved"); }}
         className="w-11 h-6 rounded-full flex items-center px-0.5 cursor-pointer active:scale-95"
         style={{ background: on ? "var(--brand)" : "var(--border-2)", transition: "all 0.2s" }}>
         <div className="w-5 h-5 rounded-full bg-white" style={{ transition: "transform 0.2s", transform: on ? "translateX(20px)" : "translateX(0)" }} />
@@ -281,7 +281,7 @@ const SettingsPage = () => {
         <div className="hidden md:block w-[200px] shrink-0">
           <div className="sticky top-20 space-y-0.5">
             {navItems.map(item => (
-              <button key={item.id} onClick={() => setActiveTab(item.id)}
+              <button type="button" key={item.id} onClick={() => setActiveTab(item.id)}
                 className="w-full text-left text-[13px] px-3 h-[42px] rounded-xl flex items-center gap-2.5 cursor-pointer"
                 style={{
                   background: activeTab === item.id ? "var(--brand-dim)" : "transparent",
@@ -294,7 +294,7 @@ const SettingsPage = () => {
               </button>
             ))}
             <div style={{ borderTop: "1px solid var(--border)", marginTop: 8, paddingTop: 8 }}>
-              <button onClick={handleSignOut}
+              <button type="button" onClick={handleSignOut}
                 className="w-full text-left text-[13px] px-3 h-[42px] rounded-xl flex items-center gap-2.5 cursor-pointer"
                 style={{ color: "var(--text-3)", transition: "all 0.15s" }}
                 onMouseEnter={e => { e.currentTarget.style.background = "rgba(220,38,38,0.06)"; e.currentTarget.style.color = "#DC2626"; }}
@@ -308,7 +308,7 @@ const SettingsPage = () => {
         <div className="flex-1 min-w-0">
           <div className="md:hidden flex flex-wrap gap-1.5 mb-5">
             {navItems.map(item => (
-              <button key={item.id} onClick={() => setActiveTab(item.id)}
+              <button type="button" key={item.id} onClick={() => setActiveTab(item.id)}
                 className="text-[11px] px-3 h-7 rounded-full cursor-pointer"
                 style={{
                   background: activeTab === item.id ? "var(--brand)" : "var(--surface-2)",
@@ -405,7 +405,7 @@ const SettingsPage = () => {
 
                 <div className="rounded-xl p-3 mb-4 flex items-center gap-2" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
                   <p className="flex-1 text-[13px] truncate" style={{ color: "var(--text-1)" }}>{inviteLink}</p>
-                  <button onClick={copyInviteLink} className="p-2 rounded-lg cursor-pointer active:scale-95" style={{ color: "var(--brand)" }}>
+                  <button type="button" onClick={copyInviteLink} className="p-2 rounded-lg cursor-pointer active:scale-95" style={{ color: "var(--brand)" }}>
                     <Copy className="w-4 h-4" />
                   </button>
                 </div>
@@ -438,7 +438,7 @@ const SettingsPage = () => {
                   { id: "light", label: "Light", icon: Sun, desc: "Anjaneyam Orange", previewBg: "#FFF8F2", previewSurface: "#FFFFFF", previewDot: "#E8580A" },
                   { id: "system", label: "System", icon: Monitor, desc: "Match device" },
                 ].map(t => (
-                  <button key={t.id} onClick={() => handleThemeChange(t.id)}
+                  <button type="button" key={t.id} onClick={() => handleThemeChange(t.id)}
                     className="rounded-2xl p-3 text-left cursor-pointer relative overflow-hidden active:scale-[0.98]"
                     style={{
                       background: "var(--surface-2)",
@@ -475,7 +475,7 @@ const SettingsPage = () => {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {journeyCards.map(c => (
-                  <button key={c.id} onClick={() => setJourneyChoice(c.id)}
+                  <button type="button" key={c.id} onClick={() => setJourneyChoice(c.id)}
                     className="t-card t-card-hover p-5 text-left relative cursor-pointer active:scale-[0.98]"
                     style={journeyChoice === c.id ? { borderColor: "var(--brand)", background: "var(--brand-dim)" } : {}}>
                     {journeyChoice === c.id && <div className="absolute top-3 right-3 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: "var(--brand)" }}><Check className="w-3 h-3 text-white" /></div>}

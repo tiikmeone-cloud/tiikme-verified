@@ -103,19 +103,19 @@ const LivePostCard = ({
           <span className="text-[11px]" style={{ color: "var(--text-3)" }}>{timeAgo}</span>
         </div>
         <div className="relative">
-          <button onClick={() => setShowMenu(!showMenu)} className="p-2 md:p-1.5 rounded-lg cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center" style={{ color: "var(--text-3)" }}><MoreHorizontal className="w-4 h-4" /></button>
+          <button type="button" onClick={() => setShowMenu(!showMenu)} className="p-2 md:p-1.5 rounded-lg cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center" style={{ color: "var(--text-3)" }}><MoreHorizontal className="w-4 h-4" /></button>
           {showMenu && (
             <div className="absolute right-0 top-8 glass-liquid rounded-xl p-1 min-w-[160px] z-10">
-              <button onClick={() => { navigator.clipboard.writeText(window.location.origin + "/post/" + post.id); toast.success("Link copied!"); setShowMenu(false); }} className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "var(--text-2)" }}><ArrowUpRight className="w-3 h-3" /> Copy link</button>
-              <button onClick={() => {
+              <button type="button" onClick={() => { navigator.clipboard.writeText(window.location.origin + "/post/" + post.id); toast.success("Link copied!"); setShowMenu(false); }} className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "var(--text-2)" }}><ArrowUpRight className="w-3 h-3" /> Copy link</button>
+              <button type="button" onClick={() => {
                 if (navigator.share) { navigator.share({ title: "Post on Tiikme", url: window.location.origin + "/post/" + post.id }); }
                 else { navigator.clipboard.writeText(window.location.origin + "/post/" + post.id); toast.success("Link copied!"); }
                 setShowMenu(false);
               }} className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "var(--text-2)" }}><Send className="w-3 h-3" /> Share via...</button>
               {isOwn ? (
-                <button onClick={handleDelete} className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "#DC2626" }}><Trash2 className="w-3 h-3" /> Delete post</button>
+                <button type="button" onClick={handleDelete} className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "#DC2626" }}><Trash2 className="w-3 h-3" /> Delete post</button>
               ) : (
-                <button onClick={() => { toast.info("Report submitted"); setShowMenu(false); }} className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "var(--text-2)" }}><Flag className="w-3 h-3" /> Report</button>
+                <button type="button" onClick={() => { toast.info("Report submitted"); setShowMenu(false); }} className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "var(--text-2)" }}><Flag className="w-3 h-3" /> Report</button>
               )}
             </div>
           )}
@@ -143,22 +143,22 @@ const LivePostCard = ({
 
       {/* Like / Comment / Repost */}
       <div className="flex items-center px-4 py-2" style={{ borderTop: "1px solid var(--border)" }}>
-        <button onClick={() => toggleLike(post.id)} className="h-9 px-3 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all" style={{ color: liked ? "var(--brand)" : "var(--text-2)" }}>
+        <button type="button" onClick={() => toggleLike(post.id)} className="h-9 px-3 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all" style={{ color: liked ? "var(--brand)" : "var(--text-2)" }}>
           <Heart className="w-4 h-4" style={{ fill: liked ? "var(--brand)" : "none", color: liked ? "var(--brand)" : "var(--text-2)" }} />
           {likeCount}
         </button>
-        <button onClick={() => toggleComments(post.id)} className="h-9 px-3 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer hover:bg-[var(--brand-dim)]" style={{ color: "var(--text-2)" }}>
+        <button type="button" onClick={() => toggleComments(post.id)} className="h-9 px-3 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer hover:bg-[var(--brand-dim)]" style={{ color: "var(--text-2)" }}>
           <MessageSquare className="w-4 h-4" /> {commentCount}
         </button>
         <div className="relative">
-          <button onClick={handleRepost} className="h-9 px-3 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer hover:bg-[var(--brand-dim)]" style={{ color: "var(--text-2)" }}>
+          <button type="button" onClick={handleRepost} className="h-9 px-3 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer hover:bg-[var(--brand-dim)]" style={{ color: "var(--text-2)" }}>
             <Repeat2 className="w-4 h-4" />
           </button>
           {confirmRepost && (
             <div className="absolute bottom-full left-0 mb-1 flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] whitespace-nowrap" style={{ background: "var(--surface)", border: "1px solid var(--border)", zIndex: 10 }}>
               <span style={{ color: "var(--text-2)" }}>Repost?</span>
-              <button onClick={handleRepost} className="font-bold px-1.5 cursor-pointer" style={{ color: "var(--brand)" }}>Yes</button>
-              <button onClick={() => setConfirmRepost(false)} className="px-1.5 cursor-pointer" style={{ color: "var(--text-3)" }}>No</button>
+              <button type="button" onClick={handleRepost} className="font-bold px-1.5 cursor-pointer" style={{ color: "var(--brand)" }}>Yes</button>
+              <button type="button" onClick={() => setConfirmRepost(false)} className="px-1.5 cursor-pointer" style={{ color: "var(--text-3)" }}>No</button>
             </div>
           )}
         </div>
@@ -184,7 +184,7 @@ const LivePostCard = ({
                     <Link to={`/app/profile/${c.author?.id || c.user_id}`} className="text-[13px] font-bold hover:underline" style={{ color: "var(--text-1)" }}>{cName}</Link>
                     <span className="text-[11px]" style={{ color: "var(--text-3)" }}>{cTime}</span>
                     {isOwnComment && (
-                      <button onClick={() => deleteComment(post.id, c.id)} className="opacity-0 group-hover:opacity-100 p-0.5 cursor-pointer" style={{ color: "var(--text-3)" }}>
+                      <button type="button" onClick={() => deleteComment(post.id, c.id)} className="opacity-0 group-hover:opacity-100 p-0.5 cursor-pointer" style={{ color: "var(--text-3)" }}>
                         <Trash2 className="w-3 h-3" />
                       </button>
                     )}
@@ -363,7 +363,7 @@ const Feed = () => {
               <div className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: "var(--brand)" }}>
                 {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : initials}
               </div>
-              <button onClick={() => feedNavigate("/post/create")} className="flex-1 text-left text-[13px] h-10 glass-input px-4 cursor-pointer" style={{ color: "var(--text-3)" }}>
+              <button type="button" onClick={() => feedNavigate("/post/create")} className="flex-1 text-left text-[13px] h-10 glass-input px-4 cursor-pointer" style={{ color: "var(--text-3)" }}>
                 What's on your mind?
               </button>
             </div>

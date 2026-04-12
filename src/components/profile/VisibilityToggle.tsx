@@ -29,7 +29,7 @@ export default function VisibilityToggle({ value, onChange }: VisibilityTogglePr
 
   return (
     <div className="relative" ref={ref}>
-      <button onClick={() => setOpen(!open)} className="p-1 rounded-md cursor-pointer hover:bg-[var(--surface-2)] transition-colors" title={current.label}>
+      <button type="button" onClick={() => setOpen(!open)} className="p-1 rounded-md cursor-pointer hover:bg-[var(--surface-2)] transition-colors" title={current.label}>
         <Icon className="w-3.5 h-3.5" style={{ color: current.color }} />
       </button>
       {open && (
@@ -37,7 +37,7 @@ export default function VisibilityToggle({ value, onChange }: VisibilityTogglePr
           {options.map(opt => {
             const selected = opt.value === value;
             return (
-              <button key={opt.value} onClick={() => { onChange(opt.value); setOpen(false); }}
+              <button type="button" key={opt.value} onClick={() => { onChange(opt.value); setOpen(false); }}
                 className="w-full flex items-center gap-2 px-3 py-2 text-[12px] font-medium cursor-pointer transition-colors"
                 style={{ background: selected ? "var(--brand-dim)" : "transparent", color: selected ? "var(--brand)" : "var(--text-2)" }}>
                 <opt.icon className="w-3.5 h-3.5" />

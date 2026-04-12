@@ -301,7 +301,7 @@ const SearchableSelect = ({ options, value, onChange, placeholder }: { options: 
         style={inputStyle}
       />
       {value && !open && (
-        <button onClick={() => { onChange(""); setOpen(true); setSearch(""); }} className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer" style={{ color: "#9CA3AF" }}>
+        <button type="button" onClick={() => { onChange(""); setOpen(true); setSearch(""); }} className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer" style={{ color: "#9CA3AF" }}>
           <X className="w-4 h-4" />
         </button>
       )}
@@ -310,7 +310,7 @@ const SearchableSelect = ({ options, value, onChange, placeholder }: { options: 
           {filtered.map((o, i) => {
             if (o.startsWith("──")) return <div key={i} className="px-3 py-1.5 text-[11px] font-bold" style={{ color: "#9CA3AF", background: "#F9FAFB" }}>{o}</div>;
             return (
-              <button key={i} onClick={() => { onChange(o); setOpen(false); setSearch(""); }}
+              <button type="button" key={i} onClick={() => { onChange(o); setOpen(false); setSearch(""); }}
                 className="w-full text-left px-3 py-2 text-[13px] hover:bg-orange-50 cursor-pointer transition-colors"
                 style={{ color: "#111827" }}
               >{o}</button>
@@ -513,7 +513,7 @@ export default function OnboardingDetails() {
             <input value={city} onChange={e => setCity(e.target.value)} placeholder="e.g. Korutla, Jagtial District" style={inputStyle} />
           )}
           {cityManual && (
-            <button onClick={() => setCityManual(false)} className="text-[11px] mt-1 cursor-pointer hover:underline" style={{ color: "#E8580A" }}>← Back to suggestions</button>
+            <button type="button" onClick={() => setCityManual(false)} className="text-[11px] mt-1 cursor-pointer hover:underline" style={{ color: "#E8580A" }}>← Back to suggestions</button>
           )}
         </div>
       )}
@@ -618,7 +618,7 @@ export default function OnboardingDetails() {
         <label style={labelStyle}>Posting location type</label>
         <div className="flex flex-wrap gap-2">
           {GOVT_POSTING_TYPES.map(t => (
-            <button key={t} onClick={() => u("postingType", t)}
+            <button type="button" key={t} onClick={() => u("postingType", t)}
               className="px-3 py-1.5 rounded-lg text-[12px] font-medium cursor-pointer transition-all"
               style={{ border: `1.5px solid ${rd.postingType === t ? "#E8580A" : "#E5E7EB"}`, background: rd.postingType === t ? "#FFF8F2" : "#fff", color: rd.postingType === t ? "#E8580A" : "#6B7280" }}
             >{t}</button>
@@ -786,7 +786,7 @@ export default function OnboardingDetails() {
           {submitting ? "Saving..." : "Complete profile →"}
         </button>
 
-        <button onClick={handleSkip} className="block mx-auto mt-3 text-[13px] cursor-pointer hover:underline" style={{ color: "#6B7280" }}>
+        <button type="button" onClick={handleSkip} className="block mx-auto mt-3 text-[13px] cursor-pointer hover:underline" style={{ color: "#6B7280" }}>
           Skip for now — I'll finish this from my profile
         </button>
       </div>

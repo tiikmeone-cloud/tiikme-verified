@@ -148,7 +148,7 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
     <div>
       <div className="flex items-center gap-2 mt-1">
         <span className="text-[10px]" style={{ color: "var(--text-3)" }}>○ Unverified</span>
-        <button onClick={() => setExpanded(!expanded)} className="text-[10px] font-semibold cursor-pointer" style={{ color: "var(--brand)" }}>
+        <button type="button" onClick={() => setExpanded(!expanded)} className="text-[10px] font-semibold cursor-pointer" style={{ color: "var(--brand)" }}>
           {expanded ? "Cancel" : "Request Verification →"}
         </button>
       </div>
@@ -170,7 +170,7 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
                 />
               </div>
               {orgs.map(org => (
-                <button key={org.id} onClick={() => { setSelectedOrg(org); setMode("org_selected"); }}
+                <button type="button" key={org.id} onClick={() => { setSelectedOrg(org); setMode("org_selected"); }}
                   className="flex items-center gap-2 w-full p-2 rounded-lg text-left cursor-pointer"
                   style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold text-white" style={{ background: "var(--brand)" }}>
@@ -202,7 +202,7 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
               </p>
               {verifiers.length === 0 && <p className="text-[11px]" style={{ color: "var(--text-3)" }}>No admins found. Try inviting directly.</p>}
               {verifiers.map(v => (
-                <button key={v.user_id} onClick={() => setSelectedVerifier(v)}
+                <button type="button" key={v.user_id} onClick={() => setSelectedVerifier(v)}
                   className="flex items-center gap-2 w-full p-2 rounded-lg cursor-pointer"
                   style={{ background: selectedVerifier?.user_id === v.user_id ? "var(--brand-dim)" : "var(--surface)", border: `1px solid ${selectedVerifier?.user_id === v.user_id ? "var(--brand)" : "var(--border)"}` }}>
                   <div className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold text-white overflow-hidden" style={{ background: "var(--brand)" }}>
@@ -219,7 +219,7 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
                 onClick={() => handleSubmit(selectedVerifier.user_id, selectedVerifier.profile?.full_name || "")}>
                 <Send className="w-3 h-3 mr-1" /> {submitting ? "Sending..." : "Send Request"}
               </Button>
-              <button onClick={() => { setMode("search"); setSelectedOrg(null); }} className="text-[10px] cursor-pointer" style={{ color: "var(--text-3)" }}>← Back</button>
+              <button type="button" onClick={() => { setMode("search"); setSelectedOrg(null); }} className="text-[10px] cursor-pointer" style={{ color: "var(--text-3)" }}>← Back</button>
             </>
           )}
 
@@ -231,7 +231,7 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
               <Button size="sm" disabled={!directEmail.includes("@") || submitting} className="w-full text-[11px]" onClick={handleEmailInvite}>
                 {submitting ? "Sending..." : "Send Invite"}
               </Button>
-              <button onClick={() => setMode("search")} className="text-[10px] cursor-pointer" style={{ color: "var(--text-3)" }}>← Back</button>
+              <button type="button" onClick={() => setMode("search")} className="text-[10px] cursor-pointer" style={{ color: "var(--text-3)" }}>← Back</button>
             </>
           )}
 
@@ -240,7 +240,7 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
               <p className="text-[12px] font-semibold" style={{ color: "var(--text-1)" }}>Search for a person who can verify this</p>
               <Input value={directSearch} onChange={e => setDirectSearch(e.target.value)} placeholder="Search by name..." className="h-8 text-[11px]" />
               {directResults.map(p => (
-                <button key={p.id} onClick={() => setSelectedVerifier({ user_id: p.id, profile: p })}
+                <button type="button" key={p.id} onClick={() => setSelectedVerifier({ user_id: p.id, profile: p })}
                   className="flex items-center gap-2 w-full p-2 rounded-lg cursor-pointer"
                   style={{ background: selectedVerifier?.user_id === p.id ? "var(--brand-dim)" : "var(--surface)", border: `1px solid ${selectedVerifier?.user_id === p.id ? "var(--brand)" : "var(--border)"}` }}>
                   <div className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold text-white overflow-hidden" style={{ background: "var(--brand)" }}>
@@ -254,7 +254,7 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
                 onClick={() => handleSubmit(selectedVerifier.user_id, selectedVerifier.profile?.full_name || "")}>
                 {submitting ? "Sending..." : "Send Request"}
               </Button>
-              <button onClick={() => setMode("search")} className="text-[10px] cursor-pointer" style={{ color: "var(--text-3)" }}>← Back</button>
+              <button type="button" onClick={() => setMode("search")} className="text-[10px] cursor-pointer" style={{ color: "var(--text-3)" }}>← Back</button>
             </>
           )}
         </div>

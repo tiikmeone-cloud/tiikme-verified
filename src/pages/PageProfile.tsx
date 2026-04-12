@@ -123,7 +123,7 @@ const PageProfile = () => {
       {/* TABS */}
       <div className="flex overflow-x-auto scrollbar-hide mt-4 px-4 md:px-6" style={{ borderBottom: "1px solid var(--border)" }}>
         {pageTabs.map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)}
+          <button type="button" key={tab} onClick={() => setActiveTab(tab)}
             className="py-3 px-4 text-[13px] font-semibold cursor-pointer shrink-0"
             style={{ color: activeTab === tab ? "var(--brand)" : "var(--text-2)", borderBottom: activeTab === tab ? "2px solid var(--brand)" : "2px solid transparent" }}>
             {tab}

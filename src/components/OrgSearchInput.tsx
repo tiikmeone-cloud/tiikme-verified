@@ -57,7 +57,7 @@ export default function OrgSearchInput({ value, onChange, placeholder = "Company
       {open && (
         <div className="absolute z-20 left-0 right-0 top-full mt-1 rounded-xl overflow-hidden shadow-lg" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
           {results.map(org => (
-            <button key={org.id} className="w-full flex items-center gap-3 px-3 py-2.5 text-left cursor-pointer hover:bg-[var(--surface-2)]"
+            <button type="button" key={org.id} className="w-full flex items-center gap-3 px-3 py-2.5 text-left cursor-pointer hover:bg-[var(--surface-2)]"
               onClick={() => { setQuery(org.name); onChange(org.name, org.id); setOpen(false); }}>
               <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 overflow-hidden" style={{ background: "var(--brand-dim)" }}>
                 {org.logo_url ? <img src={org.logo_url} alt="" className="w-full h-full object-cover" /> : <Building2 className="w-4 h-4" style={{ color: "var(--brand)" }} />}

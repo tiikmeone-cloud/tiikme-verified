@@ -69,7 +69,7 @@ const WorkDetail = () => {
   return (
     <div className="max-w-5xl mx-auto px-4 py-7">
       <div className="flex items-center gap-2 text-sm mb-5" style={{ color: "var(--text-2)" }}>
-        <button onClick={() => navigate(-1)} className="cursor-pointer" style={{ color: "var(--text-2)" }}><ArrowLeft className="w-4 h-4" /></button>
+        <button type="button" onClick={() => navigate(-1)} className="cursor-pointer" style={{ color: "var(--text-2)" }}><ArrowLeft className="w-4 h-4" /></button>
         {owner?.username && <Link to={`/app/profile/${owner.id}`} className="hover:underline" style={{ color: "var(--brand)" }}>{owner.username}</Link>}
         <span>/</span>
         <span className="font-bold" style={{ color: "var(--text-1)" }}>{work.title}</span>

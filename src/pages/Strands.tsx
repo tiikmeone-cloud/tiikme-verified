@@ -145,7 +145,7 @@ const Strands = () => {
 
       <div className="flex gap-0 border-b mb-5 overflow-x-auto" style={{ borderColor: "var(--border)", scrollbarWidth: "none" }}>
         {tabs.map(t => (
-          <button key={t.key} onClick={() => setTab(t.key)} className="flex-1 md:flex-none px-4 py-2.5 text-[12px] font-semibold relative cursor-pointer whitespace-nowrap min-h-[44px]"
+          <button type="button" key={t.key} onClick={() => setTab(t.key)} className="flex-1 md:flex-none px-4 py-2.5 text-[12px] font-semibold relative cursor-pointer whitespace-nowrap min-h-[44px]"
             style={{ color: tab === t.key ? "var(--brand)" : "var(--text-3)" }}>
             {t.label}
             {tab === t.key && <div className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full" style={{ background: "var(--brand)" }} />}

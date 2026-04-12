@@ -77,7 +77,7 @@ const AddWorkModal = ({ open, onClose, onSaved }: { open: boolean; onClose: () =
           <h2 className="text-[16px] font-bold" style={{ color: "var(--text-1)" }}>
             {step === 1 ? "Add to My Work" : `Add ${workTypes.find(w => w.id === selectedType)?.label}`}
           </h2>
-          <button onClick={() => { onClose(); setStep(1); }} className="w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer" style={{ color: "var(--text-3)" }}>✕</button>
+          <button type="button" onClick={() => { onClose(); setStep(1); }} className="w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer" style={{ color: "var(--text-3)" }}>✕</button>
         </div>
         <div className="p-5 sm:p-6">
           {step === 1 && (
@@ -85,7 +85,7 @@ const AddWorkModal = ({ open, onClose, onSaved }: { open: boolean; onClose: () =
               <p className="text-[14px] mb-5" style={{ color: "var(--text-2)" }}>Choose what type of work you want to add.</p>
               <div className="grid grid-cols-3 gap-2.5 mb-5">
                 {workTypes.map(wt => (
-                  <button key={wt.id} onClick={() => setSelectedType(wt.id)}
+                  <button type="button" key={wt.id} onClick={() => setSelectedType(wt.id)}
                     className="rounded-2xl p-4 text-center cursor-pointer"
                     style={{
                       background: selectedType === wt.id ? "var(--brand-dim)" : "var(--surface-2)",
@@ -101,7 +101,7 @@ const AddWorkModal = ({ open, onClose, onSaved }: { open: boolean; onClose: () =
           )}
           {step === 2 && (
             <>
-              <button onClick={() => setStep(1)} className="text-[13px] font-semibold mb-4 flex items-center gap-1 cursor-pointer" style={{ color: "var(--brand)" }}>← Back</button>
+              <button type="button" onClick={() => setStep(1)} className="text-[13px] font-semibold mb-4 flex items-center gap-1 cursor-pointer" style={{ color: "var(--brand)" }}>← Back</button>
               <div className="space-y-4 mb-5">
                 <div><label className="micro-label block mb-1.5">Title</label><Input placeholder="Project or startup name" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></div>
                 <div>
@@ -113,7 +113,7 @@ const AddWorkModal = ({ open, onClose, onSaved }: { open: boolean; onClose: () =
                   <label className="micro-label block mb-1.5">Status</label>
                   <div className="flex gap-2">
                     {["active", "completed", "paused"].map(s => (
-                      <button key={s} onClick={() => setForm({ ...form, status: s })}
+                      <button type="button" key={s} onClick={() => setForm({ ...form, status: s })}
                         className="flex-1 h-[38px] rounded-[10px] text-[13px] font-semibold cursor-pointer capitalize"
                         style={{ background: form.status === s ? "var(--brand)" : "var(--surface-2)", color: form.status === s ? "white" : "var(--text-2)", border: form.status === s ? "none" : "1px solid var(--border)" }}>
                         {statusLabel(s)}
@@ -192,7 +192,7 @@ const MyWork = () => {
 
       <div className="flex gap-1.5 overflow-x-auto scrollbar-hide mb-5 pb-1">
         {filterTabs.map(f => (
-          <button key={f} onClick={() => setActiveFilter(f)}
+          <button type="button" key={f} onClick={() => setActiveFilter(f)}
             className="shrink-0 h-[30px] px-3 rounded-full text-[12px] font-semibold cursor-pointer"
             style={{
               background: activeFilter === f ? "var(--brand)" : "var(--surface-2)",
@@ -257,7 +257,7 @@ const MyWork = () => {
                   <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => toast.info("Editor coming soon")}>
                     <Pencil className="w-3 h-3" /> Edit
                   </Button>
-                  <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/app/work/${project.id}`); toast.success("Link copied"); }}
+                  <button type="button" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/app/work/${project.id}`); toast.success("Link copied"); }}
                     className="ml-auto flex items-center gap-1 text-[12px] font-semibold cursor-pointer" style={{ color: "var(--brand)" }}>
                     <Copy className="w-3 h-3" /> Share
                   </button>

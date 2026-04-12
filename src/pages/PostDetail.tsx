@@ -91,7 +91,7 @@ const PostDetail = () => {
   if (!post) return (
     <div className="max-w-[660px] mx-auto px-4 py-8 text-center">
       <p className="text-[16px] font-bold" style={{ color: "var(--text-1)" }}>Post not found</p>
-      <button onClick={() => navigate("/app/feed")} className="text-[13px] mt-2" style={{ color: "var(--brand)" }}>Back to Feed</button>
+      <button type="button" onClick={() => navigate("/app/feed")} className="text-[13px] mt-2" style={{ color: "var(--brand)" }}>Back to Feed</button>
     </div>
   );
 
@@ -103,7 +103,7 @@ const PostDetail = () => {
 
   return (
     <main className="max-w-[660px] mx-auto px-4 py-4">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-[14px] font-semibold cursor-pointer min-h-[44px] mb-4" style={{ color: "var(--text-2)" }}>
+      <button type="button" onClick={() => navigate(-1)} className="flex items-center gap-2 text-[14px] font-semibold cursor-pointer min-h-[44px] mb-4" style={{ color: "var(--text-2)" }}>
         <ArrowLeft className="w-5 h-5" /> Back
       </button>
 
@@ -129,7 +129,7 @@ const PostDetail = () => {
         )}
 
         <div className="flex items-center px-4 py-2" style={{ borderTop: "1px solid var(--border)" }}>
-          <button onClick={toggleLike} className="h-9 px-3 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer" style={{ color: liked ? "var(--brand)" : "var(--text-2)" }}>
+          <button type="button" onClick={toggleLike} className="h-9 px-3 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer" style={{ color: liked ? "var(--brand)" : "var(--text-2)" }}>
             <Heart className="w-4 h-4" style={{ fill: liked ? "var(--brand)" : "none" }} /> {likeCount}
           </button>
           <span className="h-9 px-3 rounded-xl text-[13px] font-semibold flex items-center gap-1.5" style={{ color: "var(--text-2)" }}>
@@ -167,7 +167,7 @@ const PostDetail = () => {
                 className="flex-1 h-9 rounded-xl px-3 text-[13px] outline-none"
                 style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }}
                 onKeyDown={e => { if (e.key === "Enter" && commentText.trim()) submitComment(); }} />
-              <button onClick={submitComment} className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer" style={{ background: commentText.trim() ? "var(--brand)" : "var(--surface-2)" }}>
+              <button type="button" onClick={submitComment} className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer" style={{ background: commentText.trim() ? "var(--brand)" : "var(--surface-2)" }}>
                 <Send className="w-3.5 h-3.5" style={{ color: commentText.trim() ? "white" : "var(--text-3)" }} />
               </button>
             </div>

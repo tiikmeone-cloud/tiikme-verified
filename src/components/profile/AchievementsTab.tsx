@@ -81,12 +81,12 @@ export default function AchievementsTab({ isOwnProfile, achievements = [], userI
             className="glass-card p-6 max-w-md w-full" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-[17px] font-extrabold" style={{ color: "var(--text-1)" }}>{addStep === 0 ? "Choose type" : "Achievement details"}</h2>
-              <button onClick={() => setShowAddModal(false)} className="p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
+              <button type="button" onClick={() => setShowAddModal(false)} className="p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
             </div>
             {addStep === 0 && (
               <div className="grid grid-cols-2 gap-2">
                 {achievementTypes.map(t => (
-                  <button key={t.value} onClick={() => { setSelectedType(t.value); setAddStep(1); }}
+                  <button type="button" key={t.value} onClick={() => { setSelectedType(t.value); setAddStep(1); }}
                     className="t-card t-card-hover p-3 text-left cursor-pointer">
                     <span className="text-lg">{t.emoji}</span>
                     <p className="text-[12px] font-bold mt-1" style={{ color: "var(--text-1)" }}>{t.label}</p>
@@ -129,7 +129,7 @@ export default function AchievementsTab({ isOwnProfile, achievements = [], userI
       <>
         <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2 mb-4">
           {achievementTypes.slice(0, 5).map(t => (
-            <button key={t.value} onClick={() => openAddModal(t.value)}
+            <button type="button" key={t.value} onClick={() => openAddModal(t.value)}
               className="flex-shrink-0 flex items-center gap-2 px-4 py-2 border-2 border-dashed rounded-xl text-sm font-medium transition-all whitespace-nowrap cursor-pointer active:scale-95"
               style={{ borderColor: "color-mix(in srgb, var(--brand) 30%, transparent)", color: "var(--brand)" }}>
               {t.emoji} {t.label.split(" / ")[0]} +
@@ -178,7 +178,7 @@ export default function AchievementsTab({ isOwnProfile, achievements = [], userI
         ))}
       </div>
       {isOwnProfile && (
-        <button onClick={() => openAddModal()}
+        <button type="button" onClick={() => openAddModal()}
           className="w-full py-3 mt-3 border-2 border-dashed rounded-2xl text-sm font-medium cursor-pointer active:scale-[0.98] transition-all"
           style={{ borderColor: "color-mix(in srgb, var(--brand) 30%, transparent)", color: "var(--brand)" }}>
           <Plus className="w-4 h-4 inline mr-1" /> Add achievement

@@ -184,7 +184,7 @@ const Workspace = () => {
         style={{ background: "var(--glass-bg)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderRight: "1px solid var(--glass-border)" }}>
         <div className="p-4 flex items-center justify-between" style={{ borderBottom: "1px solid var(--border)" }}>
           <h2 className="text-[16px] font-extrabold" style={{ color: "var(--text-1)" }}>Workspaces</h2>
-          <button onClick={() => { setShowCreate(true); setCreateStep(0); }} className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer active:scale-95" style={{ background: "var(--brand)", color: "white" }}>
+          <button type="button" onClick={() => { setShowCreate(true); setCreateStep(0); }} className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer active:scale-95" style={{ background: "var(--brand)", color: "white" }}>
             <Plus className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -195,7 +195,7 @@ const Workspace = () => {
         <div className="flex-1 overflow-y-auto">
           <p className="micro-label px-4 pt-3 pb-1.5">MY WORKSPACES</p>
           {displayWorkspaces.filter(ws => !searchWs || ws.name.toLowerCase().includes(searchWs.toLowerCase())).map(ws => (
-            <button key={ws.id} onClick={() => selectWs(ws.id)}
+            <button type="button" key={ws.id} onClick={() => selectWs(ws.id)}
               className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left cursor-pointer transition-all duration-150"
               style={{ background: selected === ws.id ? "var(--brand-dim)" : "transparent", borderLeft: selected === ws.id ? "3px solid var(--brand)" : "3px solid transparent" }}>
               <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[10px] font-bold shrink-0" style={{ background: "var(--brand-dim)", color: "var(--brand)" }}>{ws.initials}</div>
@@ -206,7 +206,7 @@ const Workspace = () => {
             </button>
           ))}
           <div className="p-4">
-            <button onClick={() => tiikToast("Enter invite code")} className="w-full text-[11px] cursor-pointer" style={{ color: "var(--brand)" }}>+ Join with code</button>
+            <button type="button" onClick={() => tiikToast("Enter invite code")} className="w-full text-[11px] cursor-pointer" style={{ color: "var(--brand)" }}>+ Join with code</button>
           </div>
         </div>
       </div>
@@ -221,7 +221,7 @@ const Workspace = () => {
               <p className="text-[13px] mb-6" style={{ color: "var(--text-2)" }}>Workspaces let you build, share, and track projects with your team.</p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {templates.map(t => (
-                  <button key={t.id} onClick={() => { setCreateType(t.id); setShowCreate(true); setCreateStep(1); }}
+                  <button type="button" key={t.id} onClick={() => { setCreateType(t.id); setShowCreate(true); setCreateStep(1); }}
                     className="t-card t-card-hover p-5 text-center cursor-pointer">
                     <t.icon className="w-8 h-8 mx-auto mb-2" style={{ color: "var(--brand)" }} />
                     <p className="text-[13px] font-bold" style={{ color: "var(--text-1)" }}>{t.title}</p>
@@ -233,7 +233,7 @@ const Workspace = () => {
           </div>
         ) : (
           <div className="max-w-[800px] mx-auto w-full px-4 py-5">
-            <button onClick={() => setMobileShowRight(false)} className="md:hidden flex items-center gap-1 mb-3 text-[13px] font-semibold cursor-pointer" style={{ color: "var(--brand)" }}>← Workspaces</button>
+            <button type="button" onClick={() => setMobileShowRight(false)} className="md:hidden flex items-center gap-1 mb-3 text-[13px] font-semibold cursor-pointer" style={{ color: "var(--brand)" }}>← Workspaces</button>
             {/* Header */}
             <div className="t-card p-4 mb-4">
               <div className="flex items-center gap-3 flex-wrap">
@@ -256,7 +256,7 @@ const Workspace = () => {
             {/* Tabs */}
             <div className="flex mb-4 overflow-x-auto scrollbar-hide" style={{ borderBottom: "1px solid var(--border)" }}>
               {tabs.map(t => (
-                <button key={t} onClick={() => setActiveTab(t)}
+                <button type="button" key={t} onClick={() => setActiveTab(t)}
                   className="py-2.5 px-4 text-[12px] font-semibold relative cursor-pointer shrink-0"
                   style={{ color: activeTab === t ? "var(--brand)" : "var(--text-2)", borderBottom: activeTab === t ? "2px solid var(--brand)" : "2px solid transparent" }}>
                   {t}
@@ -273,7 +273,7 @@ const Workspace = () => {
                       <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white overflow-hidden" style={{ background: "var(--brand)" }}>
                         {authProfile?.avatar_url ? <img src={authProfile.avatar_url} alt="" className="w-full h-full object-cover" /> : userInitials}
                       </div>
-                      <button onClick={() => setComposeOpen(true)} className="flex-1 text-left text-[12px] h-9 glass-input px-3 cursor-pointer" style={{ color: "var(--text-3)" }}>
+                      <button type="button" onClick={() => setComposeOpen(true)} className="flex-1 text-left text-[12px] h-9 glass-input px-3 cursor-pointer" style={{ color: "var(--text-3)" }}>
                         Share with {activeWs?.name}...
                       </button>
                     </div>
@@ -342,7 +342,7 @@ const Workspace = () => {
                   {memberResults.length > 0 && (
                     <div className="absolute left-0 right-0 top-full mt-1 z-20 rounded-xl overflow-hidden shadow-lg" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
                       {memberResults.map(u => (
-                        <button key={u.id} onClick={() => handleAddMember(u.id)} disabled={addingMember}
+                        <button type="button" key={u.id} onClick={() => handleAddMember(u.id)} disabled={addingMember}
                           className="w-full flex items-center gap-3 px-3 py-2.5 text-left cursor-pointer hover:bg-[var(--surface-2)] disabled:opacity-50">
                           <div className="w-8 h-8 rounded-full flex items-center justify-center text-[9px] font-bold text-white overflow-hidden" style={{ backgroundColor: "#4F46E5" }}>
                             {u.avatar_url ? <img src={u.avatar_url} alt="" className="w-full h-full object-cover" /> : (u.full_name || "U").split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
@@ -437,12 +437,12 @@ const Workspace = () => {
               className="glass-card p-6 max-w-md w-full" onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-[17px] font-extrabold" style={{ color: "var(--text-1)" }}>Add member to {activeWs?.name}</h2>
-                <button onClick={() => setShowInvite(false)} className="p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
+                <button type="button" onClick={() => setShowInvite(false)} className="p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
               </div>
               <Input placeholder="Search by name or @username..." value={memberSearch} onChange={e => setMemberSearch(e.target.value)} autoFocus />
               <div className="mt-3 max-h-[300px] overflow-y-auto space-y-1">
                 {memberResults.map(u => (
-                  <button key={u.id} onClick={() => handleAddMember(u.id)} disabled={addingMember}
+                  <button type="button" key={u.id} onClick={() => handleAddMember(u.id)} disabled={addingMember}
                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left cursor-pointer hover:bg-[var(--surface-2)] disabled:opacity-50">
                     <div className="w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold text-white overflow-hidden" style={{ backgroundColor: "#4F46E5" }}>
                       {u.avatar_url ? <img src={u.avatar_url} alt="" className="w-full h-full object-cover" /> : (u.full_name || "U").split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
@@ -466,7 +466,7 @@ const Workspace = () => {
               className="glass-card p-6 max-w-md w-full" onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-[17px] font-extrabold" style={{ color: "var(--text-1)" }}>Workspace settings</h2>
-                <button onClick={() => setShowSettings(false)} className="p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
+                <button type="button" onClick={() => setShowSettings(false)} className="p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
               </div>
               <div className="space-y-3">
                 <div><label className="micro-label block mb-1">Workspace Name</label><Input value={settingsName} onChange={e => setSettingsName(e.target.value)} /></div>
@@ -491,12 +491,12 @@ const Workspace = () => {
               className="glass-card p-6 max-w-md w-full" onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-[17px] font-extrabold" style={{ color: "var(--text-1)" }}>Create Workspace</h2>
-                <button onClick={() => setShowCreate(false)} className="p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
+                <button type="button" onClick={() => setShowCreate(false)} className="p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
               </div>
               {createStep === 0 && (
                 <div className="space-y-3">
                   {templates.map(t => (
-                    <button key={t.id} onClick={() => { setCreateType(t.id); setCreateStep(1); }}
+                    <button type="button" key={t.id} onClick={() => { setCreateType(t.id); setCreateStep(1); }}
                       className="w-full flex items-center gap-3 p-4 rounded-xl text-left cursor-pointer" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
                       <t.icon className="w-6 h-6" style={{ color: "var(--brand)" }} />
                       <div><p className="text-[13px] font-bold" style={{ color: "var(--text-1)" }}>{t.title}</p><p className="text-[11px]" style={{ color: "var(--text-3)" }}>{t.desc}</p></div>
@@ -521,7 +521,7 @@ const Workspace = () => {
                     className="w-full rounded-xl p-3 text-[13px] outline-none resize-none" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }} />
                   <div className="flex gap-2">
                     {["members_only", "public"].map(p => (
-                      <button key={p} onClick={() => setCreatePrivacy(p)}
+                      <button type="button" key={p} onClick={() => setCreatePrivacy(p)}
                         className="flex-1 py-2 rounded-lg text-[11px] font-semibold cursor-pointer capitalize"
                         style={{ background: createPrivacy === p ? "var(--brand-dim)" : "var(--surface-2)", border: createPrivacy === p ? "1px solid var(--brand)" : "1px solid var(--border)", color: createPrivacy === p ? "var(--brand)" : "var(--text-2)" }}>
                         {p === "members_only" ? "Members only" : "Public"}

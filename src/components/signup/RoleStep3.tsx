@@ -48,7 +48,7 @@ export default function RoleStep3({ role, roleData, onFinish, onSkip }: RoleStep
       </select>
       <Input placeholder="Project link (optional)" value={data.link || ""} onChange={e => u("link", e.target.value)} style={inputS} />
       <div className="flex gap-2 pt-2">
-        <button onClick={() => setShowInternship(true)} className="text-[12px] font-semibold px-3 py-2 rounded-xl cursor-pointer" style={{ border: "1.5px dashed rgba(238,240,255,0.12)", color: "rgba(238,240,255,0.5)" }}>I'm doing an internship</button>
+        <button type="button" onClick={() => setShowInternship(true)} className="text-[12px] font-semibold px-3 py-2 rounded-xl cursor-pointer" style={{ border: "1.5px dashed rgba(238,240,255,0.12)", color: "rgba(238,240,255,0.5)" }}>I'm doing an internship</button>
       </div>
     </div>
   );
@@ -62,7 +62,7 @@ export default function RoleStep3({ role, roleData, onFinish, onSkip }: RoleStep
         <select value={data.startYear || ""} onChange={e => u("startYear", e.target.value)} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={selectS}><option value="">Start YYYY</option>{years.map(y => <option key={y}>{y}</option>)}</select>
       </div>
       <Input placeholder="What you're working on (optional)" value={data.workDesc || ""} onChange={e => u("workDesc", e.target.value)} style={inputS} />
-      <button onClick={() => setShowInternship(false)} className="text-[12px] cursor-pointer" style={{ color: "var(--brand, #3D5AF1)" }}>← Back to project form</button>
+      <button type="button" onClick={() => setShowInternship(false)} className="text-[12px] cursor-pointer" style={{ color: "var(--brand, #3D5AF1)" }}>← Back to project form</button>
     </div>
   );
 
@@ -160,7 +160,7 @@ export default function RoleStep3({ role, roleData, onFinish, onSkip }: RoleStep
       <p className="text-center mb-6 text-[14px]" style={{ color: "rgba(238,240,255,0.55)" }}>This becomes the first entry on your profile.</p>
       {renderForm()}
       <Button size="xl" onClick={onFinish} className="w-full mt-5 active:scale-95 transition-all duration-200">Create my profile <ArrowRight className="w-4 h-4 ml-1" /></Button>
-      <button onClick={onSkip} className="block mx-auto mt-3 text-[13px] cursor-pointer hover:underline" style={{ color: "var(--brand, #3D5AF1)" }}>Skip for now</button>
+      <button type="button" onClick={onSkip} className="block mx-auto mt-3 text-[13px] cursor-pointer hover:underline" style={{ color: "var(--brand, #3D5AF1)" }}>Skip for now</button>
     </div>
   );
 }
