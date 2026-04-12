@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useLikes } from "@/hooks/useLikes";
 import { useComments } from "@/hooks/useComments";
+import { useOrgIdentity } from "@/contexts/OrgIdentityContext";
 
 const roleColorMap: Record<string, string> = {
   student: "#4F46E5", professional: "#0369A1", doctor: "#0E7490",
@@ -303,6 +304,7 @@ const Feed = () => {
   const { posts: livePosts, loading, loadingMore, hasMore, loadMore, refresh } = useFeedPosts();
   const sentinelRef = useRef<HTMLDivElement>(null);
   const { profile, initials } = useAuth();
+  const { isInstitution, org, identityName, identityAvatar, identityInitials } = useOrgIdentity();
   const feedRef = useRef<HTMLDivElement>(null);
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
 
