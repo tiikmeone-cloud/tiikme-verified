@@ -64,7 +64,16 @@ const AppShell = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!user?.id) return;
     supabase.from("alerts").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("is_read", false).then(({ count }) => setUnreadAlerts(count || 0));
-    supabase.from("pings").select("*", { count: "exact", head: true }).eq("is_read", false).neq("sender_id", user.id).then(({ count }) => setUnreadPings(count || 0));
+    // Count unread pings via conversations the user is part of
+    supabase.from("conversations").select("id").or(`participant_1.eq.${user.id},participant_2.eq.${user.id}`).then(({ data: convos }) => {
+      if (!convos?.length) { setUnreadPings(0); return; }
+      const convIds = convos.map(c => c.id);
+      supabase.from("pings").select("*", { count: "exact", head: true })
+        .in("conversation_id", convIds)
+        .eq("is_read", false)
+        .neq("sender_id", user.id)
+        .then(({ count }) => setUnreadPings(count || 0));
+    });
 
     const alertsCh = supabase.channel("unread-alerts-" + user.id)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "alerts", filter: `user_id=eq.${user.id}` }, () => {
