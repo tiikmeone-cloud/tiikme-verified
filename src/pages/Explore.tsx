@@ -245,7 +245,7 @@ const Explore = () => {
     setSameOrg(fromOrg.slice(0, 8));
     setSameRole(byRole.slice(0, 8));
     setNearYou(nearby.slice(0, 8));
-    setOrgs(orgsRes.data || []);
+    setOrgs(orgsRes.status === "fulfilled" ? (orgsRes.value as any).data || [] : []);
     setLoading(false);
   }, [user, profile, search]);
 
