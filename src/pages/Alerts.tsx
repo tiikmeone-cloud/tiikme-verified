@@ -102,11 +102,11 @@ const Alerts = () => {
     // Send notification to sender
     await supabase.from("alerts").insert({
       user_id: senderId,
-      actor_id: user.id,
       type: "strand",
       title: `${profile?.full_name || "Someone"} accepted your Strand request!`,
       body: "You are now connected.",
-      link: `/app/profile/${user.id}`,
+      action_url: `/app/profile/${user.id}`,
+      data: { actor_id: user.id } as any,
     });
 
     // Mark this alert as read

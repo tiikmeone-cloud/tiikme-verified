@@ -38,10 +38,11 @@ const GetTiikedModal = ({ open, onClose, userId, userRole, onVerified }: Props) 
     if (error) { toast.error(error.message); setSending(false); return; }
     // Send alert
     await supabase.from("alerts").insert({
-      user_id: verifierId, actor_id: userId, type: "verification_request",
+      user_id: verifierId, type: "verification_request",
       title: "Tiik Verification Request",
       body: "Someone is requesting you to verify their profile on Tiikme.",
-      link: `/app/profile/${userId}`,
+      action_url: `/app/profile/${userId}`,
+      data: { actor_id: userId } as any,
     });
     toast.success(`Verification request sent to ${verifierName}`);
     setSending(false);
