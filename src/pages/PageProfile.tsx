@@ -203,7 +203,15 @@ const PageProfile = () => {
             {isAdmin && (
               <div className="t-card p-4 mb-4">
                 <p className="text-[13px]" style={{ color: "var(--text-3)" }}>Post as {page.name}...</p>
-                <Button size="sm" className="mt-2" onClick={() => toast.info("Institution post composer coming soon")}>Create Post</Button>
+                <Button size="sm" className="mt-2" onClick={async () => {
+                  if (!user) { toast.error("Sign in to post"); return; }
+                  const content = window.prompt("Write your update:");
+                  if (!content?.trim()) return;
+                  try {
+                    await supabase.from("posts").insert({ author_id: user.id, content, post_type: "post", visibility: "everyone", workspace_name: `page:${page.id}` } as any);
+                    toast.success("Update posted!");
+                  } catch (e) { console.warn("[PageProfile] post failed:", e); toast.error("Failed to post"); }
+                }}>Create Post</Button>
               </div>
             )}
             <div className="t-card p-8 text-center">
@@ -216,7 +224,16 @@ const PageProfile = () => {
           <div>
             {isAdmin && (
               <div className="flex justify-end mb-4">
-                <Button size="sm" className="gap-1" onClick={() => toast.info("Job posting form coming soon")}><Plus className="w-3.5 h-3.5" /> Post a Job</Button>
+                <Button size="sm" className="gap-1" onClick={async () => {
+                  if (!user) { toast.error("Sign in to post"); return; }
+                  const title = window.prompt("Job title:");
+                  if (!title?.trim()) return;
+                  const desc = window.prompt("Job description:") || "";
+                  try {
+                    await supabase.from("opportunities").insert({ title, description: desc, poster_id: user.id, is_open: true } as any);
+                    toast.success("Job posted!");
+                  } catch (e) { console.warn("[PageProfile] job post failed:", e); toast.error("Failed to post"); }
+                }}><Plus className="w-3.5 h-3.5" /> Post a Job</Button>
               </div>
             )}
             <div className="t-card p-8 text-center">

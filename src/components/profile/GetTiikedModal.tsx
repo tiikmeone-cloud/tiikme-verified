@@ -75,7 +75,7 @@ const GetTiikedModal = ({ open, onClose, userId, userRole, onVerified }: Props) 
         return [
           { id: "email", icon: Mail, title: "Work Email", desc: "Verify with your official company email", action: () => setStep("email") },
           { id: "peer", icon: UserCheck, title: "Manager / HR Verification", desc: "Ask your manager or HR to verify your employment", action: () => setStep("peer") },
-          { id: "document", icon: FileText, title: "Experience Letter", desc: "Upload your relieving or experience letter", action: () => { toast.info("Document upload coming soon"); } },
+          { id: "document", icon: FileText, title: "Experience Letter", desc: "Upload your relieving or experience letter", action: () => setStep("document") },
         ];
       case "doctor":
         return [
@@ -108,7 +108,7 @@ const GetTiikedModal = ({ open, onClose, userId, userRole, onVerified }: Props) 
           <div className="flex items-center gap-2">
             <Shield className="w-5 h-5" style={{ color: "#F59E0B" }} />
             <h2 className="text-[18px] font-extrabold" style={{ color: "var(--text-1)" }}>
-              {step === "choose" ? "Get Tiiked" : step === "email" ? "Email Verification" : "Peer Verification"}
+              {step === "choose" ? "Get Tiiked" : step === "email" ? "Email Verification" : step === "document" ? "Document Upload" : "Peer Verification"}
             </h2>
           </div>
           <button type="button" onClick={() => { onClose(); setStep("choose"); }} className="p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
@@ -166,6 +166,39 @@ const GetTiikedModal = ({ open, onClose, userId, userRole, onVerified }: Props) 
               {peerSearch.length >= 2 && peerResults.length === 0 && (
                 <p className="text-[12px] text-center py-4" style={{ color: "var(--text-3)" }}>No users found</p>
               )}
+            </div>
+            <Button variant="ghost" className="w-full" onClick={() => setStep("choose")}>← Back</Button>
+          </div>
+        )}
+
+        {step === "document" && (
+          <div className="space-y-4">
+            <p className="text-[13px]" style={{ color: "var(--text-2)" }}>Upload your experience letter, relieving letter, or official document for verification.</p>
+            <div className="rounded-xl p-6 text-center cursor-pointer" style={{ border: "2px dashed var(--border)", background: "var(--surface-2)" }}
+              onClick={() => {
+                const input = document.createElement("input");
+                input.type = "file";
+                input.accept = ".pdf,.jpg,.jpeg,.png";
+                input.onchange = async (e: any) => {
+                  const file = e.target.files?.[0];
+                  if (!file || !userId) return;
+                  if (file.size > 10 * 1024 * 1024) { toast.error("Max 10MB"); return; }
+                  try {
+                    const path = `${userId}/verify-${Date.now()}-${file.name.replace(/[^a-z0-9.]/gi, "_")}`;
+                    const { error: upErr } = await supabase.storage.from("work-assets").upload(path, file);
+                    if (upErr) { toast.error("Upload failed"); return; }
+                    const { data: urlData } = supabase.storage.from("work-assets").getPublicUrl(path);
+                    await supabase.from("alerts").insert({ user_id: userId, type: "verification_request", title: "Document submitted for verification", body: "Your document has been uploaded. Our team will review it shortly.", data: { doc_url: urlData?.publicUrl } as any });
+                    toast.success("Document uploaded! We'll review it shortly.");
+                    onClose();
+                    setStep("choose");
+                  } catch (err) { console.warn("[GetTiiked] doc upload:", err); toast.error("Upload failed"); }
+                };
+                input.click();
+              }}>
+              <FileText className="w-8 h-8 mx-auto mb-2" style={{ color: "var(--text-3)" }} />
+              <p className="text-[14px] font-semibold" style={{ color: "var(--text-1)" }}>Click to upload PDF or image</p>
+              <p className="text-[12px] mt-1" style={{ color: "var(--text-3)" }}>Max 10MB · PDF, JPG, PNG</p>
             </div>
             <Button variant="ghost" className="w-full" onClick={() => setStep("choose")}>← Back</Button>
           </div>

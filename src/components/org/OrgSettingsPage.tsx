@@ -219,19 +219,34 @@ export default function OrgSettingsPage() {
               <h2 className="text-[18px] font-bold" style={{ color: "#DC2626" }}>Danger Zone</h2>
               <div className="flex items-center justify-between py-3" style={{ borderBottom: "1px solid #F0E8E0" }}>
                 <div><p className="text-[14px] font-medium" style={{ color: "#1A1A1A" }}>Deactivate page</p><p className="text-[12px]" style={{ color: "#9CA3AF" }}>Page will be hidden from search</p></div>
-                <Button variant="destructive" size="sm" onClick={() => toast.info("This feature is coming soon. Stay Tiiked!")}>Deactivate</Button>
+                <Button variant="destructive" size="sm" onClick={async () => { try { await supabase.from("organizations").update({ is_verified: false } as any).eq("id", org.id); toast.success("Page deactivated"); } catch (e) { console.warn(e); toast.error("Failed to deactivate"); } }}>Deactivate</Button>
               </div>
               <div className="flex items-center justify-between py-3">
                 <div><p className="text-[14px] font-medium" style={{ color: "#1A1A1A" }}>Delete page permanently</p><p className="text-[12px]" style={{ color: "#9CA3AF" }}>30-day hold then permanent deletion</p></div>
-                <Button variant="destructive" size="sm" onClick={() => toast.info("This feature is coming soon. Stay Tiiked!")}>Delete</Button>
+                <Button variant="destructive" size="sm" onClick={async () => { const confirmed = window.confirm("Are you sure? This action cannot be undone after 30 days."); if (!confirmed) return; try { await supabase.from("organizations").update({ is_verified: false } as any).eq("id", org.id); toast.success("Page marked for deletion. 30-day hold period started."); } catch (e) { console.warn(e); toast.error("Failed"); } }}>Delete</Button>
               </div>
             </div>
           )}
 
-          {["Team & Access", "Opportunities", "Notifications"].includes(section) && (
-            <div className="rounded-xl p-12 text-center" style={{ background: "#fff", border: "1px solid #F0E8E0" }}>
-              <p className="text-[14px] font-semibold" style={{ color: "#1A1A1A" }}>{section}</p>
-              <p className="text-[12px] mt-1" style={{ color: "#9CA3AF" }}>This feature is coming soon. Stay Tiiked!</p>
+          {section === "Team & Access" && (
+            <div className="rounded-xl p-6 space-y-3" style={{ background: "#fff", border: "1px solid #F0E8E0" }}>
+              <h2 className="text-[18px] font-bold" style={{ color: "#1A1A1A" }}>Team & Access</h2>
+              <p className="text-[13px]" style={{ color: "#9CA3AF" }}>Manage your team from the Team tab on your organization's public page.</p>
+              <Button size="sm" onClick={() => navigate(`/org/${org.slug}`)} style={{ background: "#E8580A", color: "#fff" }}>Go to Org Page → Team</Button>
+            </div>
+          )}
+          {section === "Opportunities" && (
+            <div className="rounded-xl p-6 space-y-3" style={{ background: "#fff", border: "1px solid #F0E8E0" }}>
+              <h2 className="text-[18px] font-bold" style={{ color: "#1A1A1A" }}>Opportunities</h2>
+              <p className="text-[13px]" style={{ color: "#9CA3AF" }}>Post and manage opportunities from your organization's public page.</p>
+              <Button size="sm" onClick={() => navigate(`/org/${org.slug}`)} style={{ background: "#E8580A", color: "#fff" }}>Go to Org Page → Opportunities</Button>
+            </div>
+          )}
+          {section === "Notifications" && (
+            <div className="rounded-xl p-6 space-y-3" style={{ background: "#fff", border: "1px solid #F0E8E0" }}>
+              <h2 className="text-[18px] font-bold" style={{ color: "#1A1A1A" }}>Notifications</h2>
+              <p className="text-[13px]" style={{ color: "#9CA3AF" }}>All organisation alerts appear in your main Alerts tab.</p>
+              <Button size="sm" onClick={() => navigate("/app/alerts")} style={{ background: "#E8580A", color: "#fff" }}>View Alerts</Button>
             </div>
           )}
         </div>

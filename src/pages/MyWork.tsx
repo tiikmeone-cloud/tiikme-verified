@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -141,6 +141,7 @@ const AddWorkModal = ({ open, onClose, onSaved }: { open: boolean; onClose: () =
 
 const MyWork = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [addOpen, setAddOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState("All");
   const [workItems, setWorkItems] = useState<any[]>([]);
@@ -254,7 +255,7 @@ const MyWork = () => {
                   <span className="flex items-center gap-1"><Briefcase className="w-3 h-3" /> {project.recruiter_views || 0} recruiter</span>
                 </div>
                 <div className="flex items-center gap-2 p-4 mt-2" style={{ borderTop: "1px solid var(--border)" }}>
-                  <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => toast.info("Editor coming soon")}>
+                  <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => navigate(`/app/work/${project.id}`)}>
                     <Pencil className="w-3 h-3" /> Edit
                   </Button>
                   <button type="button" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/app/work/${project.id}`); toast.success("Link copied"); }}

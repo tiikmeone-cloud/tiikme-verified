@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const WorkDetail = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { slug } = useParams();
   const [work, setWork] = useState<any>(null);
@@ -156,7 +158,18 @@ const WorkDetail = () => {
           <div className="t-card p-5">
             <h3 className="text-sm font-bold mb-3" style={{ color: "var(--text-1)" }}>Interested?</h3>
             <div className="space-y-2">
-              <Button className="w-full" size="sm" onClick={() => toast.info("Coming soon")}>Reach out</Button>
+              <Button className="w-full" size="sm" onClick={async () => {
+                if (!user) { toast.error("Sign in to reach out"); return; }
+                try {
+                  const ownerId = work.owner_id;
+                  if (ownerId === user.id) { toast.info("This is your own work"); return; }
+                  const { data: existing } = await supabase.from("conversations").select("id").or(`and(participant_1.eq.${user.id},participant_2.eq.${ownerId}),and(participant_1.eq.${ownerId},participant_2.eq.${user.id})`).maybeSingle();
+                  if (existing) { navigate("/app/pings"); return; }
+                  const { data: conv } = await supabase.from("conversations").insert({ participant_1: user.id, participant_2: ownerId }).select().single();
+                  if (conv) { await supabase.from("pings").insert({ conversation_id: conv.id, sender_id: user.id, content: `Hi! I'm interested in your work: "${work.title}"`, is_opener: true }); }
+                  navigate("/app/pings");
+                } catch (e) { console.warn("[WorkDetail]", e); toast.error("Failed to start conversation"); }
+              }}>Reach out</Button>
               <Button variant="secondary" className="w-full" size="sm" onClick={() => toast.success("Saved")}>Save to pool</Button>
             </div>
           </div>
