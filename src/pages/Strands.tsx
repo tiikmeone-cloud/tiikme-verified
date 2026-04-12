@@ -1,3 +1,4 @@
+import { storageImageUrl } from "@/lib/imageTransform";
 import { useState, useEffect, useCallback } from "react";
 import { Link2, Check, X, Search, MessageCircle, Compass } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -123,7 +124,7 @@ const Strands = () => {
     const color = ROLE_COLORS[person?.role || ""] || "#6B7280";
     return (
       <div className="w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: color }}>
-        {person?.avatar_url ? <img src={person.avatar_url} alt="" className="w-full h-full object-cover" /> : initials}
+        {person?.avatar_url ? <img src={storageImageUrl(person.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials}
       </div>
     );
   };

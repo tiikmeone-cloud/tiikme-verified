@@ -1,3 +1,4 @@
+import { storageImageUrl } from "@/lib/imageTransform";
 import { useState, useRef } from "react";
 import { ArrowLeft, Image as ImageIcon, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -112,7 +113,7 @@ const PostCreate = () => {
       {/* Author */}
       <div className="flex items-center gap-3 mb-4">
         <div className="w-11 h-11 rounded-full flex items-center justify-center text-[14px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: "var(--brand)" }}>
-          {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : initials}
+          {profile?.avatar_url ? <img src={storageImageUrl(profile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials}
         </div>
         <div>
           <p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>{profile?.full_name || "You"}</p>

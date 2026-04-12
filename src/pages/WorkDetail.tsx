@@ -1,3 +1,4 @@
+import { storageImageUrl } from "@/lib/imageTransform";
 import { useState, useEffect } from "react";
 import { ArrowLeft, Layers, Copy, Shield, ExternalLink, Users, MessageSquare, Github, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -116,7 +117,7 @@ const WorkDetail = () => {
                 {owner && (
                   <Link to={`/app/profile/${owner.id}`} className="text-center shrink-0 hover:-translate-y-1 transition-transform">
                     <div className="w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold text-white mx-auto mb-1 overflow-hidden" style={{ backgroundColor: ROLE_COLORS[owner.role || ""] || "#6B7280" }}>
-                      {owner.avatar_url ? <img src={owner.avatar_url} alt="" className="w-full h-full object-cover" /> : (ownerName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase())}
+                      {owner.avatar_url ? <img src={storageImageUrl(owner.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (ownerName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase())}
                     </div>
                     <p className="text-[11px] font-bold" style={{ color: "var(--text-1)" }}>{ownerName.split(" ")[0]}</p>
                     <p className="text-[10px]" style={{ color: "var(--text-3)" }}>Owner</p>
@@ -129,7 +130,7 @@ const WorkDetail = () => {
                   return (
                     <Link key={m.id} to={`/app/profile/${u?.id}`} className="text-center shrink-0 hover:-translate-y-1 transition-transform">
                       <div className="w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold text-white mx-auto mb-1 overflow-hidden" style={{ backgroundColor: ROLE_COLORS[u?.role || ""] || "#6B7280" }}>
-                        {u?.avatar_url ? <img src={u.avatar_url} alt="" className="w-full h-full object-cover" /> : initials}
+                        {u?.avatar_url ? <img src={storageImageUrl(u.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials}
                       </div>
                       <p className="text-[11px] font-bold" style={{ color: "var(--text-1)" }}>{name.split(" ")[0]}</p>
                       <p className="text-[10px]" style={{ color: "var(--text-3)" }}>{m.role_in_project || "Member"}</p>

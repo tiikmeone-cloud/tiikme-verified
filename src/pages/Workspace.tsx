@@ -1,3 +1,4 @@
+import { storageImageUrl } from "@/lib/imageTransform";
 import { useState, useEffect } from "react";
 import { Plus, Users, Layers, MessageCircle, Settings, Hash, Send, Crown, Lock, Rocket, Building2, ChevronDown, Globe, ArrowRight, X, Link2, Copy, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -271,7 +272,7 @@ const Workspace = () => {
                   {!composeOpen ? (
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white overflow-hidden" style={{ background: "var(--brand)" }}>
-                        {authProfile?.avatar_url ? <img src={authProfile.avatar_url} alt="" className="w-full h-full object-cover" /> : userInitials}
+                        {authProfile?.avatar_url ? <img src={storageImageUrl(authProfile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : userInitials}
                       </div>
                       <button type="button" onClick={() => setComposeOpen(true)} className="flex-1 text-left text-[12px] h-9 glass-input px-3 cursor-pointer" style={{ color: "var(--text-3)" }}>
                         Share with {activeWs?.name}...
@@ -307,7 +308,7 @@ const Workspace = () => {
                       <div className="flex items-center gap-2.5 mb-2">
                         <Link to={`/app/profile/${author?.id || ""}`}>
                           <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white hover:scale-105 transition-transform overflow-hidden" style={{ backgroundColor: authorColor }}>
-                            {author?.avatar_url ? <img src={author.avatar_url} alt="" className="w-full h-full object-cover" /> : authorInitials}
+                            {author?.avatar_url ? <img src={storageImageUrl(author.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : authorInitials}
                           </div>
                         </Link>
                         <div className="flex-1 min-w-0">
@@ -345,7 +346,7 @@ const Workspace = () => {
                         <button type="button" key={u.id} onClick={() => handleAddMember(u.id)} disabled={addingMember}
                           className="w-full flex items-center gap-3 px-3 py-2.5 text-left cursor-pointer hover:bg-[var(--surface-2)] disabled:opacity-50">
                           <div className="w-8 h-8 rounded-full flex items-center justify-center text-[9px] font-bold text-white overflow-hidden" style={{ backgroundColor: "#4F46E5" }}>
-                            {u.avatar_url ? <img src={u.avatar_url} alt="" className="w-full h-full object-cover" /> : (u.full_name || "U").split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
+                            {u.avatar_url ? <img src={storageImageUrl(u.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (u.full_name || "U").split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-[13px] font-bold truncate" style={{ color: "var(--text-1)" }}>{u.full_name || u.username}</p>
@@ -445,7 +446,7 @@ const Workspace = () => {
                   <button type="button" key={u.id} onClick={() => handleAddMember(u.id)} disabled={addingMember}
                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left cursor-pointer hover:bg-[var(--surface-2)] disabled:opacity-50">
                     <div className="w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold text-white overflow-hidden" style={{ backgroundColor: "#4F46E5" }}>
-                      {u.avatar_url ? <img src={u.avatar_url} alt="" className="w-full h-full object-cover" /> : (u.full_name || "U").split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
+                      {u.avatar_url ? <img src={storageImageUrl(u.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (u.full_name || "U").split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[13px] font-bold truncate" style={{ color: "var(--text-1)" }}>{u.full_name || u.username}</p>

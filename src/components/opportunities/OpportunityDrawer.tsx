@@ -1,3 +1,4 @@
+import { storageImageUrl } from "@/lib/imageTransform";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { X, Clock, Users, Shield, MapPin, Briefcase, CheckSquare, ToggleLeft, ToggleRight } from "lucide-react";
@@ -115,7 +116,7 @@ export function OpportunityDetailDrawer({ opp, onClose }: { opp: Opportunity; on
 
               <div className="glass-liquid rounded-xl flex items-center gap-3 p-3">
                 <div className="w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-bold text-white overflow-hidden" style={{ background: roleColor }}>
-                  {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : initials}
+                  {profile?.avatar_url ? <img src={storageImageUrl(profile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials}
                 </div>
                 <div>
                   <p className="text-[13px] font-bold" style={{ color: "var(--text-1)" }}>{displayName}</p>

@@ -1,3 +1,4 @@
+import { storageImageUrl } from "@/lib/imageTransform";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Users, Shield, Send, ExternalLink, CheckCircle, Layers } from "lucide-react";
@@ -127,7 +128,7 @@ const ProjectHub = () => {
               <Link to={`/app/profile/${project.owner.id}`} className="relative flex items-center gap-3 py-2.5 group">
                 <div className="w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 group-hover:scale-110 transition-transform relative z-10 overflow-hidden"
                   style={{ backgroundColor: ROLE_COLORS[project.owner.role || ""] || "#6B7280" }}>
-                  {project.owner.avatar_url ? <img src={project.owner.avatar_url} alt="" className="w-full h-full object-cover" /> :
+                  {project.owner.avatar_url ? <img src={storageImageUrl(project.owner.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> :
                     (project.owner.full_name || "O").split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
                 </div>
                 <div className="min-w-0">
@@ -143,7 +144,7 @@ const ProjectHub = () => {
                 <Link key={tm.id} to={`/app/profile/${m.id}`} className="relative flex items-center gap-3 py-2.5 group">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 group-hover:scale-110 transition-transform relative z-10 overflow-hidden"
                     style={{ backgroundColor: ROLE_COLORS[m.role || ""] || "#6B7280" }}>
-                    {m.avatar_url ? <img src={m.avatar_url} alt="" className="w-full h-full object-cover" /> :
+                    {m.avatar_url ? <img src={storageImageUrl(m.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> :
                       (m.full_name || "M").split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
                   </div>
                   <div className="min-w-0">

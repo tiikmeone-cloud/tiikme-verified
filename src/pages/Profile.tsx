@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { storageImageUrl } from "@/lib/imageTransform";
 import { MapPin, Copy, Shield, Layers, X, MessageCircle, CheckCircle, Building2, Link2, Plus, Pencil, Trash2, Briefcase, GraduationCap, Award, Code2, GripVertical, Eye, EyeOff, Heart, Rocket, Send, Share2, Users } from "lucide-react";
 import OrgSearchInput from "@/components/OrgSearchInput";
 import GetTiikedModal from "@/components/profile/GetTiikedModal";
@@ -113,7 +114,7 @@ const EditProfileInline = ({ open, onClose, onSaved }: { open: boolean; onClose:
       </div>
       <div className="flex items-center gap-4 mb-5 cursor-pointer" onClick={() => avatarRef.current?.click()}>
         <div className="w-16 h-16 rounded-full flex items-center justify-center text-[20px] font-bold text-white overflow-hidden" style={{ backgroundColor: "var(--brand)" }}>
-          {form.avatar_url ? <img src={form.avatar_url} alt="" className="w-full h-full object-cover" /> : form.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "U"}
+          {form.avatar_url ? <img src={storageImageUrl(form.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : form.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "U"}
         </div>
         <p className="text-[12px]" style={{ color: "var(--text-3)" }}>Click to change avatar</p>
         <input ref={avatarRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
@@ -286,7 +287,7 @@ const ProfilePostsSection = ({ posts, isOwnProfile }: { posts: any[]; isOwnProfi
             <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-2)" }}><MentionText text={p.content} /></p>
             {p.image_urls?.length > 0 && (
               <div className="mt-2 rounded-xl overflow-hidden">
-                <img src={p.image_urls[0]} alt="Post" className="w-full max-h-48 object-cover rounded-xl" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                <img src={storageImageUrl(p.image_urls[0], "feed")} alt="Post" className="w-full max-h-48 object-cover rounded-xl" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
               </div>
             )}
             <div className="flex items-center gap-1 mt-2">
@@ -310,7 +311,7 @@ const ProfilePostsSection = ({ posts, isOwnProfile }: { posts: any[]; isOwnProfi
                   return (
                     <div key={c.id} className="flex items-start gap-2 group">
                       <div className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: cColor }}>
-                        {c.author?.avatar_url ? <img src={c.author.avatar_url} alt="" className="w-full h-full object-cover" /> : cInitials}
+                        {c.author?.avatar_url ? <img src={storageImageUrl(c.author.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : cInitials}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
@@ -325,7 +326,7 @@ const ProfilePostsSection = ({ posts, isOwnProfile }: { posts: any[]; isOwnProfi
                 })}
                 <div className="flex items-center gap-2 mt-1">
                   <div className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0 overflow-hidden" style={{ background: "var(--brand)" }}>
-                    {authProfile?.avatar_url ? <img src={authProfile.avatar_url} alt="" className="w-full h-full object-cover" /> : userInitials}
+                    {authProfile?.avatar_url ? <img src={storageImageUrl(authProfile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : userInitials}
                   </div>
                   <input value={commentText} onChange={e => setCommentInputs(prev => ({ ...prev, [p.id]: e.target.value }))}
                     placeholder="Write a comment..." className="flex-1 h-8 rounded-lg px-3 text-[12px] outline-none"
@@ -974,7 +975,7 @@ const Profile = () => {
             <div className={`relative ${isOwnProfile ? "group cursor-pointer" : ""}`} onClick={() => isOwnProfile && setEditOpen(!editOpen)}>
               <div className="w-[72px] h-[72px] md:w-[88px] md:h-[88px] rounded-full flex items-center justify-center text-[24px] md:text-[28px] font-extrabold text-white shrink-0 overflow-hidden"
                 style={{ backgroundColor: roleColor, border: "4px solid var(--surface)", boxShadow: isVerified ? "0 0 0 3px #F59E0B, 0 0 12px rgba(245,158,11,0.45)" : "0 4px 12px rgba(0,0,0,0.15)" }}>
-                {profileData.avatar_url ? <img src={profileData.avatar_url} alt="" className="w-full h-full object-cover" /> : initials}
+                {profileData.avatar_url ? <img src={storageImageUrl(profileData.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials}
               </div>
               {isOwnProfile && <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><Pencil className="w-4 h-4 text-white" /></div>}
             </div>

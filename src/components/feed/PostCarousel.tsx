@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { storageImageUrl } from "@/lib/imageTransform";
 
 interface PostCarouselProps {
   images: string[];
@@ -21,7 +22,6 @@ const PostCarousel = ({ images }: PostCarouselProps) => {
     else if (touchDeltaX.current < -50) next();
   };
 
-  // ESC to close lightbox
   useEffect(() => {
     if (!lightbox) return;
     const handleKey = (e: KeyboardEvent) => {
@@ -35,12 +35,11 @@ const PostCarousel = ({ images }: PostCarouselProps) => {
 
   if (images.length === 0) return null;
 
-  // Single image
   if (images.length === 1) {
     return (
       <>
         <img
-          src={images[0]}
+          src={storageImageUrl(images[0], "feed")}
           alt=""
           className="w-full max-h-[500px] object-cover cursor-pointer"
           onClick={() => setLightbox(true)}
@@ -51,14 +50,13 @@ const PostCarousel = ({ images }: PostCarouselProps) => {
             <button type="button" className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center cursor-pointer z-10" onClick={() => setLightbox(false)}>
               <X className="w-6 h-6 text-white" />
             </button>
-            <img src={images[0]} alt="" className="max-w-[95vw] max-h-[90vh] object-contain" onClick={e => e.stopPropagation()} />
+            <img src={storageImageUrl(images[0], "lightbox")} alt="" className="max-w-[95vw] max-h-[90vh] object-contain" onClick={e => e.stopPropagation()} />
           </div>
         )}
       </>
     );
   }
 
-  // Multi image carousel
   return (
     <>
       <div
@@ -68,17 +66,15 @@ const PostCarousel = ({ images }: PostCarouselProps) => {
         onTouchEnd={handleTouchEnd}
       >
         <img
-          src={images[current]}
+          src={storageImageUrl(images[current], "feed")}
           alt=""
           className="w-full max-h-[500px] object-cover cursor-pointer"
           onClick={() => setLightbox(true)}
           onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
         />
-        {/* Counter */}
         <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[11px] font-bold text-white" style={{ background: "rgba(0,0,0,0.5)" }}>
           {current + 1} / {images.length}
         </span>
-        {/* Arrows */}
         {current > 0 && (
           <button type="button" onClick={(e) => { e.stopPropagation(); prev(); }}
             className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 cursor-pointer">
@@ -91,7 +87,6 @@ const PostCarousel = ({ images }: PostCarouselProps) => {
             <ChevronRight className="w-5 h-5" />
           </button>
         )}
-        {/* Dots */}
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
           {images.map((_, i) => (
             <button type="button" key={i} onClick={(e) => { e.stopPropagation(); setCurrent(i); }}
@@ -101,7 +96,6 @@ const PostCarousel = ({ images }: PostCarouselProps) => {
         </div>
       </div>
 
-      {/* Lightbox */}
       {lightbox && (
         <div className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center" onClick={() => setLightbox(false)}>
           <button type="button" className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center cursor-pointer z-10" onClick={() => setLightbox(false)}>
@@ -120,7 +114,7 @@ const PostCarousel = ({ images }: PostCarouselProps) => {
               <ChevronRight className="w-6 h-6" />
             </button>
           )}
-          <img src={images[current]} alt="" className="max-w-[95vw] max-h-[85vh] object-contain" onClick={e => e.stopPropagation()} />
+          <img src={storageImageUrl(images[current], "lightbox")} alt="" className="max-w-[95vw] max-h-[85vh] object-contain" onClick={e => e.stopPropagation()} />
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
             {images.map((_, i) => (
               <button type="button" key={i} onClick={(e) => { e.stopPropagation(); setCurrent(i); }}
