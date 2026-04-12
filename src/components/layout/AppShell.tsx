@@ -149,6 +149,18 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             <div key={group.label} className="mb-1">
               <p className="micro-label px-3 py-3">{group.label}</p>
               <div className="space-y-0.5">
+                {group.label === "WORK" && (() => {
+                  const active = isActive(profilePath);
+                  return (
+                    <Link key="profile" to={profilePath}
+                      className="flex items-center gap-2.5 h-[42px] px-3 rounded-xl relative text-[14px]"
+                      style={{ background: active ? "var(--brand-dim)" : "transparent", border: active ? "1px solid color-mix(in srgb, var(--brand) 25%, transparent)" : "1px solid transparent", color: active ? "var(--brand)" : "var(--text-2)", fontWeight: active ? 700 : 500, transition: "all 0.15s" }}>
+                      {active && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[22px]" style={{ borderRadius: "0 3px 3px 0", background: "var(--brand)", boxShadow: "2px 0 8px var(--brand-glow)" }} />}
+                      <User className="w-[18px] h-[18px] shrink-0" strokeWidth={1.8} />
+                      <span>Profile</span>
+                    </Link>
+                  );
+                })()}
                 {group.items.map((item) => {
                   const active = isActive(item.path);
                   const badge = getBadge(item.path);
