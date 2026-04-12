@@ -1190,15 +1190,7 @@ export type Database = {
           village?: string | null
           website_url?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "organizations_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       page_admins: {
         Row: {
