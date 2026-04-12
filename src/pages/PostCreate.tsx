@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useOrgIdentity } from "@/contexts/OrgIdentityContext";
 import { supabase } from "@/integrations/supabase/client";
 
 const MAX_IMAGES = 20;
@@ -12,6 +13,7 @@ const MAX_IMAGES = 20;
 const PostCreate = () => {
   const navigate = useNavigate();
   const { user, profile, initials } = useAuth();
+  const { isInstitution, org, identityName, identityAvatar, identityInitials } = useOrgIdentity();
   const [content, setContent] = useState("");
   const [publishing, setPublishing] = useState(false);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
