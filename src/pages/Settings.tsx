@@ -503,22 +503,6 @@ const SettingsPage = () => {
             </div>
           )}
 
-          {activeTab === "institution" && (
-            <div className="t-card p-5">
-              <h3 className="text-[16px] font-bold mb-4" style={{ color: "var(--text-1)" }}>Institution</h3>
-              <p className="text-[14px] mb-3" style={{ color: "var(--text-2)" }}>You are linked to:</p>
-              <div className="t-card p-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[11px] font-bold" style={{ background: "var(--brand-dim)", color: "var(--brand)" }}>
-                  {profile.institution?.slice(0, 2).toUpperCase() || "??"}
-                </div>
-                <div>
-                  <p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>{profile.institution || "Not set"}</p>
-                  <p className="text-[12px]" style={{ color: "var(--text-3)" }}>{profile.city || "Unknown"}</p>
-                </div>
-              </div>
-            </div>
-          )}
-
           {activeTab === "notifications" && (
             <div className="t-card p-5">
               <h3 className="text-[16px] font-bold mb-4" style={{ color: "var(--text-1)" }}>Notification preferences</h3>
