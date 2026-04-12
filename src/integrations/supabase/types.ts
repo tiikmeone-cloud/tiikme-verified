@@ -126,46 +126,39 @@ export type Database = {
       }
       alerts: {
         Row: {
-          actor_id: string | null
+          action_url: string | null
           body: string | null
           created_at: string | null
+          data: Json | null
           id: string
           is_read: boolean | null
-          link: string | null
           title: string | null
           type: string
           user_id: string | null
         }
         Insert: {
-          actor_id?: string | null
+          action_url?: string | null
           body?: string | null
           created_at?: string | null
+          data?: Json | null
           id?: string
           is_read?: boolean | null
-          link?: string | null
           title?: string | null
-          type: string
+          type?: string
           user_id?: string | null
         }
         Update: {
-          actor_id?: string | null
+          action_url?: string | null
           body?: string | null
           created_at?: string | null
+          data?: Json | null
           id?: string
           is_read?: boolean | null
-          link?: string | null
           title?: string | null
           type?: string
           user_id?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "alerts_actor_id_fkey"
-            columns: ["actor_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "alerts_user_id_fkey"
             columns: ["user_id"]
