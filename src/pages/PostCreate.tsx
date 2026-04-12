@@ -1,5 +1,5 @@
 import { storageImageUrl } from "@/lib/imageTransform";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ArrowLeft, Image as ImageIcon, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -12,9 +12,18 @@ const MAX_IMAGES = 20;
 const PostCreate = () => {
   const navigate = useNavigate();
   const { user, profile, initials, displayName } = useAuth();
-  const identityAvatar = profile?.avatar_url || null;
-  const identityInitials = initials;
-  const identityName = displayName;
+  const isInstitution = profile?.account_type === "institution" && !!profile?.org_id;
+  const [orgData, setOrgData] = useState<{ name: string; logo_url: string | null; slug: string } | null>(null);
+
+  useEffect(() => {
+    if (!isInstitution || !profile?.org_id) return;
+    supabase.from("organizations").select("name, logo_url, slug").eq("id", profile.org_id).maybeSingle()
+      .then(({ data }) => setOrgData(data || null));
+  }, [isInstitution, profile?.org_id]);
+
+  const identityAvatar = isInstitution && orgData?.logo_url ? orgData.logo_url : (profile?.avatar_url || null);
+  const identityInitials = isInstitution && orgData?.name ? orgData.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() : initials;
+  const identityName = isInstitution && orgData?.name ? orgData.name : displayName;
   const [content, setContent] = useState("");
   const [publishing, setPublishing] = useState(false);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
