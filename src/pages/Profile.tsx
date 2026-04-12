@@ -390,6 +390,9 @@ const Profile = () => {
     setDataLoading(true);
 
     const postsQuery = supabase.from("posts").select("id, content, created_at, image_urls, comment_count, reactions:post_reactions(user_id)").eq("author_id", targetUserId).order("created_at", { ascending: false }).limit(20);
+
+    const [profileRes, itemsRes, strandCountRes, postsRes, achvsRes, certsRes] = await Promise.allSettled([
+      isOwnProfile ? Promise.resolve({ data: authProfile }) : supabase.from("profiles").select("*").eq("id", targetUserId).maybeSingle(),
       supabase.from("work_items").select("*").eq("owner_id", targetUserId).order("is_current", { ascending: false }).order("created_at", { ascending: false }),
       supabase.from("strands").select("*", { count: "exact", head: true }).or(`requester_id.eq.${targetUserId},receiver_id.eq.${targetUserId}`).eq("status", "accepted"),
       postsQuery,
@@ -415,7 +418,7 @@ const Profile = () => {
       setSectionOrder(DEFAULT_SECTION_ORDER);
     }
     setDataLoading(false);
-  }, [targetUserId, isOwnProfile, authProfile, isOwnInstitutionProfile]);
+  }, [targetUserId, isOwnProfile, authProfile]);
 
   const [connectionStatus, setConnectionStatus] = useState<{ status: string | null; direction: string | null; id: string | null }>({ status: null, direction: null, id: null });
   const [connectLoading, setConnectLoading] = useState(false);
