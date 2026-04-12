@@ -54,6 +54,7 @@ const CertificatePage = lazyWithRetry(() => import("./pages/CertificatePage.tsx"
 const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword.tsx"), "ResetPassword");
 const PostDetail = lazyWithRetry(() => import("./pages/PostDetail.tsx"), "PostDetail");
 const JoinRedirect = lazyWithRetry(() => import("./pages/JoinRedirect.tsx"), "JoinRedirect");
+const ApplicationsDashboard = lazyWithRetry(() => import("./pages/ApplicationsDashboard.tsx"), "ApplicationsDashboard");
 
 // Org sub-pages
 const OrgSettingsPage = lazyWithRetry(() => import("./components/org/OrgSettingsPage.tsx"), "OrgSettingsPage");
@@ -115,6 +116,7 @@ const App = () => (
             <Route path="/app/teams" element={<Shell><MyWork /></Shell>} />
             <Route path="/app/teams/:projectId" element={<Shell><ProjectHub /></Shell>} />
             <Route path="/app/opportunities" element={<Shell><Opportunities /></Shell>} />
+            <Route path="/app/opportunities/:id/applications" element={<Shell><ApplicationsDashboard /></Shell>} />
             <Route path="/app/strands" element={<Shell><Strands /></Shell>} />
             <Route path="/app/pings" element={<Shell><Pings /></Shell>} />
             <Route path="/app/pings/:id" element={<Shell><Pings /></Shell>} />
