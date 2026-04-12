@@ -243,13 +243,19 @@ export default function OpportunitiesTab({ org, isAdmin }: OpportunitiesTabProps
               {opp.deadline && <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {Math.max(0, Math.ceil((new Date(opp.deadline).getTime() - Date.now()) / 86400000))} days left</span>}
             </div>
             <div className="flex gap-2">
+              {isAdmin && (
+                <Button variant="outline" size="sm" className="h-10 gap-1" onClick={() => navigate(`/app/applications/${opp.id}`)}
+                  style={{ borderColor: "#F0E8E0", color: "#6B6B6B" }}>
+                  <BarChart3 className="w-3.5 h-3.5" /> Applications
+                </Button>
+              )}
               <button type="button" className="p-2 rounded-lg hover:bg-gray-50" onClick={() => toast.success("Opportunity saved")}>
                 <Bookmark className="w-4 h-4" style={{ color: "#9CA3AF" }} />
               </button>
               {appliedIds.has(opp.id) ? (
-                <Button size="sm" disabled className="h-10" style={{ background: "#16A34A", color: "#fff" }}>Applied ✓</Button>
+                <Button size="sm" disabled className="h-10" style={{ background: "#16A34A", color: "#fff" }}>Applied</Button>
               ) : (
-                <Button size="sm" className="h-10" onClick={() => setShowApply(opp.id)} style={{ background: "#E8580A", color: "#fff" }}>Apply Now →</Button>
+                <Button size="sm" className="h-10" onClick={() => setShowApply(opp.id)} style={{ background: "#E8580A", color: "#fff" }}>Apply Now</Button>
               )}
             </div>
           </div>
