@@ -1191,11 +1191,7 @@ const Profile = () => {
     ) : null,
   };
 
-  // ── INSTITUTION PROFILE RENDERING ──
-  if (isOwnInstitutionProfile && org) {
-    const orgInitials = org.name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
-    return <InstitutionProfileView org={org} userPosts={userPosts} stats={stats} navigate={navigate} user={user} />;
-  }
+  // Institution profile is handled earlier — this point is only reached for personal profiles
 
   return (
     <div className="max-w-[760px] mx-auto px-0 md:px-4 py-0 md:py-7 space-y-3 md:space-y-4 md:pl-8">
