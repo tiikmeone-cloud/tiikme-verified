@@ -5,7 +5,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { OrgIdentityProvider } from "@/contexts/OrgIdentityContext";
 import { ProtectedRoute, PublicOnlyRoute } from "@/components/RouteGuard";
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
 import PageLoader from "@/components/PageLoader";
@@ -36,29 +35,17 @@ const Strands = lazyWithRetry(() => import("./pages/Strands.tsx"), "Strands");
 const Pings = lazyWithRetry(() => import("./pages/Pings.tsx"), "Pings");
 const Alerts = lazyWithRetry(() => import("./pages/Alerts.tsx"), "Alerts");
 const SettingsPage = lazyWithRetry(() => import("./pages/Settings.tsx"), "SettingsPage");
-const Institution = lazyWithRetry(() => import("./pages/Institution.tsx"), "Institution");
 const WorkDetail = lazyWithRetry(() => import("./pages/WorkDetail.tsx"), "WorkDetail");
-const Workspace = lazyWithRetry(() => import("./pages/Workspace.tsx"), "Workspace");
 const CreatePage = lazyWithRetry(() => import("./pages/CreatePage.tsx"), "CreatePage");
 const PageProfile = lazyWithRetry(() => import("./pages/PageProfile.tsx"), "PageProfile");
 const VerifyInvite = lazyWithRetry(() => import("./pages/VerifyInvite.tsx"), "VerifyInvite");
 const Privacy = lazyWithRetry(() => import("./pages/Privacy.tsx"), "Privacy");
 const Terms = lazyWithRetry(() => import("./pages/Terms.tsx"), "Terms");
 const Grievance = lazyWithRetry(() => import("./pages/Grievance.tsx"), "Grievance");
-const JoinAsInstitution = lazyWithRetry(() => import("./pages/JoinAsInstitution.tsx"), "JoinAsInstitution");
-const CreateOrganization = lazyWithRetry(() => import("./pages/CreateOrganization.tsx"), "CreateOrganization");
-const OrganizationPage = lazyWithRetry(() => import("./pages/OrganizationPage.tsx"), "OrganizationPage");
-const OrgAdmin = lazyWithRetry(() => import("./pages/OrgAdmin.tsx"), "OrgAdmin");
 const PostCreate = lazyWithRetry(() => import("./pages/PostCreate.tsx"), "PostCreate");
 const CertificatePage = lazyWithRetry(() => import("./pages/CertificatePage.tsx"), "CertificatePage");
 const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword.tsx"), "ResetPassword");
 const PostDetail = lazyWithRetry(() => import("./pages/PostDetail.tsx"), "PostDetail");
-const JoinRedirect = lazyWithRetry(() => import("./pages/JoinRedirect.tsx"), "JoinRedirect");
-const ApplicationsDashboard = lazyWithRetry(() => import("./pages/ApplicationsDashboard.tsx"), "ApplicationsDashboard");
-
-// Org sub-pages
-const OrgSettingsPage = lazyWithRetry(() => import("./components/org/OrgSettingsPage.tsx"), "OrgSettingsPage");
-const OrgVerifyPage = lazyWithRetry(() => import("./components/org/OrgVerifyPage.tsx"), "OrgVerifyPage");
 
 const queryClient = new QueryClient();
 
@@ -69,7 +56,6 @@ const Shell = ({ children }: { children: React.ReactNode }) => (
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-    <OrgIdentityProvider>
     <TooltipProvider>
       <Toaster />
       <Sonner position="bottom-right" />
@@ -86,22 +72,10 @@ const App = () => (
             <Route path="/onboarding/welcome" element={<PageErrorBoundary><OnboardingWelcome /></PageErrorBoundary>} />
             <Route path="/welcome" element={<PageErrorBoundary><Welcome /></PageErrorBoundary>} />
             <Route path="/verify-invite" element={<PageErrorBoundary><VerifyInvite /></PageErrorBoundary>} />
-            <Route path="/join" element={<PageErrorBoundary><JoinRedirect /></PageErrorBoundary>} />
-            <Route path="/join-as-institution" element={<PageErrorBoundary><JoinAsInstitution /></PageErrorBoundary>} />
             <Route path="/privacy" element={<PageErrorBoundary><Privacy /></PageErrorBoundary>} />
             <Route path="/terms" element={<PageErrorBoundary><Terms /></PageErrorBoundary>} />
             <Route path="/grievance" element={<PageErrorBoundary><Grievance /></PageErrorBoundary>} />
             <Route path="/reset-password" element={<PageErrorBoundary><ResetPassword /></PageErrorBoundary>} />
-            <Route path="/create-organization" element={<ProtectedRoute><PageErrorBoundary><CreateOrganization /></PageErrorBoundary></ProtectedRoute>} />
-
-            {/* Organisation pages — public */}
-            <Route path="/org/:slug" element={<PageErrorBoundary><OrganizationPage /></PageErrorBoundary>} />
-            <Route path="/org/:slug/:tab" element={<PageErrorBoundary><OrganizationPage /></PageErrorBoundary>} />
-
-            {/* Organisation admin pages — protected */}
-            <Route path="/org/:slug/admin" element={<ProtectedRoute><PageErrorBoundary><OrgAdmin /></PageErrorBoundary></ProtectedRoute>} />
-            <Route path="/org/:slug/settings" element={<ProtectedRoute><PageErrorBoundary><OrgSettingsPage /></PageErrorBoundary></ProtectedRoute>} />
-            <Route path="/org/:slug/verify" element={<ProtectedRoute><PageErrorBoundary><OrgVerifyPage /></PageErrorBoundary></ProtectedRoute>} />
 
             <Route path="/certificate/:id" element={<PageErrorBoundary><CertificatePage /></PageErrorBoundary>} />
             <Route path="/create-page" element={<Shell><CreatePage /></Shell>} />
@@ -116,14 +90,11 @@ const App = () => (
             <Route path="/app/teams" element={<Shell><MyWork /></Shell>} />
             <Route path="/app/teams/:projectId" element={<Shell><ProjectHub /></Shell>} />
             <Route path="/app/opportunities" element={<Shell><Opportunities /></Shell>} />
-            <Route path="/app/opportunities/:id/applications" element={<Shell><ApplicationsDashboard /></Shell>} />
             <Route path="/app/strands" element={<Shell><Strands /></Shell>} />
             <Route path="/app/pings" element={<Shell><Pings /></Shell>} />
             <Route path="/app/pings/:id" element={<Shell><Pings /></Shell>} />
             <Route path="/app/alerts" element={<Shell><Alerts /></Shell>} />
             <Route path="/app/settings" element={<Shell><SettingsPage /></Shell>} />
-            <Route path="/app/institution/:id" element={<Shell><Institution /></Shell>} />
-            <Route path="/app/workspace" element={<Shell><Workspace /></Shell>} />
 
             {/* Pages (org profiles) */}
             <Route path="/p/:slug" element={<Shell><PageProfile /></Shell>} />
@@ -144,7 +115,6 @@ const App = () => (
         </Suspense>
       </BrowserRouter>
     </TooltipProvider>
-    </OrgIdentityProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

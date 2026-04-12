@@ -13,7 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useLikes } from "@/hooks/useLikes";
 import { useComments } from "@/hooks/useComments";
-import { useOrgIdentity } from "@/contexts/OrgIdentityContext";
+
 
 const roleColorMap: Record<string, string> = {
   student: "#4F46E5", professional: "#0369A1", doctor: "#0E7490",
@@ -351,8 +351,10 @@ const Feed = () => {
   const feedNavigate = useNavigate();
   const { posts: livePosts, loading, loadingMore, hasMore, loadMore, refresh } = useFeedPosts();
   const sentinelRef = useRef<HTMLDivElement>(null);
-  const { profile, initials } = useAuth();
-  const { isInstitution, org, identityName, identityAvatar, identityInitials } = useOrgIdentity();
+  const { profile, initials, displayName } = useAuth();
+  const identityAvatar = profile?.avatar_url || null;
+  const identityInitials = initials;
+  const identityName = displayName;
   const feedRef = useRef<HTMLDivElement>(null);
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
 
@@ -408,7 +410,7 @@ const Feed = () => {
                 {identityAvatar ? <img src={storageImageUrl(identityAvatar, "avatar")} alt="" className="w-full h-full object-cover" /> : identityInitials}
               </div>
               <button type="button" onClick={() => feedNavigate("/post/create")} className="flex-1 text-left text-[13px] h-10 glass-input px-4 cursor-pointer" style={{ color: "var(--text-3)" }}>
-                {isInstitution ? `Share an update as ${identityName}...` : "What's on your mind?"}
+                What's on your mind?
               </button>
             </div>
           </div>
