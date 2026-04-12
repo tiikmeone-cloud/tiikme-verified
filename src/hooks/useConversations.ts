@@ -89,19 +89,19 @@ export function useConversations(userId: string | undefined) {
     const lastMsgsData = lastMsgsRes.status === "fulfilled" ? (lastMsgsRes.value as any).data || [] : (console.warn("[useConversations] lastMsgs failed"), []);
 
     const unreadMap: Record<string, number> = {};
-    (unreadRes.data || []).forEach(p => {
+    (unreadData as any[]).forEach((p: any) => {
       unreadMap[p.conversation_id!] = (unreadMap[p.conversation_id!] || 0) + 1;
     });
 
     // Build last message map (first occurrence per convo = most recent)
     const lastMsgMap: Record<string, { content: string; attachment_type: string | null }> = {};
-    (lastMsgsRes.data || []).forEach(p => {
+    (lastMsgsData as any[]).forEach((p: any) => {
       if (!lastMsgMap[p.conversation_id!]) {
-        lastMsgMap[p.conversation_id!] = { content: p.content, attachment_type: (p as any).attachment_type || null };
+        lastMsgMap[p.conversation_id!] = { content: p.content, attachment_type: p.attachment_type || null };
       }
     });
 
-    const profileMap = new Map((profilesRes.data || []).map(p => [p.id, p]));
+    const profileMap = new Map((profilesData as any[]).map((p: any) => [p.id, p]));
     const enriched: ConversationWithProfile[] = convos.map(c => {
       const otherId = c.participant_1 === userId ? c.participant_2 : c.participant_1;
       const lastMsg = lastMsgMap[c.id];
