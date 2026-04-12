@@ -50,8 +50,15 @@ export default function StepPageSetup({
     setSubmitting(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { toast.error("Authentication failed"); setSubmitting(false); return; }
+      let { data: { user } } = await supabase.auth.getUser();
+      
+      // If no user session, try to get session
+      if (!user) {
+        const { data: { session } } = await supabase.auth.getSession();
+        user = session?.user ?? null;
+      }
+
+      if (!user) { toast.error("Please complete email verification first"); setSubmitting(false); return; }
 
       const baseSlug = generateSlug(orgName);
       const slug = `${baseSlug}-${Date.now().toString(36)}`;
