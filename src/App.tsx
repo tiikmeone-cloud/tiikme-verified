@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute, PublicOnlyRoute } from "@/components/RouteGuard";
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
 import PageLoader from "@/components/PageLoader";
+import { LayoutErrorBoundary, PageErrorBoundary } from "@/components/ErrorBoundaries";
 import AppShell from "./components/layout/AppShell.tsx";
 
 // Eager load landing + auth (critical path)

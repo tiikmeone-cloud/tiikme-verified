@@ -1,4 +1,5 @@
 import { createRoot } from "react-dom/client";
+import { RootErrorBoundary } from "./components/ErrorBoundaries";
 import App from "./App.tsx";
 import "./index.css";
 
@@ -13,4 +14,8 @@ if (saved === "dark") {
   document.documentElement.setAttribute("data-theme", "light");
 }
 
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(
+  <RootErrorBoundary>
+    <App />
+  </RootErrorBoundary>
+);
