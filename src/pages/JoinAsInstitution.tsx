@@ -231,13 +231,9 @@ const JoinAsInstitution = () => {
                         </div>
                       ))}
                     </div>
-                    <Button className="w-full" onClick={() => navigate("/app/feed", { replace: true })}
+                    <Button className="w-full" onClick={() => navigate("/app/profile", { replace: true })}
                       style={{ height: 52, background: "#E8580A", borderRadius: 8, fontSize: 15, fontWeight: 700 }}>
-                      Go to my feed <ArrowRight style={{ width: 16, height: 16, marginLeft: 4 }} />
-                    </Button>
-                    <Button variant="outline" className="w-full mt-2" onClick={() => navigate(`/org/${completedSlug}`)}
-                      style={{ height: 44, borderRadius: 8, fontSize: 14, fontWeight: 600 }}>
-                      View my institution page
+                      Go to my profile <ArrowRight style={{ width: 16, height: 16, marginLeft: 4 }} />
                     </Button>
                     <p style={{ fontSize: 12, color: "#9CA3AF", marginTop: 12 }}>
                       Founding spots remaining: ~1,847 of 2,000
