@@ -43,14 +43,14 @@ export default function OrganizationPage() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
-  const [activeTab, setActiveTab] = useState("Home");
+  const [activeTab, setActiveTab] = useState("Posts");
 
   // Map URL tab to display tab
   useEffect(() => {
     if (urlTab && TAB_SLUG_MAP[urlTab]) {
       setActiveTab(TAB_SLUG_MAP[urlTab]);
     } else if (!urlTab) {
-      setActiveTab("Home");
+      setActiveTab("Posts");
     }
   }, [urlTab]);
 
@@ -143,11 +143,10 @@ export default function OrganizationPage() {
       <OrgTabs tabs={TABS} active={activeTab} onChange={handleTabChange} />
 
       <div className="max-w-[960px] mx-auto px-4 md:px-6 py-5">
-        {activeTab === "Home" && <HomeTab org={org} posts={posts} isAdmin={isAdmin} onPostCreated={post => setPosts(prev => [post, ...prev])} />}
+        {activeTab === "Posts" && <HomeTab org={org} posts={posts} isAdmin={isAdmin} onPostCreated={post => setPosts(prev => [post, ...prev])} />}
         {activeTab === "About" && <AboutTab org={org} metadata={metadata} />}
         {activeTab === "Team" && <TeamTab org={org} members={members} isAdmin={isAdmin} />}
         {activeTab === "Opportunities" && <OpportunitiesTab org={org} isAdmin={isAdmin} />}
-        {activeTab === "Posts" && <HomeTab org={org} posts={posts} isAdmin={isAdmin} onPostCreated={post => setPosts(prev => [post, ...prev])} />}
         {activeTab === "Verified Members" && <VerifiedMembersTab members={members} />}
       </div>
     </div>
