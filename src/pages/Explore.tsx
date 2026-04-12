@@ -161,9 +161,10 @@ const Explore = () => {
     setLoading(true);
 
     // Fetch strands for current user
-    const { data: strands } = await supabase.from("strands")
+    const { data: strands, error: strandsErr } = await supabase.from("strands")
       .select("requester_id, receiver_id, status")
       .or(`requester_id.eq.${user.id},receiver_id.eq.${user.id}`);
+    if (strandsErr) console.warn("[Explore] strands fetch failed:", strandsErr.message);
 
     const sMap: Record<string, string> = {};
     (strands || []).forEach(s => {

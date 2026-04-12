@@ -422,7 +422,10 @@ const Profile = () => {
     if (!user || !targetUserId || isOwnProfile) return;
     supabase.from("strands").select("id, status, requester_id, receiver_id")
       .or(`and(requester_id.eq.${user.id},receiver_id.eq.${targetUserId}),and(requester_id.eq.${targetUserId},receiver_id.eq.${user.id})`)
-      .maybeSingle().then(({ data }) => { if (data) { setConnectionStatus({ status: data.status, direction: data.requester_id === user.id ? "sent" : "received", id: data.id }); } });
+      .maybeSingle().then(({ data, error }) => {
+        if (error) { console.warn("[Profile] strand status failed:", error.message); return; }
+        if (data) { setConnectionStatus({ status: data.status, direction: data.requester_id === user.id ? "sent" : "received", id: data.id }); }
+      });
   }, [user, targetUserId, isOwnProfile]);
   useEffect(() => { if (!authLoading) loadProfile(); }, [authLoading, loadProfile]);
 
