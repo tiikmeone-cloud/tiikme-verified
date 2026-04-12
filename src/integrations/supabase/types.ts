@@ -695,39 +695,63 @@ export type Database = {
           applicant_id: string
           assessment_passed: boolean | null
           assessment_score: number | null
+          cover_letter: string | null
           cover_note: string | null
           created_at: string | null
+          custom_answers: Json | null
           id: string
+          joined_confirmed: boolean | null
           message: string | null
+          offer_accepted: boolean | null
           opportunity_id: string
+          portfolio_url: string | null
+          recruiter_notes: string | null
           resume_url: string | null
+          selected_at: string | null
           status: string | null
+          why_good_fit: string | null
           work_items_attached: string[] | null
         }
         Insert: {
           applicant_id: string
           assessment_passed?: boolean | null
           assessment_score?: number | null
+          cover_letter?: string | null
           cover_note?: string | null
           created_at?: string | null
+          custom_answers?: Json | null
           id?: string
+          joined_confirmed?: boolean | null
           message?: string | null
+          offer_accepted?: boolean | null
           opportunity_id: string
+          portfolio_url?: string | null
+          recruiter_notes?: string | null
           resume_url?: string | null
+          selected_at?: string | null
           status?: string | null
+          why_good_fit?: string | null
           work_items_attached?: string[] | null
         }
         Update: {
           applicant_id?: string
           assessment_passed?: boolean | null
           assessment_score?: number | null
+          cover_letter?: string | null
           cover_note?: string | null
           created_at?: string | null
+          custom_answers?: Json | null
           id?: string
+          joined_confirmed?: boolean | null
           message?: string | null
+          offer_accepted?: boolean | null
           opportunity_id?: string
+          portfolio_url?: string | null
+          recruiter_notes?: string | null
           resume_url?: string | null
+          selected_at?: string | null
           status?: string | null
+          why_good_fit?: string | null
           work_items_attached?: string[] | null
         }
         Relationships: [
@@ -877,30 +901,45 @@ export type Database = {
       }
       org_members: {
         Row: {
+          approval_status: string | null
+          approved_by: string | null
+          department: string | null
+          granted_by: string | null
           id: string
           is_verified: boolean | null
           joined_at: string | null
           org_id: string
+          permissions: Json | null
           role: string | null
           title: string | null
           user_id: string
           verified_at: string | null
         }
         Insert: {
+          approval_status?: string | null
+          approved_by?: string | null
+          department?: string | null
+          granted_by?: string | null
           id?: string
           is_verified?: boolean | null
           joined_at?: string | null
           org_id: string
+          permissions?: Json | null
           role?: string | null
           title?: string | null
           user_id: string
           verified_at?: string | null
         }
         Update: {
+          approval_status?: string | null
+          approved_by?: string | null
+          department?: string | null
+          granted_by?: string | null
           id?: string
           is_verified?: boolean | null
           joined_at?: string | null
           org_id?: string
+          permissions?: Json | null
           role?: string | null
           title?: string | null
           user_id?: string
@@ -1522,6 +1561,52 @@ export type Database = {
           },
         ]
       }
+      post_reposts: {
+        Row: {
+          created_at: string | null
+          id: string
+          post_id: string
+          reposted_by: string
+          reposted_by_org: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          post_id: string
+          reposted_by: string
+          reposted_by_org?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          reposted_by?: string
+          reposted_by_org?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_reposts_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_reposts_reposted_by_fkey"
+            columns: ["reposted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_reposts_reposted_by_org_fkey"
+            columns: ["reposted_by_org"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       posts: {
         Row: {
           author_id: string | null
@@ -1877,6 +1962,76 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      verification_requests: {
+        Row: {
+          context_note: string | null
+          created_at: string | null
+          id: string
+          item_id: string
+          item_type: string
+          org_id: string
+          requester_id: string
+          review_note: string | null
+          reviewed_by: string | null
+          status: string | null
+          submitted_id: string
+          supporting_doc_url: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          context_note?: string | null
+          created_at?: string | null
+          id?: string
+          item_id: string
+          item_type: string
+          org_id: string
+          requester_id: string
+          review_note?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          submitted_id: string
+          supporting_doc_url?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          context_note?: string | null
+          created_at?: string | null
+          id?: string
+          item_id?: string
+          item_type?: string
+          org_id?: string
+          requester_id?: string
+          review_note?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          submitted_id?: string
+          supporting_doc_url?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verification_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verification_requests_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verification_requests_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       verifications: {
         Row: {
