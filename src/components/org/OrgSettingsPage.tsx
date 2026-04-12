@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, Upload } from "lucide-react";
 import { toast } from "sonner";
 import PageLoader from "@/components/PageLoader";
 
@@ -22,6 +22,10 @@ export default function OrgSettingsPage() {
   const [section, setSection] = useState<typeof SECTIONS[number]>("General");
   const [form, setForm] = useState<any>({});
   const [isAdmin, setIsAdmin] = useState(false);
+  const logoRef = useRef<HTMLInputElement>(null);
+  const coverRef = useRef<HTMLInputElement>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -56,6 +60,40 @@ export default function OrgSettingsPage() {
     setSaving(false);
   };
 
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !org) return;
+    if (file.size > 2 * 1024 * 1024) { toast.error("Logo must be under 2MB"); return; }
+    setUploadingLogo(true);
+    try {
+      const path = `${org.id}/logo-${Date.now()}.${file.name.split(".").pop()}`;
+      const { error: upErr } = await supabase.storage.from("org-logos").upload(path, file, { upsert: true });
+      if (upErr) { toast.error(upErr.message); setUploadingLogo(false); return; }
+      const { data: { publicUrl } } = supabase.storage.from("org-logos").getPublicUrl(path);
+      await supabase.from("organizations").update({ logo_url: publicUrl }).eq("id", org.id);
+      setOrg((prev: any) => ({ ...prev, logo_url: publicUrl }));
+      toast.success("Logo updated!");
+    } catch { toast.error("Upload failed"); }
+    setUploadingLogo(false);
+  };
+
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !org) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Cover must be under 5MB"); return; }
+    setUploadingCover(true);
+    try {
+      const path = `${org.id}/cover-${Date.now()}.${file.name.split(".").pop()}`;
+      const { error: upErr } = await supabase.storage.from("cover-images").upload(path, file, { upsert: true });
+      if (upErr) { toast.error(upErr.message); setUploadingCover(false); return; }
+      const { data: { publicUrl } } = supabase.storage.from("cover-images").getPublicUrl(path);
+      await supabase.from("organizations").update({ cover_url: publicUrl }).eq("id", org.id);
+      setOrg((prev: any) => ({ ...prev, cover_url: publicUrl }));
+      toast.success("Cover updated!");
+    } catch { toast.error("Upload failed"); }
+    setUploadingCover(false);
+  };
+
   if (loading) return <PageLoader />;
   if (!org || !isAdmin) return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: "#FFF8F2" }}>
@@ -65,6 +103,9 @@ export default function OrgSettingsPage() {
 
   return (
     <div className="min-h-screen" style={{ background: "#FFF8F2" }}>
+      <input ref={logoRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+      <input ref={coverRef} type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
+
       <div className="sticky top-0 z-10 bg-white border-b px-4 py-3 flex items-center gap-3" style={{ borderColor: "#F0E8E0" }}>
         <button type="button" onClick={() => navigate(`/org/${slug}`)} className="flex items-center gap-2 text-[13px]" style={{ color: "#6B6B6B" }}>
           <ArrowLeft className="w-4 h-4" /> Back to page
@@ -73,7 +114,6 @@ export default function OrgSettingsPage() {
       </div>
 
       <div className="max-w-[960px] mx-auto px-4 py-6 flex flex-col md:flex-row gap-6">
-        {/* Nav */}
         <nav className="w-full md:w-[200px] shrink-0">
           <div className="flex md:flex-col gap-1 overflow-x-auto md:overflow-visible">
             {SECTIONS.map(s => (
@@ -86,7 +126,6 @@ export default function OrgSettingsPage() {
           </div>
         </nav>
 
-        {/* Content */}
         <div className="flex-1 min-w-0">
           {section === "General" && (
             <div className="rounded-xl p-6 space-y-4" style={{ background: "#fff", border: "1px solid #F0E8E0" }}>
@@ -125,16 +164,34 @@ export default function OrgSettingsPage() {
                   <p className="text-[13px] font-medium mb-2" style={{ color: "#6B6B6B" }}>Logo</p>
                   <div className="w-[120px] h-[120px] rounded-full border-2 border-dashed flex items-center justify-center cursor-pointer hover:bg-gray-50"
                     style={{ borderColor: "#F0E8E0" }}
-                    onClick={() => toast.info("Logo upload coming soon")}>
-                    {org.logo_url ? <img src={org.logo_url} alt="" className="w-full h-full rounded-full object-cover" /> : <span className="text-[12px]" style={{ color: "#9CA3AF" }}>Upload logo</span>}
+                    onClick={() => logoRef.current?.click()}>
+                    {uploadingLogo ? (
+                      <span className="text-[12px]" style={{ color: "#E8580A" }}>Uploading...</span>
+                    ) : org.logo_url ? (
+                      <img src={org.logo_url} alt="" className="w-full h-full rounded-full object-cover" />
+                    ) : (
+                      <div className="flex flex-col items-center gap-1">
+                        <Upload className="w-5 h-5" style={{ color: "#9CA3AF" }} />
+                        <span className="text-[12px]" style={{ color: "#9CA3AF" }}>Upload logo</span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="flex-1">
                   <p className="text-[13px] font-medium mb-2" style={{ color: "#6B6B6B" }}>Cover photo</p>
                   <div className="w-full h-[100px] rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer hover:bg-gray-50"
                     style={{ borderColor: "#F0E8E0" }}
-                    onClick={() => toast.info("Cover upload coming soon")}>
-                    {org.cover_url ? <img src={org.cover_url} alt="" className="w-full h-full rounded-xl object-cover" /> : <span className="text-[12px]" style={{ color: "#9CA3AF" }}>Upload cover</span>}
+                    onClick={() => coverRef.current?.click()}>
+                    {uploadingCover ? (
+                      <span className="text-[12px]" style={{ color: "#E8580A" }}>Uploading...</span>
+                    ) : org.cover_url ? (
+                      <img src={org.cover_url} alt="" className="w-full h-full rounded-xl object-cover" />
+                    ) : (
+                      <div className="flex flex-col items-center gap-1">
+                        <Upload className="w-5 h-5" style={{ color: "#9CA3AF" }} />
+                        <span className="text-[12px]" style={{ color: "#9CA3AF" }}>Upload cover</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -162,11 +219,11 @@ export default function OrgSettingsPage() {
               <h2 className="text-[18px] font-bold" style={{ color: "#DC2626" }}>Danger Zone</h2>
               <div className="flex items-center justify-between py-3" style={{ borderBottom: "1px solid #F0E8E0" }}>
                 <div><p className="text-[14px] font-medium" style={{ color: "#1A1A1A" }}>Deactivate page</p><p className="text-[12px]" style={{ color: "#9CA3AF" }}>Page will be hidden from search</p></div>
-                <Button variant="destructive" size="sm" onClick={() => toast.info("Coming soon")}>Deactivate</Button>
+                <Button variant="destructive" size="sm" onClick={() => toast.info("This feature is coming soon. Stay Tiiked!")}>Deactivate</Button>
               </div>
               <div className="flex items-center justify-between py-3">
                 <div><p className="text-[14px] font-medium" style={{ color: "#1A1A1A" }}>Delete page permanently</p><p className="text-[12px]" style={{ color: "#9CA3AF" }}>30-day hold then permanent deletion</p></div>
-                <Button variant="destructive" size="sm" onClick={() => toast.info("Coming soon")}>Delete</Button>
+                <Button variant="destructive" size="sm" onClick={() => toast.info("This feature is coming soon. Stay Tiiked!")}>Delete</Button>
               </div>
             </div>
           )}
@@ -174,7 +231,7 @@ export default function OrgSettingsPage() {
           {["Team & Access", "Opportunities", "Notifications"].includes(section) && (
             <div className="rounded-xl p-12 text-center" style={{ background: "#fff", border: "1px solid #F0E8E0" }}>
               <p className="text-[14px] font-semibold" style={{ color: "#1A1A1A" }}>{section}</p>
-              <p className="text-[12px] mt-1" style={{ color: "#9CA3AF" }}>Configuration coming soon</p>
+              <p className="text-[12px] mt-1" style={{ color: "#9CA3AF" }}>This feature is coming soon. Stay Tiiked!</p>
             </div>
           )}
         </div>

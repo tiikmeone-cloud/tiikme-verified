@@ -12,6 +12,8 @@ import OpportunitiesTab from "@/components/org/tabs/OpportunitiesTab";
 import VerifiedMembersTab from "@/components/org/tabs/VerifiedMembersTab";
 
 const TABS = ["Home", "About", "Team", "Opportunities", "Posts", "Verified Members"];
+const TAB_SLUG_MAP: Record<string, string> = { about: "About", team: "Team", opportunities: "Opportunities", posts: "Posts", members: "Verified Members" };
+const SLUG_TAB_MAP: Record<string, string> = { Home: "", About: "about", Team: "team", Opportunities: "opportunities", Posts: "posts", "Verified Members": "members" };
 
 export default function OrganizationPage() {
   const { slug, tab: urlTab } = useParams<{ slug: string; tab?: string }>();
@@ -45,11 +47,22 @@ export default function OrganizationPage() {
 
   // Map URL tab to display tab
   useEffect(() => {
-    if (urlTab) {
-      const map: Record<string, string> = { about: "About", team: "Team", opportunities: "Opportunities", posts: "Posts", members: "Verified Members" };
-      if (map[urlTab]) setActiveTab(map[urlTab]);
+    if (urlTab && TAB_SLUG_MAP[urlTab]) {
+      setActiveTab(TAB_SLUG_MAP[urlTab]);
+    } else if (!urlTab) {
+      setActiveTab("Home");
     }
   }, [urlTab]);
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    const tabSlug = SLUG_TAB_MAP[tab];
+    if (tabSlug) {
+      navigate(`/org/${slug}/${tabSlug}`, { replace: true });
+    } else {
+      navigate(`/org/${slug}`, { replace: true });
+    }
+  };
 
   const fetchOrg = useCallback(async () => {
     if (!slug) return;
@@ -92,10 +105,13 @@ export default function OrganizationPage() {
       await supabase.from("org_followers").delete().eq("org_id", org.id).eq("user_id", user.id);
       setIsFollowing(false);
       setFollowerCount(c => c - 1);
+      // Sync DB count
+      await supabase.from("organizations").update({ followers_count: Math.max(0, followerCount - 1) }).eq("id", org.id);
     } else {
       await supabase.from("org_followers").insert({ org_id: org.id, user_id: user.id });
       setIsFollowing(true);
       setFollowerCount(c => c + 1);
+      await supabase.from("organizations").update({ followers_count: followerCount + 1 }).eq("id", org.id);
     }
   };
 
@@ -121,9 +137,11 @@ export default function OrganizationPage() {
         memberCount={verifiedMembers.length}
         onFollow={handleFollow}
         onNavigateSettings={() => navigate(`/org/${slug}/settings`)}
+        onCoverUpdated={(url) => setOrg((prev: any) => ({ ...prev, cover_url: url }))}
+        onLogoUpdated={(url) => setOrg((prev: any) => ({ ...prev, logo_url: url }))}
       />
 
-      <OrgTabs tabs={TABS} active={activeTab} onChange={setActiveTab} />
+      <OrgTabs tabs={TABS} active={activeTab} onChange={handleTabChange} />
 
       <div className="max-w-[960px] mx-auto px-4 md:px-6 py-5">
         {activeTab === "Home" && <HomeTab org={org} posts={posts} isAdmin={isAdmin} onPostCreated={post => setPosts(prev => [post, ...prev])} />}

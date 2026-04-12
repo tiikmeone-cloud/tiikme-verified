@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Users, Plus, CheckCircle, Search } from "lucide-react";
+import { Users, Plus, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 interface TeamTabProps {
   org: any;
@@ -24,7 +25,6 @@ export default function TeamTab({ org, members, isAdmin }: TeamTabProps) {
     items: members.filter(m => tier.roles.includes(m.role || "member")),
   })).filter(g => g.items.length > 0);
 
-  // If no tier matched, show all under "Team Members"
   const ungrouped = members.filter(m => !TIERS.some(t => t.roles.includes(m.role || "member")));
   if (ungrouped.length > 0) {
     const existing = groupedMembers.find(g => g.key === "team");
@@ -42,7 +42,8 @@ export default function TeamTab({ org, members, isAdmin }: TeamTabProps) {
             style={{ background: view === "list" ? "rgba(232,88,10,0.1)" : "transparent", color: view === "list" ? "#E8580A" : "#6B6B6B" }}>List</button>
         </div>
         {isAdmin && (
-          <Button size="sm" className="gap-1" style={{ background: "#E8580A", color: "#fff" }}>
+          <Button size="sm" className="gap-1" style={{ background: "#E8580A", color: "#fff" }}
+            onClick={() => toast.info("This feature is coming soon. Stay Tiiked!")}>
             <Plus className="w-3.5 h-3.5" /> Add Team Member
           </Button>
         )}

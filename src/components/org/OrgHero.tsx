@@ -1,6 +1,8 @@
+import { useState, useRef } from "react";
 import { MapPin, Globe, Calendar, Users, MessageCircle, Share2, Settings, MoreHorizontal, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface OrgHeroProps {
   org: any;
@@ -10,14 +12,67 @@ interface OrgHeroProps {
   memberCount: number;
   onFollow: () => void;
   onNavigateSettings: () => void;
+  onCoverUpdated?: (url: string) => void;
+  onLogoUpdated?: (url: string) => void;
 }
 
-export default function OrgHero({ org, isAdmin, isFollowing, followerCount, memberCount, onFollow, onNavigateSettings }: OrgHeroProps) {
+export default function OrgHero({ org, isAdmin, isFollowing, followerCount, memberCount, onFollow, onNavigateSettings, onCoverUpdated, onLogoUpdated }: OrgHeroProps) {
   const initials = (org.name || "").split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
   const locationParts = [org.city, org.state].filter(Boolean);
+  const coverRef = useRef<HTMLInputElement>(null);
+  const logoRef = useRef<HTMLInputElement>(null);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Cover image must be under 5MB"); return; }
+    setUploadingCover(true);
+    try {
+      const path = `${org.id}/cover-${Date.now()}.${file.name.split(".").pop()}`;
+      const { error: upErr } = await supabase.storage.from("cover-images").upload(path, file, { upsert: true });
+      if (upErr) { toast.error(upErr.message); setUploadingCover(false); return; }
+      const { data: { publicUrl } } = supabase.storage.from("cover-images").getPublicUrl(path);
+      await supabase.from("organizations").update({ cover_url: publicUrl }).eq("id", org.id);
+      onCoverUpdated?.(publicUrl);
+      toast.success("Cover updated!");
+    } catch (err) { toast.error("Upload failed"); }
+    setUploadingCover(false);
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { toast.error("Logo must be under 2MB"); return; }
+    setUploadingLogo(true);
+    try {
+      const path = `${org.id}/logo-${Date.now()}.${file.name.split(".").pop()}`;
+      const { error: upErr } = await supabase.storage.from("org-logos").upload(path, file, { upsert: true });
+      if (upErr) { toast.error(upErr.message); setUploadingLogo(false); return; }
+      const { data: { publicUrl } } = supabase.storage.from("org-logos").getPublicUrl(path);
+      await supabase.from("organizations").update({ logo_url: publicUrl }).eq("id", org.id);
+      onLogoUpdated?.(publicUrl);
+      toast.success("Logo updated!");
+    } catch (err) { toast.error("Upload failed"); }
+    setUploadingLogo(false);
+  };
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      try { await navigator.share({ title: org.name, url }); } catch {}
+    } else {
+      navigator.clipboard.writeText(url);
+      toast.success("Link copied to clipboard");
+    }
+  };
 
   return (
     <>
+      <input ref={coverRef} type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
+      <input ref={logoRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+
       {/* Cover */}
       <div className="w-full h-[180px] md:h-[280px] relative overflow-hidden group" style={{
         background: org.cover_url ? `url(${org.cover_url}) center/cover` : "linear-gradient(135deg, #E8580A 0%, #C4460A 100%)",
@@ -25,8 +80,9 @@ export default function OrgHero({ org, isAdmin, isFollowing, followerCount, memb
         {isAdmin && (
           <button type="button" className="absolute top-3 right-3 px-3 py-1.5 rounded-lg text-[12px] font-semibold flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
             style={{ background: "rgba(0,0,0,0.5)", color: "#fff" }}
-            onClick={() => toast.info("Cover upload coming soon")}>
-            <Camera className="w-3.5 h-3.5" /> Change cover
+            disabled={uploadingCover}
+            onClick={() => coverRef.current?.click()}>
+            <Camera className="w-3.5 h-3.5" /> {uploadingCover ? "Uploading..." : "Change cover"}
           </button>
         )}
       </div>
@@ -35,15 +91,16 @@ export default function OrgHero({ org, isAdmin, isFollowing, followerCount, memb
       <div className="max-w-[960px] mx-auto px-4 md:px-6">
         <div className="flex flex-col md:flex-row md:items-start gap-4 -mt-12 relative z-10">
           {/* Logo */}
-          <div className="w-[72px] h-[72px] md:w-24 md:h-24 rounded-full flex items-center justify-center text-[20px] md:text-[24px] font-bold shrink-0 overflow-hidden cursor-pointer"
+          <div className="w-[72px] h-[72px] md:w-24 md:h-24 rounded-full flex items-center justify-center text-[20px] md:text-[24px] font-bold shrink-0 overflow-hidden cursor-pointer relative"
             style={{
               background: org.logo_url ? "#fff" : "#E8580A",
               color: org.logo_url ? undefined : "#fff",
               border: "3px solid #fff",
               boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06)",
             }}
-            onClick={() => isAdmin && toast.info("Logo upload coming soon")}>
+            onClick={() => isAdmin && logoRef.current?.click()}>
             {org.logo_url ? <img src={org.logo_url} alt="" className="w-full h-full object-cover" /> : initials}
+            {uploadingLogo && <div className="absolute inset-0 bg-black/30 flex items-center justify-center rounded-full"><span className="text-[10px] text-white">...</span></div>}
             {org.is_verified && (
               <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: "#E8580A" }}>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M9 12l2 2 4-4" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -84,7 +141,8 @@ export default function OrgHero({ org, isAdmin, isFollowing, followerCount, memb
                 style={isFollowing ? { background: "#fff", color: "#1A1A1A", border: "1px solid #F0E8E0" } : { background: "#E8580A", color: "#fff" }}>
                 {isFollowing ? "Following ✓" : "Follow"}
               </Button>
-              <Button variant="secondary" size="default" className="h-10 gap-1.5" style={{ border: "1px solid #F0E8E0" }}>
+              <Button variant="secondary" size="default" className="h-10 gap-1.5" style={{ border: "1px solid #F0E8E0" }}
+                onClick={() => toast.info("This feature is coming soon. Stay Tiiked!")}>
                 <MessageCircle className="w-4 h-4" /> Message
               </Button>
               <div className="relative group/menu">
@@ -94,7 +152,7 @@ export default function OrgHero({ org, isAdmin, isFollowing, followerCount, memb
                 <div className="absolute right-0 top-full mt-1 w-[180px] rounded-xl py-1 hidden group-hover/menu:block z-20"
                   style={{ background: "#fff", border: "1px solid #F0E8E0", boxShadow: "0 4px 16px rgba(0,0,0,0.08)" }}>
                   <button type="button" className="w-full text-left px-3 py-2 text-[13px] hover:bg-gray-50" onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success("Link copied"); }}>Copy link</button>
-                  <button type="button" className="w-full text-left px-3 py-2 text-[13px] hover:bg-gray-50">Share page</button>
+                  <button type="button" className="w-full text-left px-3 py-2 text-[13px] hover:bg-gray-50" onClick={handleShare}>Share page</button>
                   {isAdmin && (
                     <>
                       <div className="h-px my-1" style={{ background: "#F0E8E0" }} />
