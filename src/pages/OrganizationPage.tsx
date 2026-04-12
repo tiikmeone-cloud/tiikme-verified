@@ -66,42 +66,49 @@ export default function OrganizationPage() {
   const fetchOrg = useCallback(async () => {
     if (!slug) return;
     setLoading(true);
-    const { data: orgData } = await supabase.from("organizations" as any).select("*").eq("slug", slug).single();
-    if (!orgData) { setLoading(false); return; }
-    setOrg(orgData as any);
-    setFollowerCount((orgData as any).followers_count || 0);
+    try {
+      const { data: orgData, error: orgErr } = await supabase.from("organizations" as any).select("*").eq("slug", slug).maybeSingle();
+      if (orgErr) { console.warn("[OrgPage] org fetch failed:", orgErr.message); setLoading(false); return; }
+      if (!orgData) { setLoading(false); return; }
+      setOrg(orgData as any);
+      setFollowerCount((orgData as any).followers_count || 0);
 
-    const orgId = (orgData as any).id;
+      const orgId = (orgData as any).id;
 
-    // Parallel fetches
-    const [membersRes, metaRes, postsRes] = await Promise.all([
-      supabase.from("org_members" as any).select("*, profile:profiles!user_id(id, full_name, avatar_url, role, headline, username)").eq("org_id", orgId),
-      supabase.from("org_metadata" as any).select("*").eq("org_id", orgId),
-      supabase.from("posts").select("*, author:profiles!posts_author_id_fkey(id, full_name, avatar_url, username)").eq("workspace_name", `org:${orgId}`).order("created_at", { ascending: false }).limit(50),
-    ]);
+      const [membersRes, metaRes, postsRes] = await Promise.allSettled([
+        supabase.from("org_members" as any).select("*, profile:profiles!user_id(id, full_name, avatar_url, role, headline, username)").eq("org_id", orgId),
+        supabase.from("org_metadata" as any).select("*").eq("org_id", orgId),
+        supabase.from("posts").select("*, author:profiles!posts_author_id_fkey(id, full_name, avatar_url, username)").eq("workspace_name", `org:${orgId}`).order("created_at", { ascending: false }).limit(50),
+      ]);
 
-    setMembers((membersRes.data as any) || []);
-    const metaMap: Record<string, string> = {};
-    ((metaRes.data as any) || []).forEach((m: any) => { metaMap[m.key] = m.value; });
-    setMeta(metaMap);
-    setPosts((postsRes.data as any) || []);
+      const membersData = membersRes.status === "fulfilled" ? (membersRes.value as any).data || [] : (console.warn("[OrgPage] members failed"), []);
+      const metaData = metaRes.status === "fulfilled" ? (metaRes.value as any).data || [] : (console.warn("[OrgPage] meta failed"), []);
+      const postsData = postsRes.status === "fulfilled" ? (postsRes.value as any).data || [] : (console.warn("[OrgPage] posts failed"), []);
 
-    if (user) {
-      const myMember = ((membersRes.data as any) || []).find((m: any) => m.user_id === user.id);
-      setIsMember(!!myMember);
-      setIsAdmin(myMember?.role === "owner" || myMember?.role === "admin");
+      setMembers(membersData);
+      const metaMap: Record<string, string> = {};
+      metaData.forEach((m: any) => { metaMap[m.key] = m.value; });
+      setMeta(metaMap);
+      setPosts(postsData);
 
-      const { data: followData } = await supabase.from("org_followers" as any).select("id").eq("org_id", orgId).eq("user_id", user.id).maybeSingle();
-      setIsFollowing(!!followData);
+      if (user) {
+        const myMember = membersData.find((m: any) => m.user_id === user.id);
+        setIsMember(!!myMember);
+        setIsAdmin(myMember?.role === "owner" || myMember?.role === "admin");
 
-      // Fetch pending requests if admin
-      if (myMember?.role === "owner" || myMember?.role === "admin") {
-        const { data: reqs } = await supabase.from("org_verif_requests" as any)
-          .select("*, profile:profiles!user_id(id, full_name, avatar_url, username, role)")
-          .eq("org_id", orgId).eq("status", "pending");
-        setPendingReqs((reqs as any) || []);
+        const { data: followData, error: followErr } = await supabase.from("org_followers" as any).select("id").eq("org_id", orgId).eq("user_id", user.id).maybeSingle();
+        if (followErr) console.warn("[OrgPage] follow check failed:", followErr.message);
+        setIsFollowing(!!followData);
+
+        if (myMember?.role === "owner" || myMember?.role === "admin") {
+          const { data: reqs, error: reqsErr } = await supabase.from("org_verif_requests" as any)
+            .select("*, profile:profiles!user_id(id, full_name, avatar_url, username, role)")
+            .eq("org_id", orgId).eq("status", "pending");
+          if (reqsErr) console.warn("[OrgPage] pending reqs failed:", reqsErr.message);
+          setPendingReqs((reqs as any) || []);
+        }
       }
-    }
+    } catch (e) { console.warn("[OrgPage] exception:", e); }
     setLoading(false);
   }, [slug, user]);
 

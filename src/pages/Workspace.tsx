@@ -68,7 +68,8 @@ const Workspace = () => {
   useEffect(() => {
     if (createName.length < 4) { setNameSuggestions([]); return; }
     const timer = setTimeout(async () => {
-      const { data } = await supabase.from("workspaces").select("name").ilike("name", `%${createName}%`).limit(5);
+      const { data, error } = await supabase.from("workspaces").select("name").ilike("name", `%${createName}%`).limit(5);
+      if (error) console.warn("[Workspace] name suggestions failed:", error.message);
       setNameSuggestions((data || []).map(w => w.name));
     }, 300);
     return () => clearTimeout(timer);
@@ -139,7 +140,8 @@ const Workspace = () => {
   useEffect(() => {
     if (!selected) return;
     const loadPosts = async () => {
-      const { data } = await supabase.from("posts").select("*, author:profiles!author_id(id, full_name, username, avatar_url, role)").eq("workspace_id", selected).order("created_at", { ascending: false }).limit(50);
+      const { data, error } = await supabase.from("posts").select("*, author:profiles!author_id(id, full_name, username, avatar_url, role)").eq("workspace_id", selected).order("created_at", { ascending: false }).limit(50);
+      if (error) console.warn("[Workspace] posts fetch failed:", error.message);
       if (data) setPosts(data);
     };
     loadPosts();

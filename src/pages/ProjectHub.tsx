@@ -24,12 +24,14 @@ const ProjectHub = () => {
   useEffect(() => {
     if (!projectId) { setLoading(false); return; }
     const load = async () => {
-      const [{ data: proj }, { data: team }] = await Promise.all([
-        supabase.from("work_items").select("*, owner:profiles!work_items_owner_id_fkey(id, full_name, avatar_url, role)").eq("id", projectId).maybeSingle(),
-        supabase.from("team_members").select("*, member:profiles!team_members_user_id_fkey(id, full_name, avatar_url, role, institution_name)").eq("work_item_id", projectId),
-      ]);
-      setProject(proj);
-      setTeamMembers(team || []);
+      try {
+        const [projRes, teamRes] = await Promise.allSettled([
+          supabase.from("work_items").select("*, owner:profiles!work_items_owner_id_fkey(id, full_name, avatar_url, role)").eq("id", projectId).maybeSingle(),
+          supabase.from("team_members").select("*, member:profiles!team_members_user_id_fkey(id, full_name, avatar_url, role, institution_name)").eq("work_item_id", projectId),
+        ]);
+        setProject(projRes.status === "fulfilled" ? (projRes.value as any).data : (console.warn("[ProjectHub] project fetch failed"), null));
+        setTeamMembers(teamRes.status === "fulfilled" ? (teamRes.value as any).data || [] : (console.warn("[ProjectHub] team fetch failed"), []));
+      } catch (e) { console.warn("[ProjectHub] exception:", e); }
       setLoading(false);
     };
     load();

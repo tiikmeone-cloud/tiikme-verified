@@ -21,16 +21,19 @@ const PageProfile = () => {
   useEffect(() => {
     const load = async () => {
       if (!slug) return;
-      const { data } = await supabase.from("pages").select("*").eq("slug", slug).single();
-      if (data) {
-        setPage(data);
-        if (user) {
-          const { data: admin } = await supabase.from("page_admins").select("id").eq("page_id", data.id).eq("user_id", user.id).maybeSingle();
-          setIsAdmin(!!admin || data.created_by === user.id);
-          const { data: tracker } = await supabase.from("page_trackers").select("id").eq("page_id", data.id).eq("user_id", user.id).maybeSingle();
-          setTracking(!!tracker);
+      try {
+        const { data, error } = await supabase.from("pages").select("*").eq("slug", slug).maybeSingle();
+        if (error) { console.warn("[PageProfile] page fetch failed:", error.message); setLoading(false); return; }
+        if (data) {
+          setPage(data);
+          if (user) {
+            const { data: admin } = await supabase.from("page_admins").select("id").eq("page_id", data.id).eq("user_id", user.id).maybeSingle();
+            setIsAdmin(!!admin || data.created_by === user.id);
+            const { data: tracker } = await supabase.from("page_trackers").select("id").eq("page_id", data.id).eq("user_id", user.id).maybeSingle();
+            setTracking(!!tracker);
+          }
         }
-      }
+      } catch (e) { console.warn("[PageProfile] exception:", e); }
       setLoading(false);
     };
     load();
