@@ -34,7 +34,7 @@ export default function StepEmail({ onNext }: Props) {
 
     setSubmitting(true);
     try {
-      // Step 1: Sign up — Supabase sends a confirmation OTP automatically
+      // Sign up — Supabase sends a confirmation email automatically
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: email.trim(),
         password,
@@ -61,7 +61,7 @@ export default function StepEmail({ onNext }: Props) {
         return;
       }
 
-      // Step 2: Send a separate OTP for 6-digit verification
+      // Send OTP for 6-digit verification (overrides the default confirmation link)
       const { error: otpError } = await supabase.auth.signInWithOtp({
         email: email.trim(),
       });

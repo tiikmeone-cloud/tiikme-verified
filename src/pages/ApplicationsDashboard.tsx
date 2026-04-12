@@ -179,6 +179,27 @@ export default function ApplicationsDashboard() {
   if (loading) return <PageLoader />;
   if (!opp) return null;
 
+  const qualifiedCount = apps.filter((a: any) => a.is_qualified === true).length;
+
+  const handleContactViaPings = async (applicantId: string) => {
+    if (!user) return;
+    try {
+      // Check for existing conversation
+      const { data: existing } = await supabase.from("conversations")
+        .select("id")
+        .or(`and(participant_1.eq.${user.id},participant_2.eq.${applicantId}),and(participant_1.eq.${applicantId},participant_2.eq.${user.id})`)
+        .maybeSingle();
+      if (existing) {
+        navigate(`/app/pings/${existing.id}`);
+        return;
+      }
+      const { data: conv } = await supabase.from("conversations").insert({
+        participant_1: user.id, participant_2: applicantId,
+      }).select().single();
+      if (conv) navigate(`/app/pings/${conv.id}`);
+    } catch (e) { console.warn("[AppsDashboard] ping contact:", e); toast.error("Failed to open conversation"); }
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-60px)]">
       {/* Header */}
@@ -189,11 +210,7 @@ export default function ApplicationsDashboard() {
         <div className="flex-1 min-w-0">
           <h1 className="text-[16px] font-bold truncate" style={{ color: "#1A1A1A" }}>{opp.title}</h1>
           <p className="text-[13px]" style={{ color: "#9CA3AF" }}>
-            {apps.length} applied
-            {(() => {
-              const qualifiedCount = apps.filter((a: any) => a.is_qualified === true).length;
-              return qualifiedCount > 0 ? ` · ${qualifiedCount} qualified` : "";
-            })()}
+            {apps.length} applied{qualifiedCount > 0 ? ` · ${qualifiedCount} qualified` : ""}
           </p>
         </div>
       </div>
