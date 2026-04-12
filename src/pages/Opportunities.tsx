@@ -2,9 +2,10 @@ import { storageImageUrl } from "@/lib/imageTransform";
 import { useState, useEffect, useCallback } from "react";
 import { AnimatePresence } from "framer-motion";
 import {
-  Search, Briefcase, MapPin, Bookmark, Clock, Plus, Building2, Users as UsersIcon
+  Search, Briefcase, MapPin, Bookmark, Clock, Plus, Building2, Users as UsersIcon, Eye
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrgIdentity } from "@/contexts/OrgIdentityContext";
@@ -18,6 +19,7 @@ const typeColors: Record<string, string> = { fulltime: "#2563EB", "full-time": "
 const Opportunities = () => {
   const { user, profile } = useAuth();
   const { isInstitution, org } = useOrgIdentity();
+  const navigate = useNavigate();
   const [activeType, setActiveType] = useState("All");
   const [search, setSearch] = useState("");
   const [opps, setOpps] = useState<any[]>([]);
