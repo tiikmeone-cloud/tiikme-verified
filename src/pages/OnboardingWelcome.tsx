@@ -8,7 +8,7 @@ import ThemeLogo from "@/components/ThemeLogo";
 export default function OnboardingWelcome() {
   const navigate = useNavigate();
   const { profile } = useAuth();
-  const firstName = profile?.first_name || profile?.full_name?.split(" ")[0] || "there";
+  const firstName = profile?.full_name?.split(" ")[0] || "there";
   const role = profile?.role || "student";
   const [showCheck, setShowCheck] = useState(false);
 

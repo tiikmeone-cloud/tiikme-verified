@@ -1652,7 +1652,6 @@ export type Database = {
           custom_links: Json | null
           department: string | null
           designation: string | null
-          first_name: string | null
           full_name: string | null
           headline: string | null
           id: string
@@ -1661,7 +1660,6 @@ export type Database = {
           is_public: boolean | null
           is_verified: boolean | null
           languages: string[] | null
-          last_name: string | null
           location_city: string | null
           location_state: string | null
           onboarding_complete: boolean | null
@@ -1692,7 +1690,6 @@ export type Database = {
           custom_links?: Json | null
           department?: string | null
           designation?: string | null
-          first_name?: string | null
           full_name?: string | null
           headline?: string | null
           id: string
@@ -1701,7 +1698,6 @@ export type Database = {
           is_public?: boolean | null
           is_verified?: boolean | null
           languages?: string[] | null
-          last_name?: string | null
           location_city?: string | null
           location_state?: string | null
           onboarding_complete?: boolean | null
@@ -1732,7 +1728,6 @@ export type Database = {
           custom_links?: Json | null
           department?: string | null
           designation?: string | null
-          first_name?: string | null
           full_name?: string | null
           headline?: string | null
           id?: string
@@ -1741,7 +1736,6 @@ export type Database = {
           is_public?: boolean | null
           is_verified?: boolean | null
           languages?: string[] | null
-          last_name?: string | null
           location_city?: string | null
           location_state?: string | null
           onboarding_complete?: boolean | null

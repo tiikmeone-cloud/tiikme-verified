@@ -340,9 +340,8 @@ export default function OnboardingDetails() {
   const [submitting, setSubmitting] = useState(false);
 
   // Identity
-  const isReturning = !!(profile?.first_name && profile?.onboarding_complete);
-  const [firstName, setFirstName] = useState(isReturning ? (profile?.first_name || "") : "");
-  const [lastName, setLastName] = useState(isReturning ? (profile?.last_name || "") : "");
+  const isReturning = !!(profile?.full_name && profile?.onboarding_complete);
+  const [fullName, setFullName] = useState(isReturning ? (profile?.full_name || "") : "");
   const [username, setUsername] = useState("");
   const [usernameStatus, setUsernameStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
 
@@ -361,11 +360,11 @@ export default function OnboardingDetails() {
 
   // Auto-generate username
   useEffect(() => {
-    if (!firstName && !lastName) return;
-    const base = (firstName + lastName).toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (!fullName) return;
+    const base = fullName.toLowerCase().replace(/[^a-z0-9]/g, "");
     const suffix = user?.id?.slice(0, 6) || "000000";
     setUsername(base + "-" + suffix);
-  }, [firstName, lastName, user?.id]);
+  }, [fullName, user?.id]);
 
   // Check username
   useEffect(() => {
@@ -422,7 +421,7 @@ export default function OnboardingDetails() {
   const citySuggestions = country === "India" && state ? (CITY_SUGGESTIONS[state] || []) : [];
 
   const handleComplete = async () => {
-    if (!firstName.trim() || !lastName.trim()) { toast.info("First and last name are required"); return; }
+    if (!fullName.trim()) { toast.info("Full name is required"); return; }
     if (!country || !state || !city.trim()) { toast.info("Location is required"); return; }
     if (!user) { toast.error("Not authenticated"); return; }
 
@@ -435,9 +434,7 @@ export default function OnboardingDetails() {
 
     const { error } = await supabase.from("profiles").upsert({
       id: user.id,
-      full_name: `${firstName.trim()} ${lastName.trim()}`,
-      first_name: firstName.trim(),
-      last_name: lastName.trim(),
+      full_name: fullName.trim(),
       username: username.trim().toLowerCase(),
       role,
       headline: headline || "",
@@ -467,7 +464,7 @@ export default function OnboardingDetails() {
     if (!user) { navigate("/app/feed"); return; }
     await supabase.from("profiles").upsert({
       id: user.id,
-      full_name: `${firstName.trim()} ${lastName.trim()}`.trim() || user.email?.split("@")[0] || "User",
+      full_name: fullName.trim() || user.email?.split("@")[0] || "User",
       username: username || (user.email?.split("@")[0]?.replace(/[^a-z0-9]/g, "") + "-" + user.id.slice(0, 6)),
       role,
       onboarding_complete: false,
@@ -742,9 +739,9 @@ export default function OnboardingDetails() {
 
         {/* Section 1: Your Name */}
         <SectionBlock title="Your Name">
-          <div className="grid grid-cols-2 gap-3">
-            <div><label style={labelStyle}>First name *</label><input value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="e.g. Rahul" style={inputStyle} /></div>
-            <div><label style={labelStyle}>Last name *</label><input value={lastName} onChange={e => setLastName(e.target.value)} placeholder="e.g. Sharma" style={inputStyle} /></div>
+          <div>
+            <label style={labelStyle}>Full name *</label>
+            <input value={fullName} onChange={e => setFullName(e.target.value)} placeholder="e.g. Rahul Sharma" style={inputStyle} />
           </div>
           <div>
             <label style={labelStyle}>@username *</label>
