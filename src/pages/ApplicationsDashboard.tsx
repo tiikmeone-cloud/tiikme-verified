@@ -421,6 +421,32 @@ export default function ApplicationsDashboard() {
           )}
         </div>
       </div>
+
+      {/* Selection Confirmation Modal */}
+      {showSelectModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.5)" }} onClick={() => setShowSelectModal(null)}>
+          <div className="rounded-2xl p-6 max-w-[400px] w-full" style={{ background: "#fff" }} onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-4">
+              <Avatar className="w-12 h-12">
+                <AvatarImage src={showSelectModal.profile?.avatar_url ? storageImageUrl(showSelectModal.profile.avatar_url, "thumbnail") : undefined} />
+                <AvatarFallback style={{ background: "#FFF3EC", color: "#E8580A" }}>{(showSelectModal.profile?.full_name || "U").substring(0, 2).toUpperCase()}</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="text-[16px] font-bold" style={{ color: "#1A1A1A" }}>{showSelectModal.profile?.full_name}</p>
+                <p className="text-[13px]" style={{ color: "#9CA3AF" }}>{showSelectModal.profile?.headline || ""}</p>
+              </div>
+            </div>
+            <label className="text-[13px] font-semibold block mb-1.5" style={{ color: "#1A1A1A" }}>Offer message</label>
+            <textarea value={offerMessage} onChange={e => setOfferMessage(e.target.value)} rows={4}
+              className="w-full rounded-xl p-3 text-[14px] outline-none resize-none mb-4"
+              style={{ background: "#F9FAFB", border: "1.5px solid #F0E8E0", color: "#1A1A1A" }} />
+            <Button className="w-full" onClick={confirmSelect} style={{ height: 52, borderRadius: 12, background: "#E8580A", color: "#fff" }}>
+              Send Offer & Select
+            </Button>
+            <button type="button" onClick={() => setShowSelectModal(null)} className="w-full text-center text-[13px] mt-2 cursor-pointer" style={{ color: "#9CA3AF" }}>Cancel</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
