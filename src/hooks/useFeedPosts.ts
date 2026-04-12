@@ -97,7 +97,8 @@ export function useFeedPosts() {
       .select("requester_id, receiver_id")
       .or(`requester_id.eq.${user.id},receiver_id.eq.${user.id}`)
       .eq("status", "accepted")
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) { console.warn("[useFeedPosts] strands fetch failed:", error.message); return; }
         if (!mountedRef.current) return;
         const ids = new Set<string>();
         (data || []).forEach(s => {

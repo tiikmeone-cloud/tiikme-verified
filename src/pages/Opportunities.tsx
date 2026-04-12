@@ -59,7 +59,8 @@ const Opportunities = () => {
       .limit(30);
     if (search.trim()) query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%,location.ilike.%${search}%`);
     if (activeType !== "All" && typeMap[activeType]) query = query.eq("type", typeMap[activeType]);
-    const { data } = await query;
+    const { data, error } = await query;
+    if (error) console.warn("[Opportunities] fetch failed:", error.message);
     setOpps(data || []);
     setLoading(false);
   }, [search, activeType]);
@@ -70,7 +71,7 @@ const Opportunities = () => {
   useEffect(() => {
     if (!user) return;
     supabase.from("opportunity_applications").select("opportunity_id").eq("applicant_id", user.id)
-      .then(({ data }) => setAppliedIds((data || []).map((a: any) => a.opportunity_id)));
+      .then(({ data, error }) => { if (error) { console.warn("[Opportunities] applications fetch failed:", error.message); } setAppliedIds((data || []).map((a: any) => a.opportunity_id)); });
   }, [user]);
 
   const handleApply = async () => {
