@@ -599,7 +599,6 @@ const SettingsPage = () => {
           )}
         </div>
       </div>
-      )}
     </motion.div>
   );
 };
