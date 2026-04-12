@@ -43,16 +43,19 @@ export function useWorkspaces(userId: string | undefined) {
     setLoading(true);
 
     // Single query: get workspace IDs the user belongs to
-    const [{ data: memberRows }, { data: createdWs }] = await Promise.all([
+    const [memberRes, createdRes] = await Promise.allSettled([
       supabase.from("workspace_members").select("workspace_id").eq("user_id", userId).eq("status", "active"),
       supabase.from("workspaces").select("id").eq("created_by", userId),
     ]);
 
     if (!mountedRef.current) return;
 
+    const memberRows = memberRes.status === "fulfilled" ? (memberRes.value as any).data || [] : (console.warn("[useWorkspaces] members failed"), []);
+    const createdWs = createdRes.status === "fulfilled" ? (createdRes.value as any).data || [] : (console.warn("[useWorkspaces] created failed"), []);
+
     const allIds = [...new Set([
-      ...(memberRows || []).map(m => m.workspace_id).filter(Boolean) as string[],
-      ...(createdWs || []).map(w => w.id),
+      ...memberRows.map((m: any) => m.workspace_id).filter(Boolean) as string[],
+      ...createdWs.map((w: any) => w.id),
     ])];
 
     if (allIds.length === 0) {
@@ -61,11 +64,12 @@ export function useWorkspaces(userId: string | undefined) {
       return;
     }
 
-    const { data: ws } = await supabase
+    const { data: ws, error: wsErr } = await supabase
       .from("workspaces")
       .select("*")
       .in("id", allIds)
       .order("created_at", { ascending: false });
+    if (wsErr) console.warn("[useWorkspaces] workspaces fetch failed:", wsErr.message);
 
     if (mountedRef.current) {
       setWorkspaces(ws || []);

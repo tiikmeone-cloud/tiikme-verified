@@ -53,13 +53,14 @@ export function useConversations(userId: string | undefined) {
     if (!userId) { setLoading(false); return; }
     setLoading(true);
 
-    const { data: convos } = await supabase
+    const { data: convos, error: convoErr } = await supabase
       .from("conversations")
       .select("*")
       .or(`participant_1.eq.${userId},participant_2.eq.${userId}`)
       .order("last_message_at", { ascending: false })
       .limit(50);
 
+    if (convoErr) { console.warn("[useConversations] fetch failed:", convoErr.message); }
     if (!mountedRef.current) return;
     if (!convos || convos.length === 0) {
       setConversations([]);
@@ -75,14 +76,17 @@ export function useConversations(userId: string | undefined) {
     const convoIds = convos.map(c => c.id);
 
     // Batch fetch: profiles, unread counts, and last messages
-    const [profilesRes, unreadRes, lastMsgsRes] = await Promise.all([
+    const [profilesRes, unreadRes, lastMsgsRes] = await Promise.allSettled([
       supabase.from("profiles").select("id, full_name, username, avatar_url, role, institution_name, is_verified").in("id", uniqueIds),
       supabase.from("pings").select("conversation_id").in("conversation_id", convoIds).eq("is_read", false).neq("sender_id", userId),
-      // Get last message per conversation - fetch recent pings for all convos
       supabase.from("pings").select("conversation_id, content, created_at, attachment_type").in("conversation_id", convoIds).order("created_at", { ascending: false }).limit(200),
     ]);
 
     if (!mountedRef.current) return;
+
+    const profilesData = profilesRes.status === "fulfilled" ? (profilesRes.value as any).data || [] : (console.warn("[useConversations] profiles failed"), []);
+    const unreadData = unreadRes.status === "fulfilled" ? (unreadRes.value as any).data || [] : (console.warn("[useConversations] unread failed"), []);
+    const lastMsgsData = lastMsgsRes.status === "fulfilled" ? (lastMsgsRes.value as any).data || [] : (console.warn("[useConversations] lastMsgs failed"), []);
 
     const unreadMap: Record<string, number> = {};
     (unreadRes.data || []).forEach(p => {
