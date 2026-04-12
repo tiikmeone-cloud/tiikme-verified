@@ -60,15 +60,27 @@ export default function ApplicationsDashboard() {
 
       setOpp(oppData);
 
+      // Fetch applications
       const { data: appsData } = await supabase
         .from("opportunity_applications")
-        .select("*, profile:profiles!opportunity_applications_applicant_id_fkey(id, full_name, avatar_url, username, headline, role, activity_score, location_city, location_state, skills)")
+        .select("*")
         .eq("opportunity_id", id)
         .order("created_at", { ascending: false });
 
+      // Fetch profiles for applicants separately
       const appsList = appsData || [];
-      setApps(appsList);
-      if (appsList.length > 0 && !selectedApp) setSelectedApp(appsList[0]);
+      const applicantIds = appsList.map(a => a.applicant_id).filter(Boolean);
+      let profilesMap: Record<string, any> = {};
+      if (applicantIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from("profiles")
+          .select("id, full_name, avatar_url, username, headline, role, activity_score, location_city, location_state, skills")
+          .in("id", applicantIds);
+        (profilesData || []).forEach(p => { profilesMap[p.id] = p; });
+      }
+      const enrichedApps = appsList.map(a => ({ ...a, profile: profilesMap[a.applicant_id] || null }));
+      setApps(enrichedApps);
+      if (enrichedApps.length > 0 && !selectedApp) setSelectedApp(enrichedApps[0]);
     } catch (e) { console.warn("[AppsDashboard]", e); }
     setLoading(false);
   }, [id, user, isInstitution, org, navigate]);

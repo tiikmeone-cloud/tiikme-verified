@@ -10,16 +10,14 @@ import StepOrgType from "@/components/institution-onboarding/StepOrgType";
 import StepRepresentative from "@/components/institution-onboarding/StepRepresentative";
 import StepPageSetup from "@/components/institution-onboarding/StepPageSetup";
 
-const STEPS = ["Email", "Verify", "Organisation", "Your Role", "Page Setup"];
+const STEPS = ["Account", "Verify", "Organisation", "Your Role", "Page Setup"];
 
 const JoinAsInstitution = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
 
-  // Collected data across steps
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [hasMobile, setHasMobile] = useState(false);
   const [orgType, setOrgType] = useState("");
   const [orgName, setOrgName] = useState("");
   const [website, setWebsite] = useState("");
@@ -28,7 +26,6 @@ const JoinAsInstitution = () => {
   const [repRole, setRepRole] = useState("");
   const [repDesignation, setRepDesignation] = useState("");
   const [repDepartment, setRepDepartment] = useState("");
-  const [completedSlug, setCompletedSlug] = useState("");
 
   // Force light mode
   useEffect(() => {
@@ -87,23 +84,13 @@ const JoinAsInstitution = () => {
             <div style={{ marginTop: 40, paddingTop: 32, borderTop: "1px solid rgba(238,240,255,0.1)" }}>
               <h3 style={{ fontSize: 18, fontWeight: 800, color: "#EEF0FF", marginBottom: 16 }}>Simple pricing</h3>
               <div className="space-y-3">
-                <div style={{
-                  borderRadius: 12, padding: 16,
-                  background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)",
-                }}>
+                <div style={{ borderRadius: 12, padding: 16, background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)" }}>
                   <p style={{ fontSize: 14, fontWeight: 700, color: "#10B981" }}>Free — First 6 months</p>
-                  <p style={{ fontSize: 12, color: "rgba(238,240,255,0.5)", marginTop: 4 }}>
-                    Full access. No credit card needed. No commitments.
-                  </p>
+                  <p style={{ fontSize: 12, color: "rgba(238,240,255,0.5)", marginTop: 4 }}>Full access. No credit card needed.</p>
                 </div>
-                <div style={{
-                  borderRadius: 12, padding: 16,
-                  background: "rgba(238,240,255,0.04)", border: "1px solid rgba(238,240,255,0.1)",
-                }}>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: "#EEF0FF" }}>₹299/month — From month 7</p>
-                  <p style={{ fontSize: 12, color: "rgba(238,240,255,0.5)", marginTop: 4 }}>
-                    50% off for months 7–9 (₹149/mo). Full ₹299/month from month 10.
-                  </p>
+                <div style={{ borderRadius: 12, padding: 16, background: "rgba(238,240,255,0.04)", border: "1px solid rgba(238,240,255,0.1)" }}>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: "#EEF0FF" }}>From month 7</p>
+                  <p style={{ fontSize: 12, color: "rgba(238,240,255,0.5)", marginTop: 4 }}>50% off for months 7-9. Full from month 10.</p>
                 </div>
               </div>
             </div>
@@ -111,8 +98,7 @@ const JoinAsInstitution = () => {
         </div>
 
         {/* Right form panel */}
-        <div className="flex-1 flex flex-col items-center justify-center px-4 py-12"
-          style={{ background: "#FFF8F2" }}>
+        <div className="flex-1 flex flex-col items-center justify-center px-4 py-12" style={{ background: "#FFF8F2" }}>
           {/* Mobile logo */}
           <div className="w-full max-w-[480px] mb-4">
             <div className="flex items-center justify-between mb-2 lg:hidden">
@@ -141,54 +127,44 @@ const JoinAsInstitution = () => {
 
           <motion.div className="w-full max-w-[480px]" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <AnimatePresence mode="wait">
-              {/* Step 0: Email + Smart Verification */}
               {step === 0 && (
                 <motion.div key="s0" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
-                  <StepEmail onNext={({ email: e, password: p, mobile }) => {
-                    setEmail(e);
-                    setPassword(p);
-                    setHasMobile(!!mobile);
-                    setStep(1);
+                  <StepEmail onNext={({ email: e, password: p }) => {
+                    setEmail(e); setPassword(p); setStep(1);
                   }} />
                 </motion.div>
               )}
 
-              {/* Step 1: OTP Verification */}
               {step === 1 && (
                 <motion.div key="s1" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
-                  <StepOTP email={email} hasMobile={hasMobile} password={password} onNext={() => setStep(2)} />
+                  <StepOTP email={email} password={password} onNext={() => setStep(2)} />
                 </motion.div>
               )}
 
-              {/* Step 2: Organisation Type & Name */}
               {step === 2 && (
                 <motion.div key="s2" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
                   <StepOrgType onNext={({ orgType: t, orgName: n, website: w, city: c, state: s }) => {
-                    setOrgType(t); setOrgName(n); setWebsite(w); setCity(c); setState(s);
-                    setStep(3);
+                    setOrgType(t); setOrgName(n); setWebsite(w); setCity(c); setState(s); setStep(3);
                   }} />
                 </motion.div>
               )}
 
-              {/* Step 3: Representative Profile */}
               {step === 3 && (
                 <motion.div key="s3" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
                   <StepRepresentative orgName={orgName} orgType={orgType}
                     onNext={({ role, designation, department }) => {
-                      setRepRole(role); setRepDesignation(designation); setRepDepartment(department);
-                      setStep(4);
+                      setRepRole(role); setRepDesignation(designation); setRepDepartment(department); setStep(4);
                     }} />
                 </motion.div>
               )}
 
-              {/* Step 4: Page Setup */}
               {step === 4 && (
                 <motion.div key="s4" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
                   <StepPageSetup
                     orgName={orgName} orgType={orgType} city={city} state={state}
                     website={website} repRole={repRole} repDesignation={repDesignation}
                     repDepartment={repDepartment}
-                    onComplete={slug => { setCompletedSlug(slug); setStep(5); }}
+                    onComplete={() => setStep(5)}
                   />
                 </motion.div>
               )}
@@ -201,19 +177,18 @@ const JoinAsInstitution = () => {
                     boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06)",
                     textAlign: "center",
                   }}>
-                    <div style={{ fontSize: 48, marginBottom: 16 }}>🎉</div>
+                    <div style={{
+                      width: 64, height: 64, borderRadius: "50%", background: "#F0FDF4",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      margin: "0 auto 16px",
+                    }}>
+                      <Check style={{ width: 32, height: 32, color: "#16A34A" }} />
+                    </div>
                     <h2 style={{ fontSize: 24, fontWeight: 800, color: "#1A1A1A", marginBottom: 8 }}>
                       Your institution page is live!
                     </h2>
-                    <p style={{ fontSize: 14, color: "#6B6B6B", marginBottom: 8 }}>
+                    <p style={{ fontSize: 14, color: "#6B6B6B", marginBottom: 24 }}>
                       Start building your presence on Tiikme.
-                    </p>
-                    <p style={{
-                      fontSize: 13, fontWeight: 600, color: "#16A34A",
-                      background: "#F0FDF4", borderRadius: 999, display: "inline-block",
-                      padding: "6px 16px", marginBottom: 24,
-                    }}>
-                      🏅 You're a Founding Institution!
                     </p>
                     <div style={{ textAlign: "left", marginBottom: 24 }}>
                       {[
@@ -223,7 +198,6 @@ const JoinAsInstitution = () => {
                         "Workspace with channels",
                         "Analytics (who tracked you, top viewer roles)",
                         "Priority in search results",
-                        "\"Founding Institution\" badge (permanent)",
                       ].map((t, i) => (
                         <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 8 }}>
                           <Check style={{ width: 16, height: 16, color: "#16A34A", flexShrink: 0, marginTop: 2 }} />
@@ -235,9 +209,6 @@ const JoinAsInstitution = () => {
                       style={{ height: 52, background: "#E8580A", borderRadius: 8, fontSize: 15, fontWeight: 700 }}>
                       Go to my profile <ArrowRight style={{ width: 16, height: 16, marginLeft: 4 }} />
                     </Button>
-                    <p style={{ fontSize: 12, color: "#9CA3AF", marginTop: 12 }}>
-                      Founding spots remaining: ~1,847 of 2,000
-                    </p>
                   </div>
                 </motion.div>
               )}

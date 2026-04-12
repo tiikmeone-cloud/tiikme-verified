@@ -39,8 +39,7 @@ export default function StepPageSetup({
   const years = Array.from({ length: currentYear - 1800 + 1 }, (_, i) => currentYear - i);
 
   const handleFile = (file: File, type: "logo" | "cover") => {
-    const maxMB = type === "logo" ? 5 : 5;
-    if (file.size > maxMB * 1024 * 1024) { toast.error(`Max ${maxMB}MB`); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Max 5MB"); return; }
     if (type === "logo") { setLogoFile(file); setLogoPreview(URL.createObjectURL(file)); }
     else { setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); }
   };
@@ -50,33 +49,30 @@ export default function StepPageSetup({
     setSubmitting(true);
 
     try {
+      // Get authenticated user
       let { data: { user } } = await supabase.auth.getUser();
-      
-      // If no user session, try to get session
       if (!user) {
         const { data: { session } } = await supabase.auth.getSession();
         user = session?.user ?? null;
       }
-
       if (!user) { toast.error("Please complete email verification first"); setSubmitting(false); return; }
 
-      // Ensure profile exists before creating org (FK constraint)
+      // Ensure profile exists (FK constraint for org_members)
       const { data: existingProfile } = await supabase.from("profiles").select("id").eq("id", user.id).maybeSingle();
       if (!existingProfile) {
-        // Profile not yet created by trigger — create it manually
         const { error: profileErr } = await supabase.from("profiles").insert({
           id: user.id,
-          full_name: user.user_metadata?.full_name || "",
-          username: user.user_metadata?.username || `user-${user.id.slice(0, 8)}`,
+          full_name: orgName,
+          username: `user-${user.id.slice(0, 8)}`,
           role: "institution_admin",
         } as any);
         if (profileErr && !profileErr.message.includes("duplicate")) {
           console.warn("[StepPageSetup] profile create error:", profileErr);
         }
-        // Small delay to let DB settle
         await new Promise(r => setTimeout(r, 500));
       }
 
+      // Generate unique slug
       const baseSlug = generateSlug(orgName);
       const slug = `${baseSlug}-${Date.now().toString(36)}`;
 
@@ -104,6 +100,7 @@ export default function StepPageSetup({
         }
       }
 
+      // Create organization
       const { data: org, error: orgError } = await supabase
         .from("organizations")
         .insert({
@@ -132,8 +129,8 @@ export default function StepPageSetup({
         return;
       }
 
-      // Add creator as owner
-      await supabase.from("org_members").insert({
+      // Add creator as owner member
+      const { error: memberErr } = await supabase.from("org_members").insert({
         org_id: org.id,
         user_id: user.id,
         role: "owner",
@@ -142,9 +139,10 @@ export default function StepPageSetup({
         department: repDepartment || null,
         permissions: { all: true },
       } as any);
+      if (memberErr) console.warn("[StepPageSetup] member insert error:", memberErr);
 
-      // Update profile with institution account type and org link
-      await supabase.from("profiles").update({
+      // Update profile: set org identity
+      const { error: profileUpdateErr } = await supabase.from("profiles").update({
         full_name: orgName,
         designation: repDesignation,
         department: repDepartment || null,
@@ -153,6 +151,7 @@ export default function StepPageSetup({
         org_id: org.id,
         onboarding_complete: true,
       } as any).eq("id", user.id);
+      if (profileUpdateErr) console.warn("[StepPageSetup] profile update error:", profileUpdateErr);
 
       onComplete(slug);
     } catch (err: any) {
@@ -173,6 +172,12 @@ export default function StepPageSetup({
       </p>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {/* Organisation name preview */}
+        <div style={{ padding: "12px 16px", borderRadius: 8, background: "#F0FDF4", border: "1px solid #BBF7D0" }}>
+          <p style={{ fontSize: 11, fontWeight: 600, color: "#166534", marginBottom: 2 }}>Organisation name</p>
+          <p style={{ fontSize: 16, fontWeight: 700, color: "#1A1A1A" }}>{orgName}</p>
+        </div>
+
         {/* Logo upload */}
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <button type="button" onClick={() => logoRef.current?.click()}
@@ -195,7 +200,7 @@ export default function StepPageSetup({
             onChange={e => e.target.files?.[0] && handleFile(e.target.files[0], "logo")} />
           <div>
             <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A1A" }}>Logo</p>
-            <p style={{ fontSize: 11, color: "#9CA3AF" }}>PNG, JPG, or SVG · Max 5MB</p>
+            <p style={{ fontSize: 11, color: "#9CA3AF" }}>PNG, JPG, or SVG. Max 5MB</p>
           </div>
         </div>
 
@@ -221,9 +226,7 @@ export default function StepPageSetup({
         <div>
           <Input placeholder="What do you do in one line" value={tagline}
             onChange={e => setTagline(e.target.value.slice(0, 100))} style={inputStyle} />
-          <p style={{ fontSize: 11, color: "#9CA3AF", textAlign: "right", marginTop: 2 }}>
-            {tagline.length}/100
-          </p>
+          <p style={{ fontSize: 11, color: "#9CA3AF", textAlign: "right", marginTop: 2 }}>{tagline.length}/100</p>
         </div>
 
         {/* Description */}
@@ -232,14 +235,8 @@ export default function StepPageSetup({
             onChange={e => setDescription(e.target.value.slice(0, 500))}
             placeholder="Tell people about your organisation"
             rows={4}
-            style={{
-              ...inputStyle, height: "auto", minHeight: 120, width: "100%",
-              padding: "12px 14px", resize: "none", fontFamily: "inherit",
-            }}
-          />
-          <span style={{ position: "absolute", bottom: 8, right: 12, fontSize: 10, color: "#9CA3AF" }}>
-            {description.length}/500
-          </span>
+            style={{ ...inputStyle, height: "auto", minHeight: 120, width: "100%", padding: "12px 14px", resize: "none", fontFamily: "inherit" }} />
+          <span style={{ position: "absolute", bottom: 8, right: 12, fontSize: 10, color: "#9CA3AF" }}>{description.length}/500</span>
         </div>
 
         {/* Founded year */}
@@ -271,7 +268,7 @@ export default function StepPageSetup({
 
       <Button type="submit" className="w-full mt-6" disabled={submitting}
         style={{ height: 52, background: "#E8580A", borderRadius: 8, fontSize: 15, fontWeight: 700 }}>
-        {submitting ? "Creating page..." : "Create Page →"}
+        {submitting ? "Creating page..." : "Create Page"}
       </Button>
     </form>
   );

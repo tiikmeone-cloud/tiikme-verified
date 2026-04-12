@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowRight, Eye, EyeOff, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Eye, EyeOff, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -34,12 +34,11 @@ export default function StepEmail({ onNext }: Props) {
 
     setSubmitting(true);
     try {
-      // Try sign up first
+      // Step 1: Sign up — Supabase sends a confirmation OTP automatically
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: email.trim(),
         password,
         options: {
-          emailRedirectTo: window.location.origin + "/app/feed",
           data: { full_name: "", role: "institution_admin" },
         },
       });
@@ -62,11 +61,11 @@ export default function StepEmail({ onNext }: Props) {
         return;
       }
 
-      // Send OTP for verification
+      // Step 2: Send a separate OTP for 6-digit verification
       const { error: otpError } = await supabase.auth.signInWithOtp({
         email: email.trim(),
       });
-      if (otpError) console.warn("[StepEmail] OTP send error:", otpError);
+      if (otpError) console.warn("[StepEmail] OTP send error:", otpError.message);
 
       onNext({ email: email.trim(), password, mobile: mobile.trim() || undefined });
     } catch (err: any) {
@@ -88,47 +87,31 @@ export default function StepEmail({ onNext }: Props) {
 
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <div>
-          <Input
-            type="email"
-            placeholder="Work email *"
-            value={email}
+          <Input type="email" placeholder="Work email *" value={email}
             onChange={e => { setEmail(e.target.value); setEmailError(""); }}
-            style={{ ...inputStyle, height: 48 }}
-            required
-          />
+            style={{ ...inputStyle, height: 48 }} required />
           {emailError && (
-            <div style={{
-              marginTop: 8, padding: "10px 12px", borderRadius: 8,
-              background: "#FEF2F2", border: "1px solid #FECACA",
-              display: "flex", gap: 8, alignItems: "flex-start",
-            }}>
+            <div style={{ marginTop: 8, padding: "10px 12px", borderRadius: 8, background: "#FEF2F2", border: "1px solid #FECACA", display: "flex", gap: 8, alignItems: "flex-start" }}>
               <AlertTriangle style={{ width: 16, height: 16, color: "#DC2626", flexShrink: 0, marginTop: 1 }} />
               <p style={{ fontSize: 13, color: "#991B1B", lineHeight: 1.4 }}>
                 {emailError}{" "}
-                <Link to="/signin" style={{ color: "#E8580A", fontWeight: 600, textDecoration: "underline" }}>
-                  Sign in instead →
-                </Link>
+                <Link to="/signin" style={{ color: "#E8580A", fontWeight: 600, textDecoration: "underline" }}>Sign in instead</Link>
               </p>
             </div>
           )}
           {isPersonal && !emailError && (
-            <div style={{
-              marginTop: 8, padding: "12px", borderRadius: "0 8px 8px 8px",
-              background: "#FFF8E1", borderLeft: "3px solid #D97706",
-            }}>
-              <p style={{ fontSize: 13, fontWeight: 600, color: "#92400E", marginBottom: 4 }}>⚠ Personal email detected</p>
+            <div style={{ marginTop: 8, padding: "12px", borderRadius: "0 8px 8px 8px", background: "#FFF8E1", borderLeft: "3px solid #D97706" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                <AlertTriangle style={{ width: 14, height: 14, color: "#92400E" }} />
+                <p style={{ fontSize: 13, fontWeight: 600, color: "#92400E" }}>Personal email detected</p>
+              </div>
               <p style={{ fontSize: 13, color: "#92400E", lineHeight: 1.4 }}>
                 A mobile number is required to verify your organisation is real.
-                Pages without verified contact will be held for review after 30 days.
               </p>
             </div>
           )}
           {isOrg && !emailError && (
-            <div style={{
-              marginTop: 8, padding: "8px 12px", borderRadius: 8,
-              background: "#F0FDF4", border: "1px solid #BBF7D0",
-              display: "flex", gap: 6, alignItems: "center",
-            }}>
+            <div style={{ marginTop: 8, padding: "8px 12px", borderRadius: 8, background: "#F0FDF4", border: "1px solid #BBF7D0", display: "flex", gap: 6, alignItems: "center" }}>
               <CheckCircle2 style={{ width: 14, height: 14, color: "#16A34A" }} />
               <p style={{ fontSize: 13, color: "#166534" }}>Organisation email detected</p>
             </div>
@@ -138,67 +121,41 @@ export default function StepEmail({ onNext }: Props) {
         {isPersonal && (
           <div>
             <div style={{ display: "flex", gap: 8 }}>
-              <div style={{
-                ...inputStyle, width: 72, height: 48, display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 13, fontWeight: 600, color: "#6B6B6B", flexShrink: 0,
-              }}>
-                🇮🇳 +91
+              <div style={{ ...inputStyle, width: 72, height: 48, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 600, color: "#6B6B6B", flexShrink: 0 }}>
+                +91
               </div>
-              <Input
-                type="tel"
-                placeholder="Mobile number *"
-                value={mobile}
+              <Input type="tel" placeholder="Mobile number *" value={mobile}
                 onChange={e => setMobile(e.target.value.replace(/\D/g, "").slice(0, 10))}
-                style={{ ...inputStyle, flex: 1, height: 48 }}
-                required={isPersonal}
-              />
+                style={{ ...inputStyle, flex: 1, height: 48 }} required={isPersonal} />
             </div>
             <p style={{ fontSize: 11, color: "#9CA3AF", marginTop: 4 }}>
-              We'll send an OTP to verify. Unverified pages using personal email will be held for review after 30 days.
+              We'll verify this. Unverified pages using personal email will be held for review after 30 days.
             </p>
           </div>
         )}
 
         {!isPersonal && domain.length > 0 && (
-          <Input
-            type="tel"
-            placeholder="Mobile number (optional)"
-            value={mobile}
+          <Input type="tel" placeholder="Mobile number (optional)" value={mobile}
             onChange={e => setMobile(e.target.value.replace(/\D/g, "").slice(0, 10))}
-            style={{ ...inputStyle, height: 48 }}
-          />
+            style={{ ...inputStyle, height: 48 }} />
         )}
 
         <div style={{ position: "relative" }}>
-          <Input
-            type={showPw ? "text" : "password"}
-            placeholder="Password *"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            style={{ ...inputStyle, height: 48 }}
-            required
-            minLength={8}
-          />
+          <Input type={showPw ? "text" : "password"} placeholder="Password *" value={password}
+            onChange={e => setPassword(e.target.value)} style={{ ...inputStyle, height: 48 }} required minLength={8} />
           <button type="button" onClick={() => setShowPw(!showPw)}
             style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 4 }}>
             {showPw ? <EyeOff style={{ width: 18, height: 18, color: "#9CA3AF" }} /> : <Eye style={{ width: 18, height: 18, color: "#9CA3AF" }} />}
           </button>
         </div>
 
-        <Input
-          type={showPw ? "text" : "password"}
-          placeholder="Confirm password *"
-          value={confirmPassword}
-          onChange={e => setConfirmPassword(e.target.value)}
-          style={{ ...inputStyle, height: 48 }}
-          required
-          minLength={8}
-        />
+        <Input type={showPw ? "text" : "password"} placeholder="Confirm password *" value={confirmPassword}
+          onChange={e => setConfirmPassword(e.target.value)} style={{ ...inputStyle, height: 48 }} required minLength={8} />
       </div>
 
       <Button type="submit" className="w-full mt-6" disabled={submitting}
         style={{ height: 52, background: "#E8580A", borderRadius: 12, fontSize: 15, fontWeight: 700 }}>
-        {submitting ? "Creating account..." : "Continue →"}
+        {submitting ? "Creating account..." : "Continue"}
       </Button>
 
       <p style={{ fontSize: 12, color: "#9CA3AF", marginTop: 12, textAlign: "center", lineHeight: 1.5 }}>

@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Shield, UserPlus, Check, X, Copy, Link2 } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Shield, UserPlus, Check, X, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,20 +31,41 @@ export default function AccessManager({ orgId, isOwner }: Props) {
   const [selectedScope, setSelectedScope] = useState("");
   const [granting, setGranting] = useState(false);
 
-  useEffect(() => {
-    fetchData();
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      // Fetch rules and members separately to avoid FK issues
+      const [rulesRes, membersRes] = await Promise.all([
+        supabase.from("org_access_rules").select("*").eq("org_id", orgId),
+        supabase.from("org_members").select("*").eq("org_id", orgId),
+      ]);
+
+      const rulesData = rulesRes.data || [];
+      const membersData = membersRes.data || [];
+
+      // Fetch profiles for members and rule targets
+      const allUserIds = [
+        ...membersData.map(m => m.user_id),
+        ...rulesData.map(r => r.member_id).filter(Boolean),
+      ].filter((id, i, arr) => arr.indexOf(id) === i);
+
+      let profiles: Record<string, any> = {};
+      if (allUserIds.length > 0) {
+        const { data: profilesData } = await supabase.from("profiles")
+          .select("id, full_name, avatar_url, username, role")
+          .in("id", allUserIds);
+        (profilesData || []).forEach(p => { profiles[p.id] = p; });
+      }
+
+      setRules(rulesData.map(r => ({ ...r, member: profiles[r.member_id] || null })));
+      setMembers(membersData.map(m => ({ ...m, profile: profiles[m.user_id] || null })));
+    } catch (e) {
+      console.warn("[AccessManager] fetch error:", e);
+    }
+    setLoading(false);
   }, [orgId]);
 
-  const fetchData = async () => {
-    setLoading(true);
-    const [rulesRes, membersRes] = await Promise.allSettled([
-      supabase.from("org_access_rules").select("*, member:profiles!org_access_rules_member_id_fkey(id, full_name, avatar_url, username)").eq("org_id", orgId),
-      supabase.from("org_members").select("*, profile:profiles!org_members_user_id_fkey(id, full_name, avatar_url, username, role)").eq("org_id", orgId),
-    ]);
-    setRules(rulesRes.status === "fulfilled" ? (rulesRes.value as any).data || [] : []);
-    setMembers(membersRes.status === "fulfilled" ? (membersRes.value as any).data || [] : []);
-    setLoading(false);
-  };
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleGrant = async () => {
     if (!selectedMember || !selectedAccess || !user) return;
@@ -55,14 +76,14 @@ export default function AccessManager({ orgId, isOwner }: Props) {
         member_id: selectedMember,
         access_type: selectedAccess,
         access_scope: selectedScope || "general",
-        department_scope: null,
         created_by: user.id,
         delegated_by: isOwner ? null : user.id,
         delegation_approved: isOwner ? true : null,
       } as any);
+
       if (error) { toast.error(error.message); setGranting(false); return; }
 
-      // Send notification if delegation needs approval
+      // Notify owner if delegation needs approval
       if (!isOwner) {
         const owner = members.find(m => m.role === "owner");
         if (owner) {
@@ -70,10 +91,10 @@ export default function AccessManager({ orgId, isOwner }: Props) {
           await supabase.from("alerts").insert({
             user_id: owner.user_id,
             type: "delegation_approval",
-            title: `Access delegation request`,
+            title: "Access delegation request",
             body: `${memberProfile?.full_name || "A team member"} was granted "${selectedAccess}" access and needs your approval`,
-            action_url: `/org/${org?.slug}/admin`,
-            data: { org_id: orgId, member_id: selectedMember, access_type: selectedAccess, delegated_by: user.id } as any,
+            action_url: `/app/workspace`,
+            data: { org_id: orgId, member_id: selectedMember, access_type: selectedAccess } as any,
           });
         }
       }
@@ -82,25 +103,28 @@ export default function AccessManager({ orgId, isOwner }: Props) {
       setShowGrant(false);
       setSelectedMember("");
       setSelectedAccess("");
+      setSelectedScope("");
       fetchData();
     } catch (e) { console.warn("[AccessManager] grant error:", e); }
     setGranting(false);
   };
 
   const handleRevoke = async (ruleId: string) => {
-    await supabase.from("org_access_rules").delete().eq("id", ruleId);
+    const { error } = await supabase.from("org_access_rules").delete().eq("id", ruleId);
+    if (error) { toast.error("Failed to revoke: " + error.message); return; }
     setRules(prev => prev.filter(r => r.id !== ruleId));
     toast.success("Access revoked");
   };
 
   const handleApprove = async (ruleId: string) => {
-    await supabase.from("org_access_rules").update({ delegation_approved: true } as any).eq("id", ruleId);
+    const { error } = await supabase.from("org_access_rules").update({ delegation_approved: true } as any).eq("id", ruleId);
+    if (error) { toast.error("Failed to approve: " + error.message); return; }
     setRules(prev => prev.map(r => r.id === ruleId ? { ...r, delegation_approved: true } : r));
     toast.success("Delegation approved");
   };
 
   const copyInviteLink = () => {
-    const link = `${window.location.origin}/join-redirect?org=${orgId}`;
+    const link = `${window.location.origin}/join?org=${orgId}`;
     navigator.clipboard.writeText(link);
     toast.success("Invite link copied");
   };
@@ -128,7 +152,11 @@ export default function AccessManager({ orgId, isOwner }: Props) {
 
       {/* Active rules */}
       {rules.length === 0 ? (
-        <p className="text-[13px] text-center py-6" style={{ color: "var(--text-3)" }}>No access rules configured</p>
+        <div className="text-center py-8">
+          <Shield className="w-10 h-10 mx-auto mb-2" style={{ color: "var(--text-3)" }} />
+          <p className="text-[13px]" style={{ color: "var(--text-3)" }}>No access rules configured yet</p>
+          <p className="text-[11px] mt-1" style={{ color: "var(--text-3)" }}>Grant team members specific permissions like posting jobs or verifying members</p>
+        </div>
       ) : (
         <div className="space-y-2">
           {rules.map(rule => (
@@ -176,9 +204,14 @@ export default function AccessManager({ orgId, isOwner }: Props) {
                   className="w-full h-11 rounded-lg px-3 text-[13px] outline-none" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }}>
                   <option value="">Select member...</option>
                   {eligibleMembers.map(m => (
-                    <option key={m.user_id} value={m.user_id}>{m.profile?.full_name || m.profile?.username || "Unknown"} — {m.role || "member"}</option>
+                    <option key={m.user_id} value={m.user_id}>
+                      {m.profile?.full_name || m.profile?.username || "Unknown"} — {m.role || "member"}
+                    </option>
                   ))}
                 </select>
+                {eligibleMembers.length === 0 && (
+                  <p className="text-[11px] mt-1" style={{ color: "#9CA3AF" }}>Add team members to your workspace first before granting access</p>
+                )}
               </div>
 
               <div>
@@ -199,8 +232,7 @@ export default function AccessManager({ orgId, isOwner }: Props) {
 
               <div>
                 <label className="text-[12px] font-semibold block mb-1" style={{ color: "var(--text-2)" }}>Department scope (optional)</label>
-                <Input value={selectedScope} onChange={e => setSelectedScope(e.target.value)} placeholder="e.g. Engineering, Marketing"
-                  style={{ height: 40 }} />
+                <Input value={selectedScope} onChange={e => setSelectedScope(e.target.value)} placeholder="e.g. Engineering, Marketing" style={{ height: 40 }} />
               </div>
             </div>
 
