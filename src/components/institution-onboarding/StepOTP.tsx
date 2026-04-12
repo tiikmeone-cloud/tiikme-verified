@@ -6,12 +6,11 @@ import { cardStyle } from "./constants";
 
 interface Props {
   email: string;
-  hasMobile: boolean;
-  password?: string;
+  password: string;
   onNext: () => void;
 }
 
-export default function StepOTP({ email, hasMobile, password, onNext }: Props) {
+export default function StepOTP({ email, password, onNext }: Props) {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [countdown, setCountdown] = useState(60);
   const [submitting, setSubmitting] = useState(false);
@@ -24,18 +23,16 @@ export default function StepOTP({ email, hasMobile, password, onNext }: Props) {
     }
   }, [countdown]);
 
-  useEffect(() => {
-    refs.current[0]?.focus();
-  }, []);
+  useEffect(() => { refs.current[0]?.focus(); }, []);
 
   const handleChange = (i: number, v: string) => {
     if (v.length > 1) {
+      // Handle paste
       const chars = v.replace(/\D/g, "").slice(0, 6).split("");
       const next = [...otp];
       chars.forEach((c, idx) => { if (i + idx < 6) next[i + idx] = c; });
       setOtp(next);
-      const focusIdx = Math.min(i + chars.length, 5);
-      refs.current[focusIdx]?.focus();
+      refs.current[Math.min(i + chars.length, 5)]?.focus();
       return;
     }
     const digit = v.replace(/\D/g, "");
@@ -46,9 +43,7 @@ export default function StepOTP({ email, hasMobile, password, onNext }: Props) {
   };
 
   const handleKeyDown = (i: number, e: React.KeyboardEvent) => {
-    if (e.key === "Backspace" && !otp[i] && i > 0) {
-      refs.current[i - 1]?.focus();
-    }
+    if (e.key === "Backspace" && !otp[i] && i > 0) refs.current[i - 1]?.focus();
   };
 
   const handleVerify = async (e: React.FormEvent) => {
@@ -57,20 +52,12 @@ export default function StepOTP({ email, hasMobile, password, onNext }: Props) {
     if (code.length < 6) { toast.info("Enter the 6-digit code"); return; }
     setSubmitting(true);
     try {
-      // Try verifying as email OTP (from signInWithOtp)
-      let result = await supabase.auth.verifyOtp({
-        email,
-        token: code,
-        type: "email",
-      });
+      // Try email OTP type first (from signInWithOtp)
+      let result = await supabase.auth.verifyOtp({ email, token: code, type: "email" });
 
-      // If that fails, try as signup OTP
+      // Fallback to signup type
       if (result.error) {
-        result = await supabase.auth.verifyOtp({
-          email,
-          token: code,
-          type: "signup",
-        });
+        result = await supabase.auth.verifyOtp({ email, token: code, type: "signup" });
       }
 
       if (result.error) {
@@ -91,10 +78,8 @@ export default function StepOTP({ email, hasMobile, password, onNext }: Props) {
 
   const handleResend = async () => {
     try {
-      // Re-send OTP via signInWithOtp
       const { error } = await supabase.auth.signInWithOtp({ email });
       if (error) {
-        // Fallback: resend signup confirmation
         await supabase.auth.resend({ type: "signup", email });
       }
       setCountdown(60);
@@ -105,20 +90,17 @@ export default function StepOTP({ email, hasMobile, password, onNext }: Props) {
     }
   };
 
-  const handleSkipVerification = async () => {
-    // Try to sign in with password as fallback
-    if (password) {
-      setSubmitting(true);
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (!error) {
-        toast.info("Signed in — email verification can be completed later");
-        onNext();
-        setSubmitting(false);
-        return;
-      }
-      setSubmitting(false);
+  const handlePasswordFallback = async () => {
+    if (!password) { toast.info("Please verify your email to continue"); return; }
+    setSubmitting(true);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (!error) {
+      toast.info("Signed in — email verification can be completed later");
+      onNext();
+    } else {
+      toast.info("Please verify your email to continue");
     }
-    toast.info("Please verify your email to continue");
+    setSubmitting(false);
   };
 
   return (
@@ -132,22 +114,16 @@ export default function StepOTP({ email, hasMobile, password, onNext }: Props) {
 
       <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 24 }}>
         {otp.map((d, i) => (
-          <input
-            key={i}
-            ref={el => { refs.current[i] = el; }}
-            type="text"
-            inputMode="numeric"
-            maxLength={6}
-            value={d}
+          <input key={i} ref={el => { refs.current[i] = el; }}
+            type="text" inputMode="numeric" maxLength={6} value={d}
             onChange={e => handleChange(i, e.target.value)}
             onKeyDown={e => handleKeyDown(i, e)}
+            onFocus={e => e.target.select()}
             style={{
               width: 52, height: 56, textAlign: "center", fontSize: 22, fontWeight: 700,
               border: d ? "2px solid #E8580A" : "1.5px solid #E5E7EB",
               borderRadius: 8, outline: "none", color: "#1A1A1A", background: "#FFFFFF",
-            }}
-            onFocus={e => e.target.select()}
-          />
+            }} />
         ))}
       </div>
 
@@ -164,26 +140,17 @@ export default function StepOTP({ email, hasMobile, password, onNext }: Props) {
 
       <Button type="submit" className="w-full" disabled={submitting}
         style={{ height: 52, background: "#E8580A", borderRadius: 8, fontSize: 15, fontWeight: 700 }}>
-        {submitting ? "Verifying..." : "Verify →"}
+        {submitting ? "Verifying..." : "Verify"}
       </Button>
 
       <div style={{ textAlign: "center", marginTop: 16 }}>
         <p style={{ fontSize: 12, color: "#9CA3AF", marginBottom: 6 }}>
           Didn't receive the code? Check your spam folder.
         </p>
-        {password && (
-          <button
-            type="button"
-            onClick={handleSkipVerification}
-            style={{
-              fontSize: 13, color: "#6B6B6B", fontWeight: 500,
-              background: "none", border: "none", cursor: "pointer",
-              textDecoration: "underline",
-            }}
-          >
-            I already verified — continue
-          </button>
-        )}
+        <button type="button" onClick={handlePasswordFallback}
+          style={{ fontSize: 13, color: "#6B6B6B", fontWeight: 500, background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
+          I already verified — continue
+        </button>
       </div>
     </form>
   );
