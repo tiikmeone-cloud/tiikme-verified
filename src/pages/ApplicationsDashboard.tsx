@@ -176,7 +176,13 @@ export default function ApplicationsDashboard() {
         </button>
         <div className="flex-1 min-w-0">
           <h1 className="text-[16px] font-bold truncate" style={{ color: "#1A1A1A" }}>{opp.title}</h1>
-          <p className="text-[13px]" style={{ color: "#9CA3AF" }}>{apps.length} total applicants</p>
+          <p className="text-[13px]" style={{ color: "#9CA3AF" }}>
+            {apps.length} applied
+            {(() => {
+              const qualifiedCount = apps.filter((a: any) => a.is_qualified === true).length;
+              return qualifiedCount > 0 ? ` · ${qualifiedCount} qualified` : "";
+            })()}
+          </p>
         </div>
       </div>
 
@@ -412,9 +418,23 @@ export default function ApplicationsDashboard() {
                   style={{ background: "#16A34A", color: "#fff", borderRadius: 8 }}>
                   <CheckCircle2 className="w-4 h-4 mr-1" /> Select ✓
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => navigate(`/app/pings`)}
+                <Button variant="outline" size="sm" onClick={async () => {
+                  if (!user || !selectedApp?.applicant_id) return;
+                  try {
+                    const { data: existing } = await supabase.from("conversations")
+                      .select("id")
+                      .or(`and(participant_1.eq.${user.id},participant_2.eq.${selectedApp.applicant_id}),and(participant_1.eq.${selectedApp.applicant_id},participant_2.eq.${user.id})`)
+                      .maybeSingle();
+                    if (existing) {
+                      navigate(`/app/pings`);
+                    } else {
+                      await supabase.from("conversations").insert({ participant_1: user.id, participant_2: selectedApp.applicant_id });
+                      navigate(`/app/pings`);
+                    }
+                  } catch { navigate(`/app/pings`); }
+                }}
                   style={{ borderColor: "#F0E8E0", color: "#6B6B6B", borderRadius: 8 }}>
-                  <MessageSquare className="w-4 h-4 mr-1" /> Message
+                  <MessageSquare className="w-4 h-4 mr-1" /> Contact via Pings
                 </Button>
               </div>
             </>
