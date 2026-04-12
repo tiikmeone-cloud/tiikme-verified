@@ -106,6 +106,11 @@ const SignIn = () => {
           <p className="text-center text-[12px] mt-5" style={{ color: "var(--text-3)" }}>
             By signing in, you agree to our <Link to="/terms" style={{ color: "var(--brand)" }}>Terms</Link> and <Link to="/privacy" style={{ color: "var(--brand)" }}>Privacy Policy</Link>
           </p>
+          <div className="mt-4 pt-4" style={{ borderTop: "1px solid var(--border)" }}>
+            <Link to="/join-as-institution" className="flex items-center justify-center gap-2 text-[13px] font-bold" style={{ color: "var(--brand)" }}>
+              <Building2 className="w-4 h-4" /> Register as an Organisation →
+            </Link>
+          </div>
         </motion.div>
       </div>
 
