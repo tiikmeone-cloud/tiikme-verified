@@ -57,7 +57,7 @@ const JoinRedirect = lazyWithRetry(() => import("./pages/JoinRedirect.tsx"), "Jo
 const queryClient = new QueryClient();
 
 const Shell = ({ children }: { children: React.ReactNode }) => (
-  <ProtectedRoute><AppShell>{children}</AppShell></ProtectedRoute>
+  <ProtectedRoute><LayoutErrorBoundary><AppShell><PageErrorBoundary>{children}</PageErrorBoundary></AppShell></LayoutErrorBoundary></ProtectedRoute>
 );
 
 const App = () => (
