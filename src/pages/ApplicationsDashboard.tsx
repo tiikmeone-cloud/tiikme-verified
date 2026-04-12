@@ -85,27 +85,62 @@ export default function ApplicationsDashboard() {
     return true;
   });
 
+  const [showSelectModal, setShowSelectModal] = useState<any>(null);
+  const [offerMessage, setOfferMessage] = useState("");
+
   const handleStatusChange = async (appId: string, status: string) => {
+    if (status === "selected") {
+      const app = apps.find(a => a.id === appId);
+      setOfferMessage(`Congratulations! 🎉 We're thrilled to select you for the ${opp?.title} role at ${org?.name || "our organization"}. We'd love to have you on board. Please confirm your acceptance.`);
+      setShowSelectModal(app);
+      return;
+    }
     try {
       const updates: any = { status };
-      if (status === "selected") updates.selected_at = new Date().toISOString();
       await supabase.from("opportunity_applications").update(updates).eq("id", appId);
       setApps(prev => prev.map(a => a.id === appId ? { ...a, ...updates } : a));
       if (selectedApp?.id === appId) setSelectedApp((prev: any) => ({ ...prev, ...updates }));
       toast.success(`Status updated to ${status}`);
-
-      // Create alert for applicant
-      const app = apps.find(a => a.id === appId);
-      if (app && status === "selected") {
-        await supabase.from("alerts").insert({
-          user_id: app.applicant_id,
-          type: "opportunity",
-          title: `${org?.name || "An organization"} selected you for ${opp?.title}`,
-          body: "Congratulations! Check the opportunity details.",
-          action_url: `/app/opportunities`,
-        });
-      }
     } catch (e) { console.warn("[AppsDashboard] status update:", e); }
+  };
+
+  const confirmSelect = async () => {
+    if (!showSelectModal || !opp) return;
+    const app = showSelectModal;
+    try {
+      await supabase.from("opportunity_applications").update({ status: "selected", selected_at: new Date().toISOString() }).eq("id", app.id);
+      setApps(prev => prev.map(a => a.id === app.id ? { ...a, status: "selected" } : a));
+      if (selectedApp?.id === app.id) setSelectedApp((prev: any) => ({ ...prev, status: "selected" }));
+
+      // Create offer alert for the applicant
+      await supabase.from("alerts").insert({
+        user_id: app.applicant_id,
+        type: "offer",
+        title: `You've been selected! 🎉`,
+        body: `${org?.name || "An organization"} has selected you for ${opp.title}`,
+        action_url: `/app/opportunities`,
+        data: { org_id: org?.id, org_name: org?.name, opportunity_id: opp.id, role_title: opp.title, application_id: app.id } as any,
+      });
+
+      // Send Ping to applicant
+      try {
+        const ownerId = user?.id;
+        if (ownerId && app.applicant_id) {
+          const { data: conv } = await supabase.from("conversations").insert({
+            participant_1: ownerId, participant_2: app.applicant_id,
+          }).select().single();
+          if (conv) {
+            await supabase.from("pings").insert({
+              conversation_id: conv.id, sender_id: ownerId,
+              content: offerMessage, is_opener: true,
+            });
+          }
+        }
+      } catch (pingErr) { console.warn("[AppsDashboard] ping send:", pingErr); }
+
+      toast.success(`Offer sent to ${app.profile?.full_name || "applicant"}!`);
+      setShowSelectModal(null);
+    } catch (e) { console.warn("[AppsDashboard] select:", e); toast.error("Failed to send offer"); }
   };
 
   const handleSaveNote = async () => {
@@ -386,6 +421,32 @@ export default function ApplicationsDashboard() {
           )}
         </div>
       </div>
+
+      {/* Selection Confirmation Modal */}
+      {showSelectModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.5)" }} onClick={() => setShowSelectModal(null)}>
+          <div className="rounded-2xl p-6 max-w-[400px] w-full" style={{ background: "#fff" }} onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-4">
+              <Avatar className="w-12 h-12">
+                <AvatarImage src={showSelectModal.profile?.avatar_url ? storageImageUrl(showSelectModal.profile.avatar_url, "thumbnail") : undefined} />
+                <AvatarFallback style={{ background: "#FFF3EC", color: "#E8580A" }}>{(showSelectModal.profile?.full_name || "U").substring(0, 2).toUpperCase()}</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="text-[16px] font-bold" style={{ color: "#1A1A1A" }}>{showSelectModal.profile?.full_name}</p>
+                <p className="text-[13px]" style={{ color: "#9CA3AF" }}>{showSelectModal.profile?.headline || ""}</p>
+              </div>
+            </div>
+            <label className="text-[13px] font-semibold block mb-1.5" style={{ color: "#1A1A1A" }}>Offer message</label>
+            <textarea value={offerMessage} onChange={e => setOfferMessage(e.target.value)} rows={4}
+              className="w-full rounded-xl p-3 text-[14px] outline-none resize-none mb-4"
+              style={{ background: "#F9FAFB", border: "1.5px solid #F0E8E0", color: "#1A1A1A" }} />
+            <Button className="w-full" onClick={confirmSelect} style={{ height: 52, borderRadius: 12, background: "#E8580A", color: "#fff" }}>
+              Send Offer & Select
+            </Button>
+            <button type="button" onClick={() => setShowSelectModal(null)} className="w-full text-center text-[13px] mt-2 cursor-pointer" style={{ color: "#9CA3AF" }}>Cancel</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
