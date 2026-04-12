@@ -141,6 +141,7 @@ const AddWorkModal = ({ open, onClose, onSaved }: { open: boolean; onClose: () =
 
 const MyWork = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [addOpen, setAddOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState("All");
   const [workItems, setWorkItems] = useState<any[]>([]);
