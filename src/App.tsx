@@ -54,6 +54,10 @@ const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword.tsx"), "
 const PostDetail = lazyWithRetry(() => import("./pages/PostDetail.tsx"), "PostDetail");
 const JoinRedirect = lazyWithRetry(() => import("./pages/JoinRedirect.tsx"), "JoinRedirect");
 
+// Org sub-pages
+const OrgSettingsPage = lazyWithRetry(() => import("./components/org/OrgSettingsPage.tsx"), "OrgSettingsPage");
+const OrgVerifyPage = lazyWithRetry(() => import("./components/org/OrgVerifyPage.tsx"), "OrgVerifyPage");
+
 const queryClient = new QueryClient();
 
 const Shell = ({ children }: { children: React.ReactNode }) => (
@@ -86,12 +90,21 @@ const App = () => (
             <Route path="/grievance" element={<PageErrorBoundary><Grievance /></PageErrorBoundary>} />
             <Route path="/reset-password" element={<PageErrorBoundary><ResetPassword /></PageErrorBoundary>} />
             <Route path="/create-organization" element={<ProtectedRoute><PageErrorBoundary><CreateOrganization /></PageErrorBoundary></ProtectedRoute>} />
+
+            {/* Organisation pages — public */}
             <Route path="/org/:slug" element={<PageErrorBoundary><OrganizationPage /></PageErrorBoundary>} />
+            <Route path="/org/:slug/:tab" element={<PageErrorBoundary><OrganizationPage /></PageErrorBoundary>} />
+
+            {/* Organisation admin pages — protected */}
             <Route path="/org/:slug/admin" element={<ProtectedRoute><PageErrorBoundary><OrgAdmin /></PageErrorBoundary></ProtectedRoute>} />
+            <Route path="/org/:slug/settings" element={<ProtectedRoute><PageErrorBoundary><OrgSettingsPage /></PageErrorBoundary></ProtectedRoute>} />
+            <Route path="/org/:slug/verify" element={<ProtectedRoute><PageErrorBoundary><OrgVerifyPage /></PageErrorBoundary></ProtectedRoute>} />
+
             <Route path="/certificate/:id" element={<PageErrorBoundary><CertificatePage /></PageErrorBoundary>} />
             <Route path="/create-page" element={<Shell><CreatePage /></Shell>} />
             <Route path="/post/create" element={<Shell><PostCreate /></Shell>} />
             <Route path="/post/:postId" element={<Shell><PostDetail /></Shell>} />
+
             {/* App (protected) */}
             <Route path="/app/feed" element={<Shell><Feed /></Shell>} />
             <Route path="/app/explore" element={<Shell><Explore /></Shell>} />
@@ -107,8 +120,10 @@ const App = () => (
             <Route path="/app/settings" element={<Shell><SettingsPage /></Shell>} />
             <Route path="/app/institution/:id" element={<Shell><Institution /></Shell>} />
             <Route path="/app/workspace" element={<Shell><Workspace /></Shell>} />
+
             {/* Pages (org profiles) */}
             <Route path="/p/:slug" element={<Shell><PageProfile /></Shell>} />
+
             {/* Legacy redirects */}
             <Route path="/app/nexus" element={<Shell><Explore /></Shell>} />
             <Route path="/app/work" element={<Shell><MyWork /></Shell>} />
@@ -116,6 +131,7 @@ const App = () => (
             <Route path="/app/build-log" element={<Shell><MyWork /></Shell>} />
             <Route path="/app/challenges" element={<Shell><Opportunities /></Shell>} />
             <Route path="/app/messages" element={<Shell><Pings /></Shell>} />
+
             {/* Public profile */}
             <Route path="/:username/:slug" element={<PageErrorBoundary><WorkDetail /></PageErrorBoundary>} />
             <Route path="/:username" element={<PageErrorBoundary><Profile /></PageErrorBoundary>} />
