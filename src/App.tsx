@@ -46,6 +46,8 @@ const PostCreate = lazyWithRetry(() => import("./pages/PostCreate.tsx"), "PostCr
 const CertificatePage = lazyWithRetry(() => import("./pages/CertificatePage.tsx"), "CertificatePage");
 const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword.tsx"), "ResetPassword");
 const PostDetail = lazyWithRetry(() => import("./pages/PostDetail.tsx"), "PostDetail");
+const OrganizationPage = lazyWithRetry(() => import("./pages/OrganizationPage.tsx"), "OrganizationPage");
+const JoinAsInstitution = lazyWithRetry(() => import("./pages/JoinAsInstitution.tsx"), "JoinAsInstitution");
 
 const queryClient = new QueryClient();
 
@@ -95,6 +97,9 @@ const App = () => (
             <Route path="/app/pings/:id" element={<Shell><Pings /></Shell>} />
             <Route path="/app/alerts" element={<Shell><Alerts /></Shell>} />
             <Route path="/app/settings" element={<Shell><SettingsPage /></Shell>} />
+
+            {/* Organization profiles */}
+            <Route path="/org/:slug" element={<Shell><OrganizationPage /></Shell>} />
 
             {/* Pages (org profiles) */}
             <Route path="/p/:slug" element={<Shell><PageProfile /></Shell>} />
