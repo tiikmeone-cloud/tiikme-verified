@@ -217,6 +217,8 @@ const Alerts = () => {
               const Icon = ICON_MAP[notif.type] || Bell;
               const isStrandRequest = notif.type === "strand" && notif.title?.toLowerCase().includes("connect");
               const isOffer = notif.type === "offer" || (notif.type === "opportunity" && notif.title?.toLowerCase().includes("selected"));
+              const isDelegation = notif.type === "delegation_approval";
+              const isExVerification = notif.type === "ex_member_verification";
               const handled = notif._accepted || notif._declined;
 
               return (
@@ -267,7 +269,59 @@ const Alerts = () => {
                         </Button>
                       </div>
                     )}
-                    {notif._accepted && (
+                    {/* Delegation approval actions */}
+                    {isDelegation && !handled && (
+                      <div className="flex gap-2 mt-2">
+                        <Button size="sm" className="h-7 text-[11px] gap-1" onClick={async (e) => {
+                          e.stopPropagation();
+                          const ruleData = notif.data;
+                          if (ruleData?.org_id && ruleData?.member_id && ruleData?.access_type) {
+                            await supabase.from("org_access_rules").update({ delegation_approved: true } as any)
+                              .eq("org_id", ruleData.org_id).eq("member_id", ruleData.member_id).eq("access_type", ruleData.access_type);
+                          }
+                          await supabase.from("alerts").update({ is_read: true } as any).eq("id", notif.id);
+                          setAlerts(prev => prev.map(a => a.id === notif.id ? { ...a, is_read: true, _accepted: true } : a));
+                          toast.success("Delegation approved");
+                        }}>
+                          <Check className="w-3 h-3" /> Approve
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-7 text-[11px] gap-1" onClick={async (e) => {
+                          e.stopPropagation();
+                          const ruleData = notif.data;
+                          if (ruleData?.org_id && ruleData?.member_id && ruleData?.access_type) {
+                            await supabase.from("org_access_rules").delete()
+                              .eq("org_id", ruleData.org_id).eq("member_id", ruleData.member_id).eq("access_type", ruleData.access_type);
+                          }
+                          await supabase.from("alerts").update({ is_read: true } as any).eq("id", notif.id);
+                          setAlerts(prev => prev.map(a => a.id === notif.id ? { ...a, is_read: true, _declined: true } : a));
+                          toast.success("Delegation declined");
+                        }}>
+                          <X className="w-3 h-3" /> Decline
+                        </Button>
+                      </div>
+                    )}
+                    {/* Ex-member verification actions */}
+                    {isExVerification && !handled && (
+                      <div className="flex gap-2 mt-2">
+                        <Button size="sm" className="h-7 text-[11px] gap-1" onClick={async (e) => {
+                          e.stopPropagation();
+                          await supabase.from("alerts").update({ is_read: true } as any).eq("id", notif.id);
+                          setAlerts(prev => prev.map(a => a.id === notif.id ? { ...a, is_read: true, _accepted: true } : a));
+                          toast.success("Verification approved");
+                          if (notif.action_url) navigate(notif.action_url);
+                        }}>
+                          <Check className="w-3 h-3" /> Approve
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-7 text-[11px] gap-1" onClick={async (e) => {
+                          e.stopPropagation();
+                          await supabase.from("alerts").update({ is_read: true } as any).eq("id", notif.id);
+                          setAlerts(prev => prev.map(a => a.id === notif.id ? { ...a, is_read: true, _declined: true } : a));
+                          toast.success("Verification declined");
+                        }}>
+                          <X className="w-3 h-3" /> Decline
+                        </Button>
+                      </div>
+                    )}
                       <span className="text-[11px] font-bold mt-1 block" style={{ color: "#10B981" }}>✓ {isOffer ? "Joined" : "Accepted"}</span>
                     )}
                     {notif._declined && (
