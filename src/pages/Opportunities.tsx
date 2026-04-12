@@ -17,6 +17,7 @@ const typeColors: Record<string, string> = { fulltime: "#2563EB", "full-time": "
 
 const Opportunities = () => {
   const { user, profile } = useAuth();
+  const isInstitution = profile?.account_type === "institution";
   
   const navigate = useNavigate();
   const [activeType, setActiveType] = useState("All");
@@ -27,7 +28,7 @@ const Opportunities = () => {
   const [appliedIds, setAppliedIds] = useState<Set<string>>(new Set());
   const [showCreate, setShowCreate] = useState(false);
   const [showApply, setShowApply] = useState<any>(null);
-  const [tab, setTab] = useState<"all" | "mine">("all");
+  const [tab, setTab] = useState<"all" | "mine">(isInstitution ? "mine" : "all");
 
   const fetchOpps = useCallback(async () => {
     setLoading(true);
@@ -76,9 +77,19 @@ const Opportunities = () => {
         <div>
           <h1 className="text-[28px] font-bold" style={{ color: "var(--text-1)" }}>Opportunities</h1>
           <p className="text-[14px]" style={{ color: "var(--text-3)" }}>
-            Roles matched to your profile and connections
+            {isInstitution ? "Manage your job postings and applications" : "Roles matched to your profile and connections"}
           </p>
         </div>
+        {isInstitution && (
+          <div className="flex items-center gap-2">
+            <Button variant="secondary" size="sm" onClick={() => setTab(tab === "mine" ? "all" : "mine")}>
+              {tab === "mine" ? "Browse All" : "My Postings"}
+            </Button>
+            <Button size="sm" onClick={() => setShowCreate(true)}>
+              <Plus className="w-4 h-4 mr-1" /> Post Opportunity
+            </Button>
+          </div>
+        )}
       </div>
 
 
@@ -169,8 +180,8 @@ const Opportunities = () => {
                   <div className="flex items-center gap-2">
                     {o.poster_id === user?.id ? (
                       <Button onClick={() => navigate(`/app/opportunities/${o.id}/applications`)}
-                        variant="outline" style={{ height: 40, borderRadius: 12, borderColor: "#E8580A", color: "#E8580A" }}>
-                        <Eye className="w-4 h-4 mr-1" /> Applications
+                        variant="outline" style={{ height: 40, borderRadius: 12, borderColor: "var(--brand)", color: "var(--brand)" }}>
+                        <Eye className="w-4 h-4 mr-1" /> {o.responses_count || 0} Applications
                       </Button>
                     ) : (
                       <>
