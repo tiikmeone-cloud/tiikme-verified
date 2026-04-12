@@ -11,9 +11,9 @@ import TeamTab from "@/components/org/tabs/TeamTab";
 import OpportunitiesTab from "@/components/org/tabs/OpportunitiesTab";
 import VerifiedMembersTab from "@/components/org/tabs/VerifiedMembersTab";
 
-const TABS = ["Home", "About", "Team", "Opportunities", "Posts", "Verified Members"];
+const TABS = ["Posts", "About", "Team", "Opportunities", "Verified Members"];
 const TAB_SLUG_MAP: Record<string, string> = { about: "About", team: "Team", opportunities: "Opportunities", posts: "Posts", members: "Verified Members" };
-const SLUG_TAB_MAP: Record<string, string> = { Home: "", About: "about", Team: "team", Opportunities: "opportunities", Posts: "posts", "Verified Members": "members" };
+const SLUG_TAB_MAP: Record<string, string> = { Posts: "", About: "about", Team: "team", Opportunities: "opportunities", "Verified Members": "members" };
 
 export default function OrganizationPage() {
   const { slug, tab: urlTab } = useParams<{ slug: string; tab?: string }>();
