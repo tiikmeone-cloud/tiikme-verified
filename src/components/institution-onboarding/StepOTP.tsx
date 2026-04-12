@@ -60,10 +60,21 @@ export default function StepOTP({ email, password, onNext }: Props) {
         result = await supabase.auth.verifyOtp({ email, token: code, type: "signup" });
       }
 
+      // Fallback to magiclink type
+      if (result.error) {
+        result = await supabase.auth.verifyOtp({ email, token: code, type: "magiclink" });
+      }
+
       if (result.error) {
         toast.error(result.error.message);
         setSubmitting(false);
         return;
+      }
+
+      // If OTP verified but no session, sign in with password
+      if (!result.data?.session) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInError) console.warn("[StepOTP] post-verify sign-in:", signInError.message);
       }
 
       toast.success("Email verified!");
