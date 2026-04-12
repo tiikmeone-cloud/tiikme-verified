@@ -303,9 +303,16 @@ export default function ApplicationsDashboard() {
                     </p>
                   )}
                 </div>
-                <div className="w-12 h-12 rounded-full flex items-center justify-center text-[14px] font-bold"
-                  style={{ background: "#FFF3EC", color: "#E8580A", border: "2px solid #E8580A" }}>
-                  {selectedApp.profile?.activity_score || 0}
+                <div className="flex flex-col items-end gap-2">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center text-[14px] font-bold"
+                    style={{ background: "#FFF3EC", color: "#E8580A", border: "2px solid #E8580A" }}>
+                    {selectedApp.profile?.activity_score || 0}
+                  </div>
+                  <Button size="sm" variant="outline" className="gap-1.5 text-[11px] h-8"
+                    style={{ borderColor: "#E8580A", color: "#E8580A" }}
+                    onClick={() => handleContactViaPings(selectedApp.applicant_id)}>
+                    <MessageSquare className="w-3.5 h-3.5" /> Contact via Pings
+                  </Button>
                 </div>
               </div>
 
