@@ -2,7 +2,9 @@ import { useState, useRef } from "react";
 import { MapPin, Globe, Calendar, Users, MessageCircle, Share2, Settings, MoreHorizontal, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface OrgHeroProps {
   org: any;
@@ -17,6 +19,8 @@ interface OrgHeroProps {
 }
 
 export default function OrgHero({ org, isAdmin, isFollowing, followerCount, memberCount, onFollow, onNavigateSettings, onCoverUpdated, onLogoUpdated }: OrgHeroProps) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const initials = (org.name || "").split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
   const locationParts = [org.city, org.state].filter(Boolean);
   const coverRef = useRef<HTMLInputElement>(null);
@@ -68,12 +72,73 @@ export default function OrgHero({ org, isAdmin, isFollowing, followerCount, memb
     }
   };
 
+  const handleMessage = async () => {
+    if (!user) { toast.error("Please sign in to send messages"); return; }
+
+    // Check if pings are enabled
+    if (org.pings_enabled === false) {
+      toast.info("This organisation has disabled messages.");
+      return;
+    }
+
+    // Check follow requirement
+    if (org.pings_visibility === "followers") {
+      const { data: followData } = await supabase.from("org_followers").select("id").eq("org_id", org.id).eq("user_id", user.id).maybeSingle();
+      if (!followData) {
+        toast.info(`Follow ${org.name} to send them a message.`);
+        return;
+      }
+    }
+
+    try {
+      // Find org owner
+      const { data: ownerMember } = await supabase.from("org_members")
+        .select("user_id")
+        .eq("org_id", org.id)
+        .eq("role", "owner")
+        .limit(1)
+        .maybeSingle();
+
+      const ownerId = ownerMember?.user_id || org.created_by;
+      if (!ownerId) { toast.error("Could not find organisation contact"); return; }
+      if (ownerId === user.id) { toast.info("You can't message your own organisation"); return; }
+
+      // Check for existing conversation
+      const { data: existing } = await supabase.from("conversations")
+        .select("id")
+        .or(`and(participant_1.eq.${user.id},participant_2.eq.${ownerId}),and(participant_1.eq.${ownerId},participant_2.eq.${user.id})`)
+        .maybeSingle();
+
+      if (existing) {
+        navigate("/app/pings");
+        return;
+      }
+
+      // Create new conversation
+      const { data: conv, error } = await supabase.from("conversations").insert({
+        participant_1: user.id,
+        participant_2: ownerId,
+      }).select().single();
+
+      if (error) { console.warn("[OrgHero] conversation creation failed:", error.message); toast.error("Failed to start conversation"); return; }
+
+      // Send opening ping
+      await supabase.from("pings").insert({
+        conversation_id: conv.id,
+        sender_id: user.id,
+        content: `Hi ${org.name}! I'd like to connect.`,
+        is_opener: true,
+      });
+
+      navigate("/app/pings");
+    } catch (e) { console.warn("[OrgHero] message error:", e); toast.error("Something went wrong"); }
+  };
+
   return (
     <>
       <input ref={coverRef} type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
       <input ref={logoRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
 
-      {/* Cover */}
       <div className="w-full h-[180px] md:h-[280px] relative overflow-hidden group" style={{
         background: org.cover_url ? `url(${org.cover_url}) center/cover` : "linear-gradient(135deg, #E8580A 0%, #C4460A 100%)",
       }}>
@@ -87,10 +152,8 @@ export default function OrgHero({ org, isAdmin, isFollowing, followerCount, memb
         )}
       </div>
 
-      {/* Header content */}
       <div className="max-w-[960px] mx-auto px-4 md:px-6">
         <div className="flex flex-col md:flex-row md:items-start gap-4 -mt-12 relative z-10">
-          {/* Logo */}
           <div className="w-[72px] h-[72px] md:w-24 md:h-24 rounded-full flex items-center justify-center text-[20px] md:text-[24px] font-bold shrink-0 overflow-hidden cursor-pointer relative"
             style={{
               background: org.logo_url ? "#fff" : "#E8580A",
@@ -108,7 +171,6 @@ export default function OrgHero({ org, isAdmin, isFollowing, followerCount, memb
             )}
           </div>
 
-          {/* Info */}
           <div className="flex-1 min-w-0 md:pt-14">
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-[24px] font-bold" style={{ color: "#1A1A1A" }}>{org.name}</h1>
@@ -127,14 +189,12 @@ export default function OrgHero({ org, isAdmin, isFollowing, followerCount, memb
               )}
             </div>
 
-            {/* Stats */}
             <div className="flex items-center gap-6 mt-3">
               <StatItem value={followerCount} label="Followers" />
               <StatItem value={memberCount} label="Employees" />
               {org.founded_year && <StatItem value={`Since ${org.founded_year}`} label="" />}
             </div>
 
-            {/* Actions */}
             <div className="flex items-center gap-2 mt-4 flex-wrap">
               <Button size="default" onClick={onFollow}
                 className="min-w-[100px] h-10"
@@ -142,7 +202,7 @@ export default function OrgHero({ org, isAdmin, isFollowing, followerCount, memb
                 {isFollowing ? "Following ✓" : "Follow"}
               </Button>
               <Button variant="secondary" size="default" className="h-10 gap-1.5" style={{ border: "1px solid #F0E8E0" }}
-                onClick={() => toast.info("This feature is coming soon. Stay Tiiked!")}>
+                onClick={handleMessage}>
                 <MessageCircle className="w-4 h-4" /> Message
               </Button>
               <div className="relative group/menu">
@@ -151,13 +211,13 @@ export default function OrgHero({ org, isAdmin, isFollowing, followerCount, memb
                 </Button>
                 <div className="absolute right-0 top-full mt-1 w-[180px] rounded-xl py-1 hidden group-hover/menu:block z-20"
                   style={{ background: "#fff", border: "1px solid #F0E8E0", boxShadow: "0 4px 16px rgba(0,0,0,0.08)" }}>
-                  <button type="button" className="w-full text-left px-3 py-2 text-[13px] hover:bg-gray-50" onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success("Link copied"); }}>Copy link</button>
-                  <button type="button" className="w-full text-left px-3 py-2 text-[13px] hover:bg-gray-50" onClick={handleShare}>Share page</button>
+                  <button type="button" className="w-full text-left px-3 py-2 text-[13px] hover:bg-gray-50 cursor-pointer" onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success("Link copied"); }}>Copy link</button>
+                  <button type="button" className="w-full text-left px-3 py-2 text-[13px] hover:bg-gray-50 cursor-pointer" onClick={handleShare}>Share page</button>
                   {isAdmin && (
                     <>
                       <div className="h-px my-1" style={{ background: "#F0E8E0" }} />
-                      <button type="button" className="w-full text-left px-3 py-2 text-[13px] hover:bg-gray-50" onClick={onNavigateSettings}>Edit Page</button>
-                      <button type="button" className="w-full text-left px-3 py-2 text-[13px] hover:bg-gray-50" onClick={onNavigateSettings}>Page Settings</button>
+                      <button type="button" className="w-full text-left px-3 py-2 text-[13px] hover:bg-gray-50 cursor-pointer" onClick={onNavigateSettings}>Edit Page</button>
+                      <button type="button" className="w-full text-left px-3 py-2 text-[13px] hover:bg-gray-50 cursor-pointer" onClick={onNavigateSettings}>Page Settings</button>
                     </>
                   )}
                 </div>
@@ -165,7 +225,6 @@ export default function OrgHero({ org, isAdmin, isFollowing, followerCount, memb
             </div>
           </div>
 
-          {/* Quick Info card — desktop only */}
           <div className="hidden md:block w-[280px] shrink-0 rounded-xl p-5 mt-14"
             style={{ background: "#fff", border: "1px solid #F0E8E0", boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06)" }}>
             <p className="text-[11px] font-bold uppercase tracking-wider mb-3" style={{ color: "#9CA3AF" }}>Quick Info</p>
@@ -177,7 +236,7 @@ export default function OrgHero({ org, isAdmin, isFollowing, followerCount, memb
               {org.founded_year && <InfoRow icon="📅" text={`Founded ${org.founded_year}`} />}
             </div>
             {isAdmin && (
-              <button type="button" className="text-[13px] font-semibold mt-3 hover:underline" style={{ color: "#E8580A" }} onClick={onNavigateSettings}>
+              <button type="button" className="text-[13px] font-semibold mt-3 hover:underline cursor-pointer" style={{ color: "#E8580A" }} onClick={onNavigateSettings}>
                 Edit details →
               </button>
             )}

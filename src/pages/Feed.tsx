@@ -54,11 +54,22 @@ const LivePostCard = ({
   const [showMenu, setShowMenu] = useState(false);
   const { user, profile: authProfile, initials: userInitials } = useAuth();
 
+  // Org branding logic
+  const isOrgPost = !!post.posted_by_org && !!post.org;
   const author = post.author;
-  const name = author?.full_name || author?.username || "Unknown";
-  const initials = name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
-  const role = author?.role || "user";
-  const roleColor = roleColorMap[role] || "#6B7280";
+
+  const displayAvatar = isOrgPost ? post.org?.logo_url : author?.avatar_url;
+  const displayName = isOrgPost ? post.org?.name : (author?.full_name || author?.username || "Unknown");
+  const displayRole = isOrgPost ? post.org?.type : (author?.role || "user");
+  const profileLink = isOrgPost ? `/org/${post.org?.slug}` : `/app/profile/${author?.id || ""}`;
+
+  // "via member" for org posts by non-owner
+  const viaName = isOrgPost && post.poster_profile?.full_name
+    ? post.poster_profile.full_name
+    : null;
+
+  const initials = displayName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
+  const roleColor = isOrgPost ? "#E8580A" : (roleColorMap[displayRole] || "#6B7280");
   const timeAgo = post.created_at ? getTimeAgo(new Date(post.created_at)) : "";
   const isOwn = user?.id === post.author_id;
 
@@ -68,6 +79,9 @@ const LivePostCard = ({
   const isOpen = commentsOpen.has(post.id);
   const comments = commentsData[post.id] || [];
   const commentText = commentInputs[post.id] || "";
+
+  const isWorkspacePost = post.visibility === "workspace";
+  const repostCount = post.repost_count || 0;
 
   const handleDelete = async () => {
     onDelete(post.id);
@@ -80,29 +94,51 @@ const LivePostCard = ({
   const handleRepost = async () => {
     if (!user) return;
     if (!confirmRepost) { setConfirmRepost(true); return; }
-    await supabase.from("posts").insert({
-      author_id: user.id, content: post.content, repost_of: post.id,
-      post_type: "thought", type: "thought", visibility: "everyone",
-      image_urls: post.image_urls || [],
-    } as any);
-    toast.success("Reposted");
+    try {
+      await supabase.from("posts").insert({
+        author_id: user.id, content: post.content, repost_of: post.id,
+        post_type: "thought", type: "thought", visibility: "everyone",
+        image_urls: post.image_urls || [],
+      } as any);
+      await supabase.from("post_reposts").insert({ post_id: post.id, reposted_by: user.id });
+      toast.success("Reposted");
+    } catch (e) { console.warn("[Feed] repost failed:", e); }
     setConfirmRepost(false);
   };
 
+  // Townhall post rendering
+  const isTownhall = post.post_type === "townhall";
+
   return (
-    <article className="glass-liquid glass-liquid-hover rounded-2xl md:rounded-3xl mb-3 overflow-hidden">
+    <article className="glass-liquid glass-liquid-hover rounded-2xl md:rounded-3xl mb-3 overflow-hidden"
+      style={isTownhall ? { borderLeft: "4px solid #E8580A" } : undefined}>
+      {isTownhall && (
+        <div className="px-4 pt-3">
+          <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "#E8580A" }}>📢 TOWNHALL</span>
+        </div>
+      )}
       <div className="flex items-center gap-3 px-4 pt-4 pb-1">
-        <Link to={`/app/profile/${author?.id || ""}`}>
-          <div className="w-11 h-11 rounded-full flex items-center justify-center text-[14px] font-bold text-white shrink-0 hover:scale-105 transition-transform overflow-hidden" style={{ backgroundColor: roleColor }}>
-            {author?.avatar_url ? <img src={storageImageUrl(author.avatar_url, "avatar")} alt="" className="w-full h-full rounded-full object-cover" /> : initials}
+        <Link to={profileLink}>
+          <div className="w-11 h-11 rounded-full flex items-center justify-center text-[14px] font-bold text-white shrink-0 hover:scale-105 transition-transform overflow-hidden"
+            style={{ backgroundColor: roleColor, border: isOrgPost && displayAvatar ? "1.5px solid #F0E8E0" : undefined, background: isOrgPost && displayAvatar ? "#fff" : roleColor }}>
+            {displayAvatar
+              ? <img src={storageImageUrl(displayAvatar, "avatar")} alt="" className="w-full h-full rounded-full object-cover" />
+              : initials}
           </div>
         </Link>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <Link to={`/app/profile/${author?.id || ""}`} className="text-[14px] font-bold hover:underline" style={{ color: "var(--text-1)" }}>{name}</Link>
-            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full" style={{ background: `${roleColor}1A`, color: roleColor }}>{role}</span>
+            <Link to={profileLink} className="text-[14px] font-bold hover:underline" style={{ color: "var(--text-1)" }}>{displayName}</Link>
+            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full" style={{ background: `${roleColor}1A`, color: roleColor }}>
+              {isOrgPost ? (displayRole?.charAt(0).toUpperCase() + displayRole?.slice(1)) : displayRole}
+            </span>
           </div>
-          <span className="text-[11px]" style={{ color: "var(--text-3)" }}>{timeAgo}</span>
+          <div className="flex items-center gap-1.5">
+            {viaName && (
+              <span className="text-[12px]" style={{ color: "var(--text-3)" }}>via {viaName} · </span>
+            )}
+            <span className="text-[11px]" style={{ color: "var(--text-3)" }}>{timeAgo}</span>
+          </div>
         </div>
         <div className="relative">
           <button type="button" onClick={() => setShowMenu(!showMenu)} className="p-2 md:p-1.5 rounded-lg cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center" style={{ color: "var(--text-3)" }}><MoreHorizontal className="w-4 h-4" /></button>
@@ -143,6 +179,15 @@ const LivePostCard = ({
         </div>
       )}
 
+      {/* Repost summary */}
+      {repostCount >= 2 && (
+        <div className="px-4 pb-1">
+          <p className="text-[12px]" style={{ color: "var(--text-3)" }}>
+            ↩️ {isOrgPost ? post.org?.name : displayName} and {repostCount - 1} other{repostCount > 2 ? "s" : ""} reposted
+          </p>
+        </div>
+      )}
+
       {/* Like / Comment / Repost */}
       <div className="flex items-center px-4 py-2" style={{ borderTop: "1px solid var(--border)" }}>
         <button type="button" onClick={() => toggleLike(post.id)} className="h-9 px-3 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all" style={{ color: liked ? "var(--brand)" : "var(--text-2)" }}>
@@ -152,18 +197,20 @@ const LivePostCard = ({
         <button type="button" onClick={() => toggleComments(post.id)} className="h-9 px-3 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer hover:bg-[var(--brand-dim)]" style={{ color: "var(--text-2)" }}>
           <MessageSquare className="w-4 h-4" /> {commentCount}
         </button>
-        <div className="relative">
-          <button type="button" onClick={handleRepost} className="h-9 px-3 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer hover:bg-[var(--brand-dim)]" style={{ color: "var(--text-2)" }}>
-            <Repeat2 className="w-4 h-4" />
-          </button>
-          {confirmRepost && (
-            <div className="absolute bottom-full left-0 mb-1 flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] whitespace-nowrap" style={{ background: "var(--surface)", border: "1px solid var(--border)", zIndex: 10 }}>
-              <span style={{ color: "var(--text-2)" }}>Repost?</span>
-              <button type="button" onClick={handleRepost} className="font-bold px-1.5 cursor-pointer" style={{ color: "var(--brand)" }}>Yes</button>
-              <button type="button" onClick={() => setConfirmRepost(false)} className="px-1.5 cursor-pointer" style={{ color: "var(--text-3)" }}>No</button>
-            </div>
-          )}
-        </div>
+        {!isWorkspacePost && (
+          <div className="relative">
+            <button type="button" onClick={handleRepost} className="h-9 px-3 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer hover:bg-[var(--brand-dim)]" style={{ color: "var(--text-2)" }}>
+              <Repeat2 className="w-4 h-4" />
+            </button>
+            {confirmRepost && (
+              <div className="absolute bottom-full left-0 mb-1 flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] whitespace-nowrap" style={{ background: "var(--surface)", border: "1px solid var(--border)", zIndex: 10 }}>
+                <span style={{ color: "var(--text-2)" }}>Repost?</span>
+                <button type="button" onClick={handleRepost} className="font-bold px-1.5 cursor-pointer" style={{ color: "var(--brand)" }}>Yes</button>
+                <button type="button" onClick={() => setConfirmRepost(false)} className="px-1.5 cursor-pointer" style={{ color: "var(--text-3)" }}>No</button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Comments */}
@@ -209,6 +256,7 @@ const LivePostCard = ({
               onKeyDown={(e) => { if (e.key === "Enter" && commentText.trim()) submitComment(post.id); }}
             />
             <button
+              type="button"
               onClick={() => submitComment(post.id)}
               className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer active:scale-95"
               style={{ background: commentText.trim() ? "var(--brand)" : "var(--surface-2)" }}
@@ -308,10 +356,8 @@ const Feed = () => {
   const feedRef = useRef<HTMLDivElement>(null);
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
 
-  // Filter out locally deleted posts for instant feedback
   const visiblePosts = useMemo(() => livePosts.filter((p: any) => !deletedIds.has(p.id)), [livePosts, deletedIds]);
 
-  // Batch like/comment hooks
   const postIds = useMemo(() => visiblePosts.map((p: any) => p.id), [visiblePosts]);
   const postIdsKey = useMemo(() => postIds.join(","), [postIds]);
   const { counts: likeCounts, myLikes, toggle: toggleLike } = useLikes(postIds);
@@ -321,17 +367,14 @@ const Feed = () => {
     submit: submitComment, deleteComment, loadCounts: loadCommentCounts,
   } = useComments();
 
-  // Load comment counts when posts change
   useEffect(() => {
     loadCommentCounts(postIds);
   }, [postIdsKey, loadCommentCounts]);
 
-  // Handle post deletion from feed — instant removal
   const handleDeletePost = (postId: string) => {
     setDeletedIds(prev => new Set(prev).add(postId));
   };
 
-  // Pull-to-refresh
   const [pullY, setPullY] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const touchStartY = useRef(0);
@@ -352,7 +395,6 @@ const Feed = () => {
   return (
     <main className="max-w-[960px] mx-auto px-3 md:px-6 py-4 md:py-7" ref={feedRef}
       onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
-      {/* Pull-to-refresh */}
       <div className="md:hidden flex items-center justify-center overflow-hidden transition-all duration-200"
         style={{ height: pullY > 0 ? `${pullY}px` : 0, opacity: pullY > 20 ? 1 : 0 }}>
         <div className={`w-7 h-7 rounded-full border-2 border-t-transparent ${refreshing ? 'animate-spin' : ''}`}
@@ -360,7 +402,6 @@ const Feed = () => {
       </div>
       <div className="flex gap-6">
         <div className="flex-1 min-w-0 max-w-[660px]">
-          {/* Compose */}
           <div className="glass-liquid rounded-2xl md:rounded-3xl p-3 mb-4">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: "var(--brand)" }}>
