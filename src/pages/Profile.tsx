@@ -1026,7 +1026,7 @@ const Profile = () => {
     );
   }
 
-  
+  return (
     <div className="max-w-[760px] mx-auto px-0 md:px-4 py-0 md:py-7 space-y-3 md:space-y-4 md:pl-8">
       {/* HEADER */}
       <div className="t-card overflow-hidden">
