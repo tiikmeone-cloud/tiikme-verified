@@ -53,13 +53,14 @@ export function useConversations(userId: string | undefined) {
     if (!userId) { setLoading(false); return; }
     setLoading(true);
 
-    const { data: convos } = await supabase
+    const { data: convos, error: convoErr } = await supabase
       .from("conversations")
       .select("*")
       .or(`participant_1.eq.${userId},participant_2.eq.${userId}`)
       .order("last_message_at", { ascending: false })
       .limit(50);
 
+    if (convoErr) { console.warn("[useConversations] fetch failed:", convoErr.message); }
     if (!mountedRef.current) return;
     if (!convos || convos.length === 0) {
       setConversations([]);
@@ -75,29 +76,32 @@ export function useConversations(userId: string | undefined) {
     const convoIds = convos.map(c => c.id);
 
     // Batch fetch: profiles, unread counts, and last messages
-    const [profilesRes, unreadRes, lastMsgsRes] = await Promise.all([
+    const [profilesRes, unreadRes, lastMsgsRes] = await Promise.allSettled([
       supabase.from("profiles").select("id, full_name, username, avatar_url, role, institution_name, is_verified").in("id", uniqueIds),
       supabase.from("pings").select("conversation_id").in("conversation_id", convoIds).eq("is_read", false).neq("sender_id", userId),
-      // Get last message per conversation - fetch recent pings for all convos
       supabase.from("pings").select("conversation_id, content, created_at, attachment_type").in("conversation_id", convoIds).order("created_at", { ascending: false }).limit(200),
     ]);
 
     if (!mountedRef.current) return;
 
+    const profilesData = profilesRes.status === "fulfilled" ? (profilesRes.value as any).data || [] : (console.warn("[useConversations] profiles failed"), []);
+    const unreadData = unreadRes.status === "fulfilled" ? (unreadRes.value as any).data || [] : (console.warn("[useConversations] unread failed"), []);
+    const lastMsgsData = lastMsgsRes.status === "fulfilled" ? (lastMsgsRes.value as any).data || [] : (console.warn("[useConversations] lastMsgs failed"), []);
+
     const unreadMap: Record<string, number> = {};
-    (unreadRes.data || []).forEach(p => {
+    (unreadData as any[]).forEach((p: any) => {
       unreadMap[p.conversation_id!] = (unreadMap[p.conversation_id!] || 0) + 1;
     });
 
     // Build last message map (first occurrence per convo = most recent)
     const lastMsgMap: Record<string, { content: string; attachment_type: string | null }> = {};
-    (lastMsgsRes.data || []).forEach(p => {
+    (lastMsgsData as any[]).forEach((p: any) => {
       if (!lastMsgMap[p.conversation_id!]) {
-        lastMsgMap[p.conversation_id!] = { content: p.content, attachment_type: (p as any).attachment_type || null };
+        lastMsgMap[p.conversation_id!] = { content: p.content, attachment_type: p.attachment_type || null };
       }
     });
 
-    const profileMap = new Map((profilesRes.data || []).map(p => [p.id, p]));
+    const profileMap = new Map((profilesData as any[]).map((p: any) => [p.id, p]));
     const enriched: ConversationWithProfile[] = convos.map(c => {
       const otherId = c.participant_1 === userId ? c.participant_2 : c.participant_1;
       const lastMsg = lastMsgMap[c.id];

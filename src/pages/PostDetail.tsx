@@ -36,19 +36,27 @@ const PostDetail = () => {
   useEffect(() => {
     if (!postId) return;
     (async () => {
-      const { data } = await supabase.from("posts")
-        .select(`*, author:profiles!author_id (id, full_name, username, role, avatar_url, institution_name)`)
-        .eq("id", postId).single();
-      setPost(data);
+      try {
+        const { data, error: postErr } = await supabase.from("posts")
+          .select(`*, author:profiles!author_id (id, full_name, username, role, avatar_url, institution_name)`)
+          .eq("id", postId).maybeSingle();
+        if (postErr) console.warn("[PostDetail] post fetch failed:", postErr.message);
+        setPost(data);
 
-      const [{ data: reactions }, { data: cmts }, { data: myReaction }] = await Promise.all([
-        supabase.from("post_reactions").select("id").eq("post_id", postId),
-        supabase.from("post_comments").select("*, author:profiles!post_comments_user_id_fkey(id, full_name, avatar_url, role)").eq("post_id", postId).order("created_at", { ascending: true }).limit(50),
-        user ? supabase.from("post_reactions").select("id").eq("post_id", postId).eq("user_id", user.id).maybeSingle() : Promise.resolve({ data: null }),
-      ]);
-      setLikeCount(reactions?.length || 0);
-      setLiked(!!myReaction);
-      setComments(cmts || []);
+        const [reactionsRes, cmtsRes, myReactionRes] = await Promise.allSettled([
+          supabase.from("post_reactions").select("id").eq("post_id", postId),
+          supabase.from("post_comments").select("*, author:profiles!post_comments_user_id_fkey(id, full_name, avatar_url, role)").eq("post_id", postId).order("created_at", { ascending: true }).limit(50),
+          user ? supabase.from("post_reactions").select("id").eq("post_id", postId).eq("user_id", user.id).maybeSingle() : Promise.resolve({ data: null }),
+        ]);
+        const reactions = reactionsRes.status === "fulfilled" ? (reactionsRes.value as any).data || [] : (console.warn("[PostDetail] reactions failed"), []);
+        const cmts = cmtsRes.status === "fulfilled" ? (cmtsRes.value as any).data || [] : (console.warn("[PostDetail] comments failed"), []);
+        const myReaction = myReactionRes.status === "fulfilled" ? (myReactionRes.value as any).data : null;
+        setLikeCount(reactions.length || 0);
+        setLiked(!!myReaction);
+        setComments(cmts);
+      } catch (e) {
+        console.warn("[PostDetail] exception:", e);
+      }
       setLoading(false);
     })();
   }, [postId, user]);
