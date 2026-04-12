@@ -94,6 +94,7 @@ const App = () => (
             <Route path="/app/teams" element={<Shell><MyWork /></Shell>} />
             <Route path="/app/teams/:projectId" element={<Shell><ProjectHub /></Shell>} />
             <Route path="/app/opportunities" element={<Shell><Opportunities /></Shell>} />
+            <Route path="/app/opportunities/:id/applications" element={<Shell><ApplicationsDashboard /></Shell>} />
             <Route path="/app/strands" element={<Shell><Strands /></Shell>} />
             <Route path="/app/pings" element={<Shell><Pings /></Shell>} />
             <Route path="/app/pings/:id" element={<Shell><Pings /></Shell>} />
