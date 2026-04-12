@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useOrgIdentity } from "@/contexts/OrgIdentityContext";
 
 const navGroups = [
   {
@@ -56,9 +57,12 @@ const AppShell = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
   const openPostCreate = () => navigate("/post/create");
   const { profile, initials, displayName, user } = useAuth();
+  const { isInstitution, org, identityName, identityAvatar, identityInitials } = useOrgIdentity();
   const [unreadAlerts, setUnreadAlerts] = useState(0);
   const [unreadPings, setUnreadPings] = useState(0);
-  const roleLabel = profile?.role ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1).replace(/_/g, " ") : "Member";
+  const roleLabel = isInstitution && org
+    ? (org.type || "org").charAt(0).toUpperCase() + (org.type || "org").slice(1)
+    : profile?.role ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1).replace(/_/g, " ") : "Member";
 
   const isActive = (path: string) => pathname === path || pathname.startsWith(path + "/");
 
