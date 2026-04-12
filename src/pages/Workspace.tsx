@@ -11,6 +11,7 @@ import { useOrgIdentity } from "@/contexts/OrgIdentityContext";
 import { useWorkspaces } from "@/hooks/useWorkspaces";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import AccessManager from "@/components/workspace/AccessManager";
 
 const postTypes = [
   { emoji: "📢", label: "Announcement", type: "announcement" },
@@ -390,6 +391,18 @@ const Workspace = () => {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {activeTab === "Access" && isInstitution && org && (
+              <div>
+                <AccessManager orgId={org.id} isOwner={members.some(m => m.role === "Admin" || realWorkspaces.find(w => w.id === selected))} />
+              </div>
+            )}
+            {activeTab === "Access" && !isInstitution && (
+              <div className="text-center py-10">
+                <Shield className="w-10 h-10 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
+                <p className="text-[14px] font-bold mb-1" style={{ color: "var(--text-1)" }}>Access management is available for institution accounts</p>
               </div>
             )}
 

@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 const ICON_MAP: Record<string, any> = {
   strand: Link2, hr: Briefcase, verified: Shield, work: Target, score: TrendingUp,
   strand_request: UserCheck, verification_request: Shield, opportunity: Briefcase, offer: Briefcase,
+  delegation_approval: Shield, ex_member_verification: UserCheck,
 };
 
 const ICON_STYLES: Record<string, { bg: string; color: string }> = {
@@ -25,6 +26,8 @@ const ICON_STYLES: Record<string, { bg: string; color: string }> = {
   challenge: { bg: "rgba(146,64,14,0.1)", color: "#92400E" },
   like: { bg: "rgba(232,88,10,0.1)", color: "#E8580A" },
   comment: { bg: "rgba(232,88,10,0.1)", color: "#E8580A" },
+  delegation_approval: { bg: "rgba(245,158,11,0.1)", color: "#F59E0B" },
+  ex_member_verification: { bg: "rgba(79,70,229,0.1)", color: "#4F46E5" },
 };
 
 function getTimeAgo(date: Date): string {
