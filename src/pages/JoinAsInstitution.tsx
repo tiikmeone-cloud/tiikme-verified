@@ -18,6 +18,7 @@ const JoinAsInstitution = () => {
 
   // Collected data across steps
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [hasMobile, setHasMobile] = useState(false);
   const [orgType, setOrgType] = useState("");
   const [orgName, setOrgName] = useState("");
