@@ -254,7 +254,7 @@ const MyWork = () => {
                   <span className="flex items-center gap-1"><Briefcase className="w-3 h-3" /> {project.recruiter_views || 0} recruiter</span>
                 </div>
                 <div className="flex items-center gap-2 p-4 mt-2" style={{ borderTop: "1px solid var(--border)" }}>
-                  <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => toast.info("Editor coming soon")}>
+                  <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => navigate(`/app/work/${project.id}`)}>
                     <Pencil className="w-3 h-3" /> Edit
                   </Button>
                   <button type="button" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/app/work/${project.id}`); toast.success("Link copied"); }}

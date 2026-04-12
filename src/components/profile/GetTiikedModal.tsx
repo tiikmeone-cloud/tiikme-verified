@@ -75,7 +75,7 @@ const GetTiikedModal = ({ open, onClose, userId, userRole, onVerified }: Props) 
         return [
           { id: "email", icon: Mail, title: "Work Email", desc: "Verify with your official company email", action: () => setStep("email") },
           { id: "peer", icon: UserCheck, title: "Manager / HR Verification", desc: "Ask your manager or HR to verify your employment", action: () => setStep("peer") },
-          { id: "document", icon: FileText, title: "Experience Letter", desc: "Upload your relieving or experience letter", action: () => { toast.info("Document upload coming soon"); } },
+          { id: "document", icon: FileText, title: "Experience Letter", desc: "Upload your relieving or experience letter", action: () => setStep("document") },
         ];
       case "doctor":
         return [

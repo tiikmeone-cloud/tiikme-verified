@@ -155,7 +155,14 @@ export default function OrgVerifyPage() {
                   <Button size="sm" className="gap-1" style={{ background: "#16A34A", color: "#fff" }} onClick={() => handleApprove(selected)}>
                     <CheckCircle className="w-3.5 h-3.5" /> Approve
                   </Button>
-                  <Button variant="ghost" size="sm" className="gap-1" onClick={() => toast.info("This feature is coming soon. Stay Tiiked!")}>
+                  <Button variant="ghost" size="sm" className="gap-1" onClick={async () => {
+                    if (!user || !selected) return;
+                    try {
+                      const { data: conv } = await supabase.from("conversations").insert({ participant_1: user.id, participant_2: selected.user_id }).select().single();
+                      if (conv) { await supabase.from("pings").insert({ conversation_id: conv.id, sender_id: user.id, content: `Regarding your verification request for ${org.name}: Could you provide more details?`, is_opener: true }); }
+                      navigate("/app/pings");
+                    } catch (e) { console.warn("[OrgVerify]", e); toast.error("Failed to send message"); }
+                  }}>
                     <MessageCircle className="w-3.5 h-3.5" /> Request More Info
                   </Button>
                 </div>

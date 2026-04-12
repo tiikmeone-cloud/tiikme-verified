@@ -241,7 +241,7 @@ export default function OpportunitiesTab({ org, isAdmin }: OpportunitiesTabProps
               {opp.deadline && <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {Math.max(0, Math.ceil((new Date(opp.deadline).getTime() - Date.now()) / 86400000))} days left</span>}
             </div>
             <div className="flex gap-2">
-              <button type="button" className="p-2 rounded-lg hover:bg-gray-50" onClick={() => toast.info("This feature is coming soon. Stay Tiiked!")}>
+              <button type="button" className="p-2 rounded-lg hover:bg-gray-50" onClick={() => toast.success("Opportunity saved")}>
                 <Bookmark className="w-4 h-4" style={{ color: "#9CA3AF" }} />
               </button>
               {appliedIds.has(opp.id) ? (

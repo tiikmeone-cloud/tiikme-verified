@@ -199,32 +199,11 @@ const PageProfile = () => {
         )}
 
         {activeTab === "Updates" && (
-          <div>
-            {isAdmin && (
-              <div className="t-card p-4 mb-4">
-                <p className="text-[13px]" style={{ color: "var(--text-3)" }}>Post as {page.name}...</p>
-                <Button size="sm" className="mt-2" onClick={() => toast.info("Institution post composer coming soon")}>Create Post</Button>
-              </div>
-            )}
-            <div className="t-card p-8 text-center">
-              <p className="text-[14px]" style={{ color: "var(--text-3)" }}>No updates posted yet</p>
-            </div>
-          </div>
+          <PageUpdatesTab page={page} isAdmin={isAdmin} />
         )}
 
         {activeTab === "Jobs & Opportunities" && (
-          <div>
-            {isAdmin && (
-              <div className="flex justify-end mb-4">
-                <Button size="sm" className="gap-1" onClick={() => toast.info("Job posting form coming soon")}><Plus className="w-3.5 h-3.5" /> Post a Job</Button>
-              </div>
-            )}
-            <div className="t-card p-8 text-center">
-              <Briefcase className="w-10 h-10 mx-auto mb-2" style={{ color: "var(--text-3)" }} />
-              <p className="text-[14px] font-bold mb-1" style={{ color: "var(--text-1)" }}>No active opportunities</p>
-              <p className="text-[12px]" style={{ color: "var(--text-3)" }}>Jobs and opportunities will appear here</p>
-            </div>
-          </div>
+          <PageOpportunitiesTab page={page} isAdmin={isAdmin} />
         )}
 
         {activeTab === "Team" && (
