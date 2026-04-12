@@ -58,6 +58,9 @@ const AppShell = ({ children }: { children: ReactNode }) => {
   const openPostCreate = () => navigate("/post/create");
   const { profile, initials, displayName, user } = useAuth();
   const { isInstitution, org, identityName, identityAvatar, identityInitials } = useOrgIdentity();
+
+  // Dynamic profile link: institution → /org/slug, user → /app/profile
+  const profilePath = isInstitution && org?.slug ? `/org/${org.slug}` : "/app/profile";
   const [unreadAlerts, setUnreadAlerts] = useState(0);
   const [unreadPings, setUnreadPings] = useState(0);
   const roleLabel = isInstitution && org
@@ -151,7 +154,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
                   const active = isActive(item.path);
                   const badge = getBadge(item.path);
                   return (
-                    <Link key={item.path} to={item.path}
+                    <Link key={item.path} to={item.path === "/app/profile" ? profilePath : item.path}
                       className="flex items-center gap-2.5 h-[42px] px-3 rounded-xl relative text-[14px]"
                       style={{ background: active ? "var(--brand-dim)" : "transparent", border: active ? "1px solid color-mix(in srgb, var(--brand) 25%, transparent)" : "1px solid transparent", color: active ? "var(--brand)" : "var(--text-2)", fontWeight: active ? 700 : 500, transition: "all 0.15s" }}>
                       {active && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[22px]" style={{ borderRadius: "0 3px 3px 0", background: "var(--brand)", boxShadow: "2px 0 8px var(--brand-glow)" }} />}
@@ -175,7 +178,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           </div>
         </nav>
         <div className="px-2.5 pb-3 pt-2" style={{ borderTop: "1px solid var(--border)" }}>
-          <Link to="/app/profile" className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl">
+          <Link to={profilePath} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl">
             <div className="w-10 h-10 rounded-full flex items-center justify-center text-[13px] font-bold text-white overflow-hidden" style={{ backgroundColor: "var(--brand)" }}>
               {identityAvatar ? <img src={storageImageUrl(identityAvatar, "avatar")} alt="" className="w-full h-full object-cover" /> : identityInitials}
             </div>
@@ -205,7 +208,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             return (
               <Tooltip key={item.path} delayDuration={0}>
                 <TooltipTrigger asChild>
-                  <Link to={item.path} className="w-10 h-10 rounded-xl flex items-center justify-center relative"
+                  <Link to={item.path === "/app/profile" ? profilePath : item.path} className="w-10 h-10 rounded-xl flex items-center justify-center relative"
                     style={{ background: active ? "var(--brand-dim)" : "transparent", color: active ? "var(--brand)" : "var(--text-2)", transition: "all 0.15s" }}>
                     {active && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[22px]" style={{ borderRadius: "0 3px 3px 0", background: "var(--brand)", boxShadow: "2px 0 8px var(--brand-glow)" }} />}
                     <item.icon className="w-[18px] h-[18px]" strokeWidth={1.8} />
@@ -221,7 +224,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           style={{ background: "linear-gradient(135deg, var(--brand), var(--brand-2))", boxShadow: "0 4px 12px var(--brand-glow)" }}>
           <PencilLine className="w-4 h-4 text-white" />
         </button>
-        <Link to="/app/profile">
+        <Link to={profilePath}>
           <div className="w-10 h-10 rounded-full flex items-center justify-center text-[13px] font-bold text-white overflow-hidden" style={{ backgroundColor: "var(--brand)" }}>
             {identityAvatar ? <img src={storageImageUrl(identityAvatar, "avatar")} alt="" className="w-full h-full object-cover" /> : identityInitials}
           </div>
@@ -276,7 +279,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             // Profile tab shows user avatar
             if (item.path === "/app/profile") {
               return (
-                <Link key={item.path} to="/app/profile" className="flex flex-col items-center justify-center gap-0.5 w-14 h-14">
+                <Link key={item.path} to={profilePath} className="flex flex-col items-center justify-center gap-0.5 w-14 h-14">
                   <div className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold text-white overflow-hidden shrink-0"
                     style={{
                       backgroundColor: "var(--brand)",
