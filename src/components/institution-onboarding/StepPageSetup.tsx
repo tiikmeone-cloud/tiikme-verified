@@ -145,6 +145,7 @@ export default function StepPageSetup({
 
       // Update profile with institution account type and org link
       await supabase.from("profiles").update({
+        full_name: orgName,
         designation: repDesignation,
         department: repDepartment || null,
         institution_name: orgName,
