@@ -7,10 +7,11 @@ import { cardStyle } from "./constants";
 interface Props {
   email: string;
   hasMobile: boolean;
+  password?: string;
   onNext: () => void;
 }
 
-export default function StepOTP({ email, hasMobile, onNext }: Props) {
+export default function StepOTP({ email, hasMobile, password, onNext }: Props) {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [countdown, setCountdown] = useState(60);
   const [submitting, setSubmitting] = useState(false);
@@ -29,7 +30,6 @@ export default function StepOTP({ email, hasMobile, onNext }: Props) {
 
   const handleChange = (i: number, v: string) => {
     if (v.length > 1) {
-      // Paste handling
       const chars = v.replace(/\D/g, "").slice(0, 6).split("");
       const next = [...otp];
       chars.forEach((c, idx) => { if (i + idx < 6) next[i + idx] = c; });
@@ -57,12 +57,28 @@ export default function StepOTP({ email, hasMobile, onNext }: Props) {
     if (code.length < 6) { toast.info("Enter the 6-digit code"); return; }
     setSubmitting(true);
     try {
-      const { error } = await supabase.auth.verifyOtp({
+      // Try verifying as email OTP (from signInWithOtp)
+      let result = await supabase.auth.verifyOtp({
         email,
         token: code,
-        type: "signup",
+        type: "email",
       });
-      if (error) { toast.error(error.message); setSubmitting(false); return; }
+
+      // If that fails, try as signup OTP
+      if (result.error) {
+        result = await supabase.auth.verifyOtp({
+          email,
+          token: code,
+          type: "signup",
+        });
+      }
+
+      if (result.error) {
+        toast.error(result.error.message);
+        setSubmitting(false);
+        return;
+      }
+
       toast.success("Email verified!");
       onNext();
     } catch (err: any) {
@@ -75,13 +91,34 @@ export default function StepOTP({ email, hasMobile, onNext }: Props) {
 
   const handleResend = async () => {
     try {
-      await supabase.auth.resend({ type: "signup", email });
+      // Re-send OTP via signInWithOtp
+      const { error } = await supabase.auth.signInWithOtp({ email });
+      if (error) {
+        // Fallback: resend signup confirmation
+        await supabase.auth.resend({ type: "signup", email });
+      }
       setCountdown(60);
       toast.success("Code resent");
     } catch (err: any) {
       console.warn("[StepOTP] resend error:", err);
       toast.error("Failed to resend");
     }
+  };
+
+  const handleSkipVerification = async () => {
+    // Try to sign in with password as fallback
+    if (password) {
+      setSubmitting(true);
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (!error) {
+        toast.info("Signed in — email verification can be completed later");
+        onNext();
+        setSubmitting(false);
+        return;
+      }
+      setSubmitting(false);
+    }
+    toast.info("Please verify your email to continue");
   };
 
   return (
@@ -129,6 +166,25 @@ export default function StepOTP({ email, hasMobile, onNext }: Props) {
         style={{ height: 52, background: "#E8580A", borderRadius: 8, fontSize: 15, fontWeight: 700 }}>
         {submitting ? "Verifying..." : "Verify →"}
       </Button>
+
+      <div style={{ textAlign: "center", marginTop: 16 }}>
+        <p style={{ fontSize: 12, color: "#9CA3AF", marginBottom: 6 }}>
+          Didn't receive the code? Check your spam folder.
+        </p>
+        {password && (
+          <button
+            type="button"
+            onClick={handleSkipVerification}
+            style={{
+              fontSize: 13, color: "#6B6B6B", fontWeight: 500,
+              background: "none", border: "none", cursor: "pointer",
+              textDecoration: "underline",
+            }}
+          >
+            I already verified — continue
+          </button>
+        )}
+      </div>
     </form>
   );
 }

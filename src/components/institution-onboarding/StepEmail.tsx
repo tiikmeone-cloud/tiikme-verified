@@ -29,7 +29,20 @@ export default function StepEmail({ onNext }: Props) {
 
     setSubmitting(true);
     try {
-      const { error } = await supabase.auth.signUp({
+      // Try to sign in first (returning user)
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+
+      if (!signInError) {
+        // Already have an account — proceed
+        onNext({ email: email.trim(), password, mobile: mobile.trim() || undefined });
+        return;
+      }
+
+      // If sign-in fails, create a new account
+      const { error: signUpError } = await supabase.auth.signUp({
         email: email.trim(),
         password,
         options: {
@@ -37,10 +50,31 @@ export default function StepEmail({ onNext }: Props) {
           data: { full_name: "", role: "institution_admin" },
         },
       });
-      if (error) { toast.error(error.message); setSubmitting(false); return; }
+
+      if (signUpError) {
+        // User exists but wrong password
+        if (signUpError.message.includes("already registered") || signUpError.message.includes("already been registered")) {
+          toast.error("An account with this email exists. Check your password.");
+        } else {
+          toast.error(signUpError.message);
+        }
+        setSubmitting(false);
+        return;
+      }
+
+      // Now send a login OTP (this always includes the 6-digit code in the email)
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email: email.trim(),
+      });
+
+      if (otpError) {
+        console.warn("[StepEmail] OTP send error:", otpError);
+        // Don't block — the signup confirmation email may still have a code
+      }
+
       onNext({ email: email.trim(), password, mobile: mobile.trim() || undefined });
     } catch (err: any) {
-      console.warn("[StepEmail] signup error:", err);
+      console.warn("[StepEmail] error:", err);
       toast.error("Something went wrong");
     } finally {
       setSubmitting(false);
