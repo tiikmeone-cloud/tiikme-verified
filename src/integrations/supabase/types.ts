@@ -596,6 +596,7 @@ export type Database = {
           location: string | null
           org_id: string | null
           poster_id: string | null
+          qualification_criteria: Json | null
           responses_count: number | null
           salary_currency: string | null
           salary_max: number | null
@@ -620,6 +621,7 @@ export type Database = {
           location?: string | null
           org_id?: string | null
           poster_id?: string | null
+          qualification_criteria?: Json | null
           responses_count?: number | null
           salary_currency?: string | null
           salary_max?: number | null
@@ -644,6 +646,7 @@ export type Database = {
           location?: string | null
           org_id?: string | null
           poster_id?: string | null
+          qualification_criteria?: Json | null
           responses_count?: number | null
           salary_currency?: string | null
           salary_max?: number | null
@@ -700,6 +703,7 @@ export type Database = {
           created_at: string | null
           custom_answers: Json | null
           id: string
+          is_qualified: boolean | null
           joined_confirmed: boolean | null
           message: string | null
           offer_accepted: boolean | null
@@ -721,6 +725,7 @@ export type Database = {
           created_at?: string | null
           custom_answers?: Json | null
           id?: string
+          is_qualified?: boolean | null
           joined_confirmed?: boolean | null
           message?: string | null
           offer_accepted?: boolean | null
@@ -742,6 +747,7 @@ export type Database = {
           created_at?: string | null
           custom_answers?: Json | null
           id?: string
+          is_qualified?: boolean | null
           joined_confirmed?: boolean | null
           message?: string | null
           offer_accepted?: boolean | null
@@ -766,27 +772,36 @@ export type Database = {
       }
       org_access_rules: {
         Row: {
+          access_scope: string | null
           access_type: string
           created_at: string | null
           created_by: string | null
+          delegated_by: string | null
+          delegation_approved: boolean | null
           department_scope: string | null
           id: string
           member_id: string | null
           org_id: string | null
         }
         Insert: {
+          access_scope?: string | null
           access_type: string
           created_at?: string | null
           created_by?: string | null
+          delegated_by?: string | null
+          delegation_approved?: boolean | null
           department_scope?: string | null
           id?: string
           member_id?: string | null
           org_id?: string | null
         }
         Update: {
+          access_scope?: string | null
           access_type?: string
           created_at?: string | null
           created_by?: string | null
+          delegated_by?: string | null
+          delegation_approved?: boolean | null
           department_scope?: string | null
           id?: string
           member_id?: string | null
@@ -906,6 +921,7 @@ export type Database = {
           department: string | null
           granted_by: string | null
           id: string
+          is_current: boolean | null
           is_verified: boolean | null
           joined_at: string | null
           org_id: string
@@ -921,6 +937,7 @@ export type Database = {
           department?: string | null
           granted_by?: string | null
           id?: string
+          is_current?: boolean | null
           is_verified?: boolean | null
           joined_at?: string | null
           org_id: string
@@ -936,6 +953,7 @@ export type Database = {
           department?: string | null
           granted_by?: string | null
           id?: string
+          is_current?: boolean | null
           is_verified?: boolean | null
           joined_at?: string | null
           org_id?: string
