@@ -652,13 +652,13 @@ const Profile = () => {
   }, [user, targetUserId, isOwnProfile]);
   useEffect(() => { if (!authLoading) loadProfile(); }, [authLoading, loadProfile]);
 
-  if (authLoading || dataLoading) return (
-    <div className="max-w-[760px] mx-auto px-4 py-7"><div className="t-card p-6 animate-pulse"><div className="h-[140px] rounded-xl" style={{ background: "var(--surface-2)" }} /></div></div>
+  if (authLoading || dataLoading || (isOwnInstitutionProfile && orgLoading)) return (
+    <div className="max-w-[760px] mx-auto px-4 py-7"><div className="t-card p-6 animate-pulse"><div className="h-[140px] rounded-xl" style={{ background: "var(--surface-2)" }} /><div className="h-6 w-48 rounded mt-4" style={{ background: "var(--surface-2)" }} /><div className="h-4 w-32 rounded mt-2" style={{ background: "var(--surface-2)" }} /></div></div>
   );
   if (!user && isOwnProfile) return null;
 
   const profileData = viewedProfile || authProfile;
-  if (!profileData) return (
+  if (!profileData && !isOwnInstitutionProfile) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
       <p className="text-[16px] font-bold" style={{ color: "var(--text-1)" }}>Profile not found</p>
       <button type="button" onClick={() => navigate("/app/explore")} className="text-[13px] mt-2" style={{ color: "var(--brand)" }}>Back to Explore</button>
