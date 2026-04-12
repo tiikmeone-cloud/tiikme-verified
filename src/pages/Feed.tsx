@@ -234,7 +234,7 @@ const ActivityWidget = () => {
 const OpportunitiesWidget = () => {
   const [opps, setOpps] = useState<any[]>([]);
   useEffect(() => {
-    supabase.from("opportunities").select("id, title, compensation, deadline").eq("is_open", true).order("created_at", { ascending: false }).limit(3).then(({ data }) => setOpps(data || []));
+    supabase.from("opportunities").select("id, title, compensation, deadline").eq("is_open", true).order("created_at", { ascending: false }).limit(3).then(({ data, error }) => { if (error) console.warn("[Feed] opps fetch failed:", error.message); setOpps(data || []); });
   }, []);
   if (opps.length === 0) return null;
   return (
@@ -264,7 +264,7 @@ const SuggestedWidget = () => {
   const [suggested, setSuggested] = useState<any[]>([]);
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("id, full_name, role, avatar_url, institution_name").neq("id", user.id).eq("is_public", true).order("activity_score", { ascending: false }).limit(3).then(({ data }) => setSuggested(data || []));
+    supabase.from("profiles").select("id, full_name, role, avatar_url, institution_name").neq("id", user.id).eq("is_public", true).order("activity_score", { ascending: false }).limit(3).then(({ data, error }) => { if (error) console.warn("[Feed] suggested fetch failed:", error.message); setSuggested(data || []); });
   }, [user]);
   if (suggested.length === 0) return null;
   return (
