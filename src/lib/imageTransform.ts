@@ -6,12 +6,14 @@
  * Non-Supabase URLs are returned unchanged.
  */
 
-type ImagePreset = "feed" | "avatar" | "lightbox";
+type ImagePreset = "feed" | "avatar" | "lightbox" | "thumbnail" | "cover";
 
 const presetParams: Record<ImagePreset, string> = {
   feed: "width=800&quality=75&format=webp",
   avatar: "width=160&height=160&quality=85&format=webp",
   lightbox: "width=1600&quality=85&format=webp",
+  thumbnail: "width=200&height=200&quality=80&format=webp",
+  cover: "width=1600&quality=80&format=webp",
 };
 
 export function storageImageUrl(url: string, preset: ImagePreset = "feed"): string {

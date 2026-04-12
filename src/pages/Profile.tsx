@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useOrgIdentity } from "@/contexts/OrgIdentityContext";
 import { storageImageUrl } from "@/lib/imageTransform";
 import { MapPin, Copy, Shield, Layers, X, MessageCircle, CheckCircle, Building2, Link2, Plus, Pencil, Trash2, Briefcase, GraduationCap, Award, Code2, GripVertical, Eye, EyeOff, Heart, Rocket, Send, Share2, Users } from "lucide-react";
 import OrgSearchInput from "@/components/OrgSearchInput";
@@ -350,6 +351,15 @@ const Profile = () => {
   const { id: urlUserId } = useParams<{ id: string }>();
   const [editOpen, setEditOpen] = useState(false);
   const { profile: authProfile, initials: authInitials, displayName: authDisplayName, refreshProfile, user, loading: authLoading } = useAuth();
+  const { isInstitution, org } = useOrgIdentity();
+  const navigate = useNavigate();
+
+  // Redirect institution accounts viewing own profile to org page
+  useEffect(() => {
+    if (!authLoading && isInstitution && org?.slug && (!urlUserId || urlUserId === user?.id)) {
+      navigate(`/org/${org.slug}`, { replace: true });
+    }
+  }, [authLoading, isInstitution, org, urlUserId, user?.id, navigate]);
   const [viewedProfile, setViewedProfile] = useState<any>(null);
   const [workItems, setWorkItems] = useState<any[]>([]);
   const [userPosts, setUserPosts] = useState<any[]>([]);
@@ -359,7 +369,7 @@ const Profile = () => {
   const [dataLoading, setDataLoading] = useState(true);
   const [bioExpanded, setBioExpanded] = useState(false);
   const [sectionOrder, setSectionOrder] = useState<string[]>(DEFAULT_SECTION_ORDER);
-  const navigate = useNavigate();
+  // navigate already declared above
 
   const [showAddExp, setShowAddExp] = useState(false);
   const [showAddEdu, setShowAddEdu] = useState(false);
