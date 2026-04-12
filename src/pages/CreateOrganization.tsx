@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { generateSlug } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -66,11 +67,7 @@ export default function CreateOrganization() {
     if (!user) return;
     setSubmitting(true);
 
-    const baseSlug = name.trim().toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '');
+    const baseSlug = generateSlug(name);
     const slug = `${baseSlug}-${Date.now().toString(36)}`;
 
     const { data: org, error: orgError } = await supabase.from("organizations" as any).insert({

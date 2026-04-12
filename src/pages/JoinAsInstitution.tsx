@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { generateSlug } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Check, GraduationCap, Building2, Landmark, Heart, Banknote, Palette, Upload, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -89,13 +90,7 @@ const JoinAsInstitution = () => {
       if (!user) { toast.error("Authentication failed. Please try again."); setIsSubmitting(false); return; }
 
       // Generate unique slug
-      const baseSlug = details.name
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9\s]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '');
+      const baseSlug = generateSlug(details.name);
       const slug = `${baseSlug}-${Date.now().toString(36)}`;
 
       // Upload logo if any
@@ -157,13 +152,7 @@ const JoinAsInstitution = () => {
     }
   };
 
-  const orgSlug = details.name
-    ?.trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '') || '';
+  const orgSlug = generateSlug(details.name || '');
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#FFF8F2', colorScheme: 'light' as any }}>
