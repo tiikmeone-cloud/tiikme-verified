@@ -78,6 +78,7 @@ const App = () => (
             <Route path="/terms" element={<PageErrorBoundary><Terms /></PageErrorBoundary>} />
             <Route path="/grievance" element={<PageErrorBoundary><Grievance /></PageErrorBoundary>} />
             <Route path="/reset-password" element={<PageErrorBoundary><ResetPassword /></PageErrorBoundary>} />
+            <Route path="/join-as-institution" element={<PageErrorBoundary><JoinAsInstitution /></PageErrorBoundary>} />
 
             <Route path="/certificate/:id" element={<PageErrorBoundary><CertificatePage /></PageErrorBoundary>} />
             <Route path="/create-page" element={<Shell><CreatePage /></Shell>} />
