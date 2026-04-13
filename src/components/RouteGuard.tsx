@@ -10,7 +10,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   // Redirect new users to onboarding if incomplete (only for accounts < 10 minutes old)
   const isNewAccount = user.created_at && (Date.now() - new Date(user.created_at).getTime()) < 600000;
-  const needsOnboarding = profile && !profile.onboarding_complete && isNewAccount;
+  const needsOnboarding = profile && !profile.onboarding_complete && isNewAccount && profile.account_type !== 'institution';
 
   if (needsOnboarding && !location.pathname.startsWith("/onboarding")) {
     return <Navigate to="/onboarding/role" replace />;
