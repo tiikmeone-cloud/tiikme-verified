@@ -583,27 +583,12 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* ── BIO + LINKS (if exists) ── */}
-      {(bio || customLinks.length > 0) && (
+      {/* ── BIO (if exists) ── */}
+      {bio && (
         <div className="max-w-[960px] mx-auto px-4 mt-3">
-          <div className="glass-light px-5 py-4" style={{ borderRadius: 20 }}>
-            {bio && (
-              <div>
-                <p className="text-[13px] leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>{bioExpanded || bio.length <= 180 ? bio : bio.slice(0, 180) + "..."}</p>
-                {bio.length > 180 && <button type="button" onClick={() => setBioExpanded(!bioExpanded)} className="text-[11px] font-semibold cursor-pointer" style={{ color: "var(--color-accent)" }}>{bioExpanded ? "show less" : "...see more"}</button>}
-              </div>
-            )}
-            {customLinks.length > 0 && (
-              <div className={bio ? "mt-3 pt-3" : ""} style={bio ? { borderTop: "1px solid var(--glass-border-subtle)" } : undefined}>
-                <div className="flex flex-wrap gap-3">
-                  {customLinks.map((link: any, i: number) => (
-                    <a key={i} href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[13px] font-medium hover:underline" style={{ color: "var(--color-accent)" }}>
-                      <ExternalLink className="w-3.5 h-3.5 shrink-0" />{link.label || link.url}
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
+          <div className="glass-light px-4 py-3" style={{ borderRadius: 20 }}>
+            <p className="text-[13px] leading-relaxed" style={{ color: "#6B7094" }}>{bioExpanded || bio.length <= 180 ? bio : bio.slice(0, 180) + "..."}</p>
+            {bio.length > 180 && <button type="button" onClick={() => setBioExpanded(!bioExpanded)} className="text-[11px] font-semibold cursor-pointer" style={{ color: "#E8733A" }}>{bioExpanded ? "show less" : "...see more"}</button>}
           </div>
         </div>
       )}
