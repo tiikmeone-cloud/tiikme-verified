@@ -478,50 +478,112 @@ export default function Workspace() {
 
           {/* Verifications Panel */}
           {selectedPanel === "verifications" && (
-            <div>
-              {verifRequests.length === 0 ? (
+            <div className="space-y-4">
+              {/* Item Verification Requests (work items) */}
+              {itemVerifRequests.length > 0 && (
+                <div>
+                  <p className="text-[13px] font-bold mb-2" style={{ color: "var(--color-text)" }}>
+                    <Briefcase className="w-4 h-4 inline mr-1" style={{ color: "#FFB800" }} />
+                    Work Item Verifications ({itemVerifRequests.length})
+                  </p>
+                  <div className="space-y-2">
+                    {itemVerifRequests.map(r => {
+                      const wi = r.work_item;
+                      const itemLabel = wi?.job_title || wi?.title || "Work item";
+                      const companyLabel = wi?.company_name || wi?.institution_name_edu || "";
+                      const typeLabel = wi?.item_type === "education" ? "Education" : wi?.item_type === "project" ? "Project" : "Experience";
+                      return (
+                        <GlassBox key={r.id} accent="verified">
+                          <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[12px] font-bold text-white overflow-hidden shrink-0"
+                              style={{ background: "linear-gradient(135deg, #FFB800, #FF8C00)" }}>
+                              {r.requester?.avatar_url ? <img src={storageImageUrl(r.requester.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (r.requester?.full_name?.[0] || "?")}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[13px] font-bold" style={{ color: "var(--color-text)" }}>{r.requester?.full_name || "User"}</p>
+                              <p className="text-[11px] mt-0.5" style={{ color: "var(--color-text-secondary)" }}>
+                                Claims: <span className="font-semibold">{itemLabel}</span>{companyLabel ? ` at ${companyLabel}` : ""}
+                              </p>
+                              <span className="inline-block text-[9px] font-bold px-2 py-0.5 rounded-full mt-1"
+                                style={{ background: "rgba(74,144,217,0.10)", color: "#4A90D9" }}>{typeLabel}</span>
+                              {r.message && <p className="text-[11px] mt-1" style={{ color: "var(--color-text-muted)" }}>"{r.message}"</p>}
+                            </div>
+                            <div className="flex items-center gap-1.5 shrink-0 pt-1">
+                              <Button size="sm" onClick={() => handleItemVerifAction(r.id, "approved", r.requester_id, r.work_item_id)}
+                                className="h-8 text-[11px] rounded-xl" style={{ background: "#059669", border: "none" }}>
+                                <CheckCircle className="w-3 h-3 mr-1" /> Verify
+                              </Button>
+                              <Button variant="destructive" size="sm" onClick={() => handleItemVerifAction(r.id, "rejected", r.requester_id, r.work_item_id)}
+                                className="h-8 text-[11px] rounded-xl">
+                                <XCircle className="w-3 h-3 mr-1" /> Decline
+                              </Button>
+                            </div>
+                          </div>
+                          <p className="text-[10px] mt-2" style={{ color: "var(--color-text-muted)" }}>
+                            Requested {r.created_at ? new Date(r.created_at).toLocaleDateString() : ""}
+                          </p>
+                        </GlassBox>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Org Membership Verifications */}
+              {verifRequests.length > 0 && (
+                <div>
+                  <p className="text-[13px] font-bold mb-2" style={{ color: "var(--color-text)" }}>
+                    <Shield className="w-4 h-4 inline mr-1" style={{ color: "#059669" }} />
+                    Membership Verifications ({verifRequests.length})
+                  </p>
+                  <div className="space-y-2">
+                    {verifRequests.map(r => (
+                      <GlassBox key={r.id} accent="verified">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[12px] font-bold text-white overflow-hidden shrink-0" style={{ background: "#F59E0B" }}>
+                            {r.requester?.avatar_url ? <img src={storageImageUrl(r.requester.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (r.requester?.full_name?.[0] || "?")}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[13px] font-bold" style={{ color: "var(--color-text)" }}>{r.requester?.full_name || "User"}</p>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {r.title_at_org && <span className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>{r.title_at_org}</span>}
+                              {r.member_type && (
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                                  style={{ background: r.member_type === "ex" ? "#FEF2F2" : "#F0FDF4", color: r.member_type === "ex" ? "#DC2626" : "#059669" }}>
+                                  {r.member_type === "ex" ? "Alumni" : "Current"}
+                                </span>
+                              )}
+                            </div>
+                            {r.message && <p className="text-[12px] mt-1" style={{ color: "var(--color-text-secondary)" }}>{r.message}</p>}
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <Button size="sm" onClick={() => handleVerifAction(r.id, "approved", r.user_id)}
+                              className="h-8 text-[11px] rounded-xl" style={{ background: "#059669", border: "none" }}>
+                              <CheckCircle className="w-3 h-3 mr-1" /> Approve
+                            </Button>
+                            <Button variant="destructive" size="sm" onClick={() => handleVerifAction(r.id, "rejected", r.user_id)}
+                              className="h-8 text-[11px] rounded-xl">
+                              <XCircle className="w-3 h-3 mr-1" /> Decline
+                            </Button>
+                          </div>
+                        </div>
+                        <p className="text-[10px] mt-2" style={{ color: "var(--color-text-muted)" }}>
+                          Requested {r.created_at ? new Date(r.created_at).toLocaleDateString() : ""}
+                        </p>
+                      </GlassBox>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {verifRequests.length === 0 && itemVerifRequests.length === 0 && (
                 <GlassBox accent="verified">
                   <div className="text-center py-8">
-                    <Shield className="w-10 h-10 mx-auto mb-2" style={{ color: "#9CA3AF" }} />
-                    <p className="text-[14px] font-bold" style={{ color: "#1A1A1A" }}>No pending verifications</p>
+                    <Shield className="w-10 h-10 mx-auto mb-2" style={{ color: "var(--color-text-muted)" }} />
+                    <p className="text-[14px] font-bold" style={{ color: "var(--color-text)" }}>No pending verifications</p>
+                    <p className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>Requests from users will appear here</p>
                   </div>
                 </GlassBox>
-              ) : (
-                <div className="space-y-2">
-                  {verifRequests.map(r => (
-                    <GlassBox key={r.id} accent="verified">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[12px] font-bold text-white overflow-hidden shrink-0" style={{ background: "#F59E0B" }}>
-                          {r.requester?.avatar_url ? <img src={storageImageUrl(r.requester.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (r.requester?.full_name?.[0] || "?")}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-bold" style={{ color: "#1A1A1A" }}>{r.requester?.full_name || "User"}</p>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {r.title_at_org && <span className="text-[11px]" style={{ color: "#9CA3AF" }}>{r.title_at_org}</span>}
-                            {r.member_type && (
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                                style={{ background: r.member_type === "ex" ? "#FEF2F2" : "#F0FDF4", color: r.member_type === "ex" ? "#DC2626" : "#059669" }}>
-                                {r.member_type === "ex" ? "Alumni" : "Current"}
-                              </span>
-                            )}
-                          </div>
-                          {r.message && <p className="text-[12px] mt-1" style={{ color: "#374151" }}>{r.message}</p>}
-                        </div>
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <Button size="sm" onClick={() => handleVerifAction(r.id, "approved", r.user_id)} style={{ background: "#059669", height: 36 }}>
-                            <CheckCircle className="w-3.5 h-3.5 mr-1" /> Approve
-                          </Button>
-                          <Button variant="destructive" size="sm" onClick={() => handleVerifAction(r.id, "rejected", r.user_id)} style={{ height: 36 }}>
-                            <XCircle className="w-3.5 h-3.5 mr-1" /> Decline
-                          </Button>
-                        </div>
-                      </div>
-                      <p className="text-[10px] mt-2" style={{ color: "#9CA3AF" }}>
-                        Requested {r.created_at ? new Date(r.created_at).toLocaleDateString() : ""}
-                      </p>
-                    </GlassBox>
-                  ))}
-                </div>
               )}
             </div>
           )}
