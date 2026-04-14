@@ -133,7 +133,7 @@ export function useFeedPosts() {
         const { data, error } = await supabase
           .from("posts")
           .select(FEED_SELECT)
-          .eq("visibility", "everyone")
+          .or("visibility.eq.everyone,and(visibility.eq.workspace,is_shared_to_feed.eq.true)")
           .order("created_at", { ascending: false })
           .range(pageNum * POSTS_PER_PAGE, (pageNum + 1) * POSTS_PER_PAGE - 1);
 
