@@ -58,26 +58,8 @@ function getTimeAgo(d: Date): string {
   return `${Math.floor(h / 24)}d ago`;
 }
 
-/* Company logo color from name */
-const LOGO_COLORS = ["#E8580A","#3B82F6","#8B5CF6","#10B981","#F59E0B","#EC4899","#06B6D4","#6366F1"];
-const hashColor = (name: string) => LOGO_COLORS[name.split("").reduce((a,c) => a + c.charCodeAt(0), 0) % LOGO_COLORS.length];
 
-/* ── VerifBadge ── */
-const VerifBadge = ({ item, isOwn, onStatusChange }: { item: any; isOwn: boolean; onStatusChange?: (id: string, status: string) => void }) => {
-  const status = item.verification_status || "unverified";
-  if (status === "verified") return (
-    <span className="inline-flex items-center gap-1 text-[10px] font-semibold mt-1 px-2.5 py-0.5 rounded-full" style={{ background: "rgba(16,185,129,0.08)", color: "#059669", border: "1px solid rgba(16,185,129,0.2)" }}>
-      <CheckCircle className="w-3 h-3" /> Tiiked
-    </span>
-  );
-  if (status === "pending") return (
-    <span className="inline-flex items-center gap-1 text-[10px] mt-1 px-2.5 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.08)", color: "#D97706", border: "1px solid rgba(245,158,11,0.2)" }}>
-      Verification pending
-    </span>
-  );
-  if (isOwn) return <VerificationRequest item={item} itemType={item.item_type || "experience"} onStatusChange={onStatusChange!} />;
-  return <span className="text-[10px] mt-1 block" style={{ color: "#9CA3AF" }}>Unverified</span>;
-};
+
 
 /* ── Edit Profile Drawer ── */
 const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose: () => void; onSaved: () => void }) => {
