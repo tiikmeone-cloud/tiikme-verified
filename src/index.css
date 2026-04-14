@@ -327,3 +327,133 @@
   0%,100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.6; transform: scale(0.8); }
 }
+
+/* ═══════════════════════════════════════════════
+   GLASS LIQUID DESIGN SYSTEM v2
+   ═══════════════════════════════════════════════ */
+
+:root {
+  --glass-bg-light: rgba(255, 255, 255, 0.25);
+  --glass-bg-medium: rgba(255, 255, 255, 0.15);
+  --glass-bg-dark: rgba(26, 26, 78, 0.85);
+  --glass-border-light-v2: rgba(255, 255, 255, 0.40);
+  --glass-border-dark-v2: rgba(255, 255, 255, 0.12);
+  --glass-glow-orange: rgba(232, 115, 58, 0.15);
+  --glass-glow-pink: rgba(255, 107, 157, 0.10);
+}
+
+/* ── Glass Card Variants ── */
+.glass-light {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.40);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(26, 26, 78, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.glass-medium {
+  background: linear-gradient(135deg, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0.05) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 24px;
+  box-shadow: 0 12px 40px rgba(26, 26, 78, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.50);
+}
+
+.glass-dark {
+  background: linear-gradient(145deg, rgba(26,26,78,0.85) 0%, rgba(45,45,122,0.75) 100%);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 28px;
+  box-shadow: 0 25px 80px rgba(26, 26, 78, 0.50), 0 0 60px rgba(232, 115, 58, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.glass-glow {
+  background: linear-gradient(145deg, rgba(232,115,58,0.20) 0%, rgba(255,107,157,0.15) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(232, 115, 58, 0.30);
+  border-radius: 24px;
+  box-shadow: 0 12px 40px rgba(232, 115, 58, 0.20), 0 0 60px rgba(255, 107, 157, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.40);
+}
+
+/* ── Liquid Buttons ── */
+.btn-liquid-primary {
+  background: linear-gradient(135deg, #E8733A 0%, #FF6B9D 100%);
+  color: white;
+  font-weight: 600;
+  border-radius: 16px;
+  padding: 10px 24px;
+  box-shadow: 0 4px 20px rgba(232, 115, 58, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-liquid-primary:hover {
+  box-shadow: 0 6px 30px rgba(232, 115, 58, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+.btn-glass-pill {
+  background: rgba(255, 255, 255, 0.20);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 16px;
+  padding: 8px 20px;
+  color: #1A1A2E;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.50);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-glass-pill:hover {
+  background: rgba(255, 255, 255, 0.35);
+  transform: translateY(-1px);
+}
+
+/* ── Glass Input — Dark ── */
+.glass-input-dark {
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.20);
+  border-radius: 12px;
+  color: #F0F2F7;
+  padding: 10px 14px;
+}
+.glass-input-dark::placeholder { color: rgba(255, 255, 255, 0.50); }
+.glass-input-dark:focus {
+  border-color: rgba(232, 115, 58, 0.50);
+  box-shadow: 0 0 20px rgba(232, 115, 58, 0.15);
+  outline: none;
+}
+
+/* ── Glass Input — Light ── */
+.glass-input-light {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 12px;
+  color: #1A1A2E;
+  padding: 10px 14px;
+}
+.glass-input-light:focus {
+  border-color: rgba(232, 115, 58, 0.40);
+  box-shadow: 0 0 20px rgba(232, 115, 58, 0.12);
+  outline: none;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(26, 26, 78, 0.15); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(26, 26, 78, 0.25); }
+
+/* ── Selection ── */
+::selection { background: rgba(232, 115, 58, 0.25); color: #1A1A2E; }
+
+/* ── Sign-in animated blobs ── */
+@keyframes driftBlob1 {
+  0%,100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(60px, -30px) scale(1.1); }
+}
+@keyframes driftBlob2 {
+  0%,100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-50px, 40px) scale(1.08); }
+}
