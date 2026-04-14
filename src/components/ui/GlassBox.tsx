@@ -82,7 +82,7 @@ const GlassBox = ({ accent, expanded, onClick, children, className, style, spanF
         }
       }}
     >
-      <div className="relative z-[1]" style={{ padding: "14px 16px" }}>{children}</div>
+      <div className="relative z-[1]" style={{ padding: 14 }}>{children}</div>
     </div>
   );
 };
