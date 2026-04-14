@@ -6,6 +6,7 @@ import {
   Heart, Rocket, Send, Share2, Users, Globe, ChevronDown, ChevronUp, ExternalLink, LinkIcon
 } from "lucide-react";
 import { detectPlatform } from "@/lib/platformDetect";
+import GlassModal, { glassInputDarkStyle as gInputStyle, glassSelectDarkStyle as gSelectStyle, glassTextareaDarkStyle as gTextareaStyle, labelStyle } from "@/components/ui/GlassModal";
 import GetTiikedModal from "@/components/profile/GetTiikedModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
