@@ -8,6 +8,7 @@ import {
 import { detectPlatform } from "@/lib/platformDetect";
 import GlassModal, { glassInputDarkStyle as gInputStyle, glassSelectDarkStyle as gSelectStyle, glassTextareaDarkStyle as gTextareaStyle, labelStyle } from "@/components/ui/GlassModal";
 import GetTiikedModal from "@/components/profile/GetTiikedModal";
+import { ExperienceSection, EducationSection, ProjectsSection, AchievementsSection, SkillsSection, PostsSection } from "@/components/profile/ProfileSections";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
