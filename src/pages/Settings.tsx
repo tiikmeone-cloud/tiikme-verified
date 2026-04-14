@@ -432,38 +432,42 @@ const SettingsPage = () => {
 
           {activeTab === "appearance" && (
             <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
-              <h3 className="text-[16px] font-semibold mb-4" style={{ color: "#1A1A2E" }}>Theme</h3>
+              <h3 className="text-[16px] font-semibold mb-2" style={{ color: "var(--color-text)" }}>Appearance</h3>
+              <p className="text-[13px] mb-4" style={{ color: "var(--color-text-secondary)" }}>Choose how Tiikme looks for you.</p>
               <div className="grid grid-cols-3 gap-3">
                 {[
-                  { id: "dark", label: "Dark", icon: Moon, desc: "Krishna Blue", previewBg: "#04061A", previewSurface: "#080B2A", previewDot: "#3D5AF1" },
-                  { id: "light", label: "Light", icon: Sun, desc: "Anjaneyam Orange", previewBg: "#FFF8F2", previewSurface: "#FFFFFF", previewDot: "#E8580A" },
-                  { id: "system", label: "System", icon: Monitor, desc: "Match device" },
-                ].map(t => (
-                  <button type="button" key={t.id} onClick={() => handleThemeChange(t.id)}
-                    className="rounded-2xl p-3 text-left cursor-pointer relative overflow-hidden active:scale-[0.98]"
-                    style={{
-                      background: "var(--surface-2)",
-                      border: theme === t.id ? "2px solid var(--brand)" : "1.5px solid var(--border)",
-                      boxShadow: theme === t.id ? "0 0 0 3px var(--brand-dim)" : "none",
-                      transition: "all 0.2s",
-                      width: "100%", height: 92,
-                    }}>
-                    {theme === t.id && <div className="absolute top-2 right-2 w-[18px] h-[18px] rounded-full flex items-center justify-center" style={{ background: "var(--brand)" }}><Check className="w-3 h-3 text-white" /></div>}
-                    {t.previewBg ? (
-                      <div className="w-full h-[55px] rounded-lg mb-2 relative overflow-hidden" style={{ background: t.previewBg }}>
-                        <div className="absolute inset-x-2 top-2 h-2 rounded-full" style={{ background: t.previewSurface, opacity: 0.5 }} />
-                        <div className="absolute inset-x-2 top-5 h-2 rounded-full" style={{ background: t.previewSurface, opacity: 0.3 }} />
-                        <div className="absolute bottom-2 left-2 w-2 h-2 rounded-full" style={{ background: t.previewDot }} />
-                      </div>
-                    ) : (
-                      <div className="w-full h-[55px] rounded-lg mb-2 relative overflow-hidden" style={{ background: "linear-gradient(135deg, #04061A 50%, #FFF8F2 50%)" }}>
-                        <div className="absolute bottom-2 left-2 w-2 h-2 rounded-full" style={{ background: "#3D5AF1" }} />
-                        <div className="absolute bottom-2 right-2 w-2 h-2 rounded-full" style={{ background: "#E8580A" }} />
-                      </div>
-                    )}
-                    <span className="text-[13px] font-semibold block" style={{ color: "var(--text-2)" }}>{t.label}</span>
-                  </button>
-                ))}
+                  { id: "light", label: "Light", icon: Sun, previewBg: "#F0F2F7", previewSurface: "rgba(255,255,255,0.5)", previewDot: "#E8733A" },
+                  { id: "dark", label: "Dark", icon: Moon, previewBg: "#0D0D1E", previewSurface: "rgba(26,26,78,0.5)", previewDot: "#F08050" },
+                  { id: "system", label: "System", icon: Monitor },
+                ].map(t => {
+                  const isActive = theme === t.id;
+                  return (
+                    <button type="button" key={t.id} onClick={() => handleThemeChange(t.id)}
+                      className="rounded-2xl p-3 text-left cursor-pointer relative overflow-hidden active:scale-[0.98]"
+                      style={{
+                        background: isActive ? "var(--color-accent-glow)" : "var(--color-surface)",
+                        border: isActive ? "2px solid var(--color-accent)" : "1.5px solid var(--glass-border-subtle)",
+                        boxShadow: isActive ? "0 0 0 3px var(--color-accent-glow)" : "none",
+                        transition: "all 0.2s",
+                        width: "100%", height: 92,
+                      }}>
+                      {isActive && <div className="absolute top-2 right-2 w-[18px] h-[18px] rounded-full flex items-center justify-center" style={{ background: "var(--color-accent)" }}><Check className="w-3 h-3 text-white" /></div>}
+                      {t.previewBg ? (
+                        <div className="w-full h-[55px] rounded-lg mb-2 relative overflow-hidden" style={{ background: t.previewBg }}>
+                          <div className="absolute inset-x-2 top-2 h-2 rounded-full" style={{ background: t.previewSurface, opacity: 0.5 }} />
+                          <div className="absolute inset-x-2 top-5 h-2 rounded-full" style={{ background: t.previewSurface, opacity: 0.3 }} />
+                          <div className="absolute bottom-2 left-2 w-2 h-2 rounded-full" style={{ background: t.previewDot }} />
+                        </div>
+                      ) : (
+                        <div className="w-full h-[55px] rounded-lg mb-2 relative overflow-hidden" style={{ background: "linear-gradient(135deg, #0D0D1E 50%, #F0F2F7 50%)" }}>
+                          <div className="absolute bottom-2 left-2 w-2 h-2 rounded-full" style={{ background: "#F08050" }} />
+                          <div className="absolute bottom-2 right-2 w-2 h-2 rounded-full" style={{ background: "#E8733A" }} />
+                        </div>
+                      )}
+                      <span className="text-[13px] font-semibold block" style={{ color: "var(--color-text-secondary)" }}>{t.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
