@@ -32,6 +32,7 @@ export interface UserProfile {
   onboarding_complete: boolean | null;
   account_type: string | null;
   org_id: string | null;
+  skills: string[] | null;
 }
 
 interface AuthContextValue {

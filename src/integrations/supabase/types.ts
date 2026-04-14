@@ -585,13 +585,22 @@ export type Database = {
           applications_count: number | null
           ask_portfolio: boolean | null
           assessment_id: string | null
+          budget_max: number | null
+          budget_min: number | null
+          can_convert_fulltime: boolean | null
           company_id: string | null
           compensation: string | null
           created_at: string | null
           custom_attachment_label: string | null
           deadline: string | null
           description: string | null
+          documents_to_bring: string[] | null
           domain: string | null
+          duration_months: number | null
+          end_date: string | null
+          event_date: string | null
+          event_mode: string | null
+          event_time: string | null
           experience_min: number | null
           hr_contact_id: string | null
           id: string
@@ -600,8 +609,13 @@ export type Database = {
           is_remote: boolean | null
           location: string | null
           org_id: string | null
+          positions_available: number | null
           poster_id: string | null
+          pricing_model: string | null
+          prize_pool: string | null
+          project_duration: string | null
           qualification_criteria: Json | null
+          registration_deadline: string | null
           require_resume: boolean | null
           responses_count: number | null
           salary_currency: string | null
@@ -609,22 +623,37 @@ export type Database = {
           salary_min: number | null
           screening_questions: Json | null
           skills_required: string[] | null
+          start_date: string | null
           status: string | null
+          stipend: string | null
+          team_size_max: number | null
+          team_size_min: number | null
+          themes: string[] | null
           title: string
           type: string | null
+          venue: string | null
         }
         Insert: {
           activity_score_min?: number | null
           applications_count?: number | null
           ask_portfolio?: boolean | null
           assessment_id?: string | null
+          budget_max?: number | null
+          budget_min?: number | null
+          can_convert_fulltime?: boolean | null
           company_id?: string | null
           compensation?: string | null
           created_at?: string | null
           custom_attachment_label?: string | null
           deadline?: string | null
           description?: string | null
+          documents_to_bring?: string[] | null
           domain?: string | null
+          duration_months?: number | null
+          end_date?: string | null
+          event_date?: string | null
+          event_mode?: string | null
+          event_time?: string | null
           experience_min?: number | null
           hr_contact_id?: string | null
           id?: string
@@ -633,8 +662,13 @@ export type Database = {
           is_remote?: boolean | null
           location?: string | null
           org_id?: string | null
+          positions_available?: number | null
           poster_id?: string | null
+          pricing_model?: string | null
+          prize_pool?: string | null
+          project_duration?: string | null
           qualification_criteria?: Json | null
+          registration_deadline?: string | null
           require_resume?: boolean | null
           responses_count?: number | null
           salary_currency?: string | null
@@ -642,22 +676,37 @@ export type Database = {
           salary_min?: number | null
           screening_questions?: Json | null
           skills_required?: string[] | null
+          start_date?: string | null
           status?: string | null
+          stipend?: string | null
+          team_size_max?: number | null
+          team_size_min?: number | null
+          themes?: string[] | null
           title: string
           type?: string | null
+          venue?: string | null
         }
         Update: {
           activity_score_min?: number | null
           applications_count?: number | null
           ask_portfolio?: boolean | null
           assessment_id?: string | null
+          budget_max?: number | null
+          budget_min?: number | null
+          can_convert_fulltime?: boolean | null
           company_id?: string | null
           compensation?: string | null
           created_at?: string | null
           custom_attachment_label?: string | null
           deadline?: string | null
           description?: string | null
+          documents_to_bring?: string[] | null
           domain?: string | null
+          duration_months?: number | null
+          end_date?: string | null
+          event_date?: string | null
+          event_mode?: string | null
+          event_time?: string | null
           experience_min?: number | null
           hr_contact_id?: string | null
           id?: string
@@ -666,8 +715,13 @@ export type Database = {
           is_remote?: boolean | null
           location?: string | null
           org_id?: string | null
+          positions_available?: number | null
           poster_id?: string | null
+          pricing_model?: string | null
+          prize_pool?: string | null
+          project_duration?: string | null
           qualification_criteria?: Json | null
+          registration_deadline?: string | null
           require_resume?: boolean | null
           responses_count?: number | null
           salary_currency?: string | null
@@ -675,9 +729,15 @@ export type Database = {
           salary_min?: number | null
           screening_questions?: Json | null
           skills_required?: string[] | null
+          start_date?: string | null
           status?: string | null
+          stipend?: string | null
+          team_size_max?: number | null
+          team_size_min?: number | null
+          themes?: string[] | null
           title?: string
           type?: string | null
+          venue?: string | null
         }
         Relationships: [
           {
