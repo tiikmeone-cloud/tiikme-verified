@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { storageImageUrl } from "@/lib/imageTransform";
-import { Heart, MessageSquare, Repeat2, MoreHorizontal, Flag, Send, FileText, ChevronDown, ArrowUpRight, Trash2 } from "lucide-react";
+import { Heart, MessageSquare, Repeat2, MoreHorizontal, Flag, Send, FileText, ChevronDown, ArrowUpRight, Trash2, Pencil, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
@@ -8,6 +8,8 @@ import ImageGrid from "@/components/feed/ImageGrid";
 import MentionText from "@/components/feed/MentionText";
 import ActivityScoreRing from "@/components/ActivityScoreRing";
 import SkeletonCard from "@/components/SkeletonCard";
+import EditPostModal from "@/components/feed/EditPostModal";
+import DeletePostDialog from "@/components/feed/DeletePostDialog";
 import { useFeedPosts } from "@/hooks/useFeedPosts";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,15 +46,27 @@ interface PostCardProps {
   submitComment: (postId: string) => void;
   deleteComment: (postId: string, commentId: string) => void;
   onDelete: (postId: string) => void;
+  onEdit: (post: any) => void;
 }
 
 const LivePostCard = ({
   post, likeCounts, myLikes, toggleLike,
   commentCounts, commentsData, commentsOpen, commentInputs,
-  setCommentInputs, toggleComments, submitComment, deleteComment, onDelete,
+  setCommentInputs, toggleComments, submitComment, deleteComment, onDelete, onEdit,
 }: PostCardProps) => {
   const [showMenu, setShowMenu] = useState(false);
   const { user, profile: authProfile, initials: userInitials } = useAuth();
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu on outside click
+  useEffect(() => {
+    if (!showMenu) return;
+    const handleClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setShowMenu(false);
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [showMenu]);
 
   const isOrgPost = !!post.posted_by_org && !!post.org;
   const author = post.author;
@@ -70,6 +84,7 @@ const LivePostCard = ({
   const roleColor = isOrgPost ? "#E8580A" : (roleColorMap[displayRole] || "#6B7280");
   const timeAgo = post.created_at ? getTimeAgo(new Date(post.created_at)) : "";
   const isOwn = user?.id === post.author_id;
+  const isEdited = post.is_edited;
 
   const liked = myLikes[post.id] || false;
   const likeCount = likeCounts[post.id] || 0;
@@ -81,12 +96,11 @@ const LivePostCard = ({
   const isWorkspacePost = post.visibility === "workspace";
   const repostCount = post.repost_count || 0;
 
-  const handleDelete = async () => {
-    onDelete(post.id);
-    await supabase.from("posts").delete().eq("id", post.id);
-    toast.success("Post deleted");
-    setShowMenu(false);
-  };
+  // Username display
+  const username = !isOrgPost && author?.username ? `@${author.username}` : null;
+
+  // Company badge: show institution_name from author profile
+  const companyName = !isOrgPost && author?.institution_name ? author.institution_name : null;
 
   const [confirmRepost, setConfirmRepost] = useState(false);
   const handleRepost = async () => {
@@ -120,7 +134,7 @@ const LivePostCard = ({
     >
       {isTownhall && (
         <div className="pb-2">
-          <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--color-accent)" }}>📢 TOWNHALL</span>
+          <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--color-accent)" }}>TOWNHALL</span>
         </div>
       )}
       <div className="flex items-center gap-3 pb-1">
@@ -133,37 +147,66 @@ const LivePostCard = ({
           </div>
         </Link>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 flex-wrap">
+          {/* Line 1: Name · @username · timestamp · (edited) */}
+          <div className="flex items-center gap-1.5 flex-wrap">
             <Link to={profileLink} className="font-semibold hover:underline" style={{ color: "var(--color-text)", fontSize: 15 }}>{displayName}</Link>
-            <span className="font-semibold px-2 py-0.5 rounded-md" style={{ background: "rgba(232,115,58,0.12)", color: "var(--color-accent)", fontSize: 11, borderRadius: 6 }}>
-              {isOrgPost ? (displayRole?.charAt(0).toUpperCase() + displayRole?.slice(1)) : displayRole}
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            {viaName && (
-              <span className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>via {viaName} · </span>
+            {username && (
+              <span className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>{username}</span>
             )}
+            <span className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>·</span>
             <span style={{ color: "var(--color-text-secondary)", fontSize: 12 }}>{timeAgo}</span>
+            {isEdited && (
+              <span className="text-[11px] italic" style={{ color: "var(--color-text-muted)" }}>(edited)</span>
+            )}
           </div>
+          {/* Line 2: Company badge or via name */}
+          {viaName ? (
+            <span className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>via {viaName}</span>
+          ) : companyName ? (
+            <div className="flex items-center gap-1.5">
+              <div className="w-3.5 h-3.5 rounded flex items-center justify-center shrink-0 overflow-hidden" style={{ background: "rgba(232,115,58,0.15)" }}>
+                <span className="text-[7px] font-bold" style={{ color: "var(--color-accent)" }}>
+                  {companyName.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <span className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>{companyName}</span>
+            </div>
+          ) : null}
         </div>
-        <div className="relative">
+        <div className="relative" ref={menuRef}>
           <button type="button" onClick={() => setShowMenu(!showMenu)} className="p-2 md:p-1.5 rounded-lg cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center" style={{ color: "var(--color-text-secondary)" }}
             onMouseEnter={e => { e.currentTarget.style.color = "var(--color-text)"; }}
             onMouseLeave={e => { e.currentTarget.style.color = "var(--color-text-secondary)"; }}>
             <MoreHorizontal className="w-4 h-4" />
           </button>
           {showMenu && (
-            <div className="absolute right-0 top-8 glass-light rounded-xl p-1 min-w-[160px] z-10" style={{ borderRadius: 14 }}>
-              <button type="button" onClick={() => { navigator.clipboard.writeText(window.location.origin + "/post/" + post.id); toast.success("Link copied!"); setShowMenu(false); }} className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "var(--color-text-secondary)" }}><ArrowUpRight className="w-3 h-3" /> Copy link</button>
+            <div className="absolute right-0 top-8 glass-light rounded-xl p-1 min-w-[170px] z-10" style={{ borderRadius: 14 }}>
+              <button type="button" onClick={() => { navigator.clipboard.writeText(window.location.origin + "/post/" + post.id); toast.success("Link copied!"); setShowMenu(false); }}
+                className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "var(--color-text-secondary)" }}>
+                <Copy className="w-3 h-3" /> Copy link
+              </button>
               <button type="button" onClick={() => {
                 if (navigator.share) { navigator.share({ title: "Post on Tiikme", url: window.location.origin + "/post/" + post.id }); }
                 else { navigator.clipboard.writeText(window.location.origin + "/post/" + post.id); toast.success("Link copied!"); }
                 setShowMenu(false);
-              }} className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "var(--color-text-secondary)" }}><Send className="w-3 h-3" /> Share via...</button>
+              }} className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "var(--color-text-secondary)" }}>
+                <Send className="w-3 h-3" /> Share via...
+              </button>
               {isOwn ? (
-                <button type="button" onClick={handleDelete} className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "#DC2626" }}><Trash2 className="w-3 h-3" /> Delete post</button>
+                <>
+                  <button type="button" onClick={() => { onEdit(post); setShowMenu(false); }}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "var(--color-text-secondary)" }}>
+                    <Pencil className="w-3 h-3" /> Edit post
+                  </button>
+                  <button type="button" onClick={() => { onDelete(post.id); setShowMenu(false); }}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "#DC2626" }}>
+                    <Trash2 className="w-3 h-3" /> Delete post
+                  </button>
+                </>
               ) : (
-                <button type="button" onClick={() => { toast.info("Report submitted"); setShowMenu(false); }} className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "var(--color-text-secondary)" }}><Flag className="w-3 h-3" /> Report</button>
+                <button type="button" onClick={() => { toast.info("Report submitted"); setShowMenu(false); }} className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "var(--color-text-secondary)" }}>
+                  <Flag className="w-3 h-3" /> Report
+                </button>
               )}
             </div>
           )}
@@ -184,7 +227,7 @@ const LivePostCard = ({
             <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: "rgba(220,38,38,0.1)" }}>
               <FileText className="w-5 h-5" style={{ color: "#DC2626" }} />
             </div>
-            <p className="text-[13px] font-bold truncate flex-1" style={{ color: "var(--color-text)" }}>Attached PDF · Tap to open ↗</p>
+            <p className="text-[13px] font-bold truncate flex-1" style={{ color: "var(--color-text)" }}>Attached PDF · Tap to open</p>
           </a>
         </div>
       )}
@@ -192,7 +235,7 @@ const LivePostCard = ({
       {repostCount >= 2 && (
         <div className="pb-1">
           <p className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>
-            ↩️ {isOrgPost ? post.org?.name : displayName} and {repostCount - 1} other{repostCount > 2 ? "s" : ""} reposted
+            {isOrgPost ? post.org?.name : displayName} and {repostCount - 1} other{repostCount > 2 ? "s" : ""} reposted
           </p>
         </div>
       )}
@@ -207,7 +250,7 @@ const LivePostCard = ({
         </button>
         <button type="button" onClick={() => toggleComments(post.id)}
           className="h-8 px-2.5 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer transition-all"
-          style={{ background: "rgba(255,255,255,0.15)", borderRadius: 12, color: "var(--color-text-secondary)" }}>
+          style={{ background: "rgba(255,255,255,0.15)", borderRadius: 12, color: isOpen ? "var(--color-accent)" : "var(--color-text-secondary)" }}>
           <MessageSquare className="w-4 h-4" /> {commentCount}
         </button>
         {!isWorkspacePost && (
@@ -240,7 +283,7 @@ const LivePostCard = ({
             const isOwnComment = user?.id === c.user_id;
             return (
               <div key={c.id} className="flex items-start gap-2 group">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: cColor }}>
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: cColor }}>
                   {c.author?.avatar_url ? <img src={storageImageUrl(c.author.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : cInitials}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -258,26 +301,28 @@ const LivePostCard = ({
               </div>
             );
           })}
-          <div className="flex items-center gap-2 mt-2">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden" style={{ background: "var(--color-accent)" }}>
-              {authProfile?.avatar_url ? <img src={storageImageUrl(authProfile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : userInitials}
+          {user && (
+            <div className="flex items-center gap-2 mt-2">
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden" style={{ background: "var(--color-accent)" }}>
+                {authProfile?.avatar_url ? <img src={storageImageUrl(authProfile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : userInitials}
+              </div>
+              <input
+                value={commentText}
+                onChange={(e) => setCommentInputs((p) => ({ ...p, [post.id]: e.target.value }))}
+                placeholder="Write a comment..."
+                className="flex-1 h-9 rounded-xl px-3 text-[13px] outline-none glass-input"
+                onKeyDown={(e) => { if (e.key === "Enter" && commentText.trim()) submitComment(post.id); }}
+              />
+              <button
+                type="button"
+                onClick={() => submitComment(post.id)}
+                className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer active:scale-95"
+                style={{ background: commentText.trim() ? "var(--color-accent)" : "var(--color-surface)" }}
+              >
+                <Send className="w-3.5 h-3.5" style={{ color: commentText.trim() ? "white" : "var(--color-text-muted)" }} />
+              </button>
             </div>
-            <input
-              value={commentText}
-              onChange={(e) => setCommentInputs((p) => ({ ...p, [post.id]: e.target.value }))}
-              placeholder="Write a comment..."
-              className="flex-1 h-9 rounded-xl px-3 text-[13px] outline-none glass-input"
-              onKeyDown={(e) => { if (e.key === "Enter" && commentText.trim()) submitComment(post.id); }}
-            />
-            <button
-              type="button"
-              onClick={() => submitComment(post.id)}
-              className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer active:scale-95"
-              style={{ background: commentText.trim() ? "var(--color-accent)" : "var(--color-surface)" }}
-            >
-              <Send className="w-3.5 h-3.5" style={{ color: commentText.trim() ? "white" : "var(--color-text-muted)" }} />
-            </button>
-          </div>
+          )}
         </div>
       )}
     </article>
@@ -369,14 +414,24 @@ const Feed = () => {
   const feedNavigate = useNavigate();
   const { posts: livePosts, loading, loadingMore, hasMore, loadMore, refresh } = useFeedPosts();
   const sentinelRef = useRef<HTMLDivElement>(null);
-  const { profile, initials, displayName } = useAuth();
+  const { user, profile, initials, displayName } = useAuth();
   const identityAvatar = profile?.avatar_url || null;
   const identityInitials = initials;
   const identityName = displayName;
   const feedRef = useRef<HTMLDivElement>(null);
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
 
-  const visiblePosts = useMemo(() => livePosts.filter((p: any) => !deletedIds.has(p.id)), [livePosts, deletedIds]);
+  // Edit/delete modals
+  const [editingPost, setEditingPost] = useState<any | null>(null);
+  const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
+  const [editedPosts, setEditedPosts] = useState<Record<string, any>>({});
+
+  const visiblePosts = useMemo(() =>
+    livePosts
+      .filter((p: any) => !deletedIds.has(p.id))
+      .map((p: any) => editedPosts[p.id] ? { ...p, ...editedPosts[p.id] } : p),
+    [livePosts, deletedIds, editedPosts]
+  );
 
   const postIds = useMemo(() => visiblePosts.map((p: any) => p.id), [visiblePosts]);
   const postIdsKey = useMemo(() => postIds.join(","), [postIds]);
@@ -392,7 +447,16 @@ const Feed = () => {
   }, [postIdsKey, loadCommentCounts]);
 
   const handleDeletePost = (postId: string) => {
+    setDeletingPostId(postId);
+  };
+
+  const handleDeleteConfirmed = (postId: string) => {
     setDeletedIds(prev => new Set(prev).add(postId));
+    setDeletingPostId(null);
+  };
+
+  const handleEditSaved = (updated: any) => {
+    setEditedPosts(prev => ({ ...prev, [updated.id]: { content: updated.content, is_edited: updated.is_edited, updated_at: updated.updated_at } }));
   };
 
   const [pullY, setPullY] = useState(0);
@@ -463,6 +527,7 @@ const Feed = () => {
               submitComment={submitComment}
               deleteComment={deleteComment}
               onDelete={handleDeletePost}
+              onEdit={setEditingPost}
             />
           ))}
 
@@ -471,7 +536,7 @@ const Feed = () => {
               <MessageSquare className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--color-text-muted)" }} />
               <p className="text-[16px] font-bold mb-1" style={{ color: "var(--color-text)" }}>Nothing here yet</p>
               <p className="text-[13px] mb-4" style={{ color: "var(--color-text-muted)" }}>Be the first to post something.</p>
-              <button onClick={() => feedNavigate("/post/create")} className="btn-liquid-primary rounded-full">Write a post →</button>
+              <button onClick={() => feedNavigate("/post/create")} className="btn-liquid-primary rounded-full">Write a post</button>
             </div>
           )}
 
@@ -479,7 +544,7 @@ const Feed = () => {
           {loadingMore && <SkeletonCard count={2} />}
           {!loading && !hasMore && visiblePosts.length > 0 && (
             <div className="flex items-center justify-center py-8">
-              <span className="text-[12px] font-medium px-5 py-2 rounded-full" style={{ background: "rgba(255,255,255,0.20)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.25)", color: "var(--color-text-muted)" }}>You're caught up ✓</span>
+              <span className="text-[12px] font-medium px-5 py-2 rounded-full" style={{ background: "rgba(255,255,255,0.20)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.25)", color: "var(--color-text-muted)" }}>You're caught up</span>
             </div>
           )}
         </div>
@@ -489,6 +554,24 @@ const Feed = () => {
           <SuggestedWidget />
         </aside>
       </div>
+
+      {/* Edit modal */}
+      {editingPost && (
+        <EditPostModal
+          post={editingPost}
+          onClose={() => setEditingPost(null)}
+          onSaved={handleEditSaved}
+        />
+      )}
+
+      {/* Delete confirmation */}
+      {deletingPostId && (
+        <DeletePostDialog
+          postId={deletingPostId}
+          onClose={() => setDeletingPostId(null)}
+          onDeleted={handleDeleteConfirmed}
+        />
+      )}
     </main>
   );
 };
