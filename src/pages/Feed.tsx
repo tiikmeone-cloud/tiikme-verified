@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { PageSEO } from "@/hooks/usePageSEO";
 import { storageImageUrl } from "@/lib/imageTransform";
 import { Heart, MessageSquare, Repeat2, MoreHorizontal, Flag, Send, FileText, ChevronDown, ArrowUpRight, Trash2, Pencil, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -479,6 +480,11 @@ const Feed = () => {
   return (
     <main className="max-w-[960px] mx-auto px-3 md:px-6 py-4 md:py-7" ref={feedRef}
       onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+      <PageSEO
+        title="Feed | Tiikme"
+        description="Your professional feed — posts, updates, and insights from verified professionals and organizations on Tiikme."
+        noIndex
+      />
       <div className="md:hidden flex items-center justify-center overflow-hidden transition-all duration-200"
         style={{ height: pullY > 0 ? `${pullY}px` : 0, opacity: pullY > 20 ? 1 : 0 }}>
         <div className={`w-7 h-7 rounded-full border-2 border-t-transparent ${refreshing ? 'animate-spin' : ''}`}

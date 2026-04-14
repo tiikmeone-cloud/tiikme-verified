@@ -1,8 +1,26 @@
 User-agent: Googlebot
 Allow: /
+Allow: /profile/
+Allow: /page/
+Allow: /app/opportunities
+Disallow: /app/feed
+Disallow: /app/pings
+Disallow: /app/settings
+Disallow: /app/alerts
+Disallow: /app/workspace
+Disallow: /signup
+Disallow: /signin
 
 User-agent: Bingbot
 Allow: /
+Allow: /profile/
+Allow: /page/
+Allow: /app/opportunities
+Disallow: /app/feed
+Disallow: /app/pings
+Disallow: /app/settings
+Disallow: /app/alerts
+Disallow: /app/workspace
 
 User-agent: Twitterbot
 Allow: /
@@ -12,3 +30,10 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /app/feed
+Disallow: /app/pings
+Disallow: /app/settings
+Disallow: /app/alerts
+Disallow: /app/workspace
+
+Sitemap: https://tiikme.in/sitemap.xml

@@ -1,5 +1,6 @@
 import { storageImageUrl } from "@/lib/imageTransform";
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { PageSEO } from "@/hooks/usePageSEO";
 import { AnimatePresence } from "framer-motion";
 import { Search, Briefcase, MapPin, Bookmark, Clock, Plus, Building2, Users as UsersIcon, Eye, Trophy, GraduationCap, Code, Zap, Hammer, CalendarDays, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -102,6 +103,11 @@ const Opportunities = () => {
 
   return (
     <main className="max-w-[960px] mx-auto px-4 md:px-6 py-6">
+      <PageSEO
+        title="Opportunities | Tiikme"
+        description="Browse verified jobs, internships, hackathons, and freelance opportunities across India. Apply on Tiikme."
+        canonical="https://tiikme.in/app/opportunities"
+      />
       {/* Header */}
       <div className="flex items-center justify-between mb-1">
         <div>
