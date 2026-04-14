@@ -514,7 +514,7 @@ const SettingsPage = () => {
               <Toggle label="Opportunity matches" />
               <Toggle label="Replies to my comments" />
               <Toggle label="New Pings (unread)" />
-              <Toggle label="Activity Score milestones" defaultOn={false} />
+              <Toggle label="Activity Score milestones" value={false} />
             </div>
           )}
 
