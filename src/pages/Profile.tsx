@@ -388,7 +388,7 @@ const Profile = () => {
     setSaving(false);
     if (error) { toast.error(error.message); return; }
     if (data) setWorkItems(prev => [data, ...prev]);
-    setShowAddExp(false);
+    setModalSection(null);
     setExpForm({ company: "", title: "", type: "Full-time", city: "", isCurrent: true, startMonth: "", startYear: "", endMonth: "", endYear: "", description: "", skills: "" });
     toast.success("Experience added");
   };
@@ -410,7 +410,7 @@ const Profile = () => {
     setSaving(false);
     if (error) { toast.error(error.message); return; }
     if (data) setWorkItems(prev => [data, ...prev]);
-    setShowAddEdu(false);
+    setModalSection(null);
     setEduForm({ institution: "", degree: "", branch: "", startYear: "", endYear: "", isCurrent: false, grade: "" });
     toast.success("Education added");
   };
@@ -429,7 +429,7 @@ const Profile = () => {
     setSaving(false);
     if (error) { toast.error(error.message); return; }
     if (data) setWorkItems(prev => [data, ...prev]);
-    setShowAddProject(false);
+    setModalSection(null);
     setProjForm({ title: "", org: "", description: "", techStack: "", startMonth: "", startYear: "", endMonth: "", endYear: "", isCurrent: false });
     toast.success("Project added");
   };
@@ -445,7 +445,7 @@ const Profile = () => {
     setSaving(false);
     if (error) { toast.error(error.message); return; }
     if (data) setAchievements(prev => [data, ...prev]);
-    setShowAddAchievement(false);
+    setModalSection(null);
     setAchForm({ title: "", issuedBy: "", dateMonth: "", dateYear: "", description: "", url: "" });
     toast.success("Achievement added");
   };
@@ -473,7 +473,7 @@ const Profile = () => {
     const updated = [...skills, newSkill.trim()];
     await supabase.from("profiles").update({ skills: updated } as any).eq("id", user.id);
     toast.success("Skill added");
-    setNewSkill(""); setShowAddSkill(false);
+    setNewSkill(""); setModalSection(null);
     await refreshProfile(); loadProfile();
   };
 
