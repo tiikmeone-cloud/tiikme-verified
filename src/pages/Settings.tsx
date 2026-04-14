@@ -48,10 +48,10 @@ const Toggle = ({ label, desc, defaultOn = true }: { label: string; desc?: strin
 const SettingsPage = () => {
   const navigate = useNavigate();
   const { user, refreshProfile } = useAuth();
+  const { theme, setTheme: setThemeHook } = useTheme();
   
   const [activeTab, setActiveTab] = useState("profile");
   const [journeyChoice, setJourneyChoice] = useState<string | null>(null);
-  const [theme, setTheme] = useState(() => localStorage.getItem("tiikme-theme") || "light");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteText, setDeleteText] = useState("");
   const [loggingOut, setLoggingOut] = useState(false);
@@ -75,7 +75,7 @@ const SettingsPage = () => {
 
   const hasChanges = JSON.stringify(profile) !== JSON.stringify(originalProfile);
 
-  useEffect(() => { applyTheme(theme); }, []);
+
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -110,9 +110,7 @@ const SettingsPage = () => {
   }, []);
 
   const handleThemeChange = (newTheme: string) => {
-    setTheme(newTheme);
-    localStorage.setItem("tiikme-theme", newTheme);
-    applyTheme(newTheme);
+    setThemeHook(newTheme as any, user?.id);
     tiikToast.success(`Theme set to ${newTheme}`);
   };
 
