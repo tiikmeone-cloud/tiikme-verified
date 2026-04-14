@@ -154,9 +154,8 @@ const PrivacySection = ({ userId }: { userId: string | null }) => {
       </div>
     </div>
   );
-};
 
-
+const SettingsPage = () => {
   const navigate = useNavigate();
   const { user, refreshProfile } = useAuth();
   const { theme, setTheme: setThemeHook } = useTheme();
