@@ -29,10 +29,7 @@ const journeyCards = [
   { id: "break", icon: Coffee, title: "Taking a break", desc: "Become Alumni" },
 ];
 
-const applyTheme = (t: string) => {
-  const resolved = t === "system" ? (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark") : t;
-  document.documentElement.setAttribute("data-theme", resolved);
-};
+/* theme is handled via useTheme hook */
 
 const Toggle = ({ label, desc, defaultOn = true }: { label: string; desc?: string; defaultOn?: boolean }) => {
   const [on, setOn] = useState(defaultOn);
