@@ -171,11 +171,17 @@ export default function Workspace() {
 
   if (!isInstitution) {
     return (
-      <div className="max-w-[960px] mx-auto px-4 py-16 text-center">
-        <Users className="w-12 h-12 mx-auto mb-3" style={{ color: "#9CA3AF" }} />
-        <h1 className="text-[20px] font-bold mb-2" style={{ color: "#1A1A1A" }}>Workspace</h1>
-        <p className="text-[14px] mb-4" style={{ color: "#9CA3AF" }}>Workspaces are available for organisation accounts.</p>
-        <Button onClick={() => window.location.href = "/join-as-institution"}>Register Organisation</Button>
+      <div className="max-w-[960px] mx-auto px-4 py-16 flex items-center justify-center">
+        <div className="glass-light text-center" style={{ padding: 40, borderRadius: 24, maxWidth: 480 }}>
+          <Users className="w-16 h-16 mx-auto mb-3" style={{ color: "#6B7094" }} />
+          <h1 className="text-[24px] font-bold mb-2" style={{ color: "#1A1A2E" }}>Workspace</h1>
+          <p className="text-[15px] mb-6 mx-auto" style={{ color: "#6B7094", maxWidth: 400 }}>Workspaces are available for organisation accounts.</p>
+          <button type="button" onClick={() => window.location.href = "/join-as-institution"}
+            className="h-12 px-8 rounded-2xl text-[14px] font-bold transition-all duration-200"
+            style={{ background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", cursor: "pointer", boxShadow: "0 4px 16px rgba(232,115,58,0.30)" }}>
+            Register Organisation
+          </button>
+        </div>
       </div>
     );
   }

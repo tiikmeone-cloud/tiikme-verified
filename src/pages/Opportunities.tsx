@@ -86,18 +86,21 @@ const Opportunities = () => {
       </div>
 
       {/* Filter bar */}
-      <div className="sticky top-0 z-10 py-3 flex items-center gap-3 flex-wrap" style={{ background: "linear-gradient(135deg, #FFF8F2, #FFF0E8)" }}>
+      <div className="sticky top-0 z-10 py-3 flex items-center gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: "#9CA3AF" }} />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: "#6B7094" }} />
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search roles, companies..."
-            className="w-full h-[52px] rounded-full pl-12 pr-4 text-[14px] outline-none"
-            style={{ background: "rgba(255,255,255,0.72)", border: "1.5px solid rgba(255,255,255,0.9)", color: "#1A1A1A", backdropFilter: "blur(24px)", boxShadow: "0 2px 8px rgba(232,88,10,0.06), 0 8px 32px rgba(0,0,0,0.08)" }} />
+            className="w-full h-[48px] rounded-[20px] pl-12 pr-4 text-[14px] outline-none transition-all duration-200"
+            style={{ background: "rgba(255,255,255,0.20)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.30)", color: "#1A1A2E" }} />
         </div>
-        <div className="flex gap-1.5">
+        <div className="flex gap-2">
           {typeFilters.map(f => (
             <button key={f} type="button" onClick={() => setActiveType(f)}
-              className="h-9 px-4 rounded-full text-[13px] font-semibold cursor-pointer"
-              style={{ background: activeType === f ? "#E8580A" : "rgba(255,255,255,0.72)", color: activeType === f ? "#fff" : "#374151", border: activeType === f ? "none" : "1.5px solid rgba(255,255,255,0.9)" }}>
+              className="h-9 px-5 rounded-[20px] text-[13px] font-semibold cursor-pointer transition-all duration-200"
+              style={activeType === f
+                ? { background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 4px 16px rgba(232,115,58,0.30)" }
+                : { background: "rgba(255,255,255,0.20)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.25)", color: "#1A1A2E" }
+              }>
               {f}
             </button>
           ))}
