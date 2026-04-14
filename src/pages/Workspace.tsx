@@ -3,7 +3,8 @@ import { storageImageUrl } from "@/lib/imageTransform";
 import {
   Users, Plus, Shield, Copy, Search, FileText, Briefcase, CheckCircle, XCircle,
   Clock, UserPlus, Send, Building2, Lock, Trash2, ChevronRight, MessageCircle,
-  AlertTriangle, Hash, Megaphone, FolderKanban, Paperclip, X, Settings
+  AlertTriangle, Hash, Megaphone, FolderKanban, Paperclip, X, Settings,
+  Heart, MoreHorizontal, Image as ImageIcon, Loader2, Globe, Eye, EyeOff
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import GlassBox from "@/components/ui/GlassBox";
 import { Link, useNavigate } from "react-router-dom";
+import ImageGrid from "@/components/feed/ImageGrid";
+import MentionText from "@/components/feed/MentionText";
 
 /* ── Constants ── */
 const ROLE_LABELS: Record<string, string> = {
@@ -33,6 +36,12 @@ const AVATAR_COLORS = ["#E8733A", "#4A90D9", "#34C759", "#FF6B9D", "#8B5CF6", "#
 const hashColor = (s: string) => AVATAR_COLORS[Math.abs([...s].reduce((a, c) => a + c.charCodeAt(0), 0)) % AVATAR_COLORS.length];
 const initials = (name: string) => name?.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "?";
 const CHANNEL_ICONS: Record<string, any> = { group: Hash, announcement: Megaphone, project: FolderKanban };
+const POST_TYPE_STYLES: Record<string, { label: string; color: string; bg: string }> = {
+  announcement: { label: "Announcement", color: "#DC2626", bg: "rgba(220,38,38,0.10)" },
+  meeting: { label: "Meeting", color: "#2563EB", bg: "rgba(37,99,235,0.10)" },
+  update: { label: "Update", color: "#059669", bg: "rgba(5,150,105,0.10)" },
+  townhall: { label: "Townhall", color: "#E8580A", bg: "rgba(232,88,10,0.10)" },
+};
 const formatTime = (d: string) => {
   const date = new Date(d);
   const now = new Date();
@@ -48,6 +57,426 @@ const formatDateSep = (d: string) => {
   if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
   return date.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
 };
+function getTimeAgo(date: Date): string {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
+
+/* ── Workspace Feed Post Card ── */
+interface WsFeedPostProps {
+  post: any;
+  userId?: string;
+  orgName?: string;
+  members: any[];
+  onDelete: (id: string) => void;
+}
+const WsFeedPost = ({ post, userId, orgName, members, onDelete }: WsFeedPostProps) => {
+  const author = post.author;
+  const authorName = author?.full_name || "Team Member";
+  const authorInitials = initials(authorName);
+  const memberEntry = members.find(m => m.user_id === post.author_id);
+  const roleAtOrg = memberEntry ? (ROLE_LABELS[memberEntry.role] || memberEntry.role) : null;
+  const titleAtOrg = memberEntry?.title;
+  const roleColor = memberEntry ? (ROLE_COLORS[memberEntry.role] || "#6B7280") : "#6B7280";
+  const timeAgo = post.created_at ? getTimeAgo(new Date(post.created_at)) : "";
+  const postTypeStyle = POST_TYPE_STYLES[post.post_type];
+  const isOwn = userId === post.author_id;
+  const isSharedToFeed = post.is_shared_to_feed;
+
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [comments, setComments] = useState<any[]>([]);
+  const [commentText, setCommentText] = useState("");
+  const [commentCount, setCommentCount] = useState(post.comment_count || 0);
+  const [showMenu, setShowMenu] = useState(false);
+
+  useEffect(() => {
+    if (!userId) return;
+    supabase.from("post_reactions").select("id").eq("post_id", post.id).eq("user_id", userId).maybeSingle()
+      .then(({ data }) => setLiked(!!data));
+    supabase.from("post_reactions").select("id", { count: "exact", head: true }).eq("post_id", post.id)
+      .then(({ count }) => setLikeCount(count || 0));
+  }, [post.id, userId]);
+
+  const toggleLike = async () => {
+    if (!userId) return;
+    if (liked) {
+      await supabase.from("post_reactions").delete().eq("post_id", post.id).eq("user_id", userId);
+      setLiked(false); setLikeCount(p => Math.max(0, p - 1));
+    } else {
+      await supabase.from("post_reactions").insert({ post_id: post.id, user_id: userId, reaction_type: "useful" });
+      setLiked(true); setLikeCount(p => p + 1);
+    }
+  };
+
+  const loadComments = async () => {
+    const { data } = await supabase.from("post_comments").select("*, author:profiles!post_comments_user_id_fkey(id, full_name, avatar_url, role)")
+      .eq("post_id", post.id).order("created_at", { ascending: true }).limit(50);
+    setComments(data || []);
+    setCommentCount(data?.length || 0);
+  };
+
+  const toggleComments = () => {
+    if (!commentsOpen) loadComments();
+    setCommentsOpen(!commentsOpen);
+  };
+
+  const submitComment = async () => {
+    if (!commentText.trim() || !userId) return;
+    await supabase.from("post_comments").insert({ post_id: post.id, user_id: userId, content: commentText.trim() });
+    setCommentText("");
+    loadComments();
+  };
+
+  const handleDelete = async () => {
+    onDelete(post.id);
+    await supabase.from("posts").delete().eq("id", post.id);
+    toast.success("Post deleted");
+    setShowMenu(false);
+  };
+
+  return (
+    <article className="glass-light mb-3 overflow-hidden" style={{
+      padding: 16, borderRadius: 24,
+      borderLeft: postTypeStyle ? `4px solid ${postTypeStyle.color}` : undefined,
+    }}>
+      {/* Post type badge */}
+      {postTypeStyle && (
+        <div className="pb-2">
+          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+            style={{ background: postTypeStyle.bg, color: postTypeStyle.color }}>
+            {postTypeStyle.label}
+          </span>
+        </div>
+      )}
+
+      {/* Author header */}
+      <div className="flex items-center gap-3 pb-1">
+        <Link to={`/app/profile/${post.author_id || ""}`}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[13px] font-bold text-white shrink-0 overflow-hidden"
+            style={{ backgroundColor: roleColor, border: "2px solid rgba(255,255,255,0.25)" }}>
+            {author?.avatar_url
+              ? <img src={storageImageUrl(author.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" />
+              : authorInitials}
+          </div>
+        </Link>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Link to={`/app/profile/${post.author_id || ""}`} className="font-semibold hover:underline" style={{ color: "var(--color-text)", fontSize: 14 }}>{authorName}</Link>
+            {roleAtOrg && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: `${roleColor}1A`, color: roleColor }}>
+                {roleAtOrg}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--color-text-muted)" }}>
+            {titleAtOrg && <span>{titleAtOrg} · </span>}
+            <span>{timeAgo}</span>
+            <span className="flex items-center gap-0.5 ml-1">
+              {isSharedToFeed ? <><Globe className="w-3 h-3" /> Public</> : <><Lock className="w-3 h-3" /> Workspace</>}
+            </span>
+          </div>
+        </div>
+        <div className="relative">
+          <button type="button" onClick={() => setShowMenu(!showMenu)} className="p-2 rounded-lg cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
+            style={{ color: "var(--color-text-secondary)" }}>
+            <MoreHorizontal className="w-4 h-4" />
+          </button>
+          {showMenu && (
+            <div className="absolute right-0 top-8 glass-light rounded-xl p-1 min-w-[140px] z-10" style={{ borderRadius: 14 }}>
+              {isOwn && (
+                <button type="button" onClick={handleDelete} className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "#DC2626" }}>
+                  <Trash2 className="w-3 h-3" /> Delete
+                </button>
+              )}
+              <button type="button" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/post/${post.id}`); toast.success("Link copied"); setShowMenu(false); }}
+                className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "var(--color-text-secondary)" }}>
+                <Copy className="w-3 h-3" /> Copy link
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="py-2.5" style={{ fontSize: 15, lineHeight: 1.6, color: "var(--color-text)" }}>
+        <MentionText text={post.content} />
+      </div>
+
+      {/* Images */}
+      {post.image_urls?.length > 0 && (
+        <div className="pb-2"><div className="rounded-xl overflow-hidden"><ImageGrid images={post.image_urls} /></div></div>
+      )}
+
+      {/* PDF */}
+      {post.pdf_url && (
+        <div className="mb-3">
+          <a href={post.pdf_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 glass-medium rounded-xl p-3">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: "rgba(220,38,38,0.1)" }}>
+              <FileText className="w-5 h-5" style={{ color: "#DC2626" }} />
+            </div>
+            <p className="text-[13px] font-bold truncate flex-1" style={{ color: "var(--color-text)" }}>Attached PDF ↗</p>
+          </a>
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="flex items-center gap-1 pt-2" style={{ borderTop: "1px solid var(--glass-border-subtle)" }}>
+        <button type="button" onClick={toggleLike}
+          className="h-8 px-2.5 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all"
+          style={{ background: "rgba(255,255,255,0.15)", borderRadius: 12, color: liked ? "var(--color-accent)" : "var(--color-text-secondary)" }}>
+          <Heart className="w-4 h-4" style={{ fill: liked ? "var(--color-accent)" : "none" }} /> {likeCount}
+        </button>
+        <button type="button" onClick={toggleComments}
+          className="h-8 px-2.5 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer transition-all"
+          style={{ background: "rgba(255,255,255,0.15)", borderRadius: 12, color: "var(--color-text-secondary)" }}>
+          <MessageCircle className="w-4 h-4" /> {commentCount}
+        </button>
+      </div>
+
+      {/* Comments */}
+      {commentsOpen && (
+        <div className="pt-3 space-y-3" style={{ borderTop: "1px solid var(--glass-border-subtle)", marginTop: 8 }}>
+          {comments.length === 0 && <p className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>No comments yet</p>}
+          {comments.map(c => {
+            const cName = c.author?.full_name || "User";
+            const cInit = initials(cName);
+            const cTime = c.created_at ? getTimeAgo(new Date(c.created_at)) : "";
+            return (
+              <div key={c.id} className="flex items-start gap-2">
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[9px] font-bold text-white overflow-hidden shrink-0"
+                  style={{ background: hashColor(c.user_id || "") }}>
+                  {c.author?.avatar_url ? <img src={storageImageUrl(c.author.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : cInit}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[12px] font-bold" style={{ color: "var(--color-text)" }}>{cName}</span>
+                    <span className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>{cTime}</span>
+                  </div>
+                  <p className="text-[12px]" style={{ color: "var(--color-text-secondary)" }}><MentionText text={c.content} /></p>
+                </div>
+              </div>
+            );
+          })}
+          <div className="flex items-center gap-2">
+            <input value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="Write a comment..."
+              className="flex-1 h-8 rounded-xl px-3 text-[12px] outline-none glass-input"
+              onKeyDown={e => { if (e.key === "Enter" && commentText.trim()) submitComment(); }} />
+            <button type="button" onClick={submitComment}
+              className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer active:scale-95"
+              style={{ background: commentText.trim() ? "var(--color-accent)" : "var(--glass-bg)" }}>
+              <Send className="w-3.5 h-3.5" style={{ color: commentText.trim() ? "white" : "var(--color-text-muted)" }} />
+            </button>
+          </div>
+        </div>
+      )}
+    </article>
+  );
+};
+
+/* ── Workspace Post Composer ── */
+interface WsComposerProps {
+  userId: string;
+  orgId: string;
+  orgName: string;
+  workspaceId: string | null;
+  isAdmin: boolean;
+  profile: any;
+  onPosted: () => void;
+}
+const WsComposer = ({ userId, orgId, orgName, workspaceId, isAdmin, profile, onPosted }: WsComposerProps) => {
+  const [content, setContent] = useState("");
+  const [postType, setPostType] = useState<"thought" | "announcement" | "meeting" | "update">("thought");
+  const [shareToFeed, setShareToFeed] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const imgRef = useRef<HTMLInputElement>(null);
+  const pdfRef = useRef<HTMLInputElement>(null);
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const valid: File[] = []; const previews: string[] = [];
+    for (const f of files.slice(0, 10 - imageFiles.length)) {
+      if (!f.type.startsWith("image/") || f.size > 10 * 1024 * 1024) continue;
+      valid.push(f); previews.push(URL.createObjectURL(f));
+    }
+    setImageFiles(prev => [...prev, ...valid]);
+    setImagePreviews(prev => [...prev, ...previews]);
+    e.target.value = "";
+  };
+
+  const removeImage = (idx: number) => {
+    URL.revokeObjectURL(imagePreviews[idx]);
+    setImageFiles(prev => prev.filter((_, i) => i !== idx));
+    setImagePreviews(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const handlePdfSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (f && f.type === "application/pdf" && f.size <= 25 * 1024 * 1024) setPdfFile(f);
+    else if (f) toast.error("Only PDF files under 25MB");
+    e.target.value = "";
+  };
+
+  const publish = async () => {
+    if (!content.trim() && imageFiles.length === 0 && !pdfFile) { toast.error("Write something"); return; }
+    if (postType === "announcement" && !isAdmin) { toast.error("Only admins can post announcements"); return; }
+    setPublishing(true);
+    try {
+      let imageUrls: string[] = [];
+      for (const file of imageFiles) {
+        const path = `${userId}/${Date.now()}-${file.name.replace(/[^a-z0-9.]/gi, "_")}`;
+        const { data: ud, error } = await supabase.storage.from("post-images").upload(path, file, { upsert: false, contentType: file.type });
+        if (error) { toast.error("Image upload failed"); setPublishing(false); return; }
+        const { data: url } = supabase.storage.from("post-images").getPublicUrl(ud.path);
+        if (url?.publicUrl) imageUrls.push(url.publicUrl);
+      }
+      let pdfUrl: string | null = null;
+      if (pdfFile) {
+        const path = `${userId}/${Date.now()}-${pdfFile.name.replace(/[^a-z0-9.]/gi, "_")}`;
+        const { data: ud, error } = await supabase.storage.from("message-attachments").upload(path, pdfFile, { contentType: "application/pdf" });
+        if (error) { toast.error("PDF upload failed"); setPublishing(false); return; }
+        const { data: url } = supabase.storage.from("message-attachments").getPublicUrl(ud.path);
+        pdfUrl = url?.publicUrl || null;
+      }
+
+      const { error } = await supabase.from("posts").insert({
+        author_id: userId,
+        content: content.trim(),
+        post_type: postType,
+        type: postType,
+        visibility: "workspace",
+        is_shared_to_feed: shareToFeed,
+        posted_by_org: orgId,
+        posted_by_user_id: userId,
+        workspace_id: workspaceId,
+        workspace_name: orgName,
+        image_urls: imageUrls,
+        pdf_url: pdfUrl,
+        hashtags: (content.match(/#\w+/g) || []).map(t => t.slice(1)),
+        show_company_badge: true,
+      } as any);
+      if (error) throw error;
+      await supabase.rpc("increment_score", { uid: userId, amount: 3 });
+      toast.success("Posted to workspace");
+      setContent(""); setPostType("thought"); setShareToFeed(false);
+      setImageFiles([]); setImagePreviews([]); setPdfFile(null);
+      onPosted();
+    } catch (err: any) {
+      toast.error("Failed to post");
+      console.error(err);
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  return (
+    <div className="glass-light rounded-3xl p-4 mb-4" style={{ boxShadow: "inset 0 1px 0 var(--glass-highlight)" }}>
+      {/* Header indicator */}
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-bold text-white overflow-hidden shrink-0"
+          style={{ background: "var(--color-accent)" }}>
+          {profile?.avatar_url ? <img src={storageImageUrl(profile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials(profile?.full_name || "")}
+        </div>
+        <div className="flex-1">
+          <p className="text-[12px] font-semibold" style={{ color: "var(--color-text)" }}>{profile?.full_name}</p>
+          <p className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>Posting to {orgName}</p>
+        </div>
+      </div>
+
+      {/* Textarea */}
+      <textarea value={content} onChange={e => setContent(e.target.value.slice(0, 3000))}
+        placeholder="Share something with your team..."
+        className="w-full min-h-[100px] px-3 py-2.5 text-[14px] resize-none outline-none rounded-xl"
+        style={{ background: "var(--surface-2)", border: "1px solid var(--border-2)", color: "var(--color-text)", lineHeight: 1.6 }} />
+
+      {/* Image previews */}
+      {imagePreviews.length > 0 && (
+        <div className="flex gap-2 mt-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+          {imagePreviews.map((p, i) => (
+            <div key={i} className="relative shrink-0 w-16 h-16 rounded-xl overflow-hidden" style={{ background: "var(--surface-2)" }}>
+              <img src={p} alt="" className="w-full h-full object-cover" />
+              <button type="button" onClick={() => removeImage(i)} className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center cursor-pointer">
+                <X className="w-2.5 h-2.5 text-white" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* PDF preview */}
+      {pdfFile && (
+        <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-xl" style={{ background: "var(--surface-2)", border: "1px solid var(--border-2)" }}>
+          <FileText className="w-4 h-4" style={{ color: "#DC2626" }} />
+          <span className="text-[12px] flex-1 truncate" style={{ color: "var(--color-text)" }}>{pdfFile.name}</span>
+          <button onClick={() => setPdfFile(null)} className="cursor-pointer"><X className="w-3.5 h-3.5" style={{ color: "var(--color-text-muted)" }} /></button>
+        </div>
+      )}
+
+      {/* Controls */}
+      <div className="flex items-center gap-2 mt-3 flex-wrap">
+        {/* Post type */}
+        <div className="flex gap-1">
+          {(["thought", "announcement", "meeting", "update"] as const).map(t => {
+            if (t === "announcement" && !isAdmin) return null;
+            const isActive = postType === t;
+            const style = POST_TYPE_STYLES[t];
+            return (
+              <button key={t} onClick={() => setPostType(t)}
+                className="px-2 py-1 rounded-lg text-[10px] font-bold capitalize cursor-pointer"
+                style={{
+                  background: isActive ? (style?.bg || "rgba(232,115,58,0.10)") : "transparent",
+                  color: isActive ? (style?.color || "var(--color-accent)") : "var(--color-text-muted)",
+                  border: isActive ? `1px solid ${style?.color || "var(--color-accent)"}33` : "1px solid transparent",
+                }}>
+                {t === "thought" ? "Regular" : t}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex-1" />
+
+        {/* Privacy toggle */}
+        <button onClick={() => setShareToFeed(!shareToFeed)}
+          className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold cursor-pointer"
+          style={{
+            background: shareToFeed ? "rgba(5,150,105,0.10)" : "transparent",
+            color: shareToFeed ? "#059669" : "var(--color-text-muted)",
+            border: `1px solid ${shareToFeed ? "rgba(5,150,105,0.2)" : "var(--glass-border-color)"}`,
+          }}>
+          {shareToFeed ? <><Globe className="w-3 h-3" /> Public</> : <><Lock className="w-3 h-3" /> Workspace</>}
+        </button>
+
+        {/* Attach buttons */}
+        <button onClick={() => imgRef.current?.click()} className="p-1.5 rounded-lg cursor-pointer" style={{ color: "var(--color-text-muted)" }}>
+          <ImageIcon className="w-4 h-4" />
+        </button>
+        <button onClick={() => pdfRef.current?.click()} className="p-1.5 rounded-lg cursor-pointer" style={{ color: "var(--color-text-muted)" }}>
+          <FileText className="w-4 h-4" />
+        </button>
+
+        <button onClick={publish} disabled={publishing || (!content.trim() && imageFiles.length === 0 && !pdfFile)}
+          className="btn-liquid-primary px-4 py-1.5 rounded-xl text-[12px] font-bold cursor-pointer disabled:opacity-50">
+          {publishing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Post"}
+        </button>
+      </div>
+
+      <input ref={imgRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageSelect} />
+      <input ref={pdfRef} type="file" accept=".pdf" className="hidden" onChange={handlePdfSelect} />
+    </div>
+  );
+};
+
+/* ════════════════════════════════════════ */
 
 export default function Workspace() {
   const { user, profile } = useAuth();
@@ -60,12 +489,11 @@ export default function Workspace() {
   const [accessRules, setAccessRules] = useState<any[]>([]);
   const [verifRequests, setVerifRequests] = useState<any[]>([]);
   const [itemVerifRequests, setItemVerifRequests] = useState<any[]>([]);
-  const [posts, setPosts] = useState<any[]>([]);
+  const [wsPosts, setWsPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [myRole, setMyRole] = useState<string>("member");
   const [search, setSearch] = useState("");
 
-  // Panels — added "groups"
   const [selectedPanel, setSelectedPanel] = useState<"feed" | "team" | "access" | "verifications" | "invites" | "groups">("feed");
 
   // Groups/Channels state
@@ -102,7 +530,7 @@ export default function Workspace() {
   const fetchData = useCallback(async () => {
     if (!orgId || !user) { setLoading(false); return; }
     setLoading(true);
-    const [orgRes, membersRes, accessRes, verifRes, myRoleRes, postsRes, itemVerifRes] = await Promise.allSettled([
+    const [orgRes, membersRes, accessRes, verifRes, myRoleRes, itemVerifRes] = await Promise.allSettled([
       supabase.from("organizations").select("*").eq("id", orgId).maybeSingle(),
       supabase.from("org_members").select("*, profile:profiles!org_members_user_id_fkey(id, full_name, avatar_url, role, headline)")
         .eq("org_id", orgId).order("joined_at", { ascending: true }),
@@ -111,8 +539,6 @@ export default function Workspace() {
       supabase.from("org_verif_requests").select("*, requester:profiles!org_verif_requests_user_id_fkey(full_name, avatar_url, role)")
         .eq("org_id", orgId).eq("status", "pending").order("created_at", { ascending: false }),
       supabase.from("org_members").select("role").eq("org_id", orgId).eq("user_id", user.id).maybeSingle(),
-      supabase.from("posts").select("*, author:profiles!posts_author_id_fkey(full_name, avatar_url)")
-        .eq("posted_by_org", orgId).order("created_at", { ascending: false }).limit(30),
       supabase.from("item_verification_requests").select("*")
         .eq("org_id", orgId).eq("status", "pending").order("created_at", { ascending: false }),
     ]);
@@ -121,7 +547,6 @@ export default function Workspace() {
     if (accessRes.status === "fulfilled") setAccessRules(accessRes.value.data || []);
     if (verifRes.status === "fulfilled") setVerifRequests(verifRes.value.data || []);
     if (myRoleRes.status === "fulfilled") setMyRole(myRoleRes.value.data?.role || "member");
-    if (postsRes.status === "fulfilled") setPosts(postsRes.value.data || []);
 
     // Hydrate item verif requests
     if (itemVerifRes.status === "fulfilled") {
@@ -151,7 +576,6 @@ export default function Workspace() {
     if (ws) {
       wsId = ws.id;
     } else {
-      // auto-create workspace for org
       const { data: newWs } = await supabase.from("workspaces").insert({
         name: orgRes.status === "fulfilled" ? orgRes.value.data?.name || "Workspace" : "Workspace",
         type: "organization",
@@ -171,6 +595,19 @@ export default function Workspace() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  /* ── Fetch workspace posts ── */
+  const fetchWsPosts = useCallback(async () => {
+    if (!orgId) return;
+    const { data } = await supabase.from("posts")
+      .select("*, author:profiles!posts_author_id_fkey(id, full_name, avatar_url, role, headline)")
+      .eq("posted_by_org", orgId)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    setWsPosts(data || []);
+  }, [orgId]);
+
+  useEffect(() => { fetchWsPosts(); }, [fetchWsPosts]);
+
   /* ── Channel messages ── */
   const loadMessages = useCallback(async (channelId: string) => {
     setMsgLoading(true);
@@ -179,7 +616,6 @@ export default function Workspace() {
       .eq("channel_id", channelId)
       .order("created_at", { ascending: true })
       .limit(200);
-    // hydrate sender profiles
     if (data && data.length > 0) {
       const senderIds = [...new Set(data.map(m => m.sender_id).filter(Boolean))];
       const { data: profiles } = await supabase.from("profiles").select("id, full_name, avatar_url").in("id", senderIds as string[]);
@@ -263,7 +699,6 @@ export default function Workspace() {
     }).select("*").maybeSingle();
     if (error) { toast.error(error.message); return; }
     if (ch) {
-      // Auto-add creator as admin
       await supabase.from("workspace_channel_members").insert({ channel_id: ch.id, user_id: user.id, role: "admin" });
       setChannels(prev => [...prev, ch]);
       toast.success(`#${ch.name} created`);
@@ -281,7 +716,7 @@ export default function Workspace() {
     e.target.value = "";
   };
 
-  /* ── Existing handlers (unchanged logic) ── */
+  /* ── Existing handlers ── */
   const handleInvite = async () => {
     if (!inviteEmail.trim() || !orgId || !user) return;
     const { data: found } = await supabase.from("profiles")
@@ -366,6 +801,10 @@ export default function Workspace() {
     toast.success("Invite link copied");
   };
 
+  const handleDeletePost = (postId: string) => {
+    setWsPosts(prev => prev.filter(p => p.id !== postId));
+  };
+
   const filteredMembers = members.filter(m => !search.trim() || m.profile?.full_name?.toLowerCase().includes(search.toLowerCase()));
 
   /* ── Empty state ── */
@@ -398,7 +837,7 @@ export default function Workspace() {
 
   /* ── NAV ── */
   const NAV_ITEMS = [
-    { key: "feed" as const, label: "Feed", icon: FileText, count: posts.length },
+    { key: "feed" as const, label: "Feed", icon: FileText, count: wsPosts.length },
     { key: "verifications" as const, label: "Verifications", icon: Shield, count: verifCount },
     { key: "groups" as const, label: "Groups", icon: Hash, count: channels.length },
     { key: "team" as const, label: "Members", icon: Users, count: members.length },
@@ -417,7 +856,6 @@ export default function Workspace() {
 
     return (
       <div className="flex flex-col h-[calc(100vh-200px)] min-h-[400px]">
-        {/* Chat header */}
         <div className="glass-light rounded-2xl px-4 py-3 mb-3 flex items-center justify-between" style={{ boxShadow: "inset 0 1px 0 var(--glass-highlight)" }}>
           <div className="flex items-center gap-2">
             <button onClick={() => setActiveChannel(null)} className="text-[12px] cursor-pointer mr-1" style={{ color: "var(--color-text-muted)" }}>←</button>
@@ -430,12 +868,9 @@ export default function Workspace() {
           )}
         </div>
 
-        {/* Messages */}
         <div className="flex-1 overflow-y-auto space-y-1 px-1 pb-2">
           {msgLoading ? (
-            <div className="text-center py-8">
-              <div className="w-6 h-6 rounded-full mx-auto animate-pulse" style={{ background: "var(--glass-bg)" }} />
-            </div>
+            <div className="text-center py-8"><div className="w-6 h-6 rounded-full mx-auto animate-pulse" style={{ background: "var(--glass-bg)" }} /></div>
           ) : messages.length === 0 ? (
             <div className="text-center py-12">
               <ChannelIcon className="w-10 h-10 mx-auto mb-2" style={{ color: "var(--color-text-muted)" }} />
@@ -488,7 +923,6 @@ export default function Workspace() {
                             )}
                           </>
                         )}
-                        {/* Delete button */}
                         {isOwn && !msg.is_deleted && (
                           <button onClick={() => deleteMessage(msg.id)}
                             className="absolute -top-2 -right-2 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
@@ -507,7 +941,6 @@ export default function Workspace() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input */}
         {canPost ? (
           <div className="mt-2">
             {pendingAttachment && (
@@ -587,7 +1020,6 @@ export default function Workspace() {
             </button>
           ))}
 
-          {/* Channel list under Groups */}
           {selectedPanel === "groups" && (
             <div className="ml-4 mt-1 space-y-0.5">
               {channels.map(ch => {
@@ -637,7 +1069,6 @@ export default function Workspace() {
           {selectedPanel === "groups" && (
             activeChannel ? renderChatView() : (
               <div className="space-y-3">
-                {/* Mobile channel list */}
                 <div className="md:hidden space-y-1">
                   {channels.map(ch => {
                     const Icon = CHANNEL_ICONS[ch.channel_type] || Hash;
@@ -666,7 +1097,6 @@ export default function Workspace() {
                     </button>
                   )}
                 </div>
-                {/* Desktop empty state */}
                 <div className="hidden md:block">
                   {channels.length === 0 ? (
                     <div className="glass-light rounded-2xl p-8 text-center" style={{ boxShadow: "inset 0 1px 0 var(--glass-highlight)" }}>
@@ -693,24 +1123,39 @@ export default function Workspace() {
 
           {/* ═══ FEED PANEL ═══ */}
           {selectedPanel === "feed" && (
-            <div className="space-y-3">
-              {posts.length === 0 ? (
+            <div>
+              {/* Composer */}
+              {user && orgId && (
+                <WsComposer
+                  userId={user.id}
+                  orgId={orgId}
+                  orgName={org?.name || "Workspace"}
+                  workspaceId={workspaceId}
+                  isAdmin={isOwnerOrAdmin}
+                  profile={profile}
+                  onPosted={fetchWsPosts}
+                />
+              )}
+
+              {/* Posts */}
+              {wsPosts.length === 0 ? (
                 <div className="glass-light rounded-2xl p-8 text-center" style={{ boxShadow: "inset 0 1px 0 var(--glass-highlight)" }}>
                   <FileText className="w-10 h-10 mx-auto mb-2" style={{ color: "var(--color-text-muted)" }} />
-                  <p className="text-[14px] font-bold" style={{ color: "var(--color-text)" }}>No internal posts</p>
-                  <p className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>Posts from your team will appear here</p>
+                  <p className="text-[14px] font-bold" style={{ color: "var(--color-text)" }}>No workspace posts yet</p>
+                  <p className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>Share updates, announcements, and news with your team</p>
                 </div>
-              ) : posts.map(p => (
-                <Link key={p.id} to={`/post/${p.id}`}
-                  className="glass-light rounded-2xl p-4 block transition-all hover:-translate-y-0.5"
-                  style={{ boxShadow: "inset 0 1px 0 var(--glass-highlight)" }}>
-                  <p className="text-[14px] line-clamp-3" style={{ color: "var(--color-text)" }}>{p.content}</p>
-                  <div className="flex items-center gap-2 mt-2 text-[11px]" style={{ color: "var(--color-text-muted)" }}>
-                    {p.author?.full_name && <span>via {p.author.full_name}</span>}
-                    <span>{new Date(p.created_at).toLocaleDateString()}</span>
-                  </div>
-                </Link>
-              ))}
+              ) : (
+                wsPosts.map(p => (
+                  <WsFeedPost
+                    key={p.id}
+                    post={p}
+                    userId={user?.id}
+                    orgName={org?.name}
+                    members={members}
+                    onDelete={handleDeletePost}
+                  />
+                ))
+              )}
             </div>
           )}
 
@@ -943,7 +1388,7 @@ export default function Workspace() {
                 ["Pending Verif.", verifCount],
                 ["Groups", channels.length],
                 ["Access Rules", accessRules.length],
-                ["Posts", posts.length],
+                ["Posts", wsPosts.length],
               ].map(([label, val]) => (
                 <div key={label as string} className="flex justify-between">
                   <span style={{ color: "var(--color-text-muted)" }}>{label}</span>
