@@ -57,7 +57,7 @@ function PersonCard({ p, strandStatus, onStrand }: { p: ProfileResult; strandSta
       className="glass-light cursor-pointer flex flex-col items-center text-center"
       style={{ padding: 16, borderRadius: 20, height: 230, overflow: "hidden" }}
       onClick={() => navigate(`/app/profile/${p.id}`)}>
-      <div className="w-14 h-14 rounded-full flex items-center justify-center text-[13px] font-bold shrink-0 overflow-hidden"
+      <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-[13px] font-bold shrink-0 overflow-hidden"
         style={{ backgroundColor: colors.text, color: "#fff", border: "2px solid rgba(255,255,255,0.30)", boxShadow: "0 0 12px rgba(26,26,78,0.08)" }}>
         {p.avatar_url ? <img src={storageImageUrl(p.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials}
       </div>
@@ -125,7 +125,7 @@ function OrgCard({ org }: { org: any }) {
       className="glass-light cursor-pointer flex flex-col items-center text-center"
       style={{ padding: 16, borderRadius: 20, height: 230, overflow: "hidden" }}
       onClick={() => navigate(`/org/${org.slug}`)}>
-      <div className="w-14 h-14 rounded-full flex items-center justify-center text-[12px] font-bold shrink-0 overflow-hidden"
+      <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-[12px] font-bold shrink-0 overflow-hidden"
         style={{ background: org.logo_url ? "rgba(255,255,255,0.50)" : "#E8733A", color: org.logo_url ? undefined : "#fff", border: "2px solid rgba(255,255,255,0.30)", boxShadow: "0 0 12px rgba(26,26,78,0.08)" }}>
         {org.logo_url ? <img src={storageImageUrl(org.logo_url, "avatar")} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} /> : initials}
       </div>

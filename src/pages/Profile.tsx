@@ -145,7 +145,7 @@ const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose:
         <SheetHeader><SheetTitle className="text-[18px] font-extrabold" style={{ color: "#1A1A1A" }}>Edit Profile</SheetTitle></SheetHeader>
         <div className="space-y-4 mt-4">
           <div className="flex items-center gap-4 cursor-pointer" onClick={() => avatarRef.current?.click()}>
-            <div className="w-16 h-16 rounded-full flex items-center justify-center text-[20px] font-bold text-white overflow-hidden" style={{ backgroundColor: "#E8580A" }}>
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-[20px] font-bold text-white overflow-hidden" style={{ backgroundColor: "#E8580A" }}>
               {form.avatar_url ? <img src={storageImageUrl(form.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : form.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "U"}
             </div>
             <p className="text-[12px]" style={{ color: "#9CA3AF" }}>Click to change avatar</p>
@@ -543,7 +543,7 @@ const Profile = () => {
 
           {/* Avatar + Name ON cover */}
           <div className="absolute bottom-5 left-6 flex items-end gap-4 z-10">
-            <div className="w-[100px] h-[100px] rounded-full flex items-center justify-center text-[28px] font-extrabold text-white overflow-hidden shrink-0"
+            <div className="w-[100px] h-[100px] rounded-2xl flex items-center justify-center text-[28px] font-extrabold text-white overflow-hidden shrink-0"
               style={{
                 backgroundColor: profileData.avatar_url ? "#fff" : roleColor,
                 border: "3px solid rgba(255, 255, 255, 0.40)",

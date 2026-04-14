@@ -116,7 +116,7 @@ const Strands = () => {
     const initials = name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
     const color = ROLE_COLORS[person?.role || ""] || "#6B7280";
     return (
-      <div className="w-11 h-11 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden"
+      <div className="w-11 h-11 rounded-xl flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden"
         style={{ backgroundColor: color, border: "2px solid rgba(255,255,255,0.25)", boxShadow: "0 0 8px rgba(26,26,78,0.08)" }}>
         {person?.avatar_url ? <img src={storageImageUrl(person.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials}
       </div>

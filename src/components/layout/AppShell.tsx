@@ -233,7 +233,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
         </nav>
         <div className="px-2.5 pb-3 pt-2" style={{ borderTop: "1px solid var(--glass-border-subtle)" }}>
           <Link to={profilePath} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl">
-            <div className="w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-bold text-white overflow-hidden shrink-0" style={{ backgroundColor: "var(--color-accent)", border: "2px solid rgba(255,255,255,0.30)" }}>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[13px] font-bold text-white overflow-hidden shrink-0" style={{ backgroundColor: "var(--color-accent)", border: "2px solid rgba(255,255,255,0.30)" }}>
               {identityAvatar ? <img src={storageImageUrl(identityAvatar, "avatar")} alt="" className="w-full h-full object-cover" /> : identityInitials}
             </div>
             <div className="min-w-0 flex-1">
