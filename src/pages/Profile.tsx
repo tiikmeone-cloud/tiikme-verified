@@ -3,8 +3,9 @@ import { storageImageUrl } from "@/lib/imageTransform";
 import {
   MapPin, Copy, Shield, X, MessageCircle, CheckCircle, Building2, Link2, Plus,
   Pencil, Trash2, Briefcase, GraduationCap, Award, Code2, Eye, EyeOff,
-  Heart, Rocket, Send, Share2, Users, Globe, ChevronDown, ChevronUp, ExternalLink
+  Heart, Rocket, Send, Share2, Users, Globe, ChevronDown, ChevronUp, ExternalLink, LinkIcon
 } from "lucide-react";
+import { detectPlatform } from "@/lib/platformDetect";
 import GetTiikedModal from "@/components/profile/GetTiikedModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
