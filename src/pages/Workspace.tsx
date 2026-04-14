@@ -276,7 +276,7 @@ export default function Workspace() {
     { key: "feed" as const, label: "Feed", icon: FileText, count: posts.length },
     { key: "team" as const, label: "Team", icon: Users, count: members.length },
     { key: "access" as const, label: "Access", icon: Lock, count: accessRules.length },
-    { key: "verifications" as const, label: "Verifications", icon: Shield, count: verifRequests.length },
+    { key: "verifications" as const, label: "Verifications", icon: Shield, count: verifRequests.length + itemVerifRequests.length },
     { key: "invites" as const, label: "Invites", icon: UserPlus },
   ];
 
