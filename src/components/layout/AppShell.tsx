@@ -156,8 +156,10 @@ const AppShell = ({ children }: { children: ReactNode }) => {
       <aside className="hidden lg:flex flex-col fixed inset-y-0 left-0 z-40"
         style={{ width: 248, background: "rgba(255, 255, 255, 0.12)", backdropFilter: "blur(24px) saturate(180%)", WebkitBackdropFilter: "blur(24px) saturate(180%)", borderRight: "1px solid rgba(255, 255, 255, 0.15)", boxShadow: "2px 0 24px var(--glass-shadow)" }}>
         <div className="h-16 flex items-center px-5">
-          <Link to="/app/feed">
-            <ThemeLogo className="h-10 w-auto" style={{ filter: "drop-shadow(0 0 12px rgba(232, 115, 58, 0.20))" }} />
+          <Link to="/app/feed" style={{ filter: "drop-shadow(0 0 12px rgba(232, 115, 58, 0.20))" }}>
+            <ThemeLogo className="h-10 w-auto" />
+          </Link>
+        </div>
           </Link>
         </div>
         <nav className="flex-1 overflow-y-auto px-2.5 py-3">
