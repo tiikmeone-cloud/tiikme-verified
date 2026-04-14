@@ -1,12 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { storageImageUrl } from "@/lib/imageTransform";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Heart, MessageSquare, Send, Trash2 } from "lucide-react";
+import { ArrowLeft, Heart, MessageSquare, Send, Trash2, MoreHorizontal, Pencil, Copy, Flag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import MentionText from "@/components/feed/MentionText";
 import PostCarousel from "@/components/feed/PostCarousel";
+import EditPostModal from "@/components/feed/EditPostModal";
+import DeletePostDialog from "@/components/feed/DeletePostDialog";
 
 const roleColorMap: Record<string, string> = {
   student: "#4F46E5", professional: "#0369A1", doctor: "#0E7490",
@@ -33,6 +35,19 @@ const PostDetail = () => {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [showMenu, setShowMenu] = useState(false);
+  const [editingPost, setEditingPost] = useState<any | null>(null);
+  const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showMenu) return;
+    const handleClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setShowMenu(false);
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [showMenu]);
 
   useEffect(() => {
     if (!postId) return;
@@ -49,8 +64,8 @@ const PostDetail = () => {
           supabase.from("post_comments").select("*, author:profiles!post_comments_user_id_fkey(id, full_name, avatar_url, role)").eq("post_id", postId).order("created_at", { ascending: true }).limit(50),
           user ? supabase.from("post_reactions").select("id").eq("post_id", postId).eq("user_id", user.id).maybeSingle() : Promise.resolve({ data: null }),
         ]);
-        const reactions = reactionsRes.status === "fulfilled" ? (reactionsRes.value as any).data || [] : (console.warn("[PostDetail] reactions failed"), []);
-        const cmts = cmtsRes.status === "fulfilled" ? (cmtsRes.value as any).data || [] : (console.warn("[PostDetail] comments failed"), []);
+        const reactions = reactionsRes.status === "fulfilled" ? (reactionsRes.value as any).data || [] : [];
+        const cmts = cmtsRes.status === "fulfilled" ? (cmtsRes.value as any).data || [] : [];
         const myReaction = myReactionRes.status === "fulfilled" ? (myReactionRes.value as any).data : null;
         setLikeCount(reactions.length || 0);
         setLiked(!!myReaction);
@@ -65,13 +80,13 @@ const PostDetail = () => {
   const toggleLike = async () => {
     if (!user || !postId) return;
     if (liked) {
-      await supabase.from("post_reactions").delete().eq("post_id", postId).eq("user_id", user.id);
       setLiked(false);
       setLikeCount(c => c - 1);
+      await supabase.from("post_reactions").delete().eq("post_id", postId).eq("user_id", user.id);
     } else {
-      await supabase.from("post_reactions").insert({ post_id: postId, user_id: user.id, reaction_type: "like" });
       setLiked(true);
       setLikeCount(c => c + 1);
+      await supabase.from("post_reactions").insert({ post_id: postId, user_id: user.id, reaction_type: "like" });
     }
   };
 
@@ -81,6 +96,11 @@ const PostDetail = () => {
     setCommentText("");
     const { data } = await supabase.from("post_comments").insert({ post_id: postId, user_id: user.id, content }).select("*, author:profiles!post_comments_user_id_fkey(id, full_name, avatar_url, role)").single();
     if (data) setComments(prev => [...prev, data]);
+  };
+
+  const deleteComment = async (commentId: string) => {
+    setComments(prev => prev.filter(c => c.id !== commentId));
+    await supabase.from("post_comments").delete().eq("id", commentId);
   };
 
   if (loading) return (
@@ -101,6 +121,9 @@ const PostDetail = () => {
   const initials = name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
   const roleColor = roleColorMap[author?.role || ""] || "#6B7280";
   const userInitials = profile?.full_name?.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase() || "U";
+  const isOwn = user?.id === post.author_id;
+  const username = author?.username ? `@${author.username}` : null;
+  const companyName = author?.institution_name || null;
 
   return (
     <main className="max-w-[660px] mx-auto px-4 py-4">
@@ -115,9 +138,52 @@ const PostDetail = () => {
               {author?.avatar_url ? <img src={storageImageUrl(author.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials}
             </div>
           </Link>
-          <div>
-            <Link to={`/app/profile/${author?.id || ""}`} className="text-[14px] font-bold hover:underline" style={{ color: "var(--text-1)" }}>{name}</Link>
-            <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{post.created_at ? getTimeAgo(new Date(post.created_at)) : ""}</p>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <Link to={`/app/profile/${author?.id || ""}`} className="text-[14px] font-bold hover:underline" style={{ color: "var(--text-1)" }}>{name}</Link>
+              {username && <span className="text-[12px]" style={{ color: "var(--text-3)" }}>{username}</span>}
+              <span className="text-[12px]" style={{ color: "var(--text-3)" }}>·</span>
+              <span className="text-[11px]" style={{ color: "var(--text-3)" }}>{post.created_at ? getTimeAgo(new Date(post.created_at)) : ""}</span>
+              {post.is_edited && <span className="text-[11px] italic" style={{ color: "var(--text-3)" }}>(edited)</span>}
+            </div>
+            {companyName && (
+              <div className="flex items-center gap-1.5">
+                <div className="w-3.5 h-3.5 rounded flex items-center justify-center shrink-0" style={{ background: "rgba(232,115,58,0.15)" }}>
+                  <span className="text-[7px] font-bold" style={{ color: "var(--brand)" }}>{companyName.charAt(0).toUpperCase()}</span>
+                </div>
+                <span className="text-[12px]" style={{ color: "var(--text-3)" }}>{companyName}</span>
+              </div>
+            )}
+          </div>
+          <div className="relative" ref={menuRef}>
+            <button type="button" onClick={() => setShowMenu(!showMenu)} className="p-2 rounded-lg cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center" style={{ color: "var(--text-2)" }}>
+              <MoreHorizontal className="w-4 h-4" />
+            </button>
+            {showMenu && (
+              <div className="absolute right-0 top-8 glass-light rounded-xl p-1 min-w-[170px] z-10" style={{ borderRadius: 14 }}>
+                <button type="button" onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success("Link copied!"); setShowMenu(false); }}
+                  className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "var(--text-2)" }}>
+                  <Copy className="w-3 h-3" /> Copy link
+                </button>
+                {isOwn ? (
+                  <>
+                    <button type="button" onClick={() => { setEditingPost(post); setShowMenu(false); }}
+                      className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "var(--text-2)" }}>
+                      <Pencil className="w-3 h-3" /> Edit post
+                    </button>
+                    <button type="button" onClick={() => { setDeletingPostId(post.id); setShowMenu(false); }}
+                      className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "#DC2626" }}>
+                      <Trash2 className="w-3 h-3" /> Delete post
+                    </button>
+                  </>
+                ) : (
+                  <button type="button" onClick={() => { toast.info("Report submitted"); setShowMenu(false); }}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "var(--text-2)" }}>
+                    <Flag className="w-3 h-3" /> Report
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -130,7 +196,7 @@ const PostDetail = () => {
         )}
 
         <div className="flex items-center px-4 py-2" style={{ borderTop: "1px solid var(--border)" }}>
-          <button type="button" onClick={toggleLike} className="h-9 px-3 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer" style={{ color: liked ? "var(--brand)" : "var(--text-2)" }}>
+          <button type="button" onClick={toggleLike} className="h-9 px-3 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all" style={{ color: liked ? "var(--brand)" : "var(--text-2)" }}>
             <Heart className="w-4 h-4" style={{ fill: liked ? "var(--brand)" : "none" }} /> {likeCount}
           </button>
           <span className="h-9 px-3 rounded-xl text-[13px] font-semibold flex items-center gap-1.5" style={{ color: "var(--text-2)" }}>
@@ -144,15 +210,21 @@ const PostDetail = () => {
             const cName = c.author?.full_name || "User";
             const cInit = cName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
             const cColor = roleColorMap[c.author?.role || ""] || "#6B7280";
+            const isOwnComment = user?.id === c.user_id;
             return (
-              <div key={c.id} className="flex items-start gap-2">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: cColor }}>
+              <div key={c.id} className="flex items-start gap-2 group">
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: cColor }}>
                   {c.author?.avatar_url ? <img src={storageImageUrl(c.author.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : cInit}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-[13px] font-bold" style={{ color: "var(--text-1)" }}>{cName}</span>
                     <span className="text-[11px]" style={{ color: "var(--text-3)" }}>{c.created_at ? getTimeAgo(new Date(c.created_at)) : ""}</span>
+                    {isOwnComment && (
+                      <button type="button" onClick={() => deleteComment(c.id)} className="opacity-0 group-hover:opacity-100 p-0.5 cursor-pointer" style={{ color: "var(--text-3)" }}>
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    )}
                   </div>
                   <p className="text-[13px]" style={{ color: "var(--text-2)" }}>{c.content}</p>
                 </div>
@@ -161,20 +233,35 @@ const PostDetail = () => {
           })}
           {user && (
             <div className="flex items-center gap-2 mt-2">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden" style={{ background: "var(--brand)" }}>
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden" style={{ background: "var(--brand)" }}>
                 {profile?.avatar_url ? <img src={storageImageUrl(profile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : userInitials}
               </div>
               <input value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="Write a comment..."
                 className="flex-1 h-9 rounded-xl px-3 text-[13px] outline-none"
                 style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }}
                 onKeyDown={e => { if (e.key === "Enter" && commentText.trim()) submitComment(); }} />
-              <button type="button" onClick={submitComment} className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer" style={{ background: commentText.trim() ? "var(--brand)" : "var(--surface-2)" }}>
+              <button type="button" onClick={submitComment} className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer active:scale-95" style={{ background: commentText.trim() ? "var(--brand)" : "var(--surface-2)" }}>
                 <Send className="w-3.5 h-3.5" style={{ color: commentText.trim() ? "white" : "var(--text-3)" }} />
               </button>
             </div>
           )}
         </div>
       </article>
+
+      {editingPost && (
+        <EditPostModal
+          post={editingPost}
+          onClose={() => setEditingPost(null)}
+          onSaved={(updated) => { setPost((p: any) => ({ ...p, content: updated.content, is_edited: true })); setEditingPost(null); }}
+        />
+      )}
+      {deletingPostId && (
+        <DeletePostDialog
+          postId={deletingPostId}
+          onClose={() => setDeletingPostId(null)}
+          onDeleted={() => { navigate("/app/feed"); }}
+        />
+      )}
     </main>
   );
 };
