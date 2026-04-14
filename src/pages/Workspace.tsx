@@ -309,7 +309,7 @@ export default function Workspace() {
                   return (
                     <GlassBox key={m.id} accent={roleColor}>
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full flex items-center justify-center text-[12px] font-bold text-white overflow-hidden shrink-0" style={{ background: roleColor }}>
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[12px] font-bold text-white overflow-hidden shrink-0" style={{ background: roleColor }}>
                           {m.profile?.avatar_url ? <img src={storageImageUrl(m.profile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (m.profile?.full_name?.[0] || "?")}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -363,7 +363,7 @@ export default function Workspace() {
                   {accessRules.map(r => (
                     <GlassBox key={r.id} accent="contact">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-bold text-white overflow-hidden shrink-0" style={{ background: "#64748B" }}>
+                        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[11px] font-bold text-white overflow-hidden shrink-0" style={{ background: "#64748B" }}>
                           {r.member?.avatar_url ? <img src={storageImageUrl(r.member.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (r.member?.full_name?.[0] || "?")}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -414,7 +414,7 @@ export default function Workspace() {
                   {verifRequests.map(r => (
                     <GlassBox key={r.id} accent="verified">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full flex items-center justify-center text-[12px] font-bold text-white overflow-hidden shrink-0" style={{ background: "#F59E0B" }}>
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[12px] font-bold text-white overflow-hidden shrink-0" style={{ background: "#F59E0B" }}>
                           {r.requester?.avatar_url ? <img src={storageImageUrl(r.requester.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (r.requester?.full_name?.[0] || "?")}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -504,7 +504,7 @@ export default function Workspace() {
             <div className="space-y-2">
               {members.slice(-5).reverse().map(m => (
                 <div key={m.id} className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold text-white overflow-hidden shrink-0" style={{ background: ROLE_COLORS[m.role] || "#6B7280" }}>
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[9px] font-bold text-white overflow-hidden shrink-0" style={{ background: ROLE_COLORS[m.role] || "#6B7280" }}>
                     {m.profile?.avatar_url ? <img src={storageImageUrl(m.profile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (m.profile?.full_name?.[0] || "?")}
                   </div>
                   <div className="min-w-0">

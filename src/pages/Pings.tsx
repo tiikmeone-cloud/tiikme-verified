@@ -163,7 +163,7 @@ const Pings = () => {
                   borderBottom: "1px solid var(--border)",
                 }}>
                 <div className="relative">
-                  <div className="w-11 h-11 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: roleColor, ...ringStyle(other?.is_verified || false) }}>
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: roleColor, ...ringStyle(other?.is_verified || false) }}>
                     {other?.avatar_url ? <img src={storageImageUrl(other.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials}
                   </div>
                   {convo.unread_count > 0 && <span className="absolute -top-0.5 -right-0.5 w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-bold text-white" style={{ background: "var(--danger, #DC2626)" }}>{convo.unread_count}</span>}
@@ -199,7 +199,7 @@ const Pings = () => {
               <button type="button" onClick={() => setShowMobileList(true)} className="md:hidden p-1.5 rounded-lg cursor-pointer active:scale-95" style={{ color: "var(--text-2)" }}><ArrowLeft className="w-5 h-5" /></button>
               {activeConvo?.other_user && (
                 <Link to={`/app/profile/${activeConvo.other_user.id}`} className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold text-white overflow-hidden" style={{ backgroundColor: ROLE_COLORS[activeConvo.other_user.role || ""] || "#6B7280", ...ringStyle(activeConvo.other_user.is_verified || false) }}>
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[10px] font-bold text-white overflow-hidden" style={{ backgroundColor: ROLE_COLORS[activeConvo.other_user.role || ""] || "#6B7280", ...ringStyle(activeConvo.other_user.is_verified || false) }}>
                     {activeConvo.other_user.avatar_url ? <img src={storageImageUrl(activeConvo.other_user.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (activeConvo.other_user.full_name || "U").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}
                   </div>
                   <div className="min-w-0">
@@ -241,7 +241,7 @@ const Pings = () => {
                 return (
                   <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"} mb-1`}>
                     {!isMe && !prevSame && activeConvo?.other_user && (
-                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold text-white mr-2 shrink-0 mt-1 overflow-hidden" style={{ backgroundColor: ROLE_COLORS[activeConvo.other_user.role || ""] || "#6B7280" }}>
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[9px] font-bold text-white mr-2 shrink-0 mt-1 overflow-hidden" style={{ backgroundColor: ROLE_COLORS[activeConvo.other_user.role || ""] || "#6B7280" }}>
                         {activeConvo.other_user.avatar_url ? <img src={storageImageUrl(activeConvo.other_user.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (activeConvo.other_user.full_name || "U").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}
                       </div>
                     )}
@@ -334,7 +334,7 @@ const Pings = () => {
             {searchResults.map((u: any) => (
               <button type="button" key={u.id} onClick={() => startConversation(u.id)}
                 className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left cursor-pointer hover:bg-[var(--surface-2)]">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: ROLE_COLORS[u.role || ""] || "#6B7280" }}>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: ROLE_COLORS[u.role || ""] || "#6B7280" }}>
                   {u.avatar_url ? <img src={storageImageUrl(u.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (u.full_name || "U").split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">

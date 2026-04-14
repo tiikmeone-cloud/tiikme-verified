@@ -115,7 +115,7 @@ export function OpportunityDetailDrawer({ opp, onClose }: { opp: Opportunity; on
               <h3 className="text-[16px] font-bold" style={{ color: "var(--text-1)" }}>Apply to {opp.title}</h3>
 
               <div className="glass-liquid rounded-xl flex items-center gap-3 p-3">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-bold text-white overflow-hidden" style={{ background: roleColor }}>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[11px] font-bold text-white overflow-hidden" style={{ background: roleColor }}>
                   {profile?.avatar_url ? <img src={storageImageUrl(profile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials}
                 </div>
                 <div>

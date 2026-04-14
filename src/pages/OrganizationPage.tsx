@@ -281,7 +281,7 @@ export default function OrganizationPage() {
             <div className="space-y-2">
               {leaders.slice(0, expanded === "leadership" ? undefined : 3).map(m => (
                 <Link key={m.id} to={`/app/profile/${m.user_id}`} className="flex items-center gap-2.5" onClick={e => e.stopPropagation()}>
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-bold text-white overflow-hidden shrink-0" style={{ background: "#F59E0B" }}>
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[11px] font-bold text-white overflow-hidden shrink-0" style={{ background: "#F59E0B" }}>
                     {m.profile?.avatar_url ? <img src={storageImageUrl(m.profile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (m.profile?.full_name?.[0] || "?")}
                   </div>
                   <div className="min-w-0">
@@ -312,7 +312,7 @@ export default function OrganizationPage() {
                   className="flex items-center gap-2 p-2 rounded-xl transition-all hover:scale-[1.02]"
                   onClick={e => e.stopPropagation()}
                   style={{ background: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.9)" }}>
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white overflow-hidden shrink-0" style={{ background: "#8B5CF6" }}>
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold text-white overflow-hidden shrink-0" style={{ background: "#8B5CF6" }}>
                     {m.profile?.avatar_url ? <img src={storageImageUrl(m.profile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (m.profile?.full_name?.[0] || "?")}
                   </div>
                   <div className="min-w-0">
@@ -380,7 +380,7 @@ export default function OrganizationPage() {
             <div className="space-y-2">
               {verifiedMembers.slice(0, expanded === "verified" ? undefined : 4).map(m => (
                 <Link key={m.id} to={`/app/profile/${m.user_id}`} className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white overflow-hidden shrink-0" style={{ background: "#F59E0B" }}>
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold text-white overflow-hidden shrink-0" style={{ background: "#F59E0B" }}>
                     {m.profile?.avatar_url ? <img src={storageImageUrl(m.profile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (m.profile?.full_name?.[0] || "?")}
                   </div>
                   <div className="min-w-0">

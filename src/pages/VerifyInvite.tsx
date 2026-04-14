@@ -109,7 +109,7 @@ const VerifyInvite = () => {
             {waitingUsers.map((u, i) => (
               <div
                 key={u.initials}
-                className="w-14 h-14 rounded-full flex items-center justify-center text-[14px] font-bold text-white border-[3px] border-white dark:border-[#111118]"
+                className="w-14 h-14 rounded-2xl flex items-center justify-center text-[14px] font-bold text-white border-[3px] border-white dark:border-[#111118]"
                 style={{
                   backgroundColor: u.color,
                   marginLeft: i > 0 ? "-12px" : "0",

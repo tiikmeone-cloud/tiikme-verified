@@ -130,7 +130,7 @@ const PostCreate = () => {
 
       {/* Author */}
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-11 h-11 rounded-full flex items-center justify-center text-[14px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: "var(--brand)" }}>
+        <div className="w-11 h-11 rounded-xl flex items-center justify-center text-[14px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: "var(--brand)" }}>
           {identityAvatar ? <img src={storageImageUrl(identityAvatar, "avatar")} alt="" className="w-full h-full object-cover" /> : identityInitials}
         </div>
         <div>

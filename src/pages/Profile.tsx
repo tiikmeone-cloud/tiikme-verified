@@ -625,7 +625,7 @@ const Profile = () => {
               {connectedAvatars.length > 0 && (
                 <div className="flex -space-x-2">
                   {connectedAvatars.slice(0, 4).map((a: any) => (
-                    <div key={a.id} className="w-7 h-7 rounded-full overflow-hidden border-2 border-white flex items-center justify-center text-[9px] font-bold text-white" style={{ background: "#6366F1" }}>
+                    <div key={a.id} className="w-7 h-7 rounded-lg overflow-hidden border-2 border-white flex items-center justify-center text-[9px] font-bold text-white" style={{ background: "#6366F1" }}>
                       {a.avatar_url ? <img src={storageImageUrl(a.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (a.full_name?.[0] || "?")}
                     </div>
                   ))}

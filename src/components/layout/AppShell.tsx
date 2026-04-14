@@ -279,7 +279,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           <PencilLine className="w-4 h-4 text-white" />
         </button>
         <Link to={profilePath}>
-          <div className="w-10 h-10 rounded-full flex items-center justify-center text-[13px] font-bold text-white overflow-hidden" style={{ backgroundColor: "var(--brand)" }}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[13px] font-bold text-white overflow-hidden" style={{ backgroundColor: "var(--brand)" }}>
             {identityAvatar ? <img src={storageImageUrl(identityAvatar, "avatar")} alt="" className="w-full h-full object-cover" /> : identityInitials}
           </div>
         </Link>
@@ -334,7 +334,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             if (item.path === "/app/profile") {
               return (
                 <Link key={item.path} to={profilePath} className="flex flex-col items-center justify-center gap-0.5 w-14 h-14">
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold text-white overflow-hidden shrink-0"
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[9px] font-bold text-white overflow-hidden shrink-0"
                     style={{
                       backgroundColor: "var(--brand)",
                       border: active ? "2px solid var(--brand)" : "2px solid transparent",
