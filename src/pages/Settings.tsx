@@ -31,12 +31,19 @@ const journeyCards = [
 
 /* theme is handled via useTheme hook */
 
-const Toggle = ({ label, desc, defaultOn = true }: { label: string; desc?: string; defaultOn?: boolean }) => {
-  const [on, setOn] = useState(defaultOn);
+const Toggle = ({ label, desc, value, onChange }: { label: string; desc?: string; value?: boolean; onChange?: (v: boolean) => void }) => {
+  const [localOn, setLocalOn] = useState(value ?? true);
+  const on = value !== undefined ? value : localOn;
+  const handleToggle = () => {
+    const next = !on;
+    setLocalOn(next);
+    if (onChange) onChange(next);
+    else tiikToast.success("Preference saved");
+  };
   return (
     <div className="flex items-center justify-between py-3.5" style={{ borderBottom: "1px solid rgba(255,255,255,0.15)" }}>
       <div><span className="text-[14px] font-medium" style={{ color: "#1A1A2E" }}>{label}</span>{desc && <p className="text-[12px] mt-0.5" style={{ color: "#6B7094" }}>{desc}</p>}</div>
-      <button type="button" onClick={() => { setOn(!on); tiikToast.success("Preference saved"); }}
+      <button type="button" onClick={handleToggle}
         className="w-11 h-6 rounded-full flex items-center px-0.5 cursor-pointer active:scale-95"
         style={{ background: on ? "#E8733A" : "rgba(255,255,255,0.25)", transition: "all 0.2s" }}>
         <div className="w-5 h-5 rounded-full bg-white" style={{ transition: "transform 0.2s", transform: on ? "translateX(20px)" : "translateX(0)" }} />
