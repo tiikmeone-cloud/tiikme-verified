@@ -288,7 +288,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             </Link>
           </div>
         </header>
-        <div className="min-h-0">{children}</div>
+        <div className="min-h-0 page-enter" key={pathname}>{children}</div>
       </main>
 
       {/* ═══ MOBILE BOTTOM NAV — fixed, 64px ═══ */}
