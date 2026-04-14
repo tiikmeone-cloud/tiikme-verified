@@ -227,7 +227,6 @@ const Profile = () => {
   }, [isOwnProfile, authProfile?.account_type, authProfile?.org_id, navigate]);
 
   const [editOpen, setEditOpen] = useState(false);
-  const [expandedBox, setExpandedBox] = useState<string | null>("experience");
   const [viewedProfile, setViewedProfile] = useState<any>(null);
   const [workItems, setWorkItems] = useState<any[]>([]);
   const [userPosts, setUserPosts] = useState<any[]>([]);
@@ -256,7 +255,7 @@ const Profile = () => {
 
   const targetUserId = isOwnProfile ? user?.id : urlUserId;
 
-  const toggleBox = (id: string) => setExpandedBox(prev => prev === id ? null : id);
+
 
   const loadProfile = useCallback(async () => {
     if (!targetUserId) { setDataLoading(false); return; }
