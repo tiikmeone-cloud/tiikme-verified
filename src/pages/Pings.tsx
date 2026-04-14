@@ -1,10 +1,9 @@
 import { storageImageUrl } from "@/lib/imageTransform";
 import { useState, useRef, useEffect } from "react";
-import { MessageCircle, Search, Send, Paperclip, PenSquare, X, Shield, ArrowLeft, FileText, Briefcase, Image as ImageIcon, Download } from "lucide-react";
+import { MessageCircle, Search, Send, Paperclip, PenSquare, X, Shield, ArrowLeft, FileText, Briefcase, Download, Trash2, ArrowUp, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import EmptyState from "@/components/EmptyState";
 import { useAuth } from "@/contexts/AuthContext";
 import { useConversations } from "@/hooks/useConversations";
@@ -27,8 +26,7 @@ function shortTimeAgo(date: Date): string {
   const h = Math.floor(m / 60);
   if (h < 24) return `${h}h`;
   const d = Math.floor(h / 24);
-  if (d === 1) return "1d";
-  return `${d}d`;
+  return d === 1 ? "1d" : `${d}d`;
 }
 
 function getLastMessagePreview(convo: any): string {
@@ -39,9 +37,19 @@ function getLastMessagePreview(convo: any): string {
   return msg.length > 35 ? msg.substring(0, 35) + "..." : msg;
 }
 
+function dateSeparator(dateStr: string | null): string {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  const today = new Date();
+  const diff = Math.floor((today.getTime() - d.getTime()) / 86400000);
+  if (diff === 0) return "Today";
+  if (diff === 1) return "Yesterday";
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: d.getFullYear() !== today.getFullYear() ? "numeric" : undefined });
+}
+
 const Pings = () => {
   const { user, profile } = useAuth();
-  const { conversations, loading, activeConvoId, messages, messagesLoading, loadMessages, sendMessage, findOrCreateConversation } = useConversations(user?.id);
+  const { conversations, loading, activeConvoId, messages, messagesLoading, loadMessages, sendMessage, deleteMessage, findOrCreateConversation } = useConversations(user?.id);
   const [tab, setTab] = useState<"chats" | "applications" | "requests">("chats");
   const [search, setSearch] = useState("");
   const [newMsg, setNewMsg] = useState("");
@@ -50,9 +58,15 @@ const Pings = () => {
   const [showNewPing, setShowNewPing] = useState(false);
   const [newPingSearch, setNewPingSearch] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  // BUG FIX 2: Attachment preview state — upload first, send on button click
+  const [pendingAttachment, setPendingAttachment] = useState<{ url: string; type: string; name: string; size: number; previewUrl?: string } | null>(null);
   const [uploading, setUploading] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const activeConvo = conversations.find(c => c.id === activeConvoId);
   const filteredConvos = conversations.filter(c =>
@@ -61,12 +75,22 @@ const Pings = () => {
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
-  const handleSend = async () => {
-    if (!newMsg.trim()) return;
-    await sendMessage(newMsg.trim());
-    setNewMsg("");
+  // Auto-resize textarea
+  const autoResize = () => {
+    const el = textareaRef.current;
+    if (el) { el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 120) + "px"; }
   };
 
+  const handleSend = async () => {
+    const hasContent = newMsg.trim() || pendingAttachment;
+    if (!hasContent) return;
+    await sendMessage(newMsg.trim(), pendingAttachment || undefined);
+    setNewMsg("");
+    setPendingAttachment(null);
+    if (textareaRef.current) { textareaRef.current.style.height = "auto"; }
+  };
+
+  // BUG FIX 2: Upload file and show preview, do NOT auto-send
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user || !activeConvoId) return;
@@ -80,14 +104,22 @@ const Pings = () => {
     const path = `${user.id}/${Date.now()}.${ext}`;
 
     const { data, error } = await supabase.storage.from("message-attachments").upload(path, file, { contentType: file.type });
-    if (error) { toast.error("Upload failed: " + error.message); setUploading(false); return; }
+    if (error) { toast.error("Upload failed: " + error.message); setUploading(false); e.target.value = ""; return; }
 
     const { data: urlData } = supabase.storage.from("message-attachments").getPublicUrl(data.path);
     const attachType = isImage ? "image" : isPDF ? "pdf" : "document";
 
-    await sendMessage(file.name, { url: urlData.publicUrl, type: attachType, name: file.name, size: file.size });
+    // Create local preview for images
+    const previewUrl = isImage ? URL.createObjectURL(file) : undefined;
+
+    setPendingAttachment({ url: urlData.publicUrl, type: attachType, name: file.name, size: file.size, previewUrl });
     setUploading(false);
     e.target.value = "";
+  };
+
+  const cancelAttachment = () => {
+    if (pendingAttachment?.previewUrl) URL.revokeObjectURL(pendingAttachment.previewUrl);
+    setPendingAttachment(null);
   };
 
   // Search users for new ping
@@ -109,6 +141,17 @@ const Pings = () => {
     const convoId = await findOrCreateConversation(otherUserId);
     if (convoId) { loadMessages(convoId); setShowMobileList(false); setShowNewPing(false); setNewPingSearch(""); }
   };
+
+  const handleDelete = async (msgId: string) => {
+    await deleteMessage(msgId);
+    setDeleteConfirm(null);
+    toast.success("Message deleted");
+  };
+
+  // Group messages by date
+  const getDateKey = (dateStr: string | null) => dateStr ? new Date(dateStr).toDateString() : "";
+
+  const canSend = !!(newMsg.trim() || pendingAttachment);
 
   return (
     <div className="flex relative" style={{ height: "calc(100vh - 52px)", maxHeight: "calc(100dvh - 52px)" }}>
@@ -141,7 +184,7 @@ const Pings = () => {
         <div className="flex-1 overflow-y-auto">
           {loading && <div className="flex items-center justify-center py-10"><div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: "var(--brand)", borderTopColor: "transparent" }} /></div>}
           {!loading && tab === "chats" && filteredConvos.length === 0 && (
-            <div className="p-6"><EmptyState icon={MessageCircle} title="No conversations yet" description="Start a Ping by clicking the compose button above." /></div>
+            <div className="p-6"><EmptyState icon={MessageCircle} title="No conversations yet" description="Start a conversation by visiting someone's profile and clicking 'Message'." /></div>
           )}
           {tab === "applications" && <div className="p-6"><EmptyState icon={Briefcase} title="No applications" description="Application messages will appear here." /></div>}
           {tab === "requests" && <div className="p-6"><EmptyState icon={MessageCircle} title="No requests" description="Ping requests will appear here." /></div>}
@@ -153,31 +196,35 @@ const Pings = () => {
             const timeAgo = convo.last_message_at ? shortTimeAgo(new Date(convo.last_message_at)) : "";
             const active = activeConvoId === convo.id;
             const preview = getLastMessagePreview(convo);
+            const hasUnread = convo.unread_count > 0;
 
             return (
               <button type="button" key={convo.id} onClick={() => { loadMessages(convo.id); setShowMobileList(false); }}
                 className="w-full flex items-center gap-3 px-4 py-3 text-left transition-all duration-150 cursor-pointer active:scale-[0.99]"
                 style={{
-                  background: convo.unread_count > 0 ? "linear-gradient(90deg, var(--brand-dim) 0%, transparent 100%)" : active ? "var(--brand-dim)" : "transparent",
-                  borderLeft: convo.unread_count > 0 || active ? "3px solid var(--brand)" : "3px solid transparent",
+                  background: hasUnread ? "linear-gradient(90deg, var(--brand-dim) 0%, transparent 100%)" : active ? "var(--brand-dim)" : "transparent",
+                  borderLeft: hasUnread || active ? "3px solid var(--brand)" : "3px solid transparent",
                   borderBottom: "1px solid var(--border)",
                 }}>
                 <div className="relative">
                   <div className="w-11 h-11 rounded-xl flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: roleColor, ...ringStyle(other?.is_verified || false) }}>
                     {other?.avatar_url ? <img src={storageImageUrl(other.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials}
                   </div>
-                  {convo.unread_count > 0 && <span className="absolute -top-0.5 -right-0.5 w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-bold text-white" style={{ background: "var(--danger, #DC2626)" }}>{convo.unread_count}</span>}
+                  {hasUnread && (
+                    <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-bold text-white px-1" style={{ background: "var(--brand)" }}>
+                      {convo.unread_count}
+                    </span>
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <span className="text-[13px] truncate" style={{ color: "var(--text-1)", fontWeight: convo.unread_count > 0 ? 700 : 500 }}>{name}</span>
+                    <span className="text-[13px] truncate" style={{ color: "var(--text-1)", fontWeight: hasUnread ? 700 : 500 }}>{name}</span>
                     <span className="text-[10px] shrink-0 ml-2" style={{ color: "var(--text-3)" }}>{timeAgo}</span>
                   </div>
-                  <p className="text-[12px] truncate" style={{ color: convo.unread_count > 0 ? "var(--text-1)" : "var(--text-2)", fontWeight: convo.unread_count > 0 ? 600 : 400 }}>
+                  <p className="text-[12px] truncate" style={{ color: hasUnread ? "var(--text-1)" : "var(--text-2)", fontWeight: hasUnread ? 600 : 400 }}>
                     {preview || "No messages yet"}
                   </p>
                 </div>
-                
               </button>
             );
           })}
@@ -191,20 +238,28 @@ const Pings = () => {
             <div className="text-center">
               <MessageCircle className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
               <p className="text-[15px] font-bold" style={{ color: "var(--text-1)" }}>Select a conversation</p>
+              <p className="text-[13px] mt-1" style={{ color: "var(--text-3)" }}>Start a conversation by visiting someone's profile and clicking 'Message'</p>
             </div>
           </div>
         ) : (
           <>
+            {/* Chat header */}
             <div className="flex items-center gap-3 px-5 h-16 shrink-0" style={{ background: "var(--glass-bg)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderBottom: "1px solid var(--glass-border)" }}>
               <button type="button" onClick={() => setShowMobileList(true)} className="md:hidden p-1.5 rounded-lg cursor-pointer active:scale-95" style={{ color: "var(--text-2)" }}><ArrowLeft className="w-5 h-5" /></button>
               {activeConvo?.other_user && (
                 <Link to={`/app/profile/${activeConvo.other_user.id}`} className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[10px] font-bold text-white overflow-hidden" style={{ backgroundColor: ROLE_COLORS[activeConvo.other_user.role || ""] || "#6B7280", ...ringStyle(activeConvo.other_user.is_verified || false) }}>
-                    {activeConvo.other_user.avatar_url ? <img src={storageImageUrl(activeConvo.other_user.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (activeConvo.other_user.full_name || "U").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}
+                  <div className="relative">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[10px] font-bold text-white overflow-hidden" style={{ backgroundColor: ROLE_COLORS[activeConvo.other_user.role || ""] || "#6B7280", ...ringStyle(activeConvo.other_user.is_verified || false) }}>
+                      {activeConvo.other_user.avatar_url ? <img src={storageImageUrl(activeConvo.other_user.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (activeConvo.other_user.full_name || "U").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}
+                    </div>
+                    <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2" style={{ background: "#22C55E", borderColor: "var(--glass-bg)" }} />
                   </div>
                   <div className="min-w-0">
                     <span className="text-[14px] font-bold block" style={{ color: "var(--text-1)" }}>{activeConvo.other_user.full_name || activeConvo.other_user.username}</span>
-                    <span className="text-[11px]" style={{ color: "var(--text-3)" }}>{activeConvo.other_user.institution_name || activeConvo.other_user.role}</span>
+                    <span className="text-[11px]" style={{ color: "var(--text-3)" }}>
+                      {activeConvo.other_user.institution_name || activeConvo.other_user.role}
+                      <span className="ml-2 text-[10px]" style={{ color: "var(--brand)" }}>View Profile →</span>
+                    </span>
                   </div>
                 </Link>
               )}
@@ -218,74 +273,119 @@ const Pings = () => {
             )}
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-5 py-5 pb-[140px] md:pb-5 space-y-2">
+            <div className="flex-1 overflow-y-auto px-5 py-5 pb-[140px] md:pb-5 space-y-1">
               {messagesLoading && <div className="flex justify-center py-10"><div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: "var(--brand)", borderTopColor: "transparent" }} /></div>}
               {messages.map((msg, i) => {
                 const isMe = msg.sender_id === user?.id;
-                const prevSame = i > 0 && messages[i - 1].sender_id === msg.sender_id;
-                const nextSame = i < messages.length - 1 && messages[i + 1].sender_id === msg.sender_id;
-                const topLeft = isMe ? 18 : (prevSame ? 4 : 4);
-                const topRight = isMe ? (prevSame ? 4 : 4) : 18;
-                const bottomLeft = isMe ? 18 : (nextSame ? 4 : 18);
-                const bottomRight = isMe ? (nextSame ? 4 : 18) : 18;
+                const isDeleted = !!msg.is_deleted;
+                const prevMsg = i > 0 ? messages[i - 1] : null;
+                const prevSame = prevMsg?.sender_id === msg.sender_id;
+                const nextMsg = i < messages.length - 1 ? messages[i + 1] : null;
+                const nextSame = nextMsg?.sender_id === msg.sender_id;
+
+                // Date separator
+                const currentDate = getDateKey(msg.created_at);
+                const prevDate = prevMsg ? getDateKey(prevMsg.created_at) : "";
+                const showDate = currentDate !== prevDate;
+
+                // Time clustering (within 2 mins)
+                const showTime = !nextSame || !nextMsg?.created_at || !msg.created_at ||
+                  Math.abs(new Date(nextMsg.created_at).getTime() - new Date(msg.created_at).getTime()) > 120000;
+
                 const time = msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "";
 
-                // Read receipt: show other user's avatar at the last read message from me
+                const topLeft = isMe ? 18 : (prevSame && !showDate ? 4 : 4);
+                const topRight = isMe ? (prevSame && !showDate ? 4 : 4) : 18;
+                const bottomLeft = isMe ? 18 : (nextSame ? 4 : 18);
+                const bottomRight = isMe ? (nextSame ? 4 : 18) : 18;
+
+                // Read receipt on last sent message
                 const isLastRead = (() => {
                   if (!isMe || !activeConvo?.other_user) return false;
                   const myReadMessages = messages.filter(m => m.sender_id === user?.id && m.status === "read");
-                  const lastReadMsg = myReadMessages.length > 0 ? myReadMessages[myReadMessages.length - 1] : null;
-                  return lastReadMsg?.id === msg.id;
+                  return myReadMessages.length > 0 && myReadMessages[myReadMessages.length - 1]?.id === msg.id;
                 })();
 
                 return (
-                  <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"} mb-1`}>
-                    {!isMe && !prevSame && activeConvo?.other_user && (
-                      <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[9px] font-bold text-white mr-2 shrink-0 mt-1 overflow-hidden" style={{ backgroundColor: ROLE_COLORS[activeConvo.other_user.role || ""] || "#6B7280" }}>
-                        {activeConvo.other_user.avatar_url ? <img src={storageImageUrl(activeConvo.other_user.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (activeConvo.other_user.full_name || "U").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}
+                  <div key={msg.id}>
+                    {showDate && (
+                      <div className="flex items-center justify-center py-3">
+                        <span className="text-[11px] font-semibold px-3 py-1 rounded-full" style={{ background: "var(--surface-2)", color: "var(--text-3)" }}>
+                          {dateSeparator(msg.created_at)}
+                        </span>
                       </div>
                     )}
-                    {!isMe && prevSame && <div className="w-7 mr-2 shrink-0" />}
-                    <div className="max-w-[68%] px-3.5 py-2.5 group" style={{
-                      background: isMe ? "linear-gradient(135deg, var(--brand), var(--brand-2))" : "var(--glass-bg)",
-                      backdropFilter: isMe ? "none" : "blur(16px) saturate(180%)",
-                      WebkitBackdropFilter: isMe ? "none" : "blur(16px) saturate(180%)",
-                      border: isMe ? "none" : "1px solid var(--glass-border-t)",
-                      borderRadius: `${topLeft}px ${topRight}px ${bottomRight}px ${bottomLeft}px`,
-                      color: isMe ? "white" : "var(--text-1)",
-                      boxShadow: isMe ? "inset 0 1px 1px rgba(255,255,255,0.4), 0 4px 16px var(--brand-glow)" : "var(--glass-shadow)",
-                    }}>
-                      {/* Attachment rendering */}
-                      {msg.attachment_type === "image" && msg.attachment_url && (
-                        <img src={msg.attachment_url} alt="" className="w-full max-w-[280px] rounded-lg mb-2 cursor-pointer" onClick={() => window.open(msg.attachment_url!, "_blank")} onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                      )}
-                      {(msg.attachment_type === "pdf" || msg.attachment_type === "document") && msg.attachment_url && (
-                        <a href={msg.attachment_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 rounded-lg mb-2" style={{ background: isMe ? "rgba(255,255,255,0.15)" : "var(--surface-2)" }}>
-                          <FileText className="w-8 h-8 shrink-0" style={{ color: isMe ? "white" : "var(--brand)" }} />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[12px] font-bold truncate">{msg.attachment_name || "Document"}</p>
-                            {msg.attachment_size && <p className="text-[10px] opacity-70">{(msg.attachment_size / 1024).toFixed(0)} KB</p>}
-                          </div>
-                          <Download className="w-4 h-4 shrink-0" />
-                        </a>
-                      )}
-                      {/* Text content (skip if it's just the filename for attachments) */}
-                      {(!msg.attachment_type || msg.content !== msg.attachment_name) && (
-                        <p className="text-[14px] leading-[1.6]">{msg.content}</p>
-                      )}
-                      <div className="flex items-center justify-end gap-1 mt-1">
-                        <p className="text-[10px] opacity-60" style={{ color: isMe ? "rgba(255,255,255,0.7)" : "var(--text-3)" }}>{time}</p>
-                        {isMe && <span className="text-[9px]" style={{ color: isMe ? "rgba(255,255,255,0.5)" : "var(--text-3)" }}>
-                          {msg.status === "sending" ? "Sending…" : msg.status === "read" ? "Seen" : "Delivered"}
-                        </span>}
-                      </div>
-                      {isLastRead && activeConvo?.other_user && (
-                        <div className="flex justify-end mt-0.5">
-                          <div className="w-[14px] h-[14px] rounded-sm overflow-hidden flex items-center justify-center text-[6px] font-bold text-white" style={{ backgroundColor: ROLE_COLORS[activeConvo.other_user.role || ""] || "#6B7280" }}>
-                            {activeConvo.other_user.avatar_url ? <img src={storageImageUrl(activeConvo.other_user.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (activeConvo.other_user.full_name || "U")[0]}
-                          </div>
+                    <div className={`flex ${isMe ? "justify-end" : "justify-start"} group mb-0.5`}>
+                      {/* Other person's avatar */}
+                      {!isMe && !prevSame && activeConvo?.other_user && (
+                        <div className="w-6 h-6 rounded-lg flex items-center justify-center text-[8px] font-bold text-white mr-2 shrink-0 mt-1 overflow-hidden" style={{ backgroundColor: ROLE_COLORS[activeConvo.other_user.role || ""] || "#6B7280" }}>
+                          {activeConvo.other_user.avatar_url ? <img src={storageImageUrl(activeConvo.other_user.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (activeConvo.other_user.full_name || "U").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}
                         </div>
                       )}
+                      {!isMe && (prevSame && !showDate) && <div className="w-6 mr-2 shrink-0" />}
+
+                      {/* Delete button (hover, own messages only) */}
+                      {isMe && !isDeleted && (
+                        <button type="button" onClick={() => setDeleteConfirm(msg.id)}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity self-center mr-2 p-1 rounded-lg cursor-pointer"
+                          style={{ color: "#DC2626" }}>
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+
+                      <div className="max-w-[68%] px-3.5 py-2.5 relative" style={{
+                        background: isDeleted ? "var(--surface-2)" : isMe ? "linear-gradient(135deg, var(--brand), var(--brand-2))" : "var(--glass-bg)",
+                        backdropFilter: isMe || isDeleted ? "none" : "blur(16px) saturate(180%)",
+                        WebkitBackdropFilter: isMe || isDeleted ? "none" : "blur(16px) saturate(180%)",
+                        border: isMe ? "none" : "1px solid var(--glass-border-t)",
+                        borderRadius: `${topLeft}px ${topRight}px ${bottomRight}px ${bottomLeft}px`,
+                        color: isDeleted ? "var(--text-3)" : isMe ? "white" : "var(--text-1)",
+                        boxShadow: isDeleted ? "none" : isMe ? "inset 0 1px 1px rgba(255,255,255,0.4), 0 4px 16px var(--brand-glow)" : "var(--glass-shadow)",
+                        fontStyle: isDeleted ? "italic" : "normal",
+                      }}>
+                        {/* Deleted message */}
+                        {isDeleted ? (
+                          <p className="text-[13px] select-none">This message was deleted</p>
+                        ) : (
+                          <>
+                            {/* Image attachment */}
+                            {msg.attachment_type === "image" && msg.attachment_url && (
+                              <img src={msg.attachment_url} alt="" className="w-full max-w-[240px] rounded-xl mb-2 cursor-pointer" onClick={() => window.open(msg.attachment_url!, "_blank")} onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                            )}
+                            {/* PDF/Doc attachment */}
+                            {(msg.attachment_type === "pdf" || msg.attachment_type === "document") && msg.attachment_url && (
+                              <a href={msg.attachment_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 rounded-lg mb-2" style={{ background: isMe ? "rgba(255,255,255,0.15)" : "var(--surface-2)" }}>
+                                <FileText className="w-8 h-8 shrink-0" style={{ color: isMe ? "white" : "var(--brand)" }} />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-[12px] font-bold truncate">{msg.attachment_name || "Document"}</p>
+                                  {msg.attachment_size && <p className="text-[10px] opacity-70">{(msg.attachment_size / 1024).toFixed(0)} KB</p>}
+                                </div>
+                                <Download className="w-4 h-4 shrink-0" />
+                              </a>
+                            )}
+                            {/* Text */}
+                            {(!msg.attachment_type || msg.content !== msg.attachment_name) && msg.content && (
+                              <p className="text-[14px] leading-[1.6] whitespace-pre-wrap">{msg.content}</p>
+                            )}
+                          </>
+                        )}
+                        {/* Time + status */}
+                        {showTime && (
+                          <div className="flex items-center justify-end gap-1 mt-1">
+                            <p className="text-[10px] opacity-60" style={{ color: isDeleted ? "var(--text-3)" : isMe ? "rgba(255,255,255,0.7)" : "var(--text-3)" }}>{time}</p>
+                            {isMe && !isDeleted && <span className="text-[9px]" style={{ color: "rgba(255,255,255,0.5)" }}>
+                              {msg.status === "sending" ? "Sending…" : msg.status === "read" ? "✓✓ Seen" : "✓ Delivered"}
+                            </span>}
+                          </div>
+                        )}
+                        {isLastRead && activeConvo?.other_user && (
+                          <div className="flex justify-end mt-0.5">
+                            <div className="w-[14px] h-[14px] rounded-sm overflow-hidden flex items-center justify-center text-[6px] font-bold text-white" style={{ backgroundColor: ROLE_COLORS[activeConvo.other_user.role || ""] || "#6B7280" }}>
+                              {activeConvo.other_user.avatar_url ? <img src={storageImageUrl(activeConvo.other_user.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (activeConvo.other_user.full_name || "U")[0]}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
@@ -293,28 +393,61 @@ const Pings = () => {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input area — fixed at bottom, respects keyboard */}
+            {/* Delete confirmation */}
+            {deleteConfirm && (
+              <div className="absolute inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)" }} onClick={() => setDeleteConfirm(null)}>
+                <div className="rounded-2xl p-5 max-w-[320px] w-full mx-4" style={{ background: "var(--surface)", boxShadow: "0 8px 32px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
+                  <p className="text-[15px] font-bold mb-2" style={{ color: "var(--text-1)" }}>Delete this message?</p>
+                  <p className="text-[13px] mb-4" style={{ color: "var(--text-3)" }}>This message will be replaced with "This message was deleted"</p>
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => setDeleteConfirm(null)} className="flex-1" style={{ height: 40, borderRadius: 12 }}>Cancel</Button>
+                    <Button onClick={() => handleDelete(deleteConfirm)} className="flex-1" style={{ height: 40, borderRadius: 12, background: "#DC2626", color: "#fff" }}>Delete</Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Input area */}
             <div className="fixed md:sticky bottom-[calc(64px+env(safe-area-inset-bottom))] md:bottom-0 left-0 right-0 md:left-auto md:right-auto px-3 md:px-4 py-2 md:py-3 z-30" style={{ background: "var(--glass-bg)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderTop: "1px solid var(--glass-border)", paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
+              {/* Attachment preview */}
+              {pendingAttachment && (
+                <div className="flex items-center gap-3 mb-2 px-3 py-2 rounded-xl" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
+                  {pendingAttachment.type === "image" && pendingAttachment.previewUrl ? (
+                    <img src={pendingAttachment.previewUrl} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: "var(--brand-dim)" }}>
+                      <FileText className="w-5 h-5" style={{ color: "var(--brand)" }} />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[12px] font-semibold truncate" style={{ color: "var(--text-1)" }}>{pendingAttachment.name}</p>
+                    <p className="text-[10px]" style={{ color: "var(--text-3)" }}>{(pendingAttachment.size / 1024).toFixed(0)} KB</p>
+                  </div>
+                  <button type="button" onClick={cancelAttachment} className="p-1 rounded-lg cursor-pointer" style={{ color: "var(--text-3)" }}>
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
               {uploading && (
                 <div className="flex items-center gap-2 mb-2 px-3 py-2 rounded-xl" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
                   <div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: "var(--brand)", borderTopColor: "transparent" }} />
                   <span className="text-[12px]" style={{ color: "var(--text-2)" }}>Uploading...</span>
                 </div>
               )}
-              <div className="flex items-center gap-2">
-                <button type="button" className="w-10 h-10 md:w-auto md:h-auto md:p-2 rounded-full md:rounded-lg flex items-center justify-center transition-all duration-150 cursor-pointer active:scale-95 shrink-0" style={{ color: "var(--text-2)", background: "var(--surface-2)" }} onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-                  <Paperclip className="w-5 h-5 md:w-4 md:h-4" />
+              <div className="flex items-end gap-2">
+                <button type="button" className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-150 cursor-pointer active:scale-95 shrink-0" style={{ color: "var(--text-2)", background: "var(--surface-2)" }} onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+                  <Paperclip className="w-5 h-5" />
                 </button>
-                <textarea value={newMsg} onChange={e => setNewMsg(e.target.value)}
+                <textarea ref={textareaRef} value={newMsg} onChange={e => { setNewMsg(e.target.value); autoResize(); }}
                   onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                   placeholder={activeConvo?.other_user ? `Ping ${activeConvo.other_user.full_name || ""}...` : "Type a message..."}
-                  className="flex-1 min-h-[42px] max-h-[120px] md:max-h-[160px] rounded-2xl px-3.5 py-2.5 text-[14px] resize-none outline-none transition-all duration-150"
+                  className="flex-1 min-h-[42px] max-h-[120px] rounded-2xl px-3.5 py-2.5 text-[14px] resize-none outline-none transition-all duration-150"
                   style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", color: "var(--text-1)" }}
                   rows={1} />
-                <button type="button" onClick={handleSend} disabled={!newMsg.trim()}
+                <button type="button" onClick={handleSend} disabled={!canSend}
                   className="w-[42px] h-[42px] rounded-full flex items-center justify-center transition-all duration-200 disabled:opacity-40 active:scale-95 cursor-pointer shrink-0"
-                  style={{ background: "var(--brand)", boxShadow: "0 3px 10px var(--brand-glow)" }}>
-                  <Send className="w-[18px] h-[18px] text-white" />
+                  style={{ background: canSend ? "var(--brand)" : "var(--surface-2)", boxShadow: canSend ? "0 3px 10px var(--brand-glow)" : "none" }}>
+                  <ArrowUp className="w-[18px] h-[18px]" style={{ color: canSend ? "white" : "var(--text-3)" }} />
                 </button>
               </div>
             </div>
@@ -322,7 +455,7 @@ const Pings = () => {
         )}
       </div>
 
-      {/* New Ping — inline panel above conversation list */}
+      {/* New Ping panel */}
       {showNewPing && (
         <div className="absolute top-0 left-0 right-0 z-20 p-3" style={{ background: "var(--surface)", borderBottom: "1px solid var(--border)" }}>
           <div className="flex items-center justify-between mb-2">
