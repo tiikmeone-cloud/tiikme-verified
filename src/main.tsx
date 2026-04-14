@@ -1,4 +1,5 @@
 import { createRoot } from "react-dom/client";
+import { HelmetProvider } from "react-helmet-async";
 import { RootErrorBoundary } from "./components/ErrorBoundaries";
 import App from "./App.tsx";
 import "./index.css";
@@ -24,6 +25,8 @@ if (saved === "dark") {
 
 createRoot(document.getElementById("root")!).render(
   <RootErrorBoundary>
-    <App />
+    <HelmetProvider>
+      <App />
+    </HelmetProvider>
   </RootErrorBoundary>
 );
