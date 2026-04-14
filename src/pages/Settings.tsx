@@ -502,15 +502,7 @@ const SettingsPage = () => {
           )}
 
           {activeTab === "privacy" && (
-            <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
-              <h3 className="text-[16px] font-semibold mb-4" style={{ color: "#1A1A2E" }}>Privacy settings</h3>
-              <Toggle label="Open to opportunities" desc="Show green dot on profile" />
-              <Toggle label="Show profile in Explore" />
-              <Toggle label="Show recruiter view count on work" />
-              <Toggle label="Allow Connection requests" />
-              <Toggle label="Show Activity Score publicly" />
-              <Toggle label="Show Connection count publicly" />
-            </div>
+            <PrivacySection userId={userId} />
           )}
 
           {activeTab === "notifications" && (
