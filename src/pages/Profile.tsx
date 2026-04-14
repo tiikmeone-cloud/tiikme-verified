@@ -728,18 +728,18 @@ const Profile = () => {
         {/* ═══ RIGHT COLUMN ═══ */}
         <div className="space-y-[10px]">
           {/* Experience Box */}
-          <GlassBox accent="experience" expanded={expandedBox === "experience"} onClick={() => !showAddExp && toggleBox("experience")} spanFull>
+          <GlassBox accent="experience" expanded={expandedBox === "experience"} onClick={() => toggleBox("experience")} spanFull>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Briefcase className="w-5 h-5" style={{ color: "#4A90D9" }} />
                 <h2 className="text-[15px] font-semibold" style={{ color: "#1A1A2E" }}>Experience</h2>
               </div>
-              {isOwnProfile && <button type="button" onClick={e => { e.stopPropagation(); setShowAddExp(true); setExpandedBox("experience"); }} className="btn-glass-pill" style={{ padding: "4px 12px", fontSize: 12, borderRadius: 10 }}><Plus className="w-3 h-3 inline mr-0.5" /> Add</button>}
+              {isOwnProfile && <button type="button" onClick={e => { e.stopPropagation(); setModalSection("experience"); }} className="btn-glass-pill" style={{ padding: "4px 12px", fontSize: 12, borderRadius: 10 }}><Plus className="w-3 h-3 inline mr-0.5" /> Add</button>}
             </div>
 
             {expandedBox === "experience" ? (
               <>
-                {experiences.length === 0 && !showAddExp && <p className="text-[13px] mt-1" style={{ color: "#6B7094" }}>No experience added</p>}
+                {experiences.length === 0 && <p className="text-[13px] mt-1" style={{ color: "#6B7094" }}>No experience added</p>}
                 <div className="relative pl-6 mt-1">
                   {experiences.length > 0 && <div className="absolute left-[7px] top-2 bottom-2 w-[2px]" style={{ background: "linear-gradient(to bottom, #4A90D9, rgba(74,144,217,0.15))" }} />}
                   {experiences.map((exp: any, idx: number) => (
@@ -774,30 +774,6 @@ const Profile = () => {
                   ))}
                 </div>
                 {experiences.length > 2 && <button type="button" className="text-[12px] font-semibold mt-1" style={{ color: "#E8733A" }}>See all {experiences.length} →</button>}
-                <AnimatePresence>{showAddExp && (
-                  <div onClick={e => e.stopPropagation()}>
-                    <InlineForm title="Add Experience" saving={saving} onSave={saveExperience} onCancel={() => setShowAddExp(false)} fields={<>
-                      <Input placeholder="Company / Organisation *" value={expForm.company} onChange={e => setExpForm({ ...expForm, company: e.target.value })} style={inputStyle} />
-                      <Input placeholder="Job Title *" value={expForm.title} onChange={e => setExpForm({ ...expForm, title: e.target.value })} style={inputStyle} />
-                      <select value={expForm.type} onChange={e => setExpForm({ ...expForm, type: e.target.value })} className="w-full h-11 rounded-xl px-3 text-[14px] outline-none" style={inputStyle}>
-                        {["Full-time","Part-time","Contract","Freelance","Internship"].map(t => <option key={t}>{t}</option>)}
-                      </select>
-                      <div className="grid grid-cols-2 gap-2">
-                        <select value={expForm.startMonth} onChange={e => setExpForm({ ...expForm, startMonth: e.target.value })} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none" style={selectStyle}><option value="">Start month</option>{months.map(m => <option key={m}>{m}</option>)}</select>
-                        <select value={expForm.startYear} onChange={e => setExpForm({ ...expForm, startYear: e.target.value })} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none" style={selectStyle}><option value="">Start year</option>{years.map(y => <option key={y}>{y}</option>)}</select>
-                      </div>
-                      <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={expForm.isCurrent} onChange={e => setExpForm({ ...expForm, isCurrent: e.target.checked })} /><span className="text-[12px]" style={{ color: "#6B7094" }}>I currently work here</span></label>
-                      {!expForm.isCurrent && <div className="grid grid-cols-2 gap-2">
-                        <select value={expForm.endMonth} onChange={e => setExpForm({ ...expForm, endMonth: e.target.value })} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none" style={selectStyle}><option value="">End month</option>{months.map(m => <option key={m}>{m}</option>)}</select>
-                        <select value={expForm.endYear} onChange={e => setExpForm({ ...expForm, endYear: e.target.value })} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none" style={selectStyle}><option value="">End year</option>{years.map(y => <option key={y}>{y}</option>)}</select>
-                      </div>}
-                      <Input placeholder="Location (optional)" value={expForm.city} onChange={e => setExpForm({ ...expForm, city: e.target.value })} style={inputStyle} />
-                      <textarea value={expForm.description} onChange={e => setExpForm({ ...expForm, description: e.target.value.slice(0, 500) })} placeholder="Description" rows={2} maxLength={500}
-                        className="w-full rounded-xl p-3 text-[13px] outline-none resize-none" style={{ background: "#fff", border: "1px solid #E5E7EB", color: "#1A1A2E" }} />
-                      <Input placeholder="Skills (comma separated)" value={expForm.skills} onChange={e => setExpForm({ ...expForm, skills: e.target.value })} style={inputStyle} />
-                    </>} />
-                  </div>
-                )}</AnimatePresence>
               </>
             ) : (
               currentExp ? (
@@ -813,14 +789,14 @@ const Profile = () => {
           </GlassBox>
 
           {/* Education Box */}
-          <GlassBox accent="education" expanded={expandedBox === "education"} onClick={() => !showAddEdu && toggleBox("education")} spanFull>
+          <GlassBox accent="education" expanded={expandedBox === "education"} onClick={() => toggleBox("education")} spanFull>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2"><GraduationCap className="w-5 h-5" style={{ color: "#34C759" }} /><h2 className="text-[15px] font-semibold" style={{ color: "#1A1A2E" }}>Education</h2></div>
-              {isOwnProfile && <button type="button" onClick={e => { e.stopPropagation(); setShowAddEdu(true); setExpandedBox("education"); }} className="btn-glass-pill" style={{ padding: "4px 12px", fontSize: 12, borderRadius: 10 }}><Plus className="w-3 h-3 inline mr-0.5" /> Add</button>}
+              {isOwnProfile && <button type="button" onClick={e => { e.stopPropagation(); setModalSection("education"); }} className="btn-glass-pill" style={{ padding: "4px 12px", fontSize: 12, borderRadius: 10 }}><Plus className="w-3 h-3 inline mr-0.5" /> Add</button>}
             </div>
             {expandedBox === "education" ? (
               <>
-                {education.length === 0 && !showAddEdu && <p className="text-[13px] mt-1" style={{ color: "#6B7094" }}>No education added</p>}
+                {education.length === 0 && <p className="text-[13px] mt-1" style={{ color: "#6B7094" }}>No education added</p>}
                 <div className="relative pl-6 mt-1">
                   {education.length > 0 && <div className="absolute left-[7px] top-2 bottom-2 w-[2px]" style={{ background: "linear-gradient(to bottom, #34C759, rgba(52,199,89,0.15))" }} />}
                   {education.map((edu: any, idx: number) => (
@@ -844,21 +820,6 @@ const Profile = () => {
                   ))}
                 </div>
                 {education.length > 2 && <button type="button" className="text-[12px] font-semibold mt-1" style={{ color: "#E8733A" }}>See all {education.length} →</button>}
-                <AnimatePresence>{showAddEdu && (
-                  <div onClick={e => e.stopPropagation()}>
-                    <InlineForm title="Add Education" saving={saving} onSave={saveEducation} onCancel={() => setShowAddEdu(false)} fields={<>
-                      <Input placeholder="Institution Name *" value={eduForm.institution} onChange={e => setEduForm({ ...eduForm, institution: e.target.value })} style={inputStyle} />
-                      <Input placeholder="Degree / Program" value={eduForm.degree} onChange={e => setEduForm({ ...eduForm, degree: e.target.value })} style={inputStyle} />
-                      <Input placeholder="Branch / Specialisation" value={eduForm.branch} onChange={e => setEduForm({ ...eduForm, branch: e.target.value })} style={inputStyle} />
-                      <div className="grid grid-cols-2 gap-2">
-                        <select value={eduForm.startYear} onChange={e => setEduForm({ ...eduForm, startYear: e.target.value })} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none" style={selectStyle}><option value="">Start year</option>{years.map(y => <option key={y}>{y}</option>)}</select>
-                        {!eduForm.isCurrent && <select value={eduForm.endYear} onChange={e => setEduForm({ ...eduForm, endYear: e.target.value })} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none" style={selectStyle}><option value="">End year</option>{years.map(y => <option key={y}>{y}</option>)}</select>}
-                      </div>
-                      <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={eduForm.isCurrent} onChange={e => setEduForm({ ...eduForm, isCurrent: e.target.checked })} /><span className="text-[12px]" style={{ color: "#6B7094" }}>Currently studying here</span></label>
-                      <Input placeholder="Grade / CGPA" value={eduForm.grade} onChange={e => setEduForm({ ...eduForm, grade: e.target.value })} style={inputStyle} />
-                    </>} />
-                  </div>
-                )}</AnimatePresence>
               </>
             ) : (
               education.length > 0 ? (
@@ -874,14 +835,14 @@ const Profile = () => {
           </GlassBox>
 
           {/* Projects Box */}
-          <GlassBox accent="projects" expanded={expandedBox === "projects"} onClick={() => !showAddProject && toggleBox("projects")} spanFull>
+          <GlassBox accent="projects" expanded={expandedBox === "projects"} onClick={() => toggleBox("projects")} spanFull>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2"><Rocket className="w-5 h-5" style={{ color: "#FF6B9D" }} /><h2 className="text-[15px] font-semibold" style={{ color: "#1A1A2E" }}>Projects</h2></div>
-              {isOwnProfile && <button type="button" onClick={e => { e.stopPropagation(); setShowAddProject(true); setExpandedBox("projects"); }} className="btn-glass-pill" style={{ padding: "4px 12px", fontSize: 12, borderRadius: 10 }}><Plus className="w-3 h-3 inline mr-0.5" /> Add</button>}
+              {isOwnProfile && <button type="button" onClick={e => { e.stopPropagation(); setModalSection("project"); }} className="btn-glass-pill" style={{ padding: "4px 12px", fontSize: 12, borderRadius: 10 }}><Plus className="w-3 h-3 inline mr-0.5" /> Add</button>}
             </div>
             {expandedBox === "projects" ? (
               <>
-                {projects.length === 0 && !showAddProject && <p className="text-[13px] mt-1" style={{ color: "#6B7094" }}>No projects added</p>}
+                {projects.length === 0 && <p className="text-[13px] mt-1" style={{ color: "#6B7094" }}>No projects added</p>}
                 {projects.slice(0, 2).map((p: any, idx: number) => (
                   <div key={p.id} className="py-2 group" style={{ borderBottom: idx < Math.min(projects.length, 2) - 1 ? "1px solid rgba(255,255,255,0.15)" : "none" }} onClick={e => e.stopPropagation()}>
                     <div className="flex items-start justify-between">
@@ -902,18 +863,6 @@ const Profile = () => {
                   </div>
                 ))}
                 {projects.length > 2 && <button type="button" className="text-[12px] font-semibold mt-1" style={{ color: "#E8733A" }}>See all {projects.length} →</button>}
-                <AnimatePresence>{showAddProject && (
-                  <div onClick={e => e.stopPropagation()}>
-                    <InlineForm title="Add Project" saving={saving} onSave={saveProject} onCancel={() => setShowAddProject(false)} fields={<>
-                      <Input placeholder="Project Name *" value={projForm.title} onChange={e => setProjForm({ ...projForm, title: e.target.value })} style={inputStyle} />
-                      <Input placeholder="Organisation (optional)" value={projForm.org} onChange={e => setProjForm({ ...projForm, org: e.target.value })} style={inputStyle} />
-                      <textarea value={projForm.description} onChange={e => setProjForm({ ...projForm, description: e.target.value.slice(0, 500) })} placeholder="Description" rows={2} maxLength={500}
-                        className="w-full rounded-xl p-3 text-[13px] outline-none resize-none" style={{ background: "#fff", border: "1px solid #E5E7EB", color: "#1A1A2E" }} />
-                      <Input placeholder="Tech stack (comma separated)" value={projForm.techStack} onChange={e => setProjForm({ ...projForm, techStack: e.target.value })} style={inputStyle} />
-                      <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={projForm.isCurrent} onChange={e => setProjForm({ ...projForm, isCurrent: e.target.checked })} /><span className="text-[12px]" style={{ color: "#6B7094" }}>Currently active</span></label>
-                    </>} />
-                  </div>
-                )}</AnimatePresence>
               </>
             ) : (
               projects.length > 0 ? (
@@ -928,14 +877,14 @@ const Profile = () => {
           </GlassBox>
 
           {/* Achievements Box */}
-          <GlassBox accent="achievements" expanded={expandedBox === "achievements"} onClick={() => !showAddAchievement && toggleBox("achievements")} spanFull>
+          <GlassBox accent="achievements" expanded={expandedBox === "achievements"} onClick={() => toggleBox("achievements")} spanFull>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2"><Award className="w-5 h-5" style={{ color: "#FFB800" }} /><h2 className="text-[15px] font-semibold" style={{ color: "#1A1A2E" }}>Achievements</h2></div>
-              {isOwnProfile && <button type="button" onClick={e => { e.stopPropagation(); setShowAddAchievement(true); setExpandedBox("achievements"); }} className="btn-glass-pill" style={{ padding: "4px 12px", fontSize: 12, borderRadius: 10 }}><Plus className="w-3 h-3 inline mr-0.5" /> Add</button>}
+              {isOwnProfile && <button type="button" onClick={e => { e.stopPropagation(); setModalSection("achievement"); }} className="btn-glass-pill" style={{ padding: "4px 12px", fontSize: 12, borderRadius: 10 }}><Plus className="w-3 h-3 inline mr-0.5" /> Add</button>}
             </div>
             {expandedBox === "achievements" ? (
               <>
-                {achievements.length === 0 && !showAddAchievement && <p className="text-[13px] mt-1" style={{ color: "#6B7094" }}>No achievements added</p>}
+                {achievements.length === 0 && <p className="text-[13px] mt-1" style={{ color: "#6B7094" }}>No achievements added</p>}
                 {achievements.slice(0, 2).map((a: any, idx: number) => (
                   <div key={a.id} className="flex items-center gap-3 py-2 group" style={{ borderBottom: idx < Math.min(achievements.length, 2) - 1 ? "1px solid rgba(255,255,255,0.15)" : "none" }} onClick={e => e.stopPropagation()}>
                     <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgba(255,184,0,0.08)" }}><Award className="w-4 h-4" style={{ color: "#FFB800" }} /></div>
@@ -953,19 +902,6 @@ const Profile = () => {
                   </div>
                 ))}
                 {achievements.length > 2 && <button type="button" className="text-[12px] font-semibold mt-1" style={{ color: "#E8733A" }}>See all {achievements.length} →</button>}
-                <AnimatePresence>{showAddAchievement && (
-                  <div onClick={e => e.stopPropagation()}>
-                    <InlineForm title="Add Achievement" saving={saving} onSave={saveAchievement} onCancel={() => setShowAddAchievement(false)} fields={<>
-                      <Input placeholder="Title *" value={achForm.title} onChange={e => setAchForm({ ...achForm, title: e.target.value })} style={inputStyle} />
-                      <Input placeholder="Issued by" value={achForm.issuedBy} onChange={e => setAchForm({ ...achForm, issuedBy: e.target.value })} style={inputStyle} />
-                      <div className="grid grid-cols-2 gap-2">
-                        <select value={achForm.dateMonth} onChange={e => setAchForm({ ...achForm, dateMonth: e.target.value })} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none" style={selectStyle}><option value="">Month</option>{months.map(m => <option key={m}>{m}</option>)}</select>
-                        <select value={achForm.dateYear} onChange={e => setAchForm({ ...achForm, dateYear: e.target.value })} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none" style={selectStyle}><option value="">Year</option>{years.map(y => <option key={y}>{y}</option>)}</select>
-                      </div>
-                      <Input placeholder="Credential URL (optional)" value={achForm.url} onChange={e => setAchForm({ ...achForm, url: e.target.value })} style={inputStyle} />
-                    </>} />
-                  </div>
-                )}</AnimatePresence>
               </>
             ) : (
               <div className="flex items-center gap-2 mt-1">
@@ -977,10 +913,10 @@ const Profile = () => {
           </GlassBox>
 
           {/* Skills Box */}
-          <GlassBox accent="skills" expanded={expandedBox === "skills"} onClick={() => !showAddSkill && toggleBox("skills")} spanFull>
+          <GlassBox accent="skills" expanded={expandedBox === "skills"} onClick={() => toggleBox("skills")} spanFull>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2"><Code2 className="w-5 h-5" style={{ color: "#8B5CF6" }} /><h2 className="text-[15px] font-semibold" style={{ color: "#1A1A2E" }}>Skills</h2></div>
-              {isOwnProfile && <button type="button" onClick={e => { e.stopPropagation(); setShowAddSkill(true); setExpandedBox("skills"); }} className="btn-glass-pill" style={{ padding: "4px 12px", fontSize: 12, borderRadius: 10 }}><Plus className="w-3 h-3 inline mr-0.5" /> Add</button>}
+              {isOwnProfile && <button type="button" onClick={e => { e.stopPropagation(); setModalSection("skills"); }} className="btn-glass-pill" style={{ padding: "4px 12px", fontSize: 12, borderRadius: 10 }}><Plus className="w-3 h-3 inline mr-0.5" /> Add</button>}
             </div>
             {expandedBox === "skills" ? (
               <div onClick={e => e.stopPropagation()} className="mt-1">
@@ -991,14 +927,8 @@ const Profile = () => {
                       {isOwnProfile && <button type="button" onClick={() => removeSkill(s)} className="cursor-pointer ml-0.5"><X className="w-3 h-3" /></button>}
                     </span>
                   ))}
+                  {skills.length === 0 && <span className="text-[13px]" style={{ color: "#6B7094" }}>No skills added</span>}
                 </div>
-                {showAddSkill && (
-                  <div className="flex items-center gap-2 mt-2">
-                    <Input value={newSkill} onChange={e => setNewSkill(e.target.value)} placeholder="Type a skill..." className="flex-1" onKeyDown={e => { if (e.key === "Enter") addSkill(); }} />
-                    <Button size="sm" onClick={addSkill}>Add</Button>
-                    <Button variant="ghost" size="sm" onClick={() => setShowAddSkill(false)}>Cancel</Button>
-                  </div>
-                )}
               </div>
             ) : (
               <div className="flex flex-wrap gap-1 mt-1">
@@ -1031,6 +961,110 @@ const Profile = () => {
           </GlassBox>
         </div>
       </div>
+
+      {/* ═══ GLASS MODALS ═══ */}
+
+      {/* Experience Modal */}
+      <GlassModal open={modalSection === "experience"} onClose={() => setModalSection(null)} title="Add Experience" icon={Briefcase} accentColor="#4A90D9"
+        actions={<>
+          <button type="button" onClick={saveExperience} disabled={saving} className="btn-liquid-primary cursor-pointer" style={{ padding: "10px 28px", borderRadius: 16, fontSize: 14, fontWeight: 600 }}>{saving ? "Saving..." : "Save"}</button>
+          <button type="button" onClick={() => setModalSection(null)} className="btn-glass-pill cursor-pointer" style={{ padding: "10px 20px", color: "#fff", border: "1px solid rgba(255,255,255,0.25)" }}>Cancel</button>
+        </>}
+      >
+        <div><label style={labelStyle}>Company / Organisation *</label><input value={expForm.company} onChange={e => setExpForm({ ...expForm, company: e.target.value })} style={gInputStyle} placeholder="e.g. Google" /></div>
+        <div><label style={labelStyle}>Job Title *</label><input value={expForm.title} onChange={e => setExpForm({ ...expForm, title: e.target.value })} style={gInputStyle} placeholder="e.g. Software Engineer" /></div>
+        <div><label style={labelStyle}>Employment Type</label>
+          <select value={expForm.type} onChange={e => setExpForm({ ...expForm, type: e.target.value })} style={gSelectStyle}>
+            {["Full-time","Part-time","Contract","Freelance","Internship"].map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div><label style={labelStyle}>Start Month</label><select value={expForm.startMonth} onChange={e => setExpForm({ ...expForm, startMonth: e.target.value })} style={gSelectStyle}><option value="">Month</option>{months.map(m => <option key={m}>{m}</option>)}</select></div>
+          <div><label style={labelStyle}>Start Year</label><select value={expForm.startYear} onChange={e => setExpForm({ ...expForm, startYear: e.target.value })} style={gSelectStyle}><option value="">Year</option>{years.map(y => <option key={y}>{y}</option>)}</select></div>
+        </div>
+        <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={expForm.isCurrent} onChange={e => setExpForm({ ...expForm, isCurrent: e.target.checked })} /><span className="text-[13px]" style={{ color: "rgba(255,255,255,0.70)" }}>I currently work here</span></label>
+        {!expForm.isCurrent && (
+          <div className="grid grid-cols-2 gap-3">
+            <div><label style={labelStyle}>End Month</label><select value={expForm.endMonth} onChange={e => setExpForm({ ...expForm, endMonth: e.target.value })} style={gSelectStyle}><option value="">Month</option>{months.map(m => <option key={m}>{m}</option>)}</select></div>
+            <div><label style={labelStyle}>End Year</label><select value={expForm.endYear} onChange={e => setExpForm({ ...expForm, endYear: e.target.value })} style={gSelectStyle}><option value="">Year</option>{years.map(y => <option key={y}>{y}</option>)}</select></div>
+          </div>
+        )}
+        <div><label style={labelStyle}>Location</label><input value={expForm.city} onChange={e => setExpForm({ ...expForm, city: e.target.value })} style={gInputStyle} placeholder="City" /></div>
+        <div><label style={labelStyle}>Description</label><textarea value={expForm.description} onChange={e => setExpForm({ ...expForm, description: e.target.value.slice(0, 500) })} style={gTextareaStyle} placeholder="What did you do?" maxLength={500} /></div>
+        <div><label style={labelStyle}>Skills (comma separated)</label><input value={expForm.skills} onChange={e => setExpForm({ ...expForm, skills: e.target.value })} style={gInputStyle} placeholder="React, TypeScript, Node.js" /></div>
+      </GlassModal>
+
+      {/* Education Modal */}
+      <GlassModal open={modalSection === "education"} onClose={() => setModalSection(null)} title="Add Education" icon={GraduationCap} accentColor="#34C759"
+        actions={<>
+          <button type="button" onClick={saveEducation} disabled={saving} className="btn-liquid-primary cursor-pointer" style={{ padding: "10px 28px", borderRadius: 16, fontSize: 14, fontWeight: 600 }}>{saving ? "Saving..." : "Save"}</button>
+          <button type="button" onClick={() => setModalSection(null)} className="btn-glass-pill cursor-pointer" style={{ padding: "10px 20px", color: "#fff", border: "1px solid rgba(255,255,255,0.25)" }}>Cancel</button>
+        </>}
+      >
+        <div><label style={labelStyle}>Institution Name *</label><input value={eduForm.institution} onChange={e => setEduForm({ ...eduForm, institution: e.target.value })} style={gInputStyle} placeholder="e.g. IIT Delhi" /></div>
+        <div><label style={labelStyle}>Degree / Program</label><input value={eduForm.degree} onChange={e => setEduForm({ ...eduForm, degree: e.target.value })} style={gInputStyle} placeholder="e.g. B.Tech" /></div>
+        <div><label style={labelStyle}>Branch / Specialisation</label><input value={eduForm.branch} onChange={e => setEduForm({ ...eduForm, branch: e.target.value })} style={gInputStyle} placeholder="e.g. Computer Science" /></div>
+        <div className="grid grid-cols-2 gap-3">
+          <div><label style={labelStyle}>Start Year</label><select value={eduForm.startYear} onChange={e => setEduForm({ ...eduForm, startYear: e.target.value })} style={gSelectStyle}><option value="">Year</option>{years.map(y => <option key={y}>{y}</option>)}</select></div>
+          {!eduForm.isCurrent && <div><label style={labelStyle}>End Year</label><select value={eduForm.endYear} onChange={e => setEduForm({ ...eduForm, endYear: e.target.value })} style={gSelectStyle}><option value="">Year</option>{years.map(y => <option key={y}>{y}</option>)}</select></div>}
+        </div>
+        <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={eduForm.isCurrent} onChange={e => setEduForm({ ...eduForm, isCurrent: e.target.checked })} /><span className="text-[13px]" style={{ color: "rgba(255,255,255,0.70)" }}>Currently studying here</span></label>
+        <div><label style={labelStyle}>Grade / CGPA</label><input value={eduForm.grade} onChange={e => setEduForm({ ...eduForm, grade: e.target.value })} style={gInputStyle} placeholder="e.g. 9.2" /></div>
+      </GlassModal>
+
+      {/* Project Modal */}
+      <GlassModal open={modalSection === "project"} onClose={() => setModalSection(null)} title="Add Project" icon={Rocket} accentColor="#FF6B9D"
+        actions={<>
+          <button type="button" onClick={saveProject} disabled={saving} className="btn-liquid-primary cursor-pointer" style={{ padding: "10px 28px", borderRadius: 16, fontSize: 14, fontWeight: 600 }}>{saving ? "Saving..." : "Save"}</button>
+          <button type="button" onClick={() => setModalSection(null)} className="btn-glass-pill cursor-pointer" style={{ padding: "10px 20px", color: "#fff", border: "1px solid rgba(255,255,255,0.25)" }}>Cancel</button>
+        </>}
+      >
+        <div><label style={labelStyle}>Project Name *</label><input value={projForm.title} onChange={e => setProjForm({ ...projForm, title: e.target.value })} style={gInputStyle} placeholder="e.g. Portfolio Website" /></div>
+        <div><label style={labelStyle}>Organisation (optional)</label><input value={projForm.org} onChange={e => setProjForm({ ...projForm, org: e.target.value })} style={gInputStyle} placeholder="e.g. Open source" /></div>
+        <div><label style={labelStyle}>Description</label><textarea value={projForm.description} onChange={e => setProjForm({ ...projForm, description: e.target.value.slice(0, 500) })} style={gTextareaStyle} placeholder="What is this project about?" maxLength={500} /></div>
+        <div><label style={labelStyle}>Tech Stack (comma separated)</label><input value={projForm.techStack} onChange={e => setProjForm({ ...projForm, techStack: e.target.value })} style={gInputStyle} placeholder="React, Node.js, PostgreSQL" /></div>
+        <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={projForm.isCurrent} onChange={e => setProjForm({ ...projForm, isCurrent: e.target.checked })} /><span className="text-[13px]" style={{ color: "rgba(255,255,255,0.70)" }}>Currently active</span></label>
+      </GlassModal>
+
+      {/* Achievement Modal */}
+      <GlassModal open={modalSection === "achievement"} onClose={() => setModalSection(null)} title="Add Achievement" icon={Award} accentColor="#FFB800"
+        actions={<>
+          <button type="button" onClick={saveAchievement} disabled={saving} className="btn-liquid-primary cursor-pointer" style={{ padding: "10px 28px", borderRadius: 16, fontSize: 14, fontWeight: 600 }}>{saving ? "Saving..." : "Save"}</button>
+          <button type="button" onClick={() => setModalSection(null)} className="btn-glass-pill cursor-pointer" style={{ padding: "10px 20px", color: "#fff", border: "1px solid rgba(255,255,255,0.25)" }}>Cancel</button>
+        </>}
+      >
+        <div><label style={labelStyle}>Title *</label><input value={achForm.title} onChange={e => setAchForm({ ...achForm, title: e.target.value })} style={gInputStyle} placeholder="e.g. Best Paper Award" /></div>
+        <div><label style={labelStyle}>Issued By</label><input value={achForm.issuedBy} onChange={e => setAchForm({ ...achForm, issuedBy: e.target.value })} style={gInputStyle} placeholder="e.g. IEEE" /></div>
+        <div className="grid grid-cols-2 gap-3">
+          <div><label style={labelStyle}>Month</label><select value={achForm.dateMonth} onChange={e => setAchForm({ ...achForm, dateMonth: e.target.value })} style={gSelectStyle}><option value="">Month</option>{months.map(m => <option key={m}>{m}</option>)}</select></div>
+          <div><label style={labelStyle}>Year</label><select value={achForm.dateYear} onChange={e => setAchForm({ ...achForm, dateYear: e.target.value })} style={gSelectStyle}><option value="">Year</option>{years.map(y => <option key={y}>{y}</option>)}</select></div>
+        </div>
+        <div><label style={labelStyle}>Description</label><textarea value={achForm.description} onChange={e => setAchForm({ ...achForm, description: e.target.value })} style={gTextareaStyle} placeholder="Brief description..." /></div>
+        <div><label style={labelStyle}>Credential URL (optional)</label><input value={achForm.url} onChange={e => setAchForm({ ...achForm, url: e.target.value })} style={gInputStyle} placeholder="https://..." /></div>
+      </GlassModal>
+
+      {/* Skills Modal */}
+      <GlassModal open={modalSection === "skills"} onClose={() => setModalSection(null)} title="Add Skill" icon={Code2} accentColor="#8B5CF6"
+        actions={<>
+          <button type="button" onClick={addSkill} className="btn-liquid-primary cursor-pointer" style={{ padding: "10px 28px", borderRadius: 16, fontSize: 14, fontWeight: 600 }}>Add</button>
+          <button type="button" onClick={() => setModalSection(null)} className="btn-glass-pill cursor-pointer" style={{ padding: "10px 20px", color: "#fff", border: "1px solid rgba(255,255,255,0.25)" }}>Cancel</button>
+        </>}
+      >
+        <div><label style={labelStyle}>Skill Name</label><input value={newSkill} onChange={e => setNewSkill(e.target.value)} style={gInputStyle} placeholder="e.g. React" onKeyDown={e => { if (e.key === "Enter") addSkill(); }} /></div>
+        {skills.length > 0 && (
+          <div>
+            <label style={labelStyle}>Your skills</label>
+            <div className="flex flex-wrap gap-1.5 mt-1">
+              {skills.map((s: string) => (
+                <span key={s} className="flex items-center gap-1 text-[12px] font-semibold px-3 py-1 rounded-full" style={{ border: "1.5px solid #8B5CF6", color: "#8B5CF6", background: "rgba(139,92,246,0.12)" }}>
+                  {s}
+                  <button type="button" onClick={() => removeSkill(s)} className="cursor-pointer ml-0.5"><X className="w-3 h-3" /></button>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </GlassModal>
 
       {/* Edit Drawer */}
       <EditProfileDrawer open={editOpen} onClose={() => setEditOpen(false)} onSaved={loadProfile} />
