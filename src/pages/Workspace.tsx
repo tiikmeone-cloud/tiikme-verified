@@ -38,6 +38,7 @@ export default function Workspace() {
   const [members, setMembers] = useState<any[]>([]);
   const [accessRules, setAccessRules] = useState<any[]>([]);
   const [verifRequests, setVerifRequests] = useState<any[]>([]);
+  const [itemVerifRequests, setItemVerifRequests] = useState<any[]>([]);
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [myRole, setMyRole] = useState<string>("member");
@@ -61,7 +62,7 @@ export default function Workspace() {
   const fetchData = useCallback(async () => {
     if (!orgId || !user) { setLoading(false); return; }
     setLoading(true);
-    const [orgRes, membersRes, accessRes, verifRes, myRoleRes, postsRes] = await Promise.allSettled([
+    const [orgRes, membersRes, accessRes, verifRes, myRoleRes, postsRes, itemVerifRes] = await Promise.allSettled([
       supabase.from("organizations").select("*").eq("id", orgId).maybeSingle(),
       supabase.from("org_members").select("*, profile:profiles!org_members_user_id_fkey(id, full_name, avatar_url, role, headline)")
         .eq("org_id", orgId).order("joined_at", { ascending: true }),
@@ -72,6 +73,9 @@ export default function Workspace() {
       supabase.from("org_members").select("role").eq("org_id", orgId).eq("user_id", user.id).maybeSingle(),
       supabase.from("posts").select("*, author:profiles!posts_author_id_fkey(full_name, avatar_url)")
         .eq("posted_by_org", orgId).order("created_at", { ascending: false }).limit(30),
+      supabase.from("item_verification_requests")
+        .select("*")
+        .eq("org_id", orgId).eq("status", "pending").order("created_at", { ascending: false }),
     ]);
     if (orgRes.status === "fulfilled") setOrg(orgRes.value.data);
     if (membersRes.status === "fulfilled") setMembers(membersRes.value.data || []);
@@ -79,6 +83,28 @@ export default function Workspace() {
     if (verifRes.status === "fulfilled") setVerifRequests(verifRes.value.data || []);
     if (myRoleRes.status === "fulfilled") setMyRole(myRoleRes.value.data?.role || "member");
     if (postsRes.status === "fulfilled") setPosts(postsRes.value.data || []);
+
+    // Hydrate item verification requests with profiles and work items
+    if (itemVerifRes.status === "fulfilled") {
+      const rawReqs = itemVerifRes.value.data || [];
+      if (rawReqs.length > 0) {
+        const requesterIds = [...new Set(rawReqs.map((r: any) => r.requester_id).filter(Boolean))];
+        const workItemIds = [...new Set(rawReqs.map((r: any) => r.work_item_id).filter(Boolean))];
+        const [profilesRes, workItemsRes] = await Promise.allSettled([
+          supabase.from("profiles").select("id, full_name, avatar_url, role").in("id", requesterIds as string[]),
+          supabase.from("work_items").select("id, title, job_title, company_name, institution_name_edu, item_type, start_date, end_date, is_current").in("id", workItemIds as string[]),
+        ]);
+        const profiles = profilesRes.status === "fulfilled" ? profilesRes.value.data || [] : [];
+        const workItems = workItemsRes.status === "fulfilled" ? workItemsRes.value.data || [] : [];
+        setItemVerifRequests(rawReqs.map((r: any) => ({
+          ...r,
+          requester: profiles.find((p: any) => p.id === r.requester_id),
+          work_item: workItems.find((w: any) => w.id === r.work_item_id),
+        })));
+      } else {
+        setItemVerifRequests([]);
+      }
+    }
     setLoading(false);
   }, [orgId, user]);
 
