@@ -127,7 +127,7 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Section 1: Profile preview */}
               <div className="flex items-center gap-3 p-4 rounded-xl" style={{ background: "#F9FAFB", border: "1px solid #F0E8E0" }}>
-                <div className="w-14 h-14 rounded-full flex items-center justify-center text-[16px] font-bold text-white overflow-hidden shrink-0" style={{ background: "#E8580A" }}>
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-[16px] font-bold text-white overflow-hidden shrink-0" style={{ background: "#E8580A" }}>
                   {profile?.avatar_url ? <img src={storageImageUrl(profile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (profile?.full_name || "U").slice(0, 2).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">

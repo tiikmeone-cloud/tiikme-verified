@@ -153,7 +153,7 @@ const GetTiikedModal = ({ open, onClose, userId, userRole, onVerified }: Props) 
                 <button type="button" key={u.id} onClick={() => sendPeerRequest(u.id, u.full_name || u.username)}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left cursor-pointer transition-all hover:bg-[var(--surface-2)]"
                   disabled={sending}>
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0" style={{ background: "var(--brand)" }}>
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[10px] font-bold text-white shrink-0" style={{ background: "var(--brand)" }}>
                     {u.avatar_url ? <img src={storageImageUrl(u.avatar_url, "avatar")} alt="" className="w-full h-full object-cover rounded-full" /> : (u.full_name || "U")[0]}
                   </div>
                   <div className="flex-1 min-w-0">

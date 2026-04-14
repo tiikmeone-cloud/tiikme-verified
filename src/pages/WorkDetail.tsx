@@ -118,7 +118,7 @@ const WorkDetail = () => {
               <div className="flex items-center gap-4 overflow-x-auto scrollbar-hide pb-2">
                 {owner && (
                   <Link to={`/app/profile/${owner.id}`} className="text-center shrink-0 hover:-translate-y-1 transition-transform">
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold text-white mx-auto mb-1 overflow-hidden" style={{ backgroundColor: ROLE_COLORS[owner.role || ""] || "#6B7280" }}>
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[10px] font-bold text-white mx-auto mb-1 overflow-hidden" style={{ backgroundColor: ROLE_COLORS[owner.role || ""] || "#6B7280" }}>
                       {owner.avatar_url ? <img src={storageImageUrl(owner.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (ownerName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase())}
                     </div>
                     <p className="text-[11px] font-bold" style={{ color: "var(--text-1)" }}>{ownerName.split(" ")[0]}</p>
@@ -131,7 +131,7 @@ const WorkDetail = () => {
                   const initials = name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
                   return (
                     <Link key={m.id} to={`/app/profile/${u?.id}`} className="text-center shrink-0 hover:-translate-y-1 transition-transform">
-                      <div className="w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold text-white mx-auto mb-1 overflow-hidden" style={{ backgroundColor: ROLE_COLORS[u?.role || ""] || "#6B7280" }}>
+                      <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[10px] font-bold text-white mx-auto mb-1 overflow-hidden" style={{ backgroundColor: ROLE_COLORS[u?.role || ""] || "#6B7280" }}>
                         {u?.avatar_url ? <img src={storageImageUrl(u.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials}
                       </div>
                       <p className="text-[11px] font-bold" style={{ color: "var(--text-1)" }}>{name.split(" ")[0]}</p>

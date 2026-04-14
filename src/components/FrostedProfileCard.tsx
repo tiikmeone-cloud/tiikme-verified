@@ -24,7 +24,7 @@ const FrostedProfileCard = ({ name, initials, role, roleColor, institution, head
       <div className="absolute inset-0 h-[60%]" style={{ background: `linear-gradient(135deg, ${roleColor}22 0%, ${roleColor}08 100%)` }}>
         <div className="flex items-center justify-center h-full">
           <div className="relative">
-            <div className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold text-white transition-transform duration-200 group-hover:scale-105"
+            <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-bold text-white transition-transform duration-200 group-hover:scale-105"
               style={{ backgroundColor: roleColor }}>
               {initials}
             </div>

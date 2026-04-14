@@ -111,7 +111,7 @@ const PostDetail = () => {
       <article className="glass-liquid rounded-2xl overflow-hidden">
         <div className="flex items-center gap-3 px-4 pt-4 pb-2">
           <Link to={`/app/profile/${author?.id || ""}`}>
-            <div className="w-11 h-11 rounded-full flex items-center justify-center text-[14px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: roleColor }}>
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center text-[14px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: roleColor }}>
               {author?.avatar_url ? <img src={storageImageUrl(author.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials}
             </div>
           </Link>
@@ -146,7 +146,7 @@ const PostDetail = () => {
             const cColor = roleColorMap[c.author?.role || ""] || "#6B7280";
             return (
               <div key={c.id} className="flex items-start gap-2">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: cColor }}>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: cColor }}>
                   {c.author?.avatar_url ? <img src={storageImageUrl(c.author.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : cInit}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -161,7 +161,7 @@ const PostDetail = () => {
           })}
           {user && (
             <div className="flex items-center gap-2 mt-2">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden" style={{ background: "var(--brand)" }}>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden" style={{ background: "var(--brand)" }}>
                 {profile?.avatar_url ? <img src={storageImageUrl(profile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : userInitials}
               </div>
               <input value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="Write a comment..."

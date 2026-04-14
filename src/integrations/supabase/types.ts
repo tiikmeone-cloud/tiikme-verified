@@ -1466,7 +1466,9 @@ export type Database = {
           content: string
           conversation_id: string | null
           created_at: string | null
+          deleted_at: string | null
           id: string
+          is_deleted: boolean | null
           is_opener: boolean | null
           is_read: boolean | null
           pdf_url: string | null
@@ -1481,7 +1483,9 @@ export type Database = {
           content: string
           conversation_id?: string | null
           created_at?: string | null
+          deleted_at?: string | null
           id?: string
+          is_deleted?: boolean | null
           is_opener?: boolean | null
           is_read?: boolean | null
           pdf_url?: string | null
@@ -1496,7 +1500,9 @@ export type Database = {
           content?: string
           conversation_id?: string | null
           created_at?: string | null
+          deleted_at?: string | null
           id?: string
+          is_deleted?: boolean | null
           is_opener?: boolean | null
           is_read?: boolean | null
           pdf_url?: string | null
@@ -1656,6 +1662,7 @@ export type Database = {
           hashtags: string[] | null
           id: string
           image_urls: string[] | null
+          is_edited: boolean | null
           is_shared_to_feed: boolean | null
           pdf_url: string | null
           post_type: string | null
@@ -1664,7 +1671,9 @@ export type Database = {
           reactions: Json | null
           repost_count: number | null
           repost_of: string | null
+          show_company_badge: boolean | null
           type: string | null
+          updated_at: string | null
           visibility: string | null
           work_item_id: string | null
           workspace_id: string | null
@@ -1678,6 +1687,7 @@ export type Database = {
           hashtags?: string[] | null
           id?: string
           image_urls?: string[] | null
+          is_edited?: boolean | null
           is_shared_to_feed?: boolean | null
           pdf_url?: string | null
           post_type?: string | null
@@ -1686,7 +1696,9 @@ export type Database = {
           reactions?: Json | null
           repost_count?: number | null
           repost_of?: string | null
+          show_company_badge?: boolean | null
           type?: string | null
+          updated_at?: string | null
           visibility?: string | null
           work_item_id?: string | null
           workspace_id?: string | null
@@ -1700,6 +1712,7 @@ export type Database = {
           hashtags?: string[] | null
           id?: string
           image_urls?: string[] | null
+          is_edited?: boolean | null
           is_shared_to_feed?: boolean | null
           pdf_url?: string | null
           post_type?: string | null
@@ -1708,7 +1721,9 @@ export type Database = {
           reactions?: Json | null
           repost_count?: number | null
           repost_of?: string | null
+          show_company_badge?: boolean | null
           type?: string | null
+          updated_at?: string | null
           visibility?: string | null
           work_item_id?: string | null
           workspace_id?: string | null
@@ -1815,6 +1830,7 @@ export type Database = {
           open_to_work: boolean | null
           org_id: string | null
           phone_hash: string | null
+          privacy_settings: Json | null
           referred_by: string | null
           role: string | null
           role_metadata: Json | null
@@ -1855,6 +1871,7 @@ export type Database = {
           open_to_work?: boolean | null
           org_id?: string | null
           phone_hash?: string | null
+          privacy_settings?: Json | null
           referred_by?: string | null
           role?: string | null
           role_metadata?: Json | null
@@ -1895,6 +1912,7 @@ export type Database = {
           open_to_work?: boolean | null
           org_id?: string | null
           phone_hash?: string | null
+          privacy_settings?: Json | null
           referred_by?: string | null
           role?: string | null
           role_metadata?: Json | null
@@ -2361,6 +2379,96 @@ export type Database = {
         }
         Relationships: []
       }
+      workspace_channel_members: {
+        Row: {
+          channel_id: string | null
+          id: string
+          joined_at: string | null
+          role: string | null
+          user_id: string | null
+        }
+        Insert: {
+          channel_id?: string | null
+          id?: string
+          joined_at?: string | null
+          role?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          channel_id?: string | null
+          id?: string
+          joined_at?: string | null
+          role?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_channel_members_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_channel_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_channels: {
+        Row: {
+          channel_type: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          is_private: boolean | null
+          member_count: number | null
+          name: string
+          workspace_id: string | null
+        }
+        Insert: {
+          channel_type?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_private?: boolean | null
+          member_count?: number | null
+          name: string
+          workspace_id?: string | null
+        }
+        Update: {
+          channel_type?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_private?: boolean | null
+          member_count?: number | null
+          name?: string
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_channels_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_channels_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workspace_members: {
         Row: {
           id: string
@@ -2402,6 +2510,60 @@ export type Database = {
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_messages: {
+        Row: {
+          attachment_name: string | null
+          attachment_type: string | null
+          attachment_url: string | null
+          channel_id: string | null
+          content: string
+          created_at: string | null
+          deleted_at: string | null
+          id: string
+          is_deleted: boolean | null
+          sender_id: string | null
+        }
+        Insert: {
+          attachment_name?: string | null
+          attachment_type?: string | null
+          attachment_url?: string | null
+          channel_id?: string | null
+          content: string
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string
+          is_deleted?: boolean | null
+          sender_id?: string | null
+        }
+        Update: {
+          attachment_name?: string | null
+          attachment_type?: string | null
+          attachment_url?: string | null
+          channel_id?: string | null
+          content?: string
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string
+          is_deleted?: boolean | null
+          sender_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_messages_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
