@@ -652,19 +652,81 @@ const Profile = () => {
             </div>
           )}
 
-          {/* Social Links (if any) — compact */}
-          {customLinks.length > 0 && (
-            <GlassBox accent="contact">
-              <p className="text-[12px] font-semibold uppercase tracking-wide mb-2" style={{ color: "#6B7094" }}>Links</p>
-              <div className="space-y-1.5">
-                {customLinks.map((link: any, i: number) => (
-                  <a key={i} href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[13px] font-medium hover:underline" style={{ color: "#E8733A" }}>
-                    <ExternalLink className="w-3.5 h-3.5 shrink-0" />{link.label || link.url}
-                  </a>
-                ))}
+          {/* Smart Social Links */}
+          <GlassBox accent="contact">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <LinkIcon className="w-5 h-5" style={{ color: "#6B7094" }} />
+                <h2 className="text-[15px] font-semibold" style={{ color: "#1A1A2E" }}>Links</h2>
               </div>
-            </GlassBox>
-          )}
+              {isOwnProfile && <button type="button" onClick={() => setShowAddLink(true)} className="btn-glass-pill" style={{ padding: "4px 12px", fontSize: 12, borderRadius: 10 }}><Plus className="w-3 h-3 inline mr-0.5" /> Add</button>}
+            </div>
+            {customLinks.length > 0 ? (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {customLinks.map((link: any, i: number) => {
+                  const platform = detectPlatform(link.url);
+                  const Icon = platform.icon;
+                  return (
+                    <div key={i} className="group relative">
+                      <a href={link.url} target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 transition-all duration-200"
+                        style={{
+                          background: "rgba(255,255,255,0.15)",
+                          backdropFilter: "blur(8px)",
+                          border: "1px solid rgba(255,255,255,0.25)",
+                          borderRadius: 12,
+                          padding: "6px 12px",
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.30)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.15)"; e.currentTarget.style.transform = ""; }}
+                      >
+                        <Icon className="w-4 h-4 shrink-0" style={{ color: platform.color }} />
+                        <span className="text-[12px] font-medium" style={{ color: "#1A1A2E" }}>{platform.name}</span>
+                      </a>
+                      {isOwnProfile && (
+                        <button type="button" onClick={() => removeLink(i)}
+                          className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                          style={{ background: "#E8733A", color: "#fff" }}>
+                          <X className="w-2.5 h-2.5" />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-[13px] mt-1" style={{ color: "#6B7094" }}>{isOwnProfile ? "Add your social profiles" : "No links added"}</p>
+            )}
+            {/* Inline add form */}
+            {showAddLink && (
+              <div className="mt-3 space-y-2">
+                <Input
+                  value={newLinkUrl}
+                  onChange={e => setNewLinkUrl(e.target.value)}
+                  placeholder="Paste your link..."
+                  className="glass-input-light"
+                  onKeyDown={e => { if (e.key === "Enter") addLink(); }}
+                />
+                {newLinkUrl.trim() && (() => {
+                  const preview = detectPlatform(newLinkUrl);
+                  const PreviewIcon = preview.icon;
+                  return (
+                    <div className="flex items-center gap-2 text-[12px]" style={{ color: "#6B7094" }}>
+                      <span>Preview:</span>
+                      <span className="flex items-center gap-1.5 px-3 py-1 rounded-xl" style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)" }}>
+                        <PreviewIcon className="w-4 h-4" style={{ color: preview.color }} />
+                        <span className="font-medium" style={{ color: "#1A1A2E" }}>{preview.name}</span>
+                      </span>
+                    </div>
+                  );
+                })()}
+                <div className="flex items-center gap-2">
+                  <button type="button" onClick={addLink} className="btn-liquid-primary text-[12px] font-bold px-4 py-1.5 rounded-full cursor-pointer" style={{ fontSize: 12 }}>Add</button>
+                  <button type="button" onClick={() => { setShowAddLink(false); setNewLinkUrl(""); }} className="text-[12px] cursor-pointer" style={{ color: "#6B7094" }}>Cancel</button>
+                </div>
+              </div>
+            )}
+          </GlassBox>
         </div>
 
         {/* ═══ RIGHT COLUMN ═══ */}
