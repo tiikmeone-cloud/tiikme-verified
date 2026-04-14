@@ -1,5 +1,6 @@
 import { storageImageUrl } from "@/lib/imageTransform";
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { PageSEO } from "@/hooks/usePageSEO";
 import { AnimatePresence } from "framer-motion";
 import { Search, Briefcase, MapPin, Bookmark, Clock, Plus, Building2, Users as UsersIcon, Eye, Trophy, GraduationCap, Code, Zap, Hammer, CalendarDays, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { PageSEO, orgSEO } from "@/hooks/usePageSEO";
 import {
   MapPin, Globe, Calendar, Users, MessageCircle, ExternalLink, Trophy, Share2,
   Shield, Briefcase, Plus, Image as ImageIcon, Heart, Building2, Award,

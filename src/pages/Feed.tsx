@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { PageSEO } from "@/hooks/usePageSEO";
 import { storageImageUrl } from "@/lib/imageTransform";
 import { Heart, MessageSquare, Repeat2, MoreHorizontal, Flag, Send, FileText, ChevronDown, ArrowUpRight, Trash2, Pencil, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";

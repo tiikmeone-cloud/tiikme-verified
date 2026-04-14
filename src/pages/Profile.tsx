@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { storageImageUrl } from "@/lib/imageTransform";
+import { PageSEO, profileSEO } from "@/hooks/usePageSEO";
 import {
   MapPin, Copy, Shield, X, MessageCircle, CheckCircle, Building2, Link2, Plus,
   Pencil, Trash2, Briefcase, GraduationCap, Award, Code2, Eye, EyeOff,
