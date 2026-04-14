@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { storageImageUrl } from "@/lib/imageTransform";
 import {
   Users, Plus, Shield, Copy, Search, FileText, Briefcase, CheckCircle, XCircle,
-  Clock, UserPlus, Send, Building2, Lock, Trash2, ChevronRight, MessageCircle
+  Clock, UserPlus, Send, Building2, Lock, Trash2, ChevronRight, MessageCircle, AlertTriangle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
