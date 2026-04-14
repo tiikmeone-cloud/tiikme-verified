@@ -160,8 +160,6 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             <ThemeLogo className="h-10 w-auto" />
           </Link>
         </div>
-          </Link>
-        </div>
         <nav className="flex-1 overflow-y-auto px-2.5 py-3">
           {navGroups.map((group) => (
             <div key={group.label} className="mb-1">
