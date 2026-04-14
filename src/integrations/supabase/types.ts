@@ -581,14 +581,19 @@ export type Database = {
       }
       opportunities: {
         Row: {
+          activity_score_min: number | null
+          applications_count: number | null
+          ask_portfolio: boolean | null
           assessment_id: string | null
           company_id: string | null
           compensation: string | null
           created_at: string | null
+          custom_attachment_label: string | null
           deadline: string | null
           description: string | null
           domain: string | null
           experience_min: number | null
+          hr_contact_id: string | null
           id: string
           is_cross_domain: boolean | null
           is_open: boolean | null
@@ -597,23 +602,31 @@ export type Database = {
           org_id: string | null
           poster_id: string | null
           qualification_criteria: Json | null
+          require_resume: boolean | null
           responses_count: number | null
           salary_currency: string | null
           salary_max: number | null
           salary_min: number | null
+          screening_questions: Json | null
           skills_required: string[] | null
+          status: string | null
           title: string
           type: string | null
         }
         Insert: {
+          activity_score_min?: number | null
+          applications_count?: number | null
+          ask_portfolio?: boolean | null
           assessment_id?: string | null
           company_id?: string | null
           compensation?: string | null
           created_at?: string | null
+          custom_attachment_label?: string | null
           deadline?: string | null
           description?: string | null
           domain?: string | null
           experience_min?: number | null
+          hr_contact_id?: string | null
           id?: string
           is_cross_domain?: boolean | null
           is_open?: boolean | null
@@ -622,23 +635,31 @@ export type Database = {
           org_id?: string | null
           poster_id?: string | null
           qualification_criteria?: Json | null
+          require_resume?: boolean | null
           responses_count?: number | null
           salary_currency?: string | null
           salary_max?: number | null
           salary_min?: number | null
+          screening_questions?: Json | null
           skills_required?: string[] | null
+          status?: string | null
           title: string
           type?: string | null
         }
         Update: {
+          activity_score_min?: number | null
+          applications_count?: number | null
+          ask_portfolio?: boolean | null
           assessment_id?: string | null
           company_id?: string | null
           compensation?: string | null
           created_at?: string | null
+          custom_attachment_label?: string | null
           deadline?: string | null
           description?: string | null
           domain?: string | null
           experience_min?: number | null
+          hr_contact_id?: string | null
           id?: string
           is_cross_domain?: boolean | null
           is_open?: boolean | null
@@ -647,11 +668,14 @@ export type Database = {
           org_id?: string | null
           poster_id?: string | null
           qualification_criteria?: Json | null
+          require_resume?: boolean | null
           responses_count?: number | null
           salary_currency?: string | null
           salary_max?: number | null
           salary_min?: number | null
+          screening_questions?: Json | null
           skills_required?: string[] | null
+          status?: string | null
           title?: string
           type?: string | null
         }
@@ -2018,12 +2042,16 @@ export type Database = {
       }
       verification_requests: {
         Row: {
+          assigned_to: string | null
           context_note: string | null
           created_at: string | null
+          document_type: string | null
+          document_url: string | null
           id: string
           item_id: string
           item_type: string
           org_id: string
+          requested_doc_message: string | null
           requester_id: string
           review_note: string | null
           reviewed_by: string | null
@@ -2033,12 +2061,16 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          assigned_to?: string | null
           context_note?: string | null
           created_at?: string | null
+          document_type?: string | null
+          document_url?: string | null
           id?: string
           item_id: string
           item_type: string
           org_id: string
+          requested_doc_message?: string | null
           requester_id: string
           review_note?: string | null
           reviewed_by?: string | null
@@ -2048,12 +2080,16 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          assigned_to?: string | null
           context_note?: string | null
           created_at?: string | null
+          document_type?: string | null
+          document_url?: string | null
           id?: string
           item_id?: string
           item_type?: string
           org_id?: string
+          requested_doc_message?: string | null
           requester_id?: string
           review_note?: string | null
           reviewed_by?: string | null
@@ -2297,6 +2333,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      workspace_access: {
+        Row: {
+          access_type: string
+          granted_at: string | null
+          granted_by: string | null
+          id: string
+          user_id: string
+          workspace_id: string | null
+        }
+        Insert: {
+          access_type: string
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          user_id: string
+          workspace_id?: string | null
+        }
+        Update: {
+          access_type?: string
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          user_id?: string
+          workspace_id?: string | null
+        }
+        Relationships: []
       }
       workspace_members: {
         Row: {
