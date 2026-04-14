@@ -609,88 +609,107 @@ const Profile = () => {
       )}
 
       {/* ── GRID ── */}
-      <div className="max-w-[960px] mx-auto px-4 mt-4 grid grid-cols-1 md:grid-cols-[340px_1fr] gap-4">
+      <div className="max-w-[960px] mx-auto px-4 mt-4 grid grid-cols-1 md:grid-cols-[35%_1fr] gap-3">
         {/* ═══ LEFT COLUMN ═══ */}
-        <div className="space-y-4">
+        <div className="space-y-[10px]">
           {/* Connections Box */}
           <GlassBox accent="connections">
-            <p className="text-[12px] font-bold mb-1" style={{ color: "#6366F1" }}>Connections</p>
-            <p className="text-[28px] font-extrabold" style={{ color: "var(--color-text)" }}>{stats.connections}</p>
-            {connectedAvatars.length > 0 && (
-              <div className="flex -space-x-2 mt-2">
-                {connectedAvatars.map((a: any) => (
-                  <div key={a.id} className="w-8 h-8 rounded-full overflow-hidden border-2 border-white flex items-center justify-center text-[10px] font-bold text-white" style={{ background: "#6366F1" }}>
-                    {a.avatar_url ? <img src={storageImageUrl(a.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (a.full_name?.[0] || "?")}
-                  </div>
-                ))}
+            <div className="flex items-center gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] font-semibold uppercase tracking-wide" style={{ color: "#6B7094" }}>Connections</p>
+                <p className="text-[24px] font-bold leading-tight" style={{ color: "var(--color-text)" }}>{stats.connections}</p>
               </div>
-            )}
-            <Link to="/app/strands" className="text-[12px] font-semibold mt-2 block" style={{ color: "#6366F1" }}>See all connections</Link>
+              {connectedAvatars.length > 0 && (
+                <div className="flex -space-x-2">
+                  {connectedAvatars.slice(0, 4).map((a: any) => (
+                    <div key={a.id} className="w-7 h-7 rounded-full overflow-hidden border-2 border-white flex items-center justify-center text-[9px] font-bold text-white" style={{ background: "#6366F1" }}>
+                      {a.avatar_url ? <img src={storageImageUrl(a.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (a.full_name?.[0] || "?")}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <Link to="/app/strands" className="text-[12px] font-semibold mt-1 block" style={{ color: "#E8733A" }}>See all →</Link>
           </GlassBox>
 
           {/* Not Tiiked banner (owner only) */}
           {isOwnProfile && !isVerified && (
-            <GlassBox accent="identity">
-              <div className="flex items-center gap-2">
-                <Shield className="w-5 h-5" style={{ color: "#F59E0B" }} />
-                <div className="flex-1">
-                  <p className="text-[12px] font-bold" style={{ color: "var(--color-text)" }}>Get Tiiked</p>
-                  <p className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>Verify your profile to unlock the gold badge</p>
+            <div className="glass-glow" style={{ borderRadius: 20, padding: "12px 16px" }}>
+              <div className="flex items-center gap-3">
+                <Shield className="w-5 h-5 shrink-0" style={{ color: "#E8733A" }} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-bold" style={{ color: "var(--color-text)" }}>Get Tiiked</p>
+                  <p className="text-[11px]" style={{ color: "#6B7094" }}>Verify your profile for the gold badge</p>
                 </div>
-                <button type="button" onClick={() => setShowGetTiiked(true)} className="text-[11px] font-bold px-3 py-1.5 rounded-full cursor-pointer text-white" style={{ background: "#F59E0B" }}>Verify</button>
+                <button type="button" onClick={() => setShowGetTiiked(true)} className="btn-liquid-primary text-[11px] font-bold px-3 py-1.5 rounded-full cursor-pointer shrink-0" style={{ fontSize: 11 }}>Verify</button>
+              </div>
+            </div>
+          )}
+
+          {/* Social Links (if any) — compact */}
+          {customLinks.length > 0 && (
+            <GlassBox accent="contact">
+              <p className="text-[12px] font-semibold uppercase tracking-wide mb-2" style={{ color: "#6B7094" }}>Links</p>
+              <div className="space-y-1.5">
+                {customLinks.map((link: any, i: number) => (
+                  <a key={i} href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[13px] font-medium hover:underline" style={{ color: "#E8733A" }}>
+                    <ExternalLink className="w-3.5 h-3.5 shrink-0" />{link.label || link.url}
+                  </a>
+                ))}
               </div>
             </GlassBox>
           )}
         </div>
 
         {/* ═══ RIGHT COLUMN ═══ */}
-        <div className="space-y-4">
+        <div className="space-y-[10px]">
           {/* Experience Box */}
           <GlassBox accent="experience" expanded={expandedBox === "experience"} onClick={() => !showAddExp && toggleBox("experience")} spanFull>
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Briefcase className="w-4 h-4" style={{ color: "#3B82F6" }} />
-                <h2 className="text-[16px] font-extrabold" style={{ color: "#1A1A1A" }}>Experience</h2>
+                <Briefcase className="w-5 h-5" style={{ color: "#4A90D9" }} />
+                <h2 className="text-[15px] font-semibold" style={{ color: "#1A1A2E" }}>Experience</h2>
               </div>
-              {isOwnProfile && <button type="button" onClick={e => { e.stopPropagation(); setShowAddExp(true); setExpandedBox("experience"); }} className="text-[11px] font-bold px-3 py-1 rounded-full" style={{ background: "rgba(59,130,246,0.08)", color: "#3B82F6", border: "1px solid rgba(59,130,246,0.2)" }}><Plus className="w-3 h-3 inline mr-0.5" /> Add</button>}
+              {isOwnProfile && <button type="button" onClick={e => { e.stopPropagation(); setShowAddExp(true); setExpandedBox("experience"); }} className="btn-glass-pill" style={{ padding: "4px 12px", fontSize: 12, borderRadius: 10 }}><Plus className="w-3 h-3 inline mr-0.5" /> Add</button>}
             </div>
 
             {expandedBox === "experience" ? (
               <>
-                {experiences.length === 0 && !showAddExp && <p className="text-[13px]" style={{ color: "#9CA3AF" }}>{isOwnProfile ? "Add your work experience" : "No experience added"}</p>}
-                <div className="relative pl-6">
-                  {experiences.length > 0 && <div className="absolute left-[7px] top-2 bottom-2 w-[2px]" style={{ background: "linear-gradient(to bottom, #3B82F6, #E5E7EB)" }} />}
+                {experiences.length === 0 && !showAddExp && <p className="text-[13px] mt-1" style={{ color: "#6B7094" }}>No experience added</p>}
+                <div className="relative pl-6 mt-1">
+                  {experiences.length > 0 && <div className="absolute left-[7px] top-2 bottom-2 w-[2px]" style={{ background: "linear-gradient(to bottom, #4A90D9, rgba(74,144,217,0.15))" }} />}
                   {experiences.map((exp: any, idx: number) => (
-                    <div key={exp.id} className="relative flex gap-3 py-3 group" style={{ borderBottom: idx < experiences.length - 1 ? "1px solid rgba(0,0,0,0.06)" : "none" }}>
-                      <div className="absolute -left-6 top-4 w-3 h-3 rounded-full border-2 z-10" style={{ background: exp.is_current ? "#3B82F6" : "#fff", borderColor: "#3B82F6" }} />
-                      <div className="w-12 h-12 rounded-xl flex items-center justify-center text-[14px] font-bold text-white shrink-0" style={{ background: hashColor(exp.company_name || exp.institution_name || "X") }}>
+                    <div key={exp.id} className="relative flex gap-3 py-2 group" style={{ borderBottom: idx < experiences.length - 1 ? "1px solid rgba(255,255,255,0.15)" : "none" }}>
+                      <div className="absolute -left-6 top-3 w-3 h-3 rounded-full border-2 z-10" style={{ background: exp.is_current ? "#4A90D9" : "#fff", borderColor: "#4A90D9" }} />
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[12px] font-bold text-white shrink-0" style={{ background: hashColor(exp.company_name || exp.institution_name || "X") }}>
                         {(exp.company_name || exp.institution_name || "?")[0].toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0" onClick={e => e.stopPropagation()}>
-                        <p className="text-[14px] font-bold" style={{ color: "#1A1A1A" }}>{exp.company_name || exp.institution_name}</p>
-                        <p className="text-[13px] font-semibold" style={{ color: "#374151" }}>{exp.job_title || exp.title}</p>
-                        {exp.employment_type && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full inline-block mt-0.5" style={{ background: "#EFF6FF", color: "#2563EB" }}>{exp.employment_type}</span>}
-                        <p className="text-[11px] mt-0.5" style={{ color: "#9CA3AF" }}>
+                        <p className="text-[14px] font-medium" style={{ color: "#1A1A2E" }}>{exp.company_name || exp.institution_name}</p>
+                        <p className="text-[12px]" style={{ color: "#6B7094" }}>{exp.job_title || exp.title}</p>
+                        {exp.employment_type && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full inline-block mt-0.5" style={{ background: "rgba(74,144,217,0.08)", color: "#4A90D9" }}>{exp.employment_type}</span>}
+                        <p className="text-[11px] mt-0.5" style={{ color: "#6B7094" }}>
                           {exp.start_month && exp.start_year ? `${exp.start_month} ${exp.start_year} – ${exp.is_current ? "Present" : exp.end_month && exp.end_year ? `${exp.end_month} ${exp.end_year}` : ""}` : exp.start_date ? formatDuration(exp.start_date, exp.end_date, exp.is_current) : ""}
                         </p>
-                        {exp.work_location && <p className="text-[11px] flex items-center gap-1" style={{ color: "#9CA3AF" }}><MapPin className="w-3 h-3" />{exp.work_location}</p>}
-                        {exp.description && <p className="text-[12px] mt-1 line-clamp-2" style={{ color: "#4B5563" }}>{exp.description}</p>}
+                        {exp.work_location && <p className="text-[11px] flex items-center gap-1" style={{ color: "#6B7094" }}><MapPin className="w-3 h-3" />{exp.work_location}</p>}
+                        {exp.description && <p className="text-[12px] mt-1 line-clamp-2" style={{ color: "#6B7094" }}>{exp.description}</p>}
                         {(exp.skills_used?.length > 0 || exp.tech_stack?.length > 0) && (
-                          <div className="flex flex-wrap gap-1 mt-1.5">{(exp.skills_used || exp.tech_stack || []).slice(0, 5).map((s: string) => <span key={s} className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "rgba(59,130,246,0.08)", color: "#3B82F6" }}>{s}</span>)}</div>
+                          <div className="flex flex-wrap gap-1 mt-1">{(exp.skills_used || exp.tech_stack || []).slice(0, 5).map((s: string) => <span key={s} className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "rgba(74,144,217,0.08)", color: "#4A90D9" }}>{s}</span>)}</div>
                         )}
                         <VerifBadge item={exp} isOwn={isOwnProfile} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
                       </div>
                       {isOwnProfile && (
                         <div className="flex flex-col gap-1 items-end opacity-0 group-hover:opacity-100" onClick={e => e.stopPropagation()}>
-                          <button type="button" onClick={() => toggleVisibility(exp.id, "work_items", exp.visibility || "public")} className="p-1 cursor-pointer" style={{ color: "#9CA3AF" }}>
+                          <button type="button" onClick={() => toggleVisibility(exp.id, "work_items", exp.visibility || "public")} className="p-1 cursor-pointer" style={{ color: "#6B7094" }}>
                             {exp.visibility === "public" ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                           </button>
-                          <button type="button" onClick={() => deleteItem(exp.id, "work_items")} className="p-1 cursor-pointer" style={{ color: "#9CA3AF" }}><Trash2 className="w-3.5 h-3.5" /></button>
+                          <button type="button" onClick={() => deleteItem(exp.id, "work_items")} className="p-1 cursor-pointer" style={{ color: "#6B7094" }}><Trash2 className="w-3.5 h-3.5" /></button>
                         </div>
                       )}
                     </div>
                   ))}
                 </div>
+                {experiences.length > 2 && <button type="button" className="text-[12px] font-semibold mt-1" style={{ color: "#E8733A" }}>See all {experiences.length} →</button>}
                 <AnimatePresence>{showAddExp && (
                   <div onClick={e => e.stopPropagation()}>
                     <InlineForm title="Add Experience" saving={saving} onSave={saveExperience} onCancel={() => setShowAddExp(false)} fields={<>
@@ -703,64 +722,64 @@ const Profile = () => {
                         <select value={expForm.startMonth} onChange={e => setExpForm({ ...expForm, startMonth: e.target.value })} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none" style={selectStyle}><option value="">Start month</option>{months.map(m => <option key={m}>{m}</option>)}</select>
                         <select value={expForm.startYear} onChange={e => setExpForm({ ...expForm, startYear: e.target.value })} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none" style={selectStyle}><option value="">Start year</option>{years.map(y => <option key={y}>{y}</option>)}</select>
                       </div>
-                      <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={expForm.isCurrent} onChange={e => setExpForm({ ...expForm, isCurrent: e.target.checked })} /><span className="text-[12px]" style={{ color: "#4B5563" }}>I currently work here</span></label>
+                      <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={expForm.isCurrent} onChange={e => setExpForm({ ...expForm, isCurrent: e.target.checked })} /><span className="text-[12px]" style={{ color: "#6B7094" }}>I currently work here</span></label>
                       {!expForm.isCurrent && <div className="grid grid-cols-2 gap-2">
                         <select value={expForm.endMonth} onChange={e => setExpForm({ ...expForm, endMonth: e.target.value })} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none" style={selectStyle}><option value="">End month</option>{months.map(m => <option key={m}>{m}</option>)}</select>
                         <select value={expForm.endYear} onChange={e => setExpForm({ ...expForm, endYear: e.target.value })} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none" style={selectStyle}><option value="">End year</option>{years.map(y => <option key={y}>{y}</option>)}</select>
                       </div>}
                       <Input placeholder="Location (optional)" value={expForm.city} onChange={e => setExpForm({ ...expForm, city: e.target.value })} style={inputStyle} />
                       <textarea value={expForm.description} onChange={e => setExpForm({ ...expForm, description: e.target.value.slice(0, 500) })} placeholder="Description" rows={2} maxLength={500}
-                        className="w-full rounded-xl p-3 text-[13px] outline-none resize-none" style={{ background: "#fff", border: "1px solid #E5E7EB", color: "#1A1A1A" }} />
+                        className="w-full rounded-xl p-3 text-[13px] outline-none resize-none" style={{ background: "#fff", border: "1px solid #E5E7EB", color: "#1A1A2E" }} />
                       <Input placeholder="Skills (comma separated)" value={expForm.skills} onChange={e => setExpForm({ ...expForm, skills: e.target.value })} style={inputStyle} />
                     </>} />
                   </div>
                 )}</AnimatePresence>
               </>
             ) : (
-              /* Collapsed */
               currentExp ? (
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 mt-1">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold text-white" style={{ background: hashColor(currentExp.company_name || "") }}>{(currentExp.company_name || "?")[0]}</div>
                   <div className="min-w-0">
-                    <p className="text-[13px] font-bold truncate" style={{ color: "#1A1A1A" }}>{currentExp.company_name}</p>
-                    <p className="text-[11px] truncate" style={{ color: "#9CA3AF" }}>{currentExp.job_title || currentExp.title}</p>
+                    <p className="text-[13px] font-medium truncate" style={{ color: "#1A1A2E" }}>{currentExp.company_name}</p>
+                    <p className="text-[11px] truncate" style={{ color: "#6B7094" }}>{currentExp.job_title || currentExp.title}</p>
                   </div>
                 </div>
-              ) : <p className="text-[13px]" style={{ color: "#9CA3AF" }}>No experience added</p>
+              ) : <p className="text-[13px] mt-1" style={{ color: "#6B7094" }}>No experience added</p>
             )}
           </GlassBox>
 
           {/* Education Box */}
           <GlassBox accent="education" expanded={expandedBox === "education"} onClick={() => !showAddEdu && toggleBox("education")} spanFull>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2"><GraduationCap className="w-4 h-4" style={{ color: "#8B5CF6" }} /><h2 className="text-[16px] font-extrabold" style={{ color: "#1A1A1A" }}>Education</h2></div>
-              {isOwnProfile && <button type="button" onClick={e => { e.stopPropagation(); setShowAddEdu(true); setExpandedBox("education"); }} className="text-[11px] font-bold px-3 py-1 rounded-full" style={{ background: "rgba(139,92,246,0.08)", color: "#8B5CF6", border: "1px solid rgba(139,92,246,0.2)" }}><Plus className="w-3 h-3 inline mr-0.5" /> Add</button>}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2"><GraduationCap className="w-5 h-5" style={{ color: "#34C759" }} /><h2 className="text-[15px] font-semibold" style={{ color: "#1A1A2E" }}>Education</h2></div>
+              {isOwnProfile && <button type="button" onClick={e => { e.stopPropagation(); setShowAddEdu(true); setExpandedBox("education"); }} className="btn-glass-pill" style={{ padding: "4px 12px", fontSize: 12, borderRadius: 10 }}><Plus className="w-3 h-3 inline mr-0.5" /> Add</button>}
             </div>
             {expandedBox === "education" ? (
               <>
-                {education.length === 0 && !showAddEdu && <p className="text-[13px]" style={{ color: "#9CA3AF" }}>{isOwnProfile ? "Add your education" : "No education added"}</p>}
-                <div className="relative pl-6">
-                  {education.length > 0 && <div className="absolute left-[7px] top-2 bottom-2 w-[2px]" style={{ background: "linear-gradient(to bottom, #8B5CF6, #E5E7EB)" }} />}
+                {education.length === 0 && !showAddEdu && <p className="text-[13px] mt-1" style={{ color: "#6B7094" }}>No education added</p>}
+                <div className="relative pl-6 mt-1">
+                  {education.length > 0 && <div className="absolute left-[7px] top-2 bottom-2 w-[2px]" style={{ background: "linear-gradient(to bottom, #34C759, rgba(52,199,89,0.15))" }} />}
                   {education.map((edu: any, idx: number) => (
-                    <div key={edu.id} className="relative flex gap-3 py-3 group" style={{ borderBottom: idx < education.length - 1 ? "1px solid rgba(0,0,0,0.06)" : "none" }}>
-                      <div className="absolute -left-6 top-4 w-3 h-3 rounded-full border-2 z-10" style={{ background: edu.is_current ? "#8B5CF6" : "#fff", borderColor: "#8B5CF6" }} />
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(139,92,246,0.08)" }}><GraduationCap className="w-4 h-4" style={{ color: "#8B5CF6" }} /></div>
+                    <div key={edu.id} className="relative flex gap-3 py-2 group" style={{ borderBottom: idx < education.length - 1 ? "1px solid rgba(255,255,255,0.15)" : "none" }}>
+                      <div className="absolute -left-6 top-3 w-3 h-3 rounded-full border-2 z-10" style={{ background: edu.is_current ? "#34C759" : "#fff", borderColor: "#34C759" }} />
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(52,199,89,0.08)" }}><GraduationCap className="w-4 h-4" style={{ color: "#34C759" }} /></div>
                       <div className="flex-1 min-w-0" onClick={e => e.stopPropagation()}>
-                        <p className="text-[14px] font-bold" style={{ color: "#1A1A1A" }}>{edu.institution_name_edu || edu.institution_name}</p>
-                        <p className="text-[13px]" style={{ color: "#374151" }}>{edu.degree_type || edu.title}{edu.field_of_study ? ` · ${edu.field_of_study}` : ""}</p>
-                        <p className="text-[11px]" style={{ color: "#9CA3AF" }}>{edu.start_year || ""}{edu.start_year && (edu.is_current || edu.end_year) ? " – " : ""}{edu.is_current ? "Present" : edu.end_year || ""}</p>
-                        {edu.grade_score && <p className="text-[11px]" style={{ color: "#9CA3AF" }}>Grade: {edu.grade_score}</p>}
+                        <p className="text-[14px] font-medium" style={{ color: "#1A1A2E" }}>{edu.institution_name_edu || edu.institution_name}</p>
+                        <p className="text-[12px]" style={{ color: "#6B7094" }}>{edu.degree_type || edu.title}{edu.field_of_study ? ` · ${edu.field_of_study}` : ""}</p>
+                        <p className="text-[11px]" style={{ color: "#6B7094" }}>{edu.start_year || ""}{edu.start_year && (edu.is_current || edu.end_year) ? " – " : ""}{edu.is_current ? "Present" : edu.end_year || ""}</p>
+                        {edu.grade_score && <p className="text-[11px]" style={{ color: "#6B7094" }}>Grade: {edu.grade_score}</p>}
                         <VerifBadge item={{ ...edu, item_type: "education" }} isOwn={isOwnProfile} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
                       </div>
                       {isOwnProfile && (
                         <div className="flex flex-col gap-1 items-end opacity-0 group-hover:opacity-100" onClick={e => e.stopPropagation()}>
-                          <button type="button" onClick={() => toggleVisibility(edu.id, "work_items", edu.visibility || "public")} className="p-1 cursor-pointer" style={{ color: "#9CA3AF" }}>{edu.visibility === "public" ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}</button>
-                          <button type="button" onClick={() => deleteItem(edu.id, "work_items")} className="p-1 cursor-pointer" style={{ color: "#9CA3AF" }}><Trash2 className="w-3.5 h-3.5" /></button>
+                          <button type="button" onClick={() => toggleVisibility(edu.id, "work_items", edu.visibility || "public")} className="p-1 cursor-pointer" style={{ color: "#6B7094" }}>{edu.visibility === "public" ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}</button>
+                          <button type="button" onClick={() => deleteItem(edu.id, "work_items")} className="p-1 cursor-pointer" style={{ color: "#6B7094" }}><Trash2 className="w-3.5 h-3.5" /></button>
                         </div>
                       )}
                     </div>
                   ))}
                 </div>
+                {education.length > 2 && <button type="button" className="text-[12px] font-semibold mt-1" style={{ color: "#E8733A" }}>See all {education.length} →</button>}
                 <AnimatePresence>{showAddEdu && (
                   <div onClick={e => e.stopPropagation()}>
                     <InlineForm title="Add Education" saving={saving} onSave={saveEducation} onCancel={() => setShowAddEdu(false)} fields={<>
@@ -771,7 +790,7 @@ const Profile = () => {
                         <select value={eduForm.startYear} onChange={e => setEduForm({ ...eduForm, startYear: e.target.value })} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none" style={selectStyle}><option value="">Start year</option>{years.map(y => <option key={y}>{y}</option>)}</select>
                         {!eduForm.isCurrent && <select value={eduForm.endYear} onChange={e => setEduForm({ ...eduForm, endYear: e.target.value })} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none" style={selectStyle}><option value="">End year</option>{years.map(y => <option key={y}>{y}</option>)}</select>}
                       </div>
-                      <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={eduForm.isCurrent} onChange={e => setEduForm({ ...eduForm, isCurrent: e.target.checked })} /><span className="text-[12px]" style={{ color: "#4B5563" }}>Currently studying here</span></label>
+                      <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={eduForm.isCurrent} onChange={e => setEduForm({ ...eduForm, isCurrent: e.target.checked })} /><span className="text-[12px]" style={{ color: "#6B7094" }}>Currently studying here</span></label>
                       <Input placeholder="Grade / CGPA" value={eduForm.grade} onChange={e => setEduForm({ ...eduForm, grade: e.target.value })} style={inputStyle} />
                     </>} />
                   </div>
@@ -779,96 +798,97 @@ const Profile = () => {
               </>
             ) : (
               education.length > 0 ? (
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(139,92,246,0.08)" }}><GraduationCap className="w-4 h-4" style={{ color: "#8B5CF6" }} /></div>
+                <div className="flex items-center gap-3 mt-1">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(52,199,89,0.08)" }}><GraduationCap className="w-4 h-4" style={{ color: "#34C759" }} /></div>
                   <div className="min-w-0">
-                    <p className="text-[13px] font-bold truncate" style={{ color: "#1A1A1A" }}>{education[0].institution_name_edu || education[0].institution_name}</p>
-                    <p className="text-[11px] truncate" style={{ color: "#9CA3AF" }}>{education[0].degree_type || education[0].title}</p>
+                    <p className="text-[13px] font-medium truncate" style={{ color: "#1A1A2E" }}>{education[0].institution_name_edu || education[0].institution_name}</p>
+                    <p className="text-[11px] truncate" style={{ color: "#6B7094" }}>{education[0].degree_type || education[0].title}</p>
                   </div>
                 </div>
-              ) : <p className="text-[13px]" style={{ color: "#9CA3AF" }}>No education added</p>
+              ) : <p className="text-[13px] mt-1" style={{ color: "#6B7094" }}>No education added</p>
             )}
           </GlassBox>
 
           {/* Projects Box */}
           <GlassBox accent="projects" expanded={expandedBox === "projects"} onClick={() => !showAddProject && toggleBox("projects")} spanFull>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2"><Rocket className="w-4 h-4" style={{ color: "#10B981" }} /><h2 className="text-[16px] font-extrabold" style={{ color: "#1A1A1A" }}>Projects</h2></div>
-              {isOwnProfile && <button type="button" onClick={e => { e.stopPropagation(); setShowAddProject(true); setExpandedBox("projects"); }} className="text-[11px] font-bold px-3 py-1 rounded-full" style={{ background: "rgba(16,185,129,0.08)", color: "#10B981", border: "1px solid rgba(16,185,129,0.2)" }}><Plus className="w-3 h-3 inline mr-0.5" /> Add</button>}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2"><Rocket className="w-5 h-5" style={{ color: "#FF6B9D" }} /><h2 className="text-[15px] font-semibold" style={{ color: "#1A1A2E" }}>Projects</h2></div>
+              {isOwnProfile && <button type="button" onClick={e => { e.stopPropagation(); setShowAddProject(true); setExpandedBox("projects"); }} className="btn-glass-pill" style={{ padding: "4px 12px", fontSize: 12, borderRadius: 10 }}><Plus className="w-3 h-3 inline mr-0.5" /> Add</button>}
             </div>
             {expandedBox === "projects" ? (
               <>
-                {projects.length === 0 && !showAddProject && <p className="text-[13px]" style={{ color: "#9CA3AF" }}>{isOwnProfile ? "Add your projects" : "No projects"}</p>}
-                {projects.map((p: any) => (
-                  <div key={p.id} className="py-3 group" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }} onClick={e => e.stopPropagation()}>
+                {projects.length === 0 && !showAddProject && <p className="text-[13px] mt-1" style={{ color: "#6B7094" }}>No projects added</p>}
+                {projects.slice(0, 2).map((p: any, idx: number) => (
+                  <div key={p.id} className="py-2 group" style={{ borderBottom: idx < Math.min(projects.length, 2) - 1 ? "1px solid rgba(255,255,255,0.15)" : "none" }} onClick={e => e.stopPropagation()}>
                     <div className="flex items-start justify-between">
                       <div>
-                        <p className="text-[14px] font-bold" style={{ color: "#1A1A1A" }}>{p.title}</p>
-                        {p.description && <p className="text-[12px] mt-0.5 line-clamp-2" style={{ color: "#4B5563" }}>{p.description}</p>}
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full inline-block mt-1" style={{ background: p.is_current ? "#F0FDF4" : "#F9FAFB", color: p.is_current ? "#16A34A" : "#6B7280" }}>{p.is_current ? "Active" : "Completed"}</span>
-                        {p.tech_stack?.length > 0 && <div className="flex flex-wrap gap-1 mt-1.5">{(p.tech_stack as string[]).slice(0, 4).map((s: string) => <span key={s} className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "rgba(16,185,129,0.08)", color: "#059669" }}>{s}</span>)}</div>}
+                        <p className="text-[14px] font-medium" style={{ color: "#1A1A2E" }}>{p.title}</p>
+                        {p.description && <p className="text-[12px] mt-0.5 line-clamp-2" style={{ color: "#6B7094" }}>{p.description}</p>}
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full inline-block mt-1" style={{ background: p.is_current ? "rgba(52,199,89,0.08)" : "rgba(107,112,148,0.08)", color: p.is_current ? "#34C759" : "#6B7094" }}>{p.is_current ? "Active" : "Completed"}</span>
+                        {p.tech_stack?.length > 0 && <div className="flex flex-wrap gap-1 mt-1">{(p.tech_stack as string[]).slice(0, 4).map((s: string) => <span key={s} className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "rgba(255,107,157,0.08)", color: "#FF6B9D" }}>{s}</span>)}</div>}
                         <VerifBadge item={{ ...p, item_type: "project" }} isOwn={isOwnProfile} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
                       </div>
                       {isOwnProfile && (
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100">
-                          <button type="button" onClick={() => toggleVisibility(p.id, "work_items", p.visibility || "public")} className="p-1 cursor-pointer" style={{ color: "#9CA3AF" }}>{p.visibility === "public" ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}</button>
-                          <button type="button" onClick={() => deleteItem(p.id, "work_items")} className="p-1 cursor-pointer" style={{ color: "#9CA3AF" }}><Trash2 className="w-3.5 h-3.5" /></button>
+                          <button type="button" onClick={() => toggleVisibility(p.id, "work_items", p.visibility || "public")} className="p-1 cursor-pointer" style={{ color: "#6B7094" }}>{p.visibility === "public" ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}</button>
+                          <button type="button" onClick={() => deleteItem(p.id, "work_items")} className="p-1 cursor-pointer" style={{ color: "#6B7094" }}><Trash2 className="w-3.5 h-3.5" /></button>
                         </div>
                       )}
                     </div>
                   </div>
                 ))}
+                {projects.length > 2 && <button type="button" className="text-[12px] font-semibold mt-1" style={{ color: "#E8733A" }}>See all {projects.length} →</button>}
                 <AnimatePresence>{showAddProject && (
                   <div onClick={e => e.stopPropagation()}>
                     <InlineForm title="Add Project" saving={saving} onSave={saveProject} onCancel={() => setShowAddProject(false)} fields={<>
                       <Input placeholder="Project Name *" value={projForm.title} onChange={e => setProjForm({ ...projForm, title: e.target.value })} style={inputStyle} />
                       <Input placeholder="Organisation (optional)" value={projForm.org} onChange={e => setProjForm({ ...projForm, org: e.target.value })} style={inputStyle} />
                       <textarea value={projForm.description} onChange={e => setProjForm({ ...projForm, description: e.target.value.slice(0, 500) })} placeholder="Description" rows={2} maxLength={500}
-                        className="w-full rounded-xl p-3 text-[13px] outline-none resize-none" style={{ background: "#fff", border: "1px solid #E5E7EB", color: "#1A1A1A" }} />
+                        className="w-full rounded-xl p-3 text-[13px] outline-none resize-none" style={{ background: "#fff", border: "1px solid #E5E7EB", color: "#1A1A2E" }} />
                       <Input placeholder="Tech stack (comma separated)" value={projForm.techStack} onChange={e => setProjForm({ ...projForm, techStack: e.target.value })} style={inputStyle} />
-                      <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={projForm.isCurrent} onChange={e => setProjForm({ ...projForm, isCurrent: e.target.checked })} /><span className="text-[12px]" style={{ color: "#4B5563" }}>Currently active</span></label>
+                      <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={projForm.isCurrent} onChange={e => setProjForm({ ...projForm, isCurrent: e.target.checked })} /><span className="text-[12px]" style={{ color: "#6B7094" }}>Currently active</span></label>
                     </>} />
                   </div>
                 )}</AnimatePresence>
               </>
             ) : (
               projects.length > 0 ? (
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-2 flex-wrap mt-1">
                   {projects.slice(0, 2).map(p => (
-                    <span key={p.id} className="text-[12px] font-semibold px-3 py-1 rounded-full" style={{ background: "rgba(16,185,129,0.08)", color: "#059669", border: "1px solid rgba(16,185,129,0.2)" }}>{p.title}</span>
+                    <span key={p.id} className="text-[12px] font-semibold px-3 py-1 rounded-full" style={{ background: "rgba(255,107,157,0.08)", color: "#FF6B9D", border: "1px solid rgba(255,107,157,0.2)" }}>{p.title}</span>
                   ))}
-                  {projects.length > 2 && <span className="text-[11px]" style={{ color: "#9CA3AF" }}>+{projects.length - 2} more</span>}
+                  {projects.length > 2 && <span className="text-[11px]" style={{ color: "#6B7094" }}>+{projects.length - 2} more</span>}
                 </div>
-              ) : <p className="text-[13px]" style={{ color: "#9CA3AF" }}>No projects</p>
+              ) : <p className="text-[13px] mt-1" style={{ color: "#6B7094" }}>No projects</p>
             )}
           </GlassBox>
 
           {/* Achievements Box */}
           <GlassBox accent="achievements" expanded={expandedBox === "achievements"} onClick={() => !showAddAchievement && toggleBox("achievements")} spanFull>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2"><Award className="w-4 h-4" style={{ color: "#F59E0B" }} /><h2 className="text-[16px] font-extrabold" style={{ color: "#1A1A1A" }}>Achievements</h2></div>
-              {isOwnProfile && <button type="button" onClick={e => { e.stopPropagation(); setShowAddAchievement(true); setExpandedBox("achievements"); }} className="text-[11px] font-bold px-3 py-1 rounded-full" style={{ background: "rgba(245,158,11,0.08)", color: "#F59E0B", border: "1px solid rgba(245,158,11,0.2)" }}><Plus className="w-3 h-3 inline mr-0.5" /> Add</button>}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2"><Award className="w-5 h-5" style={{ color: "#FFB800" }} /><h2 className="text-[15px] font-semibold" style={{ color: "#1A1A2E" }}>Achievements</h2></div>
+              {isOwnProfile && <button type="button" onClick={e => { e.stopPropagation(); setShowAddAchievement(true); setExpandedBox("achievements"); }} className="btn-glass-pill" style={{ padding: "4px 12px", fontSize: 12, borderRadius: 10 }}><Plus className="w-3 h-3 inline mr-0.5" /> Add</button>}
             </div>
             {expandedBox === "achievements" ? (
               <>
-                {achievements.length === 0 && !showAddAchievement && <p className="text-[13px]" style={{ color: "#9CA3AF" }}>{isOwnProfile ? "Add your achievements" : "No achievements"}</p>}
-                {achievements.map(a => (
-                  <div key={a.id} className="flex items-center gap-3 py-3 group" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }} onClick={e => e.stopPropagation()}>
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgba(245,158,11,0.08)" }}><Award className="w-5 h-5" style={{ color: "#F59E0B" }} /></div>
+                {achievements.length === 0 && !showAddAchievement && <p className="text-[13px] mt-1" style={{ color: "#6B7094" }}>No achievements added</p>}
+                {achievements.slice(0, 2).map((a: any, idx: number) => (
+                  <div key={a.id} className="flex items-center gap-3 py-2 group" style={{ borderBottom: idx < Math.min(achievements.length, 2) - 1 ? "1px solid rgba(255,255,255,0.15)" : "none" }} onClick={e => e.stopPropagation()}>
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgba(255,184,0,0.08)" }}><Award className="w-4 h-4" style={{ color: "#FFB800" }} /></div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[14px] font-bold" style={{ color: "#1A1A1A" }}>{a.title}</p>
-                      <p className="text-[11px]" style={{ color: "#9CA3AF" }}>{[a.issued_by, a.achievement_date].filter(Boolean).join(" · ")}</p>
-                      {a.description && <p className="text-[12px] mt-0.5 line-clamp-2" style={{ color: "#4B5563" }}>{a.description}</p>}
+                      <p className="text-[14px] font-medium" style={{ color: "#1A1A2E" }}>{a.title}</p>
+                      <p className="text-[11px]" style={{ color: "#6B7094" }}>{[a.issued_by, a.achievement_date].filter(Boolean).join(" · ")}</p>
                     </div>
-                    {a.certificate_url && <a href={a.certificate_url} target="_blank" rel="noopener" className="text-[11px] font-bold" style={{ color: "#E8580A" }}>View</a>}
+                    {a.certificate_url && <a href={a.certificate_url} target="_blank" rel="noopener" className="text-[11px] font-bold" style={{ color: "#E8733A" }}>View</a>}
                     {isOwnProfile && (
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100">
-                        <button type="button" onClick={() => toggleVisibility(a.id, "achievements", a.visibility || "public")} className="p-1 cursor-pointer" style={{ color: "#9CA3AF" }}>{a.visibility === "public" ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}</button>
-                        <button type="button" onClick={() => deleteItem(a.id, "achievements")} className="p-1 cursor-pointer" style={{ color: "#9CA3AF" }}><Trash2 className="w-3.5 h-3.5" /></button>
+                        <button type="button" onClick={() => toggleVisibility(a.id, "achievements", a.visibility || "public")} className="p-1 cursor-pointer" style={{ color: "#6B7094" }}>{a.visibility === "public" ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}</button>
+                        <button type="button" onClick={() => deleteItem(a.id, "achievements")} className="p-1 cursor-pointer" style={{ color: "#6B7094" }}><Trash2 className="w-3.5 h-3.5" /></button>
                       </div>
                     )}
                   </div>
                 ))}
+                {achievements.length > 2 && <button type="button" className="text-[12px] font-semibold mt-1" style={{ color: "#E8733A" }}>See all {achievements.length} →</button>}
                 <AnimatePresence>{showAddAchievement && (
                   <div onClick={e => e.stopPropagation()}>
                     <InlineForm title="Add Achievement" saving={saving} onSave={saveAchievement} onCancel={() => setShowAddAchievement(false)} fields={<>
@@ -884,32 +904,32 @@ const Profile = () => {
                 )}</AnimatePresence>
               </>
             ) : (
-              <div className="flex items-center gap-2">
-                <span className="text-[14px] font-bold" style={{ color: "#1A1A1A" }}>{achievements.length}</span>
-                <span className="text-[12px]" style={{ color: "#9CA3AF" }}>achievements</span>
-                {achievements[0] && <span className="text-[12px] font-semibold" style={{ color: "#F59E0B" }}>· {achievements[0].title}</span>}
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-[14px] font-bold" style={{ color: "#1A1A2E" }}>{achievements.length}</span>
+                <span className="text-[12px]" style={{ color: "#6B7094" }}>achievements</span>
+                {achievements[0] && <span className="text-[12px] font-semibold" style={{ color: "#FFB800" }}>· {achievements[0].title}</span>}
               </div>
             )}
           </GlassBox>
 
           {/* Skills Box */}
           <GlassBox accent="skills" expanded={expandedBox === "skills"} onClick={() => !showAddSkill && toggleBox("skills")} spanFull>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2"><Code2 className="w-4 h-4" style={{ color: "#EC4899" }} /><h2 className="text-[16px] font-extrabold" style={{ color: "#1A1A1A" }}>Skills</h2></div>
-              {isOwnProfile && <button type="button" onClick={e => { e.stopPropagation(); setShowAddSkill(true); setExpandedBox("skills"); }} className="text-[11px] font-bold px-3 py-1 rounded-full" style={{ background: "rgba(236,72,153,0.08)", color: "#EC4899", border: "1px solid rgba(236,72,153,0.2)" }}><Plus className="w-3 h-3 inline mr-0.5" /> Add</button>}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2"><Code2 className="w-5 h-5" style={{ color: "#8B5CF6" }} /><h2 className="text-[15px] font-semibold" style={{ color: "#1A1A2E" }}>Skills</h2></div>
+              {isOwnProfile && <button type="button" onClick={e => { e.stopPropagation(); setShowAddSkill(true); setExpandedBox("skills"); }} className="btn-glass-pill" style={{ padding: "4px 12px", fontSize: 12, borderRadius: 10 }}><Plus className="w-3 h-3 inline mr-0.5" /> Add</button>}
             </div>
             {expandedBox === "skills" ? (
-              <div onClick={e => e.stopPropagation()}>
+              <div onClick={e => e.stopPropagation()} className="mt-1">
                 <div className="flex flex-wrap gap-1.5">
                   {skills.map((s: string) => (
-                    <span key={s} className="flex items-center gap-1 text-[12px] font-semibold px-3 py-1.5 rounded-full" style={{ border: "1.5px solid #EC4899", color: "#EC4899", background: "rgba(236,72,153,0.06)" }}>
+                    <span key={s} className="flex items-center gap-1 text-[12px] font-semibold px-3 py-1 rounded-full" style={{ border: "1.5px solid #8B5CF6", color: "#8B5CF6", background: "rgba(139,92,246,0.06)" }}>
                       {s}
                       {isOwnProfile && <button type="button" onClick={() => removeSkill(s)} className="cursor-pointer ml-0.5"><X className="w-3 h-3" /></button>}
                     </span>
                   ))}
                 </div>
                 {showAddSkill && (
-                  <div className="flex items-center gap-2 mt-3">
+                  <div className="flex items-center gap-2 mt-2">
                     <Input value={newSkill} onChange={e => setNewSkill(e.target.value)} placeholder="Type a skill..." className="flex-1" onKeyDown={e => { if (e.key === "Enter") addSkill(); }} />
                     <Button size="sm" onClick={addSkill}>Add</Button>
                     <Button variant="ghost" size="sm" onClick={() => setShowAddSkill(false)}>Cancel</Button>
@@ -917,32 +937,32 @@ const Profile = () => {
                 )}
               </div>
             ) : (
-              <div className="flex flex-wrap gap-1">
-                {skills.slice(0, 5).map(s => <span key={s} className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full" style={{ background: "rgba(236,72,153,0.06)", color: "#EC4899" }}>{s}</span>)}
-                {skills.length > 5 && <span className="text-[11px]" style={{ color: "#9CA3AF" }}>+{skills.length - 5} more</span>}
-                {skills.length === 0 && <span className="text-[13px]" style={{ color: "#9CA3AF" }}>No skills added</span>}
+              <div className="flex flex-wrap gap-1 mt-1">
+                {skills.slice(0, 5).map(s => <span key={s} className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full" style={{ background: "rgba(139,92,246,0.06)", color: "#8B5CF6" }}>{s}</span>)}
+                {skills.length > 5 && <span className="text-[11px]" style={{ color: "#6B7094" }}>+{skills.length - 5} more</span>}
+                {skills.length === 0 && <span className="text-[13px]" style={{ color: "#6B7094" }}>No skills added</span>}
               </div>
             )}
           </GlassBox>
 
           {/* Posts Box */}
           <GlassBox accent="posts" expanded={expandedBox === "posts"} onClick={() => toggleBox("posts")} spanFull>
-            <div className="flex items-center gap-2 mb-2">
-              <MessageCircle className="w-4 h-4" style={{ color: "#E8580A" }} />
-              <h2 className="text-[16px] font-extrabold" style={{ color: "#1A1A1A" }}>Posts</h2>
+            <div className="flex items-center gap-2">
+              <MessageCircle className="w-5 h-5" style={{ color: "#E8733A" }} />
+              <h2 className="text-[15px] font-semibold" style={{ color: "#1A1A2E" }}>Posts</h2>
             </div>
             {expandedBox === "posts" ? (
-              <>
-                {userPosts.length === 0 ? <p className="text-[13px]" style={{ color: "#9CA3AF" }}>No posts yet</p> : userPosts.slice(0, 3).map(p => (
-                  <Link key={p.id} to={`/post/${p.id}`} className="block py-2" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }} onClick={e => e.stopPropagation()}>
-                    <p className="text-[13px] line-clamp-2" style={{ color: "#374151" }}>{p.content}</p>
-                    <p className="text-[11px] mt-0.5" style={{ color: "#9CA3AF" }}>{p.created_at ? getTimeAgo(new Date(p.created_at)) : ""} · {p.comment_count || 0} comments</p>
+              <div className="mt-1">
+                {userPosts.length === 0 ? <p className="text-[13px]" style={{ color: "#6B7094" }}>No posts yet</p> : userPosts.slice(0, 2).map((p: any, idx: number) => (
+                  <Link key={p.id} to={`/post/${p.id}`} className="block py-2" style={{ borderBottom: idx < Math.min(userPosts.length, 2) - 1 ? "1px solid rgba(255,255,255,0.15)" : "none" }} onClick={e => e.stopPropagation()}>
+                    <p className="text-[13px] line-clamp-2" style={{ color: "#1A1A2E" }}>{p.content}</p>
+                    <p className="text-[11px] mt-0.5" style={{ color: "#6B7094" }}>{p.created_at ? getTimeAgo(new Date(p.created_at)) : ""} · {p.comment_count || 0} comments</p>
                   </Link>
                 ))}
-                {userPosts.length > 3 && <Link to="/app/feed" className="text-[12px] font-semibold mt-2 block" style={{ color: "#E8580A" }}>See all posts</Link>}
-              </>
+                {userPosts.length > 2 && <Link to="/app/feed" className="text-[12px] font-semibold mt-1 block" style={{ color: "#E8733A" }}>See all posts →</Link>}
+              </div>
             ) : (
-              <p className="text-[13px]" style={{ color: "#9CA3AF" }}>{stats.posts} posts</p>
+              <p className="text-[13px] mt-1" style={{ color: "#6B7094" }}>{stats.posts} posts</p>
             )}
           </GlassBox>
         </div>
