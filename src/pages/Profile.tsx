@@ -555,8 +555,11 @@ const Profile = () => {
   const currentExp = experiences.find(e => e.is_current);
 
 
+  const seoProps = profileSEO(profileData as any);
+
   return (
     <div className="min-h-screen pb-8">
+      <PageSEO {...seoProps} />
       {/* ── COVER ── */}
       <div className="max-w-[960px] mx-auto px-4">
         <div className="h-[240px] relative overflow-hidden"

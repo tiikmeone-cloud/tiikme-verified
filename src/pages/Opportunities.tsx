@@ -103,6 +103,11 @@ const Opportunities = () => {
 
   return (
     <main className="max-w-[960px] mx-auto px-4 md:px-6 py-6">
+      <PageSEO
+        title="Opportunities | Tiikme"
+        description="Browse verified jobs, internships, hackathons, and freelance opportunities across India. Apply on Tiikme."
+        canonical="https://tiikme.in/app/opportunities"
+      />
       {/* Header */}
       <div className="flex items-center justify-between mb-1">
         <div>

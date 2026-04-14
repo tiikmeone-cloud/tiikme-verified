@@ -145,8 +145,11 @@ const PageProfile = () => {
   const logoLetters = initials(page.name);
   const isVerified = (page.trust_score || 0) > 0;
 
+  const seoProps = orgSEO({ name: page.name, tagline: page.about?.slice(0, 60), about: page.about, logo_url: page.logo_url, cover_url: page.cover_url, city: page.city, state: page.state, page_type: page.page_type, slug: page.slug, member_count: page.member_count });
+
   return (
     <div className="max-w-[960px] mx-auto px-0 md:px-4 pb-8">
+      <PageSEO {...seoProps} />
       {/* ── COVER ── */}
       <div className="w-full h-[200px] md:h-[240px] relative overflow-hidden" style={{
         borderRadius: "0 0 20px 20px",
