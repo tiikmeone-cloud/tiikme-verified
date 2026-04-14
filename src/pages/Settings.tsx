@@ -31,16 +31,127 @@ const journeyCards = [
 
 /* theme is handled via useTheme hook */
 
-const Toggle = ({ label, desc, defaultOn = true }: { label: string; desc?: string; defaultOn?: boolean }) => {
-  const [on, setOn] = useState(defaultOn);
+const Toggle = ({ label, desc, value, onChange }: { label: string; desc?: string; value?: boolean; onChange?: (v: boolean) => void }) => {
+  const [localOn, setLocalOn] = useState(value ?? true);
+  const on = value !== undefined ? value : localOn;
+  const handleToggle = () => {
+    const next = !on;
+    setLocalOn(next);
+    if (onChange) onChange(next);
+    else tiikToast.success("Preference saved");
+  };
   return (
     <div className="flex items-center justify-between py-3.5" style={{ borderBottom: "1px solid rgba(255,255,255,0.15)" }}>
       <div><span className="text-[14px] font-medium" style={{ color: "#1A1A2E" }}>{label}</span>{desc && <p className="text-[12px] mt-0.5" style={{ color: "#6B7094" }}>{desc}</p>}</div>
-      <button type="button" onClick={() => { setOn(!on); tiikToast.success("Preference saved"); }}
+      <button type="button" onClick={handleToggle}
         className="w-11 h-6 rounded-full flex items-center px-0.5 cursor-pointer active:scale-95"
         style={{ background: on ? "#E8733A" : "rgba(255,255,255,0.25)", transition: "all 0.2s" }}>
         <div className="w-5 h-5 rounded-full bg-white" style={{ transition: "transform 0.2s", transform: on ? "translateX(20px)" : "translateX(0)" }} />
       </button>
+    </div>
+  );
+};
+
+const VISIBILITY_OPTIONS = [
+  { value: "public", label: "Public", desc: "Anyone can see your full profile" },
+  { value: "connections_only", label: "Connections Only", desc: "Only connected users see full details" },
+  { value: "private", label: "Private", desc: "Only name + avatar visible" },
+];
+
+const MESSAGE_OPTIONS = [
+  { value: "everyone", label: "Everyone" },
+  { value: "connections_only", label: "Connections Only" },
+  { value: "no_one", label: "No One" },
+];
+
+const PrivacySection = ({ userId }: { userId: string | null }) => {
+  const [privacy, setPrivacy] = useState({
+    profile_visibility: "public",
+    show_in_search: true,
+    show_current_company: true,
+    show_location: true,
+    who_can_message: "everyone",
+    profile_view_notifications: true,
+  });
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!userId) return;
+    supabase.from("profiles").select("privacy_settings").eq("id", userId).maybeSingle().then(({ data }) => {
+      if (data?.privacy_settings) {
+        const s = data.privacy_settings as any;
+        setPrivacy({
+          profile_visibility: s.profile_visibility || "public",
+          show_in_search: s.show_in_search !== false,
+          show_current_company: s.show_current_company !== false,
+          show_location: s.show_location !== false,
+          who_can_message: s.who_can_message || "everyone",
+          profile_view_notifications: s.profile_view_notifications !== false,
+        });
+      }
+      setLoaded(true);
+    });
+  }, [userId]);
+
+  const save = async (patch: Partial<typeof privacy>) => {
+    const updated = { ...privacy, ...patch };
+    setPrivacy(updated);
+    if (!userId) return;
+    await supabase.from("profiles").update({ privacy_settings: updated as any }).eq("id", userId);
+    tiikToast.success("Privacy updated");
+  };
+
+  if (!loaded) return <div className="glass-light animate-pulse h-48" style={{ borderRadius: 20 }} />;
+
+  return (
+    <div className="space-y-5">
+      {/* Profile Visibility */}
+      <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
+        <h3 className="text-[16px] font-semibold mb-1" style={{ color: "#1A1A2E" }}>Profile Visibility</h3>
+        <p className="text-[12px] mb-4" style={{ color: "#6B7094" }}>Control who can see your profile details</p>
+        <div className="space-y-2">
+          {VISIBILITY_OPTIONS.map(opt => (
+            <button key={opt.value} type="button"
+              onClick={() => save({ profile_visibility: opt.value })}
+              className="w-full text-left px-4 py-3 rounded-xl cursor-pointer transition-all"
+              style={{
+                background: privacy.profile_visibility === opt.value ? "rgba(232,115,58,0.10)" : "var(--surface-2)",
+                border: privacy.profile_visibility === opt.value ? "1.5px solid rgba(232,115,58,0.40)" : "1.5px solid var(--border)",
+              }}>
+              <span className="text-[14px] font-medium" style={{ color: privacy.profile_visibility === opt.value ? "#E8733A" : "#1A1A2E" }}>{opt.label}</span>
+              <p className="text-[12px]" style={{ color: "#6B7094" }}>{opt.desc}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Toggle controls */}
+      <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
+        <h3 className="text-[16px] font-semibold mb-4" style={{ color: "#1A1A2E" }}>Discovery & Display</h3>
+        <Toggle label="Show in Explore & Search" desc="If off, your profile won't appear in explore or search" value={privacy.show_in_search} onChange={v => save({ show_in_search: v })} />
+        <Toggle label="Show Current Company" desc="Show company badge on posts and profile" value={privacy.show_current_company} onChange={v => save({ show_current_company: v })} />
+        <Toggle label="Show Location" desc="Display city and state on your profile" value={privacy.show_location} onChange={v => save({ show_location: v })} />
+        <Toggle label="Profile View Notifications" desc="Get notified when someone views your profile" value={privacy.profile_view_notifications} onChange={v => save({ profile_view_notifications: v })} />
+      </div>
+
+      {/* Who can message */}
+      <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
+        <h3 className="text-[16px] font-semibold mb-1" style={{ color: "#1A1A2E" }}>Who Can Message Me</h3>
+        <p className="text-[12px] mb-4" style={{ color: "#6B7094" }}>Control who can start a conversation with you</p>
+        <div className="space-y-2">
+          {MESSAGE_OPTIONS.map(opt => (
+            <button key={opt.value} type="button"
+              onClick={() => save({ who_can_message: opt.value })}
+              className="w-full text-left px-4 py-3 rounded-xl cursor-pointer transition-all"
+              style={{
+                background: privacy.who_can_message === opt.value ? "rgba(232,115,58,0.10)" : "var(--surface-2)",
+                border: privacy.who_can_message === opt.value ? "1.5px solid rgba(232,115,58,0.40)" : "1.5px solid var(--border)",
+              }}>
+              <span className="text-[14px] font-medium" style={{ color: privacy.who_can_message === opt.value ? "#E8733A" : "#1A1A2E" }}>{opt.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
@@ -74,7 +185,6 @@ const SettingsPage = () => {
   const [passwordUpdating, setPasswordUpdating] = useState(false);
 
   const hasChanges = JSON.stringify(profile) !== JSON.stringify(originalProfile);
-
 
 
   useEffect(() => {
@@ -495,15 +605,7 @@ const SettingsPage = () => {
           )}
 
           {activeTab === "privacy" && (
-            <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
-              <h3 className="text-[16px] font-semibold mb-4" style={{ color: "#1A1A2E" }}>Privacy settings</h3>
-              <Toggle label="Open to opportunities" desc="Show green dot on profile" />
-              <Toggle label="Show profile in Explore" />
-              <Toggle label="Show recruiter view count on work" />
-              <Toggle label="Allow Connection requests" />
-              <Toggle label="Show Activity Score publicly" />
-              <Toggle label="Show Connection count publicly" />
-            </div>
+            <PrivacySection userId={userId} />
           )}
 
           {activeTab === "notifications" && (
@@ -515,7 +617,7 @@ const SettingsPage = () => {
               <Toggle label="Opportunity matches" />
               <Toggle label="Replies to my comments" />
               <Toggle label="New Pings (unread)" />
-              <Toggle label="Activity Score milestones" defaultOn={false} />
+              <Toggle label="Activity Score milestones" value={false} />
             </div>
           )}
 

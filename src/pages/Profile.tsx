@@ -300,12 +300,62 @@ const Profile = () => {
     </div>
   );
 
+  // Privacy settings enforcement
+  const privacySettings = profileData.privacy_settings as any || {};
+  const profileVisibility = privacySettings.profile_visibility || "public";
+  const showLocation = privacySettings.show_location !== false;
+  const showCurrentCompany = privacySettings.show_current_company !== false;
+  const isConnected = connectionStatus.status === "accepted";
+  const isPrivateView = !isOwnProfile && profileVisibility === "private";
+  const isConnectionsOnly = !isOwnProfile && profileVisibility === "connections_only" && !isConnected;
+
+  // If profile is private or connections-only (and not connected), show limited view
+  if (isPrivateView || isConnectionsOnly) {
+    const limitedName = profileData.full_name || "User";
+    const limitedInitials = limitedName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
+    const limitedRoleColor = ROLE_COLOR_MAP[profileData.role || ""] || "#4F46E5";
+    return (
+      <div className="min-h-screen pb-8">
+        <div className="max-w-[960px] mx-auto px-4">
+          <div className="h-[240px] relative overflow-hidden" style={{ borderRadius: "0 0 28px 28px", background: "linear-gradient(135deg, #1A1A4E 0%, #2D2D7A 60%, #3D3D8A 100%)" }}>
+            <div className="absolute bottom-5 left-6 flex items-end gap-4 z-10">
+              <div className="w-[100px] h-[100px] rounded-2xl flex items-center justify-center text-[28px] font-extrabold text-white overflow-hidden shrink-0"
+                style={{ backgroundColor: profileData.avatar_url ? "#fff" : limitedRoleColor, border: "3px solid rgba(255,255,255,0.40)" }}>
+                {profileData.avatar_url ? <img src={storageImageUrl(profileData.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : limitedInitials}
+              </div>
+              <div className="pb-1">
+                <h1 className="text-[24px] font-bold text-white" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>{limitedName}</h1>
+              </div>
+            </div>
+            <div className="absolute top-4 right-4 z-10">
+              {connectionStatus.status === "accepted" 
+                ? <button type="button" className="h-10 px-5 rounded-full text-[13px] font-bold" style={{ background: "#F0FDF4", color: "#059669", border: "1.5px solid #059669" }} disabled><CheckCircle className="w-3.5 h-3.5 inline mr-1" />Connected</button>
+                : connectionStatus.status === "pending" 
+                ? <button type="button" className="h-10 px-5 rounded-full text-[13px] font-bold opacity-60" style={{ background: "#F9FAFB", color: "#6B7280", border: "1.5px solid #E5E7EB" }} disabled>Requested</button>
+                : <button type="button" onClick={handleConnect} disabled={connectLoading} className="h-10 px-5 rounded-full text-[13px] font-bold text-white" style={{ background: "#E8580A" }}><Users className="w-3.5 h-3.5 inline mr-1" />Connect</button>
+              }
+            </div>
+          </div>
+        </div>
+        <div className="max-w-[960px] mx-auto px-4 mt-8">
+          <div className="glass-light rounded-2xl p-8 text-center">
+            <Shield className="w-12 h-12 mx-auto mb-3" style={{ color: "#6B7094" }} />
+            <p className="text-[16px] font-bold mb-1" style={{ color: "#1A1A2E" }}>This profile is {isPrivateView ? "private" : "for connections only"}</p>
+            <p className="text-[13px] mb-4" style={{ color: "#6B7094" }}>
+              {isPrivateView ? "Only basic info is visible." : "Connect with this person to see their full profile."}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const displayName = profileData.full_name || authDisplayName || "";
   const username = profileData.username || "";
   const headline = profileData.headline || "";
   const bio = profileData.bio || "";
-  const city = profileData.location_city || "";
-  const state = profileData.location_state || "";
+  const city = showLocation || isOwnProfile ? (profileData.location_city || "") : "";
+  const state = showLocation || isOwnProfile ? (profileData.location_state || "") : "";
   const role = profileData.role || "student";
   const roleLabel = role.charAt(0).toUpperCase() + role.slice(1).replace(/_/g, " ");
   const initials = displayName ? displayName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase() : authInitials || "U";
@@ -495,6 +545,34 @@ const Profile = () => {
   };
 
   const currentExp = experiences.find(e => e.is_current);
+
+  if (isRestricted) {
+    return (
+      <div className="min-h-screen pb-8">
+        <div className="max-w-[960px] mx-auto px-4">
+          <div className="h-[240px] relative overflow-hidden" style={{ borderRadius: "0 0 28px 28px", background: "linear-gradient(135deg, #1A1A4E 0%, #2D2D7A 60%, #3D3D8A 100%)" }}>
+            <div className="absolute bottom-5 left-6 flex items-end gap-4 z-10">
+              <div className="w-[100px] h-[100px] rounded-2xl flex items-center justify-center text-[28px] font-extrabold text-white overflow-hidden shrink-0"
+                style={{ backgroundColor: profileData.avatar_url ? "#fff" : roleColor, border: "3px solid rgba(255,255,255,0.40)" }}>
+                {profileData.avatar_url ? <img src={storageImageUrl(profileData.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials}
+              </div>
+              <div className="pb-1">
+                <h1 className="text-[24px] font-bold text-white" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>{displayName}</h1>
+              </div>
+            </div>
+            <div className="absolute top-4 right-4 z-10">{renderConnectButton()}</div>
+          </div>
+        </div>
+        <div className="max-w-[960px] mx-auto px-4 mt-8">
+          <div className="glass-light rounded-2xl p-8 text-center">
+            <Shield className="w-12 h-12 mx-auto mb-3" style={{ color: "#6B7094" }} />
+            <p className="text-[16px] font-bold mb-1" style={{ color: "#1A1A2E" }}>This profile is {isPrivateView ? "private" : "for connections only"}</p>
+            <p className="text-[13px]" style={{ color: "#6B7094" }}>{isPrivateView ? "Only basic info is visible." : "Connect with this person to see their full profile."}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pb-8">
