@@ -28,6 +28,7 @@ interface Message {
   conversation_id: string | null;
   created_at: string | null;
   is_read: boolean | null;
+  is_deleted: boolean | null;
   pdf_url: string | null;
   attachment_url?: string | null;
   attachment_type?: string | null;
@@ -60,7 +61,7 @@ export function useConversations(userId: string | undefined) {
       .order("last_message_at", { ascending: false })
       .limit(50);
 
-    if (convoErr) { console.warn("[useConversations] fetch failed:", convoErr.message); }
+    if (convoErr) console.warn("[useConversations] fetch failed:", convoErr.message);
     if (!mountedRef.current) return;
     if (!convos || convos.length === 0) {
       setConversations([]);
@@ -72,32 +73,34 @@ export function useConversations(userId: string | undefined) {
       .map(c => c.participant_1 === userId ? c.participant_2 : c.participant_1)
       .filter(Boolean) as string[];
     const uniqueIds = [...new Set(otherIds)];
-
     const convoIds = convos.map(c => c.id);
 
-    // Batch fetch: profiles, unread counts, and last messages
+    // BUG FIX 1: Correct unread count — only messages FROM the other person that I haven't read
     const [profilesRes, unreadRes, lastMsgsRes] = await Promise.allSettled([
       supabase.from("profiles").select("id, full_name, username, avatar_url, role, institution_name, is_verified").in("id", uniqueIds),
       supabase.from("pings").select("conversation_id").in("conversation_id", convoIds).eq("is_read", false).neq("sender_id", userId),
-      supabase.from("pings").select("conversation_id, content, created_at, attachment_type").in("conversation_id", convoIds).order("created_at", { ascending: false }).limit(200),
+      supabase.from("pings").select("conversation_id, content, created_at, attachment_type, is_deleted").in("conversation_id", convoIds).order("created_at", { ascending: false }).limit(200),
     ]);
 
     if (!mountedRef.current) return;
 
-    const profilesData = profilesRes.status === "fulfilled" ? (profilesRes.value as any).data || [] : (console.warn("[useConversations] profiles failed"), []);
-    const unreadData = unreadRes.status === "fulfilled" ? (unreadRes.value as any).data || [] : (console.warn("[useConversations] unread failed"), []);
-    const lastMsgsData = lastMsgsRes.status === "fulfilled" ? (lastMsgsRes.value as any).data || [] : (console.warn("[useConversations] lastMsgs failed"), []);
+    const profilesData = profilesRes.status === "fulfilled" ? (profilesRes.value as any).data || [] : [];
+    const unreadData = unreadRes.status === "fulfilled" ? (unreadRes.value as any).data || [] : [];
+    const lastMsgsData = lastMsgsRes.status === "fulfilled" ? (lastMsgsRes.value as any).data || [] : [];
 
     const unreadMap: Record<string, number> = {};
     (unreadData as any[]).forEach((p: any) => {
       unreadMap[p.conversation_id!] = (unreadMap[p.conversation_id!] || 0) + 1;
     });
 
-    // Build last message map (first occurrence per convo = most recent)
-    const lastMsgMap: Record<string, { content: string; attachment_type: string | null }> = {};
+    const lastMsgMap: Record<string, { content: string; attachment_type: string | null; is_deleted: boolean }> = {};
     (lastMsgsData as any[]).forEach((p: any) => {
       if (!lastMsgMap[p.conversation_id!]) {
-        lastMsgMap[p.conversation_id!] = { content: p.content, attachment_type: p.attachment_type || null };
+        lastMsgMap[p.conversation_id!] = {
+          content: p.is_deleted ? "This message was deleted" : p.content,
+          attachment_type: p.is_deleted ? null : (p.attachment_type || null),
+          is_deleted: !!p.is_deleted,
+        };
       }
     });
 
@@ -133,6 +136,7 @@ export function useConversations(userId: string | undefined) {
     if (!mountedRef.current) return;
     setMessages((data || []).map(m => ({
       ...m,
+      is_deleted: (m as any).is_deleted || false,
       attachment_url: (m as any).attachment_url || null,
       attachment_type: (m as any).attachment_type || null,
       attachment_name: (m as any).attachment_name || null,
@@ -140,12 +144,17 @@ export function useConversations(userId: string | undefined) {
       status: m.is_read ? "read" as const : "delivered" as const,
     })));
     setMessagesLoading(false);
-    // Mark unread pings as read and clear badge instantly
+
+    // Mark unread messages from others as read
     if (userId) {
       setConversations(prev => prev.map(c =>
         c.id === convoId ? { ...c, unread_count: 0 } : c
       ));
-      void supabase.from("pings").update({ is_read: true }).eq("conversation_id", convoId).neq("sender_id", userId).eq("is_read", false);
+      void supabase.from("pings")
+        .update({ is_read: true })
+        .eq("conversation_id", convoId)
+        .neq("sender_id", userId)
+        .eq("is_read", false);
     }
   }, [userId]);
 
@@ -158,6 +167,7 @@ export function useConversations(userId: string | undefined) {
       conversation_id: activeConvoId,
       created_at: new Date().toISOString(),
       is_read: false,
+      is_deleted: false,
       pdf_url: null,
       attachment_url: attachment?.url || null,
       attachment_type: attachment?.type || null,
@@ -182,6 +192,7 @@ export function useConversations(userId: string | undefined) {
     } else if (data) {
       setMessages(prev => prev.map(m => m.id === optimistic.id ? {
         ...data,
+        is_deleted: false,
         attachment_url: (data as any).attachment_url || null,
         attachment_type: (data as any).attachment_type || null,
         attachment_name: (data as any).attachment_name || null,
@@ -191,6 +202,30 @@ export function useConversations(userId: string | undefined) {
       supabase.from("conversations").update({ last_message_at: new Date().toISOString() }).eq("id", activeConvoId).then(() => {});
     }
   }, [activeConvoId, userId]);
+
+  // BUG FIX 3: Delete message (soft delete)
+  const deleteMessage = useCallback(async (msgId: string) => {
+    if (!userId) return;
+    const { error } = await supabase.from("pings")
+      .update({
+        content: "This message was deleted",
+        is_deleted: true,
+        deleted_at: new Date().toISOString(),
+        attachment_url: null,
+        attachment_type: null,
+        attachment_name: null,
+      } as any)
+      .eq("id", msgId)
+      .eq("sender_id", userId);
+
+    if (error) {
+      console.warn("[deleteMessage]", error.message);
+      return;
+    }
+    setMessages(prev => prev.map(m =>
+      m.id === msgId ? { ...m, content: "This message was deleted", is_deleted: true, attachment_url: null, attachment_type: null, attachment_name: null, attachment_size: null } : m
+    ));
+  }, [userId]);
 
   // Real-time
   useEffect(() => {
@@ -202,7 +237,7 @@ export function useConversations(userId: string | undefined) {
         if (newMsg.sender_id !== userId) {
           setMessages(prev => {
             if (prev.some(m => m.id === newMsg.id)) return prev;
-            return [...prev, { ...newMsg, status: "delivered" as const }];
+            return [...prev, { ...newMsg, is_deleted: newMsg.is_deleted || false, status: "delivered" as const }];
           });
           supabase.from("pings").update({ is_read: true }).eq("id", newMsg.id).then(() => {});
         }
@@ -210,7 +245,16 @@ export function useConversations(userId: string | undefined) {
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "pings", filter: `conversation_id=eq.${activeConvoId}` }, (payload) => {
         const updated = payload.new as any;
         setMessages(prev => prev.map(m =>
-          m.id === updated.id ? { ...m, is_read: updated.is_read, status: updated.is_read ? "read" as const : "delivered" as const } : m
+          m.id === updated.id ? {
+            ...m,
+            content: updated.content,
+            is_read: updated.is_read,
+            is_deleted: updated.is_deleted || false,
+            attachment_url: updated.is_deleted ? null : (updated.attachment_url || m.attachment_url),
+            attachment_type: updated.is_deleted ? null : (updated.attachment_type || m.attachment_type),
+            attachment_name: updated.is_deleted ? null : (updated.attachment_name || m.attachment_name),
+            status: updated.is_read ? "read" as const : "delivered" as const,
+          } : m
         ));
       })
       .subscribe();
@@ -250,7 +294,7 @@ export function useConversations(userId: string | undefined) {
   return {
     conversations, loading, activeConvoId,
     messages, messagesLoading,
-    loadMessages, sendMessage, findOrCreateConversation,
+    loadMessages, sendMessage, deleteMessage, findOrCreateConversation,
     refetch: fetchConversations,
   };
 }
