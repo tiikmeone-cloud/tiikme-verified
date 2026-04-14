@@ -1,7 +1,6 @@
 import { storageImageUrl } from "@/lib/imageTransform";
 import { useState, useEffect, useCallback } from "react";
 import { Link2, Check, X, Search, MessageCircle, Compass } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -48,9 +47,6 @@ const Strands = () => {
       const accepted = acceptedRes.status === "fulfilled" ? (acceptedRes.value as any).data || [] : [];
       const incomingData = incomingRes.status === "fulfilled" ? (incomingRes.value as any).data || [] : [];
       const sentData = sentRes.status === "fulfilled" ? (sentRes.value as any).data || [] : [];
-      if (acceptedRes.status === "rejected") console.warn("[Strands] accepted fetch failed:", acceptedRes.reason);
-      if (incomingRes.status === "rejected") console.warn("[Strands] incoming fetch failed:", incomingRes.reason);
-      if (sentRes.status === "rejected") console.warn("[Strands] sent fetch failed:", sentRes.reason);
       setConnected(accepted);
       setPendingIncoming(incomingData);
       setPendingSent(sentData);
@@ -61,12 +57,11 @@ const Strands = () => {
       sentData.forEach((s: any) => connectedIds.add(s.receiver_id));
       connectedIds.add(user.id);
 
-      const { data: suggestedData, error: sugErr } = await supabase.from("profiles")
+      const { data: suggestedData } = await supabase.from("profiles")
         .select("id, full_name, avatar_url, role, institution_name")
         .eq("is_public", true)
         .not("id", "in", `(${Array.from(connectedIds).join(",")})`)
         .order("activity_score", { ascending: false }).limit(6);
-      if (sugErr) console.warn("[Strands] suggested fetch failed:", sugErr.message);
       setSuggested(suggestedData || []);
     } catch (e) {
       console.warn("[Strands] fetch exception:", e);
@@ -79,7 +74,6 @@ const Strands = () => {
   const getOther = (s: StrandRow) => s.requester_id === user?.id ? s.receiver : s.requester;
   const handleAccept = async (s: StrandRow) => {
     await supabase.from("strands").update({ status: "accepted" }).eq("id", s.id);
-    // Award score for accepted connection
     if (user) {
       await supabase.rpc("increment_score", { uid: user.id, amount: 3 });
       await supabase.rpc("increment_score", { uid: s.requester_id === user.id ? s.receiver_id : s.requester_id, amount: 3 });
@@ -91,7 +85,6 @@ const Strands = () => {
   const handleCancel = async (s: StrandRow) => { await supabase.from("strands").delete().eq("id", s.id); toast.info("Request cancelled"); fetchStrands(); };
   const handleConnect = async (profileId: string) => {
     if (!user) return;
-    // Check for existing strand
     const { data: existing } = await supabase.from("strands")
       .select("id, status, requester_id")
       .or(`and(requester_id.eq.${user.id},receiver_id.eq.${profileId}),and(requester_id.eq.${profileId},receiver_id.eq.${user.id})`)
@@ -123,7 +116,8 @@ const Strands = () => {
     const initials = name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
     const color = ROLE_COLORS[person?.role || ""] || "#6B7280";
     return (
-      <div className="w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: color }}>
+      <div className="w-11 h-11 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden"
+        style={{ backgroundColor: color, border: "2px solid rgba(255,255,255,0.25)", boxShadow: "0 0 8px rgba(26,26,78,0.08)" }}>
         {person?.avatar_url ? <img src={storageImageUrl(person.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials}
       </div>
     );
@@ -132,77 +126,99 @@ const Strands = () => {
   const roleLabel = (r: string) => r ? r.charAt(0).toUpperCase() + r.slice(1).replace(/_/g, " ") : "";
 
   if (loading) return (
-    <main className="max-w-4xl mx-auto px-4 py-6 space-y-3">
-      {[1,2,3].map(i => <div key={i} className="t-card p-4 animate-pulse h-16" />)}
+    <main className="max-w-4xl mx-auto px-4 py-6 space-y-2">
+      {[1,2,3].map(i => <div key={i} className="glass-light animate-pulse" style={{ height: 64, borderRadius: 16, padding: 12 }} />)}
     </main>
   );
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-6">
       <div className="flex items-center gap-3 mb-2">
-        <Link2 className="w-6 h-6" style={{ color: "var(--brand)" }} />
-        <h1 className="text-[20px] text-emboss">Connections</h1>
+        <Link2 className="w-6 h-6" style={{ color: "#E8733A" }} />
+        <h1 className="text-[20px] font-bold" style={{ color: "#1A1A2E" }}>Connections</h1>
       </div>
 
-      <div className="flex gap-0 border-b mb-5 overflow-x-auto" style={{ borderColor: "var(--border)", scrollbarWidth: "none" }}>
+      {/* Glass pill tabs */}
+      <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-5 pb-1">
         {tabs.map(t => (
-          <button type="button" key={t.key} onClick={() => setTab(t.key)} className="flex-1 md:flex-none px-4 py-2.5 text-[12px] font-semibold relative cursor-pointer whitespace-nowrap min-h-[44px]"
-            style={{ color: tab === t.key ? "var(--brand)" : "var(--text-3)" }}>
+          <button type="button" key={t.key} onClick={() => setTab(t.key)}
+            className="shrink-0 px-5 py-2 rounded-[20px] text-[13px] font-semibold transition-all duration-200 whitespace-nowrap min-h-[44px]"
+            style={tab === t.key
+              ? { background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 4px 16px rgba(232,115,58,0.30)", cursor: "pointer" }
+              : { background: "rgba(255,255,255,0.20)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.25)", color: "#1A1A2E", cursor: "pointer" }
+            }>
             {t.label}
-            {tab === t.key && <div className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full" style={{ background: "var(--brand)" }} />}
           </button>
         ))}
       </div>
 
       {tab === "connected" && (
         <div>
-          <div className="flex items-center gap-3 px-4 mb-4 h-[38px] glass-input">
-            <Search className="w-4 h-4" style={{ color: "var(--text-3)" }} />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..." className="flex-1 bg-transparent text-sm outline-none" style={{ color: "var(--text-1)" }} />
+          <div className="relative mb-4">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#6B7094" }} />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search connections..."
+              className="w-full h-11 rounded-[16px] pl-11 pr-4 text-[13px] outline-none transition-all duration-200"
+              style={{ background: "rgba(255,255,255,0.20)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.30)", color: "#1A1A2E" }} />
           </div>
           {filteredConnected.length > 0 ? (
-            <div className="space-y-1">
+            <div className="space-y-2">
               {filteredConnected.map(s => {
                 const other = getOther(s);
                 return (
-                  <div key={s.id} className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-[var(--surface-2)] transition-all"
+                  <div key={s.id} className="glass-light flex items-center gap-3 cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
+                    style={{ padding: 12, borderRadius: 16 }}
                     onClick={() => navigate(`/app/profile/${other?.id}`)}>
                     <Avatar person={other} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-bold truncate" style={{ color: "var(--text-1)" }}>{other?.full_name || "User"}</p>
-                      <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{roleLabel(other?.role || "")} · {other?.institution_name || "—"}</p>
+                      <p className="text-[14px] font-semibold truncate" style={{ color: "#1A1A2E" }}>{other?.full_name || "User"}</p>
+                      <p className="text-[12px]" style={{ color: "#6B7094" }}>{roleLabel(other?.role || "")} · {other?.institution_name || "—"}</p>
                     </div>
-                    <Button variant="ghost" size="sm" className="h-7 text-[11px]" onClick={e => { e.stopPropagation(); navigate("/app/pings"); }}>
-                      <MessageCircle className="w-3 h-3 mr-1" /> Ping
-                    </Button>
+                    <button type="button"
+                      onClick={e => { e.stopPropagation(); navigate("/app/pings"); }}
+                      className="h-8 px-3 rounded-xl text-[12px] font-semibold flex items-center gap-1 transition-all duration-200"
+                      style={{ background: "rgba(255,255,255,0.20)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.25)", color: "#1A1A2E", cursor: "pointer" }}>
+                      <MessageCircle className="w-3 h-3" /> Ping
+                    </button>
                   </div>
                 );
               })}
             </div>
           ) : (
             <div className="text-center py-12">
-              <Link2 className="w-10 h-10 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
-              <p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>No connections yet</p>
-              <Button variant="secondary" className="mt-3" onClick={() => navigate("/app/explore")}><Compass className="w-4 h-4 mr-1" /> Explore</Button>
+              <Link2 className="w-10 h-10 mx-auto mb-3" style={{ color: "#6B7094" }} />
+              <p className="text-[14px] font-bold" style={{ color: "#1A1A2E" }}>No connections yet</p>
+              <button type="button" onClick={() => navigate("/app/explore")}
+                className="mt-3 h-10 px-5 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 mx-auto transition-all duration-200"
+                style={{ background: "rgba(255,255,255,0.20)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.25)", color: "#1A1A2E", cursor: "pointer" }}>
+                <Compass className="w-4 h-4" /> Explore
+              </button>
             </div>
           )}
         </div>
       )}
 
       {tab === "pending" && (
-        <div className="space-y-1">
+        <div className="space-y-2">
           {pendingIncoming.length === 0 ? (
-            <div className="text-center py-12"><Check className="w-10 h-10 mx-auto mb-3" style={{ color: "var(--text-3)" }} /><p className="text-[14px]" style={{ color: "var(--text-2)" }}>No pending requests</p></div>
+            <div className="text-center py-12"><Check className="w-10 h-10 mx-auto mb-3" style={{ color: "#6B7094" }} /><p className="text-[14px]" style={{ color: "#6B7094" }}>No pending requests</p></div>
           ) : pendingIncoming.map(s => (
-            <div key={s.id} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: "var(--surface-2)" }}>
+            <div key={s.id} className="glass-light flex items-center gap-3" style={{ padding: 12, borderRadius: 16 }}>
               <Avatar person={s.requester} />
               <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-bold truncate" style={{ color: "var(--text-1)" }}>{s.requester?.full_name || "User"}</p>
-                <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{roleLabel(s.requester?.role || "")} · {s.requester?.institution_name || "—"}</p>
+                <p className="text-[14px] font-semibold truncate" style={{ color: "#1A1A2E" }}>{s.requester?.full_name || "User"}</p>
+                <p className="text-[12px]" style={{ color: "#6B7094" }}>{roleLabel(s.requester?.role || "")} · {s.requester?.institution_name || "—"}</p>
               </div>
               <div className="flex gap-1.5 shrink-0">
-                <Button size="sm" className="h-9 text-[11px] min-w-[70px]" onClick={() => handleAccept(s)}><Check className="w-3 h-3 mr-1" /> Accept</Button>
-                <Button variant="ghost" size="sm" className="h-9 text-[11px] min-w-[60px]" onClick={() => handleDecline(s)}><X className="w-3 h-3 mr-1" /> Decline</Button>
+                <button type="button" onClick={() => handleAccept(s)}
+                  className="h-9 px-4 rounded-xl text-[12px] font-bold min-w-[70px] transition-all duration-200"
+                  style={{ background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", cursor: "pointer", boxShadow: "0 4px 12px rgba(232,115,58,0.25)" }}>
+                  <Check className="w-3 h-3 inline mr-1" /> Accept
+                </button>
+                <button type="button" onClick={() => handleDecline(s)}
+                  className="h-9 px-3 rounded-xl text-[12px] font-bold min-w-[60px] transition-all duration-200"
+                  style={{ background: "rgba(255,255,255,0.20)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.25)", color: "#1A1A2E", cursor: "pointer" }}>
+                  <X className="w-3 h-3 inline mr-1" /> Decline
+                </button>
               </div>
             </div>
           ))}
@@ -210,35 +226,45 @@ const Strands = () => {
       )}
 
       {tab === "sent" && (
-        <div className="space-y-1">
+        <div className="space-y-2">
           {pendingSent.length === 0 ? (
-            <div className="text-center py-12"><p className="text-[14px]" style={{ color: "var(--text-2)" }}>No pending requests sent</p></div>
+            <div className="text-center py-12"><p className="text-[14px]" style={{ color: "#6B7094" }}>No pending requests sent</p></div>
           ) : pendingSent.map(s => (
-            <div key={s.id} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: "var(--surface-2)" }}>
+            <div key={s.id} className="glass-light flex items-center gap-3" style={{ padding: 12, borderRadius: 16 }}>
               <Avatar person={s.receiver} />
               <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-bold truncate" style={{ color: "var(--text-1)" }}>{s.receiver?.full_name || "User"}</p>
-                <p className="text-[11px]" style={{ color: "var(--text-3)" }}>Request sent</p>
+                <p className="text-[14px] font-semibold truncate" style={{ color: "#1A1A2E" }}>{s.receiver?.full_name || "User"}</p>
+                <p className="text-[12px]" style={{ color: "#6B7094" }}>Request sent</p>
               </div>
-              <Button variant="ghost" size="sm" className="h-7 text-[11px]" style={{ color: "#DC2626" }} onClick={() => handleCancel(s)}>Cancel</Button>
+              <button type="button" onClick={() => handleCancel(s)}
+                className="h-8 px-3 rounded-xl text-[12px] font-bold transition-all duration-200"
+                style={{ background: "rgba(239,68,68,0.10)", color: "#EF4444", border: "none", cursor: "pointer" }}>
+                Cancel
+              </button>
             </div>
           ))}
         </div>
       )}
 
       {tab === "suggested" && (
-        <div className="space-y-1">
+        <div className="space-y-2">
           {suggested.length > 0 ? suggested.map(person => (
-            <div key={person.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-[var(--surface-2)] cursor-pointer" onClick={() => navigate(`/app/profile/${person.id}`)}>
+            <div key={person.id} className="glass-light flex items-center gap-3 cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
+              style={{ padding: 12, borderRadius: 16 }}
+              onClick={() => navigate(`/app/profile/${person.id}`)}>
               <Avatar person={person} />
               <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-bold truncate" style={{ color: "var(--text-1)" }}>{person.full_name || "User"}</p>
-                <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{person.institution_name || "—"}</p>
+                <p className="text-[14px] font-semibold truncate" style={{ color: "#1A1A2E" }}>{person.full_name || "User"}</p>
+                <p className="text-[12px]" style={{ color: "#6B7094" }}>{person.institution_name || "—"}</p>
               </div>
-              <Button size="sm" className="h-7 text-[11px]" onClick={e => { e.stopPropagation(); handleConnect(person.id); }}>Connect</Button>
+              <button type="button" onClick={e => { e.stopPropagation(); handleConnect(person.id); }}
+                className="h-8 px-4 rounded-xl text-[12px] font-bold transition-all duration-200"
+                style={{ background: "rgba(255,255,255,0.20)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.25)", color: "#1A1A2E", cursor: "pointer" }}>
+                Connect
+              </button>
             </div>
           )) : (
-            <div className="text-center py-12"><p className="text-[14px]" style={{ color: "var(--text-2)" }}>No suggestions right now</p></div>
+            <div className="text-center py-12"><p className="text-[14px]" style={{ color: "#6B7094" }}>No suggestions right now</p></div>
           )}
         </div>
       )}
