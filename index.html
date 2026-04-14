@@ -27,6 +27,14 @@
     <meta name="twitter:title" content="Tiikme — Verified Professional Identity for India" />
     <meta name="twitter:description" content="Your work. Verified. For everyone." />
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <script>
+      (function() {
+        var theme = localStorage.getItem('tiikme-theme');
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
   </head>
 
   <body>

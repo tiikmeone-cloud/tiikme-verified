@@ -4,12 +4,14 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutGrid, Compass, Users, Target, User,
   Link2, MessageCircle, Bell, SlidersHorizontal, PencilLine, Plus, LogOut, Home,
+  Sun, Moon,
 } from "lucide-react";
 import ThemeLogo from "@/components/ThemeLogo";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/hooks/useTheme";
 
 const navGroups = [
   {
@@ -56,6 +58,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
   const openPostCreate = () => navigate("/post/create");
   const { profile, initials, displayName, user } = useAuth();
   const [orgData, setOrgData] = useState<{ name: string; logo_url: string | null; type: string; slug: string } | null>(null);
+  const { isDark, toggleTheme } = useTheme();
 
   const isInstitution = profile?.account_type === "institution" && !!profile?.org_id;
 
@@ -212,7 +215,16 @@ const AppShell = ({ children }: { children: ReactNode }) => {
               </div>
             </div>
           ))}
-          <div className="px-0 mt-2">
+          <div className="px-2.5 mt-2 space-y-2">
+            <button type="button" onClick={() => toggleTheme(user?.id)}
+              className="btn-glass-pill w-9 h-9 rounded-full flex items-center justify-center mx-auto active:scale-[0.95]"
+              style={{ padding: 0, transition: "all 0.3s ease" }}
+              title={isDark ? "Switch to light mode" : "Switch to dark mode"}>
+              {isDark
+                ? <Sun className="w-[18px] h-[18px]" strokeWidth={1.8} style={{ color: "var(--color-accent)", transition: "transform 0.4s ease" }} />
+                : <Moon className="w-[18px] h-[18px]" strokeWidth={1.8} style={{ color: "var(--color-text-secondary)", transition: "transform 0.4s ease" }} />
+              }
+            </button>
             <button type="button" onClick={openPostCreate}
               className="btn-liquid-primary w-full h-[44px] rounded-[16px] flex items-center justify-center gap-2 text-[15px] font-bold text-white active:scale-[0.97]">
               <PencilLine className="w-4 h-4" /> New Post
