@@ -237,12 +237,8 @@ const Profile = () => {
   const [bioExpanded, setBioExpanded] = useState(false);
   const [showGetTiiked, setShowGetTiiked] = useState(false);
 
-  // Add forms
-  const [showAddExp, setShowAddExp] = useState(false);
-  const [showAddEdu, setShowAddEdu] = useState(false);
-  const [showAddProject, setShowAddProject] = useState(false);
-  const [showAddAchievement, setShowAddAchievement] = useState(false);
-  const [showAddSkill, setShowAddSkill] = useState(false);
+  // Modal state — which section modal is open
+  const [modalSection, setModalSection] = useState<string | null>(null);
   const [showAddLink, setShowAddLink] = useState(false);
   const [newLinkUrl, setNewLinkUrl] = useState("");
   const [newSkill, setNewSkill] = useState("");
