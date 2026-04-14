@@ -36,11 +36,11 @@ const applyTheme = (t: string) => {
 const Toggle = ({ label, desc, defaultOn = true }: { label: string; desc?: string; defaultOn?: boolean }) => {
   const [on, setOn] = useState(defaultOn);
   return (
-    <div className="flex items-center justify-between py-3.5" style={{ borderBottom: "1px solid var(--border)" }}>
-      <div><span className="text-[14px] font-medium" style={{ color: "var(--text-1)" }}>{label}</span>{desc && <p className="text-[12px] mt-0.5" style={{ color: "var(--text-3)" }}>{desc}</p>}</div>
+    <div className="flex items-center justify-between py-3.5" style={{ borderBottom: "1px solid rgba(255,255,255,0.15)" }}>
+      <div><span className="text-[14px] font-medium" style={{ color: "#1A1A2E" }}>{label}</span>{desc && <p className="text-[12px] mt-0.5" style={{ color: "#6B7094" }}>{desc}</p>}</div>
       <button type="button" onClick={() => { setOn(!on); tiikToast.success("Preference saved"); }}
         className="w-11 h-6 rounded-full flex items-center px-0.5 cursor-pointer active:scale-95"
-        style={{ background: on ? "var(--brand)" : "var(--border-2)", transition: "all 0.2s" }}>
+        style={{ background: on ? "#E8733A" : "rgba(255,255,255,0.25)", transition: "all 0.2s" }}>
         <div className="w-5 h-5 rounded-full bg-white" style={{ transition: "transform 0.2s", transform: on ? "translateX(20px)" : "translateX(0)" }} />
       </button>
     </div>
@@ -277,7 +277,7 @@ const SettingsPage = () => {
       transition={{ duration: 0.5, ease: "easeInOut" }}
       className="max-w-[960px] mx-auto px-3 md:px-6 py-7"
     >
-      <h1 className="text-[20px] font-extrabold mb-5" style={{ color: "var(--text-1)", letterSpacing: "-0.01em" }}>Settings</h1>
+      <h1 className="text-[20px] font-extrabold mb-5" style={{ color: "#1A1A2E", letterSpacing: "-0.01em" }}>Settings</h1>
 
       <div className="flex gap-6">
         <div className="hidden md:block w-[200px] shrink-0">
@@ -286,8 +286,8 @@ const SettingsPage = () => {
               <button type="button" key={item.id} onClick={() => setActiveTab(item.id)}
                 className="w-full text-left text-[13px] px-3 h-[42px] rounded-xl flex items-center gap-2.5 cursor-pointer"
                 style={{
-                  background: activeTab === item.id ? "var(--brand-dim)" : "transparent",
-                  color: activeTab === item.id ? "var(--brand)" : "var(--text-2)",
+                  background: activeTab === item.id ? "rgba(232,115,58,0.12)" : "transparent",
+                  color: activeTab === item.id ? "#E8733A" : "#6B7094",
                   fontWeight: activeTab === item.id ? 700 : 500,
                   transition: "all 0.15s",
                 }}>
@@ -295,12 +295,12 @@ const SettingsPage = () => {
                 {item.label}
               </button>
             ))}
-            <div style={{ borderTop: "1px solid var(--border)", marginTop: 8, paddingTop: 8 }}>
+            <div style={{ borderTop: "1px solid rgba(255,255,255,0.15)", marginTop: 8, paddingTop: 8 }}>
               <button type="button" onClick={handleSignOut}
                 className="w-full text-left text-[13px] px-3 h-[42px] rounded-xl flex items-center gap-2.5 cursor-pointer"
-                style={{ color: "var(--text-3)", transition: "all 0.15s" }}
-                onMouseEnter={e => { e.currentTarget.style.background = "rgba(220,38,38,0.06)"; e.currentTarget.style.color = "#DC2626"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-3)"; }}>
+                style={{ color: "#6B7094", transition: "all 0.15s" }}
+                onMouseEnter={e => { e.currentTarget.style.background = "rgba(239,68,68,0.10)"; e.currentTarget.style.color = "#EF4444"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#6B7094"; }}>
                 <LogOut className="w-4 h-4" /> Sign out
               </button>
             </div>
@@ -313,11 +313,12 @@ const SettingsPage = () => {
               <button type="button" key={item.id} onClick={() => setActiveTab(item.id)}
                 className="text-[11px] px-3 h-7 rounded-full cursor-pointer"
                 style={{
-                  background: activeTab === item.id ? "var(--brand)" : "var(--surface-2)",
-                  color: activeTab === item.id ? "white" : "var(--text-2)",
-                  border: activeTab === item.id ? "none" : "1px solid var(--border)",
+                  background: activeTab === item.id ? "linear-gradient(135deg, #E8733A, #FF6B9D)" : "rgba(255,255,255,0.20)",
+                  color: activeTab === item.id ? "white" : "#1A1A2E",
+                  border: activeTab === item.id ? "none" : "1px solid rgba(255,255,255,0.25)",
                   fontWeight: activeTab === item.id ? 700 : 600,
                   transition: "all 0.15s",
+                  backdropFilter: activeTab === item.id ? "none" : "blur(12px)",
                 }}>
                 {item.label}
               </button>
@@ -327,7 +328,7 @@ const SettingsPage = () => {
           {activeTab === "profile" && (
             <div className="space-y-5">
               {/* Cover Photo */}
-              <div className="t-card overflow-hidden">
+              <div className="glass-light overflow-hidden" style={{ borderRadius: 20 }}>
                 <div
                   className="relative w-full h-[120px] md:h-[160px] cursor-pointer group"
                   style={{ background: profile.cover_url ? `url(${profile.cover_url}) center/cover` : "linear-gradient(135deg, var(--brand-dim), var(--surface-2))" }}
@@ -340,7 +341,7 @@ const SettingsPage = () => {
                   <input ref={coverInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleCoverUpload} />
                 </div>
                 <div className="p-5">
-                  <h3 className="text-[16px] font-bold mb-5" style={{ color: "var(--text-1)" }}>Edit Profile</h3>
+                  <h3 className="text-[16px] font-semibold mb-5" style={{ color: "#1A1A2E" }}>Edit Profile</h3>
                   <div className="flex items-center gap-5 mb-5">
                     <div className="relative group cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
                       <div className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold text-white overflow-hidden" style={{ backgroundColor: "var(--brand)" }}>
@@ -352,22 +353,22 @@ const SettingsPage = () => {
                       <input ref={avatarInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleAvatarUpload} />
                     </div>
                     <div>
-                      <p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>{profile.name || "Your Name"}</p>
-                      <p className="text-[12px]" style={{ color: "var(--text-3)" }}>Click avatar or cover to change</p>
+                      <p className="text-[14px] font-bold" style={{ color: "#1A1A2E" }}>{profile.name || "Your Name"}</p>
+                      <p className="text-[12px]" style={{ color: "#6B7094" }}>Click avatar or cover to change</p>
                     </div>
                   </div>
                   <div className="space-y-4">
                     <div>
-                      <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "var(--text-3)", letterSpacing: "0.08em" }}>Display Name</label>
+                      <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "#6B7094", letterSpacing: "0.08em" }}>Display Name</label>
                       <Input value={profile.name} onChange={e => setProfile({ ...profile, name: e.target.value })} />
                     </div>
                     <div>
-                      <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "var(--text-3)", letterSpacing: "0.08em" }}>Headline</label>
+                      <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "#6B7094", letterSpacing: "0.08em" }}>Headline</label>
                       <Input value={profile.headline} onChange={e => setProfile({ ...profile, headline: e.target.value.slice(0, 80) })} maxLength={80} />
                       <p className="text-[10px] text-right mt-1" style={{ color: "var(--text-3)" }}>{profile.headline.length}/80</p>
                     </div>
                     <div>
-                      <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "var(--text-3)", letterSpacing: "0.08em" }}>Bio</label>
+                      <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "#6B7094", letterSpacing: "0.08em" }}>Bio</label>
                       <textarea value={profile.bio} onChange={e => setProfile({ ...profile, bio: e.target.value.slice(0, 300) })} placeholder="Tell people about yourself..." rows={3} maxLength={300}
                         className="w-full rounded-xl p-3.5 text-[14px] outline-none resize-none"
                         style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", color: "var(--text-1)", transition: "border 0.15s" }}
@@ -377,11 +378,11 @@ const SettingsPage = () => {
                       <p className="text-[10px] text-right mt-1" style={{ color: "var(--text-3)" }}>{profile.bio.length}/300</p>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
-                      <div><label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "var(--text-3)" }}>City</label><Input value={profile.city} onChange={e => setProfile({ ...profile, city: e.target.value })} /></div>
-                      <div><label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "var(--text-3)" }}>State</label><Input value={profile.state} onChange={e => setProfile({ ...profile, state: e.target.value })} /></div>
+                      <div><label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "#6B7094" }}>City</label><Input value={profile.city} onChange={e => setProfile({ ...profile, city: e.target.value })} /></div>
+                      <div><label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "#6B7094" }}>State</label><Input value={profile.state} onChange={e => setProfile({ ...profile, state: e.target.value })} /></div>
                     </div>
                     <div>
-                      <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "var(--text-3)", letterSpacing: "0.08em" }}>Username</label>
+                      <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "#6B7094", letterSpacing: "0.08em" }}>Username</label>
                       <div className="flex items-center gap-2">
                         <span className="text-[13px]" style={{ color: "var(--text-3)" }}>tiikme.in/</span>
                         <Input value={profile.slug} disabled className="flex-1 opacity-60" />
@@ -389,9 +390,11 @@ const SettingsPage = () => {
                       <p className="text-[10px] mt-1" style={{ color: "var(--text-3)" }}>Username cannot be changed</p>
                     </div>
                     <div className="flex justify-end">
-                      <Button onClick={handleSaveProfile} disabled={saving || !hasChanges}>
+                      <button type="button" onClick={handleSaveProfile} disabled={saving || !hasChanges}
+                        className="h-10 px-6 rounded-2xl text-[13px] font-bold transition-all duration-200 disabled:opacity-50"
+                        style={{ background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", cursor: hasChanges ? "pointer" : "default", boxShadow: "0 4px 16px rgba(232,115,58,0.25)" }}>
                         {saving ? "Saving..." : "Save changes"}
-                      </Button>
+                    </button>
                     </div>
                   </div>
                 </div>
@@ -401,9 +404,9 @@ const SettingsPage = () => {
 
           {activeTab === "invite" && (
             <div className="space-y-5">
-              <div className="t-card p-5">
-                <h3 className="text-[16px] font-bold mb-2" style={{ color: "var(--text-1)" }}>Invite & Earn</h3>
-                <p className="text-[13px] mb-5" style={{ color: "var(--text-2)" }}>Share your unique link. When someone signs up using it, they show up in your invite count.</p>
+              <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
+                <h3 className="text-[16px] font-semibold mb-2" style={{ color: "#1A1A2E" }}>Invite & Earn</h3>
+                <p className="text-[13px] mb-5" style={{ color: "#6B7094" }}>Share your unique link. When someone signs up using it, they show up in your invite count.</p>
 
                 <div className="rounded-xl p-3 mb-4 flex items-center gap-2" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
                   <p className="flex-1 text-[13px] truncate" style={{ color: "var(--text-1)" }}>{inviteLink}</p>
@@ -432,8 +435,8 @@ const SettingsPage = () => {
           )}
 
           {activeTab === "appearance" && (
-            <div className="t-card p-5">
-              <h3 className="text-[20px] font-extrabold mb-4" style={{ color: "var(--text-1)" }}>Theme</h3>
+            <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
+              <h3 className="text-[16px] font-semibold mb-4" style={{ color: "#1A1A2E" }}>Theme</h3>
               <div className="grid grid-cols-3 gap-3">
                 {[
                   { id: "dark", label: "Dark", icon: Moon, desc: "Krishna Blue", previewBg: "#04061A", previewSurface: "#080B2A", previewDot: "#3D5AF1" },
@@ -471,15 +474,15 @@ const SettingsPage = () => {
 
           {activeTab === "journey" && (
             <div className="space-y-5">
-              <div className="t-card p-5" style={{ borderColor: "var(--brand)", borderStyle: "dashed", borderWidth: "2px" }}>
-                <h3 className="text-[18px] font-extrabold mb-1" style={{ color: "var(--text-1)" }}>Your chapter is changing. What's next?</h3>
-                <p className="text-[13px]" style={{ color: "var(--text-2)" }}>Your project history always stays. Your role and badge updates instantly.</p>
+              <div className="glass-light" style={{ padding: 16, borderRadius: 20, borderLeft: "2px dashed #E8733A" }}>
+                <h3 className="text-[18px] font-bold mb-1" style={{ color: "#1A1A2E" }}>Your chapter is changing. What's next?</h3>
+                <p className="text-[13px]" style={{ color: "#6B7094" }}>Your project history always stays. Your role and badge updates instantly.</p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {journeyCards.map(c => (
                   <button type="button" key={c.id} onClick={() => setJourneyChoice(c.id)}
-                    className="t-card t-card-hover p-5 text-left relative cursor-pointer active:scale-[0.98]"
-                    style={journeyChoice === c.id ? { borderColor: "var(--brand)", background: "var(--brand-dim)" } : {}}>
+                    className="glass-light text-left relative cursor-pointer active:scale-[0.98] transition-all duration-200"
+                    style={{ padding: 20, borderRadius: 20, ...(journeyChoice === c.id ? { borderColor: "#E8733A", background: "rgba(232,115,58,0.08)" } : {}) }}>
                     {journeyChoice === c.id && <div className="absolute top-3 right-3 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: "var(--brand)" }}><Check className="w-3 h-3 text-white" /></div>}
                     <c.icon className="w-7 h-7 mb-3" style={{ color: "var(--brand)" }} />
                     <h4 className="text-[14px] font-bold mb-1" style={{ color: "var(--text-1)" }}>{c.title}</h4>
@@ -492,8 +495,8 @@ const SettingsPage = () => {
           )}
 
           {activeTab === "privacy" && (
-            <div className="t-card p-5">
-              <h3 className="text-[16px] font-bold mb-4" style={{ color: "var(--text-1)" }}>Privacy settings</h3>
+            <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
+              <h3 className="text-[16px] font-semibold mb-4" style={{ color: "#1A1A2E" }}>Privacy settings</h3>
               <Toggle label="Open to opportunities" desc="Show green dot on profile" />
               <Toggle label="Show profile in Explore" />
               <Toggle label="Show recruiter view count on work" />
@@ -504,8 +507,8 @@ const SettingsPage = () => {
           )}
 
           {activeTab === "notifications" && (
-            <div className="t-card p-5">
-              <h3 className="text-[16px] font-bold mb-4" style={{ color: "var(--text-1)" }}>Notification preferences</h3>
+            <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
+              <h3 className="text-[16px] font-semibold mb-4" style={{ color: "#1A1A2E" }}>Notification preferences</h3>
               <Toggle label="Recruiter views my work" />
               <Toggle label="Connection requests received" />
               <Toggle label="Tiik Approvals received" />
@@ -518,15 +521,15 @@ const SettingsPage = () => {
 
           {activeTab === "account" && (
             <div className="space-y-5">
-              <div className="t-card p-5">
-                <h3 className="text-[16px] font-bold mb-4" style={{ color: "var(--text-1)" }}>Change Email</h3>
+              <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
+                <h3 className="text-[16px] font-semibold mb-4" style={{ color: "#1A1A2E" }}>Change Email</h3>
                 <div className="space-y-3">
                   <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "var(--text-3)" }}>Current Email</label>
+                    <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "#6B7094" }}>Current Email</label>
                     <Input value={user?.email || ""} disabled className="opacity-60" />
                   </div>
                   <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "var(--text-3)" }}>New Email</label>
+                    <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "#6B7094" }}>New Email</label>
                     <Input type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="new@email.com" />
                   </div>
                   <Button onClick={handleUpdateEmail} disabled={emailUpdating} className="gap-2">
@@ -535,19 +538,19 @@ const SettingsPage = () => {
                 </div>
               </div>
 
-              <div className="t-card p-5">
-                <h3 className="text-[16px] font-bold mb-4" style={{ color: "var(--text-1)" }}>Change Password</h3>
+              <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
+                <h3 className="text-[16px] font-semibold mb-4" style={{ color: "#1A1A2E" }}>Change Password</h3>
                 <div className="space-y-3">
                   <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "var(--text-3)" }}>Current Password</label>
+                    <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "#6B7094" }}>Current Password</label>
                     <Input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} />
                   </div>
                   <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "var(--text-3)" }}>New Password (min 8 chars)</label>
+                    <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "#6B7094" }}>New Password (min 8 chars)</label>
                     <Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
                   </div>
                   <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "var(--text-3)" }}>Confirm New Password</label>
+                    <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "#6B7094" }}>Confirm New Password</label>
                     <Input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
                   </div>
                   <Button onClick={handleUpdatePassword} disabled={passwordUpdating} className="gap-2">
@@ -556,7 +559,7 @@ const SettingsPage = () => {
                 </div>
               </div>
 
-              <div className="t-card p-5">
+              <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
                 <Button variant="secondary" onClick={handleSignOut} className="gap-2">
                   <LogOut className="w-4 h-4" /> Sign out of all devices
                 </Button>
