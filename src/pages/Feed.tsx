@@ -125,10 +125,10 @@ const LivePostCard = ({
       )}
       <div className="flex items-center gap-3 pb-1">
         <Link to={profileLink}>
-          <div className="w-10 h-10 rounded-full flex items-center justify-center text-[13px] font-bold text-white shrink-0 hover:scale-105 transition-transform overflow-hidden"
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[13px] font-bold text-white shrink-0 hover:scale-105 transition-transform overflow-hidden"
             style={{ backgroundColor: roleColor, border: "2px solid rgba(255,255,255,0.25)" }}>
             {displayAvatar
-              ? <img src={storageImageUrl(displayAvatar, "avatar")} alt="" className="w-full h-full rounded-full object-cover" />
+              ? <img src={storageImageUrl(displayAvatar, "avatar")} alt="" className="w-full h-full object-cover" />
               : initials}
           </div>
         </Link>
@@ -240,8 +240,8 @@ const LivePostCard = ({
             const isOwnComment = user?.id === c.user_id;
             return (
               <div key={c.id} className="flex items-start gap-2 group">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: cColor }}>
-                  {c.author?.avatar_url ? <img src={storageImageUrl(c.author.avatar_url, "avatar")} alt="" className="w-full h-full rounded-full object-cover" /> : cInitials}
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: cColor }}>
+                  {c.author?.avatar_url ? <img src={storageImageUrl(c.author.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : cInitials}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
@@ -259,7 +259,7 @@ const LivePostCard = ({
             );
           })}
           <div className="flex items-center gap-2 mt-2">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden" style={{ background: "var(--color-accent)" }}>
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden" style={{ background: "var(--color-accent)" }}>
               {authProfile?.avatar_url ? <img src={storageImageUrl(authProfile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : userInitials}
             </div>
             <input
@@ -342,7 +342,7 @@ const SuggestedWidget = () => {
           return (
             <div key={s.id} className="flex items-center gap-2.5" style={{ paddingBottom: 10, borderBottom: "1px solid rgba(255,255,255,0.15)" }}>
               <Link to={`/app/profile/${s.id}`}>
-                <div className="w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-bold text-white overflow-hidden" style={{ backgroundColor: color }}>
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[11px] font-bold text-white overflow-hidden" style={{ backgroundColor: color }}>
                   {s.avatar_url ? <img src={storageImageUrl(s.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : init}
                 </div>
               </Link>
@@ -425,7 +425,7 @@ const Feed = () => {
           {/* Composer */}
           <div className="glass-light p-4 mb-4" style={{ borderRadius: 20 }}>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: "var(--color-accent)", border: "2px solid rgba(255,255,255,0.30)" }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[12px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: "var(--color-accent)", border: "2px solid rgba(255,255,255,0.30)" }}>
                 {identityAvatar ? <img src={storageImageUrl(identityAvatar, "avatar")} alt="" className="w-full h-full object-cover" /> : identityInitials}
               </div>
               <button type="button" onClick={() => feedNavigate("/post/create")} className="flex-1 text-left text-[13px] h-10 glass-input px-4 cursor-pointer" style={{ color: "var(--color-text-muted)" }}>
