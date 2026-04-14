@@ -59,16 +59,31 @@ function getTimeAgo(d: Date): string {
 const VerifBadge = ({ item, isOwn, onStatusChange }: { item: any; isOwn: boolean; onStatusChange?: (id: string, status: string) => void }) => {
   const status = item.verification_status || "unverified";
   if (status === "verified") return (
-    <span title="Verified" className="shrink-0">
-      <CheckCircle className="w-4 h-4" style={{ color: "#34C759" }} />
+    <span title={`Verified${item.verified_at ? ` on ${new Date(item.verified_at).toLocaleDateString()}` : ""}`}
+      className="inline-flex items-center gap-1 text-[9px] font-bold px-2.5 py-0.5 rounded-full shrink-0"
+      style={{
+        background: "linear-gradient(135deg, #FFB800, #FF8C00)",
+        color: "#fff",
+        boxShadow: "0 0 8px rgba(255,184,0,0.40), inset 0 1px 0 rgba(255,255,255,0.25)",
+      }}>
+      <CheckCircle className="w-3 h-3" /> Verified
     </span>
   );
   if (status === "pending") return (
-    <span title="Verification pending" className="shrink-0">
-      <Clock className="w-3.5 h-3.5" style={{ color: "#F59E0B" }} />
+    <span title="Verification pending"
+      className="inline-flex items-center gap-1 text-[9px] font-bold px-2.5 py-0.5 rounded-full shrink-0"
+      style={{ background: "rgba(245,158,11,0.10)", color: "#D97706", border: "1px solid rgba(245,158,11,0.25)" }}>
+      <Clock className="w-3 h-3" /> Pending
     </span>
   );
-  if (isOwn) return <VerificationRequest item={item} itemType={item.item_type || "experience"} onStatusChange={onStatusChange!} />;
+  if (status === "rejected" || status === "declined") return (
+    <span className="text-[9px] font-semibold shrink-0" style={{ color: "#DC2626" }}>Declined</span>
+  );
+  if (isOwn) return (
+    <div className="relative">
+      <VerificationRequest item={item} itemType={item.item_type || "experience"} onStatusChange={onStatusChange!} />
+    </div>
+  );
   return null;
 };
 
