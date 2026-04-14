@@ -4,12 +4,14 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutGrid, Compass, Users, Target, User,
   Link2, MessageCircle, Bell, SlidersHorizontal, PencilLine, Plus, LogOut, Home,
+  Sun, Moon,
 } from "lucide-react";
 import ThemeLogo from "@/components/ThemeLogo";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/hooks/useTheme";
 
 const navGroups = [
   {
@@ -56,6 +58,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
   const openPostCreate = () => navigate("/post/create");
   const { profile, initials, displayName, user } = useAuth();
   const [orgData, setOrgData] = useState<{ name: string; logo_url: string | null; type: string; slug: string } | null>(null);
+  const { isDark, toggleTheme } = useTheme();
 
   const isInstitution = profile?.account_type === "institution" && !!profile?.org_id;
 
