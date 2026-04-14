@@ -243,6 +243,8 @@ const Profile = () => {
   const [showAddProject, setShowAddProject] = useState(false);
   const [showAddAchievement, setShowAddAchievement] = useState(false);
   const [showAddSkill, setShowAddSkill] = useState(false);
+  const [showAddLink, setShowAddLink] = useState(false);
+  const [newLinkUrl, setNewLinkUrl] = useState("");
   const [newSkill, setNewSkill] = useState("");
   const [saving, setSaving] = useState(false);
 
