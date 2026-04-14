@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { storageImageUrl } from "@/lib/imageTransform";
 import {
   Users, Plus, Shield, Copy, Search, FileText, Briefcase, CheckCircle, XCircle,
-  Clock, UserPlus, Send, Building2, Lock, Trash2, ChevronRight, MessageCircle
+  Clock, UserPlus, Send, Building2, Lock, Trash2, ChevronRight, MessageCircle, AlertTriangle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +38,7 @@ export default function Workspace() {
   const [members, setMembers] = useState<any[]>([]);
   const [accessRules, setAccessRules] = useState<any[]>([]);
   const [verifRequests, setVerifRequests] = useState<any[]>([]);
+  const [itemVerifRequests, setItemVerifRequests] = useState<any[]>([]);
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [myRole, setMyRole] = useState<string>("member");
@@ -61,7 +62,7 @@ export default function Workspace() {
   const fetchData = useCallback(async () => {
     if (!orgId || !user) { setLoading(false); return; }
     setLoading(true);
-    const [orgRes, membersRes, accessRes, verifRes, myRoleRes, postsRes] = await Promise.allSettled([
+    const [orgRes, membersRes, accessRes, verifRes, myRoleRes, postsRes, itemVerifRes] = await Promise.allSettled([
       supabase.from("organizations").select("*").eq("id", orgId).maybeSingle(),
       supabase.from("org_members").select("*, profile:profiles!org_members_user_id_fkey(id, full_name, avatar_url, role, headline)")
         .eq("org_id", orgId).order("joined_at", { ascending: true }),
@@ -72,6 +73,9 @@ export default function Workspace() {
       supabase.from("org_members").select("role").eq("org_id", orgId).eq("user_id", user.id).maybeSingle(),
       supabase.from("posts").select("*, author:profiles!posts_author_id_fkey(full_name, avatar_url)")
         .eq("posted_by_org", orgId).order("created_at", { ascending: false }).limit(30),
+      supabase.from("item_verification_requests")
+        .select("*")
+        .eq("org_id", orgId).eq("status", "pending").order("created_at", { ascending: false }),
     ]);
     if (orgRes.status === "fulfilled") setOrg(orgRes.value.data);
     if (membersRes.status === "fulfilled") setMembers(membersRes.value.data || []);
@@ -79,6 +83,28 @@ export default function Workspace() {
     if (verifRes.status === "fulfilled") setVerifRequests(verifRes.value.data || []);
     if (myRoleRes.status === "fulfilled") setMyRole(myRoleRes.value.data?.role || "member");
     if (postsRes.status === "fulfilled") setPosts(postsRes.value.data || []);
+
+    // Hydrate item verification requests with profiles and work items
+    if (itemVerifRes.status === "fulfilled") {
+      const rawReqs = itemVerifRes.value.data || [];
+      if (rawReqs.length > 0) {
+        const requesterIds = [...new Set(rawReqs.map((r: any) => r.requester_id).filter(Boolean))];
+        const workItemIds = [...new Set(rawReqs.map((r: any) => r.work_item_id).filter(Boolean))];
+        const [profilesRes, workItemsRes] = await Promise.allSettled([
+          supabase.from("profiles").select("id, full_name, avatar_url, role").in("id", requesterIds as string[]),
+          supabase.from("work_items").select("id, title, job_title, company_name, institution_name_edu, item_type, start_date, end_date, is_current").in("id", workItemIds as string[]),
+        ]);
+        const profiles = profilesRes.status === "fulfilled" ? profilesRes.value.data || [] : [];
+        const workItems = workItemsRes.status === "fulfilled" ? workItemsRes.value.data || [] : [];
+        setItemVerifRequests(rawReqs.map((r: any) => ({
+          ...r,
+          requester: profiles.find((p: any) => p.id === r.requester_id),
+          work_item: workItems.find((w: any) => w.id === r.work_item_id),
+        })));
+      } else {
+        setItemVerifRequests([]);
+      }
+    }
     setLoading(false);
   }, [orgId, user]);
 
@@ -157,6 +183,57 @@ export default function Workspace() {
     toast.success(`Request ${status}`); fetchData();
   };
 
+  const handleItemVerifAction = async (reqId: string, action: "approved" | "rejected", requesterId: string, workItemId: string) => {
+    // Update request status
+    await supabase.from("item_verification_requests").update({
+      status: action,
+      verifier_id: user?.id,
+    } as any).eq("id", reqId);
+
+    // Update the work item
+    if (action === "approved") {
+      await supabase.from("work_items").update({
+        verification_status: "verified",
+        verified_by_user: user?.id,
+        verified_at: new Date().toISOString(),
+        is_tiiked: true,
+      } as any).eq("id", workItemId);
+      if (user) await supabase.rpc("increment_score", { uid: requesterId, amount: 15 });
+    } else {
+      await supabase.from("work_items").update({
+        verification_status: "rejected",
+      } as any).eq("id", workItemId);
+    }
+
+    // Notify requester
+    await supabase.from("alerts").insert({
+      user_id: requesterId,
+      type: "verification",
+      title: action === "approved" ? `Your ${org?.name || "work"} experience verified! ✓` : "Verification declined",
+      body: action === "approved"
+        ? `${profile?.full_name || "Someone"} verified your experience at ${org?.name}`
+        : `Your verification request at ${org?.name} was declined.`,
+      action_url: "/app/profile",
+    });
+
+    // Notify org admins if verifier is not admin
+    if (myRole !== "owner" && myRole !== "admin") {
+      const ownerMember = members.find(m => m.role === "owner");
+      if (ownerMember) {
+        await supabase.from("alerts").insert({
+          user_id: ownerMember.user_id,
+          type: "verification_completed",
+          title: `${profile?.full_name} verified a member's experience`,
+          body: `Action: ${action}`,
+          action_url: "/app/workspace",
+        });
+      }
+    }
+
+    toast.success(action === "approved" ? "Verified ✓" : "Declined");
+    fetchData();
+  };
+
   const handleRemoveMember = async (memberId: string) => {
     await supabase.from("org_members").delete().eq("id", memberId);
     toast.success("Member removed"); fetchData();
@@ -199,7 +276,7 @@ export default function Workspace() {
     { key: "feed" as const, label: "Feed", icon: FileText, count: posts.length },
     { key: "team" as const, label: "Team", icon: Users, count: members.length },
     { key: "access" as const, label: "Access", icon: Lock, count: accessRules.length },
-    { key: "verifications" as const, label: "Verifications", icon: Shield, count: verifRequests.length },
+    { key: "verifications" as const, label: "Verifications", icon: Shield, count: verifRequests.length + itemVerifRequests.length },
     { key: "invites" as const, label: "Invites", icon: UserPlus },
   ];
 
@@ -401,50 +478,112 @@ export default function Workspace() {
 
           {/* Verifications Panel */}
           {selectedPanel === "verifications" && (
-            <div>
-              {verifRequests.length === 0 ? (
+            <div className="space-y-4">
+              {/* Item Verification Requests (work items) */}
+              {itemVerifRequests.length > 0 && (
+                <div>
+                  <p className="text-[13px] font-bold mb-2" style={{ color: "var(--color-text)" }}>
+                    <Briefcase className="w-4 h-4 inline mr-1" style={{ color: "#FFB800" }} />
+                    Work Item Verifications ({itemVerifRequests.length})
+                  </p>
+                  <div className="space-y-2">
+                    {itemVerifRequests.map(r => {
+                      const wi = r.work_item;
+                      const itemLabel = wi?.job_title || wi?.title || "Work item";
+                      const companyLabel = wi?.company_name || wi?.institution_name_edu || "";
+                      const typeLabel = wi?.item_type === "education" ? "Education" : wi?.item_type === "project" ? "Project" : "Experience";
+                      return (
+                        <GlassBox key={r.id} accent="verified">
+                          <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[12px] font-bold text-white overflow-hidden shrink-0"
+                              style={{ background: "linear-gradient(135deg, #FFB800, #FF8C00)" }}>
+                              {r.requester?.avatar_url ? <img src={storageImageUrl(r.requester.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (r.requester?.full_name?.[0] || "?")}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[13px] font-bold" style={{ color: "var(--color-text)" }}>{r.requester?.full_name || "User"}</p>
+                              <p className="text-[11px] mt-0.5" style={{ color: "var(--color-text-secondary)" }}>
+                                Claims: <span className="font-semibold">{itemLabel}</span>{companyLabel ? ` at ${companyLabel}` : ""}
+                              </p>
+                              <span className="inline-block text-[9px] font-bold px-2 py-0.5 rounded-full mt-1"
+                                style={{ background: "rgba(74,144,217,0.10)", color: "#4A90D9" }}>{typeLabel}</span>
+                              {r.message && <p className="text-[11px] mt-1" style={{ color: "var(--color-text-muted)" }}>"{r.message}"</p>}
+                            </div>
+                            <div className="flex items-center gap-1.5 shrink-0 pt-1">
+                              <Button size="sm" onClick={() => handleItemVerifAction(r.id, "approved", r.requester_id, r.work_item_id)}
+                                className="h-8 text-[11px] rounded-xl" style={{ background: "#059669", border: "none" }}>
+                                <CheckCircle className="w-3 h-3 mr-1" /> Verify
+                              </Button>
+                              <Button variant="destructive" size="sm" onClick={() => handleItemVerifAction(r.id, "rejected", r.requester_id, r.work_item_id)}
+                                className="h-8 text-[11px] rounded-xl">
+                                <XCircle className="w-3 h-3 mr-1" /> Decline
+                              </Button>
+                            </div>
+                          </div>
+                          <p className="text-[10px] mt-2" style={{ color: "var(--color-text-muted)" }}>
+                            Requested {r.created_at ? new Date(r.created_at).toLocaleDateString() : ""}
+                          </p>
+                        </GlassBox>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Org Membership Verifications */}
+              {verifRequests.length > 0 && (
+                <div>
+                  <p className="text-[13px] font-bold mb-2" style={{ color: "var(--color-text)" }}>
+                    <Shield className="w-4 h-4 inline mr-1" style={{ color: "#059669" }} />
+                    Membership Verifications ({verifRequests.length})
+                  </p>
+                  <div className="space-y-2">
+                    {verifRequests.map(r => (
+                      <GlassBox key={r.id} accent="verified">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[12px] font-bold text-white overflow-hidden shrink-0" style={{ background: "#F59E0B" }}>
+                            {r.requester?.avatar_url ? <img src={storageImageUrl(r.requester.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (r.requester?.full_name?.[0] || "?")}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[13px] font-bold" style={{ color: "var(--color-text)" }}>{r.requester?.full_name || "User"}</p>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {r.title_at_org && <span className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>{r.title_at_org}</span>}
+                              {r.member_type && (
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                                  style={{ background: r.member_type === "ex" ? "#FEF2F2" : "#F0FDF4", color: r.member_type === "ex" ? "#DC2626" : "#059669" }}>
+                                  {r.member_type === "ex" ? "Alumni" : "Current"}
+                                </span>
+                              )}
+                            </div>
+                            {r.message && <p className="text-[12px] mt-1" style={{ color: "var(--color-text-secondary)" }}>{r.message}</p>}
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <Button size="sm" onClick={() => handleVerifAction(r.id, "approved", r.user_id)}
+                              className="h-8 text-[11px] rounded-xl" style={{ background: "#059669", border: "none" }}>
+                              <CheckCircle className="w-3 h-3 mr-1" /> Approve
+                            </Button>
+                            <Button variant="destructive" size="sm" onClick={() => handleVerifAction(r.id, "rejected", r.user_id)}
+                              className="h-8 text-[11px] rounded-xl">
+                              <XCircle className="w-3 h-3 mr-1" /> Decline
+                            </Button>
+                          </div>
+                        </div>
+                        <p className="text-[10px] mt-2" style={{ color: "var(--color-text-muted)" }}>
+                          Requested {r.created_at ? new Date(r.created_at).toLocaleDateString() : ""}
+                        </p>
+                      </GlassBox>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {verifRequests.length === 0 && itemVerifRequests.length === 0 && (
                 <GlassBox accent="verified">
                   <div className="text-center py-8">
-                    <Shield className="w-10 h-10 mx-auto mb-2" style={{ color: "#9CA3AF" }} />
-                    <p className="text-[14px] font-bold" style={{ color: "#1A1A1A" }}>No pending verifications</p>
+                    <Shield className="w-10 h-10 mx-auto mb-2" style={{ color: "var(--color-text-muted)" }} />
+                    <p className="text-[14px] font-bold" style={{ color: "var(--color-text)" }}>No pending verifications</p>
+                    <p className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>Requests from users will appear here</p>
                   </div>
                 </GlassBox>
-              ) : (
-                <div className="space-y-2">
-                  {verifRequests.map(r => (
-                    <GlassBox key={r.id} accent="verified">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[12px] font-bold text-white overflow-hidden shrink-0" style={{ background: "#F59E0B" }}>
-                          {r.requester?.avatar_url ? <img src={storageImageUrl(r.requester.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (r.requester?.full_name?.[0] || "?")}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-bold" style={{ color: "#1A1A1A" }}>{r.requester?.full_name || "User"}</p>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {r.title_at_org && <span className="text-[11px]" style={{ color: "#9CA3AF" }}>{r.title_at_org}</span>}
-                            {r.member_type && (
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                                style={{ background: r.member_type === "ex" ? "#FEF2F2" : "#F0FDF4", color: r.member_type === "ex" ? "#DC2626" : "#059669" }}>
-                                {r.member_type === "ex" ? "Alumni" : "Current"}
-                              </span>
-                            )}
-                          </div>
-                          {r.message && <p className="text-[12px] mt-1" style={{ color: "#374151" }}>{r.message}</p>}
-                        </div>
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <Button size="sm" onClick={() => handleVerifAction(r.id, "approved", r.user_id)} style={{ background: "#059669", height: 36 }}>
-                            <CheckCircle className="w-3.5 h-3.5 mr-1" /> Approve
-                          </Button>
-                          <Button variant="destructive" size="sm" onClick={() => handleVerifAction(r.id, "rejected", r.user_id)} style={{ height: 36 }}>
-                            <XCircle className="w-3.5 h-3.5 mr-1" /> Decline
-                          </Button>
-                        </div>
-                      </div>
-                      <p className="text-[10px] mt-2" style={{ color: "#9CA3AF" }}>
-                        Requested {r.created_at ? new Date(r.created_at).toLocaleDateString() : ""}
-                      </p>
-                    </GlassBox>
-                  ))}
-                </div>
               )}
             </div>
           )}
