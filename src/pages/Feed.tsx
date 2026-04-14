@@ -54,7 +54,6 @@ const LivePostCard = ({
   const [showMenu, setShowMenu] = useState(false);
   const { user, profile: authProfile, initials: userInitials } = useAuth();
 
-  // Org branding logic
   const isOrgPost = !!post.posted_by_org && !!post.org;
   const author = post.author;
 
@@ -63,7 +62,6 @@ const LivePostCard = ({
   const displayRole = isOrgPost ? post.org?.type : (author?.role || "user");
   const profileLink = isOrgPost ? `/org/${post.org?.slug}` : `/app/profile/${author?.id || ""}`;
 
-  // "via member" for org posts by non-owner
   const viaName = isOrgPost && post.poster_profile?.full_name
     ? post.poster_profile.full_name
     : null;
@@ -106,21 +104,29 @@ const LivePostCard = ({
     setConfirmRepost(false);
   };
 
-  // Townhall post rendering
   const isTownhall = post.post_type === "townhall";
 
   return (
-    <article className="glass-liquid glass-liquid-hover rounded-2xl md:rounded-3xl mb-3 overflow-hidden"
-      style={isTownhall ? { borderLeft: "4px solid #E8580A" } : undefined}>
+    <article
+      className="glass-light mb-3 overflow-hidden"
+      style={{
+        padding: 16,
+        borderRadius: 24,
+        borderLeft: isTownhall ? "4px solid var(--color-accent)" : undefined,
+        transition: "all 0.3s ease",
+      }}
+      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = `0 12px 40px var(--glass-shadow-hover), inset 0 1px 0 var(--glass-highlight)`; }}
+      onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
+    >
       {isTownhall && (
-        <div className="px-4 pt-3">
-          <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "#E8580A" }}>📢 TOWNHALL</span>
+        <div className="pb-2">
+          <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--color-accent)" }}>📢 TOWNHALL</span>
         </div>
       )}
-      <div className="flex items-center gap-3 px-4 pt-4 pb-1">
+      <div className="flex items-center gap-3 pb-1">
         <Link to={profileLink}>
-          <div className="w-11 h-11 rounded-full flex items-center justify-center text-[14px] font-bold text-white shrink-0 hover:scale-105 transition-transform overflow-hidden"
-            style={{ backgroundColor: roleColor, border: isOrgPost && displayAvatar ? "1.5px solid #F0E8E0" : undefined, background: isOrgPost && displayAvatar ? "#fff" : roleColor }}>
+          <div className="w-10 h-10 rounded-full flex items-center justify-center text-[13px] font-bold text-white shrink-0 hover:scale-105 transition-transform overflow-hidden"
+            style={{ backgroundColor: roleColor, border: "2px solid rgba(255,255,255,0.25)" }}>
             {displayAvatar
               ? <img src={storageImageUrl(displayAvatar, "avatar")} alt="" className="w-full h-full rounded-full object-cover" />
               : initials}
@@ -128,85 +134,94 @@ const LivePostCard = ({
         </Link>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <Link to={profileLink} className="text-[14px] font-bold hover:underline" style={{ color: "var(--text-1)" }}>{displayName}</Link>
-            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full" style={{ background: `${roleColor}1A`, color: roleColor }}>
+            <Link to={profileLink} className="font-semibold hover:underline" style={{ color: "var(--color-text)", fontSize: 15 }}>{displayName}</Link>
+            <span className="font-semibold px-2 py-0.5 rounded-md" style={{ background: "rgba(232,115,58,0.12)", color: "var(--color-accent)", fontSize: 11, borderRadius: 6 }}>
               {isOrgPost ? (displayRole?.charAt(0).toUpperCase() + displayRole?.slice(1)) : displayRole}
             </span>
           </div>
           <div className="flex items-center gap-1.5">
             {viaName && (
-              <span className="text-[12px]" style={{ color: "var(--text-3)" }}>via {viaName} · </span>
+              <span className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>via {viaName} · </span>
             )}
-            <span className="text-[11px]" style={{ color: "var(--text-3)" }}>{timeAgo}</span>
+            <span style={{ color: "var(--color-text-secondary)", fontSize: 12 }}>{timeAgo}</span>
           </div>
         </div>
         <div className="relative">
-          <button type="button" onClick={() => setShowMenu(!showMenu)} className="p-2 md:p-1.5 rounded-lg cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center" style={{ color: "var(--text-3)" }}><MoreHorizontal className="w-4 h-4" /></button>
+          <button type="button" onClick={() => setShowMenu(!showMenu)} className="p-2 md:p-1.5 rounded-lg cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center" style={{ color: "var(--color-text-secondary)" }}
+            onMouseEnter={e => { e.currentTarget.style.color = "var(--color-text)"; }}
+            onMouseLeave={e => { e.currentTarget.style.color = "var(--color-text-secondary)"; }}>
+            <MoreHorizontal className="w-4 h-4" />
+          </button>
           {showMenu && (
-            <div className="absolute right-0 top-8 glass-liquid rounded-xl p-1 min-w-[160px] z-10">
-              <button type="button" onClick={() => { navigator.clipboard.writeText(window.location.origin + "/post/" + post.id); toast.success("Link copied!"); setShowMenu(false); }} className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "var(--text-2)" }}><ArrowUpRight className="w-3 h-3" /> Copy link</button>
+            <div className="absolute right-0 top-8 glass-light rounded-xl p-1 min-w-[160px] z-10" style={{ borderRadius: 14 }}>
+              <button type="button" onClick={() => { navigator.clipboard.writeText(window.location.origin + "/post/" + post.id); toast.success("Link copied!"); setShowMenu(false); }} className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "var(--color-text-secondary)" }}><ArrowUpRight className="w-3 h-3" /> Copy link</button>
               <button type="button" onClick={() => {
                 if (navigator.share) { navigator.share({ title: "Post on Tiikme", url: window.location.origin + "/post/" + post.id }); }
                 else { navigator.clipboard.writeText(window.location.origin + "/post/" + post.id); toast.success("Link copied!"); }
                 setShowMenu(false);
-              }} className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "var(--text-2)" }}><Send className="w-3 h-3" /> Share via...</button>
+              }} className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "var(--color-text-secondary)" }}><Send className="w-3 h-3" /> Share via...</button>
               {isOwn ? (
                 <button type="button" onClick={handleDelete} className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "#DC2626" }}><Trash2 className="w-3 h-3" /> Delete post</button>
               ) : (
-                <button type="button" onClick={() => { toast.info("Report submitted"); setShowMenu(false); }} className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "var(--text-2)" }}><Flag className="w-3 h-3" /> Report</button>
+                <button type="button" onClick={() => { toast.info("Report submitted"); setShowMenu(false); }} className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "var(--color-text-secondary)" }}><Flag className="w-3 h-3" /> Report</button>
               )}
             </div>
           )}
         </div>
       </div>
 
-      <div className="px-4 py-2.5" style={{ fontSize: "14px", lineHeight: 1.75, color: "var(--text-1)" }}>
+      <div className="py-2.5" style={{ fontSize: 15, lineHeight: 1.5, color: "var(--color-text)" }}>
         <MentionText text={post.content} />
       </div>
 
       {post.image_urls?.length > 0 && (
-        <div className="px-4 pb-2"><div className="rounded-xl overflow-hidden"><ImageGrid images={post.image_urls} /></div></div>
+        <div className="pb-2"><div className="rounded-xl overflow-hidden"><ImageGrid images={post.image_urls} /></div></div>
       )}
 
       {post.pdf_url && (
-        <div className="mx-4 mb-3">
-          <a href={post.pdf_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 glass-liquid rounded-xl p-3">
+        <div className="mb-3">
+          <a href={post.pdf_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 glass-medium rounded-xl p-3">
             <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: "rgba(220,38,38,0.1)" }}>
               <FileText className="w-5 h-5" style={{ color: "#DC2626" }} />
             </div>
-            <p className="text-[13px] font-bold truncate flex-1" style={{ color: "var(--text-1)" }}>Attached PDF · Tap to open ↗</p>
+            <p className="text-[13px] font-bold truncate flex-1" style={{ color: "var(--color-text)" }}>Attached PDF · Tap to open ↗</p>
           </a>
         </div>
       )}
 
-      {/* Repost summary */}
       {repostCount >= 2 && (
-        <div className="px-4 pb-1">
-          <p className="text-[12px]" style={{ color: "var(--text-3)" }}>
+        <div className="pb-1">
+          <p className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>
             ↩️ {isOrgPost ? post.org?.name : displayName} and {repostCount - 1} other{repostCount > 2 ? "s" : ""} reposted
           </p>
         </div>
       )}
 
       {/* Like / Comment / Repost */}
-      <div className="flex items-center px-4 py-2" style={{ borderTop: "1px solid var(--border)" }}>
-        <button type="button" onClick={() => toggleLike(post.id)} className="h-9 px-3 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all" style={{ color: liked ? "var(--brand)" : "var(--text-2)" }}>
-          <Heart className="w-4 h-4" style={{ fill: liked ? "var(--brand)" : "none", color: liked ? "var(--brand)" : "var(--text-2)" }} />
+      <div className="flex items-center gap-1 pt-2" style={{ borderTop: "1px solid var(--glass-border-subtle)" }}>
+        <button type="button" onClick={() => toggleLike(post.id)}
+          className="h-8 px-2.5 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all"
+          style={{ background: "rgba(255,255,255,0.15)", borderRadius: 12, color: liked ? "var(--color-accent)" : "var(--color-text-secondary)" }}>
+          <Heart className="w-4 h-4" style={{ fill: liked ? "var(--color-accent)" : "none", color: liked ? "var(--color-accent)" : "var(--color-text-secondary)" }} />
           {likeCount}
         </button>
-        <button type="button" onClick={() => toggleComments(post.id)} className="h-9 px-3 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer hover:bg-[var(--brand-dim)]" style={{ color: "var(--text-2)" }}>
+        <button type="button" onClick={() => toggleComments(post.id)}
+          className="h-8 px-2.5 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer transition-all"
+          style={{ background: "rgba(255,255,255,0.15)", borderRadius: 12, color: "var(--color-text-secondary)" }}>
           <MessageSquare className="w-4 h-4" /> {commentCount}
         </button>
         {!isWorkspacePost && (
           <div className="relative">
-            <button type="button" onClick={handleRepost} className="h-9 px-3 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer hover:bg-[var(--brand-dim)]" style={{ color: "var(--text-2)" }}>
+            <button type="button" onClick={handleRepost}
+              className="h-8 px-2.5 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer transition-all"
+              style={{ background: "rgba(255,255,255,0.15)", borderRadius: 12, color: "var(--color-text-secondary)" }}>
               <Repeat2 className="w-4 h-4" />
             </button>
             {confirmRepost && (
-              <div className="absolute bottom-full left-0 mb-1 flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] whitespace-nowrap" style={{ background: "var(--surface)", border: "1px solid var(--border)", zIndex: 10 }}>
-                <span style={{ color: "var(--text-2)" }}>Repost?</span>
-                <button type="button" onClick={handleRepost} className="font-bold px-1.5 cursor-pointer" style={{ color: "var(--brand)" }}>Yes</button>
-                <button type="button" onClick={() => setConfirmRepost(false)} className="px-1.5 cursor-pointer" style={{ color: "var(--text-3)" }}>No</button>
+              <div className="absolute bottom-full left-0 mb-1 flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] whitespace-nowrap glass-light" style={{ zIndex: 10, borderRadius: 10 }}>
+                <span style={{ color: "var(--color-text-secondary)" }}>Repost?</span>
+                <button type="button" onClick={handleRepost} className="font-bold px-1.5 cursor-pointer" style={{ color: "var(--color-accent)" }}>Yes</button>
+                <button type="button" onClick={() => setConfirmRepost(false)} className="px-1.5 cursor-pointer" style={{ color: "var(--color-text-muted)" }}>No</button>
               </div>
             )}
           </div>
@@ -215,8 +230,8 @@ const LivePostCard = ({
 
       {/* Comments */}
       {isOpen && (
-        <div className="px-4 pb-4 pt-3 space-y-3" style={{ borderTop: "1px solid var(--border)" }}>
-          {comments.length === 0 && <p className="text-[12px]" style={{ color: "var(--text-3)" }}>No comments yet. Be the first!</p>}
+        <div className="pt-3 space-y-3" style={{ borderTop: "1px solid var(--glass-border-subtle)", marginTop: 8 }}>
+          {comments.length === 0 && <p className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>No comments yet. Be the first!</p>}
           {comments.map((c: any) => {
             const cName = c.author?.full_name || "User";
             const cInitials = cName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
@@ -230,38 +245,37 @@ const LivePostCard = ({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <Link to={`/app/profile/${c.author?.id || c.user_id}`} className="text-[13px] font-bold hover:underline" style={{ color: "var(--text-1)" }}>{cName}</Link>
-                    <span className="text-[11px]" style={{ color: "var(--text-3)" }}>{cTime}</span>
+                    <Link to={`/app/profile/${c.author?.id || c.user_id}`} className="text-[13px] font-bold hover:underline" style={{ color: "var(--color-text)" }}>{cName}</Link>
+                    <span className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>{cTime}</span>
                     {isOwnComment && (
-                      <button type="button" onClick={() => deleteComment(post.id, c.id)} className="opacity-0 group-hover:opacity-100 p-0.5 cursor-pointer" style={{ color: "var(--text-3)" }}>
+                      <button type="button" onClick={() => deleteComment(post.id, c.id)} className="opacity-0 group-hover:opacity-100 p-0.5 cursor-pointer" style={{ color: "var(--color-text-muted)" }}>
                         <Trash2 className="w-3 h-3" />
                       </button>
                     )}
                   </div>
-                  <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-2)" }}><MentionText text={c.content} /></p>
+                  <p className="text-[13px] leading-relaxed" style={{ color: "var(--color-text-secondary)" }}><MentionText text={c.content} /></p>
                 </div>
               </div>
             );
           })}
           <div className="flex items-center gap-2 mt-2">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden" style={{ background: "var(--brand)" }}>
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden" style={{ background: "var(--color-accent)" }}>
               {authProfile?.avatar_url ? <img src={storageImageUrl(authProfile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : userInitials}
             </div>
             <input
               value={commentText}
               onChange={(e) => setCommentInputs((p) => ({ ...p, [post.id]: e.target.value }))}
               placeholder="Write a comment..."
-              className="flex-1 h-9 rounded-xl px-3 text-[13px] outline-none"
-              style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }}
+              className="flex-1 h-9 rounded-xl px-3 text-[13px] outline-none glass-input"
               onKeyDown={(e) => { if (e.key === "Enter" && commentText.trim()) submitComment(post.id); }}
             />
             <button
               type="button"
               onClick={() => submitComment(post.id)}
               className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer active:scale-95"
-              style={{ background: commentText.trim() ? "var(--brand)" : "var(--surface-2)" }}
+              style={{ background: commentText.trim() ? "var(--color-accent)" : "var(--color-surface)" }}
             >
-              <Send className="w-3.5 h-3.5" style={{ color: commentText.trim() ? "white" : "var(--text-3)" }} />
+              <Send className="w-3.5 h-3.5" style={{ color: commentText.trim() ? "white" : "var(--color-text-muted)" }} />
             </button>
           </div>
         </div>
@@ -274,8 +288,8 @@ const LivePostCard = ({
 const ActivityWidget = () => {
   const { profile } = useAuth();
   return (
-    <aside className="glass-liquid rounded-2xl p-5 mb-4">
-      <p className="micro-label mb-4">ACTIVITY THIS QUARTER</p>
+    <aside className="glass-glow rounded-3xl p-5 mb-4">
+      <p className="text-[11px] font-semibold uppercase tracking-wider mb-4" style={{ color: "var(--color-text-secondary)", letterSpacing: "0.05em" }}>ACTIVITY THIS QUARTER</p>
       <div className="flex justify-center"><ActivityScoreRing score={profile?.activity_score || 0} size={100} strokeWidth={7} /></div>
     </aside>
   );
@@ -288,15 +302,15 @@ const OpportunitiesWidget = () => {
   }, []);
   if (opps.length === 0) return null;
   return (
-    <aside className="glass-liquid rounded-2xl p-5 mb-4">
-      <p className="micro-label mb-3">OPEN OPPORTUNITIES</p>
+    <aside className="glass-medium rounded-3xl p-5 mb-4">
+      <p className="text-[11px] font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--color-text-secondary)", letterSpacing: "0.05em" }}>OPEN OPPORTUNITIES</p>
       <div className="space-y-0">
         {opps.map((ch, i) => (
-          <Link key={ch.id} to="/app/opportunities" className="flex items-start gap-2.5 py-2.5 cursor-pointer" style={{ borderBottom: i < opps.length - 1 ? "1px solid var(--border)" : "none" }}>
+          <Link key={ch.id} to="/app/opportunities" className="flex items-start gap-2.5 py-2.5 cursor-pointer" style={{ borderBottom: i < opps.length - 1 ? "1px solid rgba(255,255,255,0.15)" : "none" }}>
             <div className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ background: "#F59E0B" }} />
             <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-bold" style={{ color: "var(--text-1)" }}>{ch.title}</p>
-              <div className="flex gap-1.5 text-[11px]" style={{ color: "var(--text-3)" }}>
+              <p className="text-[13px] font-bold" style={{ color: "var(--color-text)" }}>{ch.title}</p>
+              <div className="flex gap-1.5 text-[11px]" style={{ color: "var(--color-text-muted)" }}>
                 {ch.compensation && <span className="font-bold" style={{ color: "#F59E0B" }}>{ch.compensation}</span>}
                 {ch.deadline && <><span>·</span><span>{ch.deadline}</span></>}
               </div>
@@ -304,7 +318,7 @@ const OpportunitiesWidget = () => {
           </Link>
         ))}
       </div>
-      <Link to="/app/opportunities" className="text-[13px] font-semibold mt-2 flex items-center gap-1" style={{ color: "var(--brand)" }}>View all <ArrowUpRight className="w-3 h-3" /></Link>
+      <Link to="/app/opportunities" className="text-[13px] font-semibold mt-2 flex items-center gap-1" style={{ color: "var(--color-accent)" }}>View all <ArrowUpRight className="w-3 h-3" /></Link>
     </aside>
   );
 };
@@ -318,30 +332,34 @@ const SuggestedWidget = () => {
   }, [user]);
   if (suggested.length === 0) return null;
   return (
-    <aside className="glass-liquid rounded-2xl p-5">
-      <p className="micro-label mb-3">SUGGESTED CONNECTIONS</p>
+    <aside className="glass-medium rounded-3xl p-5">
+      <p className="text-[11px] font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--color-text-secondary)", letterSpacing: "0.05em" }}>SUGGESTED CONNECTIONS</p>
       <div className="space-y-3">
         {suggested.map(s => {
           const name = s.full_name || "User";
           const init = name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
           const color = roleColorMap[s.role || ""] || "#6B7280";
           return (
-            <div key={s.id} className="flex items-center gap-2.5">
+            <div key={s.id} className="flex items-center gap-2.5" style={{ paddingBottom: 10, borderBottom: "1px solid rgba(255,255,255,0.15)" }}>
               <Link to={`/app/profile/${s.id}`}>
                 <div className="w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-bold text-white overflow-hidden" style={{ backgroundColor: color }}>
                   {s.avatar_url ? <img src={storageImageUrl(s.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : init}
                 </div>
               </Link>
               <div className="flex-1 min-w-0">
-                <Link to={`/app/profile/${s.id}`} className="text-[13px] font-bold truncate block hover:underline" style={{ color: "var(--text-1)" }}>{name}</Link>
-                <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{s.institution_name || s.role || ""}</p>
+                <Link to={`/app/profile/${s.id}`} className="text-[13px] font-bold truncate block hover:underline" style={{ color: "var(--color-text)" }}>{name}</Link>
+                <p className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>{s.institution_name || s.role || ""}</p>
               </div>
-              <Button variant="secondary" size="sm" className="active:scale-95 text-[11px] h-7" onClick={() => { supabase.from("strands").insert({ requester_id: user!.id, receiver_id: s.id }); toast.success("Request sent"); }}>Connect</Button>
+              <button
+                className="btn-glass-pill text-[12px] font-semibold active:scale-95"
+                style={{ padding: "4px 12px", fontSize: 12 }}
+                onClick={() => { supabase.from("strands").insert({ requester_id: user!.id, receiver_id: s.id }); toast.success("Request sent"); }}
+              >Connect</button>
             </div>
           );
         })}
       </div>
-      <Link to="/app/explore" className="text-[13px] font-semibold mt-3 flex items-center gap-1" style={{ color: "var(--brand)" }}>Find more <ArrowUpRight className="w-3 h-3" /></Link>
+      <Link to="/app/explore" className="text-[13px] font-semibold mt-3 flex items-center gap-1" style={{ color: "var(--color-accent)" }}>Find more <ArrowUpRight className="w-3 h-3" /></Link>
     </aside>
   );
 };
@@ -400,28 +418,31 @@ const Feed = () => {
       <div className="md:hidden flex items-center justify-center overflow-hidden transition-all duration-200"
         style={{ height: pullY > 0 ? `${pullY}px` : 0, opacity: pullY > 20 ? 1 : 0 }}>
         <div className={`w-7 h-7 rounded-full border-2 border-t-transparent ${refreshing ? 'animate-spin' : ''}`}
-          style={{ borderColor: "var(--brand)", borderTopColor: "transparent", transform: `rotate(${pullY * 3}deg)` }} />
+          style={{ borderColor: "var(--color-accent)", borderTopColor: "transparent", transform: `rotate(${pullY * 3}deg)` }} />
       </div>
       <div className="flex gap-6">
         <div className="flex-1 min-w-0 max-w-[660px]">
-          <div className="glass-liquid rounded-2xl md:rounded-3xl p-3 mb-4">
+          {/* Composer */}
+          <div className="glass-light p-4 mb-4" style={{ borderRadius: 20 }}>
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: "var(--brand)" }}>
+              <div className="w-10 h-10 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: "var(--color-accent)", border: "2px solid rgba(255,255,255,0.30)" }}>
                 {identityAvatar ? <img src={storageImageUrl(identityAvatar, "avatar")} alt="" className="w-full h-full object-cover" /> : identityInitials}
               </div>
-              <button type="button" onClick={() => feedNavigate("/post/create")} className="flex-1 text-left text-[13px] h-10 glass-input px-4 cursor-pointer" style={{ color: "var(--text-3)" }}>
+              <button type="button" onClick={() => feedNavigate("/post/create")} className="flex-1 text-left text-[13px] h-10 glass-input px-4 cursor-pointer" style={{ color: "var(--color-text-muted)" }}>
                 What's on your mind?
               </button>
             </div>
           </div>
 
+          {/* Today badge */}
           {!loading && visiblePosts.length > 0 && (
             <div className="flex items-center gap-3 my-4">
-              <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
-              <span className="text-[11px] font-semibold px-4 py-1.5 rounded-full" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-2)" }}>
+              <div className="flex-1 h-px" style={{ background: "var(--glass-border-subtle)" }} />
+              <span className="text-[13px] font-semibold px-4 py-1.5 rounded-[20px]"
+                style={{ background: "rgba(255, 255, 255, 0.20)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255, 255, 255, 0.25)", color: "var(--color-text-secondary)" }}>
                 Today · {visiblePosts.length} posts
               </span>
-              <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
+              <div className="flex-1 h-px" style={{ background: "var(--glass-border-subtle)" }} />
             </div>
           )}
 
@@ -446,11 +467,11 @@ const Feed = () => {
           ))}
 
           {!loading && visiblePosts.length === 0 && (
-            <div className="glass-liquid rounded-2xl p-10 text-center">
-              <MessageSquare className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
-              <p className="text-[16px] font-bold mb-1" style={{ color: "var(--text-1)" }}>Nothing here yet</p>
-              <p className="text-[13px] mb-4" style={{ color: "var(--text-3)" }}>Be the first to post something.</p>
-              <Button onClick={() => feedNavigate("/post/create")} className="rounded-full">Write a post →</Button>
+            <div className="glass-light rounded-3xl p-10 text-center">
+              <MessageSquare className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--color-text-muted)" }} />
+              <p className="text-[16px] font-bold mb-1" style={{ color: "var(--color-text)" }}>Nothing here yet</p>
+              <p className="text-[13px] mb-4" style={{ color: "var(--color-text-muted)" }}>Be the first to post something.</p>
+              <button onClick={() => feedNavigate("/post/create")} className="btn-liquid-primary rounded-full">Write a post →</button>
             </div>
           )}
 
@@ -458,7 +479,7 @@ const Feed = () => {
           {loadingMore && <SkeletonCard count={2} />}
           {!loading && !hasMore && visiblePosts.length > 0 && (
             <div className="flex items-center justify-center py-8">
-              <span className="text-[12px] font-medium px-5 py-2 rounded-full" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-3)" }}>You're caught up ✓</span>
+              <span className="text-[12px] font-medium px-5 py-2 rounded-full" style={{ background: "rgba(255,255,255,0.20)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.25)", color: "var(--color-text-muted)" }}>You're caught up ✓</span>
             </div>
           )}
         </div>
