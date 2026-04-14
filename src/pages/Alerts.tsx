@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Bell, Briefcase, Link2, Shield, TrendingUp, Target, Check, X, UserCheck } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -66,19 +65,15 @@ const Alerts = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from("alerts")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(50);
-      if (error) { console.warn("[Alerts] fetch failed:", error.message); setAlerts([]); setLoading(false); return; }
+        .from("alerts").select("*").eq("user_id", user.id)
+        .order("created_at", { ascending: false }).limit(50);
+      if (error) { setAlerts([]); setLoading(false); return; }
       setAlerts(data || []);
       setLoading(false);
       if ((data || []).some((a: any) => !a.is_read)) {
-        supabase.from("alerts").update({ is_read: true } as any).eq("user_id", user.id).eq("is_read", false).then(({ error: e }) => { if (e) console.warn("[Alerts] mark-read failed:", e.message); });
+        supabase.from("alerts").update({ is_read: true } as any).eq("user_id", user.id).eq("is_read", false).then(() => {});
       }
-    } catch (e) {
-      console.warn("[Alerts] fetch exception:", e);
+    } catch {
       setAlerts([]);
       setLoading(false);
     }
@@ -112,11 +107,7 @@ const Alerts = () => {
     toast.success("Strand declined");
   };
 
-  // Offer accept / decline
-  const acceptOffer = async (alert: any) => {
-    setShowJoinModal(alert);
-  };
-
+  const acceptOffer = async (alert: any) => { setShowJoinModal(alert); };
   const declineOffer = async (alert: any) => {
     await supabase.from("alerts").update({ is_read: true } as any).eq("id", alert.id);
     setAlerts(prev => prev.map(a => a.id === alert.id ? { ...a, is_read: true, _declined: true } : a));
@@ -129,14 +120,10 @@ const Alerts = () => {
       const oppId = alert.data?.opportunity_id;
       const orgId = alert.data?.org_id;
       const roleTitle = alert.data?.role_title || "Team Member";
-
-      // Update application
       if (oppId) {
         await supabase.from("opportunity_applications").update({ offer_accepted: true, joined_confirmed: true } as any)
           .eq("opportunity_id", oppId).eq("applicant_id", user.id);
       }
-
-      // Create work item
       if (orgId) {
         await supabase.from("work_items").insert({
           owner_id: user.id, title: roleTitle, job_title: roleTitle,
@@ -146,14 +133,11 @@ const Alerts = () => {
           company_name: alert.data?.org_name || "Organization",
         } as any);
       }
-
-      // Increment score
       try { await supabase.rpc("increment_score", { uid: user.id, amount: 15 }); } catch {}
-
       setAlerts(prev => prev.map(a => a.id === alert.id ? { ...a, _accepted: true, is_read: true } : a));
       setShowJoinModal(null);
       toast.success("Experience updated! Check your profile. 🎉");
-    } catch (e) { console.warn("[Alerts] join failed:", e); toast.error("Something went wrong"); }
+    } catch { toast.error("Something went wrong"); }
   };
 
   const unreadCount = alerts.filter(a => !a.is_read).length;
@@ -168,17 +152,9 @@ const Alerts = () => {
 
   if (loading) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-6 space-y-3">
+      <div className="max-w-3xl mx-auto px-4 py-6 space-y-2">
         {[1, 2, 3].map(i => (
-          <div key={i} className="t-card p-5 animate-pulse">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full" style={{ background: "var(--surface-2)" }} />
-              <div className="flex-1 space-y-2">
-                <div className="h-4 w-3/4 rounded" style={{ background: "var(--surface-2)" }} />
-                <div className="h-3 w-24 rounded" style={{ background: "var(--surface-2)" }} />
-              </div>
-            </div>
-          </div>
+          <div key={i} className="glass-light animate-pulse" style={{ height: 60, borderRadius: 16, padding: 12 }} />
         ))}
       </div>
     );
@@ -188,29 +164,36 @@ const Alerts = () => {
     <div className="max-w-3xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
-          <Bell className="w-6 h-6" style={{ color: "var(--brand)" }} />
-          <h1 className="text-[20px] font-bold" style={{ color: "var(--text-1)" }}>Alerts</h1>
+          <Bell className="w-6 h-6" style={{ color: "#E8733A" }} />
+          <h1 className="text-[20px] font-bold" style={{ color: "#1A1A2E" }}>Alerts</h1>
         </div>
         {unreadCount > 0 && (
-          <Button variant="ghost" size="sm" className="active:scale-95" onClick={markAllRead}>Mark all read</Button>
+          <button type="button" onClick={markAllRead}
+            className="h-8 px-3 rounded-xl text-[12px] font-semibold transition-all duration-200"
+            style={{ background: "rgba(255,255,255,0.20)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.25)", color: "#1A1A2E", cursor: "pointer" }}>
+            Mark all read
+          </button>
         )}
       </div>
 
-      <div className="flex gap-0 border-b mb-6" style={{ borderColor: "var(--border)" }}>
-        {filterTabs.map(tab => (
-          <button type="button" key={tab} onClick={() => setActiveTab(tab)}
-            className="px-4 py-2.5 text-[12px] font-semibold transition-all duration-200 relative cursor-pointer"
-            style={{ color: activeTab === tab ? "var(--brand)" : "var(--text-3)" }}>
-            {tab === "Unread" ? `Unread (${unreadCount})` : tab}
-            {activeTab === tab && <div className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full" style={{ background: "var(--brand)" }} />}
+      {/* Filter tabs */}
+      <div className="flex gap-2 mb-6">
+        {filterTabs.map(ftab => (
+          <button type="button" key={ftab} onClick={() => setActiveTab(ftab)}
+            className="px-5 py-2 rounded-[20px] text-[13px] font-semibold transition-all duration-200"
+            style={activeTab === ftab
+              ? { background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 4px 16px rgba(232,115,58,0.30)", cursor: "pointer" }
+              : { background: "rgba(255,255,255,0.20)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.25)", color: "#1A1A2E", cursor: "pointer" }
+            }>
+            {ftab === "Unread" ? `Unread (${unreadCount})` : ftab}
           </button>
         ))}
       </div>
 
       {Object.entries(groups).map(([group, groupAlerts]) => (
         <div key={group} className="mb-6">
-          <p className="text-[11px] font-bold tracking-wider uppercase mb-2 px-1" style={{ color: "var(--text-3)" }}>{group}</p>
-          <div className="rounded-2xl overflow-hidden" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+          <p className="text-[11px] font-bold tracking-wider uppercase mb-2 px-1" style={{ color: "#6B7094" }}>{group}</p>
+          <div className="space-y-2">
             {groupAlerts.map((notif, i) => {
               const unread = !notif.is_read;
               const style = ICON_STYLES[notif.type] || ICON_STYLES.score;
@@ -223,8 +206,11 @@ const Alerts = () => {
 
               return (
                 <motion.div key={notif.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}
-                  className="flex items-start gap-3 px-4 py-3.5 cursor-pointer"
-                  style={{ borderBottom: i < groupAlerts.length - 1 ? "1px solid var(--border)" : "none" }}
+                  className="glass-light flex items-start gap-3 cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
+                  style={{
+                    padding: 12, borderRadius: 16,
+                    background: unread ? "rgba(232,115,58,0.05)" : undefined,
+                  }}
                   onClick={async () => {
                     if (unread) {
                       await supabase.from("alerts").update({ is_read: true } as any).eq("id", notif.id);
@@ -233,46 +219,41 @@ const Alerts = () => {
                     if (notif.action_url && !isStrandRequest && !isOffer) navigate(notif.action_url);
                   }}>
                   <div className="w-2 flex items-start pt-2 shrink-0">
-                    {unread && <span className="w-2 h-2 rounded-full" style={{ background: "var(--brand)" }} />}
+                    {unread && <span className="w-2 h-2 rounded-full" style={{ background: "#E8733A" }} />}
                   </div>
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: isOffer ? "rgba(22,163,74,0.1)" : style.bg }}>
-                    <Icon className="w-3.5 h-3.5" style={{ color: isOffer ? "#16A34A" : style.color }} />
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: isOffer ? "rgba(22,163,74,0.1)" : style.bg }}>
+                    <Icon className="w-4 h-4" style={{ color: isOffer ? "#16A34A" : style.color }} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-[13px] leading-relaxed ${unread ? "font-semibold" : "font-normal"}`} style={{ color: unread ? "var(--text-1)" : "var(--text-2)" }}>
+                    <p className={`text-[14px] leading-relaxed ${unread ? "font-semibold" : "font-normal"}`} style={{ color: unread ? "#1A1A2E" : "#6B7094" }}>
                       {notif.title || notif.body}
                     </p>
                     {notif.body && notif.title && (
-                      <p className="text-[12px] mt-0.5" style={{ color: "var(--text-3)" }}>{notif.body}</p>
+                      <p className="text-[12px] mt-0.5" style={{ color: "#6B7094" }}>{notif.body}</p>
                     )}
-                    {/* Strand request actions */}
                     {isStrandRequest && !handled && notif.data?.actor_id && (
                       <div className="flex gap-2 mt-2">
-                        <Button size="sm" className="h-7 text-[11px] gap-1" onClick={(e) => { e.stopPropagation(); acceptStrand(notif); }}>
-                          <Check className="w-3 h-3" /> Accept
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-7 text-[11px] gap-1" onClick={(e) => { e.stopPropagation(); declineStrand(notif); }}>
-                          <X className="w-3 h-3" /> Decline
-                        </Button>
+                        <button type="button" className="h-8 px-4 rounded-xl text-[11px] font-bold" style={{ background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); acceptStrand(notif); }}>
+                          <Check className="w-3 h-3 inline mr-1" /> Accept
+                        </button>
+                        <button type="button" className="h-8 px-3 rounded-xl text-[11px] font-bold" style={{ background: "rgba(255,255,255,0.20)", border: "1px solid rgba(255,255,255,0.25)", color: "#1A1A2E", cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); declineStrand(notif); }}>
+                          <X className="w-3 h-3 inline mr-1" /> Decline
+                        </button>
                       </div>
                     )}
-                    {/* Offer actions */}
                     {isOffer && !handled && (
                       <div className="flex gap-2 mt-2">
-                        <Button size="sm" className="h-8 text-[11px] gap-1" style={{ background: "#16A34A", color: "#fff" }}
-                          onClick={(e) => { e.stopPropagation(); acceptOffer(notif); }}>
-                          Accept Offer 🎉
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-8 text-[11px] gap-1"
-                          onClick={(e) => { e.stopPropagation(); declineOffer(notif); }}>
+                        <button type="button" className="h-8 px-4 rounded-xl text-[11px] font-bold" style={{ background: "#16A34A", color: "#fff", border: "none", cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); acceptOffer(notif); }}>
+                          Accept Offer
+                        </button>
+                        <button type="button" className="h-8 px-3 rounded-xl text-[11px] font-bold" style={{ background: "rgba(255,255,255,0.20)", border: "1px solid rgba(255,255,255,0.25)", color: "#1A1A2E", cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); declineOffer(notif); }}>
                           Decline
-                        </Button>
+                        </button>
                       </div>
                     )}
-                    {/* Delegation approval actions */}
                     {isDelegation && !handled && (
                       <div className="flex gap-2 mt-2">
-                        <Button size="sm" className="h-7 text-[11px] gap-1" onClick={async (e) => {
+                        <button type="button" className="h-8 px-4 rounded-xl text-[11px] font-bold" style={{ background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", cursor: "pointer" }} onClick={async (e) => {
                           e.stopPropagation();
                           const ruleData = notif.data;
                           if (ruleData?.org_id && ruleData?.member_id && ruleData?.access_type) {
@@ -283,9 +264,9 @@ const Alerts = () => {
                           setAlerts(prev => prev.map(a => a.id === notif.id ? { ...a, is_read: true, _accepted: true } : a));
                           toast.success("Delegation approved");
                         }}>
-                          <Check className="w-3 h-3" /> Approve
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-7 text-[11px] gap-1" onClick={async (e) => {
+                          <Check className="w-3 h-3 inline mr-1" /> Approve
+                        </button>
+                        <button type="button" className="h-8 px-3 rounded-xl text-[11px] font-bold" style={{ background: "rgba(255,255,255,0.20)", border: "1px solid rgba(255,255,255,0.25)", color: "#1A1A2E", cursor: "pointer" }} onClick={async (e) => {
                           e.stopPropagation();
                           const ruleData = notif.data;
                           if (ruleData?.org_id && ruleData?.member_id && ruleData?.access_type) {
@@ -296,40 +277,35 @@ const Alerts = () => {
                           setAlerts(prev => prev.map(a => a.id === notif.id ? { ...a, is_read: true, _declined: true } : a));
                           toast.success("Delegation declined");
                         }}>
-                          <X className="w-3 h-3" /> Decline
-                        </Button>
+                          <X className="w-3 h-3 inline mr-1" /> Decline
+                        </button>
                       </div>
                     )}
-                    {/* Ex-member verification actions */}
                     {isExVerification && !handled && (
                       <div className="flex gap-2 mt-2">
-                        <Button size="sm" className="h-7 text-[11px] gap-1" onClick={async (e) => {
+                        <button type="button" className="h-8 px-4 rounded-xl text-[11px] font-bold" style={{ background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", cursor: "pointer" }} onClick={async (e) => {
                           e.stopPropagation();
                           await supabase.from("alerts").update({ is_read: true } as any).eq("id", notif.id);
                           setAlerts(prev => prev.map(a => a.id === notif.id ? { ...a, is_read: true, _accepted: true } : a));
                           toast.success("Verification approved");
                           if (notif.action_url) navigate(notif.action_url);
                         }}>
-                          <Check className="w-3 h-3" /> Approve
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-7 text-[11px] gap-1" onClick={async (e) => {
+                          <Check className="w-3 h-3 inline mr-1" /> Approve
+                        </button>
+                        <button type="button" className="h-8 px-3 rounded-xl text-[11px] font-bold" style={{ background: "rgba(255,255,255,0.20)", border: "1px solid rgba(255,255,255,0.25)", color: "#1A1A2E", cursor: "pointer" }} onClick={async (e) => {
                           e.stopPropagation();
                           await supabase.from("alerts").update({ is_read: true } as any).eq("id", notif.id);
                           setAlerts(prev => prev.map(a => a.id === notif.id ? { ...a, is_read: true, _declined: true } : a));
                           toast.success("Verification declined");
                         }}>
-                          <X className="w-3 h-3" /> Decline
-                        </Button>
+                          <X className="w-3 h-3 inline mr-1" /> Decline
+                        </button>
                       </div>
                     )}
-                    {notif._accepted && (
-                      <span className="text-[11px] font-bold mt-1 block" style={{ color: "#10B981" }}>✓ {isOffer ? "Joined" : "Accepted"}</span>
-                    )}
-                    {notif._declined && (
-                      <span className="text-[11px] font-bold mt-1 block" style={{ color: "var(--text-3)" }}>Declined</span>
-                    )}
+                    {notif._accepted && <span className="text-[11px] font-bold mt-1 block" style={{ color: "#10B981" }}>✓ {isOffer ? "Joined" : "Accepted"}</span>}
+                    {notif._declined && <span className="text-[11px] font-bold mt-1 block" style={{ color: "#6B7094" }}>Declined</span>}
                   </div>
-                  <span className="text-[10px] shrink-0 pt-0.5" style={{ color: "var(--text-3)" }}>
+                  <span className="text-[12px] shrink-0 pt-0.5" style={{ color: "#6B7094" }}>
                     {notif.created_at ? getTimeAgo(new Date(notif.created_at)) : ""}
                   </span>
                 </motion.div>
@@ -341,23 +317,27 @@ const Alerts = () => {
 
       {filteredAlerts.length === 0 && (
         <div className="text-center py-12">
-          <Bell className="w-10 h-10 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
-          <p className="text-[15px] font-bold mb-1" style={{ color: "var(--text-1)" }}>No alerts yet</p>
-          <p className="text-[13px]" style={{ color: "var(--text-3)" }}>You'll be notified about strands, opportunities, and activity here.</p>
+          <Bell className="w-10 h-10 mx-auto mb-3" style={{ color: "#6B7094" }} />
+          <p className="text-[15px] font-bold mb-1" style={{ color: "#1A1A2E" }}>No alerts yet</p>
+          <p className="text-[13px]" style={{ color: "#6B7094" }}>You'll be notified about strands, opportunities, and activity here.</p>
         </div>
       )}
 
       {/* Join confirmation modal */}
       {showJoinModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.5)" }} onClick={() => setShowJoinModal(null)}>
-          <div className="rounded-2xl p-6 max-w-[400px] w-full" style={{ background: "#fff" }} onClick={e => e.stopPropagation()}>
-            <h2 className="text-[22px] font-bold mb-2" style={{ color: "#1A1A1A" }}>Did you join {showJoinModal.data?.org_name || "the organization"}?</h2>
-            <p className="text-[14px] mb-6" style={{ color: "#9CA3AF" }}>We'll update your profile automatically</p>
-            <Button className="w-full mb-3" style={{ height: 52, borderRadius: 12, background: "#16A34A", color: "#fff" }}
-              onClick={() => confirmJoin(showJoinModal)}>
-              Yes, I joined! 🎉
-            </Button>
-            <button type="button" onClick={() => setShowJoinModal(null)} className="w-full text-center text-[13px] cursor-pointer" style={{ color: "#9CA3AF" }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4"
+          style={{ background: "rgba(26, 26, 78, 0.40)", backdropFilter: "blur(8px)" }}
+          onClick={() => setShowJoinModal(null)}>
+          <div className="glass-light w-full max-w-[400px]" style={{ padding: 24, borderRadius: 24 }} onClick={e => e.stopPropagation()}>
+            <h2 className="text-[22px] font-bold mb-2" style={{ color: "#1A1A2E" }}>Did you join {showJoinModal.data?.org_name || "the organization"}?</h2>
+            <p className="text-[14px] mb-6" style={{ color: "#6B7094" }}>We'll update your profile automatically</p>
+            <button type="button" onClick={() => confirmJoin(showJoinModal)}
+              className="w-full h-[52px] rounded-2xl text-[15px] font-bold mb-3"
+              style={{ background: "#16A34A", color: "#fff", border: "none", cursor: "pointer" }}>
+              Yes, I joined!
+            </button>
+            <button type="button" onClick={() => setShowJoinModal(null)}
+              className="w-full text-center text-[13px] cursor-pointer" style={{ color: "#6B7094" }}>
               Not yet — I'll confirm later
             </button>
           </div>
