@@ -497,94 +497,125 @@ const Profile = () => {
   const currentExp = experiences.find(e => e.is_current);
 
   return (
-    <div className="min-h-screen pb-8" style={{ background: "linear-gradient(135deg, #FFF8F2 0%, #FFF0E8 50%, #FFF8F2 100%)" }}>
-      {/* ── HEADER ── */}
+    <div className="min-h-screen pb-8">
+      {/* ── COVER ── */}
       <div className="max-w-[960px] mx-auto px-4">
-        <div className="h-[180px] rounded-b-3xl relative overflow-hidden mt-0" style={{ background: `linear-gradient(135deg, #E8580A 0%, #C4460A 50%, #FF7A35 100%)` }}>
+        <div className="h-[240px] relative overflow-hidden"
+          style={{
+            borderRadius: "0 0 28px 28px",
+            background: profileData.cover_url ? undefined : "linear-gradient(135deg, #1A1A4E 0%, #2D2D7A 60%, #3D3D8A 100%)",
+          }}>
+          {profileData.cover_url && (
+            <>
+              <img src={storageImageUrl(profileData.cover_url, "cover")} alt="" className="absolute inset-0 w-full h-full object-cover" />
+              <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(26,26,78,0.20) 0%, rgba(26,26,78,0.70) 100%)" }} />
+            </>
+          )}
+
           {/* Edit / Connect button */}
           <div className="absolute top-4 right-4 z-10">
             {isOwnProfile ? (
-              <button type="button" onClick={() => setEditOpen(true)} className="h-9 px-4 rounded-full text-[12px] font-bold cursor-pointer" style={{ background: "rgba(255,255,255,0.2)", color: "#fff", border: "1px solid rgba(255,255,255,0.4)", backdropFilter: "blur(8px)" }}>
+              <button type="button" onClick={() => setEditOpen(true)}
+                className="btn-glass-pill text-[12px] font-bold cursor-pointer"
+                style={{ color: "#fff", border: "1px solid rgba(255,255,255,0.30)" }}>
                 <Pencil className="w-3.5 h-3.5 inline mr-1" /> Edit Profile
               </button>
             ) : renderConnectButton()}
           </div>
-          {/* Avatar + Name */}
-          <div className="absolute bottom-0 left-6 flex items-end gap-4 translate-y-12">
-            <div className="w-24 h-24 rounded-full flex items-center justify-center text-[28px] font-extrabold text-white overflow-hidden shrink-0"
-              style={{ backgroundColor: roleColor, border: "3px solid #fff", boxShadow: isVerified ? "0 0 0 3px #F59E0B" : "0 4px 12px rgba(0,0,0,0.2)" }}>
+
+          {/* Avatar + Name ON cover */}
+          <div className="absolute bottom-5 left-6 flex items-end gap-4 z-10">
+            <div className="w-[100px] h-[100px] rounded-full flex items-center justify-center text-[28px] font-extrabold text-white overflow-hidden shrink-0"
+              style={{
+                backgroundColor: profileData.avatar_url ? "#fff" : roleColor,
+                border: "3px solid rgba(255, 255, 255, 0.40)",
+                boxShadow: "0 0 24px rgba(232, 115, 58, 0.20)",
+              }}>
               {profileData.avatar_url ? <img src={storageImageUrl(profileData.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials}
             </div>
-            <div className="pb-2">
-              <h1 className="text-[22px] font-extrabold text-white drop-shadow-sm">{displayName}</h1>
-              <div className="flex items-center gap-2 mt-0.5">
+            <div className="pb-1">
+              <div className="flex items-center gap-2">
+                <h1 className="text-[24px] font-bold text-white" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>{displayName}</h1>
+                {isVerified && (
+                  <span className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: "#34C759", boxShadow: "0 0 8px rgba(52,199,89,0.40)" }}>
+                    <CheckCircle className="w-3.5 h-3.5 text-white" />
+                  </span>
+                )}
+              </div>
+              <p className="text-[14px]" style={{ color: "rgba(255,255,255,0.80)" }}>{headline || `${roleLabel}${currentExp ? ` at ${currentExp.company_name || currentExp.institution_name || ""}` : ""}`}</p>
+              <div className="flex items-center gap-2 mt-1">
                 <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full" style={{ background: "rgba(255,255,255,0.9)", color: roleColor }}>{roleLabel}</span>
-                {isVerified && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1" style={{ background: "rgba(245,158,11,0.9)", color: "#fff" }}><CheckCircle className="w-3 h-3" /> Tiiked</span>}
+                {isVerified && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1" style={{ background: "rgba(245,158,11,0.9)", color: "#fff" }}><Shield className="w-3 h-3" /> Tiiked</span>}
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── GRID ── */}
-      <div className="max-w-[960px] mx-auto px-4 mt-16 grid grid-cols-1 md:grid-cols-[340px_1fr] gap-4">
-        {/* ═══ LEFT COLUMN ═══ */}
-        <div className="space-y-4">
-          {/* Identity Box */}
-          <GlassBox accent="identity">
-            {username && <p className="text-[13px] font-mono mb-1" style={{ color: "#9CA3AF" }}>@{username}</p>}
-            {headline && <p className="text-[15px] font-semibold mb-1" style={{ color: "#1A1A1A" }}>{headline}</p>}
+      {/* ── COMPACT INFO STRIP ── */}
+      <div className="max-w-[960px] mx-auto px-4 mt-4">
+        <div className="glass-light flex items-center gap-4 px-4 py-3 flex-wrap" style={{ borderRadius: 20 }}>
+          {username && <span className="text-[13px] font-mono" style={{ color: "var(--color-text-secondary)" }}>@{username}</span>}
+          {username && <div className="h-5 w-px" style={{ background: "rgba(255,255,255,0.20)" }} />}
+          {profileData.open_to_work && (
+            <>
+              <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-lg" style={{ background: "rgba(52,199,89,0.15)", color: "#34C759" }}>Open to work</span>
+              <div className="h-5 w-px" style={{ background: "rgba(255,255,255,0.20)" }} />
+            </>
+          )}
+          {(city || state) && (
+            <>
+              <span className="text-[13px] flex items-center gap-1" style={{ color: "var(--color-text-secondary)" }}>
+                <MapPin className="w-3.5 h-3.5" />{[city, state].filter(Boolean).join(", ")}
+              </span>
+              <div className="h-5 w-px" style={{ background: "rgba(255,255,255,0.20)" }} />
+            </>
+          )}
+          <span className="text-[13px] flex items-center gap-1" style={{ color: "var(--color-text-secondary)" }}>
+            🚀 {profileData.activity_score || 0} · Explorer
+          </span>
+          <div className="h-5 w-px" style={{ background: "rgba(255,255,255,0.20)" }} />
+          <button type="button" onClick={handleCopyLink}
+            className="btn-glass-pill text-[12px] font-semibold"
+            style={{ padding: "4px 12px", fontSize: 12 }}>
+            <Share2 className="w-3 h-3 inline mr-1" /> Share profile
+          </button>
+        </div>
+      </div>
+
+      {/* ── BIO + LINKS (if exists) ── */}
+      {(bio || customLinks.length > 0) && (
+        <div className="max-w-[960px] mx-auto px-4 mt-3">
+          <div className="glass-light px-5 py-4" style={{ borderRadius: 20 }}>
             {bio && (
               <div>
-                <p className="text-[13px] leading-relaxed" style={{ color: "#4B5563" }}>{bioExpanded || bio.length <= 120 ? bio : bio.slice(0, 120) + "..."}</p>
-                {bio.length > 120 && <button type="button" onClick={() => setBioExpanded(!bioExpanded)} className="text-[11px] font-semibold cursor-pointer" style={{ color: "#E8580A" }}>{bioExpanded ? "show less" : "...see more"}</button>}
+                <p className="text-[13px] leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>{bioExpanded || bio.length <= 180 ? bio : bio.slice(0, 180) + "..."}</p>
+                {bio.length > 180 && <button type="button" onClick={() => setBioExpanded(!bioExpanded)} className="text-[11px] font-semibold cursor-pointer" style={{ color: "var(--color-accent)" }}>{bioExpanded ? "show less" : "...see more"}</button>}
               </div>
             )}
-            <div className="flex items-center gap-2 mt-2 flex-wrap">
-              {profileData.open_to_work && <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full" style={{ background: "#F0FDF4", color: "#16A34A", border: "1px solid #BBF7D0" }}>Open to work</span>}
-              {isVerified && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1" style={{ background: "rgba(245,158,11,0.08)", color: "#F59E0B", border: "1px solid rgba(245,158,11,0.3)" }}><Shield className="w-3 h-3" /> Tiik Approved</span>}
-            </div>
-            {/* Activity Score */}
-            <div className="mt-3 pt-3" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
-              <ActivityScoreRing score={profileData.activity_score || 0} size={60} />
-            </div>
-            {/* Share */}
-            <button type="button" onClick={handleCopyLink} className="mt-3 text-[12px] font-semibold flex items-center gap-1.5 cursor-pointer" style={{ color: "#E8580A" }}>
-              <Copy className="w-3.5 h-3.5" /> Share profile
-            </button>
-          </GlassBox>
-
-          {/* Location Box */}
-          {(city || state) && (
-            <GlassBox accent="location">
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 shrink-0" style={{ color: "#06B6D4" }} />
-                <p className="text-[14px] font-semibold" style={{ color: "#1A1A1A" }}>{[city, state].filter(Boolean).join(", ")}</p>
-              </div>
-              {profileData.languages?.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {(profileData.languages as string[]).map((l: string) => <span key={l} className="text-[11px] px-2 py-0.5 rounded-full" style={{ background: "#F0FDFA", color: "#0D9488", border: "1px solid #99F6E4" }}>{l}</span>)}
+            {customLinks.length > 0 && (
+              <div className={bio ? "mt-3 pt-3" : ""} style={bio ? { borderTop: "1px solid var(--glass-border-subtle)" } : undefined}>
+                <div className="flex flex-wrap gap-3">
+                  {customLinks.map((link: any, i: number) => (
+                    <a key={i} href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[13px] font-medium hover:underline" style={{ color: "var(--color-accent)" }}>
+                      <ExternalLink className="w-3.5 h-3.5 shrink-0" />{link.label || link.url}
+                    </a>
+                  ))}
                 </div>
-              )}
-            </GlassBox>
-          )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
-          {/* Contact Box */}
-          {customLinks.length > 0 && (
-            <GlassBox accent="contact">
-              <p className="text-[12px] font-bold mb-2" style={{ color: "#64748B" }}>Contact & Links</p>
-              {customLinks.map((link: any, i: number) => (
-                <a key={i} href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 py-1.5 text-[13px] font-medium hover:underline" style={{ color: "#E8580A" }}>
-                  <ExternalLink className="w-3.5 h-3.5 shrink-0" />{link.label || link.url}
-                </a>
-              ))}
-            </GlassBox>
-          )}
-
+      {/* ── GRID ── */}
+      <div className="max-w-[960px] mx-auto px-4 mt-4 grid grid-cols-1 md:grid-cols-[340px_1fr] gap-4">
+        {/* ═══ LEFT COLUMN ═══ */}
+        <div className="space-y-4">
           {/* Connections Box */}
           <GlassBox accent="connections">
             <p className="text-[12px] font-bold mb-1" style={{ color: "#6366F1" }}>Connections</p>
-            <p className="text-[28px] font-extrabold" style={{ color: "#1A1A1A" }}>{stats.connections}</p>
+            <p className="text-[28px] font-extrabold" style={{ color: "var(--color-text)" }}>{stats.connections}</p>
             {connectedAvatars.length > 0 && (
               <div className="flex -space-x-2 mt-2">
                 {connectedAvatars.map((a: any) => (
@@ -603,8 +634,8 @@ const Profile = () => {
               <div className="flex items-center gap-2">
                 <Shield className="w-5 h-5" style={{ color: "#F59E0B" }} />
                 <div className="flex-1">
-                  <p className="text-[12px] font-bold" style={{ color: "#1A1A1A" }}>Get Tiiked</p>
-                  <p className="text-[11px]" style={{ color: "#9CA3AF" }}>Verify your profile to unlock the gold badge</p>
+                  <p className="text-[12px] font-bold" style={{ color: "var(--color-text)" }}>Get Tiiked</p>
+                  <p className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>Verify your profile to unlock the gold badge</p>
                 </div>
                 <button type="button" onClick={() => setShowGetTiiked(true)} className="text-[11px] font-bold px-3 py-1.5 rounded-full cursor-pointer text-white" style={{ background: "#F59E0B" }}>Verify</button>
               </div>
