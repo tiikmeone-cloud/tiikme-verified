@@ -184,7 +184,7 @@ const SettingsPage = () => {
   const [passwordUpdating, setPasswordUpdating] = useState(false);
 
   const hasChanges = JSON.stringify(profile) !== JSON.stringify(originalProfile);
-
+};
 
 
   useEffect(() => {
