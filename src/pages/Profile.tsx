@@ -327,7 +327,14 @@ const Profile = () => {
                 <h1 className="text-[24px] font-bold text-white" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>{limitedName}</h1>
               </div>
             </div>
-            <div className="absolute top-4 right-4 z-10">{renderConnectButton()}</div>
+            <div className="absolute top-4 right-4 z-10">
+              {connectionStatus.status === "accepted" 
+                ? <button type="button" className="h-10 px-5 rounded-full text-[13px] font-bold" style={{ background: "#F0FDF4", color: "#059669", border: "1.5px solid #059669" }} disabled><CheckCircle className="w-3.5 h-3.5 inline mr-1" />Connected</button>
+                : connectionStatus.status === "pending" 
+                ? <button type="button" className="h-10 px-5 rounded-full text-[13px] font-bold opacity-60" style={{ background: "#F9FAFB", color: "#6B7280", border: "1.5px solid #E5E7EB" }} disabled>Requested</button>
+                : <button type="button" onClick={handleConnect} disabled={connectLoading} className="h-10 px-5 rounded-full text-[13px] font-bold text-white" style={{ background: "#E8580A" }}><Users className="w-3.5 h-3.5 inline mr-1" />Connect</button>
+              }
+            </div>
           </div>
         </div>
         <div className="max-w-[960px] mx-auto px-4 mt-8">
