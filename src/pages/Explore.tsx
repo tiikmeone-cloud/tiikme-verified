@@ -50,6 +50,8 @@ function PersonCard({ p, strandStatus, onStrand }: { p: ProfileResult; strandSta
 
   return (
     <motion.article
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -4 }}
       transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
       className="glass-light cursor-pointer flex flex-col items-center text-center"
@@ -116,6 +118,8 @@ function OrgCard({ org }: { org: any }) {
 
   return (
     <motion.article
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -4 }}
       transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
       className="glass-light cursor-pointer flex flex-col items-center text-center"
@@ -276,7 +280,7 @@ const Explore = () => {
       {loading && (
         <div className="grid gap-3 grid-cols-2 md:grid-cols-3">
           {[1,2,3,4,5,6].map(i => (
-            <div key={i} className="rounded-[20px] animate-pulse" style={{ height: 230, background: "rgba(255,255,255,0.15)", backdropFilter: "blur(12px)" }} />
+            <div key={i} className="rounded-[20px] glass-skeleton" style={{ height: 230 }} />
           ))}
         </div>
       )}
