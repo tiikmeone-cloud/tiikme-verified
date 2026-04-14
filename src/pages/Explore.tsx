@@ -194,7 +194,7 @@ const Explore = () => {
 
       if (showPeople) {
         let q = supabase.from("profiles")
-          .select("id, full_name, username, avatar_url, role, headline, institution_name, location_city, is_verified, activity_score")
+          .select("id, full_name, username, avatar_url, role, headline, institution_name, location_city, is_verified, activity_score, privacy_settings")
           .eq("is_public", true).not("full_name", "is", null)
           .neq("id", user.id)
           .order("activity_score", { ascending: false }).limit(50);
@@ -202,7 +202,12 @@ const Explore = () => {
           q = q.or(`full_name.ilike.%${search}%,username.ilike.%${search}%,institution_name.ilike.%${search}%`);
         }
         const { data } = await q;
-        if (mountedRef.current) setPeople(data || []);
+        // Filter out profiles that opted out of search/explore
+        const filtered = (data || []).filter((p: any) => {
+          const ps = p.privacy_settings as any;
+          return !ps || ps.show_in_search !== false;
+        });
+        if (mountedRef.current) setPeople(filtered);
       } else { setPeople([]); }
 
       if (showOrgs) {
