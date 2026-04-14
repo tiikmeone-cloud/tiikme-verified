@@ -154,21 +154,33 @@ const AppShell = ({ children }: { children: ReactNode }) => {
     <div className="min-h-screen flex">
       {/* ═══ DESKTOP SIDEBAR (≥1024px) ═══ */}
       <aside className="hidden lg:flex flex-col fixed inset-y-0 left-0 z-40"
-        style={{ width: 248, background: "var(--glass-bg)", backdropFilter: "blur(24px) saturate(180%)", WebkitBackdropFilter: "blur(24px) saturate(180%)", borderRight: "1px solid var(--glass-border)", boxShadow: "2px 0 24px rgba(4,6,26,0.2)" }}>
-        <div className="h-16 flex items-center px-5"><Link to="/app/feed"><ThemeLogo className="h-10 w-auto" /></Link></div>
+        style={{ width: 248, background: "rgba(255, 255, 255, 0.12)", backdropFilter: "blur(24px) saturate(180%)", WebkitBackdropFilter: "blur(24px) saturate(180%)", borderRight: "1px solid rgba(255, 255, 255, 0.15)", boxShadow: "2px 0 24px var(--glass-shadow)" }}>
+        <div className="h-16 flex items-center px-5">
+          <Link to="/app/feed">
+            <ThemeLogo className="h-10 w-auto" style={{ filter: "drop-shadow(0 0 12px rgba(232, 115, 58, 0.20))" }} />
+          </Link>
+        </div>
         <nav className="flex-1 overflow-y-auto px-2.5 py-3">
           {navGroups.map((group) => (
             <div key={group.label} className="mb-1">
-              <p className="micro-label px-3 py-3">{group.label}</p>
+              <p className="px-3 py-3" style={{ color: "#6B7094", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>{group.label}</p>
               <div className="space-y-0.5">
                 {group.label === "WORK" && (() => {
                   const active = isActive(profilePath);
                   return (
                     <Link key="profile" to={profilePath}
-                      className="flex items-center gap-2.5 h-[42px] px-3 rounded-xl relative text-[14px]"
-                      style={{ background: active ? "var(--brand-dim)" : "transparent", border: active ? "1px solid color-mix(in srgb, var(--brand) 25%, transparent)" : "1px solid transparent", color: active ? "var(--brand)" : "var(--text-2)", fontWeight: active ? 700 : 500, transition: "all 0.15s" }}>
-                      {active && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[22px]" style={{ borderRadius: "0 3px 3px 0", background: "var(--brand)", boxShadow: "2px 0 8px var(--brand-glow)" }} />}
-                      <User className="w-[18px] h-[18px] shrink-0" strokeWidth={1.8} />
+                      className="flex items-center gap-2.5 h-[42px] px-3 rounded-[14px] relative"
+                      style={{
+                        background: active ? "rgba(255, 255, 255, 0.30)" : "transparent",
+                        color: active ? "var(--color-accent)" : "var(--color-text)",
+                        fontWeight: active ? 600 : 500,
+                        fontSize: 14,
+                        boxShadow: active ? "-3px 0 12px rgba(232, 115, 58, 0.25)" : "none",
+                        transition: "all 0.2s ease",
+                      }}
+                      onMouseEnter={e => { if (!active) e.currentTarget.style.background = "rgba(255, 255, 255, 0.20)"; }}
+                      onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}>
+                      <User className="w-5 h-5 shrink-0" strokeWidth={1.8} />
                       <span>Profile</span>
                     </Link>
                   );
@@ -178,13 +190,21 @@ const AppShell = ({ children }: { children: ReactNode }) => {
                   const badge = getBadge(item.path);
                   return (
                     <Link key={item.path} to={item.path === "/app/profile" ? profilePath : item.path}
-                      className="flex items-center gap-2.5 h-[42px] px-3 rounded-xl relative text-[14px]"
-                      style={{ background: active ? "var(--brand-dim)" : "transparent", border: active ? "1px solid color-mix(in srgb, var(--brand) 25%, transparent)" : "1px solid transparent", color: active ? "var(--brand)" : "var(--text-2)", fontWeight: active ? 700 : 500, transition: "all 0.15s" }}>
-                      {active && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[22px]" style={{ borderRadius: "0 3px 3px 0", background: "var(--brand)", boxShadow: "2px 0 8px var(--brand-glow)" }} />}
-                      <item.icon className="w-[18px] h-[18px] shrink-0" strokeWidth={1.8} />
+                      className="flex items-center gap-2.5 h-[42px] px-3 rounded-[14px] relative"
+                      style={{
+                        background: active ? "rgba(255, 255, 255, 0.30)" : "transparent",
+                        color: active ? "var(--color-accent)" : "var(--color-text)",
+                        fontWeight: active ? 600 : 500,
+                        fontSize: 14,
+                        boxShadow: active ? "-3px 0 12px rgba(232, 115, 58, 0.25)" : "none",
+                        transition: "all 0.2s ease",
+                      }}
+                      onMouseEnter={e => { if (!active) e.currentTarget.style.background = "rgba(255, 255, 255, 0.20)"; }}
+                      onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}>
+                      <item.icon className="w-5 h-5 shrink-0" strokeWidth={1.8} />
                       <span>{item.label}</span>
                       {badge && badge > 0 && (
-                        <span className="ml-auto h-[18px] min-w-[18px] flex items-center justify-center rounded-full text-[10px] font-bold text-white px-1" style={{ background: "var(--brand)", boxShadow: "0 2px 6px var(--brand-glow)" }}>{badge}</span>
+                        <span className="ml-auto h-[18px] min-w-[18px] flex items-center justify-center rounded-full text-[10px] font-bold text-white px-1" style={{ background: "var(--color-accent)", boxShadow: "0 2px 6px var(--color-accent-glow)" }}>{badge}</span>
                       )}
                     </Link>
                   );
@@ -194,27 +214,26 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           ))}
           <div className="px-0 mt-2">
             <button type="button" onClick={openPostCreate}
-              className="w-full h-[52px] rounded-[14px] flex items-center justify-center gap-2 text-[15px] font-bold text-white active:scale-[0.97]"
-              style={{ background: "linear-gradient(135deg, var(--brand), var(--brand-2))", boxShadow: "0 2px 8px var(--brand-glow), inset 0 1px 0 rgba(255,255,255,0.1)", transition: "all 0.15s" }}>
+              className="btn-liquid-primary w-full h-[44px] rounded-[16px] flex items-center justify-center gap-2 text-[15px] font-bold text-white active:scale-[0.97]">
               <PencilLine className="w-4 h-4" /> New Post
             </button>
           </div>
         </nav>
-        <div className="px-2.5 pb-3 pt-2" style={{ borderTop: "1px solid var(--border)" }}>
+        <div className="px-2.5 pb-3 pt-2" style={{ borderTop: "1px solid var(--glass-border-subtle)" }}>
           <Link to={profilePath} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center text-[13px] font-bold text-white overflow-hidden" style={{ backgroundColor: "var(--brand)" }}>
+            <div className="w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-bold text-white overflow-hidden shrink-0" style={{ backgroundColor: "var(--color-accent)", border: "2px solid rgba(255,255,255,0.30)" }}>
               {identityAvatar ? <img src={storageImageUrl(identityAvatar, "avatar")} alt="" className="w-full h-full object-cover" /> : identityInitials}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[13px] font-bold truncate" style={{ color: "var(--text-1)" }}>{identityName || "Your Name"}</p>
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "var(--brand-dim)", color: "var(--brand)" }}>{roleLabel}</span>
+              <p className="text-[14px] font-semibold truncate" style={{ color: "var(--color-text)" }}>{identityName || "Your Name"}</p>
+              <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-lg inline-block" style={{ backgroundColor: "rgba(232,115,58,0.15)", color: "var(--color-accent)" }}>{roleLabel}</span>
             </div>
           </Link>
           <button type="button" onClick={handleSignOut}
             className="w-full flex items-center gap-2.5 px-3 py-2 mt-1 rounded-xl text-[13px] font-medium cursor-pointer active:scale-[0.97]"
-            style={{ color: "var(--text-3)", transition: "all 0.15s" }}
+            style={{ color: "#6B7094", transition: "all 0.15s" }}
             onMouseEnter={e => { e.currentTarget.style.background = "rgba(220,38,38,0.06)"; e.currentTarget.style.color = "#DC2626"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-3)"; }}>
+            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#6B7094"; }}>
             <LogOut className="w-4 h-4" /> Sign out
           </button>
         </div>
