@@ -491,8 +491,75 @@
 ::-webkit-scrollbar-thumb { background: var(--color-text-muted); border-radius: 3px; opacity: 0.3; }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-text-secondary); }
 
+/* Glass scrollbar for modals */
+.glass-scrollbar::-webkit-scrollbar { width: 4px; }
+.glass-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.glass-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.20); border-radius: 2px; }
+.glass-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.35); }
+
 /* ═══ SELECTION ═══ */
 ::selection { background: var(--color-accent-glow); color: var(--color-text); }
+
+/* ═══ FOCUS STATES ═══ */
+@layer utilities {
+  .focus-ring:focus-visible {
+    outline: 2px solid rgba(232, 115, 58, 0.50);
+    outline-offset: 2px;
+  }
+}
+*:focus-visible {
+  outline: 2px solid rgba(232, 115, 58, 0.50);
+  outline-offset: 2px;
+}
+
+/* ═══ PAGE TRANSITION ═══ */
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.page-enter {
+  animation: pageEnter 0.2s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* ═══ STAGGERED CARD ENTRY ═══ */
+@keyframes cardFadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.card-stagger {
+  animation: cardFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* ═══ GLASS SKELETON SHIMMER ═══ */
+@keyframes glassShimmer {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.25; }
+}
+.glass-skeleton {
+  background: rgba(255, 255, 255, 0.15);
+  animation: glassShimmer 1.5s ease-in-out infinite;
+}
+
+/* ═══ HOVER MICRO-INTERACTIONS ═══ */
+@media (prefers-reduced-motion: no-preference) {
+  .glass-light { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+  .glass-light:hover {
+    box-shadow: 0 12px 40px var(--glass-shadow-hover), inset 0 1px 0 rgba(255,255,255,0.80);
+  }
+  .btn-liquid-primary:active { transform: scale(0.98); }
+  .btn-glass-pill:active { transform: scale(0.98); }
+}
+
+/* ═══ REDUCED MOTION ═══ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .page-enter { animation: none; }
+  .card-stagger { animation: none; }
+}
 
 /* ═══ KEYFRAME ANIMATIONS ═══ */
 @keyframes floatOrb1 {
