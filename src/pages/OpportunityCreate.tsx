@@ -214,8 +214,8 @@ export default function OpportunityCreate() {
               const selected = oppType === t.value;
               return (
                 <GlassBox key={t.value} accent={t.color} onClick={() => setOppType(t.value)}
-                  className={selected ? "ring-2" : ""}
-                  style={selected ? { ringColor: t.color, borderLeftColor: t.color } : {}}>
+                  className={selected ? "ring-2 ring-current" : ""}
+                  style={selected ? { borderLeftColor: t.color } : {}}>
                   <div className="flex flex-col items-center text-center gap-2 py-2">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${t.color}14` }}>
                       <Icon className="w-5 h-5" style={{ color: t.color }} />
