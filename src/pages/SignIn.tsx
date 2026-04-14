@@ -82,7 +82,9 @@ const SignIn = () => {
       >
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 mb-8">
-          <ThemeLogo className="h-10 w-auto" style={{ filter: "brightness(10) drop-shadow(0 0 20px rgba(232,115,58,0.4))" }} />
+          <div style={{ filter: "brightness(10) drop-shadow(0 0 20px rgba(232,115,58,0.4))" }}>
+            <ThemeLogo className="h-10 w-auto" />
+          </div>
         </Link>
 
         {/* Heading */}
