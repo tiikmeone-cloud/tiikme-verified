@@ -183,6 +183,57 @@ export default function Workspace() {
     toast.success(`Request ${status}`); fetchData();
   };
 
+  const handleItemVerifAction = async (reqId: string, action: "approved" | "rejected", requesterId: string, workItemId: string) => {
+    // Update request status
+    await supabase.from("item_verification_requests").update({
+      status: action,
+      verifier_id: user?.id,
+    } as any).eq("id", reqId);
+
+    // Update the work item
+    if (action === "approved") {
+      await supabase.from("work_items").update({
+        verification_status: "verified",
+        verified_by_user: user?.id,
+        verified_at: new Date().toISOString(),
+        is_tiiked: true,
+      } as any).eq("id", workItemId);
+      if (user) await supabase.rpc("increment_score", { uid: requesterId, amount: 15 });
+    } else {
+      await supabase.from("work_items").update({
+        verification_status: "rejected",
+      } as any).eq("id", workItemId);
+    }
+
+    // Notify requester
+    await supabase.from("alerts").insert({
+      user_id: requesterId,
+      type: "verification",
+      title: action === "approved" ? `Your ${org?.name || "work"} experience verified! ✓` : "Verification declined",
+      body: action === "approved"
+        ? `${profile?.full_name || "Someone"} verified your experience at ${org?.name}`
+        : `Your verification request at ${org?.name} was declined.`,
+      action_url: "/app/profile",
+    });
+
+    // Notify org admins if verifier is not admin
+    if (myRole !== "owner" && myRole !== "admin") {
+      const ownerMember = members.find(m => m.role === "owner");
+      if (ownerMember) {
+        await supabase.from("alerts").insert({
+          user_id: ownerMember.user_id,
+          type: "verification_completed",
+          title: `${profile?.full_name} verified a member's experience`,
+          body: `Action: ${action}`,
+          action_url: "/app/workspace",
+        });
+      }
+    }
+
+    toast.success(action === "approved" ? "Verified ✓" : "Declined");
+    fetchData();
+  };
+
   const handleRemoveMember = async (memberId: string) => {
     await supabase.from("org_members").delete().eq("id", memberId);
     toast.success("Member removed"); fetchData();
