@@ -1,4 +1,5 @@
-import { useEffect, useCallback, type ReactNode, type LucideIcon } from "react";
+import { useEffect, useCallback, type ReactNode } from "react";
+import type { LucideIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 
