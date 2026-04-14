@@ -454,6 +454,24 @@ const Profile = () => {
     toast.success("Achievement added");
   };
 
+  const addLink = async () => {
+    if (!newLinkUrl.trim() || !user) return;
+    const url = newLinkUrl.trim().startsWith("http") ? newLinkUrl.trim() : `https://${newLinkUrl.trim()}`;
+    const platform = detectPlatform(url);
+    const updated = [...customLinks, { url, label: platform.name }];
+    await supabase.from("profiles").update({ custom_links: updated } as any).eq("id", user.id);
+    toast.success("Link added");
+    setNewLinkUrl(""); setShowAddLink(false);
+    await refreshProfile(); loadProfile();
+  };
+
+  const removeLink = async (index: number) => {
+    if (!user) return;
+    const updated = customLinks.filter((_, i) => i !== index);
+    await supabase.from("profiles").update({ custom_links: updated } as any).eq("id", user.id);
+    await refreshProfile(); loadProfile();
+  };
+
   const addSkill = async () => {
     if (!newSkill.trim() || !user) return;
     const updated = [...skills, newSkill.trim()];
