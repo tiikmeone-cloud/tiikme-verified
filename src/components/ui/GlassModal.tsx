@@ -55,7 +55,7 @@ const GlassModal = ({ open, onClose, title, icon: Icon, accentColor, children, a
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 16 }}
             transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-            className="glass-dark w-[90vw] max-w-[560px] max-h-[80vh] overflow-y-auto"
+            className="glass-dark glass-scrollbar w-[90vw] max-w-[560px] max-h-[80vh] overflow-y-auto"
             style={{
               padding: 28,
               borderRadius: 24,
