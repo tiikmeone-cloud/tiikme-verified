@@ -18,7 +18,7 @@ const ImageItem = ({ src, className, style }: { src: string; className: string; 
       loading="lazy"
       crossOrigin="anonymous"
       className={className}
-      style={{ borderRadius: 10 }}
+      style={{ borderRadius: 10, ...style }}
       onError={() => setError(true)}
     />
   );
