@@ -2,8 +2,11 @@ import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { PageSEO } from "@/hooks/usePageSEO";
 import { storageImageUrl } from "@/lib/imageTransform";
 import AvatarSquare from "@/components/ui/AvatarSquare";
-import { Heart, MessageSquare, Repeat2, MoreHorizontal, Flag, Send, FileText, ChevronDown, ArrowUpRight, Trash2, Pencil, Copy } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import {
+  Heart, MessageCircle, Repeat2, Send, SendHorizontal, MoreHorizontal,
+  Trash2, Pencil, Copy, Flag, FileText, Camera, Paperclip, Loader2,
+  Image as ImageIcon, X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
 import ImageGrid from "@/components/feed/ImageGrid";
@@ -19,7 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLikes } from "@/hooks/useLikes";
 import { useComments } from "@/hooks/useComments";
 
-
+/* ─── HELPERS ─── */
 const roleColorMap: Record<string, string> = {
   student: "#4F46E5", professional: "#0369A1", doctor: "#0E7490",
   government: "#166534", skilled_trade: "#C2410C", hr: "#6B21A8", faculty: "#92400E",
@@ -35,6 +38,237 @@ function getTimeAgo(date: Date): string {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
+const extractHashtags = (text: string): string[] =>
+  (text.match(/#\w+/g) || []).map(t => t.slice(1));
+
+/* ─── INLINE COMPOSER ─── */
+interface MentionSuggestion {
+  id: string; display: string; username?: string; avatar_url?: string | null; type: "user" | "page";
+}
+
+const FeedComposer = ({ onPublished }: { onPublished: () => void }) => {
+  const { user, profile } = useAuth();
+  const [content, setContent] = useState("");
+  const [publishing, setPublishing] = useState(false);
+  const [showBadge, setShowBadge] = useState(true);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Mention state
+  const [suggestions, setSuggestions] = useState<MentionSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [mentionStart, setMentionStart] = useState(-1);
+  const [selectedIdx, setSelectedIdx] = useState(0);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const autoResize = useCallback(() => {
+    const el = textareaRef.current;
+    if (el) {
+      el.style.height = "auto";
+      el.style.height = Math.max(40, Math.min(el.scrollHeight, 160)) + "px";
+    }
+  }, []);
+
+  useEffect(() => { autoResize(); }, [content, autoResize]);
+
+  const searchMentions = useCallback(async (query: string) => {
+    if (query.length < 1) { setSuggestions([]); return; }
+    const results: MentionSuggestion[] = [];
+    const [profilesRes, pagesRes] = await Promise.allSettled([
+      supabase.from("profiles").select("id, full_name, username, avatar_url").or(`full_name.ilike.%${query}%,username.ilike.%${query}%`).limit(5),
+      supabase.from("pages").select("id, name, slug, logo_url").ilike("name", `%${query}%`).limit(3),
+    ]);
+    if (profilesRes.status === "fulfilled" && profilesRes.value.data) {
+      for (const p of profilesRes.value.data) results.push({ id: p.id, display: p.full_name || p.username || "User", username: p.username || undefined, avatar_url: p.avatar_url, type: "user" });
+    }
+    if (pagesRes.status === "fulfilled" && pagesRes.value.data) {
+      for (const p of pagesRes.value.data) results.push({ id: p.id, display: p.name, username: p.slug, avatar_url: p.logo_url, type: "page" });
+    }
+    setSuggestions(results);
+    setSelectedIdx(0);
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newVal = e.target.value.slice(0, 3000);
+    setContent(newVal);
+    const cursorPos = e.target.selectionStart || 0;
+    const textBefore = newVal.slice(0, cursorPos);
+    const atMatch = textBefore.match(/@(\w*)$/);
+    if (atMatch) {
+      setMentionStart(cursorPos - atMatch[0].length);
+      setShowSuggestions(true);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => searchMentions(atMatch[1]), 200);
+    } else {
+      setShowSuggestions(false);
+      setSuggestions([]);
+    }
+  };
+
+  const insertMention = (s: MentionSuggestion) => {
+    const before = content.slice(0, mentionStart);
+    const after = content.slice(textareaRef.current?.selectionStart || mentionStart);
+    const mentionText = `@${s.username || s.display.replace(/\s+/g, "")} `;
+    setContent(before + mentionText + after);
+    setShowSuggestions(false);
+    setSuggestions([]);
+    setTimeout(() => {
+      const el = textareaRef.current;
+      if (el) { const pos = before.length + mentionText.length; el.focus(); el.setSelectionRange(pos, pos); }
+    }, 10);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!showSuggestions || suggestions.length === 0) return;
+    if (e.key === "ArrowDown") { e.preventDefault(); setSelectedIdx(prev => (prev + 1) % suggestions.length); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); setSelectedIdx(prev => (prev - 1 + suggestions.length) % suggestions.length); }
+    else if (e.key === "Enter" || e.key === "Tab") { e.preventDefault(); insertMention(suggestions[selectedIdx]); }
+    else if (e.key === "Escape") { setShowSuggestions(false); }
+  };
+
+  const handleImageUpload = () => {
+    if (imagePreviews.length >= 4) { toast.info("Maximum 4 images"); return; }
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    Array.from(files).slice(0, 4 - imagePreviews.length).forEach(file => {
+      if (!file.type.startsWith("image/")) { toast.error("Only images allowed"); return; }
+      if (file.size > 10 * 1024 * 1024) { toast.error("Image must be under 10MB"); return; }
+      setImagePreviews(prev => [...prev, URL.createObjectURL(file)].slice(0, 4));
+      setImageFiles(prev => [...prev, file].slice(0, 4));
+    });
+    e.target.value = "";
+  };
+
+  const removeImage = (idx: number) => {
+    setImagePreviews(prev => prev.filter((_, i) => i !== idx));
+    setImageFiles(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const handlePublish = async () => {
+    if (!content.trim() || !user) return;
+    setPublishing(true);
+    try {
+      const uploadedUrls: string[] = [];
+      for (const file of imageFiles) {
+        const safeName = file.name.replace(/[^a-z0-9.]/gi, "_");
+        const path = `${user.id}/${Date.now()}-${safeName}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage.from("post-images").upload(path, file, { upsert: false, contentType: file.type });
+        if (uploadError) { toast.error("Image upload failed"); continue; }
+        const { data: urlData } = supabase.storage.from("post-images").getPublicUrl(uploadData.path);
+        if (urlData?.publicUrl) uploadedUrls.push(urlData.publicUrl);
+      }
+
+      const { error } = await supabase.from("posts").insert({
+        author_id: user.id, content: content.trim(), post_type: "thought", type: "thought",
+        visibility: "everyone", hashtags: extractHashtags(content),
+        image_urls: uploadedUrls.length > 0 ? uploadedUrls : [],
+        show_company_badge: showBadge,
+      } as any).select().single();
+      if (error) throw error;
+      setContent(""); setImagePreviews([]); setImageFiles([]);
+      toast.success("Posted");
+      onPublished();
+    } catch (err) { toast.error("Failed to post"); console.error(err); }
+    finally { setPublishing(false); }
+  };
+
+  if (!user) return null;
+
+  return (
+    <div className="glass-card" style={{ padding: 12, borderRadius: 16, marginBottom: 12 }}>
+      <div className="flex gap-[10px]" style={{ alignItems: "flex-start" }}>
+        <AvatarSquare src={profile?.avatar_url} name={profile?.full_name || "You"} size={40} />
+        <div className="flex-1 min-w-0 relative">
+          <textarea
+            ref={textareaRef}
+            value={content}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            placeholder={`What's on your mind, ${profile?.full_name?.split(" ")[0] || ""}?`}
+            className="w-full resize-none outline-none"
+            style={{
+              minHeight: 40, maxHeight: 160,
+              background: "var(--bg-input)", border: "1px solid var(--border-subtle)", borderRadius: 10,
+              padding: "10px 12px", fontSize: 14, fontWeight: 400, lineHeight: "20px",
+              color: "var(--text-primary)",
+            }}
+            onFocus={e => { e.currentTarget.style.borderColor = "rgba(232,115,58,0.50)"; }}
+            onBlur={e => { e.currentTarget.style.borderColor = "var(--border-subtle)"; }}
+          />
+
+          {/* Mention suggestions */}
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="absolute left-0 z-30 glass-card overflow-y-auto" style={{ top: "100%", marginTop: 4, width: 280, maxHeight: 200, padding: 4, borderRadius: 10 }}>
+              {suggestions.map((s, idx) => (
+                <button key={s.id} type="button" onClick={() => insertMention(s)}
+                  className="flex items-center gap-2 w-full text-left cursor-pointer transition-colors"
+                  style={{ padding: 8, borderRadius: 6, background: idx === selectedIdx ? "var(--bg-card-hover)" : "transparent" }}>
+                  <AvatarSquare src={s.avatar_url} name={s.display} size={32} />
+                  <div className="min-w-0 flex-1">
+                    <p style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }} className="truncate">{s.display}</p>
+                    {s.username && <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)" }}>@{s.username}</p>}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Image previews */}
+          {imagePreviews.length > 0 && (
+            <div className={`grid ${imagePreviews.length === 1 ? "grid-cols-1" : "grid-cols-2"} gap-2 mt-2`}>
+              {imagePreviews.map((img, i) => (
+                <div key={i} className="relative rounded-[10px] overflow-hidden aspect-video" style={{ background: "var(--bg-input)" }}>
+                  <img src={img} alt="" className="w-full h-full object-cover" />
+                  <button type="button" onClick={() => removeImage(i)} className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full flex items-center justify-center cursor-pointer" style={{ background: "rgba(0,0,0,0.5)" }}>
+                    <X className="w-3 h-3 text-white" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Action bar */}
+          <div className="flex items-center justify-between" style={{ marginTop: 8 }}>
+            <div className="flex items-center" style={{ gap: 8 }}>
+              <button type="button" onClick={handleImageUpload} className="cursor-pointer p-1" style={{ color: "var(--text-muted)" }}
+                onMouseEnter={e => { e.currentTarget.style.color = "var(--text-primary)"; }}
+                onMouseLeave={e => { e.currentTarget.style.color = "var(--text-muted)"; }}>
+                <Camera style={{ width: 20, height: 20 }} />
+              </button>
+              <button type="button" className="cursor-pointer p-1" style={{ color: "var(--text-muted)" }}
+                onMouseEnter={e => { e.currentTarget.style.color = "var(--text-primary)"; }}
+                onMouseLeave={e => { e.currentTarget.style.color = "var(--text-muted)"; }}>
+                <Paperclip style={{ width: 20, height: 20 }} />
+              </button>
+            </div>
+            <div className="flex items-center" style={{ gap: 8 }}>
+              <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                <span style={{ fontSize: 14, color: "var(--text-secondary)" }}>Show company badge</span>
+                <button type="button" onClick={() => setShowBadge(!showBadge)} className="relative cursor-pointer"
+                  style={{ width: 32, height: 18, borderRadius: 9, background: showBadge ? "var(--accent)" : "var(--border-glass)", transition: "background 150ms ease" }}>
+                  <span className="absolute top-[2px] rounded-full transition-all" style={{ width: 14, height: 14, background: "white", left: showBadge ? 16 : 2 }} />
+                </button>
+              </label>
+              <button type="button" onClick={handlePublish} disabled={publishing || !content.trim()}
+                className="btn-primary-sm disabled:opacity-50 cursor-pointer" style={{ fontSize: 13, fontWeight: 600 }}>
+                {publishing ? <Loader2 className="w-4 h-4 animate-spin" /> : "Post"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
+    </div>
+  );
+};
+
+/* ─── POST CARD ─── */
 interface PostCardProps {
   post: any;
   likeCounts: Record<string, number>;
@@ -52,16 +286,17 @@ interface PostCardProps {
   onEdit: (post: any) => void;
 }
 
-const LivePostCard = ({
+const PostCard = ({
   post, likeCounts, myLikes, toggleLike,
   commentCounts, commentsData, commentsOpen, commentInputs,
   setCommentInputs, toggleComments, submitComment, deleteComment, onDelete, onEdit,
 }: PostCardProps) => {
   const [showMenu, setShowMenu] = useState(false);
-  const { user, profile: authProfile, initials: userInitials } = useAuth();
+  const [expanded, setExpanded] = useState(false);
+  const [likeAnimating, setLikeAnimating] = useState(false);
+  const { user, profile: authProfile } = useAuth();
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Close menu on outside click
   useEffect(() => {
     if (!showMenu) return;
     const handleClick = (e: MouseEvent) => {
@@ -73,18 +308,12 @@ const LivePostCard = ({
 
   const isOrgPost = !!post.posted_by_org && !!post.org;
   const author = post.author;
-
   const displayAvatar = isOrgPost ? post.org?.logo_url : author?.avatar_url;
   const displayName = isOrgPost ? post.org?.name : (author?.full_name || author?.username || "Unknown");
-  const displayRole = isOrgPost ? post.org?.type : (author?.role || "user");
   const profileLink = isOrgPost ? `/org/${post.org?.slug}` : `/app/profile/${author?.id || ""}`;
-
-  const viaName = isOrgPost && post.poster_profile?.full_name
-    ? post.poster_profile.full_name
-    : null;
-
-  const initials = displayName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
-  const roleColor = isOrgPost ? "#E8580A" : (roleColorMap[displayRole] || "#6B7280");
+  const viaName = isOrgPost && post.poster_profile?.full_name ? post.poster_profile.full_name : null;
+  const username = !isOrgPost && author?.username ? `@${author.username}` : null;
+  const companyName = !isOrgPost && author?.institution_name && post.show_company_badge !== false ? author.institution_name : null;
   const timeAgo = post.created_at ? getTimeAgo(new Date(post.created_at)) : "";
   const isOwn = user?.id === post.author_id;
   const isEdited = post.is_edited;
@@ -95,15 +324,21 @@ const LivePostCard = ({
   const isOpen = commentsOpen.has(post.id);
   const comments = commentsData[post.id] || [];
   const commentText = commentInputs[post.id] || "";
-
-  const isWorkspacePost = post.visibility === "workspace";
   const repostCount = post.repost_count || 0;
 
-  // Username display
-  const username = !isOrgPost && author?.username ? `@${author.username}` : null;
+  // Sort comments: own first, then by created_at ASC
+  const sortedComments = useMemo(() => {
+    const arr = [...comments];
+    arr.sort((a, b) => {
+      if (a.user_id === user?.id && b.user_id !== user?.id) return -1;
+      if (a.user_id !== user?.id && b.user_id === user?.id) return 1;
+      return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
+    });
+    return arr;
+  }, [comments, user?.id]);
 
-  // Company badge: show institution_name from author profile
-  const companyName = !isOrgPost && author?.institution_name ? author.institution_name : null;
+  const [showAllComments, setShowAllComments] = useState(false);
+  const visibleComments = showAllComments ? sortedComments : sortedComments.slice(0, 3);
 
   const [confirmRepost, setConfirmRepost] = useState(false);
   const handleRepost = async () => {
@@ -116,12 +351,9 @@ const LivePostCard = ({
         image_urls: post.image_urls || [],
       } as any);
       await supabase.from("post_reposts").insert({ post_id: post.id, reposted_by: user.id });
-      // Notify original post author about repost
       if (post.author_id) {
         sendNotification({
-          userId: post.author_id,
-          actorId: user.id,
-          type: "repost",
+          userId: post.author_id, actorId: user.id, type: "repost",
           title: `${authProfile?.full_name || "Someone"} reposted your post`,
           actionUrl: `/post/${post.id}`,
         });
@@ -131,89 +363,90 @@ const LivePostCard = ({
     setConfirmRepost(false);
   };
 
+  const handleLike = () => {
+    if (!liked) { setLikeAnimating(true); setTimeout(() => setLikeAnimating(false), 150); }
+    toggleLike(post.id);
+  };
+
+  const handleShare = () => {
+    const url = window.location.origin + "/post/" + post.id;
+    navigator.clipboard.writeText(url);
+    toast.success("Copied!");
+  };
+
+  // Content clamp
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [needsClamp, setNeedsClamp] = useState(false);
+  useEffect(() => {
+    const el = contentRef.current;
+    if (el) setNeedsClamp(el.scrollHeight > 100);
+  }, [post.content]);
+
   const isTownhall = post.post_type === "townhall";
 
   return (
-    <article
-      className="glass-light mb-3 overflow-hidden"
-      style={{
-        padding: 16,
-        borderRadius: 24,
-        borderLeft: isTownhall ? "4px solid var(--color-accent)" : undefined,
-        transition: "all 0.3s ease",
-      }}
-      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = `0 12px 40px var(--glass-shadow-hover), inset 0 1px 0 var(--glass-highlight)`; }}
-      onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
-    >
+    <article className="glass-card" style={{ padding: 12, borderRadius: 16, marginBottom: 8, borderLeft: isTownhall ? "4px solid var(--accent)" : undefined }}>
       {isTownhall && (
-        <div className="pb-2">
-          <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--color-accent)" }}>TOWNHALL</span>
+        <div style={{ paddingBottom: 4 }}>
+          <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--accent)" }}>TOWNHALL</span>
         </div>
       )}
-      <div className="flex items-center gap-3 pb-1">
+
+      {/* HEADER */}
+      <div className="flex items-center" style={{ gap: 10 }}>
         <Link to={profileLink}>
-          <AvatarSquare src={displayAvatar} name={displayName} size={40} bgColor={roleColor} className="hover:scale-105 transition-transform" />
+          <AvatarSquare src={displayAvatar} name={displayName} size={40} />
         </Link>
         <div className="min-w-0 flex-1">
-          {/* Line 1: Name · @username · timestamp · (edited) */}
           <div className="flex items-center gap-1.5 flex-wrap">
-            <Link to={profileLink} className="font-semibold hover:underline" style={{ color: "var(--color-text)", fontSize: 15 }}>{displayName}</Link>
-            {username && (
-              <span className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>{username}</span>
-            )}
-            <span className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>·</span>
-            <span style={{ color: "var(--color-text-secondary)", fontSize: 12 }}>{timeAgo}</span>
-            {isEdited && (
-              <span className="text-[11px] italic" style={{ color: "var(--color-text-muted)" }}>(edited)</span>
-            )}
+            <Link to={profileLink} className="hover:underline" style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>{displayName}</Link>
+            {username && <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{username}</span>}
+            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>·</span>
+            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{timeAgo}</span>
+            {isEdited && <span style={{ fontSize: 12, fontStyle: "italic", color: "var(--text-muted)" }}>(edited)</span>}
           </div>
-          {/* Line 2: Company badge or via name */}
           {viaName ? (
-            <span className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>via {viaName}</span>
+            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>via {viaName}</span>
           ) : companyName ? (
-            <div className="flex items-center gap-1.5">
-              <div className="w-3.5 h-3.5 rounded flex items-center justify-center shrink-0 overflow-hidden" style={{ background: "rgba(232,115,58,0.15)" }}>
-                <span className="text-[7px] font-bold" style={{ color: "var(--color-accent)" }}>
-                  {companyName.charAt(0).toUpperCase()}
-                </span>
+            <div className="flex items-center gap-1">
+              <div className="flex items-center justify-center shrink-0 overflow-hidden" style={{ width: 14, height: 14, borderRadius: 0, background: "rgba(232,115,58,0.15)" }}>
+                <span style={{ fontSize: 7, fontWeight: 700, color: "var(--accent)" }}>{companyName.charAt(0).toUpperCase()}</span>
               </div>
-              <span className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>{companyName}</span>
+              <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{companyName}</span>
             </div>
           ) : null}
         </div>
+
+        {/* Three-dot menu */}
         <div className="relative" ref={menuRef}>
-          <button type="button" onClick={() => setShowMenu(!showMenu)} className="p-2 md:p-1.5 rounded-lg cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center" style={{ color: "var(--color-text-secondary)" }}
-            onMouseEnter={e => { e.currentTarget.style.color = "var(--color-text)"; }}
-            onMouseLeave={e => { e.currentTarget.style.color = "var(--color-text-secondary)"; }}>
-            <MoreHorizontal className="w-4 h-4" />
+          <button type="button" onClick={() => setShowMenu(!showMenu)}
+            className="flex items-center justify-center cursor-pointer"
+            style={{ width: 32, height: 32, color: "var(--text-muted)" }}>
+            <MoreHorizontal style={{ width: 16, height: 16 }} />
           </button>
           {showMenu && (
-            <div className="absolute right-0 top-8 glass-light rounded-xl p-1 min-w-[170px] z-10" style={{ borderRadius: 14 }}>
-              <button type="button" onClick={() => { navigator.clipboard.writeText(window.location.origin + "/post/" + post.id); toast.success("Link copied!"); setShowMenu(false); }}
-                className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "var(--color-text-secondary)" }}>
-                <Copy className="w-3 h-3" /> Copy link
-              </button>
-              <button type="button" onClick={() => {
-                if (navigator.share) { navigator.share({ title: "Post on Tiikme", url: window.location.origin + "/post/" + post.id }); }
-                else { navigator.clipboard.writeText(window.location.origin + "/post/" + post.id); toast.success("Link copied!"); }
-                setShowMenu(false);
-              }} className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "var(--color-text-secondary)" }}>
-                <Send className="w-3 h-3" /> Share via...
-              </button>
+            <div className="absolute right-0 top-8 glass-card z-20" style={{ width: 160, borderRadius: 10, padding: 4 }}>
               {isOwn ? (
                 <>
                   <button type="button" onClick={() => { onEdit(post); setShowMenu(false); }}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "var(--color-text-secondary)" }}>
-                    <Pencil className="w-3 h-3" /> Edit post
+                    className="flex items-center gap-2 w-full cursor-pointer" style={{ padding: "8px 12px", fontSize: 13, color: "var(--text-secondary)", borderRadius: 6 }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-card-hover)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}>
+                    <Pencil style={{ width: 14, height: 14 }} /> Edit Post
                   </button>
                   <button type="button" onClick={() => { onDelete(post.id); setShowMenu(false); }}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "#DC2626" }}>
-                    <Trash2 className="w-3 h-3" /> Delete post
+                    className="flex items-center gap-2 w-full cursor-pointer" style={{ padding: "8px 12px", fontSize: 13, color: "#EF4444", borderRadius: 6 }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-card-hover)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}>
+                    <Trash2 style={{ width: 14, height: 14 }} /> Delete Post
                   </button>
                 </>
               ) : (
-                <button type="button" onClick={() => { toast.info("Report submitted"); setShowMenu(false); }} className="flex items-center gap-2 w-full px-3 py-2 text-[12px] rounded-lg cursor-pointer" style={{ color: "var(--color-text-secondary)" }}>
-                  <Flag className="w-3 h-3" /> Report
+                <button type="button" onClick={() => { toast.info("Report submitted"); setShowMenu(false); }}
+                  className="flex items-center gap-2 w-full cursor-pointer" style={{ padding: "8px 12px", fontSize: 13, color: "var(--text-secondary)", borderRadius: 6 }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-card-hover)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}>
+                  <Flag style={{ width: 14, height: 14 }} /> Report
                 </button>
               )}
             </div>
@@ -221,109 +454,141 @@ const LivePostCard = ({
         </div>
       </div>
 
-      <div className="py-2.5" style={{ fontSize: 15, lineHeight: 1.5, color: "var(--color-text)" }}>
-        <MentionText text={post.content} />
+      {/* CONTENT */}
+      <div style={{ marginTop: 8 }}>
+        <div ref={contentRef}
+          style={{
+            fontSize: 14, fontWeight: 400, lineHeight: "20px", color: "var(--text-primary)",
+            ...((!expanded && needsClamp) ? { maxHeight: 100, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 5, WebkitBoxOrient: "vertical" as any } : {}),
+          }}>
+          <MentionText text={post.content} />
+        </div>
+        {needsClamp && !expanded && (
+          <button type="button" onClick={() => setExpanded(true)} className="cursor-pointer" style={{ fontSize: 13, fontWeight: 600, color: "var(--accent)", marginTop: 2 }}>
+            See more
+          </button>
+        )}
       </div>
 
+      {/* IMAGES */}
       {post.image_urls?.length > 0 && (
-        <div className="pb-2"><div className="rounded-xl overflow-hidden"><ImageGrid images={post.image_urls} /></div></div>
+        <div style={{ marginTop: 8 }}>
+          <ImageGrid images={post.image_urls} />
+        </div>
       )}
 
+      {/* PDF */}
       {post.pdf_url && (
-        <div className="mb-3">
-          <a href={post.pdf_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 glass-medium rounded-xl p-3">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: "rgba(220,38,38,0.1)" }}>
-              <FileText className="w-5 h-5" style={{ color: "#DC2626" }} />
+        <div style={{ marginTop: 8 }}>
+          <a href={post.pdf_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 glass-card" style={{ padding: 10, borderRadius: 10 }}>
+            <div className="flex items-center justify-center" style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(220,38,38,0.1)" }}>
+              <FileText style={{ width: 18, height: 18, color: "#DC2626" }} />
             </div>
-            <p className="text-[13px] font-bold truncate flex-1" style={{ color: "var(--color-text)" }}>Attached PDF · Tap to open</p>
+            <p className="truncate flex-1" style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>Attached PDF</p>
           </a>
         </div>
       )}
 
+      {/* Repost info */}
       {repostCount >= 2 && (
-        <div className="pb-1">
-          <p className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>
-            {isOrgPost ? post.org?.name : displayName} and {repostCount - 1} other{repostCount > 2 ? "s" : ""} reposted
-          </p>
-        </div>
+        <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
+          {displayName} and {repostCount - 1} other{repostCount > 2 ? "s" : ""} reposted
+        </p>
       )}
 
-      {/* Like / Comment / Repost */}
-      <div className="flex items-center gap-1 pt-2" style={{ borderTop: "1px solid var(--glass-border-subtle)" }}>
-        <button type="button" onClick={() => toggleLike(post.id)}
-          className="h-8 px-2.5 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all"
-          style={{ background: "rgba(255,255,255,0.15)", borderRadius: 12, color: liked ? "var(--color-accent)" : "var(--color-text-secondary)" }}>
-          <Heart className="w-4 h-4" style={{ fill: liked ? "var(--color-accent)" : "none", color: liked ? "var(--color-accent)" : "var(--color-text-secondary)" }} />
-          {likeCount}
+      {/* REACTION BAR */}
+      <div className="flex items-center" style={{ marginTop: 8, gap: 4 }}>
+        {/* Like */}
+        <button type="button" onClick={handleLike}
+          className="flex items-center cursor-pointer transition-all active:scale-95"
+          style={{ gap: 4, padding: "6px 10px", borderRadius: 8, background: "rgba(255,255,255,0.10)", transform: likeAnimating ? "scale(1.2)" : "scale(1)", transition: "transform 150ms ease" }}>
+          <Heart style={{ width: 16, height: 16, fill: liked ? "#E8733A" : "none", color: liked ? "#E8733A" : "var(--text-muted)" }} />
+          <span style={{ fontSize: 12, color: liked ? "#E8733A" : "var(--text-muted)" }}>{likeCount || ""}</span>
         </button>
+
+        {/* Comment */}
         <button type="button" onClick={() => toggleComments(post.id)}
-          className="h-8 px-2.5 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer transition-all"
-          style={{ background: "rgba(255,255,255,0.15)", borderRadius: 12, color: isOpen ? "var(--color-accent)" : "var(--color-text-secondary)" }}>
-          <MessageSquare className="w-4 h-4" /> {commentCount}
+          className="flex items-center cursor-pointer transition-all"
+          style={{ gap: 4, padding: "6px 10px", borderRadius: 8, background: "rgba(255,255,255,0.10)" }}>
+          <MessageCircle style={{ width: 16, height: 16, color: isOpen ? "#E8733A" : "var(--text-muted)" }} />
+          <span style={{ fontSize: 12, color: isOpen ? "#E8733A" : "var(--text-muted)" }}>{commentCount || ""}</span>
         </button>
-        {!isWorkspacePost && (
-          <div className="relative">
-            <button type="button" onClick={handleRepost}
-              className="h-8 px-2.5 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer transition-all"
-              style={{ background: "rgba(255,255,255,0.15)", borderRadius: 12, color: "var(--color-text-secondary)" }}>
-              <Repeat2 className="w-4 h-4" />
-            </button>
-            {confirmRepost && (
-              <div className="absolute bottom-full left-0 mb-1 flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] whitespace-nowrap glass-light" style={{ zIndex: 10, borderRadius: 10 }}>
-                <span style={{ color: "var(--color-text-secondary)" }}>Repost?</span>
-                <button type="button" onClick={handleRepost} className="font-bold px-1.5 cursor-pointer" style={{ color: "var(--color-accent)" }}>Yes</button>
-                <button type="button" onClick={() => setConfirmRepost(false)} className="px-1.5 cursor-pointer" style={{ color: "var(--color-text-muted)" }}>No</button>
-              </div>
-            )}
-          </div>
-        )}
+
+        {/* Repost */}
+        <div className="relative">
+          <button type="button" onClick={handleRepost}
+            className="flex items-center cursor-pointer transition-all"
+            style={{ gap: 4, padding: "6px 10px", borderRadius: 8, background: "rgba(255,255,255,0.10)" }}>
+            <Repeat2 style={{ width: 16, height: 16, color: "var(--text-muted)" }} />
+            {repostCount > 0 && <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{repostCount}</span>}
+          </button>
+          {confirmRepost && (
+            <div className="absolute bottom-full left-0 mb-1 flex items-center gap-1 px-2 py-1 glass-card z-10" style={{ borderRadius: 8, whiteSpace: "nowrap" }}>
+              <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>Repost?</span>
+              <button type="button" onClick={handleRepost} className="cursor-pointer" style={{ fontSize: 11, fontWeight: 700, color: "var(--accent)", padding: "0 4px" }}>Yes</button>
+              <button type="button" onClick={() => setConfirmRepost(false)} className="cursor-pointer" style={{ fontSize: 11, color: "var(--text-muted)", padding: "0 4px" }}>No</button>
+            </div>
+          )}
+        </div>
+
+        {/* Share */}
+        <button type="button" onClick={handleShare}
+          className="flex items-center cursor-pointer transition-all"
+          style={{ padding: "6px 10px", borderRadius: 8, background: "rgba(255,255,255,0.10)" }}>
+          <Send style={{ width: 16, height: 16, color: "var(--text-muted)" }} />
+        </button>
       </div>
 
-      {/* Comments */}
+      {/* COMMENT SECTION */}
       {isOpen && (
-        <div className="pt-3 space-y-3" style={{ borderTop: "1px solid var(--glass-border-subtle)", marginTop: 8 }}>
-          {comments.length === 0 && <p className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>No comments yet. Be the first!</p>}
-          {comments.map((c: any) => {
+        <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--border-subtle)" }}>
+          {visibleComments.length === 0 && <p style={{ fontSize: 12, color: "var(--text-muted)", padding: "4px 0" }}>No comments yet. Be the first!</p>}
+          {visibleComments.map((c: any) => {
             const cName = c.author?.full_name || "User";
-            const cInitials = cName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
-            const cColor = roleColorMap[c.author?.role || ""] || "#6B7280";
             const cTime = c.created_at ? getTimeAgo(new Date(c.created_at)) : "";
             const isOwnComment = user?.id === c.user_id;
             return (
-              <div key={c.id} className="flex items-start gap-2 group">
-                <AvatarSquare src={c.author?.avatar_url} name={cName} size={28} bgColor={cColor} />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <Link to={`/app/profile/${c.author?.id || c.user_id}`} className="text-[13px] font-bold hover:underline" style={{ color: "var(--color-text)" }}>{cName}</Link>
-                    <span className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>{cTime}</span>
-                    {isOwnComment && (
-                      <button type="button" onClick={() => deleteComment(post.id, c.id)} className="opacity-0 group-hover:opacity-100 p-0.5 cursor-pointer" style={{ color: "var(--color-text-muted)" }}>
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    )}
+              <div key={c.id} className="flex group" style={{ gap: 8, padding: "6px 0", alignItems: "flex-start" }}>
+                <AvatarSquare src={c.author?.avatar_url} name={cName} size={24} />
+                <div className="flex-1 min-w-0" style={{ background: "rgba(255,255,255,0.10)", borderRadius: 10, padding: "8px 10px" }}>
+                  <div className="flex items-center gap-1.5">
+                    <Link to={`/app/profile/${c.author?.id || c.user_id}`} className="hover:underline" style={{ fontSize: 12, fontWeight: 600, color: "var(--text-primary)" }}>{cName}</Link>
+                    <span style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)" }}>{cTime}</span>
                   </div>
-                  <p className="text-[13px] leading-relaxed" style={{ color: "var(--color-text-secondary)" }}><MentionText text={c.content} /></p>
+                  <p style={{ fontSize: 13, fontWeight: 400, color: "var(--text-secondary)", lineHeight: "18px" }}><MentionText text={c.content} /></p>
                 </div>
+                {isOwnComment && (
+                  <button type="button" onClick={() => deleteComment(post.id, c.id)}
+                    className="opacity-0 group-hover:opacity-100 cursor-pointer shrink-0 self-center"
+                    style={{ color: "#EF4444" }}>
+                    <Trash2 style={{ width: 12, height: 12 }} />
+                  </button>
+                )}
               </div>
             );
           })}
+          {sortedComments.length > 3 && !showAllComments && (
+            <button type="button" onClick={() => setShowAllComments(true)} className="cursor-pointer" style={{ fontSize: 12, fontWeight: 500, color: "var(--accent)", padding: "4px 0" }}>
+              View more comments
+            </button>
+          )}
+
+          {/* Comment input */}
           {user && (
-            <div className="flex items-center gap-2 mt-2">
-              <AvatarSquare src={authProfile?.avatar_url} name={authProfile?.full_name || "You"} size={28} />
+            <div className="flex items-center" style={{ gap: 8, marginTop: 6 }}>
+              <AvatarSquare src={authProfile?.avatar_url} name={authProfile?.full_name || "You"} size={24} />
               <input
                 value={commentText}
                 onChange={(e) => setCommentInputs((p) => ({ ...p, [post.id]: e.target.value }))}
                 placeholder="Write a comment..."
-                className="flex-1 h-9 rounded-xl px-3 text-[13px] outline-none glass-input"
+                className="flex-1 outline-none"
+                style={{ height: 36, borderRadius: 18, padding: "0 14px", fontSize: 13, background: "var(--bg-input)", border: "1px solid var(--border-subtle)", color: "var(--text-primary)" }}
                 onKeyDown={(e) => { if (e.key === "Enter" && commentText.trim()) submitComment(post.id); }}
               />
-              <button
-                type="button"
-                onClick={() => submitComment(post.id)}
-                className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer active:scale-95"
-                style={{ background: commentText.trim() ? "var(--color-accent)" : "var(--color-surface)" }}
-              >
-                <Send className="w-3.5 h-3.5" style={{ color: commentText.trim() ? "white" : "var(--color-text-muted)" }} />
+              <button type="button" onClick={() => { if (commentText.trim()) submitComment(post.id); }}
+                className="cursor-pointer" style={{ color: commentText.trim() ? "#E8733A" : "var(--text-muted)" }}
+                disabled={!commentText.trim()}>
+                <SendHorizontal style={{ width: 16, height: 16 }} />
               </button>
             </div>
           )}
@@ -333,42 +598,33 @@ const LivePostCard = ({
   );
 };
 
-/* ─── RIGHT RAIL ─── */
+/* ─── RIGHT SIDEBAR WIDGETS ─── */
 const ActivityWidget = () => {
   const { profile } = useAuth();
+  const score = profile?.activity_score || 0;
   return (
-    <aside className="glass-glow rounded-3xl p-5 mb-4">
-      <p className="text-[11px] font-semibold uppercase tracking-wider mb-4" style={{ color: "var(--color-text-secondary)", letterSpacing: "0.05em" }}>ACTIVITY THIS QUARTER</p>
-      <div className="flex justify-center"><ActivityScoreRing score={profile?.activity_score || 0} size={100} strokeWidth={7} /></div>
-    </aside>
-  );
-};
-
-const OpportunitiesWidget = () => {
-  const [opps, setOpps] = useState<any[]>([]);
-  useEffect(() => {
-    supabase.from("opportunities").select("id, title, compensation, deadline").eq("is_open", true).order("created_at", { ascending: false }).limit(3).then(({ data, error }) => { if (error) console.warn("[Feed] opps fetch failed:", error.message); setOpps(data || []); });
-  }, []);
-  if (opps.length === 0) return null;
-  return (
-    <aside className="glass-medium rounded-3xl p-5 mb-4">
-      <p className="text-[11px] font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--color-text-secondary)", letterSpacing: "0.05em" }}>OPEN OPPORTUNITIES</p>
-      <div className="space-y-0">
-        {opps.map((ch, i) => (
-          <Link key={ch.id} to="/app/opportunities" className="flex items-start gap-2.5 py-2.5 cursor-pointer" style={{ borderBottom: i < opps.length - 1 ? "1px solid rgba(255,255,255,0.15)" : "none" }}>
-            <div className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ background: "#F59E0B" }} />
-            <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-bold" style={{ color: "var(--color-text)" }}>{ch.title}</p>
-              <div className="flex gap-1.5 text-[11px]" style={{ color: "var(--color-text-muted)" }}>
-                {ch.compensation && <span className="font-bold" style={{ color: "#F59E0B" }}>{ch.compensation}</span>}
-                {ch.deadline && <><span>·</span><span>{ch.deadline}</span></>}
-              </div>
-            </div>
-          </Link>
-        ))}
+    <div className="glass-glow" style={{ padding: 12, borderRadius: 16, marginBottom: 12 }}>
+      <div className="flex items-center gap-3">
+        <div className="relative" style={{ width: 48, height: 48 }}>
+          <svg width={48} height={48} className="-rotate-90">
+            <circle cx={24} cy={24} r={21} fill="none" stroke="var(--border-subtle)" strokeWidth={3} />
+            <circle cx={24} cy={24} r={21} fill="none" stroke="#E8733A" strokeWidth={3}
+              strokeDasharray={2 * Math.PI * 21} strokeDashoffset={2 * Math.PI * 21 * (1 - Math.min(score, 100) / 100)}
+              strokeLinecap="round" className="transition-all duration-700" />
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>{score}</span>
+          </div>
+        </div>
+        <div>
+          <p style={{ fontSize: 28, fontWeight: 700, color: "var(--text-primary)", lineHeight: "32px" }}>{score}</p>
+          <p style={{ fontSize: 11, fontWeight: 500, color: "#E8733A" }}>
+            {score >= 500 ? "Tiiked Elite" : score >= 301 ? "Trailblazer" : score >= 151 ? "Achiever" : score >= 51 ? "Builder" : "Explorer"}
+          </p>
+        </div>
       </div>
-      <Link to="/app/opportunities" className="text-[13px] font-semibold mt-2 flex items-center gap-1" style={{ color: "var(--color-accent)" }}>View all <ArrowUpRight className="w-3 h-3" /></Link>
-    </aside>
+      <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 6 }}>Post more, get verified, connect with others</p>
+    </div>
   );
 };
 
@@ -377,72 +633,54 @@ const SuggestedWidget = () => {
   const [suggested, setSuggested] = useState<any[]>([]);
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("id, full_name, role, avatar_url, institution_name").neq("id", user.id).eq("is_public", true).order("activity_score", { ascending: false }).limit(3).then(({ data, error }) => { if (error) console.warn("[Feed] suggested fetch failed:", error.message); setSuggested(data || []); });
+    supabase.from("profiles").select("id, full_name, role, avatar_url, institution_name")
+      .neq("id", user.id).eq("is_public", true).order("activity_score", { ascending: false }).limit(3)
+      .then(({ data }) => setSuggested(data || []));
   }, [user]);
   if (suggested.length === 0) return null;
   return (
-    <aside className="glass-medium rounded-3xl p-5">
-      <p className="text-[11px] font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--color-text-secondary)", letterSpacing: "0.05em" }}>SUGGESTED CONNECTIONS</p>
-      <div className="space-y-3">
-        {suggested.map(s => {
-          const name = s.full_name || "User";
-          const init = name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
-          const color = roleColorMap[s.role || ""] || "#6B7280";
-          return (
-            <div key={s.id} className="flex items-center gap-2.5" style={{ paddingBottom: 10, borderBottom: "1px solid rgba(255,255,255,0.15)" }}>
-              <Link to={`/app/profile/${s.id}`}>
-                <AvatarSquare src={s.avatar_url} name={name} size={40} bgColor={color} />
-              </Link>
-              <div className="flex-1 min-w-0">
-                <Link to={`/app/profile/${s.id}`} className="text-[13px] font-bold truncate block hover:underline" style={{ color: "var(--color-text)" }}>{name}</Link>
-                <p className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>{s.institution_name || s.role || ""}</p>
-              </div>
-              <button
-                className="btn-glass-pill text-[12px] font-semibold active:scale-95"
-                style={{ padding: "4px 12px", fontSize: 12 }}
-                onClick={() => {
-                  supabase.from("strands").insert({ requester_id: user!.id, receiver_id: s.id });
-                  sendNotification({
-                    userId: s.id,
-                    actorId: user!.id,
-                    type: "connection_request",
-                    title: `${profile?.full_name || "Someone"} wants to connect`,
-                    actionUrl: `/app/strands`,
-                    data: { actor_id: user!.id },
-                  });
-                  toast.success("Request sent");
-                }}
-              >Connect</button>
-            </div>
-          );
-        })}
+    <div className="glass-card" style={{ padding: 12, borderRadius: 16 }}>
+      <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
+        <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>Suggested</span>
+        <Link to="/app/explore" style={{ fontSize: 12, color: "var(--accent)" }}>See all</Link>
       </div>
-      <Link to="/app/explore" className="text-[13px] font-semibold mt-3 flex items-center gap-1" style={{ color: "var(--color-accent)" }}>Find more <ArrowUpRight className="w-3 h-3" /></Link>
-    </aside>
+      {suggested.map((s, i) => (
+        <div key={s.id} className="flex items-center" style={{ gap: 8, padding: "6px 0", borderBottom: i < suggested.length - 1 ? "1px solid var(--border-subtle)" : "none" }}>
+          <Link to={`/app/profile/${s.id}`}>
+            <AvatarSquare src={s.avatar_url} name={s.full_name || "User"} size={40} bgColor={roleColorMap[s.role || ""] || "#6B7280"} />
+          </Link>
+          <div className="flex-1 min-w-0">
+            <Link to={`/app/profile/${s.id}`} className="hover:underline truncate block" style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}>{s.full_name || "User"}</Link>
+            <p className="truncate" style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)" }}>{s.role || ""}</p>
+          </div>
+          <button className="btn-glass-pill cursor-pointer" style={{ fontSize: 12, fontWeight: 500, padding: "4px 10px" }}
+            onClick={() => {
+              supabase.from("strands").insert({ requester_id: user!.id, receiver_id: s.id });
+              sendNotification({
+                userId: s.id, actorId: user!.id, type: "connection_request",
+                title: `${profile?.full_name || "Someone"} wants to connect`,
+                actionUrl: `/app/strands`, data: { actor_id: user!.id },
+              });
+              toast.success("Request sent");
+            }}>Connect</button>
+        </div>
+      ))}
+    </div>
   );
 };
 
 /* ─── FEED PAGE ─── */
 const Feed = () => {
-  const feedNavigate = useNavigate();
   const { posts: livePosts, loading, loadingMore, hasMore, loadMore, refresh } = useFeedPosts();
   const sentinelRef = useRef<HTMLDivElement>(null);
-  const { user, profile, initials, displayName } = useAuth();
-  const identityAvatar = profile?.avatar_url || null;
-  const identityInitials = initials;
-  const identityName = displayName;
-  const feedRef = useRef<HTMLDivElement>(null);
+  const { user, profile } = useAuth();
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
-
-  // Edit/delete modals
   const [editingPost, setEditingPost] = useState<any | null>(null);
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
   const [editedPosts, setEditedPosts] = useState<Record<string, any>>({});
 
   const visiblePosts = useMemo(() =>
-    livePosts
-      .filter((p: any) => !deletedIds.has(p.id))
-      .map((p: any) => editedPosts[p.id] ? { ...p, ...editedPosts[p.id] } : p),
+    livePosts.filter((p: any) => !deletedIds.has(p.id)).map((p: any) => editedPosts[p.id] ? { ...p, ...editedPosts[p.id] } : p),
     [livePosts, deletedIds, editedPosts]
   );
 
@@ -455,139 +693,70 @@ const Feed = () => {
     submit: submitComment, deleteComment, loadCounts: loadCommentCounts,
   } = useComments();
 
-  useEffect(() => {
-    loadCommentCounts(postIds);
-  }, [postIdsKey, loadCommentCounts]);
+  useEffect(() => { loadCommentCounts(postIds); }, [postIdsKey, loadCommentCounts]);
 
-  const handleDeletePost = (postId: string) => {
-    setDeletingPostId(postId);
-  };
-
-  const handleDeleteConfirmed = (postId: string) => {
-    setDeletedIds(prev => new Set(prev).add(postId));
-    setDeletingPostId(null);
-  };
-
-  const handleEditSaved = (updated: any) => {
-    setEditedPosts(prev => ({ ...prev, [updated.id]: { content: updated.content, is_edited: updated.is_edited, updated_at: updated.updated_at } }));
-  };
-
-  const [pullY, setPullY] = useState(0);
-  const [refreshing, setRefreshing] = useState(false);
-  const touchStartY = useRef(0);
-  const PULL_THRESHOLD = 80;
-
-  const handleTouchStart = (e: React.TouchEvent) => { if (window.scrollY === 0) touchStartY.current = e.touches[0].clientY; };
-  const handleTouchMove = (e: React.TouchEvent) => { if (refreshing || window.scrollY > 0) return; const dy = e.touches[0].clientY - touchStartY.current; if (dy > 0) setPullY(Math.min(dy * 0.4, 120)); };
-  const handleTouchEnd = async () => { if (pullY >= PULL_THRESHOLD && !refreshing) { setRefreshing(true); setPullY(PULL_THRESHOLD); await refresh(); setRefreshing(false); } setPullY(0); };
-
+  // Infinite scroll
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el) return;
-    const observer = new IntersectionObserver(entries => { if (entries[0].isIntersecting && hasMore && !loadingMore) loadMore(); }, { threshold: 0.1 });
+    const observer = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore && !loadingMore) loadMore();
+    }, { threshold: 0.1, rootMargin: "200px" });
     observer.observe(el);
     return () => observer.disconnect();
   }, [hasMore, loadingMore, loadMore]);
 
   return (
-    <main className="max-w-[960px] mx-auto px-3 md:px-6 py-4 md:py-7" ref={feedRef}
-      onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
-      <PageSEO
-        title="Feed | Tiikme"
-        description="Your professional feed — posts, updates, and insights from verified professionals and organizations on Tiikme."
-        noIndex
-      />
-      <div className="md:hidden flex items-center justify-center overflow-hidden transition-all duration-200"
-        style={{ height: pullY > 0 ? `${pullY}px` : 0, opacity: pullY > 20 ? 1 : 0 }}>
-        <div className={`w-7 h-7 rounded-full border-2 border-t-transparent ${refreshing ? 'animate-spin' : ''}`}
-          style={{ borderColor: "var(--color-accent)", borderTopColor: "transparent", transform: `rotate(${pullY * 3}deg)` }} />
-      </div>
-      <div className="flex gap-6">
-        <div className="flex-1 min-w-0 max-w-[660px]">
-          {/* Composer */}
-          <div className="glass-light p-4 mb-4" style={{ borderRadius: 20 }}>
-            <div className="flex items-center gap-3">
-              <AvatarSquare src={identityAvatar} name={identityName || "You"} size={40} />
-              <button type="button" onClick={() => feedNavigate("/post/create")} className="flex-1 text-left text-[13px] h-10 glass-input px-4 cursor-pointer" style={{ color: "var(--color-text-muted)" }}>
-                What's on your mind?
-              </button>
-            </div>
-          </div>
+    <main style={{ maxWidth: 960, margin: "0 auto", padding: 16 }}>
+      <PageSEO title="Feed | Tiikme" description="Your professional feed — posts, updates, and insights from verified professionals and organizations on Tiikme." noIndex />
 
-          {/* Today badge */}
-          {!loading && visiblePosts.length > 0 && (
-            <div className="flex items-center gap-3 my-4">
-              <div className="flex-1 h-px" style={{ background: "var(--glass-border-subtle)" }} />
-              <span className="text-[13px] font-semibold px-4 py-1.5 rounded-[20px]"
-                style={{ background: "rgba(255, 255, 255, 0.20)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255, 255, 255, 0.25)", color: "var(--color-text-secondary)" }}>
-                Today · {visiblePosts.length} posts
-              </span>
-              <div className="flex-1 h-px" style={{ background: "var(--glass-border-subtle)" }} />
-            </div>
-          )}
+      <div className="flex" style={{ gap: 16 }}>
+        {/* Main feed column */}
+        <div className="flex-1 min-w-0">
+          <FeedComposer onPublished={refresh} />
 
           {loading && <SkeletonCard count={3} />}
           {!loading && visiblePosts.map((post: any) => (
-            <LivePostCard
-              key={post.id}
-              post={post}
-              likeCounts={likeCounts}
-              myLikes={myLikes}
-              toggleLike={toggleLike}
-              commentCounts={commentCounts}
-              commentsData={commentsData}
-              commentsOpen={commentsOpen}
-              commentInputs={commentInputs}
-              setCommentInputs={setCommentInputs}
-              toggleComments={toggleComments}
-              submitComment={submitComment}
-              deleteComment={deleteComment}
-              onDelete={handleDeletePost}
-              onEdit={setEditingPost}
+            <PostCard
+              key={post.id} post={post}
+              likeCounts={likeCounts} myLikes={myLikes} toggleLike={toggleLike}
+              commentCounts={commentCounts} commentsData={commentsData}
+              commentsOpen={commentsOpen} commentInputs={commentInputs}
+              setCommentInputs={setCommentInputs} toggleComments={toggleComments}
+              submitComment={submitComment} deleteComment={deleteComment}
+              onDelete={(id) => setDeletingPostId(id)} onEdit={setEditingPost}
             />
           ))}
 
           {!loading && visiblePosts.length === 0 && (
-            <div className="glass-light rounded-3xl p-10 text-center">
-              <MessageSquare className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--color-text-muted)" }} />
-              <p className="text-[16px] font-bold mb-1" style={{ color: "var(--color-text)" }}>Nothing here yet</p>
-              <p className="text-[13px] mb-4" style={{ color: "var(--color-text-muted)" }}>Be the first to post something.</p>
-              <button onClick={() => feedNavigate("/post/create")} className="btn-liquid-primary rounded-full">Write a post</button>
+            <div className="glass-card text-center" style={{ padding: 20, borderRadius: 16 }}>
+              <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", marginBottom: 4 }}>Nothing here yet</p>
+              <p style={{ fontSize: 13, color: "var(--text-muted)" }}>Be the first to post something.</p>
             </div>
           )}
 
           <div ref={sentinelRef} className="h-1" />
-          {loadingMore && <SkeletonCard count={2} />}
+          {loadingMore && (
+            <div className="flex justify-center" style={{ margin: 16 }}>
+              <Loader2 className="animate-spin" style={{ width: 24, height: 24, color: "var(--accent)" }} />
+            </div>
+          )}
           {!loading && !hasMore && visiblePosts.length > 0 && (
-            <div className="flex items-center justify-center py-8">
-              <span className="text-[12px] font-medium px-5 py-2 rounded-full" style={{ background: "rgba(255,255,255,0.20)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.25)", color: "var(--color-text-muted)" }}>You're caught up</span>
+            <div className="glass-card text-center" style={{ padding: 20, borderRadius: 16, marginTop: 8 }}>
+              <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>You're all caught up!</p>
             </div>
           )}
         </div>
-        <aside className="hidden lg:block w-[280px] shrink-0 sticky top-7 self-start space-y-0">
+
+        {/* Right sidebar */}
+        <aside className="hidden lg:block shrink-0 sticky top-4 self-start" style={{ width: 280 }}>
           <ActivityWidget />
-          <OpportunitiesWidget />
           <SuggestedWidget />
         </aside>
       </div>
 
-      {/* Edit modal */}
-      {editingPost && (
-        <EditPostModal
-          post={editingPost}
-          onClose={() => setEditingPost(null)}
-          onSaved={handleEditSaved}
-        />
-      )}
-
-      {/* Delete confirmation */}
-      {deletingPostId && (
-        <DeletePostDialog
-          postId={deletingPostId}
-          onClose={() => setDeletingPostId(null)}
-          onDeleted={handleDeleteConfirmed}
-        />
-      )}
+      {editingPost && <EditPostModal post={editingPost} onClose={() => setEditingPost(null)} onSaved={(updated) => { setEditedPosts(prev => ({ ...prev, [updated.id]: { content: updated.content, is_edited: updated.is_edited, updated_at: updated.updated_at } })); }} />}
+      {deletingPostId && <DeletePostDialog postId={deletingPostId} onClose={() => setDeletingPostId(null)} onDeleted={(id) => { setDeletedIds(prev => new Set(prev).add(id)); setDeletingPostId(null); }} />}
     </main>
   );
 };
