@@ -2358,6 +2358,53 @@ export type Database = {
           },
         ]
       }
+      user_additional_roles: {
+        Row: {
+          about: string | null
+          achievements: string | null
+          created_at: string | null
+          designation: string | null
+          id: string
+          links: Json | null
+          role_name: string
+          show_on_profile: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          about?: string | null
+          achievements?: string | null
+          created_at?: string | null
+          designation?: string | null
+          id?: string
+          links?: Json | null
+          role_name: string
+          show_on_profile?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          about?: string | null
+          achievements?: string | null
+          created_at?: string | null
+          designation?: string | null
+          id?: string
+          links?: Json | null
+          role_name?: string
+          show_on_profile?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_additional_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_power: {
         Row: {
           current_power: number | null
