@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Search, X } from "lucide-react";
+import { cleanUsername } from "@/lib/cleanUsername";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -325,7 +326,7 @@ const Explore = () => {
                 <AvatarSquare src={r.avatar_url || r.logo_url} name={r.full_name || r.name || "?"} size={32} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.full_name || r.name}</p>
-                  <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)" }}>{r.kind === "person" ? `@${r.username || "user"}` : r.type}</p>
+                  <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)" }}>{r.kind === "person" ? `@${cleanUsername(r.username) || "user"}` : r.type}</p>
                 </div>
               </button>
             ))}
