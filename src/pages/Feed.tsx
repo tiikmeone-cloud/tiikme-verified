@@ -129,14 +129,14 @@ const FeedComposer = ({ onPublished }: { onPublished: () => void }) => {
   };
 
   const handleAttach = () => {
-    if (attachPreviews.length >= 4) { toast.info("Maximum 4 files"); return; }
+    if (attachPreviews.length >= 10) { toast.info("Maximum 10 files"); return; }
     fileInputRef.current?.click();
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-    Array.from(files).slice(0, 4 - attachPreviews.length).forEach(file => {
+    Array.from(files).slice(0, 10 - attachPreviews.length).forEach(file => {
       if (file.size > 10 * 1024 * 1024) { toast.error("File must be under 10MB"); return; }
       const isImage = file.type.startsWith("image/");
       setAttachPreviews(prev => [...prev, {
@@ -144,8 +144,8 @@ const FeedComposer = ({ onPublished }: { onPublished: () => void }) => {
         name: file.name,
         type: file.type,
         size: file.size,
-      }].slice(0, 4));
-      setAttachFiles(prev => [...prev, file].slice(0, 4));
+      }].slice(0, 10));
+      setAttachFiles(prev => [...prev, file].slice(0, 10));
     });
     e.target.value = "";
   };
@@ -573,7 +573,7 @@ const PostCard = ({
                   <div style={{ marginTop: 2, flexShrink: 0 }}>
                     <AvatarSquare src={c.author?.avatar_url} name={cName} size={24} />
                   </div>
-                  <div className="flex-1 min-w-0" style={{ background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.25)", borderRadius: 10, padding: "8px 10px" }}>
+                  <div className="flex-1 min-w-0" style={{ background: "rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "8px 10px" }}>
                     <div className="flex items-center" style={{ gap: 6 }}>
                       <Link to={`/app/profile/${c.author?.id || c.user_id}`} className="hover:underline" style={{ fontSize: 12, fontWeight: 600, color: "#1A1A2E" }}>{cName}</Link>
                       <span style={{ fontSize: 12, color: "#9CA3C0" }}>·</span>
