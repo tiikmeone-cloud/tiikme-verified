@@ -1,3 +1,4 @@
+import AvatarSquare from "@/components/ui/AvatarSquare";
 import { storageImageUrl } from "@/lib/imageTransform";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
@@ -57,10 +58,7 @@ function PersonCard({ p, strandStatus, onStrand }: { p: ProfileResult; strandSta
       className="glass-light cursor-pointer flex flex-col items-center text-center"
       style={{ padding: 16, borderRadius: 20, height: 230, overflow: "hidden" }}
       onClick={() => navigate(`/app/profile/${p.id}`)}>
-      <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-[13px] font-bold shrink-0 overflow-hidden"
-        style={{ backgroundColor: colors.text, color: "#fff", border: "2px solid rgba(255,255,255,0.30)", boxShadow: "0 0 12px rgba(26,26,78,0.08)" }}>
-        {p.avatar_url ? <img src={storageImageUrl(p.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials}
-      </div>
+      <AvatarSquare src={p.avatar_url} name={name} size={56} bgColor={colors.text} />
       <p className="text-[15px] font-semibold leading-tight w-full mt-2.5" style={{ color: "#1A1A2E", maxHeight: 40, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{name}</p>
       <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full mt-1 shrink-0" style={{ background: colors.bg, color: colors.text }}>{roleLabel}</span>
       {p.location_city && (
@@ -125,10 +123,7 @@ function OrgCard({ org }: { org: any }) {
       className="glass-light cursor-pointer flex flex-col items-center text-center"
       style={{ padding: 16, borderRadius: 20, height: 230, overflow: "hidden" }}
       onClick={() => navigate(`/org/${org.slug}`)}>
-      <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-[12px] font-bold shrink-0 overflow-hidden"
-        style={{ background: org.logo_url ? "rgba(255,255,255,0.50)" : "#E8733A", color: org.logo_url ? undefined : "#fff", border: "2px solid rgba(255,255,255,0.30)", boxShadow: "0 0 12px rgba(26,26,78,0.08)" }}>
-        {org.logo_url ? <img src={storageImageUrl(org.logo_url, "avatar")} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} /> : initials}
-      </div>
+      <AvatarSquare src={org.logo_url} name={org.name || "?"} size={56} bgColor="#E8733A" />
       <p className="text-[15px] font-semibold leading-tight w-full mt-2.5" style={{ color: "#1A1A2E", maxHeight: 40, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{org.name}</p>
       <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full mt-1 shrink-0" style={{ background: typeColors.bg, color: typeColors.text }}>{typeLabel}</span>
       {org.city && (

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { PageSEO } from "@/hooks/usePageSEO";
 import { storageImageUrl } from "@/lib/imageTransform";
+import AvatarSquare from "@/components/ui/AvatarSquare";
 import { Heart, MessageSquare, Repeat2, MoreHorizontal, Flag, Send, FileText, ChevronDown, ArrowUpRight, Trash2, Pencil, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -140,12 +141,7 @@ const LivePostCard = ({
       )}
       <div className="flex items-center gap-3 pb-1">
         <Link to={profileLink}>
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[13px] font-bold text-white shrink-0 hover:scale-105 transition-transform overflow-hidden"
-            style={{ backgroundColor: roleColor, border: "2px solid rgba(255,255,255,0.25)" }}>
-            {displayAvatar
-              ? <img src={storageImageUrl(displayAvatar, "avatar")} alt="" className="w-full h-full object-cover" />
-              : initials}
-          </div>
+          <AvatarSquare src={displayAvatar} name={displayName} size={40} bgColor={roleColor} className="hover:scale-105 transition-transform" />
         </Link>
         <div className="min-w-0 flex-1">
           {/* Line 1: Name · @username · timestamp · (edited) */}
@@ -284,9 +280,7 @@ const LivePostCard = ({
             const isOwnComment = user?.id === c.user_id;
             return (
               <div key={c.id} className="flex items-start gap-2 group">
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: cColor }}>
-                  {c.author?.avatar_url ? <img src={storageImageUrl(c.author.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : cInitials}
-                </div>
+                <AvatarSquare src={c.author?.avatar_url} name={cName} size={28} bgColor={cColor} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <Link to={`/app/profile/${c.author?.id || c.user_id}`} className="text-[13px] font-bold hover:underline" style={{ color: "var(--color-text)" }}>{cName}</Link>
@@ -304,9 +298,7 @@ const LivePostCard = ({
           })}
           {user && (
             <div className="flex items-center gap-2 mt-2">
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden" style={{ background: "var(--color-accent)" }}>
-                {authProfile?.avatar_url ? <img src={storageImageUrl(authProfile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : userInitials}
-              </div>
+              <AvatarSquare src={authProfile?.avatar_url} name={authProfile?.full_name || "You"} size={28} />
               <input
                 value={commentText}
                 onChange={(e) => setCommentInputs((p) => ({ ...p, [post.id]: e.target.value }))}
@@ -388,9 +380,7 @@ const SuggestedWidget = () => {
           return (
             <div key={s.id} className="flex items-center gap-2.5" style={{ paddingBottom: 10, borderBottom: "1px solid rgba(255,255,255,0.15)" }}>
               <Link to={`/app/profile/${s.id}`}>
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[11px] font-bold text-white overflow-hidden" style={{ backgroundColor: color }}>
-                  {s.avatar_url ? <img src={storageImageUrl(s.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : init}
-                </div>
+                <AvatarSquare src={s.avatar_url} name={name} size={40} bgColor={color} />
               </Link>
               <div className="flex-1 min-w-0">
                 <Link to={`/app/profile/${s.id}`} className="text-[13px] font-bold truncate block hover:underline" style={{ color: "var(--color-text)" }}>{name}</Link>
@@ -495,9 +485,7 @@ const Feed = () => {
           {/* Composer */}
           <div className="glass-light p-4 mb-4" style={{ borderRadius: 20 }}>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[12px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: "var(--color-accent)", border: "2px solid rgba(255,255,255,0.30)" }}>
-                {identityAvatar ? <img src={storageImageUrl(identityAvatar, "avatar")} alt="" className="w-full h-full object-cover" /> : identityInitials}
-              </div>
+              <AvatarSquare src={identityAvatar} name={identityName || "You"} size={40} />
               <button type="button" onClick={() => feedNavigate("/post/create")} className="flex-1 text-left text-[13px] h-10 glass-input px-4 cursor-pointer" style={{ color: "var(--color-text-muted)" }}>
                 What's on your mind?
               </button>

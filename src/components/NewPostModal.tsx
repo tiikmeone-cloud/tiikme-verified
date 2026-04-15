@@ -157,7 +157,7 @@ const NewPostModal = ({ open, onClose, onPublished }: NewPostModalProps) => {
               {mentionResults.map(m => (
                 <button type="button" key={m.username} onClick={() => insertMention(m.username)}
                   className="w-full flex items-center gap-3 px-3 py-2.5 text-left cursor-pointer hover:bg-[var(--surface-2)]">
-                  {m.avatar_url ? <img src={storageImageUrl(m.avatar_url, "avatar")} alt="" className="w-6 h-6 rounded-full object-cover" /> : <AtSign className="w-4 h-4" style={{ color: "var(--brand)" }} />}
+                  {m.avatar_url ? <img src={storageImageUrl(m.avatar_url, "avatar")} alt="" className="w-6 h-6 object-cover" style={{ borderRadius: 0 }} /> : <AtSign className="w-4 h-4" style={{ color: "var(--brand)" }} />}
                   <div><p className="text-[13px] font-bold" style={{ color: "var(--text-1)" }}>{m.full_name || m.username}</p><p className="text-[11px]" style={{ color: "var(--text-3)" }}>@{m.username}</p></div>
                 </button>
               ))}

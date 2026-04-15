@@ -91,13 +91,12 @@ const VerifBadge = ({ item, isOwn, onStatusChange }: { item: any; isOwn: boolean
 const CompanyLogo = ({ name, logoUrl, color, size = 40 }: { name: string; logoUrl?: string | null; color?: string; size?: number }) => {
   const initials = (name || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
   const bg = color || hashColor(name || "X");
-  const radius = size >= 48 ? "rounded-2xl" : "rounded-xl";
 
   return (
-    <div className={`${radius} flex items-center justify-center text-[12px] font-bold text-white shrink-0 overflow-hidden`}
-      style={{ width: size, height: size, backgroundColor: logoUrl ? "transparent" : bg }}>
+    <div className="flex items-center justify-center text-[12px] font-bold text-white shrink-0 overflow-hidden"
+      style={{ width: size, height: size, borderRadius: 0, backgroundColor: logoUrl ? "transparent" : bg, border: "2px solid rgba(255,255,255,0.30)" }}>
       {logoUrl ? (
-        <img src={storageImageUrl(logoUrl, "avatar")} alt="" className="w-full h-full object-cover"
+        <img src={storageImageUrl(logoUrl, "avatar")} alt="" className="w-full h-full object-cover" style={{ borderRadius: 0 }}
           onError={e => { (e.target as HTMLImageElement).style.display = "none"; e.currentTarget.parentElement!.style.backgroundColor = bg; }} />
       ) : initials}
     </div>

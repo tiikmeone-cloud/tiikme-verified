@@ -163,8 +163,8 @@ export default function ApplicationsDashboard() {
               <GlassBox key={app.id} accent={colors.text} expanded={isSelected}
                 onClick={() => { setSelectedApp(app); setNotes(app.recruiter_notes || ""); }}>
                 <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[12px] font-bold text-white overflow-hidden shrink-0" style={{ background: "#E8580A" }}>
-                    {app.applicant?.avatar_url ? <img src={storageImageUrl(app.applicant.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (app.applicant?.full_name?.[0] || "?")}
+                  <div className="w-10 h-10 flex items-center justify-center text-[12px] font-bold text-white overflow-hidden shrink-0" style={{ borderRadius: 0, background: "#E8580A" }}>
+                    {app.applicant?.avatar_url ? <img src={storageImageUrl(app.applicant.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : (app.applicant?.full_name?.[0] || "?")}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[13px] font-bold truncate" style={{ color: "#1A1A1A" }}>{app.applicant?.full_name || "Applicant"}</p>
@@ -192,8 +192,8 @@ export default function ApplicationsDashboard() {
               <div className="space-y-5 overflow-y-auto" style={{ maxHeight: "65vh" }}>
                 {/* Profile header */}
                 <div className="flex items-center gap-3">
-                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-[16px] font-bold text-white overflow-hidden shrink-0" style={{ background: "#E8580A" }}>
-                    {selectedApp.applicant?.avatar_url ? <img src={storageImageUrl(selectedApp.applicant.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (selectedApp.applicant?.full_name?.[0] || "?")}
+                  <div className="w-14 h-14 flex items-center justify-center text-[16px] font-bold text-white overflow-hidden shrink-0" style={{ borderRadius: 0, background: "#E8580A" }}>
+                    {selectedApp.applicant?.avatar_url ? <img src={storageImageUrl(selectedApp.applicant.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : (selectedApp.applicant?.full_name?.[0] || "?")}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[18px] font-extrabold" style={{ color: "#1A1A1A" }}>{selectedApp.applicant?.full_name}</p>

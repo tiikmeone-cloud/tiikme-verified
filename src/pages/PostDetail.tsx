@@ -134,8 +134,8 @@ const PostDetail = () => {
       <article className="glass-liquid rounded-2xl overflow-hidden">
         <div className="flex items-center gap-3 px-4 pt-4 pb-2">
           <Link to={`/app/profile/${author?.id || ""}`}>
-            <div className="w-11 h-11 rounded-xl flex items-center justify-center text-[14px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: roleColor }}>
-              {author?.avatar_url ? <img src={storageImageUrl(author.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials}
+            <div className="w-11 h-11 flex items-center justify-center text-[14px] font-bold text-white shrink-0 overflow-hidden" style={{ borderRadius: 0, backgroundColor: roleColor, border: "2px solid rgba(255,255,255,0.30)" }}>
+              {author?.avatar_url ? <img src={storageImageUrl(author.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : initials}
             </div>
           </Link>
           <div className="flex-1 min-w-0">
@@ -213,8 +213,8 @@ const PostDetail = () => {
             const isOwnComment = user?.id === c.user_id;
             return (
               <div key={c.id} className="flex items-start gap-2 group">
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: cColor }}>
-                  {c.author?.avatar_url ? <img src={storageImageUrl(c.author.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : cInit}
+                <div className="w-7 h-7 flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden" style={{ borderRadius: 0, backgroundColor: cColor }}>
+                  {c.author?.avatar_url ? <img src={storageImageUrl(c.author.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : cInit}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
@@ -233,8 +233,8 @@ const PostDetail = () => {
           })}
           {user && (
             <div className="flex items-center gap-2 mt-2">
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden" style={{ background: "var(--brand)" }}>
-                {profile?.avatar_url ? <img src={storageImageUrl(profile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : userInitials}
+              <div className="w-7 h-7 flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden" style={{ borderRadius: 0, background: "var(--brand)" }}>
+                {profile?.avatar_url ? <img src={storageImageUrl(profile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : userInitials}
               </div>
               <input value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="Write a comment..."
                 className="flex-1 h-9 rounded-xl px-3 text-[13px] outline-none"
