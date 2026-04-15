@@ -235,9 +235,9 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
                 <button type="button" key={org.id} onClick={() => { setSelectedOrg(org); setStep("confirm"); }}
                   className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-left cursor-pointer transition-colors"
                   style={{ background: "var(--glass-bg)", border: "1px solid var(--glass-border)" }}>
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden"
-                    style={{ background: org.logo_url ? "transparent" : hashColor(org.name) }}>
-                    {org.logo_url ? <img src={org.logo_url} className="w-full h-full object-cover" /> : org.name.slice(0, 2).toUpperCase()}
+                  <div className="w-9 h-9 flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden"
+                    style={{ borderRadius: 0, background: org.logo_url ? "transparent" : hashColor(org.name) }}>
+                    {org.logo_url ? <img src={org.logo_url} className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : org.name.slice(0, 2).toUpperCase()}
                   </div>
                   <div className="min-w-0">
                     <p className="text-[12px] font-semibold truncate" style={{ color: "var(--color-text)" }}>{org.name}</p>
@@ -281,9 +281,9 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
           {step === "confirm" && selectedOrg && (
             <>
               <div className="flex items-center gap-2.5 p-2.5 rounded-xl" style={{ background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.15)" }}>
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden"
-                  style={{ background: selectedOrg.logo_url ? "transparent" : hashColor(selectedOrg.name) }}>
-                  {selectedOrg.logo_url ? <img src={selectedOrg.logo_url} className="w-full h-full object-cover" /> : selectedOrg.name.slice(0, 2).toUpperCase()}
+                <div className="w-10 h-10 flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden"
+                  style={{ borderRadius: 0, background: selectedOrg.logo_url ? "transparent" : hashColor(selectedOrg.name) }}>
+                  {selectedOrg.logo_url ? <img src={selectedOrg.logo_url} className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : selectedOrg.name.slice(0, 2).toUpperCase()}
                 </div>
                 <div>
                   <p className="text-[12px] font-bold" style={{ color: "var(--color-text)" }}>Send request to {selectedOrg.name}?</p>
