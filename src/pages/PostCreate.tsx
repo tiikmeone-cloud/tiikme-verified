@@ -230,11 +230,8 @@ const PostCreate = () => {
               type="checkbox"
               checked={showCompanyBadge}
               onChange={e => setShowCompanyBadge(e.target.checked)}
-              className="sr-only peer"
+              className="w-4 h-4 rounded accent-[hsl(var(--primary))]"
             />
-            <div className="w-8 h-4.5 rounded-full transition-colors peer-checked:bg-[var(--color-accent)] bg-gray-300 relative">
-              <div className="absolute top-0.5 left-0.5 w-3.5 h-3.5 rounded-full bg-white transition-transform peer-checked:translate-x-3.5" />
-            </div>
             <span className="text-[12px] font-medium" style={{ color: "var(--text-3)" }}>Show company</span>
           </label>
         )}
