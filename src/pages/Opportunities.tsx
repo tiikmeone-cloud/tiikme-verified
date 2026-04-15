@@ -55,6 +55,14 @@ const Opportunities = () => {
   const fetchOpps = useCallback(async () => {
     setLoading(true);
     try {
+      // Auto-expire past-due opportunities
+      await supabase
+        .from("opportunities")
+        .update({ is_expired: true, is_open: false } as any)
+        .lt("expires_at", new Date().toISOString())
+        .eq("is_expired", false)
+        .not("expires_at", "is", null);
+
       let query = supabase.from("opportunities")
         .select("*, org:organizations!opportunities_org_id_fkey(id, name, logo_url, type, slug, is_verified)")
         .eq("is_open", true).eq("status", "active").order("created_at", { ascending: false }).limit(50);
@@ -117,6 +125,14 @@ const Opportunities = () => {
   const displayOpps = tab === "mine" ? myOpps : opps;
   const daysAgo = (d: string) => { const diff = Math.floor((Date.now() - new Date(d).getTime()) / 86400000); return diff === 0 ? "Today" : `${diff}d ago`; };
   const daysLeft = (d: string) => { const diff = Math.ceil((new Date(d).getTime() - Date.now()) / 86400000); return diff > 0 ? `${diff} days left` : "Expired"; };
+  const expiryBadge = (d: string | null) => {
+    if (!d) return null;
+    const diff = Math.ceil((new Date(d).getTime() - Date.now()) / 86400000);
+    if (diff <= 0) return { label: "Expired", bg: "rgba(239,68,68,0.12)", color: "#EF4444" };
+    if (diff <= 3) return { label: `${diff}d left`, bg: "rgba(239,68,68,0.12)", color: "#EF4444" };
+    if (diff <= 7) return { label: `${diff}d left`, bg: "rgba(255,184,0,0.12)", color: "#FFB800" };
+    return { label: `${diff}d left`, bg: "rgba(52,199,89,0.12)", color: "#34C759" };
+  };
 
   return (
     <main className="max-w-[960px] mx-auto px-4 md:px-6 py-6">
@@ -243,6 +259,10 @@ function OpportunityCard({ o, user, appliedIds, saved, onSave, onApply, navigate
         {o.is_remote && <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full" style={{ background: "#EFF6FF", color: "#2563EB" }}>Remote</span>}
         {o.compensation && <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full" style={{ background: "#FFF3EC", color: "#E8580A" }}>{o.compensation}</span>}
         {o.activity_score_min > 0 && <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full" style={{ background: "#FEF3C7", color: "#D97706" }}>Score: {o.activity_score_min}+</span>}
+        {(() => {
+          const eb = expiryBadge(o.expires_at);
+          return eb ? <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full flex items-center gap-1" style={{ background: eb.bg, color: eb.color }}><Clock className="w-3 h-3" />{eb.label}</span> : null;
+        })()}
       </div>
 
       {o.description && <p className="text-[13px] mt-2 line-clamp-2" style={{ color: "var(--text-2)" }}>{o.description}</p>}
