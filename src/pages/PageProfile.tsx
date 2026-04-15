@@ -358,6 +358,48 @@ const PageProfile = () => {
                 </div>
               </div>
             )}
+
+            {/* Startup-specific */}
+            {page.page_type === "startup" && startupProfile && (
+              <div className="glass-light rounded-2xl p-4" style={{ boxShadow: "inset 0 1px 0 var(--glass-highlight)" }}>
+                <div className="flex items-center gap-2 mb-3">
+                  <Rocket className="w-4 h-4" style={{ color: "#7C3AED" }} />
+                  <h3 className="text-[14px] font-bold" style={{ color: "var(--color-text)" }}>Startup Info</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {startupProfile.funding_stage && <InfoCell label="Funding Stage" value={startupProfile.funding_stage} />}
+                  {startupProfile.team_size && <InfoCell label="Team Size" value={String(startupProfile.team_size)} />}
+                  {startupProfile.revenue_range && <InfoCell label="Revenue" value={startupProfile.revenue_range} />}
+                </div>
+                {(startupProfile.sectors as string[] || []).length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    {(startupProfile.sectors as string[]).map((s: string, i: number) => (
+                      <span key={i} className="text-[11px] px-2.5 py-1 rounded-lg" style={{ background: "rgba(124,58,237,0.1)", color: "#7C3AED" }}>{s}</span>
+                    ))}
+                  </div>
+                )}
+                {startupProfile.looking_for_funding && (
+                  <div className="mt-3 px-3 py-2 rounded-xl flex items-center gap-2" style={{ background: "rgba(232,115,58,0.08)", border: "1px solid rgba(232,115,58,0.20)" }}>
+                    <TrendingUp className="w-4 h-4" style={{ color: "#E8733A" }} />
+                    <span className="text-[12px] font-bold" style={{ color: "#E8733A" }}>Looking for Funding</span>
+                  </div>
+                )}
+                {startupProfile.pitch_deck_url && (
+                  <a href={startupProfile.pitch_deck_url} target="_blank" rel="noopener noreferrer"
+                    className="mt-3 inline-flex items-center gap-1.5 text-[12px] font-semibold px-4 py-2 rounded-xl transition-all hover:-translate-y-0.5"
+                    style={{ background: "var(--glass-bg)", border: "1px solid var(--glass-border-color, rgba(255,255,255,0.12))", color: "var(--color-accent)" }}>
+                    <FileText className="w-3.5 h-3.5" /> View Pitch Deck
+                  </a>
+                )}
+                {isInvestor && !isAdmin && (
+                  <button type="button" onClick={() => setShowInterestModal(true)}
+                    className="mt-3 w-full h-10 rounded-xl text-[13px] font-bold transition-all cursor-pointer"
+                    style={{ background: "linear-gradient(135deg, #15803D, #34C759)", color: "#fff", border: "none", boxShadow: "0 4px 16px rgba(21,128,61,0.25)" }}>
+                    <TrendingUp className="w-4 h-4 inline mr-1.5" /> I'm Interested
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
 
