@@ -178,7 +178,7 @@ const Pings = () => {
   const canSend = !!(newMsg.trim() || pendingAttachment);
 
   return (
-    <div className="flex relative" style={{ height: "calc(100vh - 52px)", maxHeight: "calc(100dvh - 52px)" }}>
+    <div className="flex relative" style={{ height: "calc(100vh - 52px)", maxHeight: "calc(100dvh - 52px - env(safe-area-inset-bottom, 0px))" }}>
       <input ref={fileInputRef} type="file" accept="image/*,.pdf,.doc,.docx" className="hidden" onChange={handleFileSelect} />
 
       {/* Left panel */}
