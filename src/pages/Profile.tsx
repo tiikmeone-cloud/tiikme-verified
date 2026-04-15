@@ -4,7 +4,7 @@ import { PageSEO, profileSEO } from "@/hooks/usePageSEO";
 import {
   MapPin, Copy, Shield, X, MessageCircle, CheckCircle, Building2, Link2, Plus,
   Pencil, Trash2, Briefcase, GraduationCap, Award, Code2, Eye, EyeOff,
-  Heart, Rocket, Send, Share2, Users, Globe, ChevronDown, ChevronUp, ExternalLink, LinkIcon, TrendingUp
+  Heart, Rocket, Send, Share2, Users, Globe, ExternalLink, LinkIcon, TrendingUp
 } from "lucide-react";
 import { detectPlatform } from "@/lib/platformDetect";
 import GlassModal, { glassInputDarkStyle as gInputStyle, glassSelectDarkStyle as gSelectStyle, glassTextareaDarkStyle as gTextareaStyle, labelStyle } from "@/components/ui/GlassModal";
@@ -17,13 +17,10 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useLikes } from "@/hooks/useLikes";
-import { useComments } from "@/hooks/useComments";
 import MentionText from "@/components/feed/MentionText";
 import { sendNotification } from "@/lib/notify";
 import VerificationRequest from "@/components/profile/VerificationRequest";
 import CertificatesSection from "@/components/profile/CertificatesSection";
-import GlassBox from "@/components/ui/GlassBox";
 import ActivityScoreRing from "@/components/ActivityScoreRing";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle
@@ -49,19 +46,6 @@ const formatDuration = (start: string | null, end: string | null, isCurrent: boo
   if (mos > 0) parts.push(`${mos} mo${mos > 1 ? "s" : ""}`);
   return `${fmt(start)} – ${isCurrent ? "Present" : end ? fmt(end) : ""} · ${parts.join(" ") || "< 1 mo"}`;
 };
-
-function getTimeAgo(d: Date): string {
-  const s = Math.floor((Date.now() - d.getTime()) / 1000);
-  if (s < 60) return "just now";
-  const m = Math.floor(s / 60);
-  if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  return `${Math.floor(h / 24)}d ago`;
-}
-
-
-
 
 /* ── Edit Profile Drawer ── */
 const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose: () => void; onSaved: () => void }) => {
@@ -127,47 +111,46 @@ const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose:
   return (
     <Sheet open={open} onOpenChange={v => !v && onClose()}>
       <SheetContent side="right" className="w-[360px] sm:w-[400px] overflow-y-auto" style={{ background: "#fff" }}>
-        <SheetHeader><SheetTitle className="text-[18px] font-extrabold" style={{ color: "#1A1A1A" }}>Edit Profile</SheetTitle></SheetHeader>
+        <SheetHeader><SheetTitle style={{ fontSize: 18, fontWeight: 700, color: "var(--text-primary)" }}>Edit Profile</SheetTitle></SheetHeader>
         <div className="space-y-4 mt-4">
           <div className="flex items-center gap-4 cursor-pointer" onClick={() => avatarRef.current?.click()}>
-            <div className="w-16 h-16 flex items-center justify-center text-[20px] font-bold text-white overflow-hidden" style={{ borderRadius: 0, backgroundColor: "#E8580A" }}>
+            <div className="flex items-center justify-center overflow-hidden" style={{ width: 64, height: 64, borderRadius: 0, backgroundColor: "#E8580A", color: "#fff", fontWeight: 700, fontSize: 20 }}>
               {form.avatar_url ? <img src={storageImageUrl(form.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : form.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "U"}
             </div>
-            <p className="text-[12px]" style={{ color: "#9CA3AF" }}>Click to change avatar</p>
+            <p style={{ fontSize: 12, color: "var(--text-muted)" }}>Click to change avatar</p>
             <input ref={avatarRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
           </div>
-          <div><label className="text-[11px] font-bold uppercase tracking-wider block mb-1" style={{ color: "#9CA3AF" }}>Display name</label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
-          <div><label className="text-[11px] font-bold uppercase tracking-wider block mb-1" style={{ color: "#9CA3AF" }}>Headline</label><Input value={form.headline} onChange={e => setForm({ ...form, headline: e.target.value.slice(0, 80) })} maxLength={80} /></div>
-          <div><label className="text-[11px] font-bold uppercase tracking-wider block mb-1" style={{ color: "#9CA3AF" }}>Bio</label>
+          <div><label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.05em", display: "block", marginBottom: 4, color: "var(--text-muted)" }}>Display name</label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
+          <div><label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.05em", display: "block", marginBottom: 4, color: "var(--text-muted)" }}>Headline</label><Input value={form.headline} onChange={e => setForm({ ...form, headline: e.target.value.slice(0, 80) })} maxLength={80} /></div>
+          <div><label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.05em", display: "block", marginBottom: 4, color: "var(--text-muted)" }}>Bio</label>
             <textarea value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value.slice(0, 300) })} rows={3} maxLength={300}
-              className="w-full rounded-xl p-3 text-[14px] outline-none resize-none" style={{ background: "#F9FAFB", border: "1.5px solid #E5E7EB", color: "#1A1A1A" }} />
+              className="w-full outline-none resize-none" style={{ background: "var(--bg-input)", border: "1px solid var(--border-subtle)", borderRadius: 10, padding: 12, fontSize: 14, color: "var(--text-primary)" }} />
           </div>
-          <div className="flex items-center gap-2"><span className="text-[13px]" style={{ color: "#9CA3AF" }}>@</span><Input value={form.username} onChange={e => setForm({ ...form, username: e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, "") })} className="flex-1" /></div>
+          <div className="flex items-center gap-2"><span style={{ fontSize: 13, color: "var(--text-muted)" }}>@</span><Input value={form.username} onChange={e => setForm({ ...form, username: e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, "") })} className="flex-1" /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div><label className="text-[11px] font-bold uppercase tracking-wider block mb-1" style={{ color: "#9CA3AF" }}>City</label><Input value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} /></div>
-            <div><label className="text-[11px] font-bold uppercase tracking-wider block mb-1" style={{ color: "#9CA3AF" }}>State</label>
-              <select value={form.state} onChange={e => setForm({ ...form, state: e.target.value })} className="w-full h-11 rounded-xl px-3 text-[14px] outline-none" style={{ background: "#F9FAFB", border: "1.5px solid #E5E7EB", color: "#1A1A1A" }}>
+            <div><label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.05em", display: "block", marginBottom: 4, color: "var(--text-muted)" }}>City</label><Input value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} /></div>
+            <div><label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.05em", display: "block", marginBottom: 4, color: "var(--text-muted)" }}>State</label>
+              <select value={form.state} onChange={e => setForm({ ...form, state: e.target.value })} className="w-full outline-none cursor-pointer" style={{ height: 40, borderRadius: 10, padding: "0 12px", fontSize: 14, background: "var(--bg-input)", border: "1px solid var(--border-subtle)", color: "var(--text-primary)" }}>
                 <option value="">Select</option>{allIndianStates.map(s => <option key={s}>{s}</option>)}
               </select>
             </div>
           </div>
-          <div className="flex items-center justify-between py-3" style={{ borderTop: "1px solid #F0E8E0", borderBottom: "1px solid #F0E8E0" }}>
-            <span className="text-[14px] font-medium" style={{ color: "#1A1A1A" }}>Open to work</span>
-            <button type="button" onClick={() => setForm({ ...form, open_to_work: !form.open_to_work })} className="w-11 h-6 rounded-full flex items-center px-0.5 cursor-pointer"
-              style={{ background: form.open_to_work ? "#E8580A" : "#E5E7EB" }}>
-              <div className="w-5 h-5 rounded-full bg-white" style={{ transform: form.open_to_work ? "translateX(20px)" : "translateX(0)", transition: "transform 0.2s" }} />
+          <div className="flex items-center justify-between py-3" style={{ borderTop: "1px solid var(--border-subtle)", borderBottom: "1px solid var(--border-subtle)" }}>
+            <span style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>Open to work</span>
+            <button type="button" onClick={() => setForm({ ...form, open_to_work: !form.open_to_work })} className="cursor-pointer" style={{ width: 44, height: 24, borderRadius: 12, background: form.open_to_work ? "#E8733A" : "#ddd", display: "flex", alignItems: "center", padding: 2, border: "none" }}>
+              <div style={{ width: 20, height: 20, borderRadius: 10, background: "#fff", transform: form.open_to_work ? "translateX(20px)" : "translateX(0)", transition: "transform 0.2s" }} />
             </button>
           </div>
           <div>
-            <label className="text-[11px] font-bold uppercase tracking-wider block mb-1" style={{ color: "#9CA3AF" }}>Custom Links</label>
+            <label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.05em", display: "block", marginBottom: 4, color: "var(--text-muted)" }}>Custom Links</label>
             {customLinks.map((link, i) => (
               <div key={i} className="flex gap-2 items-center mb-2">
                 <Input placeholder="URL" value={link.url} onChange={e => { const u = [...customLinks]; u[i] = { ...u[i], url: e.target.value }; setCustomLinks(u); }} className="flex-1" />
                 <Input placeholder="Label" value={link.label} onChange={e => { const u = [...customLinks]; u[i] = { ...u[i], label: e.target.value }; setCustomLinks(u); }} className="flex-1" />
-                <button type="button" onClick={() => setCustomLinks(customLinks.filter((_, idx) => idx !== i))} className="p-1 cursor-pointer" style={{ color: "#9CA3AF" }}><X className="w-4 h-4" /></button>
+                <button type="button" onClick={() => setCustomLinks(customLinks.filter((_, idx) => idx !== i))} className="p-1 cursor-pointer" style={{ color: "var(--text-muted)" }}><X className="w-4 h-4" /></button>
               </div>
             ))}
-            {customLinks.length < 5 && <button type="button" onClick={() => setCustomLinks([...customLinks, { url: "", label: "" }])} className="text-[12px] font-semibold cursor-pointer" style={{ color: "#E8580A" }}>+ Add link</button>}
+            {customLinks.length < 5 && <button type="button" onClick={() => setCustomLinks([...customLinks, { url: "", label: "" }])} className="cursor-pointer" style={{ fontSize: 12, fontWeight: 600, color: "#E8733A", background: "none", border: "none", padding: 0 }}>+ Add link</button>}
           </div>
           <div className="flex gap-3 pt-2">
             <Button variant="ghost" className="flex-1" onClick={onClose}>Cancel</Button>
@@ -179,22 +162,6 @@ const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose:
   );
 };
 
-/* ── Inline Add Form ── */
-const InlineForm = ({ title, fields, onSave, onCancel, saving }: { title: string; fields: React.ReactNode; onSave: () => void; onCancel: () => void; saving: boolean }) => (
-  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
-    className="p-4 mt-3 rounded-2xl" style={{ background: "#F9FAFB", border: "1.5px solid #E5E7EB" }}>
-    <h3 className="text-[14px] font-bold mb-3" style={{ color: "#1A1A1A" }}>{title}</h3>
-    <div className="space-y-3">{fields}</div>
-    <div className="flex gap-2 mt-4">
-      <Button size="sm" onClick={onSave} disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
-      <Button variant="ghost" size="sm" onClick={onCancel}>Cancel</Button>
-    </div>
-  </motion.div>
-);
-
-const inputStyle: React.CSSProperties = { background: "#FFFFFF", border: "1.5px solid #E5E7EB", borderRadius: 12, color: "#1A1A1A", height: 44 };
-const selectStyle: React.CSSProperties = { background: "#FFFFFF", border: "1px solid #E5E7EB", color: "#1A1A1A" };
-
 /* ═══════════ MAIN PROFILE ═══════════ */
 const Profile = () => {
   const { id: urlUserId } = useParams<{ id: string }>();
@@ -202,7 +169,6 @@ const Profile = () => {
   const navigate = useNavigate();
   const isOwnProfile = !urlUserId || urlUserId === user?.id;
 
-  // Redirect institution accounts to org page
   useEffect(() => {
     if (isOwnProfile && authProfile?.account_type === "institution" && authProfile?.org_id) {
       supabase.from("organizations").select("slug").eq("id", authProfile.org_id).maybeSingle()
@@ -219,10 +185,8 @@ const Profile = () => {
   const [stats, setStats] = useState({ connections: 0, posts: 0 });
   const [connectedAvatars, setConnectedAvatars] = useState<any[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
-  const [bioExpanded, setBioExpanded] = useState(false);
   const [showGetTiiked, setShowGetTiiked] = useState(false);
 
-  // Modal state — which section modal is open
   const [modalSection, setModalSection] = useState<string | null>(null);
   const [showAddLink, setShowAddLink] = useState(false);
   const [newLinkUrl, setNewLinkUrl] = useState("");
@@ -238,8 +202,6 @@ const Profile = () => {
   const [connectLoading, setConnectLoading] = useState(false);
 
   const targetUserId = isOwnProfile ? user?.id : urlUserId;
-
-
 
   const loadProfile = useCallback(async () => {
     if (!targetUserId) { setDataLoading(false); return; }
@@ -264,7 +226,6 @@ const Profile = () => {
     const posts = postsRes.status === "fulfilled" ? (postsRes.value as any).data || [] : [];
     setStats({ connections: strandCount, posts: posts.length });
 
-    // Get connected user avatars
     if (connAvatarsRes.status === "fulfilled") {
       const strands = (connAvatarsRes.value as any).data || [];
       const otherIds = strands.map((s: any) => s.requester_id === targetUserId ? s.receiver_id : s.requester_id).filter(Boolean);
@@ -288,8 +249,8 @@ const Profile = () => {
   useEffect(() => { if (!authLoading) loadProfile(); }, [authLoading, loadProfile]);
 
   if (authLoading || dataLoading) return (
-    <div className="min-h-screen" style={{ background: "linear-gradient(135deg, #FFF8F2 0%, #FFF0E8 50%, #FFF8F2 100%)" }}>
-      <div className="max-w-[960px] mx-auto px-4 py-8"><div className="animate-pulse space-y-4"><div className="h-[180px] rounded-3xl" style={{ background: "rgba(232,88,10,0.1)" }} /><div className="grid grid-cols-1 md:grid-cols-[340px_1fr] gap-4"><div className="h-48 rounded-2xl" style={{ background: "#fff" }} /><div className="h-48 rounded-2xl" style={{ background: "#fff" }} /></div></div></div>
+    <div className="min-h-screen" style={{ background: "var(--bg-page)" }}>
+      <div style={{ maxWidth: 960, margin: "0 auto", padding: 16 }}><div className="animate-pulse space-y-4"><div style={{ height: 200, borderRadius: "16px 16px 0 0", background: "rgba(26,26,78,0.08)" }} /><div style={{ height: 80, borderRadius: "0 0 16px 16px", background: "rgba(255,255,255,0.25)" }} /><div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-3"><div style={{ height: 120, borderRadius: 16, background: "rgba(255,255,255,0.25)" }} /><div style={{ height: 120, borderRadius: 16, background: "rgba(255,255,255,0.25)" }} /></div></div></div>
     </div>
   );
   if (!user && isOwnProfile) return null;
@@ -297,71 +258,38 @@ const Profile = () => {
   const profileData = viewedProfile || authProfile;
   if (!profileData) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
-      <p className="text-[16px] font-bold" style={{ color: "#1A1A1A" }}>Profile not found</p>
-      <button type="button" onClick={() => navigate("/app/explore")} className="text-[13px] mt-2" style={{ color: "#E8580A" }}>Back to Explore</button>
+      <p style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>Profile not found</p>
+      <button type="button" onClick={() => navigate("/app/explore")} className="cursor-pointer" style={{ fontSize: 13, marginTop: 8, color: "#E8733A", background: "none", border: "none" }}>Back to Explore</button>
     </div>
   );
 
-  // Privacy settings enforcement
+  // Privacy
   const privacySettings = profileData.privacy_settings as any || {};
   const profileVisibility = privacySettings.profile_visibility || "public";
   const showLocation = privacySettings.show_location !== false;
-  const showCurrentCompany = privacySettings.show_current_company !== false;
   const isConnected = connectionStatus.status === "accepted";
   const isPrivateView = !isOwnProfile && profileVisibility === "private";
   const isConnectionsOnly = !isOwnProfile && profileVisibility === "connections_only" && !isConnected;
 
-  // If profile is private or connections-only (and not connected), show limited view
   if (isPrivateView || isConnectionsOnly) {
     const limitedName = profileData.full_name || "User";
     const limitedInitials = limitedName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
-    const limitedRoleColor = ROLE_COLOR_MAP[profileData.role || ""] || "#4F46E5";
     return (
-      <div className="min-h-screen pb-8">
-        <div className="max-w-[960px] mx-auto px-4">
-          <div className="h-[240px] relative overflow-hidden" style={{ borderRadius: "0 0 28px 28px", background: "linear-gradient(135deg, #1A1A4E 0%, #2D2D7A 60%, #3D3D8A 100%)" }}>
-            <div className="absolute bottom-5 left-6 flex items-end gap-4 z-10">
-              <div className="w-[100px] h-[100px] flex items-center justify-center text-[28px] font-extrabold text-white overflow-hidden shrink-0"
-                style={{ borderRadius: 0, backgroundColor: profileData.avatar_url ? "#fff" : limitedRoleColor, border: "3px solid rgba(255,255,255,0.40)" }}>
-                {profileData.avatar_url ? <img src={storageImageUrl(profileData.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : limitedInitials}
-              </div>
-              <div className="pb-1">
-                <h1 className="text-[24px] font-bold text-white" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>{limitedName}</h1>
-              </div>
-            </div>
-            <div className="absolute top-4 right-4 z-10">
-              {connectionStatus.status === "accepted" 
-                ? <button type="button" className="h-10 px-5 rounded-full text-[13px] font-bold" style={{ background: "#F0FDF4", color: "#059669", border: "1.5px solid #059669" }} disabled><CheckCircle className="w-3.5 h-3.5 inline mr-1" />Connected</button>
-                : connectionStatus.status === "pending" 
-                ? <button type="button" className="h-10 px-5 rounded-full text-[13px] font-bold opacity-60" style={{ background: "#F9FAFB", color: "#6B7280", border: "1.5px solid #E5E7EB" }} disabled>Requested</button>
-                : <button type="button" onClick={async () => {
-                    if (!user || !targetUserId || connectLoading) return;
-                    setConnectLoading(true);
-                    await supabase.from("strands").insert({ requester_id: user.id, receiver_id: targetUserId });
-                    sendNotification({
-                      userId: targetUserId,
-                      actorId: user.id,
-                      type: "connection_request",
-                      title: `${authProfile?.full_name || "Someone"} wants to connect`,
-                      actionUrl: `/app/strands`,
-                      data: { actor_id: user.id },
-                    });
-                    toast.success("Connection request sent!");
-                    setConnectionStatus({ status: "pending", direction: "sent", id: "" });
-                    setConnectLoading(false);
-                  }} disabled={connectLoading} className="h-10 px-5 rounded-full text-[13px] font-bold text-white" style={{ background: "#E8580A" }}><Users className="w-3.5 h-3.5 inline mr-1" />Connect</button>
-              }
-            </div>
+      <div className="min-h-screen" style={{ padding: 16, maxWidth: 960, margin: "0 auto" }}>
+        {/* Minimal cover + name */}
+        <div style={{ height: 200, borderRadius: "16px 16px 0 0", background: "linear-gradient(135deg, #1A1A4E 0%, #2D2D7A 60%, #3D3D8A 100%)", position: "relative" }} />
+        <div className="glass-card" style={{ borderRadius: "0 0 16px 16px", borderTop: "none", padding: "12px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ width: 80, height: 80, borderRadius: 0, border: "3px solid rgba(255,255,255,0.40)", marginTop: -52, background: ROLE_COLOR_MAP[profileData.role || ""] || "#4F46E5", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 24, overflow: "hidden", flexShrink: 0 }}>
+            {profileData.avatar_url ? <img src={storageImageUrl(profileData.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : limitedInitials}
+          </div>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: 20, fontWeight: 700, color: "var(--text-primary)" }}>{limitedName}</p>
           </div>
         </div>
-        <div className="max-w-[960px] mx-auto px-4 mt-8">
-          <div className="glass-light rounded-2xl p-8 text-center">
-            <Shield className="w-12 h-12 mx-auto mb-3" style={{ color: "#6B7094" }} />
-            <p className="text-[16px] font-bold mb-1" style={{ color: "#1A1A2E" }}>This profile is {isPrivateView ? "private" : "for connections only"}</p>
-            <p className="text-[13px] mb-4" style={{ color: "#6B7094" }}>
-              {isPrivateView ? "Only basic info is visible." : "Connect with this person to see their full profile."}
-            </p>
-          </div>
+        <div className="glass-card" style={{ borderRadius: 16, padding: 32, textAlign: "center", marginTop: 12 }}>
+          <Shield style={{ width: 48, height: 48, margin: "0 auto 12px", color: "var(--text-muted)" }} />
+          <p style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>This profile is {isPrivateView ? "private" : "for connections only"}</p>
+          <p style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 4 }}>{isPrivateView ? "Only basic info is visible." : "Connect to see their full profile."}</p>
         </div>
       </div>
     );
@@ -370,7 +298,6 @@ const Profile = () => {
   const displayName = profileData.full_name || authDisplayName || "";
   const username = profileData.username || "";
   const headline = profileData.headline || "";
-  const bio = profileData.bio || "";
   const city = showLocation || isOwnProfile ? (profileData.location_city || "") : "";
   const state = showLocation || isOwnProfile ? (profileData.location_state || "") : "";
   const role = profileData.role || "student";
@@ -397,14 +324,7 @@ const Profile = () => {
     setConnectLoading(true);
     const { error } = await supabase.from("strands").insert({ requester_id: user.id, receiver_id: targetUserId });
     if (error) { toast.error(error.message); setConnectLoading(false); return; }
-    sendNotification({
-      userId: targetUserId,
-      actorId: user.id,
-      type: "connection_request",
-      title: `${authProfile?.full_name || "Someone"} wants to connect`,
-      actionUrl: `/app/strands`,
-      data: { actor_id: user.id },
-    });
+    sendNotification({ userId: targetUserId, actorId: user.id, type: "connection_request", title: `${authProfile?.full_name || "Someone"} wants to connect`, actionUrl: `/app/strands`, data: { actor_id: user.id } });
     setConnectionStatus({ status: "pending", direction: "sent", id: null });
     setConnectLoading(false);
     toast.success("Connection request sent");
@@ -415,15 +335,8 @@ const Profile = () => {
     if (!connectionStatus.id) return;
     await supabase.from("strands").update({ status: "accepted" }).eq("id", connectionStatus.id);
     setConnectionStatus({ ...connectionStatus, status: "accepted" });
-    // Notify the requester that their connection was accepted
     if (targetUserId && user) {
-      sendNotification({
-        userId: targetUserId,
-        actorId: user.id,
-        type: "connection_accepted",
-        title: `${authProfile?.full_name || "Someone"} accepted your connection`,
-        actionUrl: `/app/profile/${user.id}`,
-      });
+      sendNotification({ userId: targetUserId, actorId: user.id, type: "connection_accepted", title: `${authProfile?.full_name || "Someone"} accepted your connection`, actionUrl: `/app/profile/${user.id}` });
     }
     toast.success("Connected!");
   };
@@ -567,346 +480,196 @@ const Profile = () => {
 
   const renderConnectButton = () => {
     const { status, direction } = connectionStatus;
-    if (status === "accepted") return <button type="button" className="h-10 px-5 rounded-full text-[13px] font-bold" style={{ background: "#F0FDF4", color: "#059669", border: "1.5px solid #059669" }} disabled><CheckCircle className="w-3.5 h-3.5 inline mr-1" />Connected</button>;
-    if (status === "pending" && direction === "sent") return <button type="button" className="h-10 px-5 rounded-full text-[13px] font-bold opacity-60" style={{ background: "#F9FAFB", color: "#6B7280", border: "1.5px solid #E5E7EB" }} disabled>Requested</button>;
+    if (status === "accepted") return <span style={{ fontSize: 11, fontWeight: 500, padding: "0 10px", height: 26, borderRadius: 6, background: "rgba(52,199,89,0.12)", color: "#34C759", display: "inline-flex", alignItems: "center", gap: 4 }}><CheckCircle className="w-3 h-3" />Connected</span>;
+    if (status === "pending" && direction === "sent") return <span style={{ fontSize: 11, fontWeight: 500, padding: "0 10px", height: 26, borderRadius: 6, background: "var(--bg-card)", color: "var(--text-muted)", display: "inline-flex", alignItems: "center" }}>Requested</span>;
     if (status === "pending" && direction === "received") return (
       <div className="flex gap-2">
-        <button type="button" onClick={handleAcceptConnection} className="h-10 px-5 rounded-full text-[13px] font-bold text-white" style={{ background: "#E8580A" }}>Accept</button>
-        <button type="button" onClick={handleDeclineConnection} className="h-10 px-5 rounded-full text-[13px] font-bold" style={{ color: "#6B7280", border: "1.5px solid #E5E7EB" }}>Decline</button>
+        <button type="button" onClick={handleAcceptConnection} className="cursor-pointer" style={{ height: 26, padding: "0 10px", borderRadius: 6, fontSize: 11, fontWeight: 500, background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none" }}>Accept</button>
+        <button type="button" onClick={handleDeclineConnection} className="cursor-pointer" style={{ height: 26, padding: "0 10px", borderRadius: 6, fontSize: 11, fontWeight: 500, background: "var(--bg-card)", color: "var(--text-primary)", border: "1px solid var(--border-glass)" }}>Decline</button>
       </div>
     );
-    return <button type="button" onClick={handleConnect} disabled={connectLoading} className="h-10 px-5 rounded-full text-[13px] font-bold text-white" style={{ background: "#E8580A" }}><Users className="w-3.5 h-3.5 inline mr-1" />Connect</button>;
+    return <button type="button" onClick={handleConnect} disabled={connectLoading} className="cursor-pointer" style={{ height: 26, padding: "0 10px", borderRadius: 6, fontSize: 11, fontWeight: 500, background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 2px 12px rgba(232,115,58,0.25)" }}><Users className="w-3 h-3 inline mr-1" />Connect</button>;
   };
 
-  const currentExp = experiences.find(e => e.is_current);
-
-
+  const currentExp = experiences.find((e: any) => e.is_current);
   const seoProps = profileSEO(profileData as any);
+  const activityScore = profileData.activity_score || 0;
 
   return (
     <div className="min-h-screen pb-8">
       <PageSEO {...seoProps} />
-      {/* ── COVER ── */}
-      <div className="max-w-[960px] mx-auto px-4">
-        <div className="h-[240px] relative overflow-hidden"
-          style={{
-            borderRadius: "0 0 28px 28px",
-            background: profileData.cover_url ? undefined : "linear-gradient(135deg, #1A1A4E 0%, #2D2D7A 60%, #3D3D8A 100%)",
-          }}>
+
+      <div style={{ maxWidth: 960, margin: "0 auto", padding: 16 }}>
+        {/* ── COVER ── */}
+        <div style={{
+          width: "100%", height: 200, borderRadius: "16px 16px 0 0", position: "relative", overflow: "hidden",
+          background: profileData.cover_url ? undefined : "linear-gradient(135deg, #1A1A4E 0%, #2D2D7A 60%, #3D3D8A 100%)",
+        }}>
           {profileData.cover_url && (
             <>
               <img src={storageImageUrl(profileData.cover_url, "cover")} alt="" className="absolute inset-0 w-full h-full object-cover" />
-              <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(26,26,78,0.20) 0%, rgba(26,26,78,0.70) 100%)" }} />
+              <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(26,26,78,0.20), rgba(26,26,78,0.70))" }} />
             </>
           )}
+          {/* Edit Profile button */}
+          {isOwnProfile && (
+            <button type="button" onClick={() => setEditOpen(true)} className="absolute cursor-pointer" style={{
+              top: 12, right: 12, height: 26, padding: "0 10px", borderRadius: 8, fontSize: 11, fontWeight: 500,
+              background: "var(--bg-card)", border: "1px solid var(--border-glass)", color: "var(--text-primary)",
+              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.50)", display: "inline-flex", alignItems: "center", gap: 4,
+              zIndex: 10,
+            }}>
+              <Pencil style={{ width: 12, height: 12 }} /> Edit Profile
+            </button>
+          )}
+        </div>
 
-          {/* Edit / Connect button */}
-          <div className="absolute top-4 right-4 z-10">
-            {isOwnProfile ? (
-              <button type="button" onClick={() => setEditOpen(true)}
-                className="btn-glass-pill text-[12px] font-bold cursor-pointer"
-                style={{ color: "#fff", border: "1px solid rgba(255,255,255,0.30)" }}>
-                <Pencil className="w-3.5 h-3.5 inline mr-1" /> Edit Profile
-              </button>
-            ) : renderConnectButton()}
+        {/* ── PROFILE INFO BAR ── */}
+        <div className="glass-card" style={{
+          width: "100%", padding: "12px 16px", borderRadius: "0 0 16px 16px", borderTop: "none",
+          display: "flex", alignItems: "center", gap: 12,
+        }}>
+          {/* Avatar */}
+          <div style={{
+            width: 80, height: 80, borderRadius: 0, border: "3px solid rgba(255,255,255,0.40)",
+            marginTop: -52, boxShadow: "0 4px 16px rgba(26,26,78,0.15)",
+            background: profileData.avatar_url ? "#fff" : roleColor,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            overflow: "hidden", flexShrink: 0, color: "#fff", fontWeight: 700, fontSize: 24,
+          }}>
+            {profileData.avatar_url ? <img src={storageImageUrl(profileData.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials}
           </div>
 
-          {/* Avatar + Name ON cover */}
-          <div className="absolute bottom-5 left-6 flex items-end gap-4 z-10">
-            <div className="w-[100px] h-[100px] flex items-center justify-center text-[28px] font-extrabold text-white overflow-hidden shrink-0"
-              style={{
-                borderRadius: 0,
-                backgroundColor: profileData.avatar_url ? "#fff" : roleColor,
-                border: "3px solid rgba(255, 255, 255, 0.40)",
-                boxShadow: "0 0 24px rgba(232, 115, 58, 0.20)",
-              }}>
-              {profileData.avatar_url ? <img src={storageImageUrl(profileData.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : initials}
-            </div>
-            <div className="pb-1">
-              <div className="flex items-center gap-2">
-                <h1 className="text-[24px] font-bold text-white" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>{displayName}</h1>
-                {isVerified && (
-                  <span className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: "#34C759", boxShadow: "0 0 8px rgba(52,199,89,0.40)" }}>
-                    <CheckCircle className="w-3.5 h-3.5 text-white" />
+          {/* Name + Meta */}
+          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 2 }}>
+            <p style={{ fontSize: 20, fontWeight: 700, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%", lineHeight: "28px", letterSpacing: "-0.01em" }}>{displayName}</p>
+            <p style={{ fontSize: 13, fontWeight: 400, color: "var(--text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: "18px" }}>
+              {headline || `${roleLabel}${currentExp ? ` at ${currentExp.company_name || ""}` : ""}`}
+            </p>
+            <div className="flex items-center flex-wrap" style={{ gap: 8 }}>
+              {username && <span style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)" }}>@{username}</span>}
+              {username && <span style={{ width: 3, height: 3, borderRadius: "50%", background: "var(--text-muted)", flexShrink: 0 }} />}
+              {profileData.open_to_work && (
+                <>
+                  <span style={{ fontSize: 10, fontWeight: 600, height: 18, padding: "0 6px", borderRadius: 4, background: "rgba(52,199,89,0.12)", color: "#34C759", display: "inline-flex", alignItems: "center" }}>Open to work</span>
+                  <span style={{ width: 3, height: 3, borderRadius: "50%", background: "var(--text-muted)", flexShrink: 0 }} />
+                </>
+              )}
+              {(city || state) && (
+                <>
+                  <span className="flex items-center" style={{ gap: 2, fontSize: 12, color: "var(--text-muted)" }}>
+                    <MapPin style={{ width: 12, height: 12 }} />{[city, state].filter(Boolean).join(", ")}
                   </span>
+                  <span style={{ width: 3, height: 3, borderRadius: "50%", background: "var(--text-muted)", flexShrink: 0 }} />
+                </>
+              )}
+              <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{activityScore} · Explorer</span>
+            </div>
+          </div>
+
+          {/* Share / Connect */}
+          <div className="shrink-0 flex items-center gap-2">
+            {!isOwnProfile && renderConnectButton()}
+            <button type="button" onClick={handleCopyLink} className="cursor-pointer" style={{
+              height: 26, padding: "0 10px", borderRadius: 8, fontSize: 11, fontWeight: 500,
+              background: "var(--bg-card)", border: "1px solid var(--border-glass)", color: "var(--text-primary)",
+              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.50)", display: "inline-flex", alignItems: "center", gap: 4,
+            }}>
+              <Share2 style={{ width: 12, height: 12 }} /> Share
+            </button>
+          </div>
+        </div>
+
+        {/* ── SECTION GRID ── */}
+        <div className="grid grid-cols-1 md:grid-cols-[280px_1fr]" style={{ marginTop: 12, gap: 12 }}>
+          {/* ═══ LEFT COLUMN ═══ */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {/* L1: Connections */}
+            <div className="glass-card" style={{ padding: 12, borderRadius: 16 }}>
+              <p style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.02em" }}>CONNECTIONS</p>
+              <p style={{ fontSize: 28, fontWeight: 700, color: "var(--text-primary)", margin: "4px 0", lineHeight: "36px", letterSpacing: "-0.02em" }}>{stats.connections}</p>
+              <Link to="/app/strands" style={{ fontSize: 12, fontWeight: 400, color: "#E8733A" }}>See all →</Link>
+            </div>
+
+            {/* L2: Get Tiiked */}
+            {isOwnProfile && !isVerified && (
+              <div className="glass-glow" style={{ padding: 12, borderRadius: 16, display: "flex", alignItems: "center", gap: 10 }}>
+                <Shield style={{ width: 24, height: 24, color: "#E8733A", flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>Get Tiiked</p>
+                  <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)" }}>Verify your profile</p>
+                </div>
+                <button type="button" onClick={() => setShowGetTiiked(true)} className="cursor-pointer" style={{
+                  height: 28, padding: "0 12px", borderRadius: 8, fontSize: 11, fontWeight: 600,
+                  background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none",
+                  boxShadow: "0 2px 12px rgba(232,115,58,0.25)", flexShrink: 0,
+                }}>Verify</button>
+              </div>
+            )}
+
+            {/* L3: Links */}
+            <div className="glass-card" style={{ padding: 12, borderRadius: 16 }}>
+              <div className="flex items-center" style={{ gap: 8 }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", flex: 1 }}>Links</span>
+                {isOwnProfile && (
+                  <button type="button" onClick={() => setShowAddLink(true)} className="cursor-pointer" style={{
+                    height: 26, padding: "0 10px", borderRadius: 6, fontSize: 11, fontWeight: 500,
+                    background: "var(--bg-card)", border: "1px solid var(--border-glass)", color: "var(--text-primary)",
+                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.50)", display: "inline-flex", alignItems: "center", gap: 4,
+                  }}>
+                    <Plus style={{ width: 12, height: 12 }} /> Add
+                  </button>
                 )}
               </div>
-              <p className="text-[14px]" style={{ color: "rgba(255,255,255,0.80)" }}>{headline || `${roleLabel}${currentExp ? ` at ${currentExp.company_name || currentExp.institution_name || ""}` : ""}`}</p>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full" style={{ background: "rgba(255,255,255,0.9)", color: roleColor }}>{roleLabel}</span>
-                {isVerified && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1" style={{ background: "rgba(245,158,11,0.9)", color: "#fff" }}><Shield className="w-3 h-3" /> Tiiked</span>}
-                {(profileData.role_metadata as any)?.investor_profile && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(21,128,61,0.85)", color: "#fff" }}>Investor</span>}
-                {(profileData.role_metadata as any)?.founder_profile && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(124,58,237,0.85)", color: "#fff" }}>Founder</span>}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── COMPACT INFO STRIP ── */}
-      <div className="max-w-[960px] mx-auto px-4 mt-4">
-        <div className="glass-light flex items-center gap-4 px-4 py-3 flex-wrap" style={{ borderRadius: 20 }}>
-          {username && <span className="text-[13px] font-mono" style={{ color: "var(--color-text-secondary)" }}>@{username}</span>}
-          {username && <div className="h-5 w-px" style={{ background: "rgba(255,255,255,0.20)" }} />}
-          {profileData.open_to_work && (
-            <>
-              <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-lg" style={{ background: "rgba(52,199,89,0.15)", color: "#34C759" }}>Open to work</span>
-              <div className="h-5 w-px" style={{ background: "rgba(255,255,255,0.20)" }} />
-            </>
-          )}
-          {(city || state) && (
-            <>
-              <span className="text-[13px] flex items-center gap-1" style={{ color: "var(--color-text-secondary)" }}>
-                <MapPin className="w-3.5 h-3.5" />{[city, state].filter(Boolean).join(", ")}
-              </span>
-              <div className="h-5 w-px" style={{ background: "rgba(255,255,255,0.20)" }} />
-            </>
-          )}
-          <span className="text-[13px] flex items-center gap-1" style={{ color: "var(--color-text-secondary)" }}>
-            🚀 {profileData.activity_score || 0} · Explorer
-          </span>
-          <div className="h-5 w-px" style={{ background: "rgba(255,255,255,0.20)" }} />
-          <button type="button" onClick={handleCopyLink}
-            className="btn-glass-pill text-[12px] font-semibold"
-            style={{ padding: "4px 12px", fontSize: 12 }}>
-            <Share2 className="w-3 h-3 inline mr-1" /> Share profile
-          </button>
-        </div>
-      </div>
-
-      {/* ── BIO (if exists) ── */}
-      {bio && (
-        <div className="max-w-[960px] mx-auto px-4 mt-3">
-          <div className="glass-light px-4 py-3" style={{ borderRadius: 20 }}>
-            <p className="text-[13px] leading-relaxed" style={{ color: "#6B7094" }}>{bioExpanded || bio.length <= 180 ? bio : bio.slice(0, 180) + "..."}</p>
-            {bio.length > 180 && <button type="button" onClick={() => setBioExpanded(!bioExpanded)} className="text-[11px] font-semibold cursor-pointer" style={{ color: "#E8733A" }}>{bioExpanded ? "show less" : "...see more"}</button>}
-          </div>
-        </div>
-      )}
-
-      {/* ── GRID ── */}
-      <div className="max-w-[960px] mx-auto px-4 mt-4 grid grid-cols-1 md:grid-cols-[35%_1fr] gap-3">
-        {/* ═══ LEFT COLUMN ═══ */}
-        <div className="space-y-[10px]">
-          {/* Connections Box */}
-          <GlassBox accent="connections">
-            <div className="flex items-center gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="text-[12px] font-semibold uppercase tracking-wide" style={{ color: "#6B7094" }}>Connections</p>
-                <p className="text-[24px] font-bold leading-tight" style={{ color: "var(--color-text)" }}>{stats.connections}</p>
-              </div>
-              {connectedAvatars.length > 0 && (
-                <div className="flex -space-x-2">
-                  {connectedAvatars.slice(0, 4).map((a: any) => (
-                    <div key={a.id} className="w-7 h-7 rounded-lg overflow-hidden border-2 border-white flex items-center justify-center text-[9px] font-bold text-white" style={{ background: "#6366F1" }}>
-                      {a.avatar_url ? <img src={storageImageUrl(a.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : (a.full_name?.[0] || "?")}
-                    </div>
-                  ))}
+              {customLinks.length > 0 ? (
+                <div className="flex flex-wrap" style={{ gap: 6, marginTop: 8 }}>
+                  {customLinks.map((link: any, i: number) => {
+                    const platform = detectPlatform(link.url);
+                    const Icon = platform.icon;
+                    return (
+                      <a key={i} href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center" style={{
+                        height: 28, padding: "0 10px", borderRadius: 6, gap: 6,
+                        background: "rgba(255,255,255,0.12)", border: "1px solid var(--border-subtle)",
+                      }}>
+                        <Icon style={{ width: 14, height: 14, color: platform.color, flexShrink: 0 }} />
+                        <span style={{ fontSize: 12, fontWeight: 400, color: "var(--text-primary)" }}>{platform.name}</span>
+                      </a>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)", marginTop: 8 }}>{isOwnProfile ? "Add your links" : "No links added"}</p>
+              )}
+              {/* Inline add */}
+              {showAddLink && (
+                <div style={{ marginTop: 8 }} className="space-y-2">
+                  <Input value={newLinkUrl} onChange={e => setNewLinkUrl(e.target.value)} placeholder="Paste your link..." onKeyDown={e => { if (e.key === "Enter") addLink(); }} />
+                  <div className="flex items-center gap-2">
+                    <button type="button" onClick={addLink} className="cursor-pointer" style={{ height: 28, padding: "0 12px", borderRadius: 8, fontSize: 11, fontWeight: 600, background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none" }}>Add</button>
+                    <button type="button" onClick={() => { setShowAddLink(false); setNewLinkUrl(""); }} className="cursor-pointer" style={{ fontSize: 12, color: "var(--text-muted)", background: "none", border: "none" }}>Cancel</button>
+                  </div>
                 </div>
               )}
             </div>
-            <Link to="/app/strands" className="text-[12px] font-semibold mt-1 block" style={{ color: "#E8733A" }}>See all →</Link>
-          </GlassBox>
+          </div>
 
-          {/* Investor Profile Section */}
-          {(() => {
-            const investorProfile = (profileData.role_metadata as any)?.investor_profile;
-            if (!investorProfile) return null;
-            const formatINR = (v: any) => v ? `₹${Number(v).toLocaleString("en-IN")}` : null;
-            return (
-              <GlassBox accent="success">
-                <div className="flex items-center gap-2 mb-2">
-                  <TrendingUp className="w-5 h-5" style={{ color: "#15803D" }} />
-                  <h2 className="text-[15px] font-semibold" style={{ color: "var(--color-text)" }}>Investment Profile</h2>
-                </div>
-                {(investorProfile.investment_min || investorProfile.investment_max) && (
-                  <p className="text-[13px] mb-1" style={{ color: "var(--color-text-secondary)" }}>
-                    Range: {[formatINR(investorProfile.investment_min), formatINR(investorProfile.investment_max)].filter(Boolean).join(" – ")}
-                  </p>
-                )}
-                {investorProfile.stage_preferences?.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mb-1.5">
-                    {investorProfile.stage_preferences.map((s: string) => (
-                      <span key={s} className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(21,128,61,0.10)", color: "#15803D", border: "1px solid rgba(21,128,61,0.20)" }}>{s}</span>
-                    ))}
-                  </div>
-                )}
-                {investorProfile.sectors?.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mb-1">
-                    {investorProfile.sectors.map((s: string) => (
-                      <span key={s} className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--color-surface)", border: "1px solid var(--glass-border-subtle)", color: "var(--color-text-secondary)" }}>{s}</span>
-                    ))}
-                  </div>
-                )}
-                {investorProfile.portfolio_count > 0 && (
-                  <p className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>{investorProfile.portfolio_count} portfolio companies</p>
-                )}
-              </GlassBox>
-            );
-          })()}
-
-          {/* Founder Section */}
-          {(() => {
-            const founderProfile = (profileData.role_metadata as any)?.founder_profile;
-            if (!founderProfile) return null;
-            return (
-              <GlassBox accent="info">
-                <div className="flex items-center gap-2 mb-2">
-                  <Rocket className="w-5 h-5" style={{ color: "#7C3AED" }} />
-                  <h2 className="text-[15px] font-semibold" style={{ color: "var(--color-text)" }}>My Startup</h2>
-                </div>
-                {founderProfile.startup_name && <p className="text-[14px] font-bold" style={{ color: "var(--color-text)" }}>{founderProfile.startup_name}</p>}
-                {founderProfile.funding_stage && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full inline-block mt-1" style={{ background: "rgba(124,58,237,0.10)", color: "#7C3AED", border: "1px solid rgba(124,58,237,0.20)" }}>{founderProfile.funding_stage}</span>}
-                {founderProfile.looking_for_funding && <p className="text-[11px] font-semibold mt-1.5" style={{ color: "#E8733A" }}>Looking for funding</p>}
-              </GlassBox>
-            );
-          })()}
-
-          {isOwnProfile && !isVerified && (
-            <div className="glass-glow" style={{ borderRadius: 20, padding: "12px 16px" }}>
-              <div className="flex items-center gap-3">
-                <Shield className="w-5 h-5 shrink-0" style={{ color: "#E8733A" }} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-bold" style={{ color: "var(--color-text)" }}>Get Tiiked</p>
-                  <p className="text-[11px]" style={{ color: "#6B7094" }}>Verify your profile for the gold badge</p>
-                </div>
-                <button type="button" onClick={() => setShowGetTiiked(true)} className="btn-liquid-primary text-[11px] font-bold px-3 py-1.5 rounded-full cursor-pointer shrink-0" style={{ fontSize: 11 }}>Verify</button>
-              </div>
-            </div>
-          )}
-
-          {/* Smart Social Links */}
-          <GlassBox accent="contact">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <LinkIcon className="w-5 h-5" style={{ color: "#6B7094" }} />
-                <h2 className="text-[15px] font-semibold" style={{ color: "#1A1A2E" }}>Links</h2>
-              </div>
-              {isOwnProfile && <button type="button" onClick={() => setShowAddLink(true)} className="btn-glass-pill" style={{ padding: "4px 12px", fontSize: 12, borderRadius: 10 }}><Plus className="w-3 h-3 inline mr-0.5" /> Add</button>}
-            </div>
-            {customLinks.length > 0 ? (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {customLinks.map((link: any, i: number) => {
-                  const platform = detectPlatform(link.url);
-                  const Icon = platform.icon;
-                  return (
-                    <div key={i} className="group relative">
-                      <a href={link.url} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 transition-all duration-200"
-                        style={{
-                          background: "rgba(255,255,255,0.15)",
-                          backdropFilter: "blur(8px)",
-                          border: "1px solid rgba(255,255,255,0.25)",
-                          borderRadius: 12,
-                          padding: "6px 12px",
-                        }}
-                        onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.30)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
-                        onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.15)"; e.currentTarget.style.transform = ""; }}
-                      >
-                        <Icon className="w-4 h-4 shrink-0" style={{ color: platform.color }} />
-                        <span className="text-[12px] font-medium" style={{ color: "#1A1A2E" }}>{platform.name}</span>
-                      </a>
-                      {isOwnProfile && (
-                        <button type="button" onClick={() => removeLink(i)}
-                          className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                          style={{ background: "#E8733A", color: "#fff" }}>
-                          <X className="w-2.5 h-2.5" />
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="text-[13px] mt-1" style={{ color: "#6B7094" }}>{isOwnProfile ? "Add your social profiles" : "No links added"}</p>
-            )}
-            {/* Inline add form */}
-            {showAddLink && (
-              <div className="mt-3 space-y-2">
-                <Input
-                  value={newLinkUrl}
-                  onChange={e => setNewLinkUrl(e.target.value)}
-                  placeholder="Paste your link..."
-                  className="glass-input-light"
-                  onKeyDown={e => { if (e.key === "Enter") addLink(); }}
-                />
-                {newLinkUrl.trim() && (() => {
-                  const preview = detectPlatform(newLinkUrl);
-                  const PreviewIcon = preview.icon;
-                  return (
-                    <div className="flex items-center gap-2 text-[12px]" style={{ color: "#6B7094" }}>
-                      <span>Preview:</span>
-                      <span className="flex items-center gap-1.5 px-3 py-1 rounded-xl" style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)" }}>
-                        <PreviewIcon className="w-4 h-4" style={{ color: preview.color }} />
-                        <span className="font-medium" style={{ color: "#1A1A2E" }}>{preview.name}</span>
-                      </span>
-                    </div>
-                  );
-                })()}
-                <div className="flex items-center gap-2">
-                  <button type="button" onClick={addLink} className="btn-liquid-primary text-[12px] font-bold px-4 py-1.5 rounded-full cursor-pointer" style={{ fontSize: 12 }}>Add</button>
-                  <button type="button" onClick={() => { setShowAddLink(false); setNewLinkUrl(""); }} className="text-[12px] cursor-pointer" style={{ color: "#6B7094" }}>Cancel</button>
-                </div>
-              </div>
-            )}
-          </GlassBox>
-        </div>
-
-        {/* ═══ RIGHT COLUMN ═══ */}
-        <div className="space-y-[10px]">
-          <ExperienceSection
-            items={experiences}
-            isOwnProfile={isOwnProfile}
-            onAdd={() => setModalSection("experience")}
-            onDelete={deleteItem}
-            onToggleVisibility={toggleVisibility}
-            onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))}
-          />
-
-          <EducationSection
-            items={education}
-            isOwnProfile={isOwnProfile}
-            onAdd={() => setModalSection("education")}
-            onDelete={deleteItem}
-            onToggleVisibility={toggleVisibility}
-            onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))}
-          />
-
-          <ProjectsSection
-            items={projects}
-            isOwnProfile={isOwnProfile}
-            onAdd={() => setModalSection("project")}
-            onDelete={deleteItem}
-            onToggleVisibility={toggleVisibility}
-            onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))}
-          />
-
-          <AchievementsSection
-            items={achievements}
-            isOwnProfile={isOwnProfile}
-            onAdd={() => setModalSection("achievement")}
-            onDelete={deleteItem}
-            onToggleVisibility={toggleVisibility}
-          />
-
-          <SkillsSection
-            skills={skills}
-            isOwnProfile={isOwnProfile}
-            onAdd={() => setModalSection("skills")}
-            onRemoveSkill={removeSkill}
-          />
-
-          <PostsSection posts={userPosts} stats={stats} />
+          {/* ═══ RIGHT COLUMN ═══ */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <ExperienceSection items={experiences} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("experience")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
+            <EducationSection items={education} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("education")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
+            <ProjectsSection items={projects} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("project")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
+            <AchievementsSection items={achievements} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("achievement")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} />
+            <SkillsSection skills={skills} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("skills")} onRemoveSkill={removeSkill} />
+            <PostsSection posts={userPosts} stats={stats} />
+          </div>
         </div>
       </div>
 
       {/* ═══ GLASS MODALS ═══ */}
-
-      {/* Experience Modal */}
       <GlassModal open={modalSection === "experience"} onClose={() => setModalSection(null)} title="Add Experience" icon={Briefcase} accentColor="#4A90D9"
         actions={<>
-          <button type="button" onClick={saveExperience} disabled={saving} className="btn-liquid-primary cursor-pointer" style={{ padding: "10px 28px", borderRadius: 16, fontSize: 14, fontWeight: 600 }}>{saving ? "Saving..." : "Save"}</button>
-          <button type="button" onClick={() => setModalSection(null)} className="btn-glass-pill cursor-pointer" style={{ padding: "10px 20px", color: "#fff", border: "1px solid rgba(255,255,255,0.25)" }}>Cancel</button>
+          <button type="button" onClick={saveExperience} disabled={saving} className="cursor-pointer" style={{ padding: "10px 28px", borderRadius: 16, fontSize: 14, fontWeight: 600, background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 4px 20px rgba(232,115,58,0.35)" }}>{saving ? "Saving..." : "Save"}</button>
+          <button type="button" onClick={() => setModalSection(null)} className="cursor-pointer" style={{ padding: "10px 20px", borderRadius: 16, fontSize: 14, fontWeight: 500, background: "rgba(255,255,255,0.08)", color: "#fff", border: "1px solid rgba(255,255,255,0.25)" }}>Cancel</button>
         </>}
       >
         <div><label style={labelStyle}>Company / Organisation *</label><input value={expForm.company} onChange={e => setExpForm({ ...expForm, company: e.target.value })} style={gInputStyle} placeholder="e.g. Google" /></div>
@@ -920,7 +683,7 @@ const Profile = () => {
           <div><label style={labelStyle}>Start Month</label><select value={expForm.startMonth} onChange={e => setExpForm({ ...expForm, startMonth: e.target.value })} style={gSelectStyle}><option value="">Month</option>{months.map(m => <option key={m}>{m}</option>)}</select></div>
           <div><label style={labelStyle}>Start Year</label><select value={expForm.startYear} onChange={e => setExpForm({ ...expForm, startYear: e.target.value })} style={gSelectStyle}><option value="">Year</option>{years.map(y => <option key={y}>{y}</option>)}</select></div>
         </div>
-        <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={expForm.isCurrent} onChange={e => setExpForm({ ...expForm, isCurrent: e.target.checked })} /><span className="text-[13px]" style={{ color: "rgba(255,255,255,0.70)" }}>I currently work here</span></label>
+        <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={expForm.isCurrent} onChange={e => setExpForm({ ...expForm, isCurrent: e.target.checked })} /><span style={{ fontSize: 13, color: "rgba(255,255,255,0.70)" }}>I currently work here</span></label>
         {!expForm.isCurrent && (
           <div className="grid grid-cols-2 gap-3">
             <div><label style={labelStyle}>End Month</label><select value={expForm.endMonth} onChange={e => setExpForm({ ...expForm, endMonth: e.target.value })} style={gSelectStyle}><option value="">Month</option>{months.map(m => <option key={m}>{m}</option>)}</select></div>
@@ -932,11 +695,10 @@ const Profile = () => {
         <div><label style={labelStyle}>Skills (comma separated)</label><input value={expForm.skills} onChange={e => setExpForm({ ...expForm, skills: e.target.value })} style={gInputStyle} placeholder="React, TypeScript, Node.js" /></div>
       </GlassModal>
 
-      {/* Education Modal */}
       <GlassModal open={modalSection === "education"} onClose={() => setModalSection(null)} title="Add Education" icon={GraduationCap} accentColor="#34C759"
         actions={<>
-          <button type="button" onClick={saveEducation} disabled={saving} className="btn-liquid-primary cursor-pointer" style={{ padding: "10px 28px", borderRadius: 16, fontSize: 14, fontWeight: 600 }}>{saving ? "Saving..." : "Save"}</button>
-          <button type="button" onClick={() => setModalSection(null)} className="btn-glass-pill cursor-pointer" style={{ padding: "10px 20px", color: "#fff", border: "1px solid rgba(255,255,255,0.25)" }}>Cancel</button>
+          <button type="button" onClick={saveEducation} disabled={saving} className="cursor-pointer" style={{ padding: "10px 28px", borderRadius: 16, fontSize: 14, fontWeight: 600, background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 4px 20px rgba(232,115,58,0.35)" }}>{saving ? "Saving..." : "Save"}</button>
+          <button type="button" onClick={() => setModalSection(null)} className="cursor-pointer" style={{ padding: "10px 20px", borderRadius: 16, fontSize: 14, fontWeight: 500, background: "rgba(255,255,255,0.08)", color: "#fff", border: "1px solid rgba(255,255,255,0.25)" }}>Cancel</button>
         </>}
       >
         <div><label style={labelStyle}>Institution Name *</label><input value={eduForm.institution} onChange={e => setEduForm({ ...eduForm, institution: e.target.value })} style={gInputStyle} placeholder="e.g. IIT Delhi" /></div>
@@ -946,29 +708,27 @@ const Profile = () => {
           <div><label style={labelStyle}>Start Year</label><select value={eduForm.startYear} onChange={e => setEduForm({ ...eduForm, startYear: e.target.value })} style={gSelectStyle}><option value="">Year</option>{years.map(y => <option key={y}>{y}</option>)}</select></div>
           {!eduForm.isCurrent && <div><label style={labelStyle}>End Year</label><select value={eduForm.endYear} onChange={e => setEduForm({ ...eduForm, endYear: e.target.value })} style={gSelectStyle}><option value="">Year</option>{years.map(y => <option key={y}>{y}</option>)}</select></div>}
         </div>
-        <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={eduForm.isCurrent} onChange={e => setEduForm({ ...eduForm, isCurrent: e.target.checked })} /><span className="text-[13px]" style={{ color: "rgba(255,255,255,0.70)" }}>Currently studying here</span></label>
+        <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={eduForm.isCurrent} onChange={e => setEduForm({ ...eduForm, isCurrent: e.target.checked })} /><span style={{ fontSize: 13, color: "rgba(255,255,255,0.70)" }}>Currently studying here</span></label>
         <div><label style={labelStyle}>Grade / CGPA</label><input value={eduForm.grade} onChange={e => setEduForm({ ...eduForm, grade: e.target.value })} style={gInputStyle} placeholder="e.g. 9.2" /></div>
       </GlassModal>
 
-      {/* Project Modal */}
       <GlassModal open={modalSection === "project"} onClose={() => setModalSection(null)} title="Add Project" icon={Rocket} accentColor="#FF6B9D"
         actions={<>
-          <button type="button" onClick={saveProject} disabled={saving} className="btn-liquid-primary cursor-pointer" style={{ padding: "10px 28px", borderRadius: 16, fontSize: 14, fontWeight: 600 }}>{saving ? "Saving..." : "Save"}</button>
-          <button type="button" onClick={() => setModalSection(null)} className="btn-glass-pill cursor-pointer" style={{ padding: "10px 20px", color: "#fff", border: "1px solid rgba(255,255,255,0.25)" }}>Cancel</button>
+          <button type="button" onClick={saveProject} disabled={saving} className="cursor-pointer" style={{ padding: "10px 28px", borderRadius: 16, fontSize: 14, fontWeight: 600, background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 4px 20px rgba(232,115,58,0.35)" }}>{saving ? "Saving..." : "Save"}</button>
+          <button type="button" onClick={() => setModalSection(null)} className="cursor-pointer" style={{ padding: "10px 20px", borderRadius: 16, fontSize: 14, fontWeight: 500, background: "rgba(255,255,255,0.08)", color: "#fff", border: "1px solid rgba(255,255,255,0.25)" }}>Cancel</button>
         </>}
       >
         <div><label style={labelStyle}>Project Name *</label><input value={projForm.title} onChange={e => setProjForm({ ...projForm, title: e.target.value })} style={gInputStyle} placeholder="e.g. Portfolio Website" /></div>
         <div><label style={labelStyle}>Organisation (optional)</label><input value={projForm.org} onChange={e => setProjForm({ ...projForm, org: e.target.value })} style={gInputStyle} placeholder="e.g. Open source" /></div>
         <div><label style={labelStyle}>Description</label><textarea value={projForm.description} onChange={e => setProjForm({ ...projForm, description: e.target.value.slice(0, 500) })} style={gTextareaStyle} placeholder="What is this project about?" maxLength={500} /></div>
         <div><label style={labelStyle}>Tech Stack (comma separated)</label><input value={projForm.techStack} onChange={e => setProjForm({ ...projForm, techStack: e.target.value })} style={gInputStyle} placeholder="React, Node.js, PostgreSQL" /></div>
-        <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={projForm.isCurrent} onChange={e => setProjForm({ ...projForm, isCurrent: e.target.checked })} /><span className="text-[13px]" style={{ color: "rgba(255,255,255,0.70)" }}>Currently active</span></label>
+        <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={projForm.isCurrent} onChange={e => setProjForm({ ...projForm, isCurrent: e.target.checked })} /><span style={{ fontSize: 13, color: "rgba(255,255,255,0.70)" }}>Currently active</span></label>
       </GlassModal>
 
-      {/* Achievement Modal */}
       <GlassModal open={modalSection === "achievement"} onClose={() => setModalSection(null)} title="Add Achievement" icon={Award} accentColor="#FFB800"
         actions={<>
-          <button type="button" onClick={saveAchievement} disabled={saving} className="btn-liquid-primary cursor-pointer" style={{ padding: "10px 28px", borderRadius: 16, fontSize: 14, fontWeight: 600 }}>{saving ? "Saving..." : "Save"}</button>
-          <button type="button" onClick={() => setModalSection(null)} className="btn-glass-pill cursor-pointer" style={{ padding: "10px 20px", color: "#fff", border: "1px solid rgba(255,255,255,0.25)" }}>Cancel</button>
+          <button type="button" onClick={saveAchievement} disabled={saving} className="cursor-pointer" style={{ padding: "10px 28px", borderRadius: 16, fontSize: 14, fontWeight: 600, background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 4px 20px rgba(232,115,58,0.35)" }}>{saving ? "Saving..." : "Save"}</button>
+          <button type="button" onClick={() => setModalSection(null)} className="cursor-pointer" style={{ padding: "10px 20px", borderRadius: 16, fontSize: 14, fontWeight: 500, background: "rgba(255,255,255,0.08)", color: "#fff", border: "1px solid rgba(255,255,255,0.25)" }}>Cancel</button>
         </>}
       >
         <div><label style={labelStyle}>Title *</label><input value={achForm.title} onChange={e => setAchForm({ ...achForm, title: e.target.value })} style={gInputStyle} placeholder="e.g. Best Paper Award" /></div>
@@ -981,11 +741,10 @@ const Profile = () => {
         <div><label style={labelStyle}>Credential URL (optional)</label><input value={achForm.url} onChange={e => setAchForm({ ...achForm, url: e.target.value })} style={gInputStyle} placeholder="https://..." /></div>
       </GlassModal>
 
-      {/* Skills Modal */}
       <GlassModal open={modalSection === "skills"} onClose={() => setModalSection(null)} title="Add Skill" icon={Code2} accentColor="#8B5CF6"
         actions={<>
-          <button type="button" onClick={addSkill} className="btn-liquid-primary cursor-pointer" style={{ padding: "10px 28px", borderRadius: 16, fontSize: 14, fontWeight: 600 }}>Add</button>
-          <button type="button" onClick={() => setModalSection(null)} className="btn-glass-pill cursor-pointer" style={{ padding: "10px 20px", color: "#fff", border: "1px solid rgba(255,255,255,0.25)" }}>Cancel</button>
+          <button type="button" onClick={addSkill} className="cursor-pointer" style={{ padding: "10px 28px", borderRadius: 16, fontSize: 14, fontWeight: 600, background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 4px 20px rgba(232,115,58,0.35)" }}>Add</button>
+          <button type="button" onClick={() => setModalSection(null)} className="cursor-pointer" style={{ padding: "10px 20px", borderRadius: 16, fontSize: 14, fontWeight: 500, background: "rgba(255,255,255,0.08)", color: "#fff", border: "1px solid rgba(255,255,255,0.25)" }}>Cancel</button>
         </>}
       >
         <div><label style={labelStyle}>Skill Name</label><input value={newSkill} onChange={e => setNewSkill(e.target.value)} style={gInputStyle} placeholder="e.g. React" onKeyDown={e => { if (e.key === "Enter") addSkill(); }} /></div>
@@ -994,9 +753,9 @@ const Profile = () => {
             <label style={labelStyle}>Your skills</label>
             <div className="flex flex-wrap gap-1.5 mt-1">
               {skills.map((s: string) => (
-                <span key={s} className="flex items-center gap-1 text-[12px] font-semibold px-3 py-1 rounded-full" style={{ border: "1.5px solid #8B5CF6", color: "#8B5CF6", background: "rgba(139,92,246,0.12)" }}>
+                <span key={s} className="flex items-center gap-1" style={{ fontSize: 12, fontWeight: 600, padding: "4px 12px", borderRadius: 20, border: "1.5px solid #8B5CF6", color: "#8B5CF6", background: "rgba(139,92,246,0.12)" }}>
                   {s}
-                  <button type="button" onClick={() => removeSkill(s)} className="cursor-pointer ml-0.5"><X className="w-3 h-3" /></button>
+                  <button type="button" onClick={() => removeSkill(s)} className="cursor-pointer" style={{ background: "none", border: "none", padding: 0, color: "#8B5CF6" }}><X className="w-3 h-3" /></button>
                 </span>
               ))}
             </div>
@@ -1004,10 +763,7 @@ const Profile = () => {
         )}
       </GlassModal>
 
-      {/* Edit Drawer */}
       <EditProfileDrawer open={editOpen} onClose={() => setEditOpen(false)} onSaved={loadProfile} />
-
-      {/* Get Tiiked Modal */}
       {user && <GetTiikedModal open={showGetTiiked} onClose={() => setShowGetTiiked(false)} userId={user.id} userRole={role} onVerified={loadProfile} />}
     </div>
   );
