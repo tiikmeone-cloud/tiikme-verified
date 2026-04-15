@@ -93,6 +93,16 @@ const PageProfile = () => {
         if (adminRes.status === "fulfilled") setIsAdmin(!!(adminRes.value as any).data || data.created_by === user.id);
         if (trackRes.status === "fulfilled") setTracking(!!(trackRes.value as any).data);
       }
+      // Fetch startup profile if page_type is startup
+      if (data.page_type === "startup") {
+        const { data: sp } = await supabase.from("startup_profiles").select("*").eq("page_id", data.id).maybeSingle();
+        setStartupProfile(sp);
+      }
+      // Check if current user is investor
+      if (user) {
+        const { data: prof } = await supabase.from("profiles").select("role_metadata").eq("id", user.id).maybeSingle();
+        setIsInvestor(!!(prof?.role_metadata as any)?.investor_profile);
+      }
       setLoading(false);
     };
     load();
