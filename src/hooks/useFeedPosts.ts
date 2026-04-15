@@ -142,10 +142,13 @@ export function useFeedPosts() {
         });
 
         // Apply diversity rules
-        const diversified = applyFeedDiversity(scored, connectionIds);
+        const diversified = applyFeedDiversity(
+          scored as Array<{ id: string; author_id: string | null; _score: number }>,
+          connectionIds
+        ) as unknown as FeedPost[];
 
         if (append) setPosts(prev => [...prev, ...diversified]);
-        else setPosts(diversified as FeedPost[]);
+        else setPosts(diversified);
         setHasMore((data || []).length === POSTS_PER_PAGE);
       } catch (err) {
         console.error("Failed to load posts:", err);
