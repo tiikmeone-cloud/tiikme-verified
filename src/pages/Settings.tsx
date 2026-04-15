@@ -1,6 +1,7 @@
 import { storageImageUrl } from "@/lib/imageTransform";
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
-import { Check, GraduationCap, Briefcase, Rocket, Laptop, Coffee, Sun, Moon, Monitor, Palette, Mail, Key, Download, Trash2, AlertTriangle, Camera, User, Shield, Bell, Eye, Lock, LogOut, Users, Copy, Share2, Image as ImageIcon } from "lucide-react";
+import { Check, GraduationCap, Briefcase, Rocket, Laptop, Coffee, Sun, Moon, Monitor, Palette, Mail, Key, Download, Trash2, AlertTriangle, Camera, User, Shield, Bell, Eye, Lock, LogOut, Users, Copy, Share2, Image as ImageIcon, TrendingUp } from "lucide-react";
+import InvestorFounderSettings from "@/components/profile/InvestorFounderSettings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { tiikToast } from "@/components/ui/tiik-toast";
@@ -12,11 +13,11 @@ import { useTheme } from "@/hooks/useTheme";
 
 const navItems = [
   { id: "profile", label: "Profile", icon: User },
+  { id: "roles", label: "Additional Roles", icon: TrendingUp },
   { id: "invite", label: "Invite & Earn", icon: Users },
   { id: "journey", label: "My Journey", icon: Rocket },
   { id: "appearance", label: "Appearance", icon: Palette },
   { id: "privacy", label: "Privacy", icon: Eye },
-  
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "account", label: "Account", icon: Lock },
 ];
