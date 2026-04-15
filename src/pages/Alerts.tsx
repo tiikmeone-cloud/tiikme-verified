@@ -83,6 +83,18 @@ const Alerts = () => {
       if (error) { setAlerts([]); setLoading(false); return; }
       setAlerts(data || []);
       setLoading(false);
+
+      // Fetch actor profiles for avatars
+      const actorIds = [...new Set((data || []).map((a: any) => a.data?.actor_id).filter(Boolean))] as string[];
+      if (actorIds.length > 0) {
+        supabase.from("profiles").select("id, full_name, avatar_url, role").in("id", actorIds)
+          .then(({ data: profiles }) => {
+            const map: Record<string, any> = {};
+            for (const p of profiles || []) map[p.id] = p;
+            setActorProfiles(map);
+          });
+      }
+
       if ((data || []).some((a: any) => !a.is_read)) {
         supabase.from("alerts").update({ is_read: true } as any).eq("user_id", user.id).eq("is_read", false).then(() => {});
       }
