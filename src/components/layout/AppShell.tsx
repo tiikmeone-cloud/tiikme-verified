@@ -1,5 +1,4 @@
 import { ReactNode, useEffect, useState } from "react";
-import { storageImageUrl } from "@/lib/imageTransform";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -8,7 +7,6 @@ import {
 } from "lucide-react";
 import ThemeLogo from "@/components/ThemeLogo";
 import { toast } from "sonner";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -23,6 +21,7 @@ const navGroups = [
   {
     label: "WORK",
     items: [
+      { label: "Profile", icon: User, path: "/app/profile" },
       { label: "Workspace", icon: Users, path: "/app/workspace" },
       { label: "Opportunities", icon: Target, path: "/app/opportunities" },
     ],
@@ -60,7 +59,6 @@ const AppShell = ({ children }: { children: ReactNode }) => {
 
   const isInstitution = profile?.account_type === "institution" && !!profile?.org_id;
 
-  // Fetch org data for institution accounts
   useEffect(() => {
     if (!isInstitution || !profile?.org_id) { setOrgData(null); return; }
     supabase.from("organizations").select("name, logo_url, type, slug").eq("id", profile.org_id).maybeSingle()
@@ -75,38 +73,28 @@ const AppShell = ({ children }: { children: ReactNode }) => {
     : profile?.role ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1).replace(/_/g, " ") : "Member";
   const identityName = isInstitution && orgData?.name ? orgData.name : displayName;
   const identityAvatar = isInstitution && orgData?.logo_url ? orgData.logo_url : (profile?.avatar_url || null);
-  const identityInitials = isInstitution && orgData?.name
-    ? orgData.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()
-    : initials;
 
-  const isActive = (path: string) => pathname === path || pathname.startsWith(path + "/");
+  const isActive = (path: string) => {
+    if (path === "/app/profile") return pathname === profilePath || pathname.startsWith(profilePath + "/") || pathname === "/app/profile";
+    return pathname === path || pathname.startsWith(path + "/");
+  };
 
   useEffect(() => {
     if (!user?.id) return;
-
-    // Fetch unread alerts — silent on failure
     supabase.from("alerts").select("*", { count: "exact", head: true })
       .eq("user_id", user.id).eq("is_read", false)
       .then(({ count, error }) => {
-        if (error) { console.warn("[AppShell] alerts count failed:", error.message); return; }
+        if (error) return;
         setUnreadAlerts(count || 0);
       });
-
-    // Fetch unread pings — silent on failure
     supabase.from("conversations").select("id")
       .or(`participant_1.eq.${user.id},participant_2.eq.${user.id}`)
       .then(({ data: convos, error }) => {
-        if (error) { console.warn("[AppShell] conversations fetch failed:", error.message); return; }
-        if (!convos?.length) { setUnreadPings(0); return; }
+        if (error || !convos?.length) { setUnreadPings(0); return; }
         const convIds = convos.map(c => c.id);
         supabase.from("pings").select("conversation_id", { count: "exact", head: false })
-          .in("conversation_id", convIds)
-          .eq("is_read", false)
-          .eq("is_deleted", false)
-          .neq("sender_id", user.id)
-          .then(({ data: unreadRows, error: e2 }) => {
-            if (e2) { console.warn("[AppShell] pings count failed:", e2.message); return; }
-            // Count distinct conversations with unread messages
+          .in("conversation_id", convIds).eq("is_read", false).eq("is_deleted", false).neq("sender_id", user.id)
+          .then(({ data: unreadRows }) => {
             const distinctConvos = new Set((unreadRows || []).map((r: any) => r.conversation_id));
             setUnreadPings(distinctConvos.size);
           });
@@ -116,18 +104,13 @@ const AppShell = ({ children }: { children: ReactNode }) => {
     let pingsCh: ReturnType<typeof supabase.channel> | null = null;
     try {
       alertsCh = supabase.channel("unread-alerts-" + user.id)
-        .on("postgres_changes", { event: "INSERT", schema: "public", table: "alerts", filter: `user_id=eq.${user.id}` }, () => {
-          setUnreadAlerts(p => p + 1);
-        }).subscribe();
-
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "alerts", filter: `user_id=eq.${user.id}` }, () => setUnreadAlerts(p => p + 1))
+        .subscribe();
       pingsCh = supabase.channel("unread-pings-" + user.id)
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "pings" }, payload => {
           if ((payload.new as any).sender_id !== user.id) setUnreadPings(p => p + 1);
         }).subscribe();
-    } catch (err) {
-      console.warn("[AppShell] realtime subscribe failed:", err);
-    }
-
+    } catch {}
     return () => {
       if (alertsCh) supabase.removeChannel(alertsCh);
       if (pingsCh) supabase.removeChannel(pingsCh);
@@ -152,195 +135,245 @@ const AppShell = ({ children }: { children: ReactNode }) => {
     navigate("/signin");
   };
 
+  const resolvePath = (path: string) => path === "/app/profile" ? profilePath : path;
+
   return (
-    <div className="min-h-screen flex">
-      {/* ═══ DESKTOP SIDEBAR (≥1024px) ═══ */}
-      <aside className="hidden lg:flex flex-col fixed inset-y-0 left-0 z-40"
-        style={{ width: 248, background: "rgba(255, 255, 255, 0.12)", backdropFilter: "blur(24px) saturate(180%)", WebkitBackdropFilter: "blur(24px) saturate(180%)", borderRight: "1px solid rgba(255, 255, 255, 0.15)", boxShadow: "2px 0 24px var(--glass-shadow)" }}>
-        <div className="h-16 flex items-center px-5">
-          <Link to="/app/feed" style={{ filter: "drop-shadow(0 0 12px rgba(232, 115, 58, 0.20))" }}>
-            <ThemeLogo className="h-10 w-auto" />
-          </Link>
-        </div>
-        <nav className="flex-1 overflow-y-auto px-2.5 py-3">
-          {navGroups.map((group) => (
-            <div key={group.label} className="mb-1">
-              <p className="px-3 py-3" style={{ color: "#6B7094", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>{group.label}</p>
-              <div className="space-y-0.5">
-                {group.label === "WORK" && (() => {
-                  const active = isActive(profilePath);
-                  return (
-                    <Link key="profile" to={profilePath}
-                      className="flex items-center gap-2.5 h-[42px] px-3 rounded-[14px] relative"
-                      style={{
-                        background: active ? "rgba(255, 255, 255, 0.30)" : "transparent",
-                        color: active ? "var(--color-accent)" : "var(--color-text)",
-                        fontWeight: active ? 600 : 500,
-                        fontSize: 14,
-                        boxShadow: active ? "-3px 0 12px rgba(232, 115, 58, 0.25)" : "none",
-                        transition: "all 0.2s ease",
-                      }}
-                      onMouseEnter={e => { if (!active) e.currentTarget.style.background = "rgba(255, 255, 255, 0.20)"; }}
-                      onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}>
-                      <User className="w-5 h-5 shrink-0" strokeWidth={1.8} />
-                      <span>Profile</span>
-                    </Link>
-                  );
-                })()}
+    <div className="min-h-screen">
+      {/* ═══ DESKTOP SIDEBAR (≥768px) ═══ */}
+      <aside
+        className="hidden md:flex flex-col fixed inset-y-0 left-0 z-40"
+        style={{
+          width: 220,
+          background: "rgba(255,255,255,0.10)",
+          backdropFilter: "blur(24px)",
+          WebkitBackdropFilter: "blur(24px)",
+          borderRight: "1px solid rgba(255,255,255,0.12)",
+          padding: "16px 12px",
+          justifyContent: "space-between",
+        }}
+      >
+        {/* Top: logo + nav */}
+        <div>
+          {/* Logo */}
+          <div style={{ paddingBottom: 20 }}>
+            <Link to="/app/feed" style={{ filter: "drop-shadow(0 0 10px rgba(232,115,58,0.15))" }}>
+              <ThemeLogo className="h-7 w-auto" />
+            </Link>
+          </div>
+
+          {/* Nav groups */}
+          <nav>
+            {navGroups.map((group) => (
+              <div key={group.label}>
+                <p style={{
+                  fontSize: 10,
+                  fontWeight: 600,
+                  color: "var(--text-muted)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                  margin: "16px 0 6px 12px",
+                }}>{group.label}</p>
                 {group.items.map((item) => {
                   const active = isActive(item.path);
                   const badge = getBadge(item.path);
                   return (
-                    <Link key={item.path} to={item.path === "/app/profile" ? profilePath : item.path}
-                      className="flex items-center gap-2.5 h-[42px] px-3 rounded-[14px] relative"
+                    <Link
+                      key={item.path}
+                      to={resolvePath(item.path)}
+                      className="flex items-center relative"
                       style={{
-                        background: active ? "rgba(255, 255, 255, 0.30)" : "transparent",
-                        color: active ? "var(--color-accent)" : "var(--color-text)",
+                        height: 38,
+                        padding: "0 12px",
+                        borderRadius: 10,
+                        gap: 10,
+                        marginBottom: 2,
+                        background: active ? "rgba(255,255,255,0.28)" : "transparent",
+                        color: active ? "#E8733A" : "var(--text-primary)",
                         fontWeight: active ? 600 : 500,
-                        fontSize: 14,
-                        boxShadow: active ? "-3px 0 12px rgba(232, 115, 58, 0.25)" : "none",
-                        transition: "all 0.2s ease",
+                        fontSize: 13,
+                        boxShadow: active ? "-3px 0 10px rgba(232,115,58,0.20)" : "none",
+                        transition: "all 150ms ease",
                       }}
-                      onMouseEnter={e => { if (!active) e.currentTarget.style.background = "rgba(255, 255, 255, 0.20)"; }}
-                      onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}>
-                      <item.icon className="w-5 h-5 shrink-0" strokeWidth={1.8} />
+                      onMouseEnter={e => { if (!active) e.currentTarget.style.background = "rgba(255,255,255,0.18)"; }}
+                      onMouseLeave={e => { if (!active) e.currentTarget.style.background = active ? "rgba(255,255,255,0.28)" : "transparent"; }}
+                    >
+                      <item.icon style={{ width: 18, height: 18, flexShrink: 0, color: active ? "#E8733A" : "var(--text-secondary)" }} strokeWidth={1.8} />
                       <span>{item.label}</span>
                       {badge && badge > 0 && (
-                        <span className="ml-auto h-[18px] min-w-[18px] flex items-center justify-center rounded-full text-[10px] font-bold text-white px-1" style={{ background: "var(--color-accent)", boxShadow: "0 2px 6px var(--color-accent-glow)" }}>{badge}</span>
+                        <span
+                          className="absolute flex items-center justify-center"
+                          style={{
+                            right: 12,
+                            minWidth: 18,
+                            height: 18,
+                            borderRadius: 9,
+                            background: "#E8733A",
+                            color: "white",
+                            fontSize: 10,
+                            fontWeight: 700,
+                            padding: "0 4px",
+                          }}
+                        >{badge}</span>
                       )}
                     </Link>
                   );
                 })}
               </div>
-            </div>
-          ))}
-          <div className="px-2.5 mt-2 space-y-2">
-            <button type="button" onClick={openPostCreate}
-              className="btn-liquid-primary w-full h-[44px] rounded-[16px] flex items-center justify-center gap-2 text-[15px] font-bold text-white active:scale-[0.97]">
-              <PencilLine className="w-4 h-4" /> New Post
-            </button>
-          </div>
-        </nav>
-        <div className="px-2.5 pb-3 pt-2" style={{ borderTop: "1px solid var(--glass-border-subtle)" }}>
-          <Link to={profilePath} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl">
-            <AvatarSquare src={identityAvatar} name={identityName || "You"} size={36} />
+            ))}
+          </nav>
+
+          {/* New Post button */}
+          <button
+            type="button"
+            onClick={openPostCreate}
+            className="flex items-center justify-center gap-2 active:scale-[0.97]"
+            style={{
+              width: "100%",
+              height: 40,
+              margin: "12px 0",
+              background: "linear-gradient(135deg, #E8733A, #FF6B9D)",
+              border: "1px solid var(--border-glass)",
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 600,
+              color: "white",
+              boxShadow: "0 4px 16px rgba(232,115,58,0.30)",
+              cursor: "pointer",
+              transition: "all 200ms ease",
+            }}
+          >
+            <PencilLine style={{ width: 14, height: 14 }} /> New Post
+          </button>
+        </div>
+
+        {/* Bottom: user section */}
+        <div style={{ paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.10)" }}>
+          <Link to={profilePath} className="flex items-center" style={{ gap: 10 }}>
+            <AvatarSquare src={identityAvatar} name={identityName || "You"} size={32} />
             <div className="min-w-0 flex-1">
-              <p className="text-[14px] font-semibold truncate" style={{ color: "var(--color-text)" }}>{identityName || "Your Name"}</p>
-              <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-lg inline-block" style={{ backgroundColor: "rgba(232,115,58,0.15)", color: "var(--color-accent)" }}>{roleLabel}</span>
+              <p className="truncate" style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{identityName || "Your Name"}</p>
+              <span style={{
+                fontSize: 11,
+                fontWeight: 500,
+                padding: "0 6px",
+                borderRadius: 4,
+                background: "rgba(232,115,58,0.12)",
+                color: "#E8733A",
+                lineHeight: "14px",
+                display: "inline-block",
+              }}>{roleLabel}</span>
             </div>
           </Link>
-          <button type="button" onClick={handleSignOut}
-            className="w-full flex items-center gap-2.5 px-3 py-2 mt-1 rounded-xl text-[13px] font-medium cursor-pointer active:scale-[0.97]"
-            style={{ color: "#6B7094", transition: "all 0.15s" }}
-            onMouseEnter={e => { e.currentTarget.style.background = "rgba(220,38,38,0.06)"; e.currentTarget.style.color = "#DC2626"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#6B7094"; }}>
-            <LogOut className="w-4 h-4" /> Sign out
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="flex items-center cursor-pointer active:scale-[0.97]"
+            style={{
+              gap: 10,
+              marginTop: 8,
+              fontSize: 12,
+              color: "var(--text-muted)",
+              background: "none",
+              border: "none",
+              transition: "color 150ms ease",
+            }}
+            onMouseEnter={e => (e.currentTarget.style.color = "var(--text-primary)")}
+            onMouseLeave={e => (e.currentTarget.style.color = "var(--text-muted)")}
+          >
+            <LogOut style={{ width: 14, height: 14 }} /> Sign out
           </button>
         </div>
       </aside>
 
-      {/* ═══ TABLET SIDEBAR (md–lg) ═══ */}
-      <aside className="hidden md:flex lg:hidden flex-col items-center fixed inset-y-0 left-0 z-40 py-3"
-        style={{ width: 64, background: "var(--glass-bg)", backdropFilter: "blur(24px) saturate(180%)", WebkitBackdropFilter: "blur(24px) saturate(180%)", borderRight: "1px solid var(--glass-border)" }}>
-        <div className="mb-4"><Link to="/app/feed"><ThemeLogo className="h-9 w-auto" /></Link></div>
-        <nav className="flex-1 flex flex-col items-center gap-1 overflow-y-auto">
-          {navGroups.flatMap(g => g.items).map((item) => {
-            const active = isActive(item.path);
-            const badge = getBadge(item.path);
-            return (
-              <Tooltip key={item.path} delayDuration={0}>
-                <TooltipTrigger asChild>
-                  <Link to={item.path === "/app/profile" ? profilePath : item.path} className="w-10 h-10 rounded-xl flex items-center justify-center relative"
-                    style={{ background: active ? "var(--brand-dim)" : "transparent", color: active ? "var(--brand)" : "var(--text-2)", transition: "all 0.15s" }}>
-                    {active && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[22px]" style={{ borderRadius: "0 3px 3px 0", background: "var(--brand)", boxShadow: "2px 0 8px var(--brand-glow)" }} />}
-                    <item.icon className="w-[18px] h-[18px]" strokeWidth={1.8} />
-                    {badge && badge > 0 && <span className="absolute -top-0.5 -right-0.5 w-4 h-4 text-[8px] font-bold text-white rounded-full flex items-center justify-center" style={{ background: "var(--brand)" }}>{badge}</span>}
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="text-[12px] font-semibold" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 8, padding: "6px 10px" }}>{item.label}</TooltipContent>
-              </Tooltip>
-            );
-          })}
-        </nav>
-        <button type="button" onClick={openPostCreate} className="w-10 h-10 rounded-full flex items-center justify-center mb-2 active:scale-[0.92]"
-          style={{ background: "linear-gradient(135deg, var(--brand), var(--brand-2))", boxShadow: "0 4px 12px var(--brand-glow)" }}>
-          <PencilLine className="w-4 h-4 text-white" />
-        </button>
-        <Link to={profilePath}>
-          <AvatarSquare src={identityAvatar} name={identityName || "You"} size={40} />
-        </Link>
-      </aside>
-
       {/* ═══ MAIN CONTENT ═══ */}
-      <main className="flex-1 md:ml-16 lg:ml-[248px] pb-20 md:pb-0">
-        {/* Mobile top header — 52px, sticky */}
-        <header className="md:hidden sticky top-0 z-50 flex items-center justify-between px-4"
-          style={{ height: 52, background: "var(--glass-bg)", backdropFilter: "blur(24px) saturate(180%)", WebkitBackdropFilter: "blur(24px) saturate(180%)", borderBottom: "1px solid var(--glass-border)" }}>
-          <Link to="/app/feed" className="flex items-center">
+      <main className="min-h-screen md:ml-[220px] pb-[72px] md:pb-0">
+        {/* Mobile top header */}
+        <header
+          className="md:hidden sticky top-0 z-50 flex items-center justify-between px-4"
+          style={{
+            height: 52,
+            background: "rgba(255,255,255,0.80)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            borderBottom: "1px solid rgba(255,255,255,0.30)",
+          }}
+        >
+          <Link to="/app/feed">
             <ThemeLogo className="h-7 w-auto" />
           </Link>
-          <div className="flex items-center gap-1">
-            <Link to="/app/alerts" className="relative w-10 h-10 flex items-center justify-center rounded-full active:scale-95">
-              <Bell className="w-5 h-5" style={{ color: "var(--text-2)" }} strokeWidth={1.8} />
-              {unreadAlerts > 0 && <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full" style={{ background: "var(--danger)", border: "2px solid var(--bg)" }} />}
-            </Link>
-          </div>
+          <Link to="/app/alerts" className="relative w-10 h-10 flex items-center justify-center active:scale-95">
+            <Bell style={{ width: 20, height: 20, color: "var(--text-secondary)" }} strokeWidth={1.8} />
+            {unreadAlerts > 0 && (
+              <span className="absolute" style={{
+                top: 6, right: 6, width: 8, height: 8, borderRadius: 4,
+                background: "#EF4444", border: "2px solid #F0F2F7",
+              }} />
+            )}
+          </Link>
         </header>
-        <div className="min-h-0 page-enter" key={pathname}>{children}</div>
+
+        <div className="page-enter" key={pathname}>{children}</div>
       </main>
 
-      {/* ═══ MOBILE BOTTOM NAV — fixed, 64px ═══ */}
-      <nav className="flex md:hidden fixed bottom-0 left-0 right-0 z-50"
+      {/* ═══ MOBILE BOTTOM NAV ═══ */}
+      <nav
+        className="flex md:hidden fixed bottom-0 left-0 right-0 z-50"
         style={{
-          height: "calc(64px + env(safe-area-inset-bottom))",
+          height: "calc(56px + env(safe-area-inset-bottom))",
           paddingBottom: "env(safe-area-inset-bottom)",
-          background: "var(--glass-bg)",
-          backdropFilter: "blur(48px) saturate(200%)",
-          WebkitBackdropFilter: "blur(48px) saturate(200%)",
-          borderTop: "1px solid var(--glass-border)",
-        }}>
-        <div className="flex items-center justify-around w-full h-16">
+          background: "rgba(255,255,255,0.80)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          borderTop: "1px solid rgba(255,255,255,0.30)",
+        }}
+      >
+        <div className="flex items-center justify-around w-full" style={{ height: 56 }}>
           {mobileNav.map((item) => {
             if (item.path === "__post__") {
               return (
-                <button type="button" key="post" onClick={openPostCreate}
-                  className="w-[52px] h-[52px] rounded-full flex items-center justify-center -mt-5 active:scale-[0.92] shrink-0"
+                <button
+                  type="button"
+                  key="post"
+                  onClick={openPostCreate}
+                  className="shrink-0 flex items-center justify-center active:scale-[0.92]"
                   style={{
-                    background: "linear-gradient(135deg, var(--brand), var(--brand-2))",
-                    boxShadow: "0 4px 16px var(--brand-glow), 0 0 0 4px var(--bg)",
-                  }}>
-                  <Plus className="w-6 h-6 text-white" strokeWidth={2.5} />
+                    width: 40,
+                    height: 40,
+                    borderRadius: "50%",
+                    background: "linear-gradient(135deg, #E8733A, #FF6B9D)",
+                    boxShadow: "0 4px 16px rgba(232,115,58,0.30)",
+                    cursor: "pointer",
+                  }}
+                >
+                  <Plus style={{ width: 20, height: 20, color: "white" }} strokeWidth={2.5} />
                 </button>
               );
             }
+
             const active = isActive(item.path);
             const badge = item.path === "/app/pings" ? unreadPings : undefined;
 
-            // Profile tab shows user avatar
             if (item.path === "/app/profile") {
               return (
-                <Link key={item.path} to={profilePath} className="flex flex-col items-center justify-center gap-0.5 w-14 h-14">
-                  <div className="w-7 h-7 overflow-hidden shrink-0"
-                    style={{
-                      borderRadius: 0,
-                      border: active ? "2px solid var(--brand)" : "2px solid transparent",
-                    }}>
-                    <AvatarSquare src={identityAvatar} name={identityName || "You"} size={28} />
-                  </div>
+                <Link key={item.path} to={profilePath} className="flex flex-col items-center justify-center" style={{ flex: 1, gap: 2 }}>
+                  <AvatarSquare src={identityAvatar} name={identityName || "You"} size={22} />
+                  <span style={{ fontSize: 10, fontWeight: 500, color: active ? "#E8733A" : "var(--text-muted)" }}>Profile</span>
                 </Link>
               );
             }
 
             return (
-              <Link key={item.path} to={item.path} className="flex flex-col items-center justify-center gap-0.5 w-14 h-14">
+              <Link key={item.path} to={item.path} className="flex flex-col items-center justify-center" style={{ flex: 1, gap: 2 }}>
                 <div className="relative">
-                  <item.icon className="w-6 h-6" style={{ color: active ? "var(--brand)" : "var(--text-3)" }} strokeWidth={active ? 2.2 : 1.8} />
+                  <item.icon style={{ width: 22, height: 22, color: active ? "#E8733A" : "var(--text-muted)" }} strokeWidth={active ? 2.2 : 1.8} />
                   {badge && badge > 0 && (
-                    <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1"
-                      style={{ background: "var(--danger)" }}>{badge > 9 ? "9+" : badge}</span>
+                    <span className="absolute flex items-center justify-center" style={{
+                      top: -4, right: -6, minWidth: 14, height: 14, borderRadius: 7,
+                      background: "#E8733A", color: "white", fontSize: 9, fontWeight: 700, padding: "0 3px",
+                    }}>{badge}</span>
                   )}
                 </div>
-                <span className="text-[10px]" style={{ color: active ? "var(--brand)" : "var(--text-3)", fontWeight: active ? 700 : 500 }}>{item.label}</span>
+                <span style={{ fontSize: 10, fontWeight: 500, color: active ? "#E8733A" : "var(--text-muted)" }}>{item.label}</span>
               </Link>
             );
           })}
