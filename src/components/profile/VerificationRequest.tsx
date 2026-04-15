@@ -1,6 +1,6 @@
 import { storageImageUrl } from "@/lib/imageTransform";
 import { useState, useEffect } from "react";
-import { Search, Send, CheckCircle, Clock, XCircle, Mail, Copy, ExternalLink, RefreshCw } from "lucide-react";
+import { Search, Send, CheckCircle, Clock, XCircle, Mail, Copy, ExternalLink, RefreshCw, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,7 +33,6 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
 
   const companyName = item.company_name || item.institution_name || item.institution_name_edu || "";
 
-  // Search organizations
   useEffect(() => {
     if (searchQuery.length < 2) { setOrgs([]); return; }
     const t = setTimeout(async () => {
@@ -46,7 +45,6 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
     return () => clearTimeout(t);
   }, [searchQuery]);
 
-  // Load verifiers for selected org
   useEffect(() => {
     if (!selectedOrg) return;
     (async () => {
@@ -84,7 +82,6 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
     })();
   }, [selectedOrg, item.department]);
 
-  // Direct user search
   useEffect(() => {
     if (directSearch.length < 2) { setDirectResults([]); return; }
     const t = setTimeout(async () => {
@@ -123,7 +120,7 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
     await supabase.from(table).update({ verification_status: "pending" } as any).eq("id", item.id);
 
     onStatusChange(item.id, "pending");
-    toast.success("Verification request sent ✓");
+    toast.success("Verification request sent");
     setExpanded(false);
     setSubmitting(false);
   };
@@ -140,7 +137,7 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
     const table = itemType === "achievement" ? "achievements" : "work_items";
     await supabase.from(table).update({ verification_status: "pending" } as any).eq("id", item.id);
     onStatusChange(item.id, "pending");
-    toast.success("Invite sent ✓");
+    toast.success("Invite sent");
     setExpanded(false);
     setSubmitting(false);
   };
@@ -157,24 +154,18 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
   };
 
-  /* ── Badge States ── */
-
-  // VERIFIED — gold glow badge
+  // VERIFIED
   if (item.verification_status === "verified") {
     return (
       <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-3 py-1 rounded-full shrink-0 cursor-default"
         title={`Verified${item.verified_at ? ` on ${new Date(item.verified_at).toLocaleDateString()}` : ""}`}
-        style={{
-          background: "linear-gradient(135deg, #FFB800, #FF8C00)",
-          color: "#fff",
-          boxShadow: "0 0 8px rgba(255,184,0,0.40), inset 0 1px 0 rgba(255,255,255,0.25)",
-        }}>
+        style={{ background: "linear-gradient(135deg, #FFB800, #FF8C00)", color: "#fff", boxShadow: "0 0 8px rgba(255,184,0,0.40), inset 0 1px 0 rgba(255,255,255,0.25)" }}>
         <CheckCircle className="w-3 h-3" /> Verified
       </span>
     );
   }
 
-  // PENDING — amber pill
+  // PENDING
   if (item.verification_status === "pending") {
     return (
       <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full shrink-0"
@@ -184,192 +175,269 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
     );
   }
 
-  // REJECTED — red with retry
+  // REJECTED
   if (item.verification_status === "rejected" || item.verification_status === "declined") {
     return (
       <div className="flex items-center gap-2 shrink-0">
         <span className="text-[10px] font-semibold" style={{ color: "#DC2626" }}>Declined</span>
         <button type="button" onClick={() => { setExpanded(true); setStep("search"); }}
           className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full cursor-pointer"
-          style={{ color: "var(--color-accent)", border: "1px solid var(--color-accent)", background: "transparent" }}>
+          style={{ color: "#E8733A", border: "1px solid #E8733A", background: "transparent" }}>
           <RefreshCw className="w-2.5 h-2.5" /> Retry
         </button>
       </div>
     );
   }
 
-  // UNVERIFIED — orange outline "Verify" button
+  // UNVERIFIED — trigger button + full-screen modal
   return (
     <div className="shrink-0">
-      <button type="button" onClick={() => { setExpanded(!expanded); setStep("search"); }}
+      <button type="button" onClick={() => { setExpanded(!expanded); setStep("search"); setSearchQuery(""); }}
         className="inline-flex items-center gap-1 text-[10px] font-bold px-3 py-1 rounded-full cursor-pointer transition-all hover:shadow-md"
-        style={{
-          color: "#E8733A",
-          border: "1.5px solid #E8733A",
-          background: expanded ? "rgba(232,115,58,0.08)" : "transparent",
-        }}>
+        style={{ color: "#E8733A", border: "1.5px solid #E8733A", background: expanded ? "rgba(232,115,58,0.08)" : "transparent" }}>
         {expanded ? "Cancel" : "Verify"}
       </button>
 
+      {/* ── FIXED MODAL OVERLAY ── */}
       {expanded && (
-        <div className="absolute right-0 top-full mt-2 w-[320px] p-4 rounded-2xl z-30 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200"
-          style={{ background: "var(--glass-card-bg, #fff)", border: "1px solid var(--glass-border)", boxShadow: "0 12px 40px rgba(0,0,0,0.15)", backdropFilter: "blur(20px)" }}>
-
-          {/* STEP: Search org */}
-          {step === "search" && (
-            <>
-              <p className="text-[12px] font-bold" style={{ color: "var(--color-text)" }}>
-                Find {companyName || "the organization"} on Tiikme
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center px-4"
+          style={{ background: "rgba(26,26,78,0.40)", backdropFilter: "blur(8px)" }}
+          onClick={() => setExpanded(false)}
+        >
+          <div
+            className="w-full flex flex-col"
+            style={{
+              maxWidth: 520, maxHeight: "80vh", borderRadius: 20, padding: 0,
+              background: "#fff", border: "1px solid rgba(0,0,0,0.08)",
+              boxShadow: "0 24px 80px rgba(26,26,78,0.20)",
+              overflow: "hidden",
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between shrink-0" style={{ padding: "16px 20px", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+              <p style={{ fontSize: 16, fontWeight: 700, color: "#1A1A2E" }}>
+                {step === "search" ? "Find Organization" : step === "confirm" ? "Select Verifier" : step === "not_found" ? "Invite via Email" : "Ask Someone Directly"}
               </p>
-              <div className="relative">
-                <Search className="absolute left-3 top-2.5 w-3.5 h-3.5" style={{ color: "var(--color-text-muted)" }} />
-                <Input
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="Search organization..."
-                  className="pl-9 h-9 text-[12px]"
-                  autoFocus
-                />
+              <button type="button" onClick={() => setExpanded(false)} className="p-1 cursor-pointer" style={{ color: "#9CA3C0" }}>
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Sticky search bar (for search step) */}
+            {step === "search" && (
+              <div className="shrink-0" style={{ padding: "12px 20px 0", position: "sticky", top: 0, zIndex: 10, background: "#fff" }}>
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 w-4 h-4" style={{ color: "#9CA3C0" }} />
+                  <input
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    placeholder="Search organization to verify with..."
+                    autoFocus
+                    style={{
+                      width: "100%", height: 44,
+                      background: "rgba(0,0,0,0.03)", border: "1px solid rgba(0,0,0,0.10)", borderRadius: 10,
+                      padding: "0 16px 0 40px", fontSize: 14, color: "#1A1A2E", outline: "none",
+                    }}
+                  />
+                </div>
               </div>
-              {orgs.map(org => (
-                <button type="button" key={org.id} onClick={() => { setSelectedOrg(org); setStep("confirm"); }}
-                  className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-left cursor-pointer transition-colors"
-                  style={{ background: "var(--glass-bg)", border: "1px solid var(--glass-border)" }}>
-                  <div className="w-9 h-9 flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden"
-                    style={{ borderRadius: 0, background: org.logo_url ? "transparent" : hashColor(org.name) }}>
-                    {org.logo_url ? <img src={org.logo_url} className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : org.name.slice(0, 2).toUpperCase()}
+            )}
+
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-y-auto" style={{ padding: "12px 20px" }}>
+              {step === "search" && (
+                <div className="space-y-2">
+                  {orgs.map(org => (
+                    <button type="button" key={org.id} onClick={() => { setSelectedOrg(org); setStep("confirm"); }}
+                      className="flex items-center gap-3 w-full p-3 rounded-xl text-left cursor-pointer transition-colors hover:bg-gray-50"
+                      style={{ border: "1px solid rgba(0,0,0,0.06)" }}>
+                      <div className="w-10 h-10 flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden"
+                        style={{ borderRadius: 0, background: org.logo_url ? "transparent" : hashColor(org.name) }}>
+                        {org.logo_url ? <img src={org.logo_url} className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : org.name.slice(0, 2).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>{org.name}</p>
+                        <p style={{ fontSize: 11, color: "#9CA3C0" }}>{org.type}</p>
+                      </div>
+                    </button>
+                  ))}
+                  {searchQuery.length >= 2 && orgs.length === 0 && (
+                    <div className="p-4 rounded-xl text-center space-y-3" style={{ background: "rgba(245,158,11,0.04)", border: "1px solid rgba(245,158,11,0.12)" }}>
+                      <p style={{ fontSize: 12, fontWeight: 600, color: "#D97706" }}>"{searchQuery}" is not yet on Tiikme</p>
+                      <p style={{ fontSize: 11, color: "#9CA3C0" }}>Invite them to verify your {itemType}</p>
+                      <div className="flex flex-col gap-2">
+                        <button type="button" onClick={copyInviteLink}
+                          className="flex items-center justify-center gap-2 w-full h-9 rounded-xl cursor-pointer transition-colors hover:bg-gray-50"
+                          style={{ fontSize: 12, fontWeight: 500, border: "1px solid rgba(0,0,0,0.08)", color: "#1A1A2E" }}>
+                          <Copy className="w-3.5 h-3.5" /> Copy Invite Link
+                        </button>
+                        <button type="button" onClick={() => setStep("not_found")}
+                          className="flex items-center justify-center gap-2 w-full h-9 rounded-xl cursor-pointer transition-colors hover:bg-gray-50"
+                          style={{ fontSize: 12, fontWeight: 500, border: "1px solid rgba(0,0,0,0.08)", color: "#1A1A2E" }}>
+                          <Mail className="w-3.5 h-3.5" /> Send via Email
+                        </button>
+                        <button type="button" onClick={shareWhatsApp}
+                          className="flex items-center justify-center gap-2 w-full h-9 rounded-xl cursor-pointer transition-colors hover:bg-gray-50"
+                          style={{ fontSize: 12, fontWeight: 500, border: "1px solid rgba(0,0,0,0.08)", color: "#1A1A2E" }}>
+                          <ExternalLink className="w-3.5 h-3.5" /> Send via WhatsApp
+                        </button>
+                        <button type="button" onClick={() => setStep("direct")}
+                          className="cursor-pointer" style={{ fontSize: 11, fontWeight: 500, color: "#E8733A", marginTop: 4, background: "none", border: "none" }}>
+                          Or ask someone directly →
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {step === "confirm" && selectedOrg && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: "rgba(16,185,129,0.04)", border: "1px solid rgba(16,185,129,0.12)" }}>
+                    <div className="w-10 h-10 flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden"
+                      style={{ borderRadius: 0, background: selectedOrg.logo_url ? "transparent" : hashColor(selectedOrg.name) }}>
+                      {selectedOrg.logo_url ? <img src={selectedOrg.logo_url} className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : selectedOrg.name.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: "#1A1A2E" }}>Send request to {selectedOrg.name}?</p>
+                      <p style={{ fontSize: 11, color: "#9CA3C0" }}>Select who should verify you</p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-[12px] font-semibold truncate" style={{ color: "var(--color-text)" }}>{org.name}</p>
-                    <p className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>{org.type}</p>
+
+                  {verifiers.length === 0 && (
+                    <p style={{ fontSize: 12, textAlign: "center", padding: 8, color: "#9CA3C0" }}>
+                      No admins found. <button type="button" onClick={() => setStep("direct")} className="font-semibold cursor-pointer" style={{ color: "#E8733A", background: "none", border: "none" }}>Try asking someone directly</button>
+                    </p>
+                  )}
+
+                  <div className="space-y-2" style={{ maxHeight: 200, overflowY: "auto" }}>
+                    {verifiers.map(v => (
+                      <button type="button" key={v.user_id} onClick={() => setSelectedVerifier(v)}
+                        className="flex items-center gap-3 w-full p-3 rounded-xl cursor-pointer transition-colors"
+                        style={{
+                          background: selectedVerifier?.user_id === v.user_id ? "rgba(232,115,58,0.06)" : "transparent",
+                          border: `1.5px solid ${selectedVerifier?.user_id === v.user_id ? "#E8733A" : "rgba(0,0,0,0.06)"}`,
+                        }}>
+                        <div className="w-9 h-9 flex items-center justify-center text-[10px] font-bold text-white overflow-hidden shrink-0"
+                          style={{ borderRadius: 0, background: hashColor(v.profile?.full_name || "U") }}>
+                          {v.profile?.avatar_url ? <img src={storageImageUrl(v.profile.avatar_url, "avatar")} className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : (v.profile?.full_name || "U").slice(0, 2).toUpperCase()}
+                        </div>
+                        <div className="text-left min-w-0">
+                          <p style={{ fontSize: 12, fontWeight: 600, color: "#1A1A2E" }}>{v.profile?.full_name}</p>
+                          <p style={{ fontSize: 10, color: "#9CA3C0" }}>{v.title || v.role}</p>
+                        </div>
+                      </button>
+                    ))}
                   </div>
-                </button>
-              ))}
-              {searchQuery.length >= 2 && orgs.length === 0 && (
-                <div className="p-3 rounded-xl text-center space-y-2" style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.15)" }}>
-                  <p className="text-[11px] font-semibold" style={{ color: "#D97706" }}>
-                    "{searchQuery}" is not yet on Tiikme
-                  </p>
-                  <p className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>Invite them to verify your {itemType}</p>
-                  <div className="flex flex-col gap-1.5">
-                    <button type="button" onClick={copyInviteLink}
-                      className="flex items-center justify-center gap-1.5 w-full h-8 rounded-xl text-[11px] font-semibold cursor-pointer transition-colors"
-                      style={{ background: "var(--glass-bg)", border: "1px solid var(--glass-border)", color: "var(--color-text)" }}>
-                      <Copy className="w-3 h-3" /> Copy Invite Link
-                    </button>
-                    <button type="button" onClick={() => setStep("not_found")}
-                      className="flex items-center justify-center gap-1.5 w-full h-8 rounded-xl text-[11px] font-semibold cursor-pointer transition-colors"
-                      style={{ background: "var(--glass-bg)", border: "1px solid var(--glass-border)", color: "var(--color-text)" }}>
-                      <Mail className="w-3 h-3" /> Send via Email
-                    </button>
-                    <button type="button" onClick={shareWhatsApp}
-                      className="flex items-center justify-center gap-1.5 w-full h-8 rounded-xl text-[11px] font-semibold cursor-pointer transition-colors"
-                      style={{ background: "var(--glass-bg)", border: "1px solid var(--glass-border)", color: "var(--color-text)" }}>
-                      <ExternalLink className="w-3 h-3" /> Send via WhatsApp
-                    </button>
-                    <button type="button" onClick={() => setStep("direct")}
-                      className="text-[10px] font-semibold mt-1 cursor-pointer" style={{ color: "var(--color-text-muted)" }}>
-                      Or ask someone directly →
-                    </button>
+
+                  <input value={message} onChange={e => setMessage(e.target.value.slice(0, 100))} placeholder="Optional message (100 chars)" maxLength={100}
+                    style={{ width: "100%", height: 36, borderRadius: 8, border: "1px solid rgba(0,0,0,0.10)", padding: "0 12px", fontSize: 12, color: "#1A1A2E", outline: "none" }} />
+                </div>
+              )}
+
+              {step === "not_found" && (
+                <div className="space-y-3">
+                  <p style={{ fontSize: 13, fontWeight: 700, color: "#1A1A2E" }}>Invite verifier via email</p>
+                  <input value={directEmail} onChange={e => setDirectEmail(e.target.value)} placeholder="admin@company.com"
+                    style={{ width: "100%", height: 40, borderRadius: 8, border: "1px solid rgba(0,0,0,0.10)", padding: "0 12px", fontSize: 13, color: "#1A1A2E", outline: "none" }} />
+                  <input value={message} onChange={e => setMessage(e.target.value.slice(0, 100))} placeholder="Optional message" maxLength={100}
+                    style={{ width: "100%", height: 36, borderRadius: 8, border: "1px solid rgba(0,0,0,0.10)", padding: "0 12px", fontSize: 12, color: "#1A1A2E", outline: "none" }} />
+                </div>
+              )}
+
+              {step === "direct" && (
+                <div className="space-y-3">
+                  <p style={{ fontSize: 13, fontWeight: 700, color: "#1A1A2E" }}>Ask someone on Tiikme to verify you</p>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-2.5 w-3.5 h-3.5" style={{ color: "#9CA3C0" }} />
+                    <input value={directSearch} onChange={e => setDirectSearch(e.target.value)} placeholder="Search by name or @username..."
+                      autoFocus
+                      style={{ width: "100%", height: 40, borderRadius: 8, border: "1px solid rgba(0,0,0,0.10)", padding: "0 12px 0 36px", fontSize: 13, color: "#1A1A2E", outline: "none" }} />
+                  </div>
+                  <div className="space-y-1" style={{ maxHeight: 200, overflowY: "auto" }}>
+                    {directResults.map(u => (
+                      <button type="button" key={u.id}
+                        onClick={() => handleSubmit(u.id, u.full_name || "")}
+                        disabled={submitting}
+                        className="flex items-center gap-3 w-full p-2.5 rounded-xl cursor-pointer transition-colors hover:bg-gray-50"
+                        style={{ border: "1px solid rgba(0,0,0,0.04)" }}>
+                        <div className="w-8 h-8 flex items-center justify-center text-[9px] font-bold text-white overflow-hidden shrink-0"
+                          style={{ borderRadius: 0, background: hashColor(u.full_name || "U") }}>
+                          {u.avatar_url ? <img src={storageImageUrl(u.avatar_url, "avatar")} className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : (u.full_name || "U").slice(0, 2).toUpperCase()}
+                        </div>
+                        <div className="text-left min-w-0 flex-1">
+                          <p style={{ fontSize: 12, fontWeight: 600, color: "#1A1A2E" }}>{u.full_name}</p>
+                          <p style={{ fontSize: 10, color: "#9CA3C0" }}>{u.role}{u.institution_name ? ` · ${u.institution_name}` : ""}</p>
+                        </div>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: "#E8733A", flexShrink: 0 }}>Send</span>
+                      </button>
+                    ))}
+                    {directSearch.length >= 2 && directResults.length === 0 && (
+                      <p style={{ fontSize: 12, textAlign: "center", padding: 12, color: "#9CA3C0" }}>No users found</p>
+                    )}
                   </div>
                 </div>
               )}
-            </>
-          )}
+            </div>
 
-          {/* STEP: Confirm — org found, select verifier */}
-          {step === "confirm" && selectedOrg && (
-            <>
-              <div className="flex items-center gap-2.5 p-2.5 rounded-xl" style={{ background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.15)" }}>
-                <div className="w-10 h-10 flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden"
-                  style={{ borderRadius: 0, background: selectedOrg.logo_url ? "transparent" : hashColor(selectedOrg.name) }}>
-                  {selectedOrg.logo_url ? <img src={selectedOrg.logo_url} className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : selectedOrg.name.slice(0, 2).toUpperCase()}
-                </div>
-                <div>
-                  <p className="text-[12px] font-bold" style={{ color: "var(--color-text)" }}>Send request to {selectedOrg.name}?</p>
-                  <p className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>Select who should verify you</p>
-                </div>
-              </div>
-
-              {verifiers.length === 0 && (
-                <p className="text-[11px] text-center py-2" style={{ color: "var(--color-text-muted)" }}>
-                  No admins found. <button type="button" onClick={() => setStep("direct")} className="font-semibold cursor-pointer" style={{ color: "var(--color-accent)" }}>Try asking someone directly</button>
-                </p>
+            {/* Sticky footer buttons */}
+            <div className="shrink-0 flex items-center gap-3" style={{
+              padding: "12px 20px", borderTop: "1px solid rgba(0,0,0,0.06)",
+              background: "#fff", position: "sticky", bottom: 0,
+            }}>
+              {step === "confirm" && selectedOrg && (
+                <button type="button"
+                  disabled={!selectedVerifier || submitting}
+                  onClick={() => handleSubmit(selectedVerifier.user_id, selectedVerifier.profile?.full_name || "")}
+                  className="cursor-pointer flex-1"
+                  style={{
+                    height: 40, borderRadius: 10, fontSize: 13, fontWeight: 600,
+                    background: selectedVerifier ? "linear-gradient(135deg, #E8733A, #FF6B9D)" : "#ddd",
+                    color: selectedVerifier ? "#fff" : "#999", border: "none",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                  }}>
+                  <Send className="w-3.5 h-3.5" /> {submitting ? "Sending..." : "Send Request"}
+                </button>
               )}
-
-              {verifiers.map(v => (
-                <button type="button" key={v.user_id} onClick={() => setSelectedVerifier(v)}
-                  className="flex items-center gap-2.5 w-full p-2 rounded-xl cursor-pointer transition-colors"
+              {step === "not_found" && (
+                <button type="button"
+                  disabled={!directEmail.includes("@") || submitting}
+                  onClick={handleEmailInvite}
+                  className="cursor-pointer flex-1"
                   style={{
-                    background: selectedVerifier?.user_id === v.user_id ? "rgba(232,115,58,0.08)" : "var(--glass-bg)",
-                    border: `1.5px solid ${selectedVerifier?.user_id === v.user_id ? "#E8733A" : "var(--glass-border)"}`,
+                    height: 40, borderRadius: 10, fontSize: 13, fontWeight: 600,
+                    background: directEmail.includes("@") ? "linear-gradient(135deg, #E8733A, #FF6B9D)" : "#ddd",
+                    color: directEmail.includes("@") ? "#fff" : "#999", border: "none",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
                   }}>
-                  <div className="w-8 h-8 flex items-center justify-center text-[9px] font-bold text-white overflow-hidden shrink-0"
-                    style={{ borderRadius: 0, background: hashColor(v.profile?.full_name || "U") }}>
-                    {v.profile?.avatar_url ? <img src={storageImageUrl(v.profile.avatar_url, "avatar")} className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : (v.profile?.full_name || "U").slice(0, 2).toUpperCase()}
-                  </div>
-                  <div className="text-left min-w-0">
-                    <p className="text-[11px] font-semibold truncate" style={{ color: "var(--color-text)" }}>{v.profile?.full_name}</p>
-                    <p className="text-[9px]" style={{ color: "var(--color-text-muted)" }}>{v.title || v.role}</p>
-                  </div>
+                  <Mail className="w-3.5 h-3.5" /> {submitting ? "Sending..." : "Send Invite"}
                 </button>
-              ))}
-
-              <Input value={message} onChange={e => setMessage(e.target.value.slice(0, 100))} placeholder="Optional message (100 chars)" className="h-8 text-[11px]" maxLength={100} />
-
-              <Button size="sm" disabled={!selectedVerifier || submitting} className="w-full text-[11px] h-9 rounded-xl"
-                style={{ background: "linear-gradient(135deg, #E8733A, #FF6B9D)", border: "none" }}
-                onClick={() => handleSubmit(selectedVerifier.user_id, selectedVerifier.profile?.full_name || "")}>
-                <Send className="w-3 h-3 mr-1" /> {submitting ? "Sending..." : "Send Request"}
-              </Button>
-              <button type="button" onClick={() => { setStep("search"); setSelectedOrg(null); setSelectedVerifier(null); }}
-                className="text-[10px] cursor-pointer" style={{ color: "var(--color-text-muted)" }}>← Back</button>
-            </>
-          )}
-
-          {/* STEP: Not found — email invite */}
-          {step === "not_found" && (
-            <>
-              <p className="text-[12px] font-bold" style={{ color: "var(--color-text)" }}>Invite verifier via email</p>
-              <Input value={directEmail} onChange={e => setDirectEmail(e.target.value)} placeholder="admin@company.com" className="h-8 text-[11px]" />
-              <Input value={message} onChange={e => setMessage(e.target.value.slice(0, 100))} placeholder="Optional message" className="h-8 text-[11px]" maxLength={100} />
-              <Button size="sm" disabled={!directEmail.includes("@") || submitting} className="w-full text-[11px] h-9 rounded-xl"
-                style={{ background: "linear-gradient(135deg, #E8733A, #FF6B9D)", border: "none" }}
-                onClick={handleEmailInvite}>
-                {submitting ? "Sending..." : "Send Invite"}
-              </Button>
-              <button type="button" onClick={() => setStep("search")} className="text-[10px] cursor-pointer" style={{ color: "var(--color-text-muted)" }}>← Back</button>
-            </>
-          )}
-
-          {/* STEP: Direct — search a person */}
-          {step === "direct" && (
-            <>
-              <p className="text-[12px] font-bold" style={{ color: "var(--color-text)" }}>Ask someone to verify this</p>
-              <Input value={directSearch} onChange={e => setDirectSearch(e.target.value)} placeholder="Search by name..." className="h-8 text-[11px]" />
-              {directResults.map(p => (
-                <button type="button" key={p.id} onClick={() => setSelectedVerifier({ user_id: p.id, profile: p })}
-                  className="flex items-center gap-2.5 w-full p-2 rounded-xl cursor-pointer transition-colors"
-                  style={{
-                    background: selectedVerifier?.user_id === p.id ? "rgba(232,115,58,0.08)" : "var(--glass-bg)",
-                    border: `1.5px solid ${selectedVerifier?.user_id === p.id ? "#E8733A" : "var(--glass-border)"}`,
-                  }}>
-                  <div className="w-8 h-8 flex items-center justify-center text-[9px] font-bold text-white overflow-hidden shrink-0"
-                    style={{ borderRadius: 0, background: hashColor(p.full_name || "U") }}>
-                    {p.avatar_url ? <img src={storageImageUrl(p.avatar_url, "avatar")} className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : (p.full_name || "U").slice(0, 2).toUpperCase()}
-                  </div>
-                  <p className="text-[11px] font-semibold text-left" style={{ color: "var(--color-text)" }}>{p.full_name}</p>
+              )}
+              {(step === "confirm" || step === "not_found") && (
+                <button type="button" onClick={() => { setStep("search"); setSelectedOrg(null); setSelectedVerifier(null); }}
+                  className="cursor-pointer"
+                  style={{ height: 40, padding: "0 16px", borderRadius: 10, fontSize: 13, fontWeight: 500, background: "rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.08)", color: "#1A1A2E" }}>
+                  Back
                 </button>
-              ))}
-              <Input value={message} onChange={e => setMessage(e.target.value.slice(0, 100))} placeholder="Optional message" className="h-8 text-[11px]" maxLength={100} />
-              <Button size="sm" disabled={!selectedVerifier || submitting} className="w-full text-[11px] h-9 rounded-xl"
-                style={{ background: "linear-gradient(135deg, #E8733A, #FF6B9D)", border: "none" }}
-                onClick={() => handleSubmit(selectedVerifier.user_id, selectedVerifier.profile?.full_name || "")}>
-                {submitting ? "Sending..." : "Send Request"}
-              </Button>
-              <button type="button" onClick={() => setStep("search")} className="text-[10px] cursor-pointer" style={{ color: "var(--color-text-muted)" }}>← Back</button>
-            </>
-          )}
+              )}
+              {step === "search" && (
+                <button type="button" onClick={() => setExpanded(false)}
+                  className="cursor-pointer flex-1"
+                  style={{ height: 40, borderRadius: 10, fontSize: 13, fontWeight: 500, background: "rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.08)", color: "#1A1A2E" }}>
+                  Cancel
+                </button>
+              )}
+              {step === "direct" && (
+                <button type="button" onClick={() => { setStep("search"); setDirectSearch(""); }}
+                  className="cursor-pointer flex-1"
+                  style={{ height: 40, borderRadius: 10, fontSize: 13, fontWeight: 500, background: "rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.08)", color: "#1A1A2E" }}>
+                  Back
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

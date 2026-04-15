@@ -1765,6 +1765,45 @@ export type Database = {
           },
         ]
       }
+      post_reports: {
+        Row: {
+          created_at: string | null
+          id: string
+          post_id: string | null
+          reason: string | null
+          reporter_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          post_id?: string | null
+          reason?: string | null
+          reporter_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          post_id?: string | null
+          reason?: string | null
+          reporter_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_reports_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_reposts: {
         Row: {
           created_at: string | null
@@ -1807,6 +1846,55 @@ export type Database = {
             columns: ["reposted_by_org"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_shares: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string | null
+          post_id: string | null
+          receiver_id: string | null
+          sender_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          post_id?: string | null
+          receiver_id?: string | null
+          sender_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          post_id?: string | null
+          receiver_id?: string | null
+          sender_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_shares_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_shares_receiver_id_fkey"
+            columns: ["receiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_shares_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1964,16 +2052,20 @@ export type Database = {
       }
       profiles: {
         Row: {
+          about: string | null
           about_qa: Json | null
           account_type: string | null
           activity_score: number | null
           avatar_url: string | null
           bio: string | null
+          contact_email_visible: boolean | null
           cover_url: string | null
           created_at: string | null
+          currently_working_at: string | null
           custom_links: Json | null
           department: string | null
           designation: string | null
+          email: string | null
           full_name: string | null
           headline: string | null
           id: string
@@ -1987,6 +2079,7 @@ export type Database = {
           onboarding_complete: boolean | null
           open_to_work: boolean | null
           org_id: string | null
+          phone: string | null
           phone_hash: string | null
           privacy_settings: Json | null
           referred_by: string | null
@@ -2005,16 +2098,20 @@ export type Database = {
           verified_by: string | null
         }
         Insert: {
+          about?: string | null
           about_qa?: Json | null
           account_type?: string | null
           activity_score?: number | null
           avatar_url?: string | null
           bio?: string | null
+          contact_email_visible?: boolean | null
           cover_url?: string | null
           created_at?: string | null
+          currently_working_at?: string | null
           custom_links?: Json | null
           department?: string | null
           designation?: string | null
+          email?: string | null
           full_name?: string | null
           headline?: string | null
           id: string
@@ -2028,6 +2125,7 @@ export type Database = {
           onboarding_complete?: boolean | null
           open_to_work?: boolean | null
           org_id?: string | null
+          phone?: string | null
           phone_hash?: string | null
           privacy_settings?: Json | null
           referred_by?: string | null
@@ -2046,16 +2144,20 @@ export type Database = {
           verified_by?: string | null
         }
         Update: {
+          about?: string | null
           about_qa?: Json | null
           account_type?: string | null
           activity_score?: number | null
           avatar_url?: string | null
           bio?: string | null
+          contact_email_visible?: boolean | null
           cover_url?: string | null
           created_at?: string | null
+          currently_working_at?: string | null
           custom_links?: Json | null
           department?: string | null
           designation?: string | null
+          email?: string | null
           full_name?: string | null
           headline?: string | null
           id?: string
@@ -2069,6 +2171,7 @@ export type Database = {
           onboarding_complete?: boolean | null
           open_to_work?: boolean | null
           org_id?: string | null
+          phone?: string | null
           phone_hash?: string | null
           privacy_settings?: Json | null
           referred_by?: string | null
@@ -2696,6 +2799,8 @@ export type Database = {
       workspace_members: {
         Row: {
           id: string
+          invitation_status: string | null
+          invited_by: string | null
           joined_at: string | null
           left_at: string | null
           role: string | null
@@ -2705,6 +2810,8 @@ export type Database = {
         }
         Insert: {
           id?: string
+          invitation_status?: string | null
+          invited_by?: string | null
           joined_at?: string | null
           left_at?: string | null
           role?: string | null
@@ -2714,6 +2821,8 @@ export type Database = {
         }
         Update: {
           id?: string
+          invitation_status?: string | null
+          invited_by?: string | null
           joined_at?: string | null
           left_at?: string | null
           role?: string | null
@@ -2722,6 +2831,13 @@ export type Database = {
           workspace_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "workspace_members_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "workspace_members_user_id_fkey"
             columns: ["user_id"]
@@ -2794,40 +2910,52 @@ export type Database = {
       }
       workspaces: {
         Row: {
+          avatar_url: string | null
           created_at: string | null
           created_by: string | null
           description: string | null
           id: string
           institution_id: string | null
+          is_active: boolean | null
           member_count: number | null
           name: string
+          org_id: string | null
           privacy: string | null
           project_count: number | null
           type: string | null
+          workspace_type: string | null
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string | null
           created_by?: string | null
           description?: string | null
           id?: string
           institution_id?: string | null
+          is_active?: boolean | null
           member_count?: number | null
           name: string
+          org_id?: string | null
           privacy?: string | null
           project_count?: number | null
           type?: string | null
+          workspace_type?: string | null
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string | null
           created_by?: string | null
           description?: string | null
           id?: string
           institution_id?: string | null
+          is_active?: boolean | null
           member_count?: number | null
           name?: string
+          org_id?: string | null
           privacy?: string | null
           project_count?: number | null
           type?: string | null
+          workspace_type?: string | null
         }
         Relationships: [
           {
@@ -2849,6 +2977,13 @@ export type Database = {
             columns: ["institution_id"]
             isOneToOne: false
             referencedRelation: "institutions_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspaces_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
             referencedColumns: ["id"]
           },
         ]
@@ -2958,6 +3093,10 @@ export type Database = {
         Returns: Json
       }
       calculate_activity_score: { Args: { p_user_id: string }; Returns: number }
+      generate_clean_username: {
+        Args: { p_full_name: string; p_user_id: string }
+        Returns: string
+      }
       get_page_tracker_count: { Args: { p_page_id: string }; Returns: number }
       get_user_list: {
         Args: { p_limit?: number; p_offset?: number; p_role?: string }

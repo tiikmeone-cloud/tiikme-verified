@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { PageSEO } from "@/hooks/usePageSEO";
 import { storageImageUrl } from "@/lib/imageTransform";
+import { cleanUsername } from "@/lib/cleanUsername";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import {
   Heart, MessageCircle, Repeat2, Send, SendHorizontal, MoreHorizontal,
@@ -312,7 +313,7 @@ const PostCard = ({
   const displayName = isOrgPost ? post.org?.name : (author?.full_name || author?.username || "Unknown");
   const profileLink = isOrgPost ? `/org/${post.org?.slug}` : `/app/profile/${author?.id || ""}`;
   const viaName = isOrgPost && post.poster_profile?.full_name ? post.poster_profile.full_name : null;
-  const username = !isOrgPost && author?.username ? `@${author.username}` : null;
+  const username = !isOrgPost && author?.username ? `@${cleanUsername(author.username)}` : null;
   const companyName = !isOrgPost && author?.institution_name && post.show_company_badge !== false ? author.institution_name : null;
   const timeAgo = post.created_at ? getTimeAgo(new Date(post.created_at)) : "";
   const isOwn = user?.id === post.author_id;
