@@ -134,7 +134,7 @@ const Opportunities = () => {
   const displayOpps = tab === "mine" ? myOpps : opps;
   const daysAgo = (d: string) => { const diff = Math.floor((Date.now() - new Date(d).getTime()) / 86400000); return diff === 0 ? "Today" : `${diff}d ago`; };
   const daysLeft = (d: string) => { const diff = Math.ceil((new Date(d).getTime() - Date.now()) / 86400000); return diff > 0 ? `${diff} days left` : "Expired"; };
-  const daysAgo2 = daysAgo; // alias for passing
+  
 
   return (
     <main className="max-w-[960px] mx-auto px-4 md:px-6 py-6">
