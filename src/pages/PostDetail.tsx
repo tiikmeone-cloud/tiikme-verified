@@ -88,6 +88,15 @@ const PostDetail = () => {
       setLiked(true);
       setLikeCount(c => c + 1);
       await supabase.from("post_reactions").insert({ post_id: postId, user_id: user.id, reaction_type: "like" });
+      if (post?.author_id && post.author_id !== user.id) {
+        sendNotification({
+          userId: post.author_id,
+          actorId: user.id,
+          type: "like",
+          title: `${profile?.full_name || "Someone"} liked your post`,
+          actionUrl: `/post/${postId}`,
+        });
+      }
     }
   };
 
