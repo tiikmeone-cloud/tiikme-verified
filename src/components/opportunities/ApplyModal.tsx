@@ -208,10 +208,23 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
                   <p className="text-[13px] font-semibold" style={{ color: "#1A1A1A" }}>Screening Questions</p>
                   {customQuestions.map((q: any, i: number) => (
                     <div key={i}>
-                      <p className="text-[13px] mb-1.5" style={{ color: "#6B6B6B" }}>{q.question || q.text || q}</p>
-                      {(q.type === "yesno" || q.type === "Yes or No") ? (
+                      <p className="text-[13px] mb-1.5" style={{ color: "#6B6B6B" }}>
+                        {q.question || q.text || q}
+                        {q.is_eliminatory && <span className="text-[10px] ml-1" style={{ color: "#DC2626" }}>*</span>}
+                      </p>
+                      {(q.type === "yes_no" || q.type === "yesno" || q.type === "Yes or No") ? (
                         <div className="flex gap-2">
                           {["Yes", "No"].map(opt => (
+                            <button key={opt} type="button" onClick={() => setAnswers(prev => ({ ...prev, [i]: opt }))}
+                              className="px-4 py-2 rounded-full text-[13px] font-semibold"
+                              style={{ background: answers[i] === opt ? "#E8580A" : "#fff", color: answers[i] === opt ? "#fff" : "#1A1A1A", border: answers[i] === opt ? "1.5px solid #E8580A" : "1.5px solid #E5E7EB" }}>
+                              {opt}
+                            </button>
+                          ))}
+                        </div>
+                      ) : q.type === "multiple_choice" && q.options?.length > 0 ? (
+                        <div className="flex gap-2 flex-wrap">
+                          {q.options.map((opt: string) => (
                             <button key={opt} type="button" onClick={() => setAnswers(prev => ({ ...prev, [i]: opt }))}
                               className="px-4 py-2 rounded-full text-[13px] font-semibold"
                               style={{ background: answers[i] === opt ? "#E8580A" : "#fff", color: answers[i] === opt ? "#fff" : "#1A1A1A", border: answers[i] === opt ? "1.5px solid #E8580A" : "1.5px solid #E5E7EB" }}>
