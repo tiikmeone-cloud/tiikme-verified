@@ -4,6 +4,7 @@ import { X, Loader2, Image as ImageIcon, AtSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface MentionUser {
   id: string;
@@ -24,6 +25,7 @@ const extractHashtags = (text: string): string[] =>
   (text.match(/#\w+/g) || []).map(t => t.slice(1));
 
 const NewPostModal = ({ open, onClose, onPublished }: NewPostModalProps) => {
+  const { user } = useAuth();
   const [content, setContent] = useState("");
   const [visibility, setVisibility] = useState("everyone");
   const [publishing, setPublishing] = useState(false);
@@ -41,6 +43,7 @@ const NewPostModal = ({ open, onClose, onPublished }: NewPostModalProps) => {
     const timeout = setTimeout(async () => {
       const { data } = await supabase.from("profiles")
         .select("id, username, full_name, avatar_url, role")
+        .neq("id", user?.id || "")
         .or(`username.ilike.%${mentionFilter}%,full_name.ilike.%${mentionFilter}%`)
         .limit(5);
       setMentionResults((data as MentionUser[]) || []);

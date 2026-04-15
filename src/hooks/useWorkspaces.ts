@@ -81,7 +81,7 @@ export function useWorkspaces(userId: string | undefined) {
 
     const { data: workspaces } = await supabase
       .from("workspaces")
-      .select("*")
+      .select("id, name, description, avatar_url, workspace_type, created_by, is_active, last_message_at, created_at, org_id, institution_id, member_count")
       .in("id", wsIds)
       .eq("workspace_type", "group")
       .eq("is_active", true)
@@ -133,7 +133,7 @@ export function useWorkspaces(userId: string | undefined) {
         member_count: 1 + memberIds.length,
         last_message_at: new Date().toISOString(),
       } as any)
-      .select("*")
+      .select("id, name, description, avatar_url, workspace_type, created_by, is_active, last_message_at, created_at, org_id, institution_id, member_count")
       .single();
 
     if (wsErr || !ws) return null;
@@ -237,7 +237,7 @@ export function useWorkspaces(userId: string | undefined) {
   const fetchMessages = useCallback(async (channelId: string): Promise<GroupMessage[]> => {
     const { data } = await supabase
       .from("workspace_messages")
-      .select("*")
+      .select("id, content, sender_id, channel_id, created_at, attachment_url, attachment_name")
       .eq("channel_id", channelId)
       .order("created_at", { ascending: true })
       .limit(200);

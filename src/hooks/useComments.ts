@@ -51,7 +51,7 @@ export function useComments() {
         // Load comments for this post
         supabase
           .from("post_comments")
-          .select("*")
+          .select("id, post_id, user_id, content, created_at, parent_id")
           .eq("post_id", postId)
           .order("created_at", { ascending: true })
           .then(async ({ data }) => {
@@ -91,7 +91,7 @@ export function useComments() {
       const { data, error } = await supabase
         .from("post_comments")
         .insert({ post_id: postId, user_id: user.id, content })
-        .select("*")
+        .select("id, post_id, user_id, content, created_at, parent_id")
         .single();
 
       if (error) {
@@ -182,7 +182,7 @@ export function useComments() {
 
             const { data } = await supabase
               .from("post_comments")
-              .select("*")
+              .select("id, post_id, user_id, content, created_at, parent_id")
               .eq("id", newComment.id)
               .single();
 

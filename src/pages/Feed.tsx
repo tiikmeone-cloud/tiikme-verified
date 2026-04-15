@@ -77,7 +77,7 @@ const FeedComposer = ({ onPublished }: { onPublished: () => void }) => {
     if (query.length < 1) { setSuggestions([]); return; }
     const results: MentionSuggestion[] = [];
     const [profilesRes, pagesRes] = await Promise.allSettled([
-      supabase.from("profiles").select("id, full_name, username, avatar_url").or(`full_name.ilike.%${query}%,username.ilike.%${query}%`).limit(5),
+      supabase.from("profiles").select("id, full_name, username, avatar_url").neq("id", user?.id || "").or(`full_name.ilike.%${query}%,username.ilike.%${query}%`).limit(5),
       supabase.from("pages").select("id, name, slug, logo_url").ilike("name", `%${query}%`).limit(3),
     ]);
     if (profilesRes.status === "fulfilled" && profilesRes.value.data) {
