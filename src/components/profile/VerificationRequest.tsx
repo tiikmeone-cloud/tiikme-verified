@@ -304,9 +304,9 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
                     background: selectedVerifier?.user_id === v.user_id ? "rgba(232,115,58,0.08)" : "var(--glass-bg)",
                     border: `1.5px solid ${selectedVerifier?.user_id === v.user_id ? "#E8733A" : "var(--glass-border)"}`,
                   }}>
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[9px] font-bold text-white overflow-hidden shrink-0"
-                    style={{ background: hashColor(v.profile?.full_name || "U") }}>
-                    {v.profile?.avatar_url ? <img src={storageImageUrl(v.profile.avatar_url, "avatar")} className="w-full h-full object-cover" /> : (v.profile?.full_name || "U").slice(0, 2).toUpperCase()}
+                  <div className="w-8 h-8 flex items-center justify-center text-[9px] font-bold text-white overflow-hidden shrink-0"
+                    style={{ borderRadius: 0, background: hashColor(v.profile?.full_name || "U") }}>
+                    {v.profile?.avatar_url ? <img src={storageImageUrl(v.profile.avatar_url, "avatar")} className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : (v.profile?.full_name || "U").slice(0, 2).toUpperCase()}
                   </div>
                   <div className="text-left min-w-0">
                     <p className="text-[11px] font-semibold truncate" style={{ color: "var(--color-text)" }}>{v.profile?.full_name}</p>
@@ -354,9 +354,9 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
                     background: selectedVerifier?.user_id === p.id ? "rgba(232,115,58,0.08)" : "var(--glass-bg)",
                     border: `1.5px solid ${selectedVerifier?.user_id === p.id ? "#E8733A" : "var(--glass-border)"}`,
                   }}>
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[9px] font-bold text-white overflow-hidden shrink-0"
-                    style={{ background: hashColor(p.full_name || "U") }}>
-                    {p.avatar_url ? <img src={storageImageUrl(p.avatar_url, "avatar")} className="w-full h-full object-cover" /> : (p.full_name || "U").slice(0, 2).toUpperCase()}
+                  <div className="w-8 h-8 flex items-center justify-center text-[9px] font-bold text-white overflow-hidden shrink-0"
+                    style={{ borderRadius: 0, background: hashColor(p.full_name || "U") }}>
+                    {p.avatar_url ? <img src={storageImageUrl(p.avatar_url, "avatar")} className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : (p.full_name || "U").slice(0, 2).toUpperCase()}
                   </div>
                   <p className="text-[11px] font-semibold text-left" style={{ color: "var(--color-text)" }}>{p.full_name}</p>
                 </button>
