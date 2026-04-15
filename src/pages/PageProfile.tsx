@@ -612,6 +612,17 @@ const PageProfile = () => {
           <img src={lightboxUrl} alt="" className="max-w-[90vw] max-h-[85vh] object-contain rounded-2xl" />
         </div>
       )}
+
+      {/* Investor Interest Modal */}
+      {startupProfile && (
+        <InvestorInterestModal
+          open={showInterestModal}
+          onClose={() => setShowInterestModal(false)}
+          startupId={startupProfile.id}
+          startupName={page?.name || ""}
+          founderId={startupProfile.founder_id || ""}
+        />
+      )}
     </div>
   );
 };
