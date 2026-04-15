@@ -1,5 +1,5 @@
 import AvatarSquare from "@/components/ui/AvatarSquare";
-import { storageImageUrl } from "@/lib/imageTransform";
+import React from "react";
 import { useState, useRef, useEffect } from "react";
 import { MessageCircle, Search, Send, Paperclip, PenSquare, X, Shield, ArrowLeft, FileText, Briefcase, Download, Trash2, ArrowUp, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
