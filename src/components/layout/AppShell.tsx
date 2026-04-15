@@ -108,7 +108,12 @@ const AppShell = ({ children }: { children: ReactNode }) => {
     let pingsCh: ReturnType<typeof supabase.channel> | null = null;
     try {
       alertsCh = supabase.channel("unread-alerts-" + user.id)
-        .on("postgres_changes", { event: "INSERT", schema: "public", table: "alerts", filter: `user_id=eq.${user.id}` }, () => setUnreadAlerts(p => p + 1))
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "alerts", filter: `user_id=eq.${user.id}` }, (payload) => {
+          setUnreadAlerts(p => p + 1);
+          // Show toast for new notification
+          const title = (payload.new as any)?.title;
+          if (title) toast.info(title, { duration: 4000 });
+        })
         .subscribe();
       pingsCh = supabase.channel("unread-pings-" + user.id)
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "pings" }, payload => {
