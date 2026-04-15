@@ -482,7 +482,31 @@ export default function Workspace() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const isInstitution = profile?.account_type === "institution" && !!profile?.org_id;
-  const orgId = profile?.org_id;
+
+  // For regular users: find their org membership
+  const [resolvedOrgId, setResolvedOrgId] = useState<string | null>(profile?.org_id || null);
+  const [hasOrgAccess, setHasOrgAccess] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (isInstitution && profile?.org_id) {
+      setResolvedOrgId(profile.org_id);
+      setHasOrgAccess(true);
+      return;
+    }
+    if (!user) { setHasOrgAccess(false); return; }
+    // Check if user is member of any org
+    supabase.from("org_members").select("org_id").eq("user_id", user.id).eq("is_current", true).limit(1)
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setResolvedOrgId(data[0].org_id);
+          setHasOrgAccess(true);
+        } else {
+          setHasOrgAccess(false);
+        }
+      });
+  }, [user, isInstitution, profile?.org_id]);
+
+  const orgId = resolvedOrgId;
 
   const [org, setOrg] = useState<any>(null);
   const [members, setMembers] = useState<any[]>([]);
