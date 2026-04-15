@@ -145,12 +145,20 @@ export function TrendingPostCard({ post, authorProfile }: PostCardProps) {
   const navigate = useNavigate();
   const name = authorProfile?.full_name || "User";
   const reactionTotal = (post.reactions?.useful || 0) + (post.reactions?.inspiring || 0) + (post.reactions?.insightful || 0);
+  const timeAgo = (() => {
+    const diff = Date.now() - new Date(post.created_at).getTime();
+    const h = Math.floor(diff / 3600000);
+    if (h < 1) return `${Math.max(1, Math.floor(diff / 60000))}m`;
+    if (h < 24) return `${h}h`;
+    return `${Math.floor(h / 24)}d`;
+  })();
+  const firstImage = (post.image_urls || [])[0];
 
   return (
     <article
       className="glass-card cursor-pointer flex flex-col"
       style={{
-        width: 190, minWidth: 190, padding: 12, borderRadius: 16,
+        width: 280, minWidth: 280, padding: 12, borderRadius: 12,
         scrollSnapAlign: "start", flexShrink: 0,
         transition: "transform 200ms, box-shadow 200ms",
       }}
@@ -160,12 +168,16 @@ export function TrendingPostCard({ post, authorProfile }: PostCardProps) {
     >
       <div className="flex items-center gap-2" style={{ marginBottom: 8 }}>
         <AvatarSquare src={authorProfile?.avatar_url} name={name} size={28} />
-        <p style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{name}</p>
+        <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{name}</p>
+        <span style={{ fontSize: 11, fontWeight: 400, color: "var(--text-muted)", flexShrink: 0 }}>{timeAgo}</span>
       </div>
-      <p style={{ fontSize: 13, fontWeight: 400, lineHeight: "18px", color: "var(--text-secondary)", flex: 1, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+      <p style={{ fontSize: 13, fontWeight: 400, lineHeight: "18px", color: "var(--text-secondary)", flex: 1, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
         {post.content}
       </p>
-      <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)", marginTop: 8 }}>
+      {firstImage && (
+        <img src={firstImage} alt="" loading="lazy" style={{ width: "100%", height: 120, objectFit: "cover", borderRadius: 8, marginTop: 6 }} />
+      )}
+      <p style={{ fontSize: 11, fontWeight: 400, color: "var(--text-muted)", marginTop: 8 }}>
         {reactionTotal} likes · {post.comment_count || 0} comments
       </p>
     </article>
