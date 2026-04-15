@@ -313,9 +313,8 @@ const Pings = () => {
                       </div>
                     )}
                     <div className={`flex ${isMe ? "justify-end" : "justify-start"} group mb-0.5`}>
-                      {/* Other person's avatar */}
+                      {!isMe && !prevSame && activeConvo?.other_user && (
                         <AvatarSquare src={activeConvo.other_user.avatar_url} name={activeConvo.other_user.full_name || "U"} size={24} bgColor={ROLE_COLORS[activeConvo.other_user.role || ""] || "#6B7280"} className="mr-2 mt-1" />
-                        </div>
                       )}
                       {!isMe && (prevSame && !showDate) && <div className="w-6 mr-2 shrink-0" />}
 
