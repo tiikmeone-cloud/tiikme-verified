@@ -122,7 +122,7 @@ const LivePostCard = ({
           userId: post.author_id,
           actorId: user.id,
           type: "repost",
-          title: `${profile?.full_name || "Someone"} reposted your post`,
+          title: `${authProfile?.full_name || "Someone"} reposted your post`,
           actionUrl: `/post/${post.id}`,
         });
       }
@@ -373,7 +373,7 @@ const OpportunitiesWidget = () => {
 };
 
 const SuggestedWidget = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [suggested, setSuggested] = useState<any[]>([]);
   useEffect(() => {
     if (!user) return;
