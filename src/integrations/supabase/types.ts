@@ -2977,6 +2977,20 @@ export type Database = {
         Args: { amount: number; uid: string }
         Returns: undefined
       }
+      match_opportunities_for_user: {
+        Args: { p_user_id: string }
+        Returns: {
+          match_score: number
+          opportunity_id: string
+        }[]
+      }
+      rank_explore_pages: {
+        Args: { p_page_type?: string; p_user_id: string }
+        Returns: {
+          explore_score: number
+          page_id: string
+        }[]
+      }
       update_all_activity_scores: { Args: never; Returns: undefined }
     }
     Enums: {
