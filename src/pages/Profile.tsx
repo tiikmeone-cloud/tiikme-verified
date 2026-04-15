@@ -65,7 +65,7 @@ const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose:
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       setUserId(user.id);
-      const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+      const { data } = await supabase.from("profiles").select("full_name, headline, bio, location_city, location_state, username, open_to_work, avatar_url, custom_links").eq("id", user.id).maybeSingle();
       if (data) {
         setForm({ name: data.full_name || "", headline: data.headline || "", bio: data.bio || "", city: data.location_city || "", state: data.location_state || "", username: data.username || "", open_to_work: data.open_to_work || false, avatar_url: data.avatar_url || "", about: (data as any).about || "" });
         setCustomLinks(Array.isArray(data.custom_links) ? (data.custom_links as any[]).map(l => ({ url: l.url || "", label: l.label || "" })) : []);
@@ -353,12 +353,12 @@ const Profile = () => {
     if (!targetUserId) { setDataLoading(false); return; }
     setDataLoading(true);
     const [profileRes, itemsRes, strandCountRes, postsRes, achvsRes, certsRes, connAvatarsRes] = await Promise.allSettled([
-      isOwnProfile ? Promise.resolve({ data: authProfile }) : supabase.from("profiles").select("*").eq("id", targetUserId).maybeSingle(),
-      supabase.from("work_items").select("*").eq("owner_id", targetUserId).order("is_current", { ascending: false }).order("created_at", { ascending: false }),
-      supabase.from("strands").select("*", { count: "exact", head: true }).or(`requester_id.eq.${targetUserId},receiver_id.eq.${targetUserId}`).eq("status", "accepted"),
+      isOwnProfile ? Promise.resolve({ data: authProfile }) : supabase.from("profiles").select("id, full_name, username, role, role_subtype, headline, bio, avatar_url, institution_name, location_city, location_state, activity_score, is_public, custom_links, open_to_work, designation, sector, languages, department, is_verified, role_metadata, about_qa, verification_badge_text, verification_type, created_at, account_type, org_id, skills").eq("id", targetUserId).maybeSingle(),
+      supabase.from("work_items").select("id, title, job_title, description, company_name, institution_name, item_type, employment_type, work_location, start_date, end_date, start_month, start_year, end_month, end_year, is_current, status, visibility, verification_status, verified_by_user, verified_at, is_tiik_approved, created_at, owner_id").eq("owner_id", targetUserId).order("is_current", { ascending: false }).order("created_at", { ascending: false }),
+      supabase.from("strands").select("id", { count: "exact", head: true }).or(`requester_id.eq.${targetUserId},receiver_id.eq.${targetUserId}`).eq("status", "accepted"),
       supabase.from("posts").select("id, content, created_at, image_urls, comment_count").eq("author_id", targetUserId).order("created_at", { ascending: false }).limit(5),
-      supabase.from("achievements").select("*").eq("user_id", targetUserId).order("created_at", { ascending: false }),
-      supabase.from("certificates").select("*, org:organizations(name, logo_url)").eq("issued_to", targetUserId).order("created_at", { ascending: false }),
+      supabase.from("achievements").select("id, title, type, description, icon_emoji, achievement_date, issued_by, certificate_url, certificate_file_url, source_type, source_workspace_name, visibility, created_at, user_id").eq("user_id", targetUserId).order("created_at", { ascending: false }),
+      supabase.from("certificates").select("id, title, description, issued_date, expiry_date, certificate_url, is_verified, issued_by, issued_to, org_id, created_at, org:organizations(name, logo_url)").eq("issued_to", targetUserId).order("created_at", { ascending: false }),
       supabase.from("strands").select("requester_id, receiver_id").or(`requester_id.eq.${targetUserId},receiver_id.eq.${targetUserId}`).eq("status", "accepted").limit(6),
     ]);
 
