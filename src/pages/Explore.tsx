@@ -17,25 +17,14 @@ const FILTER_TABS = ["All", "People", "Companies", "Colleges", "Hospitals", "Gov
 const Explore = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
-  const [loading, setLoading] = useState(true);
   const [focused, setFocused] = useState(false);
   const mountedRef = useRef(true);
 
-  const [people, setPeople] = useState<any[]>([]);
   const [strandMap, setStrandMap] = useState<Record<string, string>>({});
-  const [companies, setCompanies] = useState<any[]>([]);
-  const [colleges, setColleges] = useState<any[]>([]);
-  const [hospitals, setHospitals] = useState<any[]>([]);
-  const [govOrgs, setGovOrgs] = useState<any[]>([]);
-  const [ngos, setNgos] = useState<any[]>([]);
-  const [trendingTopics, setTrendingTopics] = useState<{ tag: string; count: number }[]>([]);
-  const [trendingPosts, setTrendingPosts] = useState<any[]>([]);
-  const [postAuthors, setPostAuthors] = useState<Record<string, any>>({});
   const [followMap, setFollowMap] = useState<Record<string, boolean>>({});
-  const [startups, setStartups] = useState<any[]>([]);
-  const [investors, setInvestors] = useState<any[]>([]);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
 
