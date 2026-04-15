@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, GraduationCap, Briefcase, UserCheck, BookOpen, Stethoscope, Building2, Wrench, Heart, Rocket, Check, Eye, EyeOff, Mail } from "lucide-react";
+import { ArrowLeft, ArrowRight, GraduationCap, Briefcase, UserCheck, BookOpen, Stethoscope, Building2, Wrench, Heart, Rocket, Check, Eye, EyeOff, Mail, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
@@ -48,25 +48,35 @@ const facultyDesignations = ["Assistant Professor", "Associate Professor", "Prof
 const tradeTypes = ["Electrician", "Plumber", "Carpenter", "Welder", "AC Technician", "Construction", "Driver", "Chef", "Tailor", "Other"];
 const stageOptions = ["Idea", "Building", "Launched", "Scaling"];
 
+const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
+
+const validatePassword = (pw: string) => {
+  if (pw.length < 8) return "Password must be at least 8 characters";
+  if (!/[A-Z]/.test(pw)) return "Password must contain at least 1 uppercase letter";
+  if (!/\d/.test(pw)) return "Password must contain at least 1 number";
+  return null;
+};
+
 const getStrength = (pw: string) => {
   if (pw.length < 6) return { level: 0, label: "Too short", color: "#DC2626" };
-  if (pw.length < 10) return { level: 1, label: "Could be stronger", color: "#F59E0B" };
+  if (!PASSWORD_REGEX.test(pw)) return { level: 1, label: "Could be stronger", color: "#F59E0B" };
   return { level: 2, label: "Strong", color: "#10B981" };
 };
 
 const SignUp = () => {
   const navigate = useNavigate();
   const { user, refreshProfile } = useAuth();
-  // Steps: 1=email/password, 2=OTP, 3=role, 4=profile details, 5=redirecting to welcome
   const [step, setStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [otpValue, setOtpValue] = useState("");
   const [otpError, setOtpError] = useState("");
   const [resendCooldown, setResendCooldown] = useState(60);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // Profile fields
   const [fullName, setFullName] = useState("");
@@ -79,16 +89,13 @@ const SignUp = () => {
 
   const strength = getStrength(password);
 
-  // Redirect if already logged in AND has completed profile (not mid-onboarding)
   useEffect(() => {
     if (user && step === 1) {
-      // Only redirect if user already has a name set (completed onboarding before)
       const checkProfile = async () => {
         const { data } = await supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
         if (data?.full_name) {
           navigate("/app/feed", { replace: true });
         } else {
-          // User is logged in but hasn't completed onboarding — go to role step
           setStep(3);
         }
       };
@@ -96,7 +103,6 @@ const SignUp = () => {
     }
   }, [user, step]);
 
-  // Resend cooldown timer
   useEffect(() => {
     if (step !== 2) return;
     setResendCooldown(60);
@@ -117,18 +123,44 @@ const SignUp = () => {
     if (error) toast.error(error.message);
   };
 
-  // STEP 1: Create account
+  // STEP 1: Create account with validation
   const handleSignUp = async () => {
-    if (!email || !password) { toast.info("Please fill in all fields"); return; }
-    if (password.length < 8) { toast.info("Password must be at least 8 characters"); return; }
+    const errors: Record<string, string> = {};
+    if (!email) errors.email = "Email is required";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.email = "Invalid email format";
+    
+    const pwError = validatePassword(password);
+    if (!password) errors.password = "Password is required";
+    else if (pwError) errors.password = pwError;
+    
+    if (!confirmPassword) errors.confirmPassword = "Please confirm your password";
+    else if (password !== confirmPassword) errors.confirmPassword = "Passwords do not match";
+
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
     setIsSubmitting(true);
-    const { error } = await supabase.auth.signUp({
+
+    // Check if email already exists by attempting sign-in with wrong password
+    // Supabase signUp returns a fake user for existing confirmed emails (security measure)
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: window.location.origin + "/app/feed" },
+      options: {
+        emailRedirectTo: `${window.location.origin}/app/feed`,
+        data: { account_type: "user" },
+      },
     });
     setIsSubmitting(false);
+
     if (error) { toast.error(error.message); return; }
+
+    // Supabase returns identities=[] for already-registered emails
+    if (data.user && data.user.identities && data.user.identities.length === 0) {
+      setFieldErrors({ email: "This email is already registered. Please sign in instead." });
+      return;
+    }
+
     toast.success("Account created! Check your email.");
     sessionStorage.setItem("signup_email", email);
     setStep(2);
@@ -159,13 +191,20 @@ const SignUp = () => {
 
   // STEP 3: Role selected → go to step 4
   const handleRoleContinue = () => {
-    if (!selectedRole) return;
+    if (!selectedRole) { toast.info("Please select at least one role"); return; }
     sessionStorage.setItem("onboarding_role", selectedRole);
     setStep(4);
   };
 
-  // STEP 4: Save profile
+  // STEP 4: Save profile with validation
   const handleSaveProfile = async () => {
+    const errors: Record<string, string> = {};
+    if (!fullName.trim()) errors.fullName = "Full name is required";
+    if (!city.trim()) errors.city = "City is required";
+    if (!state) errors.state = "State is required";
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
     setIsSubmitting(true);
     const { data: { user: currentUser } } = await supabase.auth.getUser();
     if (!currentUser) { toast.error("Not authenticated"); setIsSubmitting(false); return; }
@@ -195,7 +234,6 @@ const SignUp = () => {
   };
 
   const handleSkip = async () => {
-    // Save minimal profile with just role
     const { data: { user: currentUser } } = await supabase.auth.getUser();
     if (currentUser && selectedRole) {
       await supabase.from("profiles").upsert({
@@ -208,13 +246,19 @@ const SignUp = () => {
   };
 
   const inputS: React.CSSProperties = { background: "var(--surface-2)", border: "1.5px solid var(--border-2)", borderRadius: 12, color: "var(--text-1)", height: 44 };
+  const inputErrorS: React.CSSProperties = { ...inputS, borderColor: "#EF4444" };
   const selectS: React.CSSProperties = { background: "var(--surface-2)", border: "1.5px solid var(--border-2)", borderRadius: 12, color: "var(--text-1)", height: 44 };
   const glassCard: React.CSSProperties = { background: "var(--glass-bg)", backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)", border: "1px solid var(--border)", borderRadius: 24 };
 
-  const totalSteps = 4;
-  const progressSteps = [1, 2, 3, 4];
+  const FieldError = ({ field }: { field: string }) => {
+    if (!fieldErrors[field]) return null;
+    return (
+      <p className="flex items-center gap-1 mt-1" style={{ fontSize: 12, color: "#EF4444" }}>
+        <AlertCircle style={{ width: 12, height: 12, flexShrink: 0 }} /> {fieldErrors[field]}
+      </p>
+    );
+  };
 
-  // Role-specific fields for Step 4
   const renderRoleFields = () => {
     if (!selectedRole) return null;
     switch (selectedRole) {
@@ -319,13 +363,13 @@ const SignUp = () => {
 
         {/* Progress bar */}
         <div className="flex gap-1.5 mb-8 max-w-xs mx-auto">
-          {progressSteps.map(s => (
+          {[1, 2, 3, 4].map(s => (
             <div key={s} className="flex-1 h-[3px] rounded-full transition-all duration-500" style={{ background: s <= step ? "var(--brand)" : "var(--border-2)" }} />
           ))}
         </div>
 
         <AnimatePresence mode="wait">
-          {/* ═══ STEP 1: Email + Password ═══ */}
+          {/* STEP 1: Email + Password + Confirm */}
           {step === 1 && (
             <motion.div key="s1" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
               <div className="p-8 sm:p-10" style={glassCard}>
@@ -344,14 +388,24 @@ const SignUp = () => {
                   <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
                 </div>
 
-                <div className="space-y-3.5">
-                  <Input type="email" placeholder="Email address" value={email} onChange={e => setEmail(e.target.value)} style={inputS} />
+                <div className="space-y-3">
+                  <div>
+                    <Input type="email" placeholder="Email address" value={email}
+                      onChange={e => { setEmail(e.target.value); setFieldErrors(p => ({ ...p, email: "" })); }}
+                      style={fieldErrors.email ? inputErrorS : inputS} />
+                    <FieldError field="email" />
+                  </div>
                   <div>
                     <div className="relative">
-                      <Input type={showPassword ? "text" : "password"} placeholder="Password (min 8 characters)" value={password} onChange={e => setPassword(e.target.value)} style={{ ...inputS, paddingRight: 40 }} />
-                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer" style={{ color: "var(--text-3)" }}>{showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>
+                      <Input type={showPassword ? "text" : "password"} placeholder="Password (min 8 chars, 1 uppercase, 1 number)"
+                        value={password} onChange={e => { setPassword(e.target.value); setFieldErrors(p => ({ ...p, password: "" })); }}
+                        style={{ ...(fieldErrors.password ? inputErrorS : inputS), paddingRight: 40 }} />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer" style={{ color: "var(--text-3)" }}>
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
                     </div>
-                    {password && (
+                    <FieldError field="password" />
+                    {password && !fieldErrors.password && (
                       <div className="mt-2">
                         <div className="flex gap-1.5">
                           {[0, 1, 2].map(i => (
@@ -361,6 +415,12 @@ const SignUp = () => {
                         <p className="text-[10px] mt-1 font-medium" style={{ color: strength.color }}>{strength.label}</p>
                       </div>
                     )}
+                  </div>
+                  <div>
+                    <Input type="password" placeholder="Confirm password"
+                      value={confirmPassword} onChange={e => { setConfirmPassword(e.target.value); setFieldErrors(p => ({ ...p, confirmPassword: "" })); }}
+                      style={fieldErrors.confirmPassword ? inputErrorS : inputS} />
+                    <FieldError field="confirmPassword" />
                   </div>
                 </div>
 
@@ -375,7 +435,7 @@ const SignUp = () => {
             </motion.div>
           )}
 
-          {/* ═══ STEP 2: OTP Verification ═══ */}
+          {/* STEP 2: OTP Verification */}
           {step === 2 && (
             <motion.div key="s2" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
               <div className="p-8 sm:p-10 text-center" style={glassCard}>
@@ -395,7 +455,7 @@ const SignUp = () => {
                     </InputOTPGroup>
                   </InputOTP>
                 </div>
-                {otpError && <p className="text-[13px] font-medium mb-3" style={{ color: "var(--danger)" }}>{otpError}</p>}
+                {otpError && <p className="text-[13px] font-medium mb-3" style={{ color: "#EF4444" }}>{otpError}</p>}
                 <Button size="xl" onClick={handleVerifyOtp} disabled={isSubmitting || otpValue.length !== 6} className="w-full active:scale-95 transition-all duration-200 mb-4">
                   {isSubmitting ? "Verifying..." : "Verify"} <ArrowRight className="w-4 h-4 ml-1" />
                 </Button>
@@ -404,13 +464,13 @@ const SignUp = () => {
                   {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : "Resend code"}
                 </button>
                 <p className="text-[12px] mt-3" style={{ color: "var(--text-3)" }}>
-                  Wrong email? <button type="button" onClick={() => setStep(1)} className="font-semibold cursor-pointer" style={{ color: "var(--brand)" }}>Go back →</button>
+                  Wrong email? <button type="button" onClick={() => setStep(1)} className="font-semibold cursor-pointer" style={{ color: "var(--brand)" }}>Go back</button>
                 </p>
               </div>
             </motion.div>
           )}
 
-          {/* ═══ STEP 3: Role Selection ═══ */}
+          {/* STEP 3: Role Selection */}
           {step === 3 && (
             <motion.div key="s3" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
               <div className="p-8 sm:p-10" style={glassCard}>
@@ -444,13 +504,13 @@ const SignUp = () => {
                 <Button size="xl" onClick={handleRoleContinue} disabled={!selectedRole} className="w-full active:scale-95 transition-all duration-200">Continue <ArrowRight className="w-4 h-4 ml-1" /></Button>
                 <p className="text-center text-[13px] mt-4" style={{ color: "var(--text-3)" }}>
                   Registering for a company or institution?{" "}
-                  <Link to="/join-as-institution" className="font-semibold" style={{ color: "var(--brand)" }}>Create an Institution Page →</Link>
+                  <Link to="/join-as-institution" className="font-semibold" style={{ color: "var(--brand)" }}>Create an Institution Page</Link>
                 </p>
               </div>
             </motion.div>
           )}
 
-          {/* ═══ STEP 4: Profile Details ═══ */}
+          {/* STEP 4: Profile Details */}
           {step === 4 && (
             <motion.div key="s4" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
               <button type="button" onClick={() => setStep(3)} className="flex items-center gap-1 text-[13px] mb-4 cursor-pointer active:scale-95" style={{ color: "var(--text-2)" }}><ArrowLeft className="w-4 h-4" /> Back</button>
@@ -458,22 +518,35 @@ const SignUp = () => {
                 <h2 className="text-[28px] font-extrabold text-center mb-1" style={{ color: "var(--text-1)", letterSpacing: "-0.02em" }}>Your details</h2>
                 <p className="text-center mb-7 text-[14px]" style={{ color: "var(--text-2)" }}>This helps others find and verify you.</p>
                 <div className="space-y-3.5">
-                  <div className="grid grid-cols-2 gap-3">
-                    <Input placeholder="Full name *" value={fullName} onChange={e => setFullName(e.target.value)} style={inputS} />
+                  <div>
+                    <Input placeholder="Full name *" value={fullName}
+                      onChange={e => { setFullName(e.target.value); setFieldErrors(p => ({ ...p, fullName: "" })); }}
+                      style={fieldErrors.fullName ? inputErrorS : inputS} />
+                    <FieldError field="fullName" />
                   </div>
                   <Input placeholder="Headline (80 chars)" value={headline} onChange={e => setHeadline(e.target.value.slice(0, 80))} maxLength={80} style={inputS} />
 
                   {renderRoleFields()}
 
                   <div className="grid grid-cols-2 gap-3">
-                    <Input placeholder="City" value={city} onChange={e => setCity(e.target.value)} style={inputS} />
-                    <select value={state} onChange={e => setState(e.target.value)} className="w-full h-11 rounded-xl px-3 text-[14px] outline-none cursor-pointer" style={selectS}>
-                      <option value="">State</option>
-                      {allIndianStates.map(s => <option key={s}>{s}</option>)}
-                    </select>
+                    <div>
+                      <Input placeholder="City *" value={city}
+                        onChange={e => { setCity(e.target.value); setFieldErrors(p => ({ ...p, city: "" })); }}
+                        style={fieldErrors.city ? inputErrorS : inputS} />
+                      <FieldError field="city" />
+                    </div>
+                    <div>
+                      <select value={state} onChange={e => { setState(e.target.value); setFieldErrors(p => ({ ...p, state: "" })); }}
+                        className="w-full h-11 rounded-xl px-3 text-[14px] outline-none cursor-pointer"
+                        style={fieldErrors.state ? { ...selectS, borderColor: "#EF4444" } : selectS}>
+                        <option value="">State *</option>
+                        {allIndianStates.map(s => <option key={s}>{s}</option>)}
+                      </select>
+                      <FieldError field="state" />
+                    </div>
                   </div>
                 </div>
-                <Button size="xl" onClick={handleSaveProfile} disabled={isSubmitting || !fullName.trim()} className="w-full mt-5 active:scale-95 transition-all duration-200">
+                <Button size="xl" onClick={handleSaveProfile} disabled={isSubmitting} className="w-full mt-5 active:scale-95 transition-all duration-200">
                   {isSubmitting ? "Saving..." : "Complete profile"} <ArrowRight className="w-4 h-4 ml-1" />
                 </Button>
                 <button type="button" onClick={handleSkip} className="block mx-auto mt-3 text-[13px] cursor-pointer hover:underline" style={{ color: "var(--brand)" }}>Skip for now</button>
