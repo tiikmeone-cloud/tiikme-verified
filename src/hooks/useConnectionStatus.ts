@@ -82,8 +82,8 @@ export function useConnectionStatus(targetUserId: string | null | undefined) {
         title: `${profile?.full_name || "Someone"} accepted your connection`,
         actionUrl: `/app/profile/${user.id}`,
       });
-      await supabase.rpc("increment_score", { uid: user.id, amount: 3 }).catch(() => {});
-      await supabase.rpc("increment_score", { uid: targetUserId, amount: 3 }).catch(() => {});
+      try { await supabase.rpc("increment_score", { uid: user.id, amount: 3 }); } catch {}
+      try { await supabase.rpc("increment_score", { uid: targetUserId, amount: 3 }); } catch {}
     }
     setInfo({ state: "accepted", strandId: info.strandId });
     toast.success("Connected!");
