@@ -129,14 +129,14 @@ const FeedComposer = ({ onPublished }: { onPublished: () => void }) => {
   };
 
   const handleAttach = () => {
-    if (attachPreviews.length >= 4) { toast.info("Maximum 4 files"); return; }
+    if (attachPreviews.length >= 10) { toast.info("Maximum 10 files"); return; }
     fileInputRef.current?.click();
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-    Array.from(files).slice(0, 4 - attachPreviews.length).forEach(file => {
+    Array.from(files).slice(0, 10 - attachPreviews.length).forEach(file => {
       if (file.size > 10 * 1024 * 1024) { toast.error("File must be under 10MB"); return; }
       const isImage = file.type.startsWith("image/");
       setAttachPreviews(prev => [...prev, {
@@ -144,8 +144,8 @@ const FeedComposer = ({ onPublished }: { onPublished: () => void }) => {
         name: file.name,
         type: file.type,
         size: file.size,
-      }].slice(0, 4));
-      setAttachFiles(prev => [...prev, file].slice(0, 4));
+      }].slice(0, 10));
+      setAttachFiles(prev => [...prev, file].slice(0, 10));
     });
     e.target.value = "";
   };
