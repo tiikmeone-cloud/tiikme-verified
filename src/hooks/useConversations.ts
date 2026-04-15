@@ -201,8 +201,24 @@ export function useConversations(userId: string | undefined) {
         status: "delivered" as const,
       } : m));
       supabase.from("conversations").update({ last_message_at: new Date().toISOString() }).eq("id", activeConvoId).then(() => {});
+
+      // Notify the other participant
+      const convo = conversations.find(c => c.id === activeConvoId);
+      if (convo) {
+        const otherId = convo.participant_1 === userId ? convo.participant_2 : convo.participant_1;
+        if (otherId) {
+          sendNotification({
+            userId: otherId,
+            actorId: userId,
+            type: "message",
+            title: `New message from ${convo.other_user?.full_name || "someone"}`,
+            body: (content || attachment?.name || "").slice(0, 80),
+            actionUrl: "/app/pings",
+          });
+        }
+      }
     }
-  }, [activeConvoId, userId]);
+  }, [activeConvoId, userId, conversations]);
 
   // BUG FIX 3: Delete message (soft delete)
   const deleteMessage = useCallback(async (msgId: string) => {
