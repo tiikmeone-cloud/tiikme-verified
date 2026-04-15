@@ -2,7 +2,7 @@ import { useState } from "react";
 
 const isValidImage = (url: string) => url && (url.startsWith("http") || url.startsWith("data:") || url.startsWith("blob:"));
 
-const ImageItem = ({ src, className }: { src: string; className: string }) => {
+const ImageItem = ({ src, className, style }: { src: string; className: string; style?: React.CSSProperties }) => {
   const [error, setError] = useState(false);
   if (error) {
     return (
