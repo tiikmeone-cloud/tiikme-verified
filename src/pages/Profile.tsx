@@ -4,7 +4,7 @@ import { PageSEO, profileSEO } from "@/hooks/usePageSEO";
 import {
   MapPin, Copy, Shield, X, MessageCircle, CheckCircle, Building2, Link2, Plus,
   Pencil, Trash2, Briefcase, GraduationCap, Award, Code2, Eye, EyeOff,
-  Heart, Rocket, Send, Share2, Users, Globe, ChevronDown, ChevronUp, ExternalLink, LinkIcon
+  Heart, Rocket, Send, Share2, Users, Globe, ChevronDown, ChevronUp, ExternalLink, LinkIcon, TrendingUp
 } from "lucide-react";
 import { detectPlatform } from "@/lib/platformDetect";
 import GlassModal, { glassInputDarkStyle as gInputStyle, glassSelectDarkStyle as gSelectStyle, glassTextareaDarkStyle as gTextareaStyle, labelStyle } from "@/components/ui/GlassModal";
@@ -635,6 +635,8 @@ const Profile = () => {
               <div className="flex items-center gap-2 mt-1">
                 <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full" style={{ background: "rgba(255,255,255,0.9)", color: roleColor }}>{roleLabel}</span>
                 {isVerified && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1" style={{ background: "rgba(245,158,11,0.9)", color: "#fff" }}><Shield className="w-3 h-3" /> Tiiked</span>}
+                {(profileData.role_metadata as any)?.investor_profile && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(21,128,61,0.85)", color: "#fff" }}>Investor</span>}
+                {(profileData.role_metadata as any)?.founder_profile && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(124,58,237,0.85)", color: "#fff" }}>Founder</span>}
               </div>
             </div>
           </div>
@@ -706,7 +708,60 @@ const Profile = () => {
             <Link to="/app/strands" className="text-[12px] font-semibold mt-1 block" style={{ color: "#E8733A" }}>See all →</Link>
           </GlassBox>
 
-          {/* Not Tiiked banner (owner only) */}
+          {/* Investor Profile Section */}
+          {(() => {
+            const investorProfile = (profileData.role_metadata as any)?.investor_profile;
+            if (!investorProfile) return null;
+            const formatINR = (v: any) => v ? `₹${Number(v).toLocaleString("en-IN")}` : null;
+            return (
+              <GlassBox accent="success">
+                <div className="flex items-center gap-2 mb-2">
+                  <TrendingUp className="w-5 h-5" style={{ color: "#15803D" }} />
+                  <h2 className="text-[15px] font-semibold" style={{ color: "var(--color-text)" }}>Investment Profile</h2>
+                </div>
+                {(investorProfile.investment_min || investorProfile.investment_max) && (
+                  <p className="text-[13px] mb-1" style={{ color: "var(--color-text-secondary)" }}>
+                    Range: {[formatINR(investorProfile.investment_min), formatINR(investorProfile.investment_max)].filter(Boolean).join(" – ")}
+                  </p>
+                )}
+                {investorProfile.stage_preferences?.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-1.5">
+                    {investorProfile.stage_preferences.map((s: string) => (
+                      <span key={s} className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(21,128,61,0.10)", color: "#15803D", border: "1px solid rgba(21,128,61,0.20)" }}>{s}</span>
+                    ))}
+                  </div>
+                )}
+                {investorProfile.sectors?.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-1">
+                    {investorProfile.sectors.map((s: string) => (
+                      <span key={s} className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--color-surface)", border: "1px solid var(--glass-border-subtle)", color: "var(--color-text-secondary)" }}>{s}</span>
+                    ))}
+                  </div>
+                )}
+                {investorProfile.portfolio_count > 0 && (
+                  <p className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>{investorProfile.portfolio_count} portfolio companies</p>
+                )}
+              </GlassBox>
+            );
+          })()}
+
+          {/* Founder Section */}
+          {(() => {
+            const founderProfile = (profileData.role_metadata as any)?.founder_profile;
+            if (!founderProfile) return null;
+            return (
+              <GlassBox accent="info">
+                <div className="flex items-center gap-2 mb-2">
+                  <Rocket className="w-5 h-5" style={{ color: "#7C3AED" }} />
+                  <h2 className="text-[15px] font-semibold" style={{ color: "var(--color-text)" }}>My Startup</h2>
+                </div>
+                {founderProfile.startup_name && <p className="text-[14px] font-bold" style={{ color: "var(--color-text)" }}>{founderProfile.startup_name}</p>}
+                {founderProfile.funding_stage && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full inline-block mt-1" style={{ background: "rgba(124,58,237,0.10)", color: "#7C3AED", border: "1px solid rgba(124,58,237,0.20)" }}>{founderProfile.funding_stage}</span>}
+                {founderProfile.looking_for_funding && <p className="text-[11px] font-semibold mt-1.5" style={{ color: "#E8733A" }}>Looking for funding</p>}
+              </GlassBox>
+            );
+          })()}
+
           {isOwnProfile && !isVerified && (
             <div className="glass-glow" style={{ borderRadius: 20, padding: "12px 16px" }}>
               <div className="flex items-center gap-3">
