@@ -51,7 +51,7 @@ export function useComments() {
         // Load comments for this post
         supabase
           .from("post_comments")
-          .select("*")
+          .select("id, post_id, user_id, content, created_at, parent_id")
           .eq("post_id", postId)
           .order("created_at", { ascending: true })
           .then(async ({ data }) => {

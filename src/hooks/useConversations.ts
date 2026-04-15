@@ -129,7 +129,7 @@ export function useConversations(userId: string | undefined) {
     setMessagesLoading(true);
     const { data } = await supabase
       .from("pings")
-      .select("*")
+      .select("id, content, sender_id, conversation_id, created_at, is_deleted, is_read, attachment_url, attachment_name, attachment_type, attachment_size, pdf_url, work_item_id, is_opener")
       .eq("conversation_id", convoId)
       .order("created_at", { ascending: true })
       .limit(100);

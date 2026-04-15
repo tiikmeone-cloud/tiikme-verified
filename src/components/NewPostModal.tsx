@@ -4,6 +4,7 @@ import { X, Loader2, Image as ImageIcon, AtSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface MentionUser {
   id: string;
