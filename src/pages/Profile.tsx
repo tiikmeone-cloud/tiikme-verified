@@ -176,7 +176,7 @@ const AboutSection = ({ about, isOwnProfile, userId }: { about: string; isOwnPro
 
   const handleSave = async () => {
     setSaving(true);
-    await supabase.from("profiles").update({ bio: text.slice(0, 500) } as any).eq("id", userId);
+    await supabase.from("profiles").update({ about: text.slice(0, 500) } as any).eq("id", userId);
     setSaving(false);
     setEditing(false);
     toast.success("About updated");
@@ -257,6 +257,9 @@ const ContactSection = ({ isOwnProfile, profile, userEmail }: { isOwnProfile: bo
     toast.success(newVal ? "Email now visible on profile" : "Email hidden from profile");
   };
 
+  // For other people's profiles: hide entire section if email not visible
+  if (!isOwnProfile && !profile?.contact_email_visible) return null;
+
   return (
     <div className="glass-card" style={{ padding: 12, borderRadius: 16, marginTop: 8 }}>
       <div className="flex items-center" style={{ gap: 8 }}>
@@ -265,13 +268,7 @@ const ContactSection = ({ isOwnProfile, profile, userEmail }: { isOwnProfile: bo
       <div style={{ marginTop: 8 }}>
         {isOwnProfile ? (
           <>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center" style={{ gap: 6 }}>
-                <Mail style={{ width: 14, height: 14, color: "#4A90D9" }} />
-                <span style={{ fontSize: 13, fontWeight: 400, color: "#4A90D9" }}>{userEmail || "No email"}</span>
-              </div>
-            </div>
-            <div className="flex items-center justify-between" style={{ marginTop: 8 }}>
+            <div className="flex items-center justify-between" style={{ marginBottom: emailVisible ? 8 : 0 }}>
               <span style={{ fontSize: 12, color: "#6B7094" }}>Show email on profile</span>
               <button
                 type="button"
@@ -283,15 +280,17 @@ const ContactSection = ({ isOwnProfile, profile, userEmail }: { isOwnProfile: bo
                 <div style={{ width: 14, height: 14, borderRadius: 7, background: "#fff", transform: emailVisible ? "translateX(14px)" : "translateX(0)", transition: "transform 0.2s" }} />
               </button>
             </div>
+            {emailVisible && (
+              <div className="flex items-center" style={{ gap: 6 }}>
+                <Mail style={{ width: 14, height: 14, color: "#4A90D9" }} />
+                <span style={{ fontSize: 13, fontWeight: 400, color: "#4A90D9" }}>{userEmail || "No email"}</span>
+              </div>
+            )}
           </>
         ) : (
           <div className="flex items-center" style={{ gap: 6 }}>
-            <Mail style={{ width: 14, height: 14, color: emailVisible || profile?.contact_email_visible ? "#4A90D9" : "#9CA3C0" }} />
-            {profile?.contact_email_visible ? (
-              <span style={{ fontSize: 13, fontWeight: 400, color: "#4A90D9" }}>{profile?.email || "Email hidden"}</span>
-            ) : (
-              <span style={{ fontSize: 13, fontWeight: 400, color: "#9CA3C0" }}>Email hidden</span>
-            )}
+            <Mail style={{ width: 14, height: 14, color: "#4A90D9" }} />
+            <span style={{ fontSize: 13, fontWeight: 400, color: "#4A90D9" }}>{profile?.email || "Email"}</span>
           </div>
         )}
       </div>
@@ -732,7 +731,7 @@ const Profile = () => {
 
               {/* ROW 4: Stats */}
               <div className="flex items-center" style={{ gap: 16, marginTop: 4 }}>
-                <Link to="/app/strands" className="cursor-pointer hover:opacity-80">
+                <Link to="/app/connections" className="cursor-pointer hover:opacity-80">
                   <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{stats.connections}</span>
                   <span style={{ fontSize: 12, fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Connections</span>
                 </Link>
@@ -803,7 +802,7 @@ const Profile = () => {
                   ))}
                 </div>
               )}
-              <Link to="/app/strands" style={{ fontSize: 12, fontWeight: 400, color: "#E8733A" }}>See all &gt;</Link>
+              <Link to="/app/connections" style={{ fontSize: 12, fontWeight: 400, color: "#E8733A" }}>See all &gt;</Link>
             </div>
 
             {/* L2: Get Tiiked */}
