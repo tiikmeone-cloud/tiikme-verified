@@ -57,7 +57,7 @@ export function useConversations(userId: string | undefined) {
 
     const { data: convos, error: convoErr } = await supabase
       .from("conversations")
-      .select("*")
+      .select("id, participant_1, participant_2, last_message_at, created_at, is_active")
       .or(`participant_1.eq.${userId},participant_2.eq.${userId}`)
       .order("last_message_at", { ascending: false })
       .limit(50);

@@ -36,7 +36,7 @@ const Explore = () => {
     const t = setTimeout(async () => {
       const term = `%${search}%`;
       const [{ data: profiles }, { data: orgs }] = await Promise.all([
-        supabase.from("profiles").select("id, full_name, username, avatar_url, role").eq("is_public", true).or(`full_name.ilike.${term},username.ilike.${term}`).limit(5),
+        supabase.from("profiles").select("id, full_name, username, avatar_url, role").eq("is_public", true).neq("id", user?.id || "").or(`full_name.ilike.${term},username.ilike.${term}`).limit(5),
         supabase.from("organizations").select("id, name, slug, type, logo_url").or(`name.ilike.${term}`).limit(5),
       ]);
       const results: any[] = [];
