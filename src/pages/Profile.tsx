@@ -129,8 +129,8 @@ const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose:
         <SheetHeader><SheetTitle className="text-[18px] font-extrabold" style={{ color: "#1A1A1A" }}>Edit Profile</SheetTitle></SheetHeader>
         <div className="space-y-4 mt-4">
           <div className="flex items-center gap-4 cursor-pointer" onClick={() => avatarRef.current?.click()}>
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-[20px] font-bold text-white overflow-hidden" style={{ backgroundColor: "#E8580A" }}>
-              {form.avatar_url ? <img src={storageImageUrl(form.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : form.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "U"}
+            <div className="w-16 h-16 flex items-center justify-center text-[20px] font-bold text-white overflow-hidden" style={{ borderRadius: 0, backgroundColor: "#E8580A" }}>
+              {form.avatar_url ? <img src={storageImageUrl(form.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : form.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "U"}
             </div>
             <p className="text-[12px]" style={{ color: "#9CA3AF" }}>Click to change avatar</p>
             <input ref={avatarRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
@@ -320,9 +320,9 @@ const Profile = () => {
         <div className="max-w-[960px] mx-auto px-4">
           <div className="h-[240px] relative overflow-hidden" style={{ borderRadius: "0 0 28px 28px", background: "linear-gradient(135deg, #1A1A4E 0%, #2D2D7A 60%, #3D3D8A 100%)" }}>
             <div className="absolute bottom-5 left-6 flex items-end gap-4 z-10">
-              <div className="w-[100px] h-[100px] rounded-2xl flex items-center justify-center text-[28px] font-extrabold text-white overflow-hidden shrink-0"
-                style={{ backgroundColor: profileData.avatar_url ? "#fff" : limitedRoleColor, border: "3px solid rgba(255,255,255,0.40)" }}>
-                {profileData.avatar_url ? <img src={storageImageUrl(profileData.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : limitedInitials}
+              <div className="w-[100px] h-[100px] flex items-center justify-center text-[28px] font-extrabold text-white overflow-hidden shrink-0"
+                style={{ borderRadius: 0, backgroundColor: profileData.avatar_url ? "#fff" : limitedRoleColor, border: "3px solid rgba(255,255,255,0.40)" }}>
+                {profileData.avatar_url ? <img src={storageImageUrl(profileData.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : limitedInitials}
               </div>
               <div className="pb-1">
                 <h1 className="text-[24px] font-bold text-white" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>{limitedName}</h1>
