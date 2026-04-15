@@ -1,15 +1,19 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Bell, Briefcase, Link2, Shield, TrendingUp, Target, Check, X, UserCheck } from "lucide-react";
+import { Bell, Briefcase, Link2, Shield, TrendingUp, Target, Check, X, UserCheck, Heart, MessageSquare, Repeat2, AtSign, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import AvatarSquare from "@/components/ui/AvatarSquare";
 
 const ICON_MAP: Record<string, any> = {
   strand: Link2, hr: Briefcase, verified: Shield, work: Target, score: TrendingUp,
   strand_request: UserCheck, verification_request: Shield, opportunity: Briefcase, offer: Briefcase,
   delegation_approval: Shield, ex_member_verification: UserCheck,
+  like: Heart, comment: MessageSquare, repost: Repeat2, mention: AtSign,
+  connection_request: Users, connection_accepted: UserCheck, follow: Users,
+  new_message: MessageSquare, verification_approved: Shield, verification_declined: Shield,
 };
 
 const ICON_STYLES: Record<string, { bg: string; color: string }> = {
@@ -18,6 +22,8 @@ const ICON_STYLES: Record<string, { bg: string; color: string }> = {
   strand_request: { bg: "rgba(79,70,229,0.1)", color: "#4F46E5" },
   verified: { bg: "rgba(245,158,11,0.1)", color: "#F59E0B" },
   verification_request: { bg: "rgba(245,158,11,0.1)", color: "#F59E0B" },
+  verification_approved: { bg: "rgba(22,163,74,0.1)", color: "#16A34A" },
+  verification_declined: { bg: "rgba(220,38,38,0.1)", color: "#DC2626" },
   work: { bg: "rgba(3,105,161,0.1)", color: "#0369A1" },
   opportunity: { bg: "rgba(194,65,12,0.1)", color: "#C2410C" },
   offer: { bg: "rgba(22,163,74,0.1)", color: "#16A34A" },
@@ -25,6 +31,12 @@ const ICON_STYLES: Record<string, { bg: string; color: string }> = {
   challenge: { bg: "rgba(146,64,14,0.1)", color: "#92400E" },
   like: { bg: "rgba(232,88,10,0.1)", color: "#E8580A" },
   comment: { bg: "rgba(232,88,10,0.1)", color: "#E8580A" },
+  repost: { bg: "rgba(79,70,229,0.1)", color: "#4F46E5" },
+  mention: { bg: "rgba(232,115,58,0.1)", color: "#E8733A" },
+  connection_request: { bg: "rgba(79,70,229,0.1)", color: "#4F46E5" },
+  connection_accepted: { bg: "rgba(22,163,74,0.1)", color: "#16A34A" },
+  follow: { bg: "rgba(79,70,229,0.1)", color: "#4F46E5" },
+  new_message: { bg: "rgba(232,115,58,0.1)", color: "#E8733A" },
   delegation_approval: { bg: "rgba(245,158,11,0.1)", color: "#F59E0B" },
   ex_member_verification: { bg: "rgba(79,70,229,0.1)", color: "#4F46E5" },
 };
@@ -57,6 +69,7 @@ const Alerts = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("All");
   const [alerts, setAlerts] = useState<any[]>([]);
+  const [actorProfiles, setActorProfiles] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [showJoinModal, setShowJoinModal] = useState<any>(null);
 
@@ -70,6 +83,18 @@ const Alerts = () => {
       if (error) { setAlerts([]); setLoading(false); return; }
       setAlerts(data || []);
       setLoading(false);
+
+      // Fetch actor profiles for avatars
+      const actorIds = [...new Set((data || []).map((a: any) => a.data?.actor_id).filter(Boolean))] as string[];
+      if (actorIds.length > 0) {
+        supabase.from("profiles").select("id, full_name, avatar_url, role").in("id", actorIds)
+          .then(({ data: profiles }) => {
+            const map: Record<string, any> = {};
+            for (const p of profiles || []) map[p.id] = p;
+            setActorProfiles(map);
+          });
+      }
+
       if ((data || []).some((a: any) => !a.is_read)) {
         supabase.from("alerts").update({ is_read: true } as any).eq("user_id", user.id).eq("is_read", false).then(() => {});
       }
@@ -198,7 +223,7 @@ const Alerts = () => {
               const unread = !notif.is_read;
               const style = ICON_STYLES[notif.type] || ICON_STYLES.score;
               const Icon = ICON_MAP[notif.type] || Bell;
-              const isStrandRequest = notif.type === "strand" && notif.title?.toLowerCase().includes("connect");
+              const isStrandRequest = notif.type === "connection_request" || (notif.type === "strand" && notif.title?.toLowerCase().includes("connect"));
               const isOffer = notif.type === "offer" || (notif.type === "opportunity" && notif.title?.toLowerCase().includes("selected"));
               const isDelegation = notif.type === "delegation_approval";
               const isExVerification = notif.type === "ex_member_verification";
@@ -221,11 +246,26 @@ const Alerts = () => {
                   <div className="w-2 flex items-start pt-2 shrink-0">
                     {unread && <span className="w-2 h-2 rounded-full" style={{ background: "#E8733A" }} />}
                   </div>
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: isOffer ? "rgba(22,163,74,0.1)" : style.bg }}>
-                    <Icon className="w-4 h-4" style={{ color: isOffer ? "#16A34A" : style.color }} />
-                  </div>
+                  {(() => {
+                    const actor = notif.data?.actor_id ? actorProfiles[notif.data.actor_id] : null;
+                    if (actor) {
+                      return (
+                        <div className="relative shrink-0">
+                          <AvatarSquare src={actor.avatar_url} name={actor.full_name || "U"} size={36} />
+                          <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: isOffer ? "rgba(22,163,74,0.9)" : style.bg, border: "2px solid var(--bg)" }}>
+                            <Icon className="w-2.5 h-2.5" style={{ color: isOffer ? "#fff" : style.color }} />
+                          </div>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="w-9 h-9 flex items-center justify-center shrink-0" style={{ backgroundColor: isOffer ? "rgba(22,163,74,0.1)" : style.bg, borderRadius: 0 }}>
+                        <Icon className="w-4 h-4" style={{ color: isOffer ? "#16A34A" : style.color }} />
+                      </div>
+                    );
+                  })()}
                   <div className="flex-1 min-w-0">
-                    <p className={`text-[14px] leading-relaxed ${unread ? "font-semibold" : "font-normal"}`} style={{ color: unread ? "#1A1A2E" : "#6B7094" }}>
+                    <p className={`text-[14px] leading-relaxed ${unread ? "font-semibold" : "font-normal"}`} style={{ color: unread ? "var(--text-1)" : "var(--text-2)" }}>
                       {notif.title || notif.body}
                     </p>
                     {notif.body && notif.title && (

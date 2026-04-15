@@ -3,6 +3,7 @@ import { storageImageUrl } from "@/lib/imageTransform";
 import { useState, useEffect, useCallback } from "react";
 import { Link2, Check, X, Search, MessageCircle, Compass } from "lucide-react";
 import { toast } from "sonner";
+import { sendNotification } from "@/lib/notify";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,7 +22,7 @@ interface StrandRow {
 
 const Strands = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [tab, setTab] = useState<"connected" | "pending" | "sent" | "suggested">("connected");
   const [search, setSearch] = useState("");
   const [connected, setConnected] = useState<StrandRow[]>([]);
@@ -77,7 +78,15 @@ const Strands = () => {
     await supabase.from("strands").update({ status: "accepted" }).eq("id", s.id);
     if (user) {
       await supabase.rpc("increment_score", { uid: user.id, amount: 3 });
-      await supabase.rpc("increment_score", { uid: s.requester_id === user.id ? s.receiver_id : s.requester_id, amount: 3 });
+      const otherId = s.requester_id === user.id ? s.receiver_id : s.requester_id;
+      await supabase.rpc("increment_score", { uid: otherId, amount: 3 });
+      sendNotification({
+        userId: s.requester_id,
+        actorId: user.id,
+        type: "connection_accepted",
+        title: `${profile?.full_name || "Someone"} accepted your connection`,
+        actionUrl: `/app/profile/${user.id}`,
+      });
     }
     toast.success("Connected!");
     fetchStrands();
@@ -95,6 +104,14 @@ const Strands = () => {
       if (existing.status === "accepted") { toast.info("Already connected"); return; }
     }
     await supabase.from("strands").insert({ requester_id: user.id, receiver_id: profileId });
+    sendNotification({
+      userId: profileId,
+      actorId: user.id,
+      type: "connection_request",
+      title: `${profile?.full_name || "Someone"} wants to connect`,
+      actionUrl: `/app/strands`,
+      data: { actor_id: user.id },
+    });
     toast.success("Request sent!");
     fetchStrands();
   };

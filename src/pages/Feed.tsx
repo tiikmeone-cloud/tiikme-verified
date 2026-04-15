@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
 import ImageGrid from "@/components/feed/ImageGrid";
 import MentionText from "@/components/feed/MentionText";
+import { sendNotification } from "@/lib/notify";
 import ActivityScoreRing from "@/components/ActivityScoreRing";
 import SkeletonCard from "@/components/SkeletonCard";
 import EditPostModal from "@/components/feed/EditPostModal";
@@ -115,6 +116,16 @@ const LivePostCard = ({
         image_urls: post.image_urls || [],
       } as any);
       await supabase.from("post_reposts").insert({ post_id: post.id, reposted_by: user.id });
+      // Notify original post author about repost
+      if (post.author_id) {
+        sendNotification({
+          userId: post.author_id,
+          actorId: user.id,
+          type: "repost",
+          title: `${authProfile?.full_name || "Someone"} reposted your post`,
+          actionUrl: `/post/${post.id}`,
+        });
+      }
       toast.success("Reposted");
     } catch (e) { console.warn("[Feed] repost failed:", e); }
     setConfirmRepost(false);
@@ -362,7 +373,7 @@ const OpportunitiesWidget = () => {
 };
 
 const SuggestedWidget = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [suggested, setSuggested] = useState<any[]>([]);
   useEffect(() => {
     if (!user) return;
@@ -389,7 +400,18 @@ const SuggestedWidget = () => {
               <button
                 className="btn-glass-pill text-[12px] font-semibold active:scale-95"
                 style={{ padding: "4px 12px", fontSize: 12 }}
-                onClick={() => { supabase.from("strands").insert({ requester_id: user!.id, receiver_id: s.id }); toast.success("Request sent"); }}
+                onClick={() => {
+                  supabase.from("strands").insert({ requester_id: user!.id, receiver_id: s.id });
+                  sendNotification({
+                    userId: s.id,
+                    actorId: user!.id,
+                    type: "connection_request",
+                    title: `${profile?.full_name || "Someone"} wants to connect`,
+                    actionUrl: `/app/strands`,
+                    data: { actor_id: user!.id },
+                  });
+                  toast.success("Request sent");
+                }}
               >Connect</button>
             </div>
           );
