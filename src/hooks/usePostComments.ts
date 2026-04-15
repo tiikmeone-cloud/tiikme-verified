@@ -46,7 +46,7 @@ export function usePostComments(postId: string, enabled: boolean) {
     setLoading(true);
     const { data } = await supabase
       .from("post_comments")
-      .select("*")
+      .select("id, post_id, user_id, content, created_at, parent_id")
       .eq("post_id", postId)
       .order("created_at", { ascending: true })
       .limit(50);
@@ -69,7 +69,7 @@ export function usePostComments(postId: string, enabled: boolean) {
         // Fetch with author join
         const { data } = await supabase
           .from("post_comments")
-          .select("*")
+           .select("id, post_id, user_id, content, created_at, parent_id")
           .eq("id", newComment.id)
           .single();
         if (data && mountedRef.current) {
@@ -112,7 +112,7 @@ export function usePostComments(postId: string, enabled: boolean) {
     const { data, error } = await supabase
       .from("post_comments")
       .insert({ post_id: postId, user_id: userId, content })
-      .select("*")
+      .select("id, post_id, user_id, content, created_at, parent_id")
       .single();
 
     if (!error && data && mountedRef.current) {
