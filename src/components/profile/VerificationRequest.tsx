@@ -1,5 +1,6 @@
 import { storageImageUrl } from "@/lib/imageTransform";
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Search, Send, CheckCircle, Clock, XCircle, Mail, Copy, ExternalLink, RefreshCw, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -198,8 +199,8 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
         {expanded ? "Cancel" : "Verify"}
       </button>
 
-      {/* ── FIXED MODAL OVERLAY ── */}
-      {expanded && (
+      {/* ── FIXED MODAL OVERLAY via Portal ── */}
+      {expanded && createPortal(
         <div
           className="fixed inset-0 z-50 flex items-center justify-center px-4"
           style={{ background: "rgba(26,26,78,0.40)", backdropFilter: "blur(8px)" }}
@@ -438,7 +439,8 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
