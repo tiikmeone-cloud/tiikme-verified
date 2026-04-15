@@ -1,10 +1,19 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import OnboardingShell from "@/components/onboarding/OnboardingShell";
+
+const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
+
+const validatePassword = (pw: string) => {
+  if (pw.length < 8) return "Password must be at least 8 characters";
+  if (!/[A-Z]/.test(pw)) return "Must contain at least 1 uppercase letter";
+  if (!/\d/.test(pw)) return "Must contain at least 1 number";
+  return null;
+};
 
 const getStrength = (pw: string) => {
   if (pw.length < 8) return { level: 0, label: "Weak", color: "#DC2626", pct: 20 };
@@ -20,14 +29,17 @@ const inputStyle: React.CSSProperties = {
   color: "#111827", height: 48, width: "100%", padding: "0 14px", fontSize: 14,
   outline: "none", fontFamily: "'Plus Jakarta Sans', sans-serif",
 };
+const inputErrorStyle: React.CSSProperties = { ...inputStyle, borderColor: "#EF4444" };
 
 export default function SignupPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (user) {
@@ -36,6 +48,8 @@ export default function SignupPage() {
   }, [user]);
 
   const strength = getStrength(password);
+
+  const clearError = (field: string) => setErrors(p => ({ ...p, [field]: "" }));
 
   const handleGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
@@ -46,14 +60,51 @@ export default function SignupPage() {
   };
 
   const handleSubmit = async () => {
-    if (!email || !password) { toast.info("Please fill in all fields"); return; }
-    if (password.length < 8) { toast.info("Password must be at least 8 characters"); return; }
+    const errs: Record<string, string> = {};
+    if (!email) errs.email = "Email is required";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errs.email = "Invalid email format";
+
+    const pwErr = validatePassword(password);
+    if (!password) errs.password = "Password is required";
+    else if (pwErr) errs.password = pwErr;
+
+    if (!confirmPassword) errs.confirmPassword = "Please confirm your password";
+    else if (password !== confirmPassword) errs.confirmPassword = "Passwords do not match";
+
+    setErrors(errs);
+    if (Object.keys(errs).length > 0) return;
+
     setSubmitting(true);
-    const { error } = await supabase.auth.signUp({ email, password });
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/onboarding/role`,
+        data: { account_type: "user" },
+      },
+    });
     setSubmitting(false);
+
     if (error) { toast.error(error.message); return; }
+
+    // Supabase returns identities=[] for already-registered emails
+    if (data.user && data.user.identities && data.user.identities.length === 0) {
+      setErrors({ email: "This email is already registered. Please sign in instead." });
+      return;
+    }
+
     sessionStorage.setItem("ob_email", email);
     navigate("/verify-email");
+  };
+
+  const FieldError = ({ field }: { field: string }) => {
+    if (!errors[field]) return null;
+    return (
+      <p className="flex items-center gap-1 mt-1" style={{ fontSize: 12, color: "#EF4444" }}>
+        <AlertCircle style={{ width: 12, height: 12, flexShrink: 0 }} /> {errors[field]}
+      </p>
+    );
   };
 
   return (
@@ -64,6 +115,7 @@ export default function SignupPage() {
 
         {/* Google */}
         <button
+          type="button"
           onClick={handleGoogle}
           className="w-full flex items-center justify-center gap-3 h-12 rounded-2xl text-[14px] font-semibold cursor-pointer transition-all hover:shadow-md"
           style={{ background: "#fff", border: "1.5px solid #E5E7EB", color: "#111827" }}
@@ -78,39 +130,58 @@ export default function SignupPage() {
           <div className="flex-1 h-px" style={{ background: "#E5E7EB" }} />
         </div>
 
-        {/* Email */}
+        {/* Form */}
         <div className="space-y-4">
-          <input
-            type="email" placeholder="Email address" value={email}
-            onChange={e => setEmail(e.target.value)} style={inputStyle}
-          />
-
-          {/* Password */}
-          <div className="relative">
+          <div>
             <input
-              type={showPw ? "text" : "password"} placeholder="Password (min 8 characters)"
-              value={password} onChange={e => setPassword(e.target.value)} style={inputStyle}
+              type="email" placeholder="Email address" value={email}
+              onChange={e => { setEmail(e.target.value); clearError("email"); }}
+              style={errors.email ? inputErrorStyle : inputStyle}
             />
-            <button
-              type="button" onClick={() => setShowPw(!showPw)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
-              style={{ color: "#9CA3AF" }}
-            >
-              {showPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-            </button>
+            <FieldError field="email" />
           </div>
 
-          {/* Strength bar */}
-          {password.length > 0 && (
-            <div className="space-y-1.5">
-              <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "#F3F4F6" }}>
-                <div className="h-full rounded-full transition-all duration-300" style={{ width: `${strength.pct}%`, background: strength.color }} />
-              </div>
-              <p className="text-[12px] font-medium" style={{ color: strength.color }}>{strength.label}</p>
+          {/* Password */}
+          <div>
+            <div className="relative">
+              <input
+                type={showPw ? "text" : "password"} placeholder="Password (min 8 chars, 1 uppercase, 1 number)"
+                value={password} onChange={e => { setPassword(e.target.value); clearError("password"); }}
+                style={{ ...(errors.password ? inputErrorStyle : inputStyle), paddingRight: 44 }}
+              />
+              <button
+                type="button" onClick={() => setShowPw(!showPw)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
+                style={{ color: "#9CA3AF" }}
+              >
+                {showPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
             </div>
-          )}
+            <FieldError field="password" />
+            {/* Strength bar */}
+            {password.length > 0 && !errors.password && (
+              <div className="space-y-1.5 mt-2">
+                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "#F3F4F6" }}>
+                  <div className="h-full rounded-full transition-all duration-300" style={{ width: `${strength.pct}%`, background: strength.color }} />
+                </div>
+                <p className="text-[12px] font-medium" style={{ color: strength.color }}>{strength.label}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Confirm Password */}
+          <div>
+            <input
+              type="password" placeholder="Confirm password"
+              value={confirmPassword}
+              onChange={e => { setConfirmPassword(e.target.value); clearError("confirmPassword"); }}
+              style={errors.confirmPassword ? inputErrorStyle : inputStyle}
+            />
+            <FieldError field="confirmPassword" />
+          </div>
 
           <button
+            type="button"
             onClick={handleSubmit} disabled={submitting}
             className="w-full h-12 rounded-2xl text-[15px] font-bold text-white cursor-pointer transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
             style={{ background: "#E8580A" }}
