@@ -55,7 +55,9 @@ const PageProfile = () => {
   const [oppFilter, setOppFilter] = useState<"all" | "active" | "closed">("all");
   const [deptFilter, setDeptFilter] = useState<string>("all");
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
-
+  const [startupProfile, setStartupProfile] = useState<any>(null);
+  const [showInterestModal, setShowInterestModal] = useState(false);
+  const [isInvestor, setIsInvestor] = useState(false);
   useEffect(() => {
     const load = async () => {
       if (!slug) return;
