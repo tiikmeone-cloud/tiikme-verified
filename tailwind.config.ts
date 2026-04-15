@@ -1,14 +1,13 @@
 import type { Config } from "tailwindcss";
 
 export default {
-  darkMode: ["class"],
   content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
   prefix: "",
   theme: {
     container: { center: true, padding: "2rem", screens: { "2xl": "1400px" } },
     extend: {
       fontFamily: {
-        sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+        sans: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
       },
       colors: {
         border: "var(--border)",
@@ -33,8 +32,6 @@ export default {
         "t1": "var(--text-1)",
         "t2": "var(--text-2)",
         "t3": "var(--text-3)",
-        "indigo-start": "#1A1A4E",
-        "indigo-end": "#2D2D7A",
         "accent-orange": "#E8733A",
         "accent-pink": "#FF6B9D",
         "text-primary": "#1A1A2E",

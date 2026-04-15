@@ -1,6 +1,6 @@
 import { storageImageUrl } from "@/lib/imageTransform";
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
-import { Check, GraduationCap, Briefcase, Rocket, Laptop, Coffee, Sun, Moon, Monitor, Palette, Mail, Key, Download, Trash2, AlertTriangle, Camera, User, Shield, Bell, Eye, Lock, LogOut, Users, Copy, Share2, Image as ImageIcon, TrendingUp } from "lucide-react";
+import { Check, GraduationCap, Briefcase, Rocket, Laptop, Coffee, Mail, Key, Download, Trash2, AlertTriangle, Camera, User, Shield, Bell, Eye, Lock, LogOut, Users, Copy, Share2, Image as ImageIcon, TrendingUp } from "lucide-react";
 import InvestorFounderSettings from "@/components/profile/InvestorFounderSettings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,14 +9,13 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useTheme } from "@/hooks/useTheme";
+
 
 const navItems = [
   { id: "profile", label: "Profile", icon: User },
   { id: "roles", label: "Additional Roles", icon: TrendingUp },
   { id: "invite", label: "Invite & Earn", icon: Users },
   { id: "journey", label: "My Journey", icon: Rocket },
-  { id: "appearance", label: "Appearance", icon: Palette },
   { id: "privacy", label: "Privacy", icon: Eye },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "account", label: "Account", icon: Lock },
@@ -160,7 +159,7 @@ const PrivacySection = ({ userId }: { userId: string | null }) => {
 const SettingsPage = () => {
   const navigate = useNavigate();
   const { user, refreshProfile } = useAuth();
-  const { theme, setTheme: setThemeHook } = useTheme();
+  
   
   const [activeTab, setActiveTab] = useState("profile");
   const [journeyChoice, setJourneyChoice] = useState<string | null>(null);
@@ -222,10 +221,6 @@ const SettingsPage = () => {
     loadProfile();
   }, []);
 
-  const handleThemeChange = (newTheme: string) => {
-    setThemeHook(newTheme as any, user?.id);
-    tiikToast.success(`Theme set to ${newTheme}`);
-  };
 
   const handleSaveProfile = async () => {
     if (!userId) return;
@@ -330,9 +325,7 @@ const SettingsPage = () => {
   const handleSignOut = async () => {
     setLoggingOut(true);
     await supabase.auth.signOut();
-    const savedTheme = localStorage.getItem("tiikme-theme");
     localStorage.clear();
-    if (savedTheme) localStorage.setItem("tiikme-theme", savedTheme);
     setTimeout(() => navigate("/signin"), 500);
   };
 
@@ -350,9 +343,7 @@ const SettingsPage = () => {
       ]);
       await supabase.from("profiles").delete().eq("id", user.id);
       await supabase.auth.signOut();
-      const savedTheme = localStorage.getItem("tiikme-theme");
       localStorage.clear();
-      if (savedTheme) localStorage.setItem("tiikme-theme", savedTheme);
       tiikToast.success("Account deleted");
       navigate("/");
     } catch {
@@ -551,47 +542,6 @@ const SettingsPage = () => {
             </div>
           )}
 
-          {activeTab === "appearance" && (
-            <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
-              <h3 className="text-[16px] font-semibold mb-2" style={{ color: "var(--color-text)" }}>Appearance</h3>
-              <p className="text-[13px] mb-4" style={{ color: "var(--color-text-secondary)" }}>Choose how Tiikme looks for you.</p>
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { id: "light", label: "Light", icon: Sun, previewBg: "#F0F2F7", previewSurface: "rgba(255,255,255,0.5)", previewDot: "#E8733A" },
-                  { id: "dark", label: "Dark", icon: Moon, previewBg: "#0D0D1E", previewSurface: "rgba(26,26,78,0.5)", previewDot: "#F08050" },
-                  { id: "system", label: "System", icon: Monitor },
-                ].map(t => {
-                  const isActive = theme === t.id;
-                  return (
-                    <button type="button" key={t.id} onClick={() => handleThemeChange(t.id)}
-                      className="rounded-2xl p-3 text-left cursor-pointer relative overflow-hidden active:scale-[0.98]"
-                      style={{
-                        background: isActive ? "var(--color-accent-glow)" : "var(--color-surface)",
-                        border: isActive ? "2px solid var(--color-accent)" : "1.5px solid var(--glass-border-subtle)",
-                        boxShadow: isActive ? "0 0 0 3px var(--color-accent-glow)" : "none",
-                        transition: "all 0.2s",
-                        width: "100%", height: 92,
-                      }}>
-                      {isActive && <div className="absolute top-2 right-2 w-[18px] h-[18px] rounded-full flex items-center justify-center" style={{ background: "var(--color-accent)" }}><Check className="w-3 h-3 text-white" /></div>}
-                      {t.previewBg ? (
-                        <div className="w-full h-[55px] rounded-lg mb-2 relative overflow-hidden" style={{ background: t.previewBg }}>
-                          <div className="absolute inset-x-2 top-2 h-2 rounded-full" style={{ background: t.previewSurface, opacity: 0.5 }} />
-                          <div className="absolute inset-x-2 top-5 h-2 rounded-full" style={{ background: t.previewSurface, opacity: 0.3 }} />
-                          <div className="absolute bottom-2 left-2 w-2 h-2 rounded-full" style={{ background: t.previewDot }} />
-                        </div>
-                      ) : (
-                        <div className="w-full h-[55px] rounded-lg mb-2 relative overflow-hidden" style={{ background: "linear-gradient(135deg, #0D0D1E 50%, #F0F2F7 50%)" }}>
-                          <div className="absolute bottom-2 left-2 w-2 h-2 rounded-full" style={{ background: "#F08050" }} />
-                          <div className="absolute bottom-2 right-2 w-2 h-2 rounded-full" style={{ background: "#E8733A" }} />
-                        </div>
-                      )}
-                      <span className="text-[13px] font-semibold block" style={{ color: "var(--color-text-secondary)" }}>{t.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
 
           {activeTab === "journey" && (
             <div className="space-y-5">
