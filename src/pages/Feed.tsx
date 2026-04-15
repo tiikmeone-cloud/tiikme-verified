@@ -280,9 +280,7 @@ const LivePostCard = ({
             const isOwnComment = user?.id === c.user_id;
             return (
               <div key={c.id} className="flex items-start gap-2 group">
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden" style={{ backgroundColor: cColor }}>
-                  {c.author?.avatar_url ? <img src={storageImageUrl(c.author.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : cInitials}
-                </div>
+                <AvatarSquare src={c.author?.avatar_url} name={cName} size={28} bgColor={cColor} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <Link to={`/app/profile/${c.author?.id || c.user_id}`} className="text-[13px] font-bold hover:underline" style={{ color: "var(--color-text)" }}>{cName}</Link>

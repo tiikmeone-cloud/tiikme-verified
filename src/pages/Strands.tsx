@@ -1,3 +1,4 @@
+import AvatarSquare from "@/components/ui/AvatarSquare";
 import { storageImageUrl } from "@/lib/imageTransform";
 import { useState, useEffect, useCallback } from "react";
 import { Link2, Check, X, Search, MessageCircle, Compass } from "lucide-react";
@@ -113,14 +114,8 @@ const Strands = () => {
 
   const Avatar = ({ person }: { person: any }) => {
     const name = person?.full_name || "U";
-    const initials = name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
     const color = ROLE_COLORS[person?.role || ""] || "#6B7280";
-    return (
-      <div className="w-11 h-11 rounded-xl flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden"
-        style={{ backgroundColor: color, border: "2px solid rgba(255,255,255,0.25)", boxShadow: "0 0 8px rgba(26,26,78,0.08)" }}>
-        {person?.avatar_url ? <img src={storageImageUrl(person.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials}
-      </div>
-    );
+    return <AvatarSquare src={person?.avatar_url} name={name} size={44} bgColor={color} />;
   };
 
   const roleLabel = (r: string) => r ? r.charAt(0).toUpperCase() + r.slice(1).replace(/_/g, " ") : "";
