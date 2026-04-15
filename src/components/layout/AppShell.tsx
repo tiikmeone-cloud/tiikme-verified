@@ -99,9 +99,15 @@ const AppShell = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (!user?.id) return;
-    supabase.from("alerts").select("id", { count: "exact", head: true })
-      .eq("user_id", user.id).eq("is_read", false)
-      .then(({ count }) => setUnreadAlerts(count || 0));
+    // Count unread from BOTH alerts and notifications tables
+    Promise.allSettled([
+      supabase.from("alerts").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("is_read", false),
+      supabase.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("is_read", false),
+    ]).then(([alertsRes, notifsRes]) => {
+      const alertCount = alertsRes.status === "fulfilled" ? ((alertsRes.value as any).count || 0) : 0;
+      const notifCount = notifsRes.status === "fulfilled" ? ((notifsRes.value as any).count || 0) : 0;
+      setUnreadAlerts(alertCount + notifCount);
+    });
     fetchUnreadPings();
 
     // Listen for manual mark-read events from Pings page
