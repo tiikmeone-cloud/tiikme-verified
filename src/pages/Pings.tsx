@@ -14,6 +14,27 @@ import { Input } from "@/components/ui/input";
 const ROLE_COLORS: Record<string, string> = { faculty: "#92400E", professional: "#0369A1", doctor: "#0E7490", student: "#4F46E5", skilled_trade: "#C2410C", hr: "#6B21A8", government: "#166534" };
 const ALLOWED_ATTACH = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "image/jpeg", "image/png", "image/webp", "image/gif"];
 
+/** Render URLs in message text as clickable links */
+function renderLinkedText(text: string, isOwnMessage: boolean): React.ReactNode {
+  const urlRegex = /(https?:\/\/[^\s]+)/gi;
+  const parts = text.split(urlRegex);
+  if (parts.length === 1) return text;
+  return parts.map((part, i) => {
+    if (urlRegex.test(part)) {
+      // Reset lastIndex since global regex is stateful
+      urlRegex.lastIndex = 0;
+      return (
+        <a key={i} href={part} target="_blank" rel="noopener noreferrer"
+          style={{ color: isOwnMessage ? "rgba(255,255,255,0.9)" : "#4A90D9", textDecoration: "underline", wordBreak: "break-all" }}>
+          {part}
+        </a>
+      );
+    }
+    urlRegex.lastIndex = 0;
+    return <React.Fragment key={i}>{part}</React.Fragment>;
+  });
+}
+
 const ringStyle = (verified: boolean): React.CSSProperties => {
   if (verified) return { boxShadow: "0 0 0 2px var(--surface), 0 0 0 4.5px #F59E0B, 0 0 12px rgba(245,158,11,0.45)" };
   return {};
