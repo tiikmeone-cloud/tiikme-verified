@@ -139,8 +139,10 @@ const Pings = () => {
   }, [newPingSearch, user?.id]);
 
   const startConversation = async (otherUserId: string) => {
-    const convoId = await findOrCreateConversation(otherUserId);
-    if (convoId) { loadMessages(convoId); setShowMobileList(false); setShowNewPing(false); setNewPingSearch(""); }
+    const result = await findOrCreateConversation(otherUserId);
+    if (result === "blocked") { toast.error("This user doesn't accept messages"); return; }
+    if (result === "connections_only") { toast.error("This user only accepts messages from connections"); return; }
+    if (result) { loadMessages(result); setShowMobileList(false); setShowNewPing(false); setNewPingSearch(""); }
   };
 
   const handleDelete = async (msgId: string) => {

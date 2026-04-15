@@ -57,6 +57,7 @@ const AvatarSquare = ({
         <img
           src={storageImageUrl(src!, preset)}
           alt={name}
+          loading="lazy"
           className="w-full h-full object-cover"
           style={{ borderRadius: 0 }}
           onError={() => setImgError(true)}
