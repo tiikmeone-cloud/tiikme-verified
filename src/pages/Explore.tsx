@@ -176,6 +176,30 @@ const Explore = () => {
           (authors || []).forEach((a: any) => { aMap[a.id] = a; });
           if (mountedRef.current) setPostAuthors(aMap);
         }
+
+        // Startups looking for funding
+        const { data: spData } = await supabase.from("startup_profiles")
+          .select("id, page_id, funding_stage, sectors, looking_for_funding, founder_id")
+          .eq("looking_for_funding", true).limit(20);
+        if (spData && spData.length > 0) {
+          const pageIds = spData.map((s: any) => s.page_id).filter(Boolean);
+          const { data: pages } = await supabase.from("pages").select("id, name, slug, logo_url").in("id", pageIds);
+          const pageMap = new Map((pages || []).map((p: any) => [p.id, p]));
+          if (mountedRef.current) setStartups(spData.map((s: any) => ({ ...s, page: pageMap.get(s.page_id) })));
+        } else {
+          if (mountedRef.current) setStartups([]);
+        }
+
+        // Active investors
+        const { data: allProfiles } = await supabase.from("profiles")
+          .select("id, full_name, avatar_url, role_metadata")
+          .eq("is_public", true).neq("id", user.id)
+          .not("role_metadata", "is", null).limit(200);
+        const investorProfiles = (allProfiles || []).filter((p: any) => {
+          const meta = p.role_metadata as any;
+          return meta?.is_investor === true || meta?.investor_profile;
+        }).slice(0, 20);
+        if (mountedRef.current) setInvestors(investorProfiles);
       }
     } catch (err) { console.warn("[Explore] fetch error:", err); }
     if (mountedRef.current) setLoading(false);
