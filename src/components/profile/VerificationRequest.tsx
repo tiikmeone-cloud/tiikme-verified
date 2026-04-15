@@ -32,6 +32,14 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
   const [directSearch, setDirectSearch] = useState("");
   const [directResults, setDirectResults] = useState<any[]>([]);
 
+  // Close on Escape key
+  useEffect(() => {
+    if (!expanded) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") setExpanded(false); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [expanded]);
+
   const companyName = item.company_name || item.institution_name || item.institution_name_edu || "";
 
   useEffect(() => {
