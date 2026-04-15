@@ -69,6 +69,7 @@ const Alerts = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("All");
   const [alerts, setAlerts] = useState<any[]>([]);
+  const [actorProfiles, setActorProfiles] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [showJoinModal, setShowJoinModal] = useState<any>(null);
 
