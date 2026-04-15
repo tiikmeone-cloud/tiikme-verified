@@ -32,6 +32,8 @@ const Explore = () => {
   const [trendingPosts, setTrendingPosts] = useState<any[]>([]);
   const [postAuthors, setPostAuthors] = useState<Record<string, any>>({});
   const [followMap, setFollowMap] = useState<Record<string, boolean>>({});
+  const [startups, setStartups] = useState<any[]>([]);
+  const [investors, setInvestors] = useState<any[]>([]);
 
   // Search results
   const [searchResults, setSearchResults] = useState<any[]>([]);
