@@ -16,6 +16,7 @@ const ImageItem = ({ src, className }: { src: string; className: string }) => {
     <img
       src={storageImageUrl(src, "feed")}
       alt=""
+      loading="lazy"
       className={className}
       style={{ borderRadius: 12 }}
       onError={() => setError(true)}
