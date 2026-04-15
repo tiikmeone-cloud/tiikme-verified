@@ -645,21 +645,21 @@ const Profile = () => {
   const renderConnectButton = () => {
     const { status, direction } = connectionStatus;
     if (status === "accepted") return (
-      <button type="button" className="cursor-default" style={{ height: 32, padding: "0 16px", borderRadius: 8, fontSize: 12, fontWeight: 500, background: "rgba(52,199,89,0.10)", color: "#34C759", border: "1px solid rgba(52,199,89,0.25)", display: "inline-flex", alignItems: "center", gap: 4 }}>
+      <button type="button" className="cursor-default" style={{ height: 32, padding: "0 16px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "rgba(52,199,89,0.10)", color: "#34C759", border: "1px solid rgba(52,199,89,0.25)", display: "inline-flex", alignItems: "center", gap: 4 }}>
         <CheckCircle className="w-3.5 h-3.5" /> Connected
       </button>
     );
     if (status === "pending" && direction === "sent") return (
-      <button type="button" className="cursor-default" style={{ height: 32, padding: "0 16px", borderRadius: 8, fontSize: 12, fontWeight: 500, background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.40)", color: "#FFB800", display: "inline-flex", alignItems: "center" }}>Requested</button>
+      <button type="button" className="cursor-default" style={{ height: 32, padding: "0 16px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "rgba(255,184,0,0.10)", color: "#FFB800", border: "1px solid rgba(255,184,0,0.25)", display: "inline-flex", alignItems: "center" }}>Requested</button>
     );
     if (status === "pending" && direction === "received") return (
       <div className="flex gap-2">
-        <button type="button" onClick={handleAcceptConnection} className="cursor-pointer" style={{ height: 28, padding: "0 12px", borderRadius: 8, fontSize: 11, fontWeight: 600, background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none" }}>Accept</button>
-        <button type="button" onClick={handleDeclineConnection} className="cursor-pointer" style={{ height: 28, padding: "0 12px", borderRadius: 8, fontSize: 11, fontWeight: 500, background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.40)", color: "#EF4444" }}>Decline</button>
+        <button type="button" onClick={handleAcceptConnection} className="cursor-pointer" style={{ height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 700, background: "linear-gradient(135deg, #34C759, #30B350)", color: "#fff", border: "none" }}>Accept</button>
+        <button type="button" onClick={handleDeclineConnection} className="cursor-pointer" style={{ height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "transparent", color: "#EF4444", border: "1px solid rgba(239,68,68,0.25)" }}>Decline</button>
       </div>
     );
     return (
-      <button type="button" onClick={handleConnect} disabled={connectLoading} className="cursor-pointer" style={{ height: 28, padding: "0 12px", borderRadius: 8, fontSize: 11, fontWeight: 600, background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 2px 12px rgba(232,115,58,0.25)" }}>
+      <button type="button" onClick={handleConnect} disabled={connectLoading} className="cursor-pointer" style={{ height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 700, background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 2px 12px rgba(232,115,58,0.25)" }}>
         <Users className="w-3 h-3 inline mr-1" />Connect
       </button>
     );
