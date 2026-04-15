@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { storageImageUrl } from "@/lib/imageTransform";
+import { cleanUsername } from "@/lib/cleanUsername";
 import { PageSEO, profileSEO } from "@/hooks/usePageSEO";
 import {
   MapPin, Copy, Shield, X, MessageCircle, CheckCircle, Building2, Link2, Plus,
   Pencil, Trash2, Briefcase, GraduationCap, Award, Code2, Eye, EyeOff,
-  Heart, Rocket, Send, Share2, Users, Globe, ExternalLink, LinkIcon, TrendingUp
+  Heart, Rocket, Send, Share2, Users, Globe, ExternalLink, LinkIcon, TrendingUp,
+  Mail, Settings
 } from "lucide-react";
 import { detectPlatform } from "@/lib/platformDetect";
 import GlassModal, { glassInputDarkStyle as gInputStyle, glassSelectDarkStyle as gSelectStyle, glassTextareaDarkStyle as gTextareaStyle, labelStyle } from "@/components/ui/GlassModal";
@@ -22,6 +24,7 @@ import { sendNotification } from "@/lib/notify";
 import VerificationRequest from "@/components/profile/VerificationRequest";
 import CertificatesSection from "@/components/profile/CertificatesSection";
 import ActivityScoreRing from "@/components/ActivityScoreRing";
+import { getActivityTier } from "@/lib/algorithms";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle
 } from "@/components/ui/sheet";
@@ -50,7 +53,7 @@ const formatDuration = (start: string | null, end: string | null, isCurrent: boo
 /* ── Edit Profile Drawer ── */
 const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose: () => void; onSaved: () => void }) => {
   const { refreshProfile } = useAuth();
-  const [form, setForm] = useState({ name: "", headline: "", bio: "", city: "", state: "", username: "", open_to_work: false, avatar_url: "" });
+  const [form, setForm] = useState({ name: "", headline: "", bio: "", city: "", state: "", username: "", open_to_work: false, avatar_url: "", about: "" });
   const [saving, setSaving] = useState(false);
   const [customLinks, setCustomLinks] = useState<{ url: string; label: string }[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
@@ -64,7 +67,7 @@ const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose:
       setUserId(user.id);
       const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
       if (data) {
-        setForm({ name: data.full_name || "", headline: data.headline || "", bio: data.bio || "", city: data.location_city || "", state: data.location_state || "", username: data.username || "", open_to_work: data.open_to_work || false, avatar_url: data.avatar_url || "" });
+        setForm({ name: data.full_name || "", headline: data.headline || "", bio: data.bio || "", city: data.location_city || "", state: data.location_state || "", username: data.username || "", open_to_work: data.open_to_work || false, avatar_url: data.avatar_url || "", about: (data as any).about || "" });
         setCustomLinks(Array.isArray(data.custom_links) ? (data.custom_links as any[]).map(l => ({ url: l.url || "", label: l.label || "" })) : []);
       }
     })();
@@ -111,43 +114,43 @@ const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose:
   return (
     <Sheet open={open} onOpenChange={v => !v && onClose()}>
       <SheetContent side="right" className="w-[360px] sm:w-[400px] overflow-y-auto" style={{ background: "#fff" }}>
-        <SheetHeader><SheetTitle style={{ fontSize: 18, fontWeight: 700, color: "var(--text-primary)" }}>Edit Profile</SheetTitle></SheetHeader>
+        <SheetHeader><SheetTitle style={{ fontSize: 18, fontWeight: 700, color: "#1A1A2E" }}>Edit Profile</SheetTitle></SheetHeader>
         <div className="space-y-4 mt-4">
           <div className="flex items-center gap-4 cursor-pointer" onClick={() => avatarRef.current?.click()}>
             <div className="flex items-center justify-center overflow-hidden" style={{ width: 64, height: 64, borderRadius: 0, backgroundColor: "#E8580A", color: "#fff", fontWeight: 700, fontSize: 20 }}>
               {form.avatar_url ? <img src={storageImageUrl(form.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : form.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "U"}
             </div>
-            <p style={{ fontSize: 12, color: "var(--text-muted)" }}>Click to change avatar</p>
+            <p style={{ fontSize: 12, color: "#9CA3C0" }}>Click to change avatar</p>
             <input ref={avatarRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
           </div>
-          <div><label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.05em", display: "block", marginBottom: 4, color: "var(--text-muted)" }}>Display name</label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
-          <div><label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.05em", display: "block", marginBottom: 4, color: "var(--text-muted)" }}>Headline</label><Input value={form.headline} onChange={e => setForm({ ...form, headline: e.target.value.slice(0, 80) })} maxLength={80} /></div>
-          <div><label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.05em", display: "block", marginBottom: 4, color: "var(--text-muted)" }}>Bio</label>
+          <div><label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.05em", display: "block", marginBottom: 4, color: "#9CA3C0" }}>Display name</label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
+          <div><label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.05em", display: "block", marginBottom: 4, color: "#9CA3C0" }}>Headline</label><Input value={form.headline} onChange={e => setForm({ ...form, headline: e.target.value.slice(0, 80) })} maxLength={80} /></div>
+          <div><label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.05em", display: "block", marginBottom: 4, color: "#9CA3C0" }}>Bio</label>
             <textarea value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value.slice(0, 300) })} rows={3} maxLength={300}
-              className="w-full outline-none resize-none" style={{ background: "var(--bg-input)", border: "1px solid var(--border-subtle)", borderRadius: 10, padding: 12, fontSize: 14, color: "var(--text-primary)" }} />
+              className="w-full outline-none resize-none" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(0,0,0,0.10)", borderRadius: 10, padding: 12, fontSize: 14, color: "#1A1A2E" }} />
           </div>
-          <div className="flex items-center gap-2"><span style={{ fontSize: 13, color: "var(--text-muted)" }}>@</span><Input value={form.username} onChange={e => setForm({ ...form, username: e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, "") })} className="flex-1" /></div>
+          <div className="flex items-center gap-2"><span style={{ fontSize: 13, color: "#9CA3C0" }}>@</span><Input value={form.username} onChange={e => setForm({ ...form, username: e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, "") })} className="flex-1" /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div><label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.05em", display: "block", marginBottom: 4, color: "var(--text-muted)" }}>City</label><Input value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} /></div>
-            <div><label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.05em", display: "block", marginBottom: 4, color: "var(--text-muted)" }}>State</label>
-              <select value={form.state} onChange={e => setForm({ ...form, state: e.target.value })} className="w-full outline-none cursor-pointer" style={{ height: 40, borderRadius: 10, padding: "0 12px", fontSize: 14, background: "var(--bg-input)", border: "1px solid var(--border-subtle)", color: "var(--text-primary)" }}>
+            <div><label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.05em", display: "block", marginBottom: 4, color: "#9CA3C0" }}>City</label><Input value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} /></div>
+            <div><label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.05em", display: "block", marginBottom: 4, color: "#9CA3C0" }}>State</label>
+              <select value={form.state} onChange={e => setForm({ ...form, state: e.target.value })} className="w-full outline-none cursor-pointer" style={{ height: 40, borderRadius: 10, padding: "0 12px", fontSize: 14, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(0,0,0,0.10)", color: "#1A1A2E" }}>
                 <option value="">Select</option>{allIndianStates.map(s => <option key={s}>{s}</option>)}
               </select>
             </div>
           </div>
-          <div className="flex items-center justify-between py-3" style={{ borderTop: "1px solid var(--border-subtle)", borderBottom: "1px solid var(--border-subtle)" }}>
-            <span style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>Open to work</span>
+          <div className="flex items-center justify-between py-3" style={{ borderTop: "1px solid rgba(0,0,0,0.06)", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+            <span style={{ fontSize: 14, fontWeight: 500, color: "#1A1A2E" }}>Open to work</span>
             <button type="button" onClick={() => setForm({ ...form, open_to_work: !form.open_to_work })} className="cursor-pointer" style={{ width: 44, height: 24, borderRadius: 12, background: form.open_to_work ? "#E8733A" : "#ddd", display: "flex", alignItems: "center", padding: 2, border: "none" }}>
               <div style={{ width: 20, height: 20, borderRadius: 10, background: "#fff", transform: form.open_to_work ? "translateX(20px)" : "translateX(0)", transition: "transform 0.2s" }} />
             </button>
           </div>
           <div>
-            <label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.05em", display: "block", marginBottom: 4, color: "var(--text-muted)" }}>Custom Links</label>
+            <label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.05em", display: "block", marginBottom: 4, color: "#9CA3C0" }}>Custom Links</label>
             {customLinks.map((link, i) => (
               <div key={i} className="flex gap-2 items-center mb-2">
                 <Input placeholder="URL" value={link.url} onChange={e => { const u = [...customLinks]; u[i] = { ...u[i], url: e.target.value }; setCustomLinks(u); }} className="flex-1" />
                 <Input placeholder="Label" value={link.label} onChange={e => { const u = [...customLinks]; u[i] = { ...u[i], label: e.target.value }; setCustomLinks(u); }} className="flex-1" />
-                <button type="button" onClick={() => setCustomLinks(customLinks.filter((_, idx) => idx !== i))} className="p-1 cursor-pointer" style={{ color: "var(--text-muted)" }}><X className="w-4 h-4" /></button>
+                <button type="button" onClick={() => setCustomLinks(customLinks.filter((_, idx) => idx !== i))} className="p-1 cursor-pointer" style={{ color: "#9CA3C0" }}><X className="w-4 h-4" /></button>
               </div>
             ))}
             {customLinks.length < 5 && <button type="button" onClick={() => setCustomLinks([...customLinks, { url: "", label: "" }])} className="cursor-pointer" style={{ fontSize: 12, fontWeight: 600, color: "#E8733A", background: "none", border: "none", padding: 0 }}>+ Add link</button>}
@@ -159,6 +162,140 @@ const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose:
         </div>
       </SheetContent>
     </Sheet>
+  );
+};
+
+/* ═══════════ ABOUT SECTION ═══════════ */
+const AboutSection = ({ about, isOwnProfile, userId }: { about: string; isOwnProfile: boolean; userId: string }) => {
+  const [editing, setEditing] = useState(false);
+  const [text, setText] = useState(about || "");
+  const [saving, setSaving] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => { setText(about || ""); }, [about]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    await supabase.from("profiles").update({ bio: text.slice(0, 500) } as any).eq("id", userId);
+    setSaving(false);
+    setEditing(false);
+    toast.success("About updated");
+  };
+
+  const displayText = about || "";
+  const lines = displayText.split("\n");
+  const needsTruncate = lines.length > 4 || displayText.length > 280;
+  const showFull = expanded || !needsTruncate;
+
+  return (
+    <div className="glass-card" style={{ padding: 16, borderRadius: 16, marginTop: 12 }}>
+      <div className="flex items-center" style={{ gap: 8 }}>
+        <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", flex: 1 }}>About</span>
+        {isOwnProfile && !editing && (
+          <button type="button" onClick={() => setEditing(true)} className="cursor-pointer p-1" style={{ color: "#9CA3C0" }}>
+            <Pencil style={{ width: 14, height: 14 }} />
+          </button>
+        )}
+      </div>
+      {editing ? (
+        <div style={{ marginTop: 8 }}>
+          <textarea
+            value={text}
+            onChange={e => setText(e.target.value.slice(0, 500))}
+            rows={4}
+            maxLength={500}
+            className="w-full outline-none resize-none"
+            style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(0,0,0,0.10)", borderRadius: 10, padding: 12, fontSize: 14, color: "#1A1A2E", lineHeight: "20px" }}
+            autoFocus
+          />
+          <div className="flex items-center justify-between" style={{ marginTop: 4 }}>
+            <span style={{ fontSize: 11, color: "#9CA3C0" }}>{text.length}/500</span>
+            <div className="flex gap-2">
+              <button type="button" onClick={() => { setEditing(false); setText(about || ""); }} className="cursor-pointer" style={{ fontSize: 12, color: "#9CA3C0", background: "none", border: "none" }}>Cancel</button>
+              <button type="button" onClick={handleSave} disabled={saving} className="cursor-pointer" style={{ fontSize: 12, fontWeight: 600, color: "#E8733A", background: "none", border: "none" }}>{saving ? "Saving..." : "Save"}</button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div style={{ marginTop: 8 }}>
+          {displayText ? (
+            <>
+              <p style={{
+                fontSize: 14, fontWeight: 400, lineHeight: "20px", color: "#1A1A2E",
+                ...(showFull ? {} : { display: "-webkit-box", WebkitLineClamp: 4, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }),
+              }}>
+                {displayText}
+              </p>
+              {needsTruncate && (
+                <button type="button" onClick={() => setExpanded(!expanded)} className="cursor-pointer" style={{ fontSize: 13, fontWeight: 500, color: "#E8733A", background: "none", border: "none", padding: 0, marginTop: 4 }}>
+                  {expanded ? "See less" : "See more"}
+                </button>
+              )}
+            </>
+          ) : (
+            <p style={{ fontSize: 13, fontWeight: 400, color: "#9CA3C0", fontStyle: "italic" }}>
+              {isOwnProfile ? "Tell people about yourself..." : "No about section"}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ═══════════ CONTACT SECTION ═══════════ */
+const ContactSection = ({ isOwnProfile, profile, userEmail }: { isOwnProfile: boolean; profile: any; userEmail: string | null }) => {
+  const [emailVisible, setEmailVisible] = useState(profile?.contact_email_visible ?? false);
+  const [toggling, setToggling] = useState(false);
+
+  const toggleEmailVisibility = async () => {
+    setToggling(true);
+    const newVal = !emailVisible;
+    await supabase.from("profiles").update({ contact_email_visible: newVal } as any).eq("id", profile.id);
+    setEmailVisible(newVal);
+    setToggling(false);
+    toast.success(newVal ? "Email now visible on profile" : "Email hidden from profile");
+  };
+
+  return (
+    <div className="glass-card" style={{ padding: 12, borderRadius: 16, marginTop: 8 }}>
+      <div className="flex items-center" style={{ gap: 8 }}>
+        <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", flex: 1 }}>Contact</span>
+      </div>
+      <div style={{ marginTop: 8 }}>
+        {isOwnProfile ? (
+          <>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center" style={{ gap: 6 }}>
+                <Mail style={{ width: 14, height: 14, color: "#4A90D9" }} />
+                <span style={{ fontSize: 13, fontWeight: 400, color: "#4A90D9" }}>{userEmail || "No email"}</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between" style={{ marginTop: 8 }}>
+              <span style={{ fontSize: 12, color: "#6B7094" }}>Show email on profile</span>
+              <button
+                type="button"
+                onClick={toggleEmailVisibility}
+                disabled={toggling}
+                className="cursor-pointer"
+                style={{ width: 32, height: 18, borderRadius: 9, background: emailVisible ? "#34C759" : "#ddd", display: "flex", alignItems: "center", padding: 2, border: "none" }}
+              >
+                <div style={{ width: 14, height: 14, borderRadius: 7, background: "#fff", transform: emailVisible ? "translateX(14px)" : "translateX(0)", transition: "transform 0.2s" }} />
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="flex items-center" style={{ gap: 6 }}>
+            <Mail style={{ width: 14, height: 14, color: emailVisible || profile?.contact_email_visible ? "#4A90D9" : "#9CA3C0" }} />
+            {profile?.contact_email_visible ? (
+              <span style={{ fontSize: 13, fontWeight: 400, color: "#4A90D9" }}>{profile?.email || "Email hidden"}</span>
+            ) : (
+              <span style={{ fontSize: 13, fontWeight: 400, color: "#9CA3C0" }}>Email hidden</span>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 
@@ -186,6 +323,7 @@ const Profile = () => {
   const [connectedAvatars, setConnectedAvatars] = useState<any[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [showGetTiiked, setShowGetTiiked] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
   const [modalSection, setModalSection] = useState<string | null>(null);
   const [showAddLink, setShowAddLink] = useState(false);
@@ -202,6 +340,14 @@ const Profile = () => {
   const [connectLoading, setConnectLoading] = useState(false);
 
   const targetUserId = isOwnProfile ? user?.id : urlUserId;
+
+  // Get user email
+  useEffect(() => {
+    if (!isOwnProfile) return;
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user?.email) setUserEmail(data.user.email);
+    });
+  }, [isOwnProfile]);
 
   const loadProfile = useCallback(async () => {
     if (!targetUserId) { setDataLoading(false); return; }
@@ -249,8 +395,17 @@ const Profile = () => {
   useEffect(() => { if (!authLoading) loadProfile(); }, [authLoading, loadProfile]);
 
   if (authLoading || dataLoading) return (
-    <div className="min-h-screen" style={{ background: "var(--bg-page)" }}>
-      <div style={{ maxWidth: 960, margin: "0 auto", padding: 16 }}><div className="animate-pulse space-y-4"><div style={{ height: 200, borderRadius: "16px 16px 0 0", background: "rgba(26,26,78,0.08)" }} /><div style={{ height: 80, borderRadius: "0 0 16px 16px", background: "rgba(255,255,255,0.25)" }} /><div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-3"><div style={{ height: 120, borderRadius: 16, background: "rgba(255,255,255,0.25)" }} /><div style={{ height: 120, borderRadius: 16, background: "rgba(255,255,255,0.25)" }} /></div></div></div>
+    <div className="min-h-screen" style={{ background: "transparent" }}>
+      <div style={{ maxWidth: 960, margin: "0 auto", padding: 16 }}>
+        <div className="animate-pulse space-y-3">
+          <div className="glass-card" style={{ height: 140, borderRadius: 16 }} />
+          <div className="glass-card" style={{ height: 80, borderRadius: 16 }} />
+          <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-3">
+            <div className="glass-card" style={{ height: 120, borderRadius: 16 }} />
+            <div className="glass-card" style={{ height: 120, borderRadius: 16 }} />
+          </div>
+        </div>
+      </div>
     </div>
   );
   if (!user && isOwnProfile) return null;
@@ -258,7 +413,7 @@ const Profile = () => {
   const profileData = viewedProfile || authProfile;
   if (!profileData) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
-      <p style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>Profile not found</p>
+      <p style={{ fontSize: 16, fontWeight: 700, color: "#1A1A2E" }}>Profile not found</p>
       <button type="button" onClick={() => navigate("/app/explore")} className="cursor-pointer" style={{ fontSize: 13, marginTop: 8, color: "#E8733A", background: "none", border: "none" }}>Back to Explore</button>
     </div>
   );
@@ -276,27 +431,25 @@ const Profile = () => {
     const limitedInitials = limitedName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
     return (
       <div className="min-h-screen" style={{ padding: 16, maxWidth: 960, margin: "0 auto" }}>
-        {/* Minimal cover + name */}
-        <div style={{ height: 200, borderRadius: "16px 16px 0 0", background: "linear-gradient(135deg, #1A1A4E 0%, #2D2D7A 60%, #3D3D8A 100%)", position: "relative" }} />
-        <div className="glass-card" style={{ borderRadius: "0 0 16px 16px", borderTop: "none", padding: "12px 16px", display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ width: 80, height: 80, borderRadius: 0, border: "3px solid rgba(255,255,255,0.40)", marginTop: -52, background: ROLE_COLOR_MAP[profileData.role || ""] || "#4F46E5", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 24, overflow: "hidden", flexShrink: 0 }}>
+        <div className="glass-card" style={{ borderRadius: 16, padding: 20, display: "flex", alignItems: "flex-start", gap: 16 }}>
+          <div style={{ width: 100, height: 100, borderRadius: 0, border: "3px solid rgba(255,255,255,0.40)", background: ROLE_COLOR_MAP[profileData.role || ""] || "#4F46E5", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 32, overflow: "hidden", flexShrink: 0 }}>
             {profileData.avatar_url ? <img src={storageImageUrl(profileData.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : limitedInitials}
           </div>
           <div style={{ flex: 1 }}>
-            <p style={{ fontSize: 20, fontWeight: 700, color: "var(--text-primary)" }}>{limitedName}</p>
+            <p style={{ fontSize: 20, fontWeight: 700, color: "#1A1A2E" }}>{limitedName}</p>
           </div>
         </div>
         <div className="glass-card" style={{ borderRadius: 16, padding: 32, textAlign: "center", marginTop: 12 }}>
-          <Shield style={{ width: 48, height: 48, margin: "0 auto 12px", color: "var(--text-muted)" }} />
-          <p style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>This profile is {isPrivateView ? "private" : "for connections only"}</p>
-          <p style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 4 }}>{isPrivateView ? "Only basic info is visible." : "Connect to see their full profile."}</p>
+          <Shield style={{ width: 48, height: 48, margin: "0 auto 12px", color: "#9CA3C0" }} />
+          <p style={{ fontSize: 16, fontWeight: 700, color: "#1A1A2E" }}>This profile is {isPrivateView ? "private" : "for connections only"}</p>
+          <p style={{ fontSize: 13, color: "#6B7094", marginTop: 4 }}>{isPrivateView ? "Only basic info is visible." : "Connect to see their full profile."}</p>
         </div>
       </div>
     );
   }
 
   const displayName = profileData.full_name || authDisplayName || "";
-  const username = profileData.username || "";
+  const username = cleanUsername(profileData.username || "");
   const headline = profileData.headline || "";
   const city = showLocation || isOwnProfile ? (profileData.location_city || "") : "";
   const state = showLocation || isOwnProfile ? (profileData.location_state || "") : "";
@@ -307,6 +460,7 @@ const Profile = () => {
   const isVerified = profileData.is_verified === true;
   const skills: string[] = profileData.skills || [];
   const customLinks: any[] = Array.isArray(profileData.custom_links) ? profileData.custom_links : [];
+  const aboutText = profileData.bio || profileData.about || "";
 
   const visFilter = (items: any[]) => isOwnProfile ? items : items.filter((w: any) => w.visibility === "public" || !w.visibility);
   const experiences = visFilter(workItems.filter((w: any) => w.item_type === "experience")).sort((a: any, b: any) => {
@@ -478,117 +632,173 @@ const Profile = () => {
     await supabase.from(table).update({ visibility: newVis }).eq("id", id);
   };
 
-  const renderConnectButton = () => {
-    const { status, direction } = connectionStatus;
-    if (status === "accepted") return <span style={{ fontSize: 11, fontWeight: 500, padding: "0 10px", height: 26, borderRadius: 6, background: "rgba(52,199,89,0.12)", color: "#34C759", display: "inline-flex", alignItems: "center", gap: 4 }}><CheckCircle className="w-3 h-3" />Connected</span>;
-    if (status === "pending" && direction === "sent") return <span style={{ fontSize: 11, fontWeight: 500, padding: "0 10px", height: 26, borderRadius: 6, background: "var(--bg-card)", color: "var(--text-muted)", display: "inline-flex", alignItems: "center" }}>Requested</span>;
-    if (status === "pending" && direction === "received") return (
-      <div className="flex gap-2">
-        <button type="button" onClick={handleAcceptConnection} className="cursor-pointer" style={{ height: 26, padding: "0 10px", borderRadius: 6, fontSize: 11, fontWeight: 500, background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none" }}>Accept</button>
-        <button type="button" onClick={handleDeclineConnection} className="cursor-pointer" style={{ height: 26, padding: "0 10px", borderRadius: 6, fontSize: 11, fontWeight: 500, background: "var(--bg-card)", color: "var(--text-primary)", border: "1px solid var(--border-glass)" }}>Decline</button>
-      </div>
-    );
-    return <button type="button" onClick={handleConnect} disabled={connectLoading} className="cursor-pointer" style={{ height: 26, padding: "0 10px", borderRadius: 6, fontSize: 11, fontWeight: 500, background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 2px 12px rgba(232,115,58,0.25)" }}><Users className="w-3 h-3 inline mr-1" />Connect</button>;
-  };
-
   const currentExp = experiences.find((e: any) => e.is_current);
   const seoProps = profileSEO(profileData as any);
   const activityScore = profileData.activity_score || 0;
+  const tier = getActivityTier(activityScore);
+
+  const renderConnectButton = () => {
+    const { status, direction } = connectionStatus;
+    if (status === "accepted") return (
+      <button type="button" className="cursor-default" style={{ height: 32, padding: "0 16px", borderRadius: 8, fontSize: 12, fontWeight: 500, background: "rgba(52,199,89,0.10)", color: "#34C759", border: "1px solid rgba(52,199,89,0.25)", display: "inline-flex", alignItems: "center", gap: 4 }}>
+        <CheckCircle className="w-3.5 h-3.5" /> Connected
+      </button>
+    );
+    if (status === "pending" && direction === "sent") return (
+      <button type="button" className="cursor-default" style={{ height: 32, padding: "0 16px", borderRadius: 8, fontSize: 12, fontWeight: 500, background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.40)", color: "#FFB800", display: "inline-flex", alignItems: "center" }}>Requested</button>
+    );
+    if (status === "pending" && direction === "received") return (
+      <div className="flex gap-2">
+        <button type="button" onClick={handleAcceptConnection} className="cursor-pointer" style={{ height: 28, padding: "0 12px", borderRadius: 8, fontSize: 11, fontWeight: 600, background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none" }}>Accept</button>
+        <button type="button" onClick={handleDeclineConnection} className="cursor-pointer" style={{ height: 28, padding: "0 12px", borderRadius: 8, fontSize: 11, fontWeight: 500, background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.40)", color: "#EF4444" }}>Decline</button>
+      </div>
+    );
+    return (
+      <button type="button" onClick={handleConnect} disabled={connectLoading} className="cursor-pointer" style={{ height: 28, padding: "0 12px", borderRadius: 8, fontSize: 11, fontWeight: 600, background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 2px 12px rgba(232,115,58,0.25)" }}>
+        <Users className="w-3 h-3 inline mr-1" />Connect
+      </button>
+    );
+  };
 
   return (
     <div className="min-h-screen pb-8">
       <PageSEO {...seoProps} />
 
       <div style={{ maxWidth: 960, margin: "0 auto", padding: 16 }}>
-        {/* ── COVER ── */}
-        <div style={{
-          width: "100%", height: 200, borderRadius: "16px 16px 0 0", position: "relative", overflow: "hidden",
-          background: profileData.cover_url ? undefined : "linear-gradient(135deg, #1A1A4E 0%, #2D2D7A 60%, #3D3D8A 100%)",
-        }}>
-          {profileData.cover_url && (
-            <>
-              <img src={storageImageUrl(profileData.cover_url, "cover")} alt="" className="absolute inset-0 w-full h-full object-cover" />
-              <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(26,26,78,0.20), rgba(26,26,78,0.70))" }} />
-            </>
-          )}
-          {/* Edit Profile button */}
-          {isOwnProfile && (
-            <button type="button" onClick={() => setEditOpen(true)} className="absolute cursor-pointer" style={{
-              top: 12, right: 12, height: 26, padding: "0 10px", borderRadius: 8, fontSize: 11, fontWeight: 500,
-              background: "var(--bg-card)", border: "1px solid var(--border-glass)", color: "var(--text-primary)",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.50)", display: "inline-flex", alignItems: "center", gap: 4,
-              zIndex: 10,
-            }}>
-              <Pencil style={{ width: 12, height: 12 }} /> Edit Profile
-            </button>
-          )}
-        </div>
-
-        {/* ── PROFILE INFO BAR ── */}
+        {/* ── PROFILE INFO CARD (no cover) ── */}
         <div className="glass-card" style={{
-          width: "100%", padding: "12px 16px", borderRadius: "0 0 16px 16px", borderTop: "none",
-          display: "flex", alignItems: "center", gap: 12,
+          padding: 20, borderRadius: 16,
+          background: "rgba(255,255,255,0.25)", backdropFilter: "blur(20px)",
+          border: "1px solid rgba(255,255,255,0.40)",
+          boxShadow: "0 8px 32px rgba(26,26,78,0.08), inset 0 1px 0 rgba(255,255,255,0.60)",
         }}>
-          {/* Avatar */}
-          <div style={{
-            width: 80, height: 80, borderRadius: 0, border: "3px solid rgba(255,255,255,0.40)",
-            marginTop: -52, boxShadow: "0 4px 16px rgba(26,26,78,0.15)",
-            background: profileData.avatar_url ? "#fff" : roleColor,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            overflow: "hidden", flexShrink: 0, color: "#fff", fontWeight: 700, fontSize: 24,
-          }}>
-            {profileData.avatar_url ? <img src={storageImageUrl(profileData.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials}
-          </div>
+          <div className="flex" style={{ gap: 16, alignItems: "flex-start" }}>
+            {/* Avatar — 100x100 true square */}
+            <div style={{
+              width: 100, height: 100, borderRadius: 0,
+              border: "3px solid rgba(255,255,255,0.40)",
+              boxShadow: "0 4px 16px rgba(26,26,78,0.15)",
+              background: profileData.avatar_url ? "#fff" : roleColor,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              overflow: "hidden", flexShrink: 0, color: "#fff", fontWeight: 700, fontSize: 32,
+            }}>
+              {profileData.avatar_url ? <img src={storageImageUrl(profileData.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : initials}
+            </div>
 
-          {/* Name + Meta */}
-          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 2 }}>
-            <p style={{ fontSize: 20, fontWeight: 700, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%", lineHeight: "28px", letterSpacing: "-0.01em" }}>{displayName}</p>
-            <p style={{ fontSize: 13, fontWeight: 400, color: "var(--text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: "18px" }}>
-              {headline || `${roleLabel}${currentExp ? ` at ${currentExp.company_name || ""}` : ""}`}
-            </p>
-            <div className="flex items-center flex-wrap" style={{ gap: 8 }}>
-              {username && <span style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)" }}>@{username}</span>}
-              {username && <span style={{ width: 3, height: 3, borderRadius: "50%", background: "var(--text-muted)", flexShrink: 0 }} />}
-              {profileData.open_to_work && (
-                <>
-                  <span style={{ fontSize: 10, fontWeight: 600, height: 18, padding: "0 6px", borderRadius: 4, background: "rgba(52,199,89,0.12)", color: "#34C759", display: "inline-flex", alignItems: "center" }}>Open to work</span>
-                  <span style={{ width: 3, height: 3, borderRadius: "50%", background: "var(--text-muted)", flexShrink: 0 }} />
-                </>
-              )}
-              {(city || state) && (
-                <>
-                  <span className="flex items-center" style={{ gap: 2, fontSize: 12, color: "var(--text-muted)" }}>
+            {/* Info */}
+            <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
+              {/* ROW 1: Name + Edit */}
+              <div className="flex items-center" style={{ justifyContent: "space-between" }}>
+                <p style={{ fontSize: 20, fontWeight: 700, lineHeight: "28px", color: "#1A1A2E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</p>
+                {isOwnProfile && (
+                  <button type="button" onClick={() => setEditOpen(true)} className="cursor-pointer shrink-0" style={{
+                    height: 26, padding: "0 10px", borderRadius: 6, fontSize: 11, fontWeight: 500,
+                    background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.40)",
+                    color: "#1A1A2E", display: "inline-flex", alignItems: "center", gap: 4,
+                  }}>
+                    <Pencil style={{ width: 11, height: 11 }} /> Edit Profile
+                  </button>
+                )}
+              </div>
+
+              {/* ROW 2: Current position / headline */}
+              <p style={{ fontSize: 13, fontWeight: 400, color: "#6B7094" }}>
+                {currentExp ? `${currentExp.job_title || currentExp.title} at ${currentExp.company_name || ""}` : headline || roleLabel}
+              </p>
+
+              {/* ROW 3: @username + location + badges */}
+              <div className="flex items-center flex-wrap" style={{ gap: 8 }}>
+                {username && <span style={{ fontSize: 12, fontWeight: 400, color: "#9CA3C0" }}>@{username}</span>}
+                {username && (city || state) && <span style={{ width: 3, height: 3, borderRadius: "50%", background: "#9CA3C0", flexShrink: 0 }} />}
+                {(city || state) && (
+                  <span className="flex items-center" style={{ gap: 2, fontSize: 12, color: "#9CA3C0" }}>
                     <MapPin style={{ width: 12, height: 12 }} />{[city, state].filter(Boolean).join(", ")}
                   </span>
-                  <span style={{ width: 3, height: 3, borderRadius: "50%", background: "var(--text-muted)", flexShrink: 0 }} />
-                </>
-              )}
-              <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{activityScore} · Explorer</span>
+                )}
+                {((city || state) || username) && (
+                  <span style={{ width: 3, height: 3, borderRadius: "50%", background: "#9CA3C0", flexShrink: 0 }} />
+                )}
+                {profileData.open_to_work ? (
+                  <span style={{ fontSize: 10, fontWeight: 600, height: 18, padding: "0 6px", borderRadius: 4, background: "rgba(52,199,89,0.12)", color: "#34C759", display: "inline-flex", alignItems: "center" }}>Open to work</span>
+                ) : (
+                  <span style={{ fontSize: 10, fontWeight: 600, height: 18, padding: "0 6px", borderRadius: 4, background: "rgba(156,163,192,0.12)", color: "#9CA3C0", display: "inline-flex", alignItems: "center" }}>Not looking</span>
+                )}
+              </div>
+
+              {/* ROW 4: Stats */}
+              <div className="flex items-center" style={{ gap: 16, marginTop: 4 }}>
+                <Link to="/app/strands" className="cursor-pointer hover:opacity-80">
+                  <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{stats.connections}</span>
+                  <span style={{ fontSize: 12, fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Connections</span>
+                </Link>
+                <div>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{stats.posts}</span>
+                  <span style={{ fontSize: 12, fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Posts</span>
+                </div>
+                <div>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{activityScore}</span>
+                  <span style={{ fontSize: 12, fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>{tier.name}</span>
+                </div>
+              </div>
+
+              {/* ROW 5: Action buttons */}
+              <div className="flex items-center" style={{ gap: 8, marginTop: 8 }}>
+                {isOwnProfile ? (
+                  <button type="button" onClick={handleCopyLink} className="cursor-pointer" style={{
+                    height: 32, padding: "0 16px", borderRadius: 8, fontSize: 12, fontWeight: 500,
+                    background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.40)",
+                    color: "#1A1A2E", display: "inline-flex", alignItems: "center", gap: 4,
+                  }}>
+                    <Share2 style={{ width: 13, height: 13 }} /> Share Profile
+                  </button>
+                ) : (
+                  <>
+                    {renderConnectButton()}
+                    <button type="button" onClick={() => navigate(`/app/pings?to=${targetUserId}`)} className="cursor-pointer" style={{
+                      height: 32, padding: "0 16px", borderRadius: 8, fontSize: 12, fontWeight: 500,
+                      background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.40)",
+                      color: "#1A1A2E", display: "inline-flex", alignItems: "center", gap: 4,
+                    }}>
+                      <MessageCircle style={{ width: 13, height: 13 }} /> Message
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
-
-          {/* Share / Connect */}
-          <div className="shrink-0 flex items-center gap-2">
-            {!isOwnProfile && renderConnectButton()}
-            <button type="button" onClick={handleCopyLink} className="cursor-pointer" style={{
-              height: 26, padding: "0 10px", borderRadius: 8, fontSize: 11, fontWeight: 500,
-              background: "var(--bg-card)", border: "1px solid var(--border-glass)", color: "var(--text-primary)",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.50)", display: "inline-flex", alignItems: "center", gap: 4,
-            }}>
-              <Share2 style={{ width: 12, height: 12 }} /> Share
-            </button>
-          </div>
         </div>
+
+        {/* ── ABOUT ── */}
+        <AboutSection about={aboutText} isOwnProfile={isOwnProfile} userId={targetUserId || ""} />
+
+        {/* ── CONTACT ── */}
+        <ContactSection isOwnProfile={isOwnProfile} profile={profileData} userEmail={userEmail} />
 
         {/* ── SECTION GRID ── */}
         <div className="grid grid-cols-1 md:grid-cols-[280px_1fr]" style={{ marginTop: 12, gap: 12 }}>
           {/* ═══ LEFT COLUMN ═══ */}
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {/* L1: Connections */}
+            {/* L1: Connections preview */}
             <div className="glass-card" style={{ padding: 12, borderRadius: 16 }}>
-              <p style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.02em" }}>CONNECTIONS</p>
-              <p style={{ fontSize: 28, fontWeight: 700, color: "var(--text-primary)", margin: "4px 0", lineHeight: "36px", letterSpacing: "-0.02em" }}>{stats.connections}</p>
-              <Link to="/app/strands" style={{ fontSize: 12, fontWeight: 400, color: "#E8733A" }}>See all →</Link>
+              <p style={{ fontSize: 11, fontWeight: 600, color: "#9CA3C0", textTransform: "uppercase", letterSpacing: "0.02em" }}>CONNECTIONS</p>
+              <p style={{ fontSize: 28, fontWeight: 700, color: "#1A1A2E", margin: "4px 0", lineHeight: "36px", letterSpacing: "-0.02em" }}>{stats.connections}</p>
+              {/* Mini avatars */}
+              {connectedAvatars.length > 0 && (
+                <div className="flex items-center" style={{ marginBottom: 8 }}>
+                  {connectedAvatars.slice(0, 3).map((a, i) => (
+                    <div key={a.id} style={{
+                      width: 24, height: 24, borderRadius: 0, overflow: "hidden", border: "2px solid #fff",
+                      marginLeft: i > 0 ? -6 : 0, flexShrink: 0,
+                      background: ROLE_COLOR_MAP["student"] || "#4F46E5",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      color: "#fff", fontSize: 9, fontWeight: 700,
+                    }}>
+                      {a.avatar_url ? <img src={storageImageUrl(a.avatar_url, "thumbnail")} alt="" className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : (a.full_name || "U")[0]}
+                    </div>
+                  ))}
+                </div>
+              )}
+              <Link to="/app/strands" style={{ fontSize: 12, fontWeight: 400, color: "#E8733A" }}>See all &gt;</Link>
             </div>
 
             {/* L2: Get Tiiked */}
@@ -596,8 +806,8 @@ const Profile = () => {
               <div className="glass-glow" style={{ padding: 12, borderRadius: 16, display: "flex", alignItems: "center", gap: 10 }}>
                 <Shield style={{ width: 24, height: 24, color: "#E8733A", flexShrink: 0 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>Get Tiiked</p>
-                  <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)" }}>Verify your profile</p>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>Get Tiiked</p>
+                  <p style={{ fontSize: 12, fontWeight: 400, color: "#9CA3C0" }}>Verify your profile</p>
                 </div>
                 <button type="button" onClick={() => setShowGetTiiked(true)} className="cursor-pointer" style={{
                   height: 28, padding: "0 12px", borderRadius: 8, fontSize: 11, fontWeight: 600,
@@ -610,12 +820,13 @@ const Profile = () => {
             {/* L3: Links */}
             <div className="glass-card" style={{ padding: 12, borderRadius: 16 }}>
               <div className="flex items-center" style={{ gap: 8 }}>
-                <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", flex: 1 }}>Links</span>
+                <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", flex: 1 }}>Links</span>
                 {isOwnProfile && (
                   <button type="button" onClick={() => setShowAddLink(true)} className="cursor-pointer" style={{
                     height: 26, padding: "0 10px", borderRadius: 6, fontSize: 11, fontWeight: 500,
-                    background: "var(--bg-card)", border: "1px solid var(--border-glass)", color: "var(--text-primary)",
-                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.50)", display: "inline-flex", alignItems: "center", gap: 4,
+                    background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.40)",
+                    color: "#1A1A2E", display: "inline-flex", alignItems: "center", gap: 4,
+                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.50)",
                   }}>
                     <Plus style={{ width: 12, height: 12 }} /> Add
                   </button>
@@ -629,24 +840,23 @@ const Profile = () => {
                     return (
                       <a key={i} href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center" style={{
                         height: 28, padding: "0 10px", borderRadius: 6, gap: 6,
-                        background: "rgba(255,255,255,0.12)", border: "1px solid var(--border-subtle)",
+                        background: "rgba(255,255,255,0.12)", border: "1px solid rgba(0,0,0,0.06)",
                       }}>
                         <Icon style={{ width: 14, height: 14, color: platform.color, flexShrink: 0 }} />
-                        <span style={{ fontSize: 12, fontWeight: 400, color: "var(--text-primary)" }}>{platform.name}</span>
+                        <span style={{ fontSize: 12, fontWeight: 400, color: "#1A1A2E" }}>{platform.name}</span>
                       </a>
                     );
                   })}
                 </div>
               ) : (
-                <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)", marginTop: 8 }}>{isOwnProfile ? "Add your links" : "No links added"}</p>
+                <p style={{ fontSize: 12, fontWeight: 400, color: "#9CA3C0", marginTop: 8 }}>{isOwnProfile ? "Add your links" : "No links added"}</p>
               )}
-              {/* Inline add */}
               {showAddLink && (
                 <div style={{ marginTop: 8 }} className="space-y-2">
                   <Input value={newLinkUrl} onChange={e => setNewLinkUrl(e.target.value)} placeholder="Paste your link..." onKeyDown={e => { if (e.key === "Enter") addLink(); }} />
                   <div className="flex items-center gap-2">
                     <button type="button" onClick={addLink} className="cursor-pointer" style={{ height: 28, padding: "0 12px", borderRadius: 8, fontSize: 11, fontWeight: 600, background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none" }}>Add</button>
-                    <button type="button" onClick={() => { setShowAddLink(false); setNewLinkUrl(""); }} className="cursor-pointer" style={{ fontSize: 12, color: "var(--text-muted)", background: "none", border: "none" }}>Cancel</button>
+                    <button type="button" onClick={() => { setShowAddLink(false); setNewLinkUrl(""); }} className="cursor-pointer" style={{ fontSize: 12, color: "#9CA3C0", background: "none", border: "none" }}>Cancel</button>
                   </div>
                 </div>
               )}
