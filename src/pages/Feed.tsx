@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { PageSEO } from "@/hooks/usePageSEO";
 import { storageImageUrl } from "@/lib/imageTransform";
+import { cleanUsername } from "@/lib/cleanUsername";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import {
   Heart, MessageCircle, Repeat2, Send, SendHorizontal, MoreHorizontal,
