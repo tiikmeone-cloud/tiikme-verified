@@ -2917,6 +2917,7 @@ export type Database = {
           id: string
           institution_id: string | null
           is_active: boolean | null
+          last_message_at: string | null
           member_count: number | null
           name: string
           org_id: string | null
@@ -2933,6 +2934,7 @@ export type Database = {
           id?: string
           institution_id?: string | null
           is_active?: boolean | null
+          last_message_at?: string | null
           member_count?: number | null
           name: string
           org_id?: string | null
@@ -2949,6 +2951,7 @@ export type Database = {
           id?: string
           institution_id?: string | null
           is_active?: boolean | null
+          last_message_at?: string | null
           member_count?: number | null
           name?: string
           org_id?: string | null
