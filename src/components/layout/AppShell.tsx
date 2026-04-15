@@ -157,7 +157,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           {/* Logo */}
           <div style={{ paddingBottom: 20 }}>
             <Link to="/app/feed" style={{ filter: "drop-shadow(0 0 10px rgba(232,115,58,0.15))" }}>
-              <ThemeLogo className="w-auto" style={{ height: 28 }} />
+              <ThemeLogo className="h-7 w-auto" />
             </Link>
           </div>
 
