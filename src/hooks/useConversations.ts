@@ -78,7 +78,7 @@ export function useConversations(userId: string | undefined) {
     // BUG FIX 1: Correct unread count — only messages FROM the other person that I haven't read
     const [profilesRes, unreadRes, lastMsgsRes] = await Promise.allSettled([
       supabase.from("profiles").select("id, full_name, username, avatar_url, role, institution_name, is_verified").in("id", uniqueIds),
-      supabase.from("pings").select("conversation_id").in("conversation_id", convoIds).eq("is_read", false).neq("sender_id", userId),
+      supabase.from("pings").select("conversation_id").in("conversation_id", convoIds).eq("is_read", false).eq("is_deleted", false).neq("sender_id", userId),
       supabase.from("pings").select("conversation_id, content, created_at, attachment_type, is_deleted").in("conversation_id", convoIds).order("created_at", { ascending: false }).limit(200),
     ]);
 
