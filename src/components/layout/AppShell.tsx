@@ -29,7 +29,7 @@ const navGroups = [
   {
     label: "CONNECT",
     items: [
-      { label: "Connections", icon: Link2, path: "/app/strands" },
+      { label: "My Connections", icon: Link2, path: "/app/connections" },
       { label: "Pings", icon: MessageCircle, path: "/app/pings" },
       { label: "Alerts", icon: Bell, path: "/app/alerts" },
     ],
