@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { calculateFeedScore, applyFeedDiversity } from "@/lib/algorithms";
 
 const POSTS_PER_PAGE = 20;
 
@@ -8,6 +9,7 @@ interface FeedPost {
   id: string;
   content: string;
   type: string | null;
+  post_type: string | null;
   created_at: string | null;
   reactions: any;
   comment_count: number | null;
@@ -19,6 +21,8 @@ interface FeedPost {
   posted_by_org: string | null;
   posted_by_user_id: string | null;
   repost_count: number | null;
+  show_company_badge: boolean | null;
+  is_edited: boolean | null;
   author?: {
     id: string;
     username: string;
@@ -27,6 +31,8 @@ interface FeedPost {
     avatar_url: string | null;
     institution_name: string | null;
     activity_score: number | null;
+    sector: string | null;
+    is_verified: boolean | null;
   };
   org?: {
     id: string;
@@ -42,50 +48,7 @@ interface FeedPost {
   _score?: number;
 }
 
-const FEED_SELECT = `*, author:profiles!posts_author_id_fkey(id, username, full_name, role, avatar_url, institution_name, activity_score), org:organizations!posts_posted_by_org_fkey(id, name, logo_url, type, slug), poster_profile:profiles!posts_posted_by_user_id_fkey(id, full_name)`;
-
-function getRecencyWeight(createdAt: string | null): number {
-  if (!createdAt) return 0.1;
-  const hoursAgo = (Date.now() - new Date(createdAt).getTime()) / 3600000;
-  if (hoursAgo < 0.5) return 1.5;
-  if (hoursAgo < 2) return 1.2;
-  if (hoursAgo < 6) return 1.0;
-  if (hoursAgo < 24) return 0.7;
-  if (hoursAgo < 72) return 0.4;
-  return 0.1;
-}
-
-function getEngagementWeight(reactions: any, commentCount: number | null): number {
-  const total =
-    (reactions?.insightful || 0) +
-    (reactions?.useful || 0) +
-    (reactions?.inspiring || 0) +
-    (commentCount || 0);
-  if (total > 50) return 1.5;
-  if (total > 20) return 1.0;
-  if (total > 5) return 0.7;
-  if (total > 0) return 0.3;
-  return 0;
-}
-
-function scorePost(
-  post: FeedPost,
-  userRole: string | null,
-  userInstitution: string | null,
-  strandIds: Set<string>,
-  seenIds: Set<string>
-): number {
-  let score = 0;
-  const author = post.author;
-  if (strandIds.has(post.author_id || "")) score += 2.0;
-  if (author?.institution_name && author.institution_name === userInstitution) score += 1.5;
-  if (author?.role === userRole) score += 2.0;
-  else if (author?.role) score += 0.5;
-  score += getRecencyWeight(post.created_at);
-  score += getEngagementWeight(post.reactions, post.comment_count);
-  if (!seenIds.has(post.id)) score += Math.random() * 0.5;
-  return score;
-}
+const FEED_SELECT = `*, author:profiles!posts_author_id_fkey(id, username, full_name, role, avatar_url, institution_name, activity_score, sector, is_verified), org:organizations!posts_posted_by_org_fkey(id, name, logo_url, type, slug), poster_profile:profiles!posts_posted_by_user_id_fkey(id, full_name)`;
 
 export function useFeedPosts() {
   const { user, profile, isReady } = useAuth();
@@ -95,32 +58,42 @@ export function useFeedPosts() {
   const [hasMore, setHasMore] = useState(true);
   const pageRef = useRef(0);
   const mountedRef = useRef(true);
-  const seenIds = useRef<Set<string>>(
-    new Set(JSON.parse(sessionStorage.getItem("tiikme-seen-posts") || "[]"))
-  );
-  const [strandIds, setStrandIds] = useState<Set<string>>(new Set());
+  const [connectionIds, setConnectionIds] = useState<Set<string>>(new Set());
+  const [followedOrgIds, setFollowedOrgIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     mountedRef.current = true;
     return () => { mountedRef.current = false; };
   }, []);
 
+  // Load connections and followed orgs
   useEffect(() => {
     if (!isReady || !user) return;
+
+    // Connections
     supabase
       .from("strands")
       .select("requester_id, receiver_id")
       .or(`requester_id.eq.${user.id},receiver_id.eq.${user.id}`)
       .eq("status", "accepted")
-      .then(({ data, error }) => {
-        if (error) { console.warn("[useFeedPosts] strands fetch failed:", error.message); return; }
+      .then(({ data }) => {
         if (!mountedRef.current) return;
         const ids = new Set<string>();
         (data || []).forEach(s => {
           if (s.requester_id !== user.id) ids.add(s.requester_id!);
           if (s.receiver_id !== user.id) ids.add(s.receiver_id!);
         });
-        setStrandIds(ids);
+        setConnectionIds(ids);
+      });
+
+    // Followed orgs
+    supabase
+      .from("org_followers")
+      .select("org_id")
+      .eq("user_id", user.id)
+      .then(({ data }) => {
+        if (!mountedRef.current) return;
+        setFollowedOrgIds(new Set((data || []).map(f => f.org_id)));
       });
   }, [isReady, user]);
 
@@ -140,23 +113,39 @@ export function useFeedPosts() {
         if (!mountedRef.current) return;
         if (error) throw error;
 
-        const userRole = profile?.role || null;
-        const userInst = profile?.institution_name || null;
+        // Calculate reaction counts from the reactions JSON
+        const scored = (data || []).map((post: any) => {
+          const reactions = post.reactions || {};
+          const reactionCount = (reactions.useful || 0) + (reactions.inspiring || 0) + (reactions.insightful || 0);
 
-        const scored = (data || [])
-          .map((post: any) => ({
-            ...post,
-            _score: scorePost(post, userRole, userInst, strandIds, seenIds.current),
-          }))
-          .sort((a: any, b: any) => b._score - a._score);
+          const score = calculateFeedScore({
+            post: {
+              id: post.id,
+              created_at: post.created_at,
+              author_id: post.author_id,
+              posted_by_org: post.posted_by_org,
+              author_sector: post.author?.sector || null,
+              author_is_verified: post.author?.is_verified || false,
+              image_urls: post.image_urls,
+              mention_count: 0, // not stored directly
+              reaction_count: reactionCount,
+              comment_count: post.comment_count || 0,
+              repost_count: post.repost_count || 0,
+              post_type: post.post_type,
+            },
+            currentUser: { sector: profile?.sector || null },
+            connectionIds,
+            followedOrgIds,
+          });
 
-        scored.forEach((p: any) => seenIds.current.add(p.id));
-        try {
-          sessionStorage.setItem("tiikme-seen-posts", JSON.stringify([...seenIds.current].slice(-200)));
-        } catch {}
+          return { ...post, _score: score } as FeedPost;
+        });
 
-        if (append) setPosts(prev => [...prev, ...scored]);
-        else setPosts(scored);
+        // Apply diversity rules
+        const diversified = applyFeedDiversity(scored, connectionIds);
+
+        if (append) setPosts(prev => [...prev, ...diversified]);
+        else setPosts(diversified as FeedPost[]);
         setHasMore((data || []).length === POSTS_PER_PAGE);
       } catch (err) {
         console.error("Failed to load posts:", err);
@@ -167,7 +156,7 @@ export function useFeedPosts() {
         }
       }
     },
-    [profile?.role, profile?.institution_name, strandIds]
+    [profile?.sector, connectionIds, followedOrgIds]
   );
 
   useEffect(() => {
@@ -175,6 +164,7 @@ export function useFeedPosts() {
     loadPosts(0);
   }, [isReady, loadPosts]);
 
+  // Realtime
   useEffect(() => {
     if (!isReady) return;
     const channel = supabase
@@ -182,13 +172,7 @@ export function useFeedPosts() {
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "posts" }, async (payload) => {
         const newPost = payload.new as any;
         if (newPost.visibility !== "everyone") return;
-
-        const { data } = await supabase
-          .from("posts")
-          .select(FEED_SELECT)
-          .eq("id", newPost.id)
-          .single();
-
+        const { data } = await supabase.from("posts").select(FEED_SELECT).eq("id", newPost.id).single();
         if (data && mountedRef.current) {
           setPosts(prev => {
             if (prev.some(p => p.id === data.id)) return prev;
@@ -201,7 +185,6 @@ export function useFeedPosts() {
         if (mountedRef.current) setPosts(prev => prev.filter(p => p.id !== deletedId));
       })
       .subscribe();
-
     return () => { supabase.removeChannel(channel); };
   }, [isReady]);
 
