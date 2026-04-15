@@ -32,6 +32,7 @@ const MyWork = lazyWithRetry(() => import("./pages/MyWork.tsx"), "MyWork");
 const ProjectHub = lazyWithRetry(() => import("./pages/ProjectHub.tsx"), "ProjectHub");
 const Opportunities = lazyWithRetry(() => import("./pages/Opportunities.tsx"), "Opportunities");
 const Strands = lazyWithRetry(() => import("./pages/Strands.tsx"), "Strands");
+const ConnectionsPage = lazyWithRetry(() => import("./pages/Connections.tsx"), "ConnectionsPage");
 const Pings = lazyWithRetry(() => import("./pages/Pings.tsx"), "Pings");
 const Alerts = lazyWithRetry(() => import("./pages/Alerts.tsx"), "Alerts");
 const SettingsPage = lazyWithRetry(() => import("./pages/Settings.tsx"), "SettingsPage");
@@ -99,6 +100,7 @@ const App = () => (
             <Route path="/app/opportunities/create" element={<Shell><OpportunityCreate /></Shell>} />
             <Route path="/app/opportunities/:id/applications" element={<Shell><ApplicationsDashboard /></Shell>} />
             <Route path="/app/workspace" element={<Shell><WorkspacePage /></Shell>} />
+            <Route path="/app/connections" element={<Shell><ConnectionsPage /></Shell>} />
             <Route path="/app/strands" element={<Shell><Strands /></Shell>} />
             <Route path="/app/pings" element={<Shell><Pings /></Shell>} />
             <Route path="/app/pings/:id" element={<Shell><Pings /></Shell>} />
