@@ -1,4 +1,5 @@
 import AvatarSquare from "@/components/ui/AvatarSquare";
+import VerifiedBadge from "@/components/VerifiedBadge";
 import { MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -15,7 +16,7 @@ const ROLE_COLORS: Record<string, { bg: string; text: string }> = {
 };
 
 interface PersonCardProps {
-  p: { id: string; full_name: string | null; username: string | null; avatar_url: string | null; role: string | null; location_city: string | null };
+  p: { id: string; full_name: string | null; username: string | null; avatar_url: string | null; role: string | null; location_city: string | null; is_verified?: boolean | null };
   strandStatus: string;
   onStrand: () => void;
   currentUserId?: string;
@@ -44,7 +45,10 @@ export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonC
       onClick={() => navigate(`/app/profile/${p.id}`)}
     >
       <AvatarSquare src={p.avatar_url} name={name} size={56} bgColor={colors.text} />
-      <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", marginTop: 8, width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</p>
+      <div className="flex items-center gap-1 justify-center" style={{ marginTop: 8, width: "100%" }}>
+        <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</p>
+        {p.is_verified && <VerifiedBadge size={14} />}
+      </div>
       <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 10px", borderRadius: 99, marginTop: 4, background: colors.bg, color: colors.text, flexShrink: 0 }}>{roleLabel}</span>
       {p.location_city && (
         <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)", marginTop: 4, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>

@@ -14,6 +14,7 @@ import ShareModal from "@/components/feed/ShareModal";
 import { sendNotification } from "@/lib/notify";
 import ActivityScoreRing from "@/components/ActivityScoreRing";
 import SkeletonCard from "@/components/SkeletonCard";
+import VerifiedBadge from "@/components/VerifiedBadge";
 import EditPostModal from "@/components/feed/EditPostModal";
 import DeletePostDialog from "@/components/feed/DeletePostDialog";
 import { useFeedPosts } from "@/hooks/useFeedPosts";
@@ -428,6 +429,7 @@ const PostCard = ({
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 flex-wrap">
               <Link to={profileLink} className="hover:underline" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{displayName}</Link>
+              {(author?.is_verified || post.org?.is_verified) && <VerifiedBadge size={16} />}
               {isConnected && <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#34C759", display: "inline-block" }} />}
               {showFollow && followState === "none" && (
                 <button type="button" onClick={handleFollow} className="cursor-pointer"

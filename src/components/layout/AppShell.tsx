@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useState, useCallback } from "react";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -9,6 +9,7 @@ import ThemeLogo from "@/components/ThemeLogo";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useQueryClient } from "@tanstack/react-query";
 
 const navGroups = [
   {
@@ -53,6 +54,7 @@ const mobileNav = [
 const AppShell = ({ children }: { children: ReactNode }) => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const openPostCreate = () => navigate("/post/create");
   const { profile, initials, displayName, user } = useAuth();
   const [orgData, setOrgData] = useState<{ name: string; logo_url: string | null; type: string; slug: string } | null>(null);
@@ -106,7 +108,12 @@ const AppShell = ({ children }: { children: ReactNode }) => {
     let pingsCh: ReturnType<typeof supabase.channel> | null = null;
     try {
       alertsCh = supabase.channel("unread-alerts-" + user.id)
-        .on("postgres_changes", { event: "INSERT", schema: "public", table: "alerts", filter: `user_id=eq.${user.id}` }, () => setUnreadAlerts(p => p + 1))
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "alerts", filter: `user_id=eq.${user.id}` }, (payload) => {
+          setUnreadAlerts(p => p + 1);
+          // Show toast for new notification
+          const title = (payload.new as any)?.title;
+          if (title) toast.info(title, { duration: 4000 });
+        })
         .subscribe();
       pingsCh = supabase.channel("unread-pings-" + user.id)
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "pings" }, payload => {
