@@ -477,6 +477,48 @@ export type Database = {
           },
         ]
       }
+      investor_interests: {
+        Row: {
+          created_at: string | null
+          id: string
+          interest_type: string | null
+          investor_id: string | null
+          message: string | null
+          startup_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          interest_type?: string | null
+          investor_id?: string | null
+          message?: string | null
+          startup_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          interest_type?: string | null
+          investor_id?: string | null
+          message?: string | null
+          startup_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investor_interests_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "investor_interests_startup_id_fkey"
+            columns: ["startup_id"]
+            isOneToOne: false
+            referencedRelation: "startup_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       item_verification_requests: {
         Row: {
           created_at: string | null
@@ -1635,6 +1677,62 @@ export type Database = {
           },
         ]
       }
+      post_mentions: {
+        Row: {
+          created_at: string | null
+          id: string
+          mentioned_org_id: string | null
+          mentioned_page_id: string | null
+          mentioned_user_id: string | null
+          post_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          mentioned_org_id?: string | null
+          mentioned_page_id?: string | null
+          mentioned_user_id?: string | null
+          post_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          mentioned_org_id?: string | null
+          mentioned_page_id?: string | null
+          mentioned_user_id?: string | null
+          post_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_mentions_mentioned_org_id_fkey"
+            columns: ["mentioned_org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_mentions_mentioned_page_id_fkey"
+            columns: ["mentioned_page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_mentions_mentioned_user_id_fkey"
+            columns: ["mentioned_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_mentions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_reactions: {
         Row: {
           created_at: string | null
@@ -1994,6 +2092,72 @@ export type Database = {
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      startup_profiles: {
+        Row: {
+          created_at: string | null
+          founded_date: string | null
+          founder_id: string | null
+          funding_amount: number | null
+          funding_currency: string | null
+          funding_stage: string | null
+          id: string
+          looking_for_funding: boolean | null
+          page_id: string | null
+          pitch_deck_url: string | null
+          revenue_range: string | null
+          sectors: string[] | null
+          team_size: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          founded_date?: string | null
+          founder_id?: string | null
+          funding_amount?: number | null
+          funding_currency?: string | null
+          funding_stage?: string | null
+          id?: string
+          looking_for_funding?: boolean | null
+          page_id?: string | null
+          pitch_deck_url?: string | null
+          revenue_range?: string | null
+          sectors?: string[] | null
+          team_size?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          founded_date?: string | null
+          founder_id?: string | null
+          funding_amount?: number | null
+          funding_currency?: string | null
+          funding_stage?: string | null
+          id?: string
+          looking_for_funding?: boolean | null
+          page_id?: string | null
+          pitch_deck_url?: string | null
+          revenue_range?: string | null
+          sectors?: string[] | null
+          team_size?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "startup_profiles_founder_id_fkey"
+            columns: ["founder_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "startup_profiles_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
             referencedColumns: ["id"]
           },
         ]
@@ -2793,6 +2957,7 @@ export type Database = {
         }
         Returns: Json
       }
+      calculate_activity_score: { Args: { p_user_id: string }; Returns: number }
       get_page_tracker_count: { Args: { p_page_id: string }; Returns: number }
       get_user_list: {
         Args: { p_limit?: number; p_offset?: number; p_role?: string }
@@ -2812,6 +2977,7 @@ export type Database = {
         Args: { amount: number; uid: string }
         Returns: undefined
       }
+      update_all_activity_scores: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
