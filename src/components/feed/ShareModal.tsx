@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Search, Check, Copy, Loader2 } from "lucide-react";
+import { X, Search, Check, Copy, Loader2, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { sendNotification } from "@/lib/notify";
@@ -15,26 +15,56 @@ interface ShareModalProps {
 const ShareModal = ({ open, onClose, postId }: ShareModalProps) => {
   const { user, profile } = useAuth();
   const [connections, setConnections] = useState<any[]>([]);
+  const [groups, setGroups] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [sentTo, setSentTo] = useState<Set<string>>(new Set());
+  const [sentGroups, setSentGroups] = useState<Set<string>>(new Set());
   const [sending, setSending] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open || !user) return;
     (async () => {
+      // Fetch connections
       const { data: strands } = await supabase
         .from("strands")
         .select("requester_id, receiver_id")
         .or(`requester_id.eq.${user.id},receiver_id.eq.${user.id}`)
         .eq("status", "accepted");
-      if (!strands?.length) return;
-      const ids = strands.map(s => s.requester_id === user.id ? s.receiver_id : s.requester_id).filter(Boolean) as string[];
-      if (!ids.length) return;
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, full_name, avatar_url, role")
-        .in("id", ids);
-      setConnections(profiles || []);
+      if (strands?.length) {
+        const ids = strands.map(s => s.requester_id === user.id ? s.receiver_id : s.requester_id).filter(Boolean) as string[];
+        if (ids.length) {
+          const { data: profiles } = await supabase.from("profiles").select("id, full_name, avatar_url, role").in("id", ids);
+          setConnections(profiles || []);
+        }
+      }
+
+      // Fetch user's groups
+      const { data: memberships } = await supabase
+        .from("workspace_members")
+        .select("workspace_id")
+        .eq("user_id", user.id)
+        .eq("invitation_status", "accepted");
+      if (memberships?.length) {
+        const wsIds = memberships.map(m => m.workspace_id).filter(Boolean) as string[];
+        const { data: workspaces } = await supabase
+          .from("workspaces")
+          .select("id, name, avatar_url")
+          .in("id", wsIds)
+          .eq("workspace_type", "group")
+          .eq("is_active", true);
+
+        // Get default channels
+        if (workspaces?.length) {
+          const { data: channels } = await supabase
+            .from("workspace_channels")
+            .select("id, workspace_id")
+            .in("workspace_id", wsIds)
+            .order("created_at", { ascending: true });
+          const chMap = new Map<string, string>();
+          (channels || []).forEach(ch => { if (!chMap.has(ch.workspace_id!)) chMap.set(ch.workspace_id!, ch.id); });
+          setGroups((workspaces || []).map(ws => ({ ...ws, channel_id: chMap.get(ws.id) })));
+        }
+      }
     })();
   }, [open, user]);
 
@@ -44,53 +74,52 @@ const ShareModal = ({ open, onClose, postId }: ShareModalProps) => {
     ? connections.filter(c => c.full_name?.toLowerCase().includes(search.toLowerCase()))
     : connections;
 
+  const filteredGroups = search
+    ? groups.filter(g => g.name?.toLowerCase().includes(search.toLowerCase()))
+    : groups;
+
   const handleSend = async (receiverId: string, receiverName: string) => {
     if (!user) return;
     setSending(receiverId);
     try {
-      // Insert post_share
-      await supabase.from("post_shares").insert({
-        post_id: postId, sender_id: user.id, receiver_id: receiverId,
-      });
+      await supabase.from("post_shares").insert({ post_id: postId, sender_id: user.id, receiver_id: receiverId });
 
-      // Find or create conversation
       const { data: existingConv } = await supabase
-        .from("conversations")
-        .select("id")
+        .from("conversations").select("id")
         .or(`and(participant_1.eq.${user.id},participant_2.eq.${receiverId}),and(participant_1.eq.${receiverId},participant_2.eq.${user.id})`)
         .maybeSingle();
 
       let convId = existingConv?.id;
       if (!convId) {
-        const { data: newConv } = await supabase
-          .from("conversations")
-          .insert({ participant_1: user.id, participant_2: receiverId })
-          .select("id")
-          .single();
+        const { data: newConv } = await supabase.from("conversations").insert({ participant_1: user.id, participant_2: receiverId }).select("id").single();
         convId = newConv?.id;
       }
 
       if (convId) {
         const postUrl = `${window.location.origin}/app/post/${postId}`;
-        await supabase.from("pings").insert({
-          conversation_id: convId,
-          sender_id: user.id,
-          content: `Shared a post: ${postUrl}`,
-        });
+        await supabase.from("pings").insert({ conversation_id: convId, sender_id: user.id, content: `Shared a post: ${postUrl}` });
       }
 
-      sendNotification({
-        userId: receiverId, actorId: user.id, type: "share",
-        title: `${profile?.full_name || "Someone"} shared a post with you`,
-        actionUrl: `/app/post/${postId}`,
-      });
-
+      sendNotification({ userId: receiverId, actorId: user.id, type: "share", title: `${profile?.full_name || "Someone"} shared a post with you`, actionUrl: `/app/post/${postId}` });
       setSentTo(prev => new Set(prev).add(receiverId));
       toast.success(`Shared with ${receiverName}`);
-    } catch (e) {
-      console.error("Share failed:", e);
-      toast.error("Failed to share");
-    }
+    } catch { toast.error("Failed to share"); }
+    setSending(null);
+  };
+
+  const handleSendToGroup = async (group: any) => {
+    if (!user || !group.channel_id) return;
+    setSending(`group-${group.id}`);
+    try {
+      const postUrl = `${window.location.origin}/app/post/${postId}`;
+      await supabase.from("workspace_messages").insert({
+        channel_id: group.channel_id, sender_id: user.id,
+        content: `Shared a post: ${postUrl}`,
+      });
+      await supabase.from("workspaces").update({ last_message_at: new Date().toISOString() } as any).eq("id", group.id);
+      setSentGroups(prev => new Set(prev).add(group.id));
+      toast.success(`Shared to ${group.name}`);
+    } catch { toast.error("Failed to share"); }
     setSending(null);
   };
 
@@ -112,15 +141,16 @@ const ShareModal = ({ open, onClose, postId }: ShareModalProps) => {
         <div style={{ padding: "8px 16px" }}>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2" style={{ width: 16, height: 16, color: "var(--text-muted)" }} />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search connections..."
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search connections or groups..."
               className="w-full outline-none"
               style={{ height: 36, borderRadius: 10, paddingLeft: 36, paddingRight: 12, fontSize: 13, background: "var(--bg-input)", border: "1px solid var(--border-subtle)", color: "var(--text-primary)" }} />
           </div>
         </div>
 
-        {/* Connection list */}
+        {/* Content */}
         <div className="flex-1 overflow-y-auto" style={{ padding: "0 16px" }}>
-          {filtered.length === 0 && (
+          {/* Connections */}
+          {filtered.length === 0 && filteredGroups.length === 0 && (
             <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "16px 0", textAlign: "center" }}>
               {connections.length === 0 ? "Connect with people to share posts" : "No results"}
             </p>
@@ -140,6 +170,31 @@ const ShareModal = ({ open, onClose, postId }: ShareModalProps) => {
               )}
             </div>
           ))}
+
+          {/* Groups section */}
+          {filteredGroups.length > 0 && (
+            <>
+              <p className="text-[11px] font-semibold uppercase mt-3 mb-1" style={{ color: "var(--text-muted)" }}>Groups</p>
+              {filteredGroups.map(g => (
+                <div key={g.id} className="flex items-center" style={{ gap: 10, padding: "8px 0", borderBottom: "1px solid var(--border-subtle)" }}>
+                  <div className="w-9 h-9 flex items-center justify-center shrink-0" style={{ borderRadius: 0, background: "#E8733A", color: "#fff", fontSize: 13, fontWeight: 700 }}>
+                    {g.avatar_url ? <img src={g.avatar_url} alt="" className="w-full h-full object-cover" /> :
+                      <Users style={{ width: 16, height: 16 }} />}
+                  </div>
+                  <span className="flex-1 min-w-0 truncate" style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}>{g.name}</span>
+                  {sentGroups.has(g.id) ? (
+                    <span className="flex items-center gap-1" style={{ fontSize: 12, color: "#34C759" }}><Check style={{ width: 14, height: 14 }} /> Sent</span>
+                  ) : (
+                    <button type="button" onClick={() => handleSendToGroup(g)}
+                      disabled={sending === `group-${g.id}`}
+                      className="btn-primary-sm cursor-pointer" style={{ fontSize: 12, fontWeight: 600, padding: "4px 12px" }}>
+                      {sending === `group-${g.id}` ? <Loader2 className="w-3 h-3 animate-spin" /> : "Send"}
+                    </button>
+                  )}
+                </div>
+              ))}
+            </>
+          )}
         </div>
 
         {/* Copy link */}
