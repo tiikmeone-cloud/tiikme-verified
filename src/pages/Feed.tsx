@@ -1,17 +1,16 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { PageSEO } from "@/hooks/usePageSEO";
-import { storageImageUrl } from "@/lib/imageTransform";
 import { cleanUsername } from "@/lib/cleanUsername";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import {
   Heart, MessageCircle, Repeat2, Send, SendHorizontal, MoreHorizontal,
-  Trash2, Pencil, Copy, Flag, FileText, Camera, Paperclip, Loader2,
-  Image as ImageIcon, X,
+  Trash2, Pencil, Copy, Flag, Paperclip, Loader2, X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
 import ImageGrid from "@/components/feed/ImageGrid";
 import MentionText from "@/components/feed/MentionText";
+import ShareModal from "@/components/feed/ShareModal";
 import { sendNotification } from "@/lib/notify";
 import ActivityScoreRing from "@/components/ActivityScoreRing";
 import SkeletonCard from "@/components/SkeletonCard";
@@ -51,9 +50,8 @@ const FeedComposer = ({ onPublished }: { onPublished: () => void }) => {
   const { user, profile } = useAuth();
   const [content, setContent] = useState("");
   const [publishing, setPublishing] = useState(false);
-  const [showBadge, setShowBadge] = useState(true);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [attachPreviews, setAttachPreviews] = useState<{ url: string; name: string; type: string; size: number }[]>([]);
+  const [attachFiles, setAttachFiles] = useState<File[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -129,34 +127,41 @@ const FeedComposer = ({ onPublished }: { onPublished: () => void }) => {
     else if (e.key === "Escape") { setShowSuggestions(false); }
   };
 
-  const handleImageUpload = () => {
-    if (imagePreviews.length >= 4) { toast.info("Maximum 4 images"); return; }
+  const handleAttach = () => {
+    if (attachPreviews.length >= 4) { toast.info("Maximum 4 files"); return; }
     fileInputRef.current?.click();
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-    Array.from(files).slice(0, 4 - imagePreviews.length).forEach(file => {
-      if (!file.type.startsWith("image/")) { toast.error("Only images allowed"); return; }
-      if (file.size > 10 * 1024 * 1024) { toast.error("Image must be under 10MB"); return; }
-      setImagePreviews(prev => [...prev, URL.createObjectURL(file)].slice(0, 4));
-      setImageFiles(prev => [...prev, file].slice(0, 4));
+    Array.from(files).slice(0, 4 - attachPreviews.length).forEach(file => {
+      if (file.size > 10 * 1024 * 1024) { toast.error("File must be under 10MB"); return; }
+      const isImage = file.type.startsWith("image/");
+      setAttachPreviews(prev => [...prev, {
+        url: isImage ? URL.createObjectURL(file) : "",
+        name: file.name,
+        type: file.type,
+        size: file.size,
+      }].slice(0, 4));
+      setAttachFiles(prev => [...prev, file].slice(0, 4));
     });
     e.target.value = "";
   };
 
-  const removeImage = (idx: number) => {
-    setImagePreviews(prev => prev.filter((_, i) => i !== idx));
-    setImageFiles(prev => prev.filter((_, i) => i !== idx));
+  const removeAttach = (idx: number) => {
+    setAttachPreviews(prev => prev.filter((_, i) => i !== idx));
+    setAttachFiles(prev => prev.filter((_, i) => i !== idx));
   };
 
   const handlePublish = async () => {
-    if (!content.trim() || !user) return;
+    if (!content.trim() && attachFiles.length === 0) return;
+    if (!user) return;
     setPublishing(true);
     try {
       const uploadedUrls: string[] = [];
-      for (const file of imageFiles) {
+      for (const file of attachFiles) {
+        if (!file.type.startsWith("image/")) continue;
         const safeName = file.name.replace(/[^a-z0-9.]/gi, "_");
         const path = `${user.id}/${Date.now()}-${safeName}`;
         const { data: uploadData, error: uploadError } = await supabase.storage.from("post-images").upload(path, file, { upsert: false, contentType: file.type });
@@ -169,10 +174,9 @@ const FeedComposer = ({ onPublished }: { onPublished: () => void }) => {
         author_id: user.id, content: content.trim(), post_type: "thought", type: "thought",
         visibility: "everyone", hashtags: extractHashtags(content),
         image_urls: uploadedUrls.length > 0 ? uploadedUrls : [],
-        show_company_badge: showBadge,
       } as any).select().single();
       if (error) throw error;
-      setContent(""); setImagePreviews([]); setImageFiles([]);
+      setContent(""); setAttachPreviews([]); setAttachFiles([]);
       toast.success("Posted");
       onPublished();
     } catch (err) { toast.error("Failed to post"); console.error(err); }
@@ -182,8 +186,8 @@ const FeedComposer = ({ onPublished }: { onPublished: () => void }) => {
   if (!user) return null;
 
   return (
-    <div className="glass-card" style={{ padding: 12, borderRadius: 16, marginBottom: 12 }}>
-      <div className="flex gap-[10px]" style={{ alignItems: "flex-start" }}>
+    <div style={{ padding: 12, borderRadius: 16, marginBottom: 12, background: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.50)", backdropFilter: "blur(20px)", boxShadow: "0 8px 32px rgba(26,26,78,0.08)" }}>
+      <div className="flex" style={{ gap: 10, alignItems: "flex-start" }}>
         <AvatarSquare src={profile?.avatar_url} name={profile?.full_name || "You"} size={40} />
         <div className="flex-1 min-w-0 relative">
           <textarea
@@ -191,43 +195,51 @@ const FeedComposer = ({ onPublished }: { onPublished: () => void }) => {
             value={content}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
-            placeholder={`What's on your mind, ${profile?.full_name?.split(" ")[0] || ""}?`}
+            placeholder="What's on your mind?"
             className="w-full resize-none outline-none"
             style={{
               minHeight: 40, maxHeight: 160,
-              background: "var(--bg-input)", border: "1px solid var(--border-subtle)", borderRadius: 10,
+              background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.20)", borderRadius: 10,
               padding: "10px 12px", fontSize: 14, fontWeight: 400, lineHeight: "20px",
               color: "var(--text-primary)",
             }}
             onFocus={e => { e.currentTarget.style.borderColor = "rgba(232,115,58,0.50)"; }}
-            onBlur={e => { e.currentTarget.style.borderColor = "var(--border-subtle)"; }}
+            onBlur={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.20)"; }}
           />
 
           {/* Mention suggestions */}
           {showSuggestions && suggestions.length > 0 && (
-            <div className="absolute left-0 z-30 glass-card overflow-y-auto" style={{ top: "100%", marginTop: 4, width: 280, maxHeight: 200, padding: 4, borderRadius: 10 }}>
+            <div className="absolute left-0 z-30 overflow-y-auto" style={{ top: "100%", marginTop: 4, width: 280, maxHeight: 200, padding: 4, borderRadius: 10, background: "var(--bg-card)", border: "1px solid var(--border-glass)", boxShadow: "0 4px 16px rgba(0,0,0,0.1)" }}>
               {suggestions.map((s, idx) => (
                 <button key={s.id} type="button" onClick={() => insertMention(s)}
-                  className="flex items-center gap-2 w-full text-left cursor-pointer transition-colors"
+                  className="flex items-center gap-2 w-full text-left cursor-pointer"
                   style={{ padding: 8, borderRadius: 6, background: idx === selectedIdx ? "var(--bg-card-hover)" : "transparent" }}>
                   <AvatarSquare src={s.avatar_url} name={s.display} size={32} />
                   <div className="min-w-0 flex-1">
-                    <p style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }} className="truncate">{s.display}</p>
-                    {s.username && <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)" }}>@{s.username}</p>}
+                    <p className="truncate" style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}>{s.display}</p>
+                    {s.username && <p style={{ fontSize: 12, color: "var(--text-muted)" }}>@{cleanUsername(s.username)}</p>}
                   </div>
                 </button>
               ))}
             </div>
           )}
 
-          {/* Image previews */}
-          {imagePreviews.length > 0 && (
-            <div className={`grid ${imagePreviews.length === 1 ? "grid-cols-1" : "grid-cols-2"} gap-2 mt-2`}>
-              {imagePreviews.map((img, i) => (
-                <div key={i} className="relative rounded-[10px] overflow-hidden aspect-video" style={{ background: "var(--bg-input)" }}>
-                  <img src={img} alt="" className="w-full h-full object-cover" />
-                  <button type="button" onClick={() => removeImage(i)} className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full flex items-center justify-center cursor-pointer" style={{ background: "rgba(0,0,0,0.5)" }}>
-                    <X className="w-3 h-3 text-white" />
+          {/* Attachment previews */}
+          {attachPreviews.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {attachPreviews.map((att, i) => (
+                <div key={i} className="relative" style={{ borderRadius: 6, overflow: "hidden", border: "1px solid var(--border-subtle)" }}>
+                  {att.type.startsWith("image/") ? (
+                    <img src={att.url} alt="" style={{ height: 80, width: "auto", maxWidth: 120, objectFit: "cover", borderRadius: 6 }} />
+                  ) : (
+                    <div className="flex items-center gap-2" style={{ height: 36, padding: "0 10px", background: "var(--bg-input)", fontSize: 12, color: "var(--text-secondary)" }}>
+                      <Paperclip style={{ width: 14, height: 14 }} />
+                      <span className="truncate" style={{ maxWidth: 100 }}>{att.name}</span>
+                      <span style={{ color: "var(--text-muted)" }}>{(att.size / 1024).toFixed(0)}KB</span>
+                    </div>
+                  )}
+                  <button type="button" onClick={() => removeAttach(i)} className="absolute top-1 right-1 cursor-pointer flex items-center justify-center" style={{ width: 16, height: 16, borderRadius: 8, background: "rgba(0,0,0,0.5)" }}>
+                    <X style={{ width: 10, height: 10, color: "white" }} />
                   </button>
                 </div>
               ))}
@@ -236,35 +248,17 @@ const FeedComposer = ({ onPublished }: { onPublished: () => void }) => {
 
           {/* Action bar */}
           <div className="flex items-center justify-between" style={{ marginTop: 8 }}>
-            <div className="flex items-center" style={{ gap: 8 }}>
-              <button type="button" onClick={handleImageUpload} className="cursor-pointer p-1" style={{ color: "var(--text-muted)" }}
-                onMouseEnter={e => { e.currentTarget.style.color = "var(--text-primary)"; }}
-                onMouseLeave={e => { e.currentTarget.style.color = "var(--text-muted)"; }}>
-                <Camera style={{ width: 20, height: 20 }} />
-              </button>
-              <button type="button" className="cursor-pointer p-1" style={{ color: "var(--text-muted)" }}
-                onMouseEnter={e => { e.currentTarget.style.color = "var(--text-primary)"; }}
-                onMouseLeave={e => { e.currentTarget.style.color = "var(--text-muted)"; }}>
-                <Paperclip style={{ width: 20, height: 20 }} />
-              </button>
-            </div>
-            <div className="flex items-center" style={{ gap: 8 }}>
-              <label className="flex items-center gap-1.5 cursor-pointer select-none">
-                <span style={{ fontSize: 14, color: "var(--text-secondary)" }}>Show company badge</span>
-                <button type="button" onClick={() => setShowBadge(!showBadge)} className="relative cursor-pointer"
-                  style={{ width: 32, height: 18, borderRadius: 9, background: showBadge ? "var(--accent)" : "var(--border-glass)", transition: "background 150ms ease" }}>
-                  <span className="absolute top-[2px] rounded-full transition-all" style={{ width: 14, height: 14, background: "white", left: showBadge ? 16 : 2 }} />
-                </button>
-              </label>
-              <button type="button" onClick={handlePublish} disabled={publishing || !content.trim()}
-                className="btn-primary-sm disabled:opacity-50 cursor-pointer" style={{ fontSize: 13, fontWeight: 600 }}>
-                {publishing ? <Loader2 className="w-4 h-4 animate-spin" /> : "Post"}
-              </button>
-            </div>
+            <button type="button" onClick={handleAttach} className="cursor-pointer p-1" style={{ color: "#9CA3C0" }}>
+              <Paperclip style={{ width: 20, height: 20 }} />
+            </button>
+            <button type="button" onClick={handlePublish} disabled={publishing || (!content.trim() && attachFiles.length === 0)}
+              className="btn-primary-sm disabled:opacity-50 cursor-pointer" style={{ fontSize: 13, fontWeight: 600 }}>
+              {publishing ? <Loader2 className="w-4 h-4 animate-spin" /> : "Post"}
+            </button>
           </div>
         </div>
       </div>
-      <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
+      <input ref={fileInputRef} type="file" accept="image/*,.pdf,.doc,.docx" multiple className="hidden" onChange={handleFileChange} />
     </div>
   );
 };
@@ -272,6 +266,7 @@ const FeedComposer = ({ onPublished }: { onPublished: () => void }) => {
 /* ─── POST CARD ─── */
 interface PostCardProps {
   post: any;
+  connectionIds: Set<string>;
   likeCounts: Record<string, number>;
   myLikes: Record<string, boolean>;
   toggleLike: (postId: string) => void;
@@ -288,13 +283,15 @@ interface PostCardProps {
 }
 
 const PostCard = ({
-  post, likeCounts, myLikes, toggleLike,
+  post, connectionIds, likeCounts, myLikes, toggleLike,
   commentCounts, commentsData, commentsOpen, commentInputs,
   setCommentInputs, toggleComments, submitComment, deleteComment, onDelete, onEdit,
 }: PostCardProps) => {
   const [showMenu, setShowMenu] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [likeAnimating, setLikeAnimating] = useState(false);
+  const [followState, setFollowState] = useState<"none" | "pending">("none");
+  const [sharePostId, setSharePostId] = useState<string | null>(null);
   const { user, profile: authProfile } = useAuth();
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -313,11 +310,12 @@ const PostCard = ({
   const displayName = isOrgPost ? post.org?.name : (author?.full_name || author?.username || "Unknown");
   const profileLink = isOrgPost ? `/org/${post.org?.slug}` : `/app/profile/${author?.id || ""}`;
   const viaName = isOrgPost && post.poster_profile?.full_name ? post.poster_profile.full_name : null;
-  const username = !isOrgPost && author?.username ? `@${cleanUsername(author.username)}` : null;
   const companyName = !isOrgPost && author?.institution_name && post.show_company_badge !== false ? author.institution_name : null;
   const timeAgo = post.created_at ? getTimeAgo(new Date(post.created_at)) : "";
   const isOwn = user?.id === post.author_id;
   const isEdited = post.is_edited;
+  const isConnected = !isOrgPost && author?.id && connectionIds.has(author.id);
+  const showFollow = !isOrgPost && !isOwn && !isConnected && author?.id;
 
   const liked = myLikes[post.id] || false;
   const likeCount = likeCounts[post.id] || 0;
@@ -327,7 +325,6 @@ const PostCard = ({
   const commentText = commentInputs[post.id] || "";
   const repostCount = post.repost_count || 0;
 
-  // Sort comments: own first, then by created_at ASC
   const sortedComments = useMemo(() => {
     const arr = [...comments];
     arr.sort((a, b) => {
@@ -369,10 +366,34 @@ const PostCard = ({
     toggleLike(post.id);
   };
 
-  const handleShare = () => {
-    const url = window.location.origin + "/post/" + post.id;
-    navigator.clipboard.writeText(url);
-    toast.success("Copied!");
+  const handleFollow = async () => {
+    if (!user || !author?.id) return;
+    try {
+      await supabase.from("strands").insert({ requester_id: user.id, receiver_id: author.id, status: "pending" });
+      sendNotification({
+        userId: author.id, actorId: user.id, type: "connection_request",
+        title: `${authProfile?.full_name || "Someone"} wants to connect`,
+        actionUrl: `/app/strands`,
+      });
+      setFollowState("pending");
+    } catch { /* dup check */ }
+  };
+
+  const handleReport = async () => {
+    if (!user) return;
+    await supabase.from("post_reports").insert({ post_id: post.id, reporter_id: user.id, reason: "reported" });
+    const postUrl = `${window.location.origin}/app/post/${post.id}`;
+    const subject = encodeURIComponent(`Report: Post ${post.id}`);
+    const body = encodeURIComponent(`I am reporting the following post: ${postUrl}\n\nReason: \n\nReported by: ${authProfile?.full_name || "User"}`);
+    window.location.href = `mailto:contact@tiikme.com?subject=${subject}&body=${body}`;
+    toast.success("Report submitted");
+    setShowMenu(false);
+  };
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(`${window.location.origin}/app/post/${post.id}`);
+    toast.success("Link copied!");
+    setShowMenu(false);
   };
 
   // Content clamp
@@ -386,216 +407,215 @@ const PostCard = ({
   const isTownhall = post.post_type === "townhall";
 
   return (
-    <article className="glass-card" style={{ padding: 12, borderRadius: 16, marginBottom: 8, borderLeft: isTownhall ? "4px solid var(--accent)" : undefined }}>
-      {isTownhall && (
-        <div style={{ paddingBottom: 4 }}>
-          <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--accent)" }}>TOWNHALL</span>
-        </div>
-      )}
-
-      {/* HEADER */}
-      <div className="flex items-center" style={{ gap: 10 }}>
-        <Link to={profileLink}>
-          <AvatarSquare src={displayAvatar} name={displayName} size={40} />
-        </Link>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <Link to={profileLink} className="hover:underline" style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>{displayName}</Link>
-            {username && <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{username}</span>}
-            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>·</span>
-            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{timeAgo}</span>
-            {isEdited && <span style={{ fontSize: 12, fontStyle: "italic", color: "var(--text-muted)" }}>(edited)</span>}
+    <>
+      <article className="glass-card" style={{ padding: 12, borderRadius: 16, marginBottom: 8, borderLeft: isTownhall ? "4px solid var(--accent)" : undefined }}>
+        {isTownhall && (
+          <div style={{ paddingBottom: 4 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--accent)" }}>TOWNHALL</span>
           </div>
-          {viaName ? (
-            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>via {viaName}</span>
-          ) : companyName ? (
-            <div className="flex items-center gap-1">
-              <div className="flex items-center justify-center shrink-0 overflow-hidden" style={{ width: 14, height: 14, borderRadius: 0, background: "rgba(232,115,58,0.15)" }}>
-                <span style={{ fontSize: 7, fontWeight: 700, color: "var(--accent)" }}>{companyName.charAt(0).toUpperCase()}</span>
-              </div>
-              <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{companyName}</span>
-            </div>
-          ) : null}
-        </div>
+        )}
 
-        {/* Three-dot menu */}
-        <div className="relative" ref={menuRef}>
-          <button type="button" onClick={() => setShowMenu(!showMenu)}
-            className="flex items-center justify-center cursor-pointer"
-            style={{ width: 32, height: 32, color: "var(--text-muted)" }}>
-            <MoreHorizontal style={{ width: 16, height: 16 }} />
-          </button>
-          {showMenu && (
-            <div className="absolute right-0 top-8 glass-card z-20" style={{ width: 160, borderRadius: 10, padding: 4 }}>
-              {isOwn ? (
-                <>
-                  <button type="button" onClick={() => { onEdit(post); setShowMenu(false); }}
-                    className="flex items-center gap-2 w-full cursor-pointer" style={{ padding: "8px 12px", fontSize: 13, color: "var(--text-secondary)", borderRadius: 6 }}
-                    onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-card-hover)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}>
-                    <Pencil style={{ width: 14, height: 14 }} /> Edit Post
-                  </button>
-                  <button type="button" onClick={() => { onDelete(post.id); setShowMenu(false); }}
-                    className="flex items-center gap-2 w-full cursor-pointer" style={{ padding: "8px 12px", fontSize: 13, color: "#EF4444", borderRadius: 6 }}
-                    onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-card-hover)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}>
-                    <Trash2 style={{ width: 14, height: 14 }} /> Delete Post
-                  </button>
-                </>
-              ) : (
-                <button type="button" onClick={() => { toast.info("Report submitted"); setShowMenu(false); }}
-                  className="flex items-center gap-2 w-full cursor-pointer" style={{ padding: "8px 12px", fontSize: 13, color: "var(--text-secondary)", borderRadius: 6 }}
-                  onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-card-hover)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}>
-                  <Flag style={{ width: 14, height: 14 }} /> Report
+        {/* HEADER */}
+        <div className="flex items-center" style={{ gap: 10 }}>
+          <Link to={profileLink}>
+            <AvatarSquare src={displayAvatar} name={displayName} size={40} />
+          </Link>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <Link to={profileLink} className="hover:underline" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{displayName}</Link>
+              {isConnected && <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#34C759", display: "inline-block" }} />}
+              {showFollow && followState === "none" && (
+                <button type="button" onClick={handleFollow} className="cursor-pointer"
+                  style={{ fontSize: 12, fontWeight: 600, color: "#E8733A", padding: "2px 8px", border: "1px solid rgba(232,115,58,0.30)", borderRadius: 6, background: "transparent" }}>
+                  + Follow
                 </button>
               )}
+              {showFollow && followState === "pending" && (
+                <span style={{ fontSize: 12, fontWeight: 500, color: "#9CA3C0", padding: "2px 8px" }}>Requested</span>
+              )}
+              <span style={{ fontSize: 12, color: "#9CA3C0" }}>·</span>
+              <span style={{ fontSize: 12, color: "#9CA3C0" }}>{timeAgo}</span>
+              {isEdited && <span style={{ fontSize: 12, fontStyle: "italic", color: "#9CA3C0" }}>(edited)</span>}
             </div>
-          )}
-        </div>
-      </div>
-
-      {/* CONTENT */}
-      <div style={{ marginTop: 8 }}>
-        <div ref={contentRef}
-          style={{
-            fontSize: 14, fontWeight: 400, lineHeight: "20px", color: "var(--text-primary)",
-            ...((!expanded && needsClamp) ? { maxHeight: 100, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 5, WebkitBoxOrient: "vertical" as any } : {}),
-          }}>
-          <MentionText text={post.content} />
-        </div>
-        {needsClamp && !expanded && (
-          <button type="button" onClick={() => setExpanded(true)} className="cursor-pointer" style={{ fontSize: 13, fontWeight: 600, color: "var(--accent)", marginTop: 2 }}>
-            See more
-          </button>
-        )}
-      </div>
-
-      {/* IMAGES */}
-      {post.image_urls?.length > 0 && (
-        <div style={{ marginTop: 8 }}>
-          <ImageGrid images={post.image_urls} />
-        </div>
-      )}
-
-      {/* PDF */}
-      {post.pdf_url && (
-        <div style={{ marginTop: 8 }}>
-          <a href={post.pdf_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 glass-card" style={{ padding: 10, borderRadius: 10 }}>
-            <div className="flex items-center justify-center" style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(220,38,38,0.1)" }}>
-              <FileText style={{ width: 18, height: 18, color: "#DC2626" }} />
-            </div>
-            <p className="truncate flex-1" style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>Attached PDF</p>
-          </a>
-        </div>
-      )}
-
-      {/* Repost info */}
-      {repostCount >= 2 && (
-        <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
-          {displayName} and {repostCount - 1} other{repostCount > 2 ? "s" : ""} reposted
-        </p>
-      )}
-
-      {/* REACTION BAR */}
-      <div className="flex items-center" style={{ marginTop: 8, gap: 4 }}>
-        {/* Like */}
-        <button type="button" onClick={handleLike}
-          className="flex items-center cursor-pointer transition-all active:scale-95"
-          style={{ gap: 4, padding: "6px 10px", borderRadius: 8, background: "rgba(255,255,255,0.10)", transform: likeAnimating ? "scale(1.2)" : "scale(1)", transition: "transform 150ms ease" }}>
-          <Heart style={{ width: 16, height: 16, fill: liked ? "#E8733A" : "none", color: liked ? "#E8733A" : "var(--text-muted)" }} />
-          <span style={{ fontSize: 12, color: liked ? "#E8733A" : "var(--text-muted)" }}>{likeCount || ""}</span>
-        </button>
-
-        {/* Comment */}
-        <button type="button" onClick={() => toggleComments(post.id)}
-          className="flex items-center cursor-pointer transition-all"
-          style={{ gap: 4, padding: "6px 10px", borderRadius: 8, background: "rgba(255,255,255,0.10)" }}>
-          <MessageCircle style={{ width: 16, height: 16, color: isOpen ? "#E8733A" : "var(--text-muted)" }} />
-          <span style={{ fontSize: 12, color: isOpen ? "#E8733A" : "var(--text-muted)" }}>{commentCount || ""}</span>
-        </button>
-
-        {/* Repost */}
-        <div className="relative">
-          <button type="button" onClick={handleRepost}
-            className="flex items-center cursor-pointer transition-all"
-            style={{ gap: 4, padding: "6px 10px", borderRadius: 8, background: "rgba(255,255,255,0.10)" }}>
-            <Repeat2 style={{ width: 16, height: 16, color: "var(--text-muted)" }} />
-            {repostCount > 0 && <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{repostCount}</span>}
-          </button>
-          {confirmRepost && (
-            <div className="absolute bottom-full left-0 mb-1 flex items-center gap-1 px-2 py-1 glass-card z-10" style={{ borderRadius: 8, whiteSpace: "nowrap" }}>
-              <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>Repost?</span>
-              <button type="button" onClick={handleRepost} className="cursor-pointer" style={{ fontSize: 11, fontWeight: 700, color: "var(--accent)", padding: "0 4px" }}>Yes</button>
-              <button type="button" onClick={() => setConfirmRepost(false)} className="cursor-pointer" style={{ fontSize: 11, color: "var(--text-muted)", padding: "0 4px" }}>No</button>
-            </div>
-          )}
-        </div>
-
-        {/* Share */}
-        <button type="button" onClick={handleShare}
-          className="flex items-center cursor-pointer transition-all"
-          style={{ padding: "6px 10px", borderRadius: 8, background: "rgba(255,255,255,0.10)" }}>
-          <Send style={{ width: 16, height: 16, color: "var(--text-muted)" }} />
-        </button>
-      </div>
-
-      {/* COMMENT SECTION */}
-      {isOpen && (
-        <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--border-subtle)" }}>
-          {visibleComments.length === 0 && <p style={{ fontSize: 12, color: "var(--text-muted)", padding: "4px 0" }}>No comments yet. Be the first!</p>}
-          {visibleComments.map((c: any) => {
-            const cName = c.author?.full_name || "User";
-            const cTime = c.created_at ? getTimeAgo(new Date(c.created_at)) : "";
-            const isOwnComment = user?.id === c.user_id;
-            return (
-              <div key={c.id} className="flex group" style={{ gap: 8, padding: "6px 0", alignItems: "flex-start" }}>
-                <AvatarSquare src={c.author?.avatar_url} name={cName} size={24} />
-                <div className="flex-1 min-w-0" style={{ background: "rgba(255,255,255,0.10)", borderRadius: 10, padding: "8px 10px" }}>
-                  <div className="flex items-center gap-1.5">
-                    <Link to={`/app/profile/${c.author?.id || c.user_id}`} className="hover:underline" style={{ fontSize: 12, fontWeight: 600, color: "var(--text-primary)" }}>{cName}</Link>
-                    <span style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)" }}>{cTime}</span>
-                  </div>
-                  <p style={{ fontSize: 13, fontWeight: 400, color: "var(--text-secondary)", lineHeight: "18px" }}><MentionText text={c.content} /></p>
+            {viaName ? (
+              <span style={{ fontSize: 12, color: "#6B7094" }}>via {viaName}</span>
+            ) : companyName ? (
+              <div className="flex items-center gap-1">
+                <div className="flex items-center justify-center shrink-0 overflow-hidden" style={{ width: 14, height: 14, borderRadius: 0, background: "rgba(232,115,58,0.15)" }}>
+                  <span style={{ fontSize: 7, fontWeight: 700, color: "#E8733A" }}>{companyName.charAt(0).toUpperCase()}</span>
                 </div>
-                {isOwnComment && (
-                  <button type="button" onClick={() => deleteComment(post.id, c.id)}
-                    className="opacity-0 group-hover:opacity-100 cursor-pointer shrink-0 self-center"
-                    style={{ color: "#EF4444" }}>
-                    <Trash2 style={{ width: 12, height: 12 }} />
+                <span style={{ fontSize: 12, color: "#6B7094" }}>{companyName}</span>
+              </div>
+            ) : null}
+          </div>
+
+          {/* Three-dot menu */}
+          <div className="relative" ref={menuRef}>
+            <button type="button" onClick={() => setShowMenu(!showMenu)}
+              className="flex items-center justify-center cursor-pointer"
+              style={{ width: 32, height: 32, color: "#9CA3C0" }}>
+              <MoreHorizontal style={{ width: 16, height: 16 }} />
+            </button>
+            {showMenu && (
+              <div className="absolute right-0 top-8 z-20" style={{ width: 170, borderRadius: 10, padding: 4, background: "var(--bg-card)", border: "1px solid var(--border-glass)", boxShadow: "0 4px 16px rgba(0,0,0,0.1)" }}>
+                <button type="button" onClick={handleCopyLink}
+                  className="flex items-center gap-2 w-full cursor-pointer" style={{ padding: "8px 12px", fontSize: 13, color: "#6B7094", borderRadius: 6 }}>
+                  <Copy style={{ width: 14, height: 14 }} /> Copy Link
+                </button>
+                {isOwn ? (
+                  <>
+                    <button type="button" onClick={() => { onEdit(post); setShowMenu(false); }}
+                      className="flex items-center gap-2 w-full cursor-pointer" style={{ padding: "8px 12px", fontSize: 13, color: "#6B7094", borderRadius: 6 }}>
+                      <Pencil style={{ width: 14, height: 14 }} /> Edit Post
+                    </button>
+                    <button type="button" onClick={() => { onDelete(post.id); setShowMenu(false); }}
+                      className="flex items-center gap-2 w-full cursor-pointer" style={{ padding: "8px 12px", fontSize: 13, color: "#EF4444", borderRadius: 6 }}>
+                      <Trash2 style={{ width: 14, height: 14 }} /> Delete Post
+                    </button>
+                  </>
+                ) : (
+                  <button type="button" onClick={handleReport}
+                    className="flex items-center gap-2 w-full cursor-pointer" style={{ padding: "8px 12px", fontSize: 13, color: "#6B7094", borderRadius: 6 }}>
+                    <Flag style={{ width: 14, height: 14 }} /> Report
                   </button>
                 )}
               </div>
-            );
-          })}
-          {sortedComments.length > 3 && !showAllComments && (
-            <button type="button" onClick={() => setShowAllComments(true)} className="cursor-pointer" style={{ fontSize: 12, fontWeight: 500, color: "var(--accent)", padding: "4px 0" }}>
-              View more comments
+            )}
+          </div>
+        </div>
+
+        {/* CONTENT */}
+        <div style={{ marginTop: 8 }}>
+          <div ref={contentRef}
+            style={{
+              fontSize: 14, fontWeight: 400, lineHeight: "20px", color: "#1A1A2E",
+              ...((!expanded && needsClamp) ? { maxHeight: 100, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 5, WebkitBoxOrient: "vertical" as any } : {}),
+            }}>
+            <MentionText text={post.content} />
+          </div>
+          {needsClamp && !expanded && (
+            <button type="button" onClick={() => setExpanded(true)} className="cursor-pointer" style={{ fontSize: 13, fontWeight: 600, color: "#E8733A", marginTop: 2 }}>
+              See more
             </button>
           )}
-
-          {/* Comment input */}
-          {user && (
-            <div className="flex items-center" style={{ gap: 8, marginTop: 6 }}>
-              <AvatarSquare src={authProfile?.avatar_url} name={authProfile?.full_name || "You"} size={24} />
-              <input
-                value={commentText}
-                onChange={(e) => setCommentInputs((p) => ({ ...p, [post.id]: e.target.value }))}
-                placeholder="Write a comment..."
-                className="flex-1 outline-none"
-                style={{ height: 36, borderRadius: 18, padding: "0 14px", fontSize: 13, background: "var(--bg-input)", border: "1px solid var(--border-subtle)", color: "var(--text-primary)" }}
-                onKeyDown={(e) => { if (e.key === "Enter" && commentText.trim()) submitComment(post.id); }}
-              />
-              <button type="button" onClick={() => { if (commentText.trim()) submitComment(post.id); }}
-                className="cursor-pointer" style={{ color: commentText.trim() ? "#E8733A" : "var(--text-muted)" }}
-                disabled={!commentText.trim()}>
-                <SendHorizontal style={{ width: 16, height: 16 }} />
-              </button>
-            </div>
-          )}
         </div>
-      )}
-    </article>
+
+        {/* IMAGES — use raw URLs, no transform */}
+        {post.image_urls?.length > 0 && (
+          <div style={{ marginTop: 8 }}>
+            <ImageGrid images={post.image_urls} />
+          </div>
+        )}
+
+        {/* Repost info */}
+        {repostCount >= 2 && (
+          <p style={{ fontSize: 12, color: "#9CA3C0", marginTop: 4 }}>
+            {displayName} and {repostCount - 1} other{repostCount > 2 ? "s" : ""} reposted
+          </p>
+        )}
+
+        {/* REACTION BAR */}
+        <div className="flex items-center" style={{ marginTop: 8, gap: 4 }}>
+          <button type="button" onClick={handleLike}
+            className="flex items-center cursor-pointer active:scale-95"
+            style={{ gap: 4, padding: "6px 10px", borderRadius: 8, background: "rgba(255,255,255,0.10)", transform: likeAnimating ? "scale(1.2)" : "scale(1)", transition: "transform 150ms ease" }}>
+            <Heart style={{ width: 16, height: 16, fill: liked ? "#E8733A" : "none", color: liked ? "#E8733A" : "#9CA3C0" }} />
+            <span style={{ fontSize: 12, color: liked ? "#E8733A" : "#9CA3C0" }}>{likeCount || ""}</span>
+          </button>
+
+          <button type="button" onClick={() => toggleComments(post.id)}
+            className="flex items-center cursor-pointer"
+            style={{ gap: 4, padding: "6px 10px", borderRadius: 8, background: "rgba(255,255,255,0.10)" }}>
+            <MessageCircle style={{ width: 16, height: 16, color: isOpen ? "#E8733A" : "#9CA3C0" }} />
+            <span style={{ fontSize: 12, color: isOpen ? "#E8733A" : "#9CA3C0" }}>{commentCount || ""}</span>
+          </button>
+
+          <div className="relative">
+            <button type="button" onClick={handleRepost}
+              className="flex items-center cursor-pointer"
+              style={{ gap: 4, padding: "6px 10px", borderRadius: 8, background: "rgba(255,255,255,0.10)" }}>
+              <Repeat2 style={{ width: 16, height: 16, color: "#9CA3C0" }} />
+              {repostCount > 0 && <span style={{ fontSize: 12, color: "#9CA3C0" }}>{repostCount}</span>}
+            </button>
+            {confirmRepost && (
+              <div className="absolute bottom-full left-0 mb-1 flex items-center gap-1 px-2 py-1 z-10" style={{ borderRadius: 8, whiteSpace: "nowrap", background: "var(--bg-card)", border: "1px solid var(--border-glass)", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
+                <span style={{ fontSize: 11, color: "#6B7094" }}>Repost?</span>
+                <button type="button" onClick={handleRepost} className="cursor-pointer" style={{ fontSize: 11, fontWeight: 700, color: "#E8733A", padding: "0 4px" }}>Yes</button>
+                <button type="button" onClick={() => setConfirmRepost(false)} className="cursor-pointer" style={{ fontSize: 11, color: "#9CA3C0", padding: "0 4px" }}>No</button>
+              </div>
+            )}
+          </div>
+
+          <button type="button" onClick={() => setSharePostId(post.id)}
+            className="flex items-center cursor-pointer"
+            style={{ padding: "6px 10px", borderRadius: 8, background: "rgba(255,255,255,0.10)" }}>
+            <Send style={{ width: 16, height: 16, color: "#9CA3C0" }} />
+          </button>
+        </div>
+
+        {/* COMMENT SECTION */}
+        {isOpen && (
+          <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.15)" }}>
+            {visibleComments.length === 0 && <p style={{ fontSize: 12, color: "#9CA3C0", padding: "4px 0" }}>No comments yet. Be the first!</p>}
+            {visibleComments.map((c: any) => {
+              const cName = c.author?.full_name || "User";
+              const cTime = c.created_at ? getTimeAgo(new Date(c.created_at)) : "";
+              const isOwnComment = user?.id === c.user_id;
+              return (
+                <div key={c.id} className="flex group" style={{ gap: 8, padding: "6px 0", alignItems: "flex-start" }}>
+                  <div style={{ marginTop: 2, flexShrink: 0 }}>
+                    <AvatarSquare src={c.author?.avatar_url} name={cName} size={24} />
+                  </div>
+                  <div className="flex-1 min-w-0" style={{ background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.25)", borderRadius: 10, padding: "8px 10px" }}>
+                    <div className="flex items-center" style={{ gap: 6 }}>
+                      <Link to={`/app/profile/${c.author?.id || c.user_id}`} className="hover:underline" style={{ fontSize: 12, fontWeight: 600, color: "#1A1A2E" }}>{cName}</Link>
+                      <span style={{ fontSize: 12, color: "#9CA3C0" }}>·</span>
+                      <span style={{ fontSize: 12, fontWeight: 400, color: "#9CA3C0" }}>{cTime}</span>
+                    </div>
+                    <p style={{ fontSize: 13, fontWeight: 400, color: "#1A1A2E", lineHeight: "18px", marginTop: 2 }}><MentionText text={c.content} /></p>
+                  </div>
+                  {isOwnComment && (
+                    <button type="button" onClick={() => deleteComment(post.id, c.id)}
+                      className="opacity-0 group-hover:opacity-100 cursor-pointer shrink-0"
+                      style={{ color: "#EF4444", marginTop: 4 }}>
+                      <Trash2 style={{ width: 12, height: 12 }} />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+            {sortedComments.length > 3 && !showAllComments && (
+              <button type="button" onClick={() => setShowAllComments(true)} className="cursor-pointer" style={{ fontSize: 12, fontWeight: 500, color: "#E8733A", padding: "4px 0" }}>
+                View more comments
+              </button>
+            )}
+
+            {/* Comment input */}
+            {user && (
+              <div className="flex items-center" style={{ gap: 8, marginTop: 8, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.15)" }}>
+                <AvatarSquare src={authProfile?.avatar_url} name={authProfile?.full_name || "You"} size={24} />
+                <input
+                  value={commentText}
+                  onChange={(e) => setCommentInputs((p) => ({ ...p, [post.id]: e.target.value }))}
+                  placeholder="Write a comment..."
+                  className="flex-1 outline-none"
+                  style={{ height: 36, borderRadius: 18, padding: "0 12px", fontSize: 13, background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.20)", color: "#1A1A2E" }}
+                  onKeyDown={(e) => { if (e.key === "Enter" && commentText.trim()) submitComment(post.id); }}
+                />
+                <button type="button" onClick={() => { if (commentText.trim()) submitComment(post.id); }}
+                  className="cursor-pointer" style={{ color: commentText.trim() ? "#E8733A" : "#9CA3C0" }}
+                  disabled={!commentText.trim()}>
+                  <SendHorizontal style={{ width: 16, height: 16 }} />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </article>
+
+      {/* Share modal */}
+      {sharePostId && <ShareModal open postId={sharePostId} onClose={() => setSharePostId(null)} />}
+    </>
   );
 };
 
@@ -624,26 +644,48 @@ const ActivityWidget = () => {
           </p>
         </div>
       </div>
-      <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 6 }}>Post more, get verified, connect with others</p>
+      <p style={{ fontSize: 11, color: "#9CA3C0", marginTop: 6 }}>Post more, get verified, connect with others</p>
     </div>
   );
 };
 
-const SuggestedWidget = () => {
+const SuggestedWidget = ({ connectionIds }: { connectionIds: Set<string> }) => {
   const { user, profile } = useAuth();
   const [suggested, setSuggested] = useState<any[]>([]);
+  const [sentIds, setSentIds] = useState<Set<string>>(new Set());
+
   useEffect(() => {
     if (!user) return;
     supabase.from("profiles").select("id, full_name, role, avatar_url, institution_name")
-      .neq("id", user.id).eq("is_public", true).order("activity_score", { ascending: false }).limit(3)
-      .then(({ data }) => setSuggested(data || []));
-  }, [user]);
+      .neq("id", user.id).order("activity_score", { ascending: false }).limit(20)
+      .then(({ data }) => {
+        const filtered = (data || []).filter(p => !connectionIds.has(p.id));
+        setSuggested(filtered.slice(0, 3));
+      });
+  }, [user, connectionIds]);
+
   if (suggested.length === 0) return null;
+
+  const handleConnect = async (targetId: string) => {
+    if (!user) return;
+    try {
+      await supabase.from("strands").insert({ requester_id: user.id, receiver_id: targetId, status: "pending" });
+      sendNotification({
+        userId: targetId, actorId: user.id, type: "connection_request",
+        title: `${profile?.full_name || "Someone"} wants to connect`,
+        actionUrl: `/app/strands`,
+      });
+      setSentIds(prev => new Set(prev).add(targetId));
+      setSuggested(prev => prev.filter(s => s.id !== targetId));
+      toast.success("Request sent");
+    } catch { /* ignore dup */ }
+  };
+
   return (
     <div className="glass-card" style={{ padding: 12, borderRadius: 16 }}>
       <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
-        <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>Suggested</span>
-        <Link to="/app/explore" style={{ fontSize: 12, color: "var(--accent)" }}>See all</Link>
+        <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>Suggested</span>
+        <Link to="/app/explore" style={{ fontSize: 12, color: "#E8733A" }}>See all</Link>
       </div>
       {suggested.map((s, i) => (
         <div key={s.id} className="flex items-center" style={{ gap: 8, padding: "6px 0", borderBottom: i < suggested.length - 1 ? "1px solid var(--border-subtle)" : "none" }}>
@@ -651,19 +693,11 @@ const SuggestedWidget = () => {
             <AvatarSquare src={s.avatar_url} name={s.full_name || "User"} size={40} bgColor={roleColorMap[s.role || ""] || "#6B7280"} />
           </Link>
           <div className="flex-1 min-w-0">
-            <Link to={`/app/profile/${s.id}`} className="hover:underline truncate block" style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}>{s.full_name || "User"}</Link>
-            <p className="truncate" style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)" }}>{s.role || ""}</p>
+            <Link to={`/app/profile/${s.id}`} className="hover:underline truncate block" style={{ fontSize: 13, fontWeight: 500, color: "#1A1A2E" }}>{s.full_name || "User"}</Link>
+            <p className="truncate" style={{ fontSize: 12, color: "#9CA3C0" }}>{s.role || ""}</p>
           </div>
           <button className="btn-glass-pill cursor-pointer" style={{ fontSize: 12, fontWeight: 500, padding: "4px 10px" }}
-            onClick={() => {
-              supabase.from("strands").insert({ requester_id: user!.id, receiver_id: s.id });
-              sendNotification({
-                userId: s.id, actorId: user!.id, type: "connection_request",
-                title: `${profile?.full_name || "Someone"} wants to connect`,
-                actionUrl: `/app/strands`, data: { actor_id: user!.id },
-              });
-              toast.success("Request sent");
-            }}>Connect</button>
+            onClick={() => handleConnect(s.id)}>Connect</button>
         </div>
       ))}
     </div>
@@ -679,6 +713,24 @@ const Feed = () => {
   const [editingPost, setEditingPost] = useState<any | null>(null);
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
   const [editedPosts, setEditedPosts] = useState<Record<string, any>>({});
+  const [connectionIds, setConnectionIds] = useState<Set<string>>(new Set());
+
+  // Load connection IDs
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("strands")
+      .select("requester_id, receiver_id")
+      .or(`requester_id.eq.${user.id},receiver_id.eq.${user.id}`)
+      .eq("status", "accepted")
+      .then(({ data }) => {
+        const ids = new Set<string>();
+        (data || []).forEach(s => {
+          if (s.requester_id !== user.id) ids.add(s.requester_id!);
+          if (s.receiver_id !== user.id) ids.add(s.receiver_id!);
+        });
+        setConnectionIds(ids);
+      });
+  }, [user]);
 
   const visiblePosts = useMemo(() =>
     livePosts.filter((p: any) => !deletedIds.has(p.id)).map((p: any) => editedPosts[p.id] ? { ...p, ...editedPosts[p.id] } : p),
@@ -712,14 +764,13 @@ const Feed = () => {
       <PageSEO title="Feed | Tiikme" description="Your professional feed — posts, updates, and insights from verified professionals and organizations on Tiikme." noIndex />
 
       <div className="flex" style={{ gap: 16 }}>
-        {/* Main feed column */}
         <div className="flex-1 min-w-0">
           <FeedComposer onPublished={refresh} />
 
           {loading && <SkeletonCard count={3} />}
           {!loading && visiblePosts.map((post: any) => (
             <PostCard
-              key={post.id} post={post}
+              key={post.id} post={post} connectionIds={connectionIds}
               likeCounts={likeCounts} myLikes={myLikes} toggleLike={toggleLike}
               commentCounts={commentCounts} commentsData={commentsData}
               commentsOpen={commentsOpen} commentInputs={commentInputs}
@@ -731,28 +782,27 @@ const Feed = () => {
 
           {!loading && visiblePosts.length === 0 && (
             <div className="glass-card text-center" style={{ padding: 20, borderRadius: 16 }}>
-              <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", marginBottom: 4 }}>Nothing here yet</p>
-              <p style={{ fontSize: 13, color: "var(--text-muted)" }}>Be the first to post something.</p>
+              <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", marginBottom: 4 }}>Nothing here yet</p>
+              <p style={{ fontSize: 13, color: "#9CA3C0" }}>Be the first to post something.</p>
             </div>
           )}
 
           <div ref={sentinelRef} className="h-1" />
           {loadingMore && (
             <div className="flex justify-center" style={{ margin: 16 }}>
-              <Loader2 className="animate-spin" style={{ width: 24, height: 24, color: "var(--accent)" }} />
+              <Loader2 className="animate-spin" style={{ width: 24, height: 24, color: "#E8733A" }} />
             </div>
           )}
           {!loading && !hasMore && visiblePosts.length > 0 && (
             <div className="glass-card text-center" style={{ padding: 20, borderRadius: 16, marginTop: 8 }}>
-              <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>You're all caught up!</p>
+              <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>You're all caught up!</p>
             </div>
           )}
         </div>
 
-        {/* Right sidebar */}
         <aside className="hidden lg:block shrink-0 sticky top-4 self-start" style={{ width: 280 }}>
           <ActivityWidget />
-          <SuggestedWidget />
+          <SuggestedWidget connectionIds={connectionIds} />
         </aside>
       </div>
 
