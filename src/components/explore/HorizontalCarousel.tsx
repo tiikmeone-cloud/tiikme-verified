@@ -77,7 +77,7 @@ export default function HorizontalCarousel({ title, count, seeAllLink, onSeeAll,
         <div
           ref={ref}
           onScroll={check}
-          className="flex gap-3 overflow-x-auto pb-1"
+          className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide"
           style={{ scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch", scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {children}
