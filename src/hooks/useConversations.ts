@@ -151,11 +151,13 @@ export function useConversations(userId: string | undefined) {
       setConversations(prev => prev.map(c =>
         c.id === convoId ? { ...c, unread_count: 0 } : c
       ));
-      void supabase.from("pings")
+      await supabase.from("pings")
         .update({ is_read: true } as any)
         .eq("conversation_id", convoId)
         .neq("sender_id", userId)
         .eq("is_read", false);
+      // Notify sidebar to refresh unread count
+      window.dispatchEvent(new Event("pings-read"));
     }
   }, [userId]);
 

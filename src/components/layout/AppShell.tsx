@@ -104,13 +104,16 @@ const AppShell = ({ children }: { children: ReactNode }) => {
       .then(({ count }) => setUnreadAlerts(count || 0));
     fetchUnreadPings();
 
+    // Listen for manual mark-read events from Pings page
+    const onPingsRead = () => fetchUnreadPings();
+    window.addEventListener("pings-read", onPingsRead);
+
     let alertsCh: ReturnType<typeof supabase.channel> | null = null;
     let pingsCh: ReturnType<typeof supabase.channel> | null = null;
     try {
       alertsCh = supabase.channel("unread-alerts-" + user.id)
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "alerts", filter: `user_id=eq.${user.id}` }, (payload) => {
           setUnreadAlerts(p => p + 1);
-          // Show toast for new notification
           const title = (payload.new as any)?.title;
           if (title) toast.info(title, { duration: 4000 });
         })
@@ -125,6 +128,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
         .subscribe();
     } catch {}
     return () => {
+      window.removeEventListener("pings-read", onPingsRead);
       if (alertsCh) supabase.removeChannel(alertsCh);
       if (pingsCh) supabase.removeChannel(pingsCh);
     };
