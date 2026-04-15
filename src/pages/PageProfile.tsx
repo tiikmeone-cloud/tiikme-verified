@@ -3,7 +3,7 @@ import { PageSEO, orgSEO } from "@/hooks/usePageSEO";
 import {
   MapPin, Globe, Calendar, Users, MessageCircle, ExternalLink, Trophy, Share2,
   Shield, Briefcase, Plus, Image as ImageIcon, Heart, Building2, Award,
-  FileText, GraduationCap, Stethoscope, Landmark, Star, X
+  FileText, GraduationCap, Stethoscope, Landmark, Star, X, TrendingUp, Rocket
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -11,6 +11,7 @@ import { Link, useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { storageImageUrl } from "@/lib/imageTransform";
+import InvestorInterestModal from "@/components/profile/InvestorInterestModal";
 
 /* ── helpers ── */
 const daysAgo = (d: string) => {
