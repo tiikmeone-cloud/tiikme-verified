@@ -122,6 +122,19 @@ export function useComments() {
           ? (p[postId] || []).map((c) => (c.id === temp.id ? enriched : c))
           : [...(p[postId] || []), enriched],
       }));
+
+      // Send notification to post author (fire-and-forget)
+      supabase.from("posts").select("author_id").eq("id", postId).maybeSingle()
+        .then(({ data: post }) => {
+          if (post?.author_id && post.author_id !== user.id) {
+            supabase.from("alerts").insert({
+              user_id: post.author_id, type: "comment",
+              title: `${profile?.full_name || "Someone"} commented on your post`,
+              body: content.slice(0, 80),
+              action_url: `/post/${postId}`,
+            });
+          }
+        });
     },
     [inputs, user, profile]
   );

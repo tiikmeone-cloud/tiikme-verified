@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import MentionInput from "@/components/feed/MentionInput";
 
 const MAX_IMAGES = 20;
 
@@ -23,14 +24,13 @@ const PostCreate = () => {
   }, [isInstitution, profile?.org_id]);
 
   const identityAvatar = isInstitution && orgData?.logo_url ? orgData.logo_url : (profile?.avatar_url || null);
-  const identityInitials = isInstitution && orgData?.name ? orgData.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() : initials;
   const identityName = isInstitution && orgData?.name ? orgData.name : displayName;
   const [content, setContent] = useState("");
   const [publishing, setPublishing] = useState(false);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [showCompanyBadge, setShowCompanyBadge] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const charLimit = 3000;
 
@@ -57,6 +57,12 @@ const PostCreate = () => {
     URL.revokeObjectURL(imagePreviews[idx]);
     setImageFiles(prev => prev.filter((_, i) => i !== idx));
     setImagePreviews(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  // Extract @mention usernames from content
+  const extractMentions = (text: string): string[] => {
+    const matches = text.match(/@(\w[\w.]*)/g) || [];
+    return matches.map(m => m.slice(1));
   };
 
   const handlePublish = async () => {
@@ -89,15 +95,52 @@ const PostCreate = () => {
         visibility: "everyone",
         hashtags: (content.match(/#\w+/g) || []).map(t => t.slice(1)),
         image_urls: imageUrls,
+        show_company_badge: showCompanyBadge,
         ...(isInstitution && profile?.org_id ? {
           posted_by_org: profile.org_id,
           posted_by_user_id: user.id,
         } : {}),
       };
 
-      const { error } = await supabase.from("posts").insert(postData).select().single();
-
+      const { data: newPost, error } = await supabase.from("posts").insert(postData).select("id").single();
       if (error) throw error;
+
+      // Process @mentions — look up usernames and create mentions + notifications
+      const mentionUsernames = extractMentions(content);
+      if (mentionUsernames.length > 0 && newPost) {
+        const { data: mentionedUsers } = await supabase.from("profiles")
+          .select("id, username")
+          .in("username", mentionUsernames);
+
+        const { data: mentionedPages } = await supabase.from("pages")
+          .select("id, slug")
+          .in("slug", mentionUsernames);
+
+        const mentionInserts: any[] = [];
+        const alertInserts: any[] = [];
+
+        for (const mu of mentionedUsers || []) {
+          if (mu.id === user.id) continue;
+          mentionInserts.push({ post_id: newPost.id, mentioned_user_id: mu.id });
+          alertInserts.push({
+            user_id: mu.id, type: "mention",
+            title: `${profile?.full_name || "Someone"} mentioned you in a post`,
+            body: content.slice(0, 80),
+            action_url: `/post/${newPost.id}`,
+          });
+        }
+
+        for (const mp of mentionedPages || []) {
+          mentionInserts.push({ post_id: newPost.id, mentioned_page_id: mp.id });
+        }
+
+        if (mentionInserts.length > 0) {
+          await supabase.from("post_mentions").insert(mentionInserts);
+        }
+        if (alertInserts.length > 0) {
+          await supabase.from("alerts").insert(alertInserts);
+        }
+      }
 
       // Award activity score
       await supabase.rpc("increment_score", { uid: user.id, amount: 5 });
@@ -110,11 +153,6 @@ const PostCreate = () => {
     } finally {
       setPublishing(false);
     }
-  };
-
-  const autoResize = () => {
-    const el = textareaRef.current;
-    if (el) { el.style.height = "auto"; el.style.height = Math.max(200, Math.min(el.scrollHeight, 500)) + "px"; }
   };
 
   return (
@@ -140,22 +178,25 @@ const PostCreate = () => {
         </div>
       </div>
 
-      {/* Textarea */}
-      <textarea
-        ref={textareaRef}
+      {/* Textarea with mention support */}
+      <MentionInput
         value={content}
-        onChange={e => { setContent(e.target.value.slice(0, charLimit)); autoResize(); }}
-        placeholder="What's on your mind?"
-        className="w-full min-h-[200px] px-4 py-3 text-[15px] resize-none outline-none rounded-2xl"
+        onChange={setContent}
+        placeholder="What's on your mind? Use @ to mention people"
+        maxLength={charLimit}
+        className="px-4 py-3 text-[15px] rounded-2xl"
         style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", color: "var(--text-1)", lineHeight: 1.7 }}
         autoFocus
+        minHeight={200}
+        maxHeight={500}
       />
+
       <div className="flex items-center justify-between mt-2 px-1">
         <span className="text-[11px]" style={{ color: "var(--text-3)" }}>{content.length}/{charLimit}</span>
         {imageFiles.length > 0 && <span className="text-[11px] font-bold" style={{ color: "var(--brand)" }}>{imageFiles.length}/{MAX_IMAGES} images</span>}
       </div>
 
-      {/* Image previews — horizontal scroll */}
+      {/* Image previews */}
       {imagePreviews.length > 0 && (
         <div className="flex gap-2 mt-4 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
           {imagePreviews.map((preview, idx) => (
@@ -181,6 +222,19 @@ const PostCreate = () => {
           <ImageIcon className="w-4 h-4" />
           <span className="text-[13px] font-medium">{imageFiles.length > 0 ? "Add More" : "Add Photos"}</span>
         </button>
+
+        {/* Show company badge toggle */}
+        {!isInstitution && (
+          <label className="flex items-center gap-2 cursor-pointer select-none ml-auto">
+            <input
+              type="checkbox"
+              checked={showCompanyBadge}
+              onChange={e => setShowCompanyBadge(e.target.checked)}
+              className="w-4 h-4 rounded accent-[hsl(var(--primary))]"
+            />
+            <span className="text-[12px] font-medium" style={{ color: "var(--text-3)" }}>Show company</span>
+          </label>
+        )}
       </div>
 
       <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageSelect} />
