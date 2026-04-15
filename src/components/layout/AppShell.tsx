@@ -115,10 +115,18 @@ const AppShell = ({ children }: { children: ReactNode }) => {
     window.addEventListener("pings-read", onPingsRead);
 
     let alertsCh: ReturnType<typeof supabase.channel> | null = null;
+    let notifsCh: ReturnType<typeof supabase.channel> | null = null;
     let pingsCh: ReturnType<typeof supabase.channel> | null = null;
     try {
       alertsCh = supabase.channel("unread-alerts-" + user.id)
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "alerts", filter: `user_id=eq.${user.id}` }, (payload) => {
+          setUnreadAlerts(p => p + 1);
+          const title = (payload.new as any)?.title;
+          if (title) toast.info(title, { duration: 4000 });
+        })
+        .subscribe();
+      notifsCh = supabase.channel("unread-notifs-" + user.id)
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, (payload) => {
           setUnreadAlerts(p => p + 1);
           const title = (payload.new as any)?.title;
           if (title) toast.info(title, { duration: 4000 });
@@ -136,6 +144,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
     return () => {
       window.removeEventListener("pings-read", onPingsRead);
       if (alertsCh) supabase.removeChannel(alertsCh);
+      if (notifsCh) supabase.removeChannel(notifsCh);
       if (pingsCh) supabase.removeChannel(pingsCh);
     };
   }, [user?.id]);
