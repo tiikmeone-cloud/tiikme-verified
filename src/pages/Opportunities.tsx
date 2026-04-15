@@ -226,7 +226,7 @@ const Opportunities = () => {
       )}
 
       <AnimatePresence>
-        {showApply && <ApplyModal open={!!showApply} onClose={() => setShowApply(null)} opportunity={showApply} orgName={showApply?.org?.name} onApplied={() => { setAppliedIds(prev => new Set([...prev, showApply.id])); setShowApply(null); }} />}
+        {showApply && <ApplyModal open={!!showApply} onClose={() => setShowApply(null)} opportunity={showApply} orgName={showApply?.org?.name} onApplied={() => { queryClient.invalidateQueries({ queryKey: ["applied-opportunities"] }); setShowApply(null); }} />}
       </AnimatePresence>
     </main>
   );
