@@ -11,7 +11,7 @@ import HorizontalCarousel from "@/components/explore/HorizontalCarousel";
 import { PersonCard, OrgCard, TrendingPostCard, TopicPill, StartupCard, InvestorCard } from "@/components/explore/ExploreCard";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 
-const FILTER_TABS = ["All", "People", "Companies", "Colleges", "Hospitals", "Government", "NGO", "Startups", "Investors"];
+const FILTER_TABS = ["All", "People", "Companies", "Colleges", "Hospitals", "Government", "NGO", "Startups", "Investors", "Trending"];
 
 const Explore = () => {
   const { user, profile } = useAuth();
