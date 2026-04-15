@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { sendNotification } from "@/lib/notify";
 import HorizontalCarousel from "@/components/explore/HorizontalCarousel";
-import { PersonCard, OrgCard, TrendingPostCard, TopicPill } from "@/components/explore/ExploreCard";
+import { PersonCard, OrgCard, TrendingPostCard, TopicPill, StartupCard, InvestorCard } from "@/components/explore/ExploreCard";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 
 const FILTER_TABS = ["All", "People", "Companies", "Colleges", "Hospitals", "Government", "NGO"];
@@ -32,6 +32,8 @@ const Explore = () => {
   const [trendingPosts, setTrendingPosts] = useState<any[]>([]);
   const [postAuthors, setPostAuthors] = useState<Record<string, any>>({});
   const [followMap, setFollowMap] = useState<Record<string, boolean>>({});
+  const [startups, setStartups] = useState<any[]>([]);
+  const [investors, setInvestors] = useState<any[]>([]);
 
   // Search results
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -174,6 +176,30 @@ const Explore = () => {
           (authors || []).forEach((a: any) => { aMap[a.id] = a; });
           if (mountedRef.current) setPostAuthors(aMap);
         }
+
+        // Startups looking for funding
+        const { data: spData } = await supabase.from("startup_profiles")
+          .select("id, page_id, funding_stage, sectors, looking_for_funding, founder_id")
+          .eq("looking_for_funding", true).limit(20);
+        if (spData && spData.length > 0) {
+          const pageIds = spData.map((s: any) => s.page_id).filter(Boolean);
+          const { data: pages } = await supabase.from("pages").select("id, name, slug, logo_url").in("id", pageIds);
+          const pageMap = new Map((pages || []).map((p: any) => [p.id, p]));
+          if (mountedRef.current) setStartups(spData.map((s: any) => ({ ...s, page: pageMap.get(s.page_id) })));
+        } else {
+          if (mountedRef.current) setStartups([]);
+        }
+
+        // Active investors
+        const { data: allProfiles } = await supabase.from("profiles")
+          .select("id, full_name, avatar_url, role_metadata")
+          .eq("is_public", true).neq("id", user.id)
+          .not("role_metadata", "is", null).limit(200);
+        const investorProfiles = (allProfiles || []).filter((p: any) => {
+          const meta = p.role_metadata as any;
+          return meta?.is_investor === true || meta?.investor_profile;
+        }).slice(0, 20);
+        if (mountedRef.current) setInvestors(investorProfiles);
       }
     } catch (err) { console.warn("[Explore] fetch error:", err); }
     if (mountedRef.current) setLoading(false);
@@ -341,6 +367,24 @@ const Explore = () => {
 
           {/* NGOs */}
           {renderOrgCarousel("NGOs & Non-Profits", ngos, "#6D28D9")}
+
+          {/* Startups Looking for Funding */}
+          {startups.length > 0 && activeFilter === "All" && (
+            <HorizontalCarousel title="Startups Looking for Funding" count={startups.length} accentColor="#7C3AED">
+              {startups.map(s => (
+                <StartupCard key={s.id} startup={s} page={s.page} />
+              ))}
+            </HorizontalCarousel>
+          )}
+
+          {/* Active Investors */}
+          {investors.length > 0 && activeFilter === "All" && (
+            <HorizontalCarousel title="Active Investors" count={investors.length} accentColor="#059669">
+              {investors.map(inv => (
+                <InvestorCard key={inv.id} investor={inv} />
+              ))}
+            </HorizontalCarousel>
+          )}
 
           {/* Trending Posts */}
           {trendingPosts.length > 0 && activeFilter === "All" && (

@@ -168,3 +168,82 @@ export function TopicPill({ tag, count, onClick }: TopicPillProps) {
     </button>
   );
 }
+
+/* ── Startup Card ── */
+interface StartupCardProps {
+  startup: any;
+  page?: any;
+}
+
+export function StartupCard({ startup, page }: StartupCardProps) {
+  const navigate = useNavigate();
+  const name = page?.name || startup?.name || "Startup";
+  const slug = page?.slug;
+  const sectors = startup?.sectors || [];
+  const stage = startup?.funding_stage;
+
+  return (
+    <article
+      className="glass-light cursor-pointer flex flex-col items-center text-center shrink-0 transition-transform duration-200 hover:-translate-y-1"
+      style={{ width: 200, minWidth: 200, padding: 14, borderRadius: 16, scrollSnapAlign: "start" }}
+      onClick={() => slug ? navigate(`/page/${slug}`) : undefined}
+    >
+      <AvatarSquare src={page?.logo_url} name={name} size={56} bgColor="#7C3AED" />
+      <p className="text-[14px] font-semibold leading-tight w-full mt-2 truncate" style={{ color: "var(--color-text)" }}>{name}</p>
+      {stage && (
+        <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full mt-1" style={{ background: "rgba(124,58,237,0.12)", color: "#7C3AED" }}>
+          {stage}
+        </span>
+      )}
+      {sectors.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-1.5 justify-center">
+          {sectors.slice(0, 3).map((s: string) => (
+            <span key={s} className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ background: "var(--glass-bg)", color: "var(--color-text-muted)", border: "1px solid var(--glass-border-subtle)" }}>{s}</span>
+          ))}
+        </div>
+      )}
+      <div className="mt-auto w-full pt-2">
+        <span className="inline-block w-full h-8 rounded-xl text-[11px] font-bold leading-[32px]"
+          style={{ background: "linear-gradient(135deg, #7C3AED, #A855F7)", color: "#fff", boxShadow: "0 4px 16px rgba(124,58,237,0.25)" }}>
+          Learn More
+        </span>
+      </div>
+    </article>
+  );
+}
+
+/* ── Investor Card ── */
+interface InvestorCardProps {
+  investor: any;
+}
+
+export function InvestorCard({ investor }: InvestorCardProps) {
+  const navigate = useNavigate();
+  const name = investor.full_name || "Investor";
+  const meta = investor.role_metadata as any;
+  const ip = meta?.investor_profile;
+  const sectors = ip?.sectors || [];
+  const range = ip?.investment_min && ip?.investment_max
+    ? `₹${(ip.investment_min / 100000).toFixed(0)}L – ₹${(ip.investment_max / 100000).toFixed(0)}L`
+    : ip?.investment_min ? `₹${(ip.investment_min / 100000).toFixed(0)}L+` : null;
+
+  return (
+    <article
+      className="glass-light cursor-pointer flex flex-col items-center text-center shrink-0 transition-transform duration-200 hover:-translate-y-1"
+      style={{ width: 180, minWidth: 180, padding: 14, borderRadius: 16, scrollSnapAlign: "start" }}
+      onClick={() => navigate(`/app/profile/${investor.id}`)}
+    >
+      <AvatarSquare src={investor.avatar_url} name={name} size={56} bgColor="#059669" />
+      <p className="text-[14px] font-semibold leading-tight w-full mt-2 truncate" style={{ color: "var(--color-text)" }}>{name}</p>
+      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full mt-1" style={{ background: "rgba(5,150,105,0.12)", color: "#059669" }}>Investor</span>
+      {range && <p className="text-[11px] mt-1" style={{ color: "var(--color-text-secondary)" }}>{range}</p>}
+      {sectors.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-1.5 justify-center">
+          {sectors.slice(0, 2).map((s: string) => (
+            <span key={s} className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ background: "var(--glass-bg)", color: "var(--color-text-muted)", border: "1px solid var(--glass-border-subtle)" }}>{s}</span>
+          ))}
+        </div>
+      )}
+    </article>
+  );
+}
