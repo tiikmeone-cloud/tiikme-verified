@@ -1,15 +1,19 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Bell, Briefcase, Link2, Shield, TrendingUp, Target, Check, X, UserCheck } from "lucide-react";
+import { Bell, Briefcase, Link2, Shield, TrendingUp, Target, Check, X, UserCheck, Heart, MessageSquare, Repeat2, AtSign, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import AvatarSquare from "@/components/ui/AvatarSquare";
 
 const ICON_MAP: Record<string, any> = {
   strand: Link2, hr: Briefcase, verified: Shield, work: Target, score: TrendingUp,
   strand_request: UserCheck, verification_request: Shield, opportunity: Briefcase, offer: Briefcase,
   delegation_approval: Shield, ex_member_verification: UserCheck,
+  like: Heart, comment: MessageSquare, repost: Repeat2, mention: AtSign,
+  connection_request: Users, connection_accepted: UserCheck, follow: Users,
+  new_message: MessageSquare, verification_approved: Shield, verification_declined: Shield,
 };
 
 const ICON_STYLES: Record<string, { bg: string; color: string }> = {
@@ -18,6 +22,8 @@ const ICON_STYLES: Record<string, { bg: string; color: string }> = {
   strand_request: { bg: "rgba(79,70,229,0.1)", color: "#4F46E5" },
   verified: { bg: "rgba(245,158,11,0.1)", color: "#F59E0B" },
   verification_request: { bg: "rgba(245,158,11,0.1)", color: "#F59E0B" },
+  verification_approved: { bg: "rgba(22,163,74,0.1)", color: "#16A34A" },
+  verification_declined: { bg: "rgba(220,38,38,0.1)", color: "#DC2626" },
   work: { bg: "rgba(3,105,161,0.1)", color: "#0369A1" },
   opportunity: { bg: "rgba(194,65,12,0.1)", color: "#C2410C" },
   offer: { bg: "rgba(22,163,74,0.1)", color: "#16A34A" },
@@ -25,6 +31,12 @@ const ICON_STYLES: Record<string, { bg: string; color: string }> = {
   challenge: { bg: "rgba(146,64,14,0.1)", color: "#92400E" },
   like: { bg: "rgba(232,88,10,0.1)", color: "#E8580A" },
   comment: { bg: "rgba(232,88,10,0.1)", color: "#E8580A" },
+  repost: { bg: "rgba(79,70,229,0.1)", color: "#4F46E5" },
+  mention: { bg: "rgba(232,115,58,0.1)", color: "#E8733A" },
+  connection_request: { bg: "rgba(79,70,229,0.1)", color: "#4F46E5" },
+  connection_accepted: { bg: "rgba(22,163,74,0.1)", color: "#16A34A" },
+  follow: { bg: "rgba(79,70,229,0.1)", color: "#4F46E5" },
+  new_message: { bg: "rgba(232,115,58,0.1)", color: "#E8733A" },
   delegation_approval: { bg: "rgba(245,158,11,0.1)", color: "#F59E0B" },
   ex_member_verification: { bg: "rgba(79,70,229,0.1)", color: "#4F46E5" },
 };
