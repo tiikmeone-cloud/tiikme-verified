@@ -81,7 +81,7 @@ export function useWorkspaces(userId: string | undefined) {
 
     const { data: workspaces } = await supabase
       .from("workspaces")
-      .select("id, name, description, avatar_url, workspace_type, created_by, is_active, last_message_at, created_at")
+      .select("id, name, description, avatar_url, workspace_type, created_by, is_active, last_message_at, created_at, org_id, institution_id, member_count")
       .in("id", wsIds)
       .eq("workspace_type", "group")
       .eq("is_active", true)
