@@ -359,9 +359,9 @@ const Pings = () => {
                                 <Download className="w-4 h-4 shrink-0" />
                               </a>
                             )}
-                            {/* Text */}
+                            {/* Text with URL detection */}
                             {(!msg.attachment_type || msg.content !== msg.attachment_name) && msg.content && (
-                              <p className="text-[14px] leading-[1.6] whitespace-pre-wrap">{msg.content}</p>
+                              <p className="text-[14px] leading-[1.6] whitespace-pre-wrap">{renderLinkedText(msg.content, isMe)}</p>
                             )}
                           </>
                         )}
