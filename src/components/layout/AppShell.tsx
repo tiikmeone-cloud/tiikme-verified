@@ -286,10 +286,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
       </aside>
 
       {/* ═══ MAIN CONTENT ═══ */}
-      <main
-        className="min-h-screen"
-        style={{ marginLeft: 220, paddingBottom: 0 }}
-      >
+      <main className="min-h-screen md:ml-[220px] pb-[72px] md:pb-0">
         {/* Mobile top header */}
         <header
           className="md:hidden sticky top-0 z-50 flex items-center justify-between px-4"
