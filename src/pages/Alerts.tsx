@@ -78,7 +78,7 @@ const Alerts = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from("alerts").select("*").eq("user_id", user.id)
+        .from("alerts").select("id, type, title, body, action_url, is_read, data, created_at").eq("user_id", user.id)
         .order("created_at", { ascending: false }).limit(50);
       if (error) { setAlerts([]); setLoading(false); return; }
       setAlerts(data || []);
@@ -359,7 +359,7 @@ const Alerts = () => {
         <div className="text-center py-12">
           <Bell className="w-10 h-10 mx-auto mb-3" style={{ color: "#6B7094" }} />
           <p className="text-[15px] font-bold mb-1" style={{ color: "#1A1A2E" }}>No alerts yet</p>
-          <p className="text-[13px]" style={{ color: "#6B7094" }}>You'll be notified about strands, opportunities, and activity here.</p>
+          <p className="text-[13px]" style={{ color: "#6B7094" }}>You'll be notified about connections, opportunities, and activity here.</p>
         </div>
       )}
 

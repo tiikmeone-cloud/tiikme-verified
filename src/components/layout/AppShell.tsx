@@ -99,7 +99,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (!user?.id) return;
-    supabase.from("alerts").select("*", { count: "exact", head: true })
+    supabase.from("alerts").select("id", { count: "exact", head: true })
       .eq("user_id", user.id).eq("is_read", false)
       .then(({ count }) => setUnreadAlerts(count || 0));
     fetchUnreadPings();
