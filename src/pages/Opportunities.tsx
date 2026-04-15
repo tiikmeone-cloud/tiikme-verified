@@ -39,6 +39,15 @@ const filterMap: Record<string, (q: any) => any> = {
   "Remote": q => q.eq("is_remote", true),
 };
 
+function expiryBadge(d: string | null) {
+  if (!d) return null;
+  const diff = Math.ceil((new Date(d).getTime() - Date.now()) / 86400000);
+  if (diff <= 0) return { label: "Expired", bg: "rgba(239,68,68,0.12)", color: "#EF4444" };
+  if (diff <= 3) return { label: `${diff}d left`, bg: "rgba(239,68,68,0.12)", color: "#EF4444" };
+  if (diff <= 7) return { label: `${diff}d left`, bg: "rgba(255,184,0,0.12)", color: "#FFB800" };
+  return { label: `${diff}d left`, bg: "rgba(52,199,89,0.12)", color: "#34C759" };
+}
+
 const Opportunities = () => {
   const { user, profile } = useAuth();
   const isInstitution = profile?.account_type === "institution";
@@ -125,14 +134,7 @@ const Opportunities = () => {
   const displayOpps = tab === "mine" ? myOpps : opps;
   const daysAgo = (d: string) => { const diff = Math.floor((Date.now() - new Date(d).getTime()) / 86400000); return diff === 0 ? "Today" : `${diff}d ago`; };
   const daysLeft = (d: string) => { const diff = Math.ceil((new Date(d).getTime() - Date.now()) / 86400000); return diff > 0 ? `${diff} days left` : "Expired"; };
-  const expiryBadge = (d: string | null) => {
-    if (!d) return null;
-    const diff = Math.ceil((new Date(d).getTime() - Date.now()) / 86400000);
-    if (diff <= 0) return { label: "Expired", bg: "rgba(239,68,68,0.12)", color: "#EF4444" };
-    if (diff <= 3) return { label: `${diff}d left`, bg: "rgba(239,68,68,0.12)", color: "#EF4444" };
-    if (diff <= 7) return { label: `${diff}d left`, bg: "rgba(255,184,0,0.12)", color: "#FFB800" };
-    return { label: `${diff}d left`, bg: "rgba(52,199,89,0.12)", color: "#34C759" };
-  };
+  const daysAgo2 = daysAgo; // alias for passing
 
   return (
     <main className="max-w-[960px] mx-auto px-4 md:px-6 py-6">
