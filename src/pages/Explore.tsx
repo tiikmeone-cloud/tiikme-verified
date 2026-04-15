@@ -368,6 +368,24 @@ const Explore = () => {
           {/* NGOs */}
           {renderOrgCarousel("NGOs & Non-Profits", ngos, "#6D28D9")}
 
+          {/* Startups Looking for Funding */}
+          {startups.length > 0 && activeFilter === "All" && (
+            <HorizontalCarousel title="Startups Looking for Funding" count={startups.length} accentColor="#7C3AED">
+              {startups.map(s => (
+                <StartupCard key={s.id} startup={s} page={s.page} />
+              ))}
+            </HorizontalCarousel>
+          )}
+
+          {/* Active Investors */}
+          {investors.length > 0 && activeFilter === "All" && (
+            <HorizontalCarousel title="Active Investors" count={investors.length} accentColor="#059669">
+              {investors.map(inv => (
+                <InvestorCard key={inv.id} investor={inv} />
+              ))}
+            </HorizontalCarousel>
+          )}
+
           {/* Trending Posts */}
           {trendingPosts.length > 0 && activeFilter === "All" && (
             <HorizontalCarousel title="Trending Posts" count={trendingPosts.length} accentColor="#E8733A">
