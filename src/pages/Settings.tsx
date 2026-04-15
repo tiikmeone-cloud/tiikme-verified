@@ -193,7 +193,7 @@ const SettingsPage = () => {
       const { data: { user: u } } = await supabase.auth.getUser();
       if (!u) return;
       setUserId(u.id);
-      const { data } = await supabase.from("profiles").select("full_name, headline, bio, institution_name, location_city, location_state, username, avatar_url").eq("id", u.id).maybeSingle();
+      const { data } = await supabase.from("profiles").select("full_name, headline, bio, institution_name, location_city, location_state, username, avatar_url, role_metadata").eq("id", u.id).maybeSingle();
       if (data) {
         const p = {
           name: data.full_name || "",
