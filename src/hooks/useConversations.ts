@@ -280,6 +280,27 @@ export function useConversations(userId: string | undefined) {
 
   const findOrCreateConversation = useCallback(async (otherUserId: string) => {
     if (!userId) return null;
+
+    // Check who_can_message privacy setting
+    const { data: otherProfile } = await supabase
+      .from("profiles")
+      .select("privacy_settings")
+      .eq("id", otherUserId)
+      .maybeSingle();
+    if (otherProfile?.privacy_settings) {
+      const ps = otherProfile.privacy_settings as any;
+      if (ps.who_can_message === "no_one") return "blocked";
+      if (ps.who_can_message === "connections_only") {
+        const { data: strand } = await supabase
+          .from("strands")
+          .select("id")
+          .or(`and(requester_id.eq.${userId},receiver_id.eq.${otherUserId}),and(requester_id.eq.${otherUserId},receiver_id.eq.${userId})`)
+          .eq("status", "accepted")
+          .maybeSingle();
+        if (!strand) return "connections_only";
+      }
+    }
+
     const { data: existing } = await supabase
       .from("conversations")
       .select("id")
