@@ -77,15 +77,21 @@ const Alerts = () => {
     if (!user) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("alerts").select("id, type, title, body, action_url, is_read, data, created_at").eq("user_id", user.id)
-        .order("created_at", { ascending: false }).limit(50);
-      if (error) { setAlerts([]); setLoading(false); return; }
-      setAlerts(data || []);
+      // Query both alerts AND notifications tables, merge results
+      const [alertsRes, notifsRes] = await Promise.allSettled([
+        supabase.from("alerts").select("id, type, title, body, action_url, is_read, data, created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(50),
+        supabase.from("notifications").select("id, type, title, body, action_url, is_read, data, created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(50),
+      ]);
+      const alertsData = alertsRes.status === "fulfilled" ? ((alertsRes.value as any).data || []).map((a: any) => ({ ...a, _source: "alerts" })) : [];
+      const notifsData = notifsRes.status === "fulfilled" ? ((notifsRes.value as any).data || []).map((n: any) => ({ ...n, _source: "notifications" })) : [];
+      
+      // Merge and deduplicate by id, sort newest first
+      const merged = [...alertsData, ...notifsData].sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 80);
+      setAlerts(merged);
       setLoading(false);
 
       // Fetch actor profiles for avatars
-      const actorIds = [...new Set((data || []).map((a: any) => a.data?.actor_id).filter(Boolean))] as string[];
+      const actorIds = [...new Set(merged.map((a: any) => a.data?.actor_id).filter(Boolean))] as string[];
       if (actorIds.length > 0) {
         supabase.from("profiles").select("id, full_name, avatar_url, role").in("id", actorIds)
           .then(({ data: profiles }) => {
@@ -93,10 +99,6 @@ const Alerts = () => {
             for (const p of profiles || []) map[p.id] = p;
             setActorProfiles(map);
           });
-      }
-
-      if ((data || []).some((a: any) => !a.is_read)) {
-        supabase.from("alerts").update({ is_read: true } as any).eq("user_id", user.id).eq("is_read", false).then(() => {});
       }
     } catch {
       setAlerts([]);
@@ -108,7 +110,10 @@ const Alerts = () => {
 
   const markAllRead = async () => {
     if (!user) return;
-    await supabase.from("alerts").update({ is_read: true } as any).eq("user_id", user.id).eq("is_read", false);
+    await Promise.allSettled([
+      supabase.from("alerts").update({ is_read: true } as any).eq("user_id", user.id).eq("is_read", false),
+      supabase.from("notifications").update({ is_read: true } as any).eq("user_id", user.id).eq("is_read", false),
+    ]);
     setAlerts(prev => prev.map(a => ({ ...a, is_read: true })));
     toast.success("All notifications marked as read");
   };
@@ -238,7 +243,8 @@ const Alerts = () => {
                   }}
                   onClick={async () => {
                     if (unread) {
-                      await supabase.from("alerts").update({ is_read: true } as any).eq("id", notif.id);
+                      const table = notif._source === "notifications" ? "notifications" : "alerts";
+                      await supabase.from(table).update({ is_read: true } as any).eq("id", notif.id);
                       setAlerts(prev => prev.map(a => a.id === notif.id ? { ...a, is_read: true } : a));
                     }
                     if (notif.action_url && !isStrandRequest && !isOffer) navigate(notif.action_url);

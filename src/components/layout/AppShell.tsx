@@ -99,9 +99,15 @@ const AppShell = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (!user?.id) return;
-    supabase.from("alerts").select("id", { count: "exact", head: true })
-      .eq("user_id", user.id).eq("is_read", false)
-      .then(({ count }) => setUnreadAlerts(count || 0));
+    // Count unread from BOTH alerts and notifications tables
+    Promise.allSettled([
+      supabase.from("alerts").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("is_read", false),
+      supabase.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("is_read", false),
+    ]).then(([alertsRes, notifsRes]) => {
+      const alertCount = alertsRes.status === "fulfilled" ? ((alertsRes.value as any).count || 0) : 0;
+      const notifCount = notifsRes.status === "fulfilled" ? ((notifsRes.value as any).count || 0) : 0;
+      setUnreadAlerts(alertCount + notifCount);
+    });
     fetchUnreadPings();
 
     // Listen for manual mark-read events from Pings page
@@ -109,10 +115,18 @@ const AppShell = ({ children }: { children: ReactNode }) => {
     window.addEventListener("pings-read", onPingsRead);
 
     let alertsCh: ReturnType<typeof supabase.channel> | null = null;
+    let notifsCh: ReturnType<typeof supabase.channel> | null = null;
     let pingsCh: ReturnType<typeof supabase.channel> | null = null;
     try {
       alertsCh = supabase.channel("unread-alerts-" + user.id)
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "alerts", filter: `user_id=eq.${user.id}` }, (payload) => {
+          setUnreadAlerts(p => p + 1);
+          const title = (payload.new as any)?.title;
+          if (title) toast.info(title, { duration: 4000 });
+        })
+        .subscribe();
+      notifsCh = supabase.channel("unread-notifs-" + user.id)
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, (payload) => {
           setUnreadAlerts(p => p + 1);
           const title = (payload.new as any)?.title;
           if (title) toast.info(title, { duration: 4000 });
@@ -130,6 +144,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
     return () => {
       window.removeEventListener("pings-read", onPingsRead);
       if (alertsCh) supabase.removeChannel(alertsCh);
+      if (notifsCh) supabase.removeChannel(notifsCh);
       if (pingsCh) supabase.removeChannel(pingsCh);
     };
   }, [user?.id]);

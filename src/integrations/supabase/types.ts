@@ -644,9 +644,11 @@ export type Database = {
           event_mode: string | null
           event_time: string | null
           experience_min: number | null
+          expires_at: string | null
           hr_contact_id: string | null
           id: string
           is_cross_domain: boolean | null
+          is_expired: boolean | null
           is_open: boolean | null
           is_remote: boolean | null
           location: string | null
@@ -697,9 +699,11 @@ export type Database = {
           event_mode?: string | null
           event_time?: string | null
           experience_min?: number | null
+          expires_at?: string | null
           hr_contact_id?: string | null
           id?: string
           is_cross_domain?: boolean | null
+          is_expired?: boolean | null
           is_open?: boolean | null
           is_remote?: boolean | null
           location?: string | null
@@ -750,9 +754,11 @@ export type Database = {
           event_mode?: string | null
           event_time?: string | null
           experience_min?: number | null
+          expires_at?: string | null
           hr_contact_id?: string | null
           id?: string
           is_cross_domain?: boolean | null
+          is_expired?: boolean | null
           is_open?: boolean | null
           is_remote?: boolean | null
           location?: string | null
