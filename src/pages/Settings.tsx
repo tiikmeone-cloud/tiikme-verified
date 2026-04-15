@@ -519,6 +519,7 @@ const SettingsPage = () => {
             }} />
           )}
 
+          {activeTab === "invite" && (
             <div className="space-y-5">
               <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
                 <h3 className="text-[16px] font-semibold mb-2" style={{ color: "#1A1A2E" }}>Invite & Earn</h3>
