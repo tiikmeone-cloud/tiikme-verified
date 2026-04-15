@@ -573,7 +573,7 @@ const PostCard = ({
                   <div style={{ marginTop: 2, flexShrink: 0 }}>
                     <AvatarSquare src={c.author?.avatar_url} name={cName} size={24} />
                   </div>
-                  <div className="flex-1 min-w-0" style={{ background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.25)", borderRadius: 10, padding: "8px 10px" }}>
+                  <div className="flex-1 min-w-0" style={{ background: "rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "8px 10px" }}>
                     <div className="flex items-center" style={{ gap: 6 }}>
                       <Link to={`/app/profile/${c.author?.id || c.user_id}`} className="hover:underline" style={{ fontSize: 12, fontWeight: 600, color: "#1A1A2E" }}>{cName}</Link>
                       <span style={{ fontSize: 12, color: "#9CA3C0" }}>·</span>
