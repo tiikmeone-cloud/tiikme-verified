@@ -335,7 +335,7 @@ const Explore = () => {
       </div>
 
       {/* Filter tabs */}
-      <div className="flex overflow-x-auto" style={{ gap: 6, marginTop: 12, marginBottom: 16, scrollbarWidth: "none" }}>
+      <div className="flex overflow-x-auto explore-tabs scrollbar-hide" style={{ gap: 6, marginTop: 12, marginBottom: 16, scrollbarWidth: "none" }}>
         {FILTER_TABS.map(tab => (
           <button type="button" key={tab} onClick={() => setActiveFilter(tab)}
             style={{

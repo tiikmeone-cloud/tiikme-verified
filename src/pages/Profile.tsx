@@ -676,7 +676,7 @@ const Profile = () => {
           border: "1px solid rgba(255,255,255,0.40)",
           boxShadow: "0 8px 32px rgba(26,26,78,0.08), inset 0 1px 0 rgba(255,255,255,0.60)",
         }}>
-          <div className="flex" style={{ gap: 16, alignItems: "flex-start" }}>
+          <div className="flex profile-info-flex" style={{ gap: 16, alignItems: "flex-start" }}>
             {/* Avatar — 100x100 true square */}
             <div style={{
               width: 100, height: 100, borderRadius: 0,
@@ -690,7 +690,7 @@ const Profile = () => {
             </div>
 
             {/* Info */}
-            <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
+            <div className="profile-info-body" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
               {/* ROW 1: Name + Edit */}
               <div className="flex items-center" style={{ justifyContent: "space-between" }}>
                 <p style={{ fontSize: 20, fontWeight: 700, lineHeight: "28px", color: "#1A1A2E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</p>
