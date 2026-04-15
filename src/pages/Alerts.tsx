@@ -223,7 +223,7 @@ const Alerts = () => {
               const unread = !notif.is_read;
               const style = ICON_STYLES[notif.type] || ICON_STYLES.score;
               const Icon = ICON_MAP[notif.type] || Bell;
-              const isStrandRequest = notif.type === "strand" && notif.title?.toLowerCase().includes("connect");
+              const isStrandRequest = notif.type === "connection_request" || (notif.type === "strand" && notif.title?.toLowerCase().includes("connect"));
               const isOffer = notif.type === "offer" || (notif.type === "opportunity" && notif.title?.toLowerCase().includes("selected"));
               const isDelegation = notif.type === "delegation_approval";
               const isExVerification = notif.type === "ex_member_verification";
