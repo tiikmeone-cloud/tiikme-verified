@@ -31,7 +31,7 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
   const [success, setSuccess] = useState(false);
   const [answers, setAnswers] = useState<Record<number, string>>({});
 
-  const customQuestions: any[] = opportunity?.custom_questions || [];
+  const customQuestions: any[] = opportunity?.screening_questions || opportunity?.custom_questions || [];
 
   const handleResumeUpload = async (file: File) => {
     if (!user) return;
@@ -54,6 +54,26 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
     if (!user || !consent) return;
     setSubmitting(true);
     try {
+      // Check eliminatory questions for auto-reject
+      let autoRejected = false;
+      if (customQuestions.length > 0) {
+        for (let i = 0; i < customQuestions.length; i++) {
+          const q = customQuestions[i];
+          if (!q.is_eliminatory) continue;
+          const userAnswer = answers[i];
+          if (q.type === "yes_no" || q.type === "yesno" || q.type === "Yes or No") {
+            // For yes/no eliminatory: if correct answers specified, check match
+            if (q.correct?.length > 0 && !q.correct.includes(userAnswer)) {
+              autoRejected = true; break;
+            }
+          } else if (q.type === "multiple_choice") {
+            if (q.correct?.length > 0 && !q.correct.includes(userAnswer)) {
+              autoRejected = true; break;
+            }
+          }
+        }
+      }
+
       const { error } = await supabase.from("opportunity_applications").insert({
         opportunity_id: opportunity.id,
         applicant_id: user.id,
@@ -62,7 +82,7 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
         portfolio_url: portfolioUrl.trim() || null,
         cover_letter: coverLetter.trim() || null,
         custom_answers: Object.keys(answers).length > 0 ? answers : null,
-        status: "reviewing",
+        status: autoRejected ? "auto_rejected" : "reviewing",
       });
       if (error) {
         if (error.code === "23505") toast.error("You already applied");
