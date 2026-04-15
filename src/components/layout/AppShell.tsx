@@ -312,11 +312,6 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           </Link>
         </header>
 
-        {/* Mobile: remove left margin */}
-        <div className="md:hidden" style={{ marginLeft: -220 }}>
-          <style>{`@media (max-width: 767px) { main { margin-left: 0 !important; padding-bottom: 72px !important; } }`}</style>
-        </div>
-
         <div className="page-enter" key={pathname}>{children}</div>
       </main>
 
