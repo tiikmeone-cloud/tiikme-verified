@@ -101,7 +101,7 @@ const SignIn = () => {
         <div className="flex justify-center" style={{ marginBottom: 24 }}>
           <Link to="/">
             <div style={{ filter: "brightness(10) drop-shadow(0 0 20px rgba(232,115,58,0.35))" }}>
-              <ThemeLogo className="w-auto" style={{ height: 36 }} />
+              <ThemeLogo className="h-9 w-auto" />
             </div>
           </Link>
         </div>
