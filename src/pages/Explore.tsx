@@ -119,18 +119,31 @@ const Explore = () => {
         if (mountedRef.current) setPeople(filtered.slice(0, 20));
       } else { setPeople([]); }
 
-      // Orgs
+      // Orgs — with explore ranking
+      const rankItems = (items: any[]) => {
+        if (!profile) return items;
+        return items
+          .map(item => ({
+            ...item,
+            _exploreScore: calculateExploreScore({
+              page: { industry: item.industry || item.type, city: item.city, state: item.state, tracker_count: item.tracker_count || item.followers_count || 0, trust_score: item.trust_score || 0, created_at: item.created_at },
+              userProfile: { sector: profile.sector, location_city: profile.location_city, location_state: profile.location_state },
+            }),
+          }))
+          .sort((a: any, b: any) => b._exploreScore - a._exploreScore);
+      };
+
       const fetchOrgs = async (type: string) => {
         const { data } = await supabase.from("organizations")
-          .select("id, name, slug, type, logo_url, city, followers_count, created_by")
+          .select("id, name, slug, type, logo_url, city, state, followers_count, created_by, created_at")
           .eq("type", type).order("followers_count", { ascending: false }).limit(20);
-        return data || [];
+        return rankItems(data || []);
       };
       const fetchPages = async (pageType: string) => {
         const { data } = await supabase.from("pages")
-          .select("id, name, slug, page_type, logo_url, city, naac_grade, nabh_accredited, specialisations, tracker_count")
+          .select("id, name, slug, page_type, logo_url, city, state, industry, naac_grade, nabh_accredited, specialisations, tracker_count, trust_score, created_at")
           .eq("page_type", pageType).order("tracker_count", { ascending: false }).limit(20);
-        return (data || []).map((p: any) => ({ ...p, type: p.page_type }));
+        return rankItems((data || []).map((p: any) => ({ ...p, type: p.page_type })));
       };
 
       const [companyData, collegeData, hospitalData, govData, ngoData] = await Promise.all([
