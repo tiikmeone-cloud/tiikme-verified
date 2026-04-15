@@ -105,7 +105,7 @@ export function useLikes(postIds: string[]) {
           .eq("user_id", user.id)
           .maybeSingle();
 
-        if (!existing) {
+      if (!existing) {
           const { error } = await supabase
             .from("post_reactions")
             .insert({ post_id: postId, user_id: user.id, reaction_type: "like" });
@@ -115,6 +115,18 @@ export function useLikes(postIds: string[]) {
               ...p,
               [postId]: Math.max(0, (p[postId] || 0) - 1),
             }));
+          } else {
+            // Send notification to post author (fire-and-forget)
+            supabase.from("posts").select("author_id").eq("id", postId).maybeSingle()
+              .then(({ data: post }) => {
+                if (post?.author_id && post.author_id !== user.id) {
+                  supabase.from("alerts").insert({
+                    user_id: post.author_id, type: "like",
+                    title: "Someone liked your post",
+                    action_url: `/post/${postId}`,
+                  });
+                }
+              });
           }
         }
       }
