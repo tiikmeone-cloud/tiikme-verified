@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { storageImageUrl } from "@/lib/imageTransform";
+import AvatarSquare from "@/components/ui/AvatarSquare";
 import {
   Users, Plus, Search, Send, Trash2, X, Settings, Paperclip,
   ChevronLeft, Check, XCircle, Loader2, UserPlus, MessageCircle,
