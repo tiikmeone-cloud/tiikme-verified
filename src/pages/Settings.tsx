@@ -325,9 +325,7 @@ const SettingsPage = () => {
   const handleSignOut = async () => {
     setLoggingOut(true);
     await supabase.auth.signOut();
-    const savedTheme = localStorage.getItem("tiikme-theme");
     localStorage.clear();
-    if (savedTheme) localStorage.setItem("tiikme-theme", savedTheme);
     setTimeout(() => navigate("/signin"), 500);
   };
 
@@ -345,9 +343,7 @@ const SettingsPage = () => {
       ]);
       await supabase.from("profiles").delete().eq("id", user.id);
       await supabase.auth.signOut();
-      const savedTheme = localStorage.getItem("tiikme-theme");
       localStorage.clear();
-      if (savedTheme) localStorage.setItem("tiikme-theme", savedTheme);
       tiikToast.success("Account deleted");
       navigate("/");
     } catch {
