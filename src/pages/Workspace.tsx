@@ -832,13 +832,22 @@ export default function Workspace() {
   const filteredMembers = members.filter(m => !search.trim() || m.profile?.full_name?.toLowerCase().includes(search.toLowerCase()));
 
   /* ── Empty state ── */
-  if (!isInstitution) {
+  if (hasOrgAccess === null) return (
+    <div className="max-w-[1200px] mx-auto px-4 py-8">
+      <div className="animate-pulse space-y-4">
+        <div className="h-10 w-1/3 rounded-xl" style={{ background: "var(--glass-bg)" }} />
+        <div className="h-64 rounded-xl" style={{ background: "var(--glass-bg)" }} />
+      </div>
+    </div>
+  );
+
+  if (!hasOrgAccess) {
     return (
       <div className="max-w-[960px] mx-auto px-4 py-16 flex items-center justify-center">
         <div className="glass-light text-center" style={{ padding: 40, borderRadius: 24, maxWidth: 480, boxShadow: "inset 0 1px 0 var(--glass-highlight)" }}>
           <Users className="w-16 h-16 mx-auto mb-3" style={{ color: "var(--color-text-muted)" }} />
           <h1 className="text-[24px] font-bold mb-2" style={{ color: "var(--color-text)" }}>Workspace</h1>
-          <p className="text-[15px] mb-6 mx-auto" style={{ color: "var(--color-text-secondary)", maxWidth: 400 }}>Workspaces are available for organisation accounts.</p>
+          <p className="text-[15px] mb-6 mx-auto" style={{ color: "var(--color-text-secondary)", maxWidth: 400 }}>Join or create an organisation to access your workspace.</p>
           <button type="button" onClick={() => window.location.href = "/join-as-institution"}
             className="btn-liquid-primary h-12 px-8 rounded-2xl text-[14px] font-bold cursor-pointer">
             Register Organisation
