@@ -5,6 +5,7 @@ import { ArrowLeft, Heart, MessageSquare, Send, Trash2, MoreHorizontal, Pencil, 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { sendNotification } from "@/lib/notify";
 import MentionText from "@/components/feed/MentionText";
 import PostCarousel from "@/components/feed/PostCarousel";
 import EditPostModal from "@/components/feed/EditPostModal";
@@ -87,6 +88,15 @@ const PostDetail = () => {
       setLiked(true);
       setLikeCount(c => c + 1);
       await supabase.from("post_reactions").insert({ post_id: postId, user_id: user.id, reaction_type: "like" });
+      if (post?.author_id && post.author_id !== user.id) {
+        sendNotification({
+          userId: post.author_id,
+          actorId: user.id,
+          type: "like",
+          title: `${profile?.full_name || "Someone"} liked your post`,
+          actionUrl: `/post/${postId}`,
+        });
+      }
     }
   };
 
@@ -95,7 +105,20 @@ const PostDetail = () => {
     const content = commentText.trim();
     setCommentText("");
     const { data } = await supabase.from("post_comments").insert({ post_id: postId, user_id: user.id, content }).select("*, author:profiles!post_comments_user_id_fkey(id, full_name, avatar_url, role)").single();
-    if (data) setComments(prev => [...prev, data]);
+    if (data) {
+      setComments(prev => [...prev, data]);
+      // Notify post author
+      if (post?.author_id && post.author_id !== user.id) {
+        sendNotification({
+          userId: post.author_id,
+          actorId: user.id,
+          type: "comment",
+          title: `${profile?.full_name || "Someone"} commented on your post`,
+          body: content.slice(0, 80),
+          actionUrl: `/post/${postId}`,
+        });
+      }
+    }
   };
 
   const deleteComment = async (commentId: string) => {

@@ -93,7 +93,8 @@ const AppShell = ({ children }: { children: ReactNode }) => {
         if (error || !convos?.length) { setUnreadPings(0); return; }
         const convIds = convos.map(c => c.id);
         supabase.from("pings").select("conversation_id", { count: "exact", head: false })
-          .in("conversation_id", convIds).eq("is_read", false).eq("is_deleted", false).neq("sender_id", user.id)
+          .in("conversation_id", convIds).eq("is_read", false).neq("sender_id", user.id)
+          .or("is_deleted.is.null,is_deleted.eq.false")
           .then(({ data: unreadRows }) => {
             const distinctConvos = new Set((unreadRows || []).map((r: any) => r.conversation_id));
             setUnreadPings(distinctConvos.size);

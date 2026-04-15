@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { sendNotification } from "@/lib/notify";
 
 interface ConversationWithProfile {
   id: string;
@@ -75,10 +76,10 @@ export function useConversations(userId: string | undefined) {
     const uniqueIds = [...new Set(otherIds)];
     const convoIds = convos.map(c => c.id);
 
-    // BUG FIX 1: Correct unread count — only messages FROM the other person that I haven't read
+    // Correct unread count — only messages FROM the other person that I haven't read, excluding deleted
     const [profilesRes, unreadRes, lastMsgsRes] = await Promise.allSettled([
       supabase.from("profiles").select("id, full_name, username, avatar_url, role, institution_name, is_verified").in("id", uniqueIds),
-      supabase.from("pings").select("conversation_id").in("conversation_id", convoIds).eq("is_read", false).eq("is_deleted", false).neq("sender_id", userId),
+      supabase.from("pings").select("conversation_id").in("conversation_id", convoIds).eq("is_read", false).neq("sender_id", userId).or("is_deleted.is.null,is_deleted.eq.false"),
       supabase.from("pings").select("conversation_id, content, created_at, attachment_type, is_deleted").in("conversation_id", convoIds).order("created_at", { ascending: false }).limit(200),
     ]);
 
@@ -151,7 +152,7 @@ export function useConversations(userId: string | undefined) {
         c.id === convoId ? { ...c, unread_count: 0 } : c
       ));
       void supabase.from("pings")
-        .update({ is_read: true })
+        .update({ is_read: true } as any)
         .eq("conversation_id", convoId)
         .neq("sender_id", userId)
         .eq("is_read", false);
@@ -200,8 +201,24 @@ export function useConversations(userId: string | undefined) {
         status: "delivered" as const,
       } : m));
       supabase.from("conversations").update({ last_message_at: new Date().toISOString() }).eq("id", activeConvoId).then(() => {});
+
+      // Notify the other participant
+      const convo = conversations.find(c => c.id === activeConvoId);
+      if (convo) {
+        const otherId = convo.participant_1 === userId ? convo.participant_2 : convo.participant_1;
+        if (otherId) {
+          sendNotification({
+            userId: otherId,
+            actorId: userId,
+            type: "message",
+            title: `New message from ${convo.other_user?.full_name || "someone"}`,
+            body: (content || attachment?.name || "").slice(0, 80),
+            actionUrl: "/app/pings",
+          });
+        }
+      }
     }
-  }, [activeConvoId, userId]);
+  }, [activeConvoId, userId, conversations]);
 
   // BUG FIX 3: Delete message (soft delete)
   const deleteMessage = useCallback(async (msgId: string) => {
