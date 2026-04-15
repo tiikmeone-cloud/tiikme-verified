@@ -175,7 +175,7 @@ const Explore = () => {
       }
 
       // Trending topics
-      if (show("All")) {
+      if (show("All") || show("Trending")) {
         const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
         const { data: recentPosts } = await supabase.from("posts")
           .select("hashtags").not("hashtags", "is", null).gte("created_at", weekAgo).limit(500);
@@ -378,7 +378,7 @@ const Explore = () => {
           )}
 
           {/* 2. Trending Topics */}
-          {trendingTopics.length > 0 && activeFilter === "All" && (
+          {trendingTopics.length > 0 && (activeFilter === "All" || activeFilter === "Trending") && (
             <HorizontalCarousel title="Trending Topics">
               {trendingTopics.map(t => (
                 <TopicPill key={t.tag} tag={t.tag} count={t.count} onClick={() => navigate(`/app/feed?tag=${t.tag}`)} />
@@ -408,7 +408,7 @@ const Explore = () => {
           )}
 
           {/* 10. Trending Posts */}
-          {trendingPosts.length > 0 && activeFilter === "All" && (
+          {trendingPosts.length > 0 && (activeFilter === "All" || activeFilter === "Trending") && (
             <HorizontalCarousel title="Trending Posts" count={trendingPosts.length}>
               {trendingPosts.map(post => (
                 <TrendingPostCard key={post.id} post={post} authorProfile={postAuthors[post.author_id]} />
