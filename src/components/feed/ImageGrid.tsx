@@ -6,7 +6,7 @@ const ImageItem = ({ src, className, style }: { src: string; className: string; 
   const [error, setError] = useState(false);
   if (error) {
     return (
-      <div className={`${className} flex items-center justify-center`} style={{ background: "var(--bg-input)", border: "1px solid var(--border-subtle)", borderRadius: 10 }}>
+      <div className={`${className} flex items-center justify-center`} style={{ ...style, background: "var(--bg-input)", border: "1px solid var(--border-subtle)", borderRadius: 10 }}>
         <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text-muted)" }}>Image could not be loaded</span>
       </div>
     );
