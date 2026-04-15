@@ -209,6 +209,7 @@ const SettingsPage = () => {
         };
         setProfile(p);
         setOriginalProfile(p);
+        setRoleMetadata(data.role_metadata || {});
 
         // Load invite count
         if (data.username) {
