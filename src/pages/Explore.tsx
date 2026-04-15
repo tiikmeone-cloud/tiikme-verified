@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { sendNotification } from "@/lib/notify";
+import { calculateExploreScore } from "@/lib/algorithms";
 import HorizontalCarousel from "@/components/explore/HorizontalCarousel";
 import { PersonCard, OrgCard, TrendingPostCard, TopicPill, StartupCard, InvestorCard } from "@/components/explore/ExploreCard";
 import AvatarSquare from "@/components/ui/AvatarSquare";
