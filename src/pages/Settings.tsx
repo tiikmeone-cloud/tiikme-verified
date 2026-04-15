@@ -1,6 +1,6 @@
 import { storageImageUrl } from "@/lib/imageTransform";
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
-import { Check, GraduationCap, Briefcase, Rocket, Laptop, Coffee, Sun, Moon, Monitor, Palette, Mail, Key, Download, Trash2, AlertTriangle, Camera, User, Shield, Bell, Eye, Lock, LogOut, Users, Copy, Share2, Image as ImageIcon, TrendingUp } from "lucide-react";
+import { Check, GraduationCap, Briefcase, Rocket, Laptop, Coffee, Mail, Key, Download, Trash2, AlertTriangle, Camera, User, Shield, Bell, Eye, Lock, LogOut, Users, Copy, Share2, Image as ImageIcon, TrendingUp } from "lucide-react";
 import InvestorFounderSettings from "@/components/profile/InvestorFounderSettings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,14 +9,13 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useTheme } from "@/hooks/useTheme";
+
 
 const navItems = [
   { id: "profile", label: "Profile", icon: User },
   { id: "roles", label: "Additional Roles", icon: TrendingUp },
   { id: "invite", label: "Invite & Earn", icon: Users },
   { id: "journey", label: "My Journey", icon: Rocket },
-  { id: "appearance", label: "Appearance", icon: Palette },
   { id: "privacy", label: "Privacy", icon: Eye },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "account", label: "Account", icon: Lock },
@@ -160,7 +159,7 @@ const PrivacySection = ({ userId }: { userId: string | null }) => {
 const SettingsPage = () => {
   const navigate = useNavigate();
   const { user, refreshProfile } = useAuth();
-  const { theme, setTheme: setThemeHook } = useTheme();
+  
   
   const [activeTab, setActiveTab] = useState("profile");
   const [journeyChoice, setJourneyChoice] = useState<string | null>(null);
@@ -222,10 +221,6 @@ const SettingsPage = () => {
     loadProfile();
   }, []);
 
-  const handleThemeChange = (newTheme: string) => {
-    setThemeHook(newTheme as any, user?.id);
-    tiikToast.success(`Theme set to ${newTheme}`);
-  };
 
   const handleSaveProfile = async () => {
     if (!userId) return;
