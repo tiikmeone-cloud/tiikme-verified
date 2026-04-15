@@ -599,7 +599,7 @@ export default function Workspace() {
     const { data: ws } = await supabase.from("workspaces").select("id").eq("institution_id", orgId).maybeSingle();
     if (ws) {
       wsId = ws.id;
-    } else {
+    } else if (isInstitution) {
       const { data: newWs } = await supabase.from("workspaces").insert({
         name: orgRes.status === "fulfilled" ? orgRes.value.data?.name || "Workspace" : "Workspace",
         type: "organization",
