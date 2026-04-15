@@ -265,7 +265,7 @@ const Alerts = () => {
                     );
                   })()}
                   <div className="flex-1 min-w-0">
-                    <p className={`text-[14px] leading-relaxed ${unread ? "font-semibold" : "font-normal"}`} style={{ color: unread ? "#1A1A2E" : "#6B7094" }}>
+                    <p className={`text-[14px] leading-relaxed ${unread ? "font-semibold" : "font-normal"}`} style={{ color: unread ? "var(--text-1)" : "var(--text-2)" }}>
                       {notif.title || notif.body}
                     </p>
                     {notif.body && notif.title && (
