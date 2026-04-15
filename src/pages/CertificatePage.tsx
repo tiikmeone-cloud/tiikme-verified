@@ -52,7 +52,7 @@ export default function CertificatePage() {
             <p className="text-[13px] mb-1" style={{ color: "var(--text-3)" }}>Awarded to</p>
             <div className="flex items-center justify-center gap-3 mb-4">
               {cert.recipient?.avatar_url && (
-                <img src={cert.recipient.avatar_url} className="w-12 h-12 rounded-full object-cover" />
+                <img src={cert.recipient.avatar_url} className="w-12 h-12 object-cover" style={{ borderRadius: 0 }} />
               )}
               <p className="text-[20px] font-bold" style={{ color: "var(--text-1)" }}>{cert.recipient?.full_name || "User"}</p>
             </div>
