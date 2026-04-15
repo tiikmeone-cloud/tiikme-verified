@@ -34,6 +34,7 @@ const MentionInput = ({
   minHeight = 200,
   maxHeight = 500,
 }: MentionInputProps) => {
+  const { user } = useAuth();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -60,6 +61,7 @@ const MentionInput = ({
     const [profilesRes, pagesRes] = await Promise.allSettled([
       supabase.from("profiles")
         .select("id, full_name, username, avatar_url")
+        .neq("id", user?.id || "")
         .or(`full_name.ilike.%${query}%,username.ilike.%${query}%`)
         .limit(5),
       supabase.from("pages")
