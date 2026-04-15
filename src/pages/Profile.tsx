@@ -4,7 +4,7 @@ import { PageSEO, profileSEO } from "@/hooks/usePageSEO";
 import {
   MapPin, Copy, Shield, X, MessageCircle, CheckCircle, Building2, Link2, Plus,
   Pencil, Trash2, Briefcase, GraduationCap, Award, Code2, Eye, EyeOff,
-  Heart, Rocket, Send, Share2, Users, Globe, ChevronDown, ChevronUp, ExternalLink, LinkIcon
+  Heart, Rocket, Send, Share2, Users, Globe, ChevronDown, ChevronUp, ExternalLink, LinkIcon, TrendingUp
 } from "lucide-react";
 import { detectPlatform } from "@/lib/platformDetect";
 import GlassModal, { glassInputDarkStyle as gInputStyle, glassSelectDarkStyle as gSelectStyle, glassTextareaDarkStyle as gTextareaStyle, labelStyle } from "@/components/ui/GlassModal";
