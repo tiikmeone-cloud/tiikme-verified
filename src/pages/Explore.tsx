@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Search, X } from "lucide-react";
 import { cleanUsername } from "@/lib/cleanUsername";
 import { useNavigate } from "react-router-dom";

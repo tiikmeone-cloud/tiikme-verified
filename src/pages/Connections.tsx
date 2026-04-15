@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import { Link2, Search, MessageCircle, Compass, MoreHorizontal, X, Clock, UserPlus } from "lucide-react";
 import { toast } from "sonner";
