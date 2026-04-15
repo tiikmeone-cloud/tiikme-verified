@@ -170,6 +170,7 @@ const SettingsPage = () => {
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState({ name: "", headline: "", bio: "", institution: "", city: "", state: "", slug: "", avatar_url: "", cover_url: "" });
   const [originalProfile, setOriginalProfile] = useState({ name: "", headline: "", bio: "", institution: "", city: "", state: "", slug: "", avatar_url: "", cover_url: "" });
+  const [roleMetadata, setRoleMetadata] = useState<any>({});
   const [userId, setUserId] = useState<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
