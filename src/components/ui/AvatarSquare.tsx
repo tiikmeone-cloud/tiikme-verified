@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { storageImageUrl } from "@/lib/imageTransform";
 
 const FALLBACK_COLORS = ["#E8733A", "#4A90D9", "#34C759", "#FF6B9D", "#8B5CF6", "#FFB800"];
 
@@ -39,7 +38,9 @@ const AvatarSquare = ({
   const [imgError, setImgError] = useState(false);
   const initials = getInitials(name || "U");
   const bg = bgColor || hashColor(name || "U");
-  const showImage = !!src && !imgError;
+  // Fix any broken /render/image/ URLs back to /object/public/
+  const fixedSrc = src ? src.replace("/storage/v1/render/image/public/", "/storage/v1/object/public/") : null;
+  const showImage = !!fixedSrc && !imgError;
   const fontSize = Math.max(size * 0.28, 9);
 
   return (
@@ -55,7 +56,7 @@ const AvatarSquare = ({
     >
       {showImage ? (
         <img
-          src={storageImageUrl(src!, preset)}
+          src={fixedSrc!}
           alt={name}
           loading="lazy"
           className="w-full h-full object-cover"

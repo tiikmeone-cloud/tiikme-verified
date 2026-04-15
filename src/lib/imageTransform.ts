@@ -1,24 +1,16 @@
 /**
- * Transforms Supabase Storage URLs from /object/public/ to /render/image/public/
- * with size & format query params for optimized delivery.
+ * Returns the original Supabase Storage URL without image transformations.
+ * Previously this rewrote URLs to /render/image/ which causes 503 errors
+ * on plans that don't support Supabase Image Transformations.
  *
- * Only transforms URLs that contain "/storage/v1/object/public/".
- * Non-Supabase URLs are returned unchanged.
+ * Now it simply ensures URLs use /object/public/ (the working path)
+ * and strips any leftover render/image rewrites.
  */
 
 type ImagePreset = "feed" | "avatar" | "lightbox" | "thumbnail" | "cover";
 
-const presetParams: Record<ImagePreset, string> = {
-  feed: "width=800&quality=75&format=webp",
-  avatar: "width=160&height=160&quality=85&format=webp",
-  lightbox: "width=1600&quality=85&format=webp",
-  thumbnail: "width=200&height=200&quality=80&format=webp",
-  cover: "width=1600&quality=80&format=webp",
-};
-
-export function storageImageUrl(url: string, preset: ImagePreset = "feed"): string {
-  if (!url || !url.includes("/storage/v1/object/public/")) return url;
-  const transformed = url.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/");
-  const separator = transformed.includes("?") ? "&" : "?";
-  return `${transformed}${separator}${presetParams[preset]}`;
+export function storageImageUrl(url: string, _preset?: ImagePreset): string {
+  if (!url) return url;
+  // Fix any URLs that were previously rewritten to /render/image/
+  return url.replace("/storage/v1/render/image/public/", "/storage/v1/object/public/");
 }
