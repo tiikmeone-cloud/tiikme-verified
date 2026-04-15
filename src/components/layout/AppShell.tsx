@@ -102,13 +102,16 @@ const AppShell = ({ children }: { children: ReactNode }) => {
         if (error) { console.warn("[AppShell] conversations fetch failed:", error.message); return; }
         if (!convos?.length) { setUnreadPings(0); return; }
         const convIds = convos.map(c => c.id);
-        supabase.from("pings").select("*", { count: "exact", head: true })
+        supabase.from("pings").select("conversation_id", { count: "exact", head: false })
           .in("conversation_id", convIds)
           .eq("is_read", false)
+          .eq("is_deleted", false)
           .neq("sender_id", user.id)
-          .then(({ count: c, error: e2 }) => {
+          .then(({ data: unreadRows, error: e2 }) => {
             if (e2) { console.warn("[AppShell] pings count failed:", e2.message); return; }
-            setUnreadPings(c || 0);
+            // Count distinct conversations with unread messages
+            const distinctConvos = new Set((unreadRows || []).map((r: any) => r.conversation_id));
+            setUnreadPings(distinctConvos.size);
           });
       });
 
