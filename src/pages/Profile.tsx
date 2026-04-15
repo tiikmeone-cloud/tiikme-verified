@@ -20,6 +20,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLikes } from "@/hooks/useLikes";
 import { useComments } from "@/hooks/useComments";
 import MentionText from "@/components/feed/MentionText";
+import { sendNotification } from "@/lib/notify";
 import VerificationRequest from "@/components/profile/VerificationRequest";
 import CertificatesSection from "@/components/profile/CertificatesSection";
 import GlassBox from "@/components/ui/GlassBox";
