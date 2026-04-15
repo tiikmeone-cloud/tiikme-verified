@@ -635,6 +635,8 @@ const Profile = () => {
               <div className="flex items-center gap-2 mt-1">
                 <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full" style={{ background: "rgba(255,255,255,0.9)", color: roleColor }}>{roleLabel}</span>
                 {isVerified && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1" style={{ background: "rgba(245,158,11,0.9)", color: "#fff" }}><Shield className="w-3 h-3" /> Tiiked</span>}
+                {(profileData.role_metadata as any)?.investor_profile && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(21,128,61,0.85)", color: "#fff" }}>Investor</span>}
+                {(profileData.role_metadata as any)?.founder_profile && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(124,58,237,0.85)", color: "#fff" }}>Founder</span>}
               </div>
             </div>
           </div>
