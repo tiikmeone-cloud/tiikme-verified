@@ -476,9 +476,14 @@ const Profile = () => {
   const handleConnect = async () => {
     if (!user || !targetUserId || connectLoading) return;
     setConnectLoading(true);
+    // Bidirectional duplicate check
+    const { data: existing } = await supabase.from("strands").select("id")
+      .or(`and(requester_id.eq.${user.id},receiver_id.eq.${targetUserId}),and(requester_id.eq.${targetUserId},receiver_id.eq.${user.id})`)
+      .maybeSingle();
+    if (existing) { toast.info("Connection already exists"); setConnectLoading(false); return; }
     const { error } = await supabase.from("strands").insert({ requester_id: user.id, receiver_id: targetUserId });
     if (error) { toast.error(error.message); setConnectLoading(false); return; }
-    sendNotification({ userId: targetUserId, actorId: user.id, type: "connection_request", title: `${authProfile?.full_name || "Someone"} wants to connect`, actionUrl: `/app/strands`, data: { actor_id: user.id } });
+    sendNotification({ userId: targetUserId, actorId: user.id, type: "connection_request", title: `${authProfile?.full_name || "Someone"} wants to connect`, actionUrl: `/app/connections`, data: { actor_id: user.id } });
     setConnectionStatus({ status: "pending", direction: "sent", id: null });
     setConnectLoading(false);
     toast.success("Connection request sent");

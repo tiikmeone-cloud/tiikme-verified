@@ -368,15 +368,20 @@ const PostCard = ({
 
   const handleFollow = async () => {
     if (!user || !author?.id) return;
+    // Bidirectional duplicate check
+    const { data: existing } = await supabase.from("strands").select("id")
+      .or(`and(requester_id.eq.${user.id},receiver_id.eq.${author.id}),and(requester_id.eq.${author.id},receiver_id.eq.${user.id})`)
+      .maybeSingle();
+    if (existing) { setFollowState("pending"); return; }
     try {
       await supabase.from("strands").insert({ requester_id: user.id, receiver_id: author.id, status: "pending" });
       sendNotification({
         userId: author.id, actorId: user.id, type: "connection_request",
         title: `${authProfile?.full_name || "Someone"} wants to connect`,
-        actionUrl: `/app/strands`,
+        actionUrl: `/app/connections`,
       });
       setFollowState("pending");
-    } catch { /* dup check */ }
+    } catch { /* dup */ }
   };
 
   const handleReport = async () => {
@@ -426,12 +431,12 @@ const PostCard = ({
               {isConnected && <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#34C759", display: "inline-block" }} />}
               {showFollow && followState === "none" && (
                 <button type="button" onClick={handleFollow} className="cursor-pointer"
-                  style={{ fontSize: 12, fontWeight: 600, color: "#E8733A", padding: "2px 8px", border: "1px solid rgba(232,115,58,0.30)", borderRadius: 6, background: "transparent" }}>
-                  + Follow
+                  style={{ fontSize: 12, fontWeight: 700, padding: "2px 10px", borderRadius: 6, ...({background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none"}) }}>
+                  + Connect
                 </button>
               )}
               {showFollow && followState === "pending" && (
-                <span style={{ fontSize: 12, fontWeight: 500, color: "#9CA3C0", padding: "2px 8px" }}>Requested</span>
+                <span style={{ fontSize: 12, fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "rgba(255,184,0,0.10)", color: "#FFB800", border: "1px solid rgba(255,184,0,0.25)" }}>Requested</span>
               )}
               <span style={{ fontSize: 12, color: "#9CA3C0" }}>·</span>
               <span style={{ fontSize: 12, color: "#9CA3C0" }}>{timeAgo}</span>
@@ -668,12 +673,17 @@ const SuggestedWidget = ({ connectionIds }: { connectionIds: Set<string> }) => {
 
   const handleConnect = async (targetId: string) => {
     if (!user) return;
+    // Bidirectional duplicate check
+    const { data: existing } = await supabase.from("strands").select("id")
+      .or(`and(requester_id.eq.${user.id},receiver_id.eq.${targetId}),and(requester_id.eq.${targetId},receiver_id.eq.${user.id})`)
+      .maybeSingle();
+    if (existing) { toast.info("Request already exists"); return; }
     try {
       await supabase.from("strands").insert({ requester_id: user.id, receiver_id: targetId, status: "pending" });
       sendNotification({
         userId: targetId, actorId: user.id, type: "connection_request",
         title: `${profile?.full_name || "Someone"} wants to connect`,
-        actionUrl: `/app/strands`,
+        actionUrl: `/app/connections`,
       });
       setSentIds(prev => new Set(prev).add(targetId));
       setSuggested(prev => prev.filter(s => s.id !== targetId));
