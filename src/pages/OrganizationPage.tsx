@@ -25,7 +25,7 @@ type Tab = typeof orgTabs[number];
 
 export default function OrganizationPage() {
   const { slug } = useParams<{ slug: string }>();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [org, setOrg] = useState<any>(null);
   const [loading, setLoading] = useState(true);

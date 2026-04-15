@@ -90,7 +90,7 @@ function PersonCard({ p, strandStatus, onStrand }: { p: ProfileResult; strandSta
 
 function OrgCard({ org }: { org: any }) {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [following, setFollowing] = useState(false);
   const initials = (org.name || "?").slice(0, 2).toUpperCase();
   const typeColors = ORG_TYPE_COLORS[org.type] || { bg: "rgba(107,112,148,0.12)", text: "#6B7094" };
@@ -168,7 +168,7 @@ const SectionHeader = ({ title, count }: { title: string; count: number }) => (
 );
 
 const Explore = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
   const [loading, setLoading] = useState(true);

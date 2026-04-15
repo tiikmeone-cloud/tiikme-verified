@@ -22,7 +22,7 @@ interface StrandRow {
 
 const Strands = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [tab, setTab] = useState<"connected" | "pending" | "sent" | "suggested">("connected");
   const [search, setSearch] = useState("");
   const [connected, setConnected] = useState<StrandRow[]>([]);
