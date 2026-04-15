@@ -62,7 +62,7 @@ const GlassBox = ({ accent, expanded, onClick, children, className, style, spanF
         background: "rgba(255, 255, 255, 0.72)",
         border: "1px solid rgba(255, 255, 255, 0.9)",
         borderLeft: `2px solid ${color}66`,
-        borderRadius: 20,
+        borderRadius: 16,
         backdropFilter: "blur(24px)",
         WebkitBackdropFilter: "blur(24px)",
         boxShadow: expanded ? expandedGlow(color) : glowShadow(color),
