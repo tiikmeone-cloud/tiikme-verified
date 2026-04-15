@@ -587,13 +587,14 @@ const Profile = () => {
 
           {/* Avatar + Name ON cover */}
           <div className="absolute bottom-5 left-6 flex items-end gap-4 z-10">
-            <div className="w-[100px] h-[100px] rounded-2xl flex items-center justify-center text-[28px] font-extrabold text-white overflow-hidden shrink-0"
+            <div className="w-[100px] h-[100px] flex items-center justify-center text-[28px] font-extrabold text-white overflow-hidden shrink-0"
               style={{
+                borderRadius: 0,
                 backgroundColor: profileData.avatar_url ? "#fff" : roleColor,
                 border: "3px solid rgba(255, 255, 255, 0.40)",
                 boxShadow: "0 0 24px rgba(232, 115, 58, 0.20)",
               }}>
-              {profileData.avatar_url ? <img src={storageImageUrl(profileData.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials}
+              {profileData.avatar_url ? <img src={storageImageUrl(profileData.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : initials}
             </div>
             <div className="pb-1">
               <div className="flex items-center gap-2">
