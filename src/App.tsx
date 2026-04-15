@@ -53,7 +53,17 @@ const ApplicationsDashboard = lazyWithRetry(() => import("./pages/ApplicationsDa
 const OpportunityCreate = lazyWithRetry(() => import("./pages/OpportunityCreate.tsx"), "OpportunityCreate");
 const WorkspacePage = lazyWithRetry(() => import("./pages/Workspace.tsx"), "WorkspacePage");
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,        // 5 min — data considered fresh
+      gcTime: 30 * 60 * 1000,           // 30 min — keep unused data in cache
+      refetchOnWindowFocus: false,       // Don't refetch on tab switch
+      refetchOnMount: false,             // Don't refetch if cache exists
+      retry: 1,
+    },
+  },
+});
 
 const Shell = ({ children }: { children: React.ReactNode }) => (
   <ProtectedRoute><LayoutErrorBoundary><AppShell><PageErrorBoundary>{children}</PageErrorBoundary></AppShell></LayoutErrorBoundary></ProtectedRoute>
