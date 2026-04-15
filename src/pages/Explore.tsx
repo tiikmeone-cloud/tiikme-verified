@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Search, X, Filter } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,7 +9,7 @@ import HorizontalCarousel from "@/components/explore/HorizontalCarousel";
 import { PersonCard, OrgCard, TrendingPostCard, TopicPill, StartupCard, InvestorCard } from "@/components/explore/ExploreCard";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 
-const FILTER_TABS = ["All", "People", "Companies", "Colleges", "Hospitals", "Government", "NGO"];
+const FILTER_TABS = ["All", "People", "Companies", "Colleges", "Hospitals", "Government", "NGO", "Startups", "Investors"];
 
 const Explore = () => {
   const { user, profile } = useAuth();
@@ -20,7 +20,6 @@ const Explore = () => {
   const [focused, setFocused] = useState(false);
   const mountedRef = useRef(true);
 
-  // Data
   const [people, setPeople] = useState<any[]>([]);
   const [strandMap, setStrandMap] = useState<Record<string, string>>({});
   const [companies, setCompanies] = useState<any[]>([]);
@@ -34,14 +33,12 @@ const Explore = () => {
   const [followMap, setFollowMap] = useState<Record<string, boolean>>({});
   const [startups, setStartups] = useState<any[]>([]);
   const [investors, setInvestors] = useState<any[]>([]);
-
-  // Search results
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
 
   useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
-  // Search handler
+  // Search
   useEffect(() => {
     if (search.trim().length < 2) { setSearchResults([]); setShowSearchResults(false); return; }
     const t = setTimeout(async () => {
@@ -58,7 +55,7 @@ const Explore = () => {
     return () => clearTimeout(t);
   }, [search]);
 
-  // Main data fetch
+  // Data fetch
   const fetchAll = useCallback(async () => {
     if (!user) return;
     setLoading(true);
@@ -68,9 +65,13 @@ const Explore = () => {
         .select("requester_id, receiver_id, status")
         .or(`requester_id.eq.${user.id},receiver_id.eq.${user.id}`);
       const sMap: Record<string, string> = {};
+      const connectedIds = new Set<string>();
       (strands || []).forEach((s: any) => {
         const otherId = s.requester_id === user.id ? s.receiver_id : s.requester_id;
-        if (otherId) sMap[otherId] = s.status || "pending";
+        if (otherId) {
+          sMap[otherId] = s.status || "pending";
+          if (s.status === "accepted") connectedIds.add(otherId);
+        }
       });
       if (mountedRef.current) setStrandMap(sMap);
 
@@ -82,41 +83,48 @@ const Explore = () => {
 
       const show = (cat: string) => activeFilter === "All" || activeFilter === cat;
 
-      // People — relevance: same sector, same location, higher score, verified
+      // People — filter out connected users
       if (show("People")) {
         const { data } = await supabase.from("profiles")
-          .select("id, full_name, username, avatar_url, role, headline, institution_name, location_city, is_verified, activity_score, privacy_settings, sector, location_state")
+          .select("id, full_name, username, avatar_url, role, headline, institution_name, location_city, is_verified, activity_score, privacy_settings, sector, skills, location_state")
           .eq("is_public", true).not("full_name", "is", null).neq("id", user.id)
-          .order("activity_score", { ascending: false }).limit(30);
+          .order("activity_score", { ascending: false }).limit(40);
         const filtered = (data || []).filter((p: any) => {
           const ps = p.privacy_settings as any;
-          return !ps || ps.show_in_search !== false;
+          if (ps && ps.show_in_search === false) return false;
+          // Filter out already connected
+          if (connectedIds.has(p.id)) return false;
+          return true;
         });
-        // Sort by relevance
+        // PYMK scoring
         filtered.sort((a: any, b: any) => {
-          let aScore = 0, bScore = 0;
-          if (profile?.sector && a.sector === profile.sector) aScore += 30;
-          if (profile?.sector && b.sector === profile.sector) bScore += 30;
-          if (profile?.location_city && a.location_city === profile.location_city) aScore += 20;
-          if (profile?.location_city && b.location_city === profile.location_city) bScore += 20;
-          if (a.is_verified) aScore += 10;
-          if (b.is_verified) bScore += 10;
-          aScore += (a.activity_score || 0);
-          bScore += (b.activity_score || 0);
-          return bScore - aScore;
+          let aS = 0, bS = 0;
+          if (profile?.sector && a.sector === profile.sector) aS += 20;
+          if (profile?.sector && b.sector === profile.sector) bS += 20;
+          if (profile?.location_city && a.location_city === profile.location_city) aS += 15;
+          if (profile?.location_city && b.location_city === profile.location_city) bS += 15;
+          // Skill overlap
+          const mySkills = new Set(profile?.skills || []);
+          const aOverlap = (a.skills || []).filter((s: string) => mySkills.has(s)).length;
+          const bOverlap = (b.skills || []).filter((s: string) => mySkills.has(s)).length;
+          aS += Math.min(aOverlap * 2, 10);
+          bS += Math.min(bOverlap * 2, 10);
+          aS += Math.min((a.activity_score || 0) / 10, 10);
+          bS += Math.min((b.activity_score || 0) / 10, 10);
+          if (a.is_verified) aS += 13;
+          if (b.is_verified) bS += 13;
+          return bS - aS;
         });
-        if (mountedRef.current) setPeople(filtered);
+        if (mountedRef.current) setPeople(filtered.slice(0, 20));
       } else { setPeople([]); }
 
-      // Organizations by type
+      // Orgs
       const fetchOrgs = async (type: string) => {
         const { data } = await supabase.from("organizations")
           .select("id, name, slug, type, logo_url, city, followers_count, created_by")
           .eq("type", type).order("followers_count", { ascending: false }).limit(20);
         return data || [];
       };
-
-      // Pages by type
       const fetchPages = async (pageType: string) => {
         const { data } = await supabase.from("pages")
           .select("id, name, slug, page_type, logo_url, city, naac_grade, nabh_accredited, specialisations, tracker_count")
@@ -128,7 +136,7 @@ const Explore = () => {
         show("Companies") ? fetchOrgs("company") : Promise.resolve([]),
         show("Colleges") ? fetchPages("college").then(async pages => {
           const { data: eduOrgs } = await supabase.from("organizations").select("id, name, slug, type, logo_url, city, followers_count, created_by").eq("type", "education").order("followers_count", { ascending: false }).limit(20);
-          return [...pages, ...(eduOrgs || []).map((o: any) => ({ ...o }))];
+          return [...pages, ...(eduOrgs || [])];
         }) : Promise.resolve([]),
         show("Hospitals") ? fetchPages("hospital") : Promise.resolve([]),
         show("Government") ? Promise.all([fetchPages("government"), fetchOrgs("government")]).then(([a, b]) => [...a, ...b]) : Promise.resolve([]),
@@ -136,39 +144,31 @@ const Explore = () => {
       ]);
 
       if (mountedRef.current) {
-        setCompanies(companyData);
-        setColleges(collegeData);
-        setHospitals(hospitalData);
-        setGovOrgs(govData);
-        setNgos(ngoData);
+        setCompanies(companyData); setColleges(collegeData);
+        setHospitals(hospitalData); setGovOrgs(govData); setNgos(ngoData);
       }
 
-      // Trending topics (hashtags from last 7 days)
+      // Trending topics
       if (show("All")) {
         const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
         const { data: recentPosts } = await supabase.from("posts")
           .select("hashtags").not("hashtags", "is", null).gte("created_at", weekAgo).limit(500);
         const tagCount: Record<string, number> = {};
-        (recentPosts || []).forEach((p: any) => {
-          (p.hashtags || []).forEach((h: string) => { tagCount[h] = (tagCount[h] || 0) + 1; });
-        });
+        (recentPosts || []).forEach((p: any) => { (p.hashtags || []).forEach((h: string) => { tagCount[h] = (tagCount[h] || 0) + 1; }); });
         const sorted = Object.entries(tagCount).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([tag, count]) => ({ tag, count }));
         if (mountedRef.current) setTrendingTopics(sorted);
 
-        // Trending posts (last 48h, highest engagement)
+        // Trending posts
         const twoDaysAgo = new Date(Date.now() - 48 * 3600000).toISOString();
         const { data: hotPosts } = await supabase.from("posts")
           .select("id, content, author_id, reactions, comment_count, created_at")
           .gte("created_at", twoDaysAgo).eq("visibility", "everyone")
           .order("comment_count", { ascending: false }).limit(15);
-        // Sort by total engagement
         const sorted2 = (hotPosts || []).map((p: any) => ({
-          ...p,
-          _engagement: (p.reactions?.useful || 0) + (p.reactions?.inspiring || 0) + (p.reactions?.insightful || 0) + (p.comment_count || 0)
+          ...p, _engagement: (p.reactions?.useful || 0) + (p.reactions?.inspiring || 0) + (p.reactions?.insightful || 0) + (p.comment_count || 0)
         })).sort((a: any, b: any) => b._engagement - a._engagement).slice(0, 10);
         if (mountedRef.current) setTrendingPosts(sorted2);
 
-        // Fetch author profiles for trending posts
         const authorIds = [...new Set(sorted2.map((p: any) => p.author_id).filter(Boolean))];
         if (authorIds.length) {
           const { data: authors } = await supabase.from("profiles").select("id, full_name, avatar_url").in("id", authorIds);
@@ -177,33 +177,35 @@ const Explore = () => {
           if (mountedRef.current) setPostAuthors(aMap);
         }
 
-        // Startups looking for funding
-        const { data: spData } = await supabase.from("startup_profiles")
-          .select("id, page_id, funding_stage, sectors, looking_for_funding, founder_id")
-          .eq("looking_for_funding", true).limit(20);
-        if (spData && spData.length > 0) {
-          const pageIds = spData.map((s: any) => s.page_id).filter(Boolean);
-          const { data: pages } = await supabase.from("pages").select("id, name, slug, logo_url").in("id", pageIds);
-          const pageMap = new Map((pages || []).map((p: any) => [p.id, p]));
-          if (mountedRef.current) setStartups(spData.map((s: any) => ({ ...s, page: pageMap.get(s.page_id) })));
-        } else {
-          if (mountedRef.current) setStartups([]);
+        // Startups
+        if (show("Startups") || activeFilter === "All") {
+          const { data: spData } = await supabase.from("startup_profiles")
+            .select("id, page_id, funding_stage, sectors, looking_for_funding, founder_id")
+            .eq("looking_for_funding", true).limit(20);
+          if (spData && spData.length > 0) {
+            const pageIds = spData.map((s: any) => s.page_id).filter(Boolean);
+            const { data: pages } = await supabase.from("pages").select("id, name, slug, logo_url").in("id", pageIds);
+            const pageMap = new Map((pages || []).map((p: any) => [p.id, p]));
+            if (mountedRef.current) setStartups(spData.map((s: any) => ({ ...s, page: pageMap.get(s.page_id) })));
+          } else { if (mountedRef.current) setStartups([]); }
         }
 
-        // Active investors
-        const { data: allProfiles } = await supabase.from("profiles")
-          .select("id, full_name, avatar_url, role_metadata")
-          .eq("is_public", true).neq("id", user.id)
-          .not("role_metadata", "is", null).limit(200);
-        const investorProfiles = (allProfiles || []).filter((p: any) => {
-          const meta = p.role_metadata as any;
-          return meta?.is_investor === true || meta?.investor_profile;
-        }).slice(0, 20);
-        if (mountedRef.current) setInvestors(investorProfiles);
+        // Investors
+        if (show("Investors") || activeFilter === "All") {
+          const { data: allProfiles } = await supabase.from("profiles")
+            .select("id, full_name, avatar_url, role_metadata")
+            .eq("is_public", true).neq("id", user.id)
+            .not("role_metadata", "is", null).limit(200);
+          const investorProfiles = (allProfiles || []).filter((p: any) => {
+            const meta = p.role_metadata as any;
+            return meta?.is_investor === true || meta?.investor_profile;
+          }).slice(0, 20);
+          if (mountedRef.current) setInvestors(investorProfiles);
+        }
       }
     } catch (err) { console.warn("[Explore] fetch error:", err); }
     if (mountedRef.current) setLoading(false);
-  }, [user, activeFilter, profile?.sector, profile?.location_city]);
+  }, [user, activeFilter, profile?.sector, profile?.location_city, profile?.skills]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
@@ -239,65 +241,61 @@ const Explore = () => {
 
   const getOrgNavigateTo = (org: any) => org.slug ? (org.page_type ? `/page/${org.slug}` : `/org/${org.slug}`) : "#";
 
-  const renderOrgCarousel = (title: string, data: any[], accent: string) => {
+  const renderOrgCarousel = (title: string, data: any[]) => {
     if (data.length === 0) return null;
     return (
-      <HorizontalCarousel title={title} count={data.length} accentColor={accent}>
+      <HorizontalCarousel title={title} count={data.length}>
         {data.map((org: any) => (
-          <OrgCard
-            key={org.id}
-            org={org}
-            following={!!followMap[org.id]}
+          <OrgCard key={org.id} org={org} following={!!followMap[org.id]}
             onToggleFollow={() => toggleFollow(org.id, org.created_by)}
-            navigateTo={getOrgNavigateTo(org)}
-          />
+            navigateTo={getOrgNavigateTo(org)} />
         ))}
       </HorizontalCarousel>
     );
   };
 
-  const isFiltered = activeFilter !== "All";
-
   return (
-    <main className="max-w-[1100px] mx-auto px-4 md:px-6 py-4 md:py-7">
+    <main style={{ maxWidth: 960, margin: "0 auto", padding: 16 }}>
       {/* Search bar */}
-      <div className="relative mb-4">
-        <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: "var(--color-text-secondary)" }} />
+      <div className="relative">
+        <Search className="absolute" style={{ left: 16, top: "50%", transform: "translateY(-50%)", width: 20, height: 20, color: "var(--text-muted)" }} />
         <input type="text" value={search}
           onChange={e => setSearch(e.target.value)}
           onFocus={() => setFocused(true)}
           onBlur={() => setTimeout(() => { setFocused(false); setShowSearchResults(false); }, 200)}
           placeholder="Search people, companies, colleges..."
-          className="w-full outline-none transition-all duration-200"
+          className="w-full outline-none"
           style={{
-            height: 48, borderRadius: 20, paddingLeft: 48, paddingRight: 56, fontSize: 14,
-            background: "var(--glass-bg)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
-            border: focused ? "1px solid var(--input-focus-border)" : "1px solid var(--glass-border-subtle)",
-            boxShadow: focused ? "0 0 24px var(--input-focus-glow)" : "none",
-            color: "var(--color-text)",
+            height: 48, borderRadius: 16, paddingLeft: 48, paddingRight: 16, fontSize: 14, fontWeight: 400,
+            background: "var(--bg-card)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
+            border: focused ? "1px solid rgba(232,115,58,0.50)" : "1px solid var(--border-glass)",
+            boxShadow: focused ? "0 0 0 3px rgba(232,115,58,0.10)" : "none",
+            color: "var(--text-primary)", transition: "border-color 150ms, box-shadow 150ms",
           }} />
         {search && (
-          <button type="button" onClick={() => setSearch("")} className="absolute right-14 top-1/2 -translate-y-1/2 cursor-pointer" style={{ color: "var(--color-text-secondary)" }}>
-            <X className="w-4 h-4" />
+          <button type="button" onClick={() => setSearch("")} className="absolute" style={{ right: 16, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)" }}>
+            <X style={{ width: 16, height: 16 }} />
           </button>
         )}
-        <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center"
-          style={{ background: "var(--glass-bg)", backdropFilter: "blur(12px)", border: "1px solid var(--glass-border-subtle)" }}>
-          <Filter className="w-4 h-4" style={{ color: "var(--color-accent)" }} />
-        </button>
 
         {/* Search dropdown */}
         {showSearchResults && searchResults.length > 0 && (
-          <div className="absolute top-full left-0 right-0 mt-1 rounded-2xl overflow-hidden z-20"
-            style={{ background: "var(--glass-bg)", backdropFilter: "blur(20px)", border: "1px solid var(--glass-border)", boxShadow: "0 8px 32px var(--glass-shadow)" }}>
+          <div className="absolute w-full overflow-y-auto" style={{
+            marginTop: 4, maxHeight: 320, padding: 4, borderRadius: 12, zIndex: 30,
+            background: "var(--bg-card)", backdropFilter: "blur(20px)", border: "1px solid var(--border-glass)",
+            boxShadow: "0 8px 32px rgba(26,26,78,0.12)",
+          }}>
             {searchResults.map((r: any) => (
               <button key={r.id} type="button"
-                className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-white/10"
+                className="w-full flex items-center text-left"
+                style={{ gap: 8, padding: 8, borderRadius: 6, transition: "background 100ms", cursor: "pointer", background: "transparent", border: "none" }}
+                onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-card-hover)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
                 onClick={() => { navigate(r.kind === "person" ? `/app/profile/${r.id}` : `/org/${r.slug}`); setShowSearchResults(false); setSearch(""); }}>
                 <AvatarSquare src={r.avatar_url || r.logo_url} name={r.full_name || r.name || "?"} size={32} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-semibold truncate" style={{ color: "var(--color-text)" }}>{r.full_name || r.name}</p>
-                  <p className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>{r.kind === "person" ? `@${r.username || "user"}` : r.type}</p>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.full_name || r.name}</p>
+                  <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)" }}>{r.kind === "person" ? `@${r.username || "user"}` : r.type}</p>
                 </div>
               </button>
             ))}
@@ -306,27 +304,31 @@ const Explore = () => {
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-1 mb-5" style={{ scrollbarWidth: "none" }}>
+      <div className="flex overflow-x-auto" style={{ gap: 6, marginTop: 12, marginBottom: 16, scrollbarWidth: "none" }}>
         {FILTER_TABS.map(tab => (
           <button type="button" key={tab} onClick={() => setActiveFilter(tab)}
-            className="shrink-0 px-5 py-2 rounded-full text-[13px] font-semibold transition-all"
-            style={activeFilter === tab
-              ? { background: "linear-gradient(135deg, var(--color-accent), var(--color-accent-pink))", color: "#fff", border: "none", boxShadow: "0 4px 16px rgba(232,115,58,0.30)" }
-              : { background: "var(--glass-bg)", backdropFilter: "blur(12px)", border: "1px solid var(--glass-border-subtle)", color: "var(--color-text)", cursor: "pointer" }
-            }
-          >
+            style={{
+              flexShrink: 0, height: 34, padding: "0 18px", borderRadius: 12,
+              fontSize: 13, fontWeight: activeFilter === tab ? 600 : 400,
+              transition: "all 150ms", cursor: "pointer", border: "none",
+              ...(activeFilter === tab
+                ? { background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "white", boxShadow: "0 4px 14px rgba(232,115,58,0.25)" }
+                : { background: "var(--bg-card)", border: "1px solid var(--border-glass)", color: "var(--text-primary)" }
+              ),
+            }}>
             {tab}
           </button>
         ))}
       </div>
 
+      {/* Loading */}
       {loading && (
-        <div className="space-y-6">
+        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           {[1, 2, 3].map(i => (
             <div key={i}>
-              <div className="h-5 w-40 rounded glass-skeleton mb-3" />
-              <div className="flex gap-3 overflow-hidden">
-                {[1, 2, 3, 4].map(j => <div key={j} className="shrink-0 rounded-2xl glass-skeleton" style={{ width: 180, height: 200 }} />)}
+              <div style={{ height: 18, width: 160, borderRadius: 8, background: "var(--bg-card)", marginBottom: 10 }} />
+              <div className="flex" style={{ gap: 10, overflow: "hidden" }}>
+                {[1, 2, 3, 4].map(j => <div key={j} style={{ width: 190, height: 200, borderRadius: 16, background: "var(--bg-card)", flexShrink: 0 }} />)}
               </div>
             </div>
           ))}
@@ -335,72 +337,60 @@ const Explore = () => {
 
       {!loading && (
         <>
-          {/* People */}
+          {/* 1. People You May Know */}
           {people.length > 0 && (activeFilter === "All" || activeFilter === "People") && (
-            <HorizontalCarousel title="People You May Know" count={people.length} accentColor="#6D28D9">
+            <HorizontalCarousel title="People You May Know" count={people.length}>
               {people.map(p => (
                 <PersonCard key={p.id} p={p} strandStatus={strandMap[p.id] || "none"} onStrand={() => handleStrand(p.id)} currentUserId={user?.id} />
               ))}
             </HorizontalCarousel>
           )}
 
-          {/* Trending Topics */}
+          {/* 2. Trending Topics */}
           {trendingTopics.length > 0 && activeFilter === "All" && (
-            <HorizontalCarousel title="Trending Topics" accentColor="#E8733A">
+            <HorizontalCarousel title="Trending Topics">
               {trendingTopics.map(t => (
                 <TopicPill key={t.tag} tag={t.tag} count={t.count} onClick={() => navigate(`/app/feed?tag=${t.tag}`)} />
               ))}
             </HorizontalCarousel>
           )}
 
-          {/* Companies */}
-          {renderOrgCarousel("Companies", companies, "#1D4ED8")}
+          {/* 3-7. Org carousels */}
+          {(activeFilter === "All" || activeFilter === "Companies") && renderOrgCarousel("Companies", companies)}
+          {(activeFilter === "All" || activeFilter === "Colleges") && renderOrgCarousel("Colleges & Universities", colleges)}
+          {(activeFilter === "All" || activeFilter === "Hospitals") && renderOrgCarousel("Hospitals & Healthcare", hospitals)}
+          {(activeFilter === "All" || activeFilter === "Government") && renderOrgCarousel("Government Bodies", govOrgs)}
+          {(activeFilter === "All" || activeFilter === "NGO") && renderOrgCarousel("NGOs & Non-Profits", ngos)}
 
-          {/* Colleges */}
-          {renderOrgCarousel("Colleges & Universities", colleges, "#1D4ED8")}
-
-          {/* Hospitals */}
-          {renderOrgCarousel("Hospitals & Healthcare", hospitals, "#BE123C")}
-
-          {/* Government */}
-          {renderOrgCarousel("Government Bodies", govOrgs, "#15803D")}
-
-          {/* NGOs */}
-          {renderOrgCarousel("NGOs & Non-Profits", ngos, "#6D28D9")}
-
-          {/* Startups Looking for Funding */}
-          {startups.length > 0 && activeFilter === "All" && (
-            <HorizontalCarousel title="Startups Looking for Funding" count={startups.length} accentColor="#7C3AED">
-              {startups.map(s => (
-                <StartupCard key={s.id} startup={s} page={s.page} />
-              ))}
+          {/* 8. Startups */}
+          {startups.length > 0 && (activeFilter === "All" || activeFilter === "Startups") && (
+            <HorizontalCarousel title="Startups Looking for Funding" count={startups.length}>
+              {startups.map(s => <StartupCard key={s.id} startup={s} page={s.page} />)}
             </HorizontalCarousel>
           )}
 
-          {/* Active Investors */}
-          {investors.length > 0 && activeFilter === "All" && (
-            <HorizontalCarousel title="Active Investors" count={investors.length} accentColor="#059669">
-              {investors.map(inv => (
-                <InvestorCard key={inv.id} investor={inv} />
-              ))}
+          {/* 9. Investors */}
+          {investors.length > 0 && (activeFilter === "All" || activeFilter === "Investors") && (
+            <HorizontalCarousel title="Active Investors" count={investors.length}>
+              {investors.map(inv => <InvestorCard key={inv.id} investor={inv} />)}
             </HorizontalCarousel>
           )}
 
-          {/* Trending Posts */}
+          {/* 10. Trending Posts */}
           {trendingPosts.length > 0 && activeFilter === "All" && (
-            <HorizontalCarousel title="Trending Posts" count={trendingPosts.length} accentColor="#E8733A">
+            <HorizontalCarousel title="Trending Posts" count={trendingPosts.length}>
               {trendingPosts.map(post => (
                 <TrendingPostCard key={post.id} post={post} authorProfile={postAuthors[post.author_id]} />
               ))}
             </HorizontalCarousel>
           )}
 
-          {/* Empty state */}
-          {people.length === 0 && companies.length === 0 && colleges.length === 0 && hospitals.length === 0 && govOrgs.length === 0 && ngos.length === 0 && (
-            <div className="text-center py-16">
-              <Search className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--color-text-secondary)" }} />
-              <p className="text-[15px] font-bold mb-2" style={{ color: "var(--color-text)" }}>No results found</p>
-              <p className="text-[13px]" style={{ color: "var(--color-text-secondary)" }}>Try a different search term or filter</p>
+          {/* Empty */}
+          {people.length === 0 && companies.length === 0 && colleges.length === 0 && hospitals.length === 0 && govOrgs.length === 0 && ngos.length === 0 && startups.length === 0 && investors.length === 0 && (
+            <div style={{ textAlign: "center", padding: "64px 0" }}>
+              <Search style={{ width: 48, height: 48, margin: "0 auto 12px", color: "var(--text-muted)" }} />
+              <p style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)", marginBottom: 8 }}>No results found</p>
+              <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>Try a different search term or filter</p>
             </div>
           )}
         </>

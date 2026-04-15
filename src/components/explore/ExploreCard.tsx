@@ -28,36 +28,47 @@ export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonC
   const roleLabel = role.charAt(0).toUpperCase() + role.slice(1).replace(/_/g, " ");
   const colors = ROLE_COLORS[role] || { bg: "rgba(107,112,148,0.12)", text: "#6B7094" };
 
+  const isConnected = strandStatus === "accepted";
+  const isPending = strandStatus === "pending";
+
   return (
     <article
-      className="glass-light cursor-pointer flex flex-col items-center text-center shrink-0 transition-transform duration-200 hover:-translate-y-1"
-      style={{ width: 180, minWidth: 180, padding: 14, borderRadius: 16, scrollSnapAlign: "start" }}
+      className="glass-card cursor-pointer flex flex-col items-center text-center"
+      style={{
+        width: 190, minWidth: 190, padding: 12, borderRadius: 16,
+        scrollSnapAlign: "start", flexShrink: 0,
+        transition: "transform 200ms, box-shadow 200ms",
+      }}
+      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(26,26,78,0.12)"; }}
+      onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
       onClick={() => navigate(`/app/profile/${p.id}`)}
     >
       <AvatarSquare src={p.avatar_url} name={name} size={56} bgColor={colors.text} />
-      <p className="text-[14px] font-semibold leading-tight w-full mt-2 truncate" style={{ color: "var(--color-text)" }}>{name}</p>
-      <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full mt-1 shrink-0" style={{ background: colors.bg, color: colors.text }}>{roleLabel}</span>
+      <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", marginTop: 8, width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</p>
+      <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 10px", borderRadius: 99, marginTop: 4, background: colors.bg, color: colors.text, flexShrink: 0 }}>{roleLabel}</span>
       {p.location_city && (
-        <p className="text-[11px] truncate w-full mt-1 flex items-center justify-center gap-1" style={{ color: "var(--color-text-secondary)" }}>
-          <MapPin className="w-3 h-3 shrink-0" /> {p.location_city}
+        <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)", marginTop: 4, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
+          <MapPin style={{ width: 12, height: 12, flexShrink: 0 }} /> {p.location_city}
         </p>
       )}
-      <div className="mt-auto w-full pt-2">
+      <div style={{ marginTop: "auto", width: "100%", paddingTop: 8 }}>
         {currentUserId !== p.id && (
           <button
             type="button"
             disabled={strandStatus !== "none"}
             onClick={(e) => { e.stopPropagation(); onStrand(); }}
-            className="w-full h-8 rounded-xl text-[11px] font-bold transition-all"
-            style={
-              strandStatus === "accepted"
-                ? { background: "rgba(52,199,89,0.12)", color: "#34C759", border: "1px solid rgba(52,199,89,0.25)" }
-                : strandStatus === "pending"
+            style={{
+              width: "100%", height: 32, borderRadius: 12, fontSize: 11, fontWeight: 700,
+              transition: "all 150ms", cursor: strandStatus === "none" ? "pointer" : "default",
+              ...(isConnected
+                ? { background: "rgba(52,199,89,0.10)", color: "#34C759", border: "1px solid rgba(52,199,89,0.25)" }
+                : isPending
                 ? { background: "rgba(232,115,58,0.12)", color: "#E8733A", border: "1px solid rgba(232,115,58,0.25)" }
-                : { background: "var(--glass-bg)", backdropFilter: "blur(12px)", color: "var(--color-text)", border: "1px solid var(--glass-border)", cursor: "pointer" }
-            }
+                : { background: "var(--bg-card)", backdropFilter: "blur(12px)", color: "var(--text-primary)", border: "1px solid var(--border-glass)" }
+              ),
+            }}
           >
-            {strandStatus === "accepted" ? "Connected" : strandStatus === "pending" ? "Requested" : "Connect"}
+            {isConnected ? "Connected" : isPending ? "Requested" : "Connect"}
           </button>
         )}
       </div>
@@ -67,11 +78,12 @@ export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonC
 
 const ORG_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
   company: { bg: "rgba(29,78,216,0.12)", text: "#1D4ED8" },
-  education: { bg: "rgba(29,78,216,0.12)", text: "#1D4ED8" },
-  college: { bg: "rgba(29,78,216,0.12)", text: "#1D4ED8" },
+  education: { bg: "rgba(52,199,89,0.12)", text: "#34C759" },
+  college: { bg: "rgba(52,199,89,0.12)", text: "#34C759" },
   hospital: { bg: "rgba(190,18,60,0.12)", text: "#BE123C" },
   government: { bg: "rgba(21,128,61,0.12)", text: "#15803D" },
   ngo: { bg: "rgba(109,40,217,0.12)", text: "#6D28D9" },
+  startup: { bg: "rgba(124,58,237,0.12)", text: "#7C3AED" },
 };
 
 interface OrgCardProps {
@@ -83,34 +95,42 @@ interface OrgCardProps {
 
 export function OrgCard({ org, following, onToggleFollow, navigateTo }: OrgCardProps) {
   const navigate = useNavigate();
-  const typeColors = ORG_TYPE_COLORS[org.type || org.page_type] || { bg: "rgba(107,112,148,0.12)", text: "#6B7094" };
-  const typeLabel = (org.type || org.page_type || "org").charAt(0).toUpperCase() + (org.type || org.page_type || "org").slice(1);
+  const typeKey = org.type || org.page_type || "company";
+  const typeColors = ORG_TYPE_COLORS[typeKey] || { bg: "rgba(107,112,148,0.12)", text: "#6B7094" };
+  const typeLabel = typeKey.charAt(0).toUpperCase() + typeKey.slice(1);
 
   return (
     <article
-      className="glass-light cursor-pointer flex flex-col items-center text-center shrink-0 transition-transform duration-200 hover:-translate-y-1"
-      style={{ width: 180, minWidth: 180, padding: 14, borderRadius: 16, scrollSnapAlign: "start" }}
+      className="glass-card cursor-pointer flex flex-col items-center text-center"
+      style={{
+        width: 190, minWidth: 190, padding: 12, borderRadius: 16,
+        scrollSnapAlign: "start", flexShrink: 0,
+        transition: "transform 200ms, box-shadow 200ms",
+      }}
+      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(26,26,78,0.12)"; }}
+      onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
       onClick={() => navigate(navigateTo)}
     >
       <AvatarSquare src={org.logo_url} name={org.name || "?"} size={56} bgColor={typeColors.text} />
-      <p className="text-[14px] font-semibold leading-tight w-full mt-2 truncate" style={{ color: "var(--color-text)" }}>{org.name}</p>
-      <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full mt-1 shrink-0" style={{ background: typeColors.bg, color: typeColors.text }}>{typeLabel}</span>
+      <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", marginTop: 8, width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{org.name}</p>
+      <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 10px", borderRadius: 99, marginTop: 4, background: typeColors.bg, color: typeColors.text }}>{typeLabel}</span>
       {(org.city || org.location_city) && (
-        <p className="text-[11px] truncate w-full mt-1 flex items-center justify-center gap-1" style={{ color: "var(--color-text-secondary)" }}>
-          <MapPin className="w-3 h-3 shrink-0" /> {org.city || org.location_city}
+        <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)", marginTop: 4, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
+          <MapPin style={{ width: 12, height: 12, flexShrink: 0 }} /> {org.city || org.location_city}
         </p>
       )}
-      {org.naac_grade && <p className="text-[10px] mt-0.5 font-semibold" style={{ color: "#D97706" }}>NAAC {org.naac_grade}</p>}
-      {org.nabh_accredited && <p className="text-[10px] mt-0.5 font-semibold" style={{ color: "#15803D" }}>NABH Accredited</p>}
-      <div className="mt-auto w-full pt-2">
+      <div style={{ marginTop: "auto", width: "100%", paddingTop: 8 }}>
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onToggleFollow(e); }}
-          className="w-full h-8 rounded-xl text-[11px] font-bold transition-all"
-          style={following
-            ? { background: "rgba(52,199,89,0.12)", color: "#34C759", border: "1px solid rgba(52,199,89,0.25)" }
-            : { background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 4px 16px rgba(232,115,58,0.25)" }
-          }
+          style={{
+            width: "100%", height: 32, borderRadius: 12, fontSize: 11, fontWeight: 700,
+            transition: "all 150ms", cursor: "pointer", border: "none",
+            ...(following
+              ? { background: "rgba(52,199,89,0.10)", color: "#34C759", border: "1px solid rgba(52,199,89,0.25)" }
+              : { background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", boxShadow: "0 4px 14px rgba(232,115,58,0.25)" }
+            ),
+          }}
         >
           {following ? "Following" : "Follow"}
         </button>
@@ -119,10 +139,7 @@ export function OrgCard({ org, following, onToggleFollow, navigateTo }: OrgCardP
   );
 }
 
-interface PostCardProps {
-  post: any;
-  authorProfile?: any;
-}
+interface PostCardProps { post: any; authorProfile?: any; }
 
 export function TrendingPostCard({ post, authorProfile }: PostCardProps) {
   const navigate = useNavigate();
@@ -131,51 +148,52 @@ export function TrendingPostCard({ post, authorProfile }: PostCardProps) {
 
   return (
     <article
-      className="glass-light cursor-pointer flex flex-col shrink-0 transition-transform duration-200 hover:-translate-y-1"
-      style={{ width: 220, minWidth: 220, padding: 14, borderRadius: 16, scrollSnapAlign: "start" }}
+      className="glass-card cursor-pointer flex flex-col"
+      style={{
+        width: 190, minWidth: 190, padding: 12, borderRadius: 16,
+        scrollSnapAlign: "start", flexShrink: 0,
+        transition: "transform 200ms, box-shadow 200ms",
+      }}
+      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(26,26,78,0.12)"; }}
+      onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
       onClick={() => navigate(`/app/post/${post.id}`)}
     >
-      <div className="flex items-center gap-2 mb-2">
+      <div className="flex items-center gap-2" style={{ marginBottom: 8 }}>
         <AvatarSquare src={authorProfile?.avatar_url} name={name} size={28} />
-        <p className="text-[12px] font-semibold truncate" style={{ color: "var(--color-text)" }}>{name}</p>
+        <p style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{name}</p>
       </div>
-      <p className="text-[12px] leading-relaxed flex-1" style={{ color: "var(--color-text-secondary)", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+      <p style={{ fontSize: 13, fontWeight: 400, lineHeight: "18px", color: "var(--text-secondary)", flex: 1, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
         {post.content}
       </p>
-      <div className="flex items-center gap-3 mt-2 pt-2" style={{ borderTop: "1px solid var(--glass-border-subtle)" }}>
-        <span className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>{reactionTotal} reactions</span>
-        <span className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>{post.comment_count || 0} comments</span>
-      </div>
+      <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)", marginTop: 8 }}>
+        {reactionTotal} likes · {post.comment_count || 0} comments
+      </p>
     </article>
   );
 }
 
-interface TopicPillProps {
-  tag: string;
-  count: number;
-  onClick: () => void;
-}
+interface TopicPillProps { tag: string; count: number; onClick: () => void; }
 
 export function TopicPill({ tag, count, onClick }: TopicPillProps) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="shrink-0 px-4 py-2 rounded-full text-[13px] font-semibold transition-all hover:-translate-y-0.5"
-      style={{ background: "var(--glass-bg)", backdropFilter: "blur(12px)", border: "1px solid var(--glass-border)", color: "var(--color-accent)", scrollSnapAlign: "start", cursor: "pointer" }}
+    <button type="button" onClick={onClick}
+      style={{
+        flexShrink: 0, scrollSnapAlign: "start", cursor: "pointer",
+        padding: "0 18px", height: 34, borderRadius: 12,
+        background: "var(--bg-card)", border: "1px solid var(--border-glass)",
+        color: "#E8733A", fontSize: 13, fontWeight: 600,
+        transition: "transform 150ms",
+      }}
+      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; }}
+      onMouseLeave={e => { e.currentTarget.style.transform = ""; }}
     >
-      #{tag} <span className="text-[11px] ml-1 font-normal" style={{ color: "var(--color-text-muted)" }}>{count}</span>
+      #{tag} <span style={{ fontSize: 11, fontWeight: 400, color: "var(--text-muted)", marginLeft: 4 }}>{count}</span>
     </button>
   );
 }
 
 /* ── Startup Card ── */
-interface StartupCardProps {
-  startup: any;
-  page?: any;
-}
-
-export function StartupCard({ startup, page }: StartupCardProps) {
+export function StartupCard({ startup, page }: { startup: any; page?: any }) {
   const navigate = useNavigate();
   const name = page?.name || startup?.name || "Startup";
   const slug = page?.slug;
@@ -184,40 +202,42 @@ export function StartupCard({ startup, page }: StartupCardProps) {
 
   return (
     <article
-      className="glass-light cursor-pointer flex flex-col items-center text-center shrink-0 transition-transform duration-200 hover:-translate-y-1"
-      style={{ width: 200, minWidth: 200, padding: 14, borderRadius: 16, scrollSnapAlign: "start" }}
+      className="glass-card cursor-pointer flex flex-col items-center text-center"
+      style={{
+        width: 190, minWidth: 190, padding: 12, borderRadius: 16,
+        scrollSnapAlign: "start", flexShrink: 0,
+        transition: "transform 200ms, box-shadow 200ms",
+      }}
+      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(26,26,78,0.12)"; }}
+      onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
       onClick={() => slug ? navigate(`/page/${slug}`) : undefined}
     >
       <AvatarSquare src={page?.logo_url} name={name} size={56} bgColor="#7C3AED" />
-      <p className="text-[14px] font-semibold leading-tight w-full mt-2 truncate" style={{ color: "var(--color-text)" }}>{name}</p>
+      <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", marginTop: 8, width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</p>
       {stage && (
-        <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full mt-1" style={{ background: "rgba(124,58,237,0.12)", color: "#7C3AED" }}>
-          {stage}
-        </span>
+        <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 10px", borderRadius: 99, marginTop: 4, background: "rgba(124,58,237,0.12)", color: "#7C3AED" }}>{stage}</span>
       )}
       {sectors.length > 0 && (
-        <div className="flex flex-wrap gap-1 mt-1.5 justify-center">
+        <div className="flex flex-wrap gap-1 justify-center" style={{ marginTop: 6 }}>
           {sectors.slice(0, 3).map((s: string) => (
-            <span key={s} className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ background: "var(--glass-bg)", color: "var(--color-text-muted)", border: "1px solid var(--glass-border-subtle)" }}>{s}</span>
+            <span key={s} style={{ fontSize: 9, padding: "2px 6px", borderRadius: 99, background: "var(--bg-card)", color: "var(--text-muted)", border: "1px solid var(--border-subtle)" }}>{s}</span>
           ))}
         </div>
       )}
-      <div className="mt-auto w-full pt-2">
-        <span className="inline-block w-full h-8 rounded-xl text-[11px] font-bold leading-[32px]"
-          style={{ background: "linear-gradient(135deg, #7C3AED, #A855F7)", color: "#fff", boxShadow: "0 4px 16px rgba(124,58,237,0.25)" }}>
-          Learn More
-        </span>
+      <div style={{ marginTop: "auto", width: "100%", paddingTop: 8 }}>
+        <span style={{
+          display: "block", width: "100%", height: 32, borderRadius: 12, fontSize: 11, fontWeight: 700,
+          lineHeight: "32px", textAlign: "center",
+          background: "linear-gradient(135deg, #7C3AED, #A855F7)", color: "#fff",
+          boxShadow: "0 4px 16px rgba(124,58,237,0.25)",
+        }}>Learn More</span>
       </div>
     </article>
   );
 }
 
 /* ── Investor Card ── */
-interface InvestorCardProps {
-  investor: any;
-}
-
-export function InvestorCard({ investor }: InvestorCardProps) {
+export function InvestorCard({ investor }: { investor: any }) {
   const navigate = useNavigate();
   const name = investor.full_name || "Investor";
   const meta = investor.role_metadata as any;
@@ -229,18 +249,24 @@ export function InvestorCard({ investor }: InvestorCardProps) {
 
   return (
     <article
-      className="glass-light cursor-pointer flex flex-col items-center text-center shrink-0 transition-transform duration-200 hover:-translate-y-1"
-      style={{ width: 180, minWidth: 180, padding: 14, borderRadius: 16, scrollSnapAlign: "start" }}
+      className="glass-card cursor-pointer flex flex-col items-center text-center"
+      style={{
+        width: 190, minWidth: 190, padding: 12, borderRadius: 16,
+        scrollSnapAlign: "start", flexShrink: 0,
+        transition: "transform 200ms, box-shadow 200ms",
+      }}
+      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(26,26,78,0.12)"; }}
+      onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
       onClick={() => navigate(`/app/profile/${investor.id}`)}
     >
       <AvatarSquare src={investor.avatar_url} name={name} size={56} bgColor="#059669" />
-      <p className="text-[14px] font-semibold leading-tight w-full mt-2 truncate" style={{ color: "var(--color-text)" }}>{name}</p>
-      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full mt-1" style={{ background: "rgba(5,150,105,0.12)", color: "#059669" }}>Investor</span>
-      {range && <p className="text-[11px] mt-1" style={{ color: "var(--color-text-secondary)" }}>{range}</p>}
+      <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", marginTop: 8, width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</p>
+      <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 10px", borderRadius: 99, marginTop: 4, background: "rgba(5,150,105,0.12)", color: "#059669" }}>Investor</span>
+      {range && <p style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 4 }}>{range}</p>}
       {sectors.length > 0 && (
-        <div className="flex flex-wrap gap-1 mt-1.5 justify-center">
+        <div className="flex flex-wrap gap-1 justify-center" style={{ marginTop: 6 }}>
           {sectors.slice(0, 2).map((s: string) => (
-            <span key={s} className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ background: "var(--glass-bg)", color: "var(--color-text-muted)", border: "1px solid var(--glass-border-subtle)" }}>{s}</span>
+            <span key={s} style={{ fontSize: 9, padding: "2px 6px", borderRadius: 99, background: "var(--bg-card)", color: "var(--text-muted)", border: "1px solid var(--border-subtle)" }}>{s}</span>
           ))}
         </div>
       )}
