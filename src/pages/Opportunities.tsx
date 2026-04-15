@@ -53,61 +53,65 @@ const Opportunities = () => {
   const { user, profile } = useAuth();
   const isInstitution = profile?.account_type === "institution";
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [activeType, setActiveType] = useState("All");
   const [search, setSearch] = useState("");
-  const [opps, setOpps] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState<Set<string>>(new Set());
-  const [appliedIds, setAppliedIds] = useState<Set<string>>(new Set());
   const [showApply, setShowApply] = useState<any>(null);
   const [tab, setTab] = useState<"all" | "mine">(isInstitution ? "mine" : "all");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
-  const fetchOpps = useCallback(async () => {
-    setLoading(true);
-    try {
-      // Auto-expire past-due opportunities
-      await supabase
-        .from("opportunities")
-        .update({ is_expired: true, is_open: false } as any)
-        .lt("expires_at", new Date().toISOString())
-        .eq("is_expired", false)
-        .not("expires_at", "is", null);
+  useEffect(() => { const t = setTimeout(() => setDebouncedSearch(search), 300); return () => clearTimeout(t); }, [search]);
 
-      let query = supabase.from("opportunities")
-        .select("*, org:organizations!opportunities_org_id_fkey(id, name, logo_url, type, slug, is_verified)")
-        .eq("is_open", true).eq("status", "active").order("created_at", { ascending: false }).limit(50);
-      if (search.trim()) query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
-      if (activeType !== "All" && filterMap[activeType]) query = filterMap[activeType](query);
-      const { data, error } = await query;
-      if (error) console.warn("[Opportunities]", error.message);
+  const fetchOppsData = useCallback(async () => {
+    // Auto-expire past-due opportunities
+    await supabase
+      .from("opportunities")
+      .update({ is_expired: true, is_open: false } as any)
+      .lt("expires_at", new Date().toISOString())
+      .eq("is_expired", false)
+      .not("expires_at", "is", null);
 
-      // Apply client-side opportunity matching
-      const scored = (data || []).map((opp: any) => ({
-        ...opp,
-        _matchScore: profile ? calculateOpportunityMatch({
-          opportunity: opp,
-          userProfile: {
-            skills: profile.skills,
-            location_city: profile.location_city,
-            sector: profile.sector,
-            activity_score: profile.activity_score,
-            is_verified: profile.is_verified,
-          },
-        }) : 0,
-      }));
-      scored.sort((a: any, b: any) => b._matchScore - a._matchScore);
-      setOpps(scored);
-    } catch (e) { console.warn("[Opportunities]", e); }
-    setLoading(false);
-  }, [search, activeType, profile]);
+    let query = supabase.from("opportunities")
+      .select("*, org:organizations!opportunities_org_id_fkey(id, name, logo_url, type, slug, is_verified)")
+      .eq("is_open", true).eq("status", "active").order("created_at", { ascending: false }).limit(50);
+    if (debouncedSearch.trim()) query = query.or(`title.ilike.%${debouncedSearch}%,description.ilike.%${debouncedSearch}%`);
+    if (activeType !== "All" && filterMap[activeType]) query = filterMap[activeType](query);
+    const { data } = await query;
 
-  useEffect(() => { const t = setTimeout(fetchOpps, 300); return () => clearTimeout(t); }, [fetchOpps]);
+    const scored = (data || []).map((opp: any) => ({
+      ...opp,
+      _matchScore: profile ? calculateOpportunityMatch({
+        opportunity: opp,
+        userProfile: {
+          skills: profile.skills,
+          location_city: profile.location_city,
+          sector: profile.sector,
+          activity_score: profile.activity_score,
+          is_verified: profile.is_verified,
+        },
+      }) : 0,
+    }));
+    scored.sort((a: any, b: any) => b._matchScore - a._matchScore);
+    return scored;
+  }, [debouncedSearch, activeType, profile]);
 
-  useEffect(() => {
-    if (!user) return;
-    supabase.from("opportunity_applications").select("opportunity_id").eq("applicant_id", user.id)
-      .then(({ data }) => setAppliedIds(new Set((data || []).map((a: any) => a.opportunity_id))));
-  }, [user]);
+  const { data: opps = [], isLoading: loading } = useQuery({
+    queryKey: ["opportunities", debouncedSearch, activeType],
+    queryFn: fetchOppsData,
+    staleTime: 3 * 60 * 1000,
+  });
+
+  const { data: appliedIds = new Set<string>() } = useQuery({
+    queryKey: ["applied-opportunities", user?.id],
+    queryFn: async () => {
+      if (!user) return new Set<string>();
+      const { data } = await supabase.from("opportunity_applications").select("opportunity_id").eq("applicant_id", user.id);
+      return new Set((data || []).map((a: any) => a.opportunity_id));
+    },
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const toggleSave = (id: string) => {
     setSaved(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
