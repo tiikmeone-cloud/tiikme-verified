@@ -36,17 +36,20 @@ const formatDateSep = (d: string) => {
 /* ══════════════════════════════════════════════════════════════ */
 /*  AVATAR COMPONENT                                             */
 /* ══════════════════════════════════════════════════════════════ */
-const SquareAvatar = ({ url, name, size = 48, color }: { url?: string | null; name: string; size?: number; color?: string }) => (
-  <div className="flex items-center justify-center overflow-hidden shrink-0"
-    style={{
-      width: size, height: size, borderRadius: 0,
-      background: url ? "transparent" : (color || hashColor(name)),
-      border: "2px solid rgba(255,255,255,0.30)",
-      fontSize: Math.max(size * 0.3, 10), fontWeight: 700, color: "#fff",
-    }}>
-    {url ? <img src={storageImageUrl(url, "avatar")} alt="" className="w-full h-full object-cover" /> : initials(name)}
-  </div>
-);
+const SquareAvatar = ({ url, name, size = 48, color }: { url?: string | null; name: string; size?: number; color?: string }) => {
+  const fixUrl = (u: string) => u.replace("/storage/v1/render/image/", "/storage/v1/object/public/");
+  return (
+    <div className="flex items-center justify-center overflow-hidden shrink-0"
+      style={{
+        width: size, height: size, borderRadius: 0,
+        background: url ? "transparent" : (color || hashColor(name)),
+        border: "2px solid rgba(255,255,255,0.30)",
+        fontSize: Math.max(size * 0.3, 10), fontWeight: 700, color: "#fff",
+      }}>
+      {url ? <img src={fixUrl(url)} alt="" className="w-full h-full object-cover" /> : initials(name)}
+    </div>
+  );
+};
 
 /* ══════════════════════════════════════════════════════════════ */
 /*  CREATE GROUP MODAL                                           */
