@@ -13,13 +13,14 @@ import { toast } from "sonner";
 import ActivityScoreRing from "@/components/ActivityScoreRing";
 import GlassBox from "@/components/ui/GlassBox";
 
-const STATUS_TABS = ["All", "Reviewing", "Shortlisted", "Selected", "Rejected"] as const;
+const STATUS_TABS = ["All", "Reviewing", "Shortlisted", "Selected", "Rejected", "Auto-rejected"] as const;
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   applied: { bg: "#EFF6FF", text: "#2563EB" },
   reviewing: { bg: "#FFF7ED", text: "#EA580C" },
   shortlisted: { bg: "#F0FDF4", text: "#16A34A" },
   selected: { bg: "#ECFDF5", text: "#059669" },
   rejected: { bg: "#FEF2F2", text: "#DC2626" },
+  auto_rejected: { bg: "#FEF2F2", text: "#9CA3AF" },
 };
 
 export default function ApplicationsDashboard() {
@@ -54,13 +55,24 @@ export default function ApplicationsDashboard() {
   }, [oppId]);
 
   const filtered = applications.filter(a => {
-    if (statusFilter !== "All" && a.status?.toLowerCase() !== statusFilter.toLowerCase()) return false;
+    if (statusFilter !== "All") {
+      const filterKey = statusFilter.toLowerCase().replace("-", "_");
+      if (a.status?.toLowerCase() !== filterKey) return false;
+    }
     if (search.trim()) {
       const q = search.toLowerCase();
       return a.applicant?.full_name?.toLowerCase().includes(q) || a.applicant?.headline?.toLowerCase().includes(q);
     }
     return true;
   });
+
+  const statCounts = {
+    total: applications.length,
+    reviewing: applications.filter(a => a.status === "reviewing").length,
+    shortlisted: applications.filter(a => a.status === "shortlisted").length,
+    selected: applications.filter(a => a.status === "selected").length,
+    rejected: applications.filter(a => a.status === "rejected" || a.status === "auto_rejected").length,
+  };
 
   const updateStatus = async (appId: string, status: string) => {
     await supabase.from("opportunity_applications").update({ status }).eq("id", appId);
@@ -126,24 +138,44 @@ export default function ApplicationsDashboard() {
         </div>
       </div>
 
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+        {([
+          { label: "Total", count: statCounts.total, color: "#6B7280" },
+          { label: "Reviewing", count: statCounts.reviewing, color: "#EA580C" },
+          { label: "Shortlisted", count: statCounts.shortlisted, color: "#16A34A" },
+          { label: "Selected", count: statCounts.selected, color: "#059669" },
+          { label: "Rejected", count: statCounts.rejected, color: "#DC2626" },
+        ] as const).map(s => (
+          <div key={s.label} className="rounded-xl p-3 text-center" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
+            <p className="text-[22px] font-extrabold" style={{ color: s.color }}>{s.count}</p>
+            <p className="text-[11px] font-semibold" style={{ color: "var(--text-3)" }}>{s.label}</p>
+          </div>
+        ))}
+      </div>
+
       {/* Filter bar */}
       <div className="flex items-center gap-3 mb-4 flex-wrap">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#9CA3AF" }} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-3)" }} />
           <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search applicants..." className="pl-9 h-10" style={{ borderRadius: 12 }} />
         </div>
-        <div className="flex gap-1">
-          {STATUS_TABS.map(s => (
-            <button key={s} type="button" onClick={() => setStatusFilter(s)}
-              className="px-3 py-1.5 rounded-full text-[12px] font-bold cursor-pointer"
-              style={{
-                background: statusFilter === s ? "#E8580A" : "#fff",
-                color: statusFilter === s ? "#fff" : "#6B7280",
-                border: statusFilter === s ? "none" : "1px solid #F0E8E0",
-              }}>
-              {s} {s !== "All" && `(${applications.filter(a => a.status?.toLowerCase() === s.toLowerCase()).length})`}
-            </button>
-          ))}
+        <div className="flex gap-1 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+          {STATUS_TABS.map(s => {
+            const filterKey = s.toLowerCase().replace("-", "_");
+            const count = s === "All" ? null : applications.filter(a => a.status?.toLowerCase() === filterKey).length;
+            return (
+              <button key={s} type="button" onClick={() => setStatusFilter(s)}
+                className="px-3 py-1.5 rounded-full text-[12px] font-bold cursor-pointer shrink-0"
+                style={{
+                  background: statusFilter === s ? "var(--brand)" : "var(--surface-2)",
+                  color: statusFilter === s ? "#fff" : "var(--text-2)",
+                  border: statusFilter === s ? "none" : "1px solid var(--border)",
+                }}>
+                {s} {count !== null && `(${count})`}
+              </button>
+            );
+          })}
         </div>
       </div>
 

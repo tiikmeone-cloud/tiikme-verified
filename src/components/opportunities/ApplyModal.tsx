@@ -31,7 +31,7 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
   const [success, setSuccess] = useState(false);
   const [answers, setAnswers] = useState<Record<number, string>>({});
 
-  const customQuestions: any[] = opportunity?.custom_questions || [];
+  const customQuestions: any[] = opportunity?.screening_questions || opportunity?.custom_questions || [];
 
   const handleResumeUpload = async (file: File) => {
     if (!user) return;
@@ -54,6 +54,26 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
     if (!user || !consent) return;
     setSubmitting(true);
     try {
+      // Check eliminatory questions for auto-reject
+      let autoRejected = false;
+      if (customQuestions.length > 0) {
+        for (let i = 0; i < customQuestions.length; i++) {
+          const q = customQuestions[i];
+          if (!q.is_eliminatory) continue;
+          const userAnswer = answers[i];
+          if (q.type === "yes_no" || q.type === "yesno" || q.type === "Yes or No") {
+            // For yes/no eliminatory: if correct answers specified, check match
+            if (q.correct?.length > 0 && !q.correct.includes(userAnswer)) {
+              autoRejected = true; break;
+            }
+          } else if (q.type === "multiple_choice") {
+            if (q.correct?.length > 0 && !q.correct.includes(userAnswer)) {
+              autoRejected = true; break;
+            }
+          }
+        }
+      }
+
       const { error } = await supabase.from("opportunity_applications").insert({
         opportunity_id: opportunity.id,
         applicant_id: user.id,
@@ -62,7 +82,7 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
         portfolio_url: portfolioUrl.trim() || null,
         cover_letter: coverLetter.trim() || null,
         custom_answers: Object.keys(answers).length > 0 ? answers : null,
-        status: "reviewing",
+        status: autoRejected ? "auto_rejected" : "reviewing",
       });
       if (error) {
         if (error.code === "23505") toast.error("You already applied");
@@ -188,10 +208,23 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
                   <p className="text-[13px] font-semibold" style={{ color: "#1A1A1A" }}>Screening Questions</p>
                   {customQuestions.map((q: any, i: number) => (
                     <div key={i}>
-                      <p className="text-[13px] mb-1.5" style={{ color: "#6B6B6B" }}>{q.question || q.text || q}</p>
-                      {(q.type === "yesno" || q.type === "Yes or No") ? (
+                      <p className="text-[13px] mb-1.5" style={{ color: "#6B6B6B" }}>
+                        {q.question || q.text || q}
+                        {q.is_eliminatory && <span className="text-[10px] ml-1" style={{ color: "#DC2626" }}>*</span>}
+                      </p>
+                      {(q.type === "yes_no" || q.type === "yesno" || q.type === "Yes or No") ? (
                         <div className="flex gap-2">
                           {["Yes", "No"].map(opt => (
+                            <button key={opt} type="button" onClick={() => setAnswers(prev => ({ ...prev, [i]: opt }))}
+                              className="px-4 py-2 rounded-full text-[13px] font-semibold"
+                              style={{ background: answers[i] === opt ? "#E8580A" : "#fff", color: answers[i] === opt ? "#fff" : "#1A1A1A", border: answers[i] === opt ? "1.5px solid #E8580A" : "1.5px solid #E5E7EB" }}>
+                              {opt}
+                            </button>
+                          ))}
+                        </div>
+                      ) : q.type === "multiple_choice" && q.options?.length > 0 ? (
+                        <div className="flex gap-2 flex-wrap">
+                          {q.options.map((opt: string) => (
                             <button key={opt} type="button" onClick={() => setAnswers(prev => ({ ...prev, [i]: opt }))}
                               className="px-4 py-2 rounded-full text-[13px] font-semibold"
                               style={{ background: answers[i] === opt ? "#E8580A" : "#fff", color: answers[i] === opt ? "#fff" : "#1A1A1A", border: answers[i] === opt ? "1.5px solid #E8580A" : "1.5px solid #E5E7EB" }}>
