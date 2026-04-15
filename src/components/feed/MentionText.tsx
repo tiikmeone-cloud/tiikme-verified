@@ -1,18 +1,19 @@
 import { Link } from "react-router-dom";
+import { cleanUsername } from "@/lib/cleanUsername";
 
 /**
  * Renders post content with:
- * - @mentions as bold orange clickable links
+ * - @mentions as bold orange clickable links (with cleaned usernames)
  * - URLs as blue clickable links
  * - #hashtags as bold orange text
  */
 
 const URL_REGEX = /(https?:\/\/[^\s<]+)/g;
-const MENTION_REGEX = /(@\w[\w.]*)/g;
+const MENTION_REGEX = /(@[\w][\w.-]*)/g;
 const HASHTAG_REGEX = /(#\w+)/g;
 
 // Combined regex to split by URLs, mentions, and hashtags
-const COMBINED_REGEX = /(https?:\/\/[^\s<]+|@\w[\w.]*|#\w+)/g;
+const COMBINED_REGEX = /(https?:\/\/[^\s<]+|@[\w][\w.-]*|#\w+)/g;
 
 const MentionText = ({ text }: { text: string }) => {
   if (!text) return null;
@@ -27,7 +28,6 @@ const MentionText = ({ text }: { text: string }) => {
         // URL
         if (URL_REGEX.test(part)) {
           URL_REGEX.lastIndex = 0;
-          // Clean trailing punctuation
           let url = part;
           let trailing = "";
           const trailingMatch = url.match(/[.,;:!?)]+$/);
@@ -52,18 +52,19 @@ const MentionText = ({ text }: { text: string }) => {
           );
         }
 
-        // @mention
+        // @mention — display cleaned username, link with full username
         if (MENTION_REGEX.test(part)) {
           MENTION_REGEX.lastIndex = 0;
-          const username = part.slice(1);
+          const rawUsername = part.slice(1);
+          const displayUsername = cleanUsername(rawUsername);
           return (
             <Link
               key={i}
-              to={`/app/profile/${username}`}
+              to={`/app/profile/${rawUsername}`}
               className="font-semibold hover:underline"
               style={{ color: "var(--color-accent)" }}
             >
-              {part}
+              @{displayUsername}
             </Link>
           );
         }
