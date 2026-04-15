@@ -82,19 +82,25 @@ const Explore = () => {
       (follows || []).forEach((f: any) => { fMap[f.org_id] = true; });
       if (mountedRef.current) setFollowMap(fMap);
 
+      // Also collect pending ids to exclude
+      const excludedIds = new Set<string>();
+      (strands || []).forEach((s: any) => {
+        const otherId = s.requester_id === user.id ? s.receiver_id : s.requester_id;
+        if (otherId && (s.status === "accepted" || s.status === "pending")) excludedIds.add(otherId);
+      });
+
       const show = (cat: string) => activeFilter === "All" || activeFilter === cat;
 
-      // People — filter out connected users
+      // People — filter out connected AND pending users
       if (show("People")) {
         const { data } = await supabase.from("profiles")
           .select("id, full_name, username, avatar_url, role, headline, institution_name, location_city, is_verified, activity_score, privacy_settings, sector, skills, location_state")
           .eq("is_public", true).not("full_name", "is", null).neq("id", user.id)
-          .order("activity_score", { ascending: false }).limit(40);
+          .order("activity_score", { ascending: false }).limit(60);
         const filtered = (data || []).filter((p: any) => {
           const ps = p.privacy_settings as any;
           if (ps && ps.show_in_search === false) return false;
-          // Filter out already connected
-          if (connectedIds.has(p.id)) return false;
+          if (excludedIds.has(p.id)) return false;
           return true;
         });
         // PYMK scoring
@@ -133,17 +139,22 @@ const Explore = () => {
           .sort((a: any, b: any) => b._exploreScore - a._exploreScore);
       };
 
+      // Get followed org ids and tracked page ids to exclude
+      const followedOrgIds = new Set(Object.keys(fMap).filter(k => fMap[k]));
+      const { data: trackedPages } = await supabase.from("page_trackers").select("page_id").eq("user_id", user.id);
+      const trackedPageIds = new Set((trackedPages || []).map((t: any) => t.page_id));
+
       const fetchOrgs = async (type: string) => {
         const { data } = await supabase.from("organizations")
           .select("id, name, slug, type, logo_url, city, state, followers_count, created_by, created_at")
-          .eq("type", type).order("followers_count", { ascending: false }).limit(20);
-        return rankItems(data || []);
+          .eq("type", type).order("followers_count", { ascending: false }).limit(40);
+        return rankItems((data || []).filter((o: any) => !followedOrgIds.has(o.id)));
       };
       const fetchPages = async (pageType: string) => {
         const { data } = await supabase.from("pages")
           .select("id, name, slug, page_type, logo_url, city, state, industry, naac_grade, nabh_accredited, specialisations, tracker_count, trust_score, created_at")
-          .eq("page_type", pageType).order("tracker_count", { ascending: false }).limit(20);
-        return rankItems((data || []).map((p: any) => ({ ...p, type: p.page_type })));
+          .eq("page_type", pageType).order("tracker_count", { ascending: false }).limit(40);
+        return rankItems((data || []).filter((p: any) => !trackedPageIds.has(p.id)).map((p: any) => ({ ...p, type: p.page_type })));
       };
 
       const [companyData, collegeData, hospitalData, govData, ngoData] = await Promise.all([
@@ -175,7 +186,7 @@ const Explore = () => {
         // Trending posts
         const twoDaysAgo = new Date(Date.now() - 48 * 3600000).toISOString();
         const { data: hotPosts } = await supabase.from("posts")
-          .select("id, content, author_id, reactions, comment_count, created_at")
+          .select("id, content, author_id, reactions, comment_count, created_at, image_urls")
           .gte("created_at", twoDaysAgo).eq("visibility", "everyone")
           .order("comment_count", { ascending: false }).limit(15);
         const sorted2 = (hotPosts || []).map((p: any) => ({
@@ -225,11 +236,16 @@ const Explore = () => {
 
   const handleStrand = async (personId: string) => {
     if (!user) return;
+    // Duplicate check
+    const { data: existing } = await supabase.from("strands").select("id")
+      .or(`and(requester_id.eq.${user.id},receiver_id.eq.${personId}),and(requester_id.eq.${personId},receiver_id.eq.${user.id})`)
+      .maybeSingle();
+    if (existing) return;
     await supabase.from("strands").insert({ requester_id: user.id, receiver_id: personId });
     setStrandMap(prev => ({ ...prev, [personId]: "pending" }));
     sendNotification({
       userId: personId, actorId: user.id, type: "connection_request",
-      title: `${profile?.full_name || "Someone"} wants to connect`, actionUrl: `/app/strands`,
+      title: `${profile?.full_name || "Someone"} wants to connect`, actionUrl: `/app/connections`,
       data: { actor_id: user.id },
     });
     toast.success("Request sent");
