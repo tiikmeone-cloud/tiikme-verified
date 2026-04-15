@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { sendNotification } from "@/lib/notify";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
@@ -82,6 +83,16 @@ export default function OrganizationPage() {
     } else {
       await supabase.from("org_followers").insert({ org_id: org.id, user_id: user.id });
       setIsFollowing(true); setFollowerCount(p => p + 1);
+      // Notify org creator about new follower
+      if (org.created_by) {
+        sendNotification({
+          userId: org.created_by,
+          actorId: user.id,
+          type: "follow",
+          title: `${profile?.full_name || "Someone"} started following ${org.name}`,
+          actionUrl: `/org/${org.slug}`,
+        });
+      }
     }
   };
 

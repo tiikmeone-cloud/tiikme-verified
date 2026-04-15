@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { sendNotification } from "@/lib/notify";
 
 const ROLE_COLORS: Record<string, { bg: string; text: string }> = {
   student: { bg: "rgba(109,40,217,0.12)", text: "#6D28D9" },
@@ -104,6 +105,16 @@ function OrgCard({ org }: { org: any }) {
     } else {
       await supabase.from("org_followers").insert({ org_id: org.id, user_id: user.id });
       setFollowing(true);
+      // Notify org creator about new follower
+      if (org.created_by) {
+        sendNotification({
+          userId: org.created_by,
+          actorId: user.id,
+          type: "follow",
+          title: `${profile?.full_name || "Someone"} started following ${org.name}`,
+          actionUrl: `/org/${org.slug}`,
+        });
+      }
     }
   };
 
@@ -230,6 +241,14 @@ const Explore = () => {
     if (!user) return;
     await supabase.from("strands").insert({ requester_id: user.id, receiver_id: personId });
     setStrandMap(prev => ({ ...prev, [personId]: "pending" }));
+    sendNotification({
+      userId: personId,
+      actorId: user.id,
+      type: "connection_request",
+      title: `${profile?.full_name || "Someone"} wants to connect`,
+      actionUrl: `/app/strands`,
+      data: { actor_id: user.id },
+    });
     toast.success("Request sent");
   };
 

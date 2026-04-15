@@ -337,6 +337,14 @@ const Profile = () => {
                     if (!user || !targetUserId || connectLoading) return;
                     setConnectLoading(true);
                     await supabase.from("strands").insert({ requester_id: user.id, receiver_id: targetUserId });
+                    sendNotification({
+                      userId: targetUserId,
+                      actorId: user.id,
+                      type: "connection_request",
+                      title: `${authProfile?.full_name || "Someone"} wants to connect`,
+                      actionUrl: `/app/strands`,
+                      data: { actor_id: user.id },
+                    });
                     toast.success("Connection request sent!");
                     setConnectionStatus({ status: "pending", direction: "sent", id: "" });
                     setConnectLoading(false);
@@ -388,7 +396,14 @@ const Profile = () => {
     setConnectLoading(true);
     const { error } = await supabase.from("strands").insert({ requester_id: user.id, receiver_id: targetUserId });
     if (error) { toast.error(error.message); setConnectLoading(false); return; }
-    await supabase.from("alerts").insert({ user_id: targetUserId, type: "strand", title: `${authProfile?.full_name || "Someone"} wants to connect`, body: `Connection request received`, action_url: `/app/profile/${user.id}`, data: { actor_id: user.id } as any });
+    sendNotification({
+      userId: targetUserId,
+      actorId: user.id,
+      type: "connection_request",
+      title: `${authProfile?.full_name || "Someone"} wants to connect`,
+      actionUrl: `/app/strands`,
+      data: { actor_id: user.id },
+    });
     setConnectionStatus({ status: "pending", direction: "sent", id: null });
     setConnectLoading(false);
     toast.success("Connection request sent");
@@ -399,6 +414,16 @@ const Profile = () => {
     if (!connectionStatus.id) return;
     await supabase.from("strands").update({ status: "accepted" }).eq("id", connectionStatus.id);
     setConnectionStatus({ ...connectionStatus, status: "accepted" });
+    // Notify the requester that their connection was accepted
+    if (targetUserId && user) {
+      sendNotification({
+        userId: targetUserId,
+        actorId: user.id,
+        type: "connection_accepted",
+        title: `${authProfile?.full_name || "Someone"} accepted your connection`,
+        actionUrl: `/app/profile/${user.id}`,
+      });
+    }
     toast.success("Connected!");
   };
 

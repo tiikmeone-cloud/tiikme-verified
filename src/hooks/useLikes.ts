@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { sendNotification } from "@/lib/notify";
 
 export function useLikes(postIds: string[]) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [myLikes, setMyLikes] = useState<Record<string, boolean>>({});
 
@@ -116,14 +117,16 @@ export function useLikes(postIds: string[]) {
               [postId]: Math.max(0, (p[postId] || 0) - 1),
             }));
           } else {
-            // Send notification to post author (fire-and-forget)
+            // Send notification to post author
             supabase.from("posts").select("author_id").eq("id", postId).maybeSingle()
               .then(({ data: post }) => {
-                if (post?.author_id && post.author_id !== user.id) {
-                  supabase.from("alerts").insert({
-                    user_id: post.author_id, type: "like",
-                    title: "Someone liked your post",
-                    action_url: `/post/${postId}`,
+                if (post?.author_id) {
+                  sendNotification({
+                    userId: post.author_id,
+                    actorId: user.id,
+                    type: "like",
+                    title: `${profile?.full_name || "Someone"} liked your post`,
+                    actionUrl: `/post/${postId}`,
                   });
                 }
               });

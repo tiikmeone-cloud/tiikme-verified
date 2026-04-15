@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { sendNotification } from "@/lib/notify";
 
 // Helper: fetch profiles for a list of user IDs and attach as `author`
 async function attachAuthors(comments: any[]): Promise<any[]> {
@@ -123,15 +124,17 @@ export function useComments() {
           : [...(p[postId] || []), enriched],
       }));
 
-      // Send notification to post author (fire-and-forget)
+      // Send notification to post author
       supabase.from("posts").select("author_id").eq("id", postId).maybeSingle()
         .then(({ data: post }) => {
-          if (post?.author_id && post.author_id !== user.id) {
-            supabase.from("alerts").insert({
-              user_id: post.author_id, type: "comment",
+          if (post?.author_id) {
+            sendNotification({
+              userId: post.author_id,
+              actorId: user.id,
+              type: "comment",
               title: `${profile?.full_name || "Someone"} commented on your post`,
               body: content.slice(0, 80),
-              action_url: `/post/${postId}`,
+              actionUrl: `/post/${postId}`,
             });
           }
         });
