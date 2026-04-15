@@ -111,7 +111,7 @@ const CreateGroupModal = ({ open, onClose, userId, onCreate }: CreateGroupModalP
   if (!open) return null;
 
   return (
-    <GlassModal open={open} onClose={onClose} title="Create Group">
+    <GlassModal open={open} onClose={onClose} title="Create Group" icon={Users} accentColor="#E8733A">
       {step === 1 ? (
         <div className="space-y-4">
           <div>
