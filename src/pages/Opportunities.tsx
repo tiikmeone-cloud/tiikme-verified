@@ -1,4 +1,5 @@
 import { storageImageUrl } from "@/lib/imageTransform";
+import { calculateOpportunityMatch } from "@/lib/algorithms";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { PageSEO } from "@/hooks/usePageSEO";
 import { AnimatePresence } from "framer-motion";
@@ -56,15 +57,31 @@ const Opportunities = () => {
     try {
       let query = supabase.from("opportunities")
         .select("*, org:organizations!opportunities_org_id_fkey(id, name, logo_url, type, slug, is_verified)")
-        .eq("is_open", true).order("created_at", { ascending: false }).limit(50);
+        .eq("is_open", true).eq("status", "active").order("created_at", { ascending: false }).limit(50);
       if (search.trim()) query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
       if (activeType !== "All" && filterMap[activeType]) query = filterMap[activeType](query);
       const { data, error } = await query;
       if (error) console.warn("[Opportunities]", error.message);
-      setOpps(data || []);
+
+      // Apply client-side opportunity matching
+      const scored = (data || []).map((opp: any) => ({
+        ...opp,
+        _matchScore: profile ? calculateOpportunityMatch({
+          opportunity: opp,
+          userProfile: {
+            skills: profile.skills,
+            location_city: profile.location_city,
+            sector: profile.sector,
+            activity_score: profile.activity_score,
+            is_verified: profile.is_verified,
+          },
+        }) : 0,
+      }));
+      scored.sort((a: any, b: any) => b._matchScore - a._matchScore);
+      setOpps(scored);
     } catch (e) { console.warn("[Opportunities]", e); }
     setLoading(false);
-  }, [search, activeType]);
+  }, [search, activeType, profile]);
 
   useEffect(() => { const t = setTimeout(fetchOpps, 300); return () => clearTimeout(t); }, [fetchOpps]);
 
