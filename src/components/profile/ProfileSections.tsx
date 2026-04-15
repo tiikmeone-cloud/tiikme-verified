@@ -305,7 +305,7 @@ export const ProjectsSection = ({ items, isOwnProfile, onAdd, onDelete, onToggle
             return (
               <div key={p.id} className="flex gap-3 py-2.5 group"
                 style={{ borderBottom: idx < visibleItems.length - 1 ? "1px solid var(--glass-border-subtle)" : "none" }}>
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(255,107,157,0.10)" }}>
+                <div className="w-10 h-10 flex items-center justify-center shrink-0" style={{ background: "rgba(255,107,157,0.10)", borderRadius: 0, border: "2px solid rgba(255,255,255,0.30)" }}>
                   <Rocket className="w-4 h-4" style={{ color: "#FF6B9D" }} />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -382,8 +382,8 @@ export const AchievementsSection = ({ items, isOwnProfile, onAdd, onDelete, onTo
             return (
               <div key={a.id} className="flex gap-3 py-2.5 group"
                 style={{ borderBottom: idx < visibleItems.length - 1 ? "1px solid var(--glass-border-subtle)" : "none" }}>
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-[18px]"
-                  style={{ background: "rgba(255,184,0,0.10)" }}>
+                <div className="w-10 h-10 flex items-center justify-center shrink-0 text-[18px]"
+                  style={{ background: "rgba(255,184,0,0.10)", borderRadius: 0, border: "2px solid rgba(255,255,255,0.30)" }}>
                   {a.icon_emoji || "🏆"}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -453,8 +453,8 @@ export const SkillsSection = ({ skills, isOwnProfile, onAdd, onRemoveSkill }: {
       ) : (
         <div className="flex flex-wrap gap-1.5 mt-2">
           {visible.map((s: string) => (
-            <span key={s} className="flex items-center gap-1 text-[12px] font-medium px-3 py-1 rounded-xl"
-              style={{ background: "var(--glass-bg)", border: "1px solid var(--glass-border)", color: "var(--color-text-secondary)" }}>
+            <span key={s} className="flex items-center gap-1 text-[12px] font-medium px-2.5 py-1"
+              style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.20)", borderRadius: 8, color: "var(--color-text-secondary)" }}>
               {s}
               {isOwnProfile && (
                 <button type="button" onClick={() => onRemoveSkill(s)} className="cursor-pointer ml-0.5 opacity-50 hover:opacity-100">
@@ -465,15 +465,15 @@ export const SkillsSection = ({ skills, isOwnProfile, onAdd, onRemoveSkill }: {
           ))}
           {!expanded && skills.length > MAX_COLLAPSED && (
             <button type="button" onClick={() => setExpanded(true)}
-              className="text-[12px] font-medium px-3 py-1 rounded-xl"
-              style={{ background: "var(--glass-bg)", border: "1px solid var(--glass-border)", color: "var(--color-accent)" }}>
+              className="text-[12px] font-medium px-2.5 py-1"
+              style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.20)", borderRadius: 8, color: "var(--color-accent)" }}>
               +{skills.length - MAX_COLLAPSED} more
             </button>
           )}
           {expanded && skills.length > MAX_COLLAPSED && (
             <button type="button" onClick={() => setExpanded(false)}
-              className="text-[12px] font-medium px-3 py-1 rounded-xl"
-              style={{ background: "var(--glass-bg)", border: "1px solid var(--glass-border)", color: "var(--color-accent)" }}>
+              className="text-[12px] font-medium px-2.5 py-1"
+              style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.20)", borderRadius: 8, color: "var(--color-accent)" }}>
               Show less
             </button>
           )}
