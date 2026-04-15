@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { sendNotification } from "@/lib/notify";
 import HorizontalCarousel from "@/components/explore/HorizontalCarousel";
-import { PersonCard, OrgCard, TrendingPostCard, TopicPill } from "@/components/explore/ExploreCard";
+import { PersonCard, OrgCard, TrendingPostCard, TopicPill, StartupCard, InvestorCard } from "@/components/explore/ExploreCard";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 
 const FILTER_TABS = ["All", "People", "Companies", "Colleges", "Hospitals", "Government", "NGO"];
