@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { storageImageUrl } from "@/lib/imageTransform";
+import { cleanUsername } from "@/lib/cleanUsername";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Heart, MessageSquare, Send, Trash2, MoreHorizontal, Pencil, Copy, Flag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -145,7 +146,7 @@ const PostDetail = () => {
   const roleColor = roleColorMap[author?.role || ""] || "#6B7280";
   const userInitials = profile?.full_name?.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase() || "U";
   const isOwn = user?.id === post.author_id;
-  const username = author?.username ? `@${author.username}` : null;
+  const username = author?.username ? `@${cleanUsername(author.username)}` : null;
   const companyName = author?.institution_name || null;
 
   return (
