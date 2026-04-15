@@ -246,9 +246,24 @@ const Alerts = () => {
                   <div className="w-2 flex items-start pt-2 shrink-0">
                     {unread && <span className="w-2 h-2 rounded-full" style={{ background: "#E8733A" }} />}
                   </div>
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: isOffer ? "rgba(22,163,74,0.1)" : style.bg }}>
-                    <Icon className="w-4 h-4" style={{ color: isOffer ? "#16A34A" : style.color }} />
-                  </div>
+                  {(() => {
+                    const actor = notif.data?.actor_id ? actorProfiles[notif.data.actor_id] : null;
+                    if (actor) {
+                      return (
+                        <div className="relative shrink-0">
+                          <AvatarSquare src={actor.avatar_url} name={actor.full_name || "U"} size={36} />
+                          <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: isOffer ? "rgba(22,163,74,0.9)" : style.bg, border: "2px solid var(--bg)" }}>
+                            <Icon className="w-2.5 h-2.5" style={{ color: isOffer ? "#fff" : style.color }} />
+                          </div>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="w-9 h-9 flex items-center justify-center shrink-0" style={{ backgroundColor: isOffer ? "rgba(22,163,74,0.1)" : style.bg, borderRadius: 0 }}>
+                        <Icon className="w-4 h-4" style={{ color: isOffer ? "#16A34A" : style.color }} />
+                      </div>
+                    );
+                  })()}
                   <div className="flex-1 min-w-0">
                     <p className={`text-[14px] leading-relaxed ${unread ? "font-semibold" : "font-normal"}`} style={{ color: unread ? "#1A1A2E" : "#6B7094" }}>
                       {notif.title || notif.body}
