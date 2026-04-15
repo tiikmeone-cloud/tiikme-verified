@@ -79,27 +79,28 @@ const AppShell = ({ children }: { children: ReactNode }) => {
     return pathname === path || pathname.startsWith(path + "/");
   };
 
+  const fetchUnreadPings = async () => {
+    if (!user?.id) return;
+    const { data: convos } = await supabase.from("conversations").select("id")
+      .or(`participant_1.eq.${user.id},participant_2.eq.${user.id}`);
+    if (!convos?.length) { setUnreadPings(0); return; }
+    const convIds = convos.map(c => c.id);
+    const { data: unreadRows } = await supabase.from("pings")
+      .select("conversation_id")
+      .in("conversation_id", convIds)
+      .eq("is_read", false)
+      .neq("sender_id", user.id)
+      .or("is_deleted.is.null,is_deleted.eq.false");
+    const distinctConvos = new Set((unreadRows || []).map((r: any) => r.conversation_id));
+    setUnreadPings(distinctConvos.size);
+  };
+
   useEffect(() => {
     if (!user?.id) return;
     supabase.from("alerts").select("*", { count: "exact", head: true })
       .eq("user_id", user.id).eq("is_read", false)
-      .then(({ count, error }) => {
-        if (error) return;
-        setUnreadAlerts(count || 0);
-      });
-    supabase.from("conversations").select("id")
-      .or(`participant_1.eq.${user.id},participant_2.eq.${user.id}`)
-      .then(({ data: convos, error }) => {
-        if (error || !convos?.length) { setUnreadPings(0); return; }
-        const convIds = convos.map(c => c.id);
-        supabase.from("pings").select("conversation_id", { count: "exact", head: false })
-          .in("conversation_id", convIds).eq("is_read", false).neq("sender_id", user.id)
-          .or("is_deleted.is.null,is_deleted.eq.false")
-          .then(({ data: unreadRows }) => {
-            const distinctConvos = new Set((unreadRows || []).map((r: any) => r.conversation_id));
-            setUnreadPings(distinctConvos.size);
-          });
-      });
+      .then(({ count }) => setUnreadAlerts(count || 0));
+    fetchUnreadPings();
 
     let alertsCh: ReturnType<typeof supabase.channel> | null = null;
     let pingsCh: ReturnType<typeof supabase.channel> | null = null;
@@ -109,8 +110,12 @@ const AppShell = ({ children }: { children: ReactNode }) => {
         .subscribe();
       pingsCh = supabase.channel("unread-pings-" + user.id)
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "pings" }, payload => {
-          if ((payload.new as any).sender_id !== user.id) setUnreadPings(p => p + 1);
-        }).subscribe();
+          if ((payload.new as any).sender_id !== user.id) fetchUnreadPings();
+        })
+        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "pings" }, () => {
+          fetchUnreadPings();
+        })
+        .subscribe();
     } catch {}
     return () => {
       if (alertsCh) supabase.removeChannel(alertsCh);
@@ -119,7 +124,6 @@ const AppShell = ({ children }: { children: ReactNode }) => {
   }, [user?.id]);
 
   useEffect(() => {
-    if (isActive("/app/pings")) setUnreadPings(0);
     if (isActive("/app/alerts")) setUnreadAlerts(0);
   }, [pathname]);
 
