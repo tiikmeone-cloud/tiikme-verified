@@ -317,7 +317,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           </Link>
         </header>
 
-        <div className="page-enter" key={pathname}>{children}</div>
+        <div className="page-enter">{children}</div>
       </main>
 
       {/* ═══ MOBILE BOTTOM NAV ═══ */}
