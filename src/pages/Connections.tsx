@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import { Link2, Search, MessageCircle, Compass, MoreHorizontal, X, Clock, UserPlus } from "lucide-react";
 import { toast } from "sonner";
@@ -37,55 +38,53 @@ function getTimeAgo(dateStr: string): string {
 const Connections = () => {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+  const queryClient = useQueryClient();
   const [tab, setTab] = useState<TabKey>("connected");
   const [search, setSearch] = useState("");
-  const [connected, setConnected] = useState<StrandRow[]>([]);
-  const [pendingIncoming, setPendingIncoming] = useState<StrandRow[]>([]);
-  const [pendingSent, setPendingSent] = useState<StrandRow[]>([]);
-  const [suggested, setSuggested] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  const fetchStrands = useCallback(async () => {
-    if (!user) return;
-    setLoading(true);
-    try {
-      const [acceptedRes, incomingRes, sentRes] = await Promise.allSettled([
-        supabase.from("strands")
-          .select("id, requester_id, receiver_id, status, created_at, requester:profiles!strands_requester_id_fkey(id, full_name, avatar_url, role, institution_name), receiver:profiles!strands_receiver_id_fkey(id, full_name, avatar_url, role, institution_name)")
-          .or(`requester_id.eq.${user.id},receiver_id.eq.${user.id}`).eq("status", "accepted"),
-        supabase.from("strands")
-          .select("id, requester_id, receiver_id, status, created_at, requester:profiles!strands_requester_id_fkey(id, full_name, avatar_url, role, institution_name)")
-          .eq("receiver_id", user.id).eq("status", "pending"),
-        supabase.from("strands")
-          .select("id, requester_id, receiver_id, status, created_at, receiver:profiles!strands_receiver_id_fkey(id, full_name, avatar_url, role, institution_name)")
-          .eq("requester_id", user.id).eq("status", "pending"),
-      ]);
-      const accepted = acceptedRes.status === "fulfilled" ? (acceptedRes.value as any).data || [] : [];
-      const incomingData = incomingRes.status === "fulfilled" ? (incomingRes.value as any).data || [] : [];
-      const sentData = sentRes.status === "fulfilled" ? (sentRes.value as any).data || [] : [];
-      setConnected(accepted);
-      setPendingIncoming(incomingData);
-      setPendingSent(sentData);
+  const fetchStrandsData = useCallback(async () => {
+    if (!user) return { connected: [], pendingIncoming: [], pendingSent: [], suggested: [] };
+    const [acceptedRes, incomingRes, sentRes] = await Promise.allSettled([
+      supabase.from("strands")
+        .select("id, requester_id, receiver_id, status, created_at, requester:profiles!strands_requester_id_fkey(id, full_name, avatar_url, role, institution_name), receiver:profiles!strands_receiver_id_fkey(id, full_name, avatar_url, role, institution_name)")
+        .or(`requester_id.eq.${user.id},receiver_id.eq.${user.id}`).eq("status", "accepted"),
+      supabase.from("strands")
+        .select("id, requester_id, receiver_id, status, created_at, requester:profiles!strands_requester_id_fkey(id, full_name, avatar_url, role, institution_name)")
+        .eq("receiver_id", user.id).eq("status", "pending"),
+      supabase.from("strands")
+        .select("id, requester_id, receiver_id, status, created_at, receiver:profiles!strands_receiver_id_fkey(id, full_name, avatar_url, role, institution_name)")
+        .eq("requester_id", user.id).eq("status", "pending"),
+    ]);
+    const accepted = acceptedRes.status === "fulfilled" ? (acceptedRes.value as any).data || [] : [];
+    const incomingData = incomingRes.status === "fulfilled" ? (incomingRes.value as any).data || [] : [];
+    const sentData = sentRes.status === "fulfilled" ? (sentRes.value as any).data || [] : [];
 
-      const connectedIds = new Set<string>();
-      accepted.forEach((s: any) => { connectedIds.add(s.requester_id); connectedIds.add(s.receiver_id); });
-      incomingData.forEach((s: any) => connectedIds.add(s.requester_id));
-      sentData.forEach((s: any) => connectedIds.add(s.receiver_id));
-      connectedIds.add(user.id);
+    const connectedIds = new Set<string>();
+    accepted.forEach((s: any) => { connectedIds.add(s.requester_id); connectedIds.add(s.receiver_id); });
+    incomingData.forEach((s: any) => connectedIds.add(s.requester_id));
+    sentData.forEach((s: any) => connectedIds.add(s.receiver_id));
+    connectedIds.add(user.id);
 
-      const { data: suggestedData } = await supabase.from("profiles")
-        .select("id, full_name, avatar_url, role, institution_name, location_city")
-        .eq("is_public", true)
-        .not("id", "in", `(${Array.from(connectedIds).join(",")})`)
-        .order("activity_score", { ascending: false }).limit(12);
-      setSuggested(suggestedData || []);
-    } catch (e) {
-      console.warn("[Connections] fetch exception:", e);
-    }
-    setLoading(false);
+    const { data: suggestedData } = await supabase.from("profiles")
+      .select("id, full_name, avatar_url, role, institution_name, location_city")
+      .eq("is_public", true)
+      .not("id", "in", `(${Array.from(connectedIds).join(",")})`)
+      .order("activity_score", { ascending: false }).limit(12);
+
+    return { connected: accepted, pendingIncoming: incomingData, pendingSent: sentData, suggested: suggestedData || [] };
   }, [user]);
 
-  useEffect(() => { fetchStrands(); }, [fetchStrands]);
+  const { data: strandsData, isLoading: loading, refetch: fetchStrands } = useQuery({
+    queryKey: ["connections", user?.id],
+    queryFn: fetchStrandsData,
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const connected = strandsData?.connected || [];
+  const pendingIncoming = strandsData?.pendingIncoming || [];
+  const pendingSent = strandsData?.pendingSent || [];
+  const suggested = strandsData?.suggested || [];
 
   const getOther = (s: StrandRow) => s.requester_id === user?.id ? s.receiver : s.requester;
 
