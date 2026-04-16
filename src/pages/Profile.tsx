@@ -782,9 +782,11 @@ const Profile = () => {
               </div>
 
               {/* ROW 2: Current position / headline */}
+              {(currentExp || headline) && (
               <p style={{ fontSize: 13, fontWeight: 400, color: "#6B7094" }}>
-                {currentExp ? `${currentExp.job_title || currentExp.title} at ${currentExp.company_name || ""}` : headline || roleLabel}
+                {currentExp ? `${currentExp.job_title || currentExp.title} at ${currentExp.company_name || ""}` : headline}
               </p>
+              )}
 
               {/* ROW 3: @username + location + badges */}
               <div className="flex items-center flex-wrap" style={{ gap: 8 }}>
