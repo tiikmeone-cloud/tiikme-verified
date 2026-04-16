@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useState, useCallback } from "react";
+import { ReactNode, useEffect, useState, useCallback, useRef } from "react";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
