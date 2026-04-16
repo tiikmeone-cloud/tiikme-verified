@@ -127,8 +127,6 @@ const Explore = () => {
     };
 
     const followedOrgIds = new Set(Object.keys(fMap).filter(k => fMap[k]));
-    const { data: trackedPages } = await trackedPagesPromise;
-    const trackedPageIds = new Set((trackedPages || []).map((t: any) => t.page_id));
 
     const fetchOrgs = async (type: string) => {
       const { data } = await supabase.from("organizations")
