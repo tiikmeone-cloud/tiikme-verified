@@ -236,7 +236,7 @@ const CreateGroupModal = ({ open, onClose, userId, onCreate }: CreateGroupModalP
           </div>
 
           <button type="button" onClick={handleCreate}
-            disabled={creating || selectedIds.length === 0}
+            disabled={creating}
             className="w-full h-10 rounded-[10px] text-[14px] font-semibold cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
             style={{ background: "linear-gradient(135deg, #E8733A, #FF9A62)", color: "#fff" }}>
             {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : `Create Group (${selectedIds.length + 1} ${selectedIds.length + 1 === 1 ? "member" : "members"})`}
