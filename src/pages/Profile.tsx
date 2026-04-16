@@ -786,7 +786,7 @@ const Profile = () => {
                       display: "flex", alignItems: "center", justifyContent: "center",
                       color: "#fff", fontSize: 9, fontWeight: 700,
                     }}>
-                      {a.avatar_url ? <img src={storageImageUrl(a.avatar_url, "thumbnail")} alt="" className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : (a.full_name || "U")[0]}
+                      {a.avatar_url ? <img src={fixStorageUrl(a.avatar_url) || ""} alt="" className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : (a.full_name || "U")[0]}
                     </div>
                   ))}
                 </div>
