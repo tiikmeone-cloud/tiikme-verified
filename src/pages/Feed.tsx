@@ -755,7 +755,7 @@ const Feed = () => {
           ))}
 
           {!loading && !visiblePosts.length && (
-            <div className="glass-card text-center" style={{ padding: 20, borderRadius: 16 }}>
+            <div className="text-center" style={{ padding: 20, borderRadius: 16, background: "#FFFFFF", border: "1px solid #E8E8E8" }}>
               <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", marginBottom: 4 }}>Nothing here yet</p>
               <p style={{ fontSize: 13, color: "#9CA3C0" }}>Be the first to post something.</p>
             </div>
@@ -768,7 +768,7 @@ const Feed = () => {
             </div>
           )}
           {!loading && !hasMore && visiblePosts.length > 0 && !loadingMore && (
-            <div className="glass-card text-center" style={{ padding: 20, borderRadius: 16, marginTop: 8 }}>
+            <div className="text-center" style={{ padding: 20, borderRadius: 16, marginTop: 8, background: "#FFFFFF", border: "1px solid #E8E8E8" }}>
               <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>You're all caught up!</p>
             </div>
           )}
