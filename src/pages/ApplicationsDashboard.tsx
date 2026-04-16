@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { storageImageUrl } from "@/lib/imageTransform";
+import AvatarSquare from "@/components/ui/AvatarSquare";
 import {
   ArrowLeft, Search, User, FileText, MessageCircle, CheckCircle, XCircle,
   Clock, ChevronRight, Shield
@@ -195,9 +195,7 @@ export default function ApplicationsDashboard() {
               <GlassBox key={app.id} accent={colors.text} expanded={isSelected}
                 onClick={() => { setSelectedApp(app); setNotes(app.recruiter_notes || ""); }}>
                 <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 flex items-center justify-center text-[12px] font-bold text-white overflow-hidden shrink-0" style={{ borderRadius: 0, background: "#E8580A" }}>
-                    {app.applicant?.avatar_url ? <img src={storageImageUrl(app.applicant.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : (app.applicant?.full_name?.[0] || "?")}
-                  </div>
+                  <AvatarSquare src={app.applicant?.avatar_url} name={app.applicant?.full_name || "?"} size="md" />
                   <div className="flex-1 min-w-0">
                     <p className="text-[13px] font-bold truncate" style={{ color: "#1A1A1A" }}>{app.applicant?.full_name || "Applicant"}</p>
                     <p className="text-[11px] truncate" style={{ color: "#9CA3AF" }}>{app.applicant?.headline || app.applicant?.role || ""}</p>
@@ -224,9 +222,7 @@ export default function ApplicationsDashboard() {
               <div className="space-y-5 overflow-y-auto" style={{ maxHeight: "65vh" }}>
                 {/* Profile header */}
                 <div className="flex items-center gap-3">
-                  <div className="w-14 h-14 flex items-center justify-center text-[16px] font-bold text-white overflow-hidden shrink-0" style={{ borderRadius: 0, background: "#E8580A" }}>
-                    {selectedApp.applicant?.avatar_url ? <img src={storageImageUrl(selectedApp.applicant.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : (selectedApp.applicant?.full_name?.[0] || "?")}
-                  </div>
+                  <AvatarSquare src={selectedApp.applicant?.avatar_url} name={selectedApp.applicant?.full_name || "?"} size="lg" />
                   <div className="flex-1 min-w-0">
                     <p className="text-[18px] font-extrabold" style={{ color: "#1A1A1A" }}>{selectedApp.applicant?.full_name}</p>
                     <p className="text-[13px]" style={{ color: "#9CA3AF" }}>{selectedApp.applicant?.headline || selectedApp.applicant?.role}</p>

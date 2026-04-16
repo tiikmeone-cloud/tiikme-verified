@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { storageImageUrl } from "@/lib/imageTransform";
+import AvatarSquare from "@/components/ui/AvatarSquare";
+import { fixStorageUrl } from "@/components/ui/AvatarSquare";
 import { cleanUsername } from "@/lib/cleanUsername";
 import { PageSEO, profileSEO } from "@/hooks/usePageSEO";
 import {
@@ -117,9 +118,8 @@ const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose:
         <SheetHeader><SheetTitle style={{ fontSize: 18, fontWeight: 700, color: "#1A1A2E" }}>Edit Profile</SheetTitle></SheetHeader>
         <div className="space-y-4 mt-4">
           <div className="flex items-center gap-4 cursor-pointer" onClick={() => avatarRef.current?.click()}>
-            <div className="flex items-center justify-center overflow-hidden" style={{ width: 64, height: 64, borderRadius: 0, backgroundColor: "#E8580A", color: "#fff", fontWeight: 700, fontSize: 20 }}>
-              {form.avatar_url ? <img src={storageImageUrl(form.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : form.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "U"}
-            </div>
+            <AvatarSquare src={form.avatar_url} name={form.name || "U"} size="xl" />
+            <p style={{ fontSize: 12, color: "#9CA3C0" }}>Click to change avatar</p>
             <p style={{ fontSize: 12, color: "#9CA3C0" }}>Click to change avatar</p>
             <input ref={avatarRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
           </div>
@@ -431,9 +431,7 @@ const Profile = () => {
     return (
       <div className="min-h-screen" style={{ padding: 16, maxWidth: 960, margin: "0 auto" }}>
         <div className="glass-card" style={{ borderRadius: 16, padding: 20, display: "flex", alignItems: "flex-start", gap: 16 }}>
-          <div style={{ width: 100, height: 100, borderRadius: 0, border: "3px solid rgba(255,255,255,0.40)", background: ROLE_COLOR_MAP[profileData.role || ""] || "#4F46E5", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 32, overflow: "hidden", flexShrink: 0 }}>
-            {profileData.avatar_url ? <img src={storageImageUrl(profileData.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> : limitedInitials}
-          </div>
+          <AvatarSquare src={profileData.avatar_url} name={limitedName} size="profile" bgColor={ROLE_COLOR_MAP[profileData.role || ""] || "#4F46E5"} />
           <div style={{ flex: 1 }}>
             <p style={{ fontSize: 20, fontWeight: 700, color: "#1A1A2E" }}>{limitedName}</p>
           </div>
@@ -678,16 +676,7 @@ const Profile = () => {
         }}>
           <div className="flex profile-info-flex" style={{ gap: 16, alignItems: "flex-start" }}>
             {/* Avatar — 100x100 true square */}
-            <div style={{
-              width: 100, height: 100, borderRadius: 0,
-              border: "3px solid rgba(255,255,255,0.40)",
-              boxShadow: "0 4px 16px rgba(26,26,78,0.15)",
-              background: profileData.avatar_url ? "#fff" : roleColor,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              overflow: "hidden", flexShrink: 0, color: "#fff", fontWeight: 700, fontSize: 32,
-            }}>
-              {profileData.avatar_url ? <img src={storageImageUrl(profileData.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : initials}
-            </div>
+            <AvatarSquare src={profileData.avatar_url} name={displayName || "U"} size="profile" bgColor={roleColor} className="shadow-md" />
 
             {/* Info */}
             <div className="profile-info-body" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
@@ -797,7 +786,7 @@ const Profile = () => {
                       display: "flex", alignItems: "center", justifyContent: "center",
                       color: "#fff", fontSize: 9, fontWeight: 700,
                     }}>
-                      {a.avatar_url ? <img src={storageImageUrl(a.avatar_url, "thumbnail")} alt="" className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : (a.full_name || "U")[0]}
+                      {a.avatar_url ? <img src={fixStorageUrl(a.avatar_url) || ""} alt="" className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : (a.full_name || "U")[0]}
                     </div>
                   ))}
                 </div>

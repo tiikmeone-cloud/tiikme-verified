@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { storageImageUrl } from "@/lib/imageTransform";
+import AvatarSquare from "@/components/ui/AvatarSquare";
 import {
   Building2, MapPin, Globe, Users, Heart, Briefcase, Shield, Calendar,
   Share2, Settings, Award, FileText, ExternalLink, Trophy, Plus,
@@ -283,11 +284,7 @@ export default function OrganizationPage() {
                   <Link key={m.id} to={`/app/profile/${m.user_id}`}
                     className="glass-light rounded-2xl p-3 flex items-center gap-3 transition-all hover:-translate-y-0.5"
                     style={{ boxShadow: "inset 0 1px 0 var(--glass-highlight)" }}>
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[12px] font-bold text-white overflow-hidden shrink-0" style={{ background: hashColor(m.user_id) }}>
-                      {m.profile?.avatar_url
-                        ? <img src={storageImageUrl(m.profile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" />
-                        : initials(m.profile?.full_name || "")}
-                    </div>
+                    <AvatarSquare src={m.profile?.avatar_url} name={m.profile?.full_name || "Member"} size="md" />
                     <div className="min-w-0 flex-1">
                       <p className="text-[13px] font-semibold truncate" style={{ color: "var(--color-text)" }}>{m.profile?.full_name || "Member"}</p>
                       <p className="text-[11px] truncate" style={{ color: "var(--color-text-muted)" }}>{m.title || m.role}{m.department ? ` · ${m.department}` : ""}</p>

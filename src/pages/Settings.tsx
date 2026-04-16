@@ -1,3 +1,4 @@
+import AvatarSquare from "@/components/ui/AvatarSquare";
 import { storageImageUrl } from "@/lib/imageTransform";
 import { cleanUsername } from "@/lib/cleanUsername";
 import { useState, useEffect, useRef } from "react";
@@ -512,9 +513,7 @@ const SettingsPage = () => {
                 <h3 className="text-[16px] font-semibold mb-5" style={{ color: "#1A1A2E" }}>Edit Profile</h3>
                 <div className="flex items-center gap-5 mb-5">
                   <div className="relative group cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
-                    <div className="w-20 h-20 flex items-center justify-center text-2xl font-bold text-white overflow-hidden" style={{ borderRadius: 0, backgroundColor: "var(--brand)" }}>
-                      {profile.avatar_url ? <img src={storageImageUrl(profile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : (profile.name?.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "U")}
-                    </div>
+                    <AvatarSquare src={profile.avatar_url} name={profile.name || "U"} size="xl" />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center" style={{ transition: "opacity 0.2s", borderRadius: 0 }}>
                       <Camera className="w-5 h-5 text-white" />
                     </div>

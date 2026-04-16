@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { storageImageUrl } from "@/lib/imageTransform";
+import AvatarSquare from "@/components/ui/AvatarSquare";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import ActivityScoreRing from "@/components/ActivityScoreRing";
@@ -147,9 +148,7 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Section 1: Profile preview */}
               <div className="flex items-center gap-3 p-4 rounded-xl" style={{ background: "#F9FAFB", border: "1px solid #F0E8E0" }}>
-                <div className="w-14 h-14 flex items-center justify-center text-[16px] font-bold text-white overflow-hidden shrink-0" style={{ borderRadius: 0, background: "#E8580A" }}>
-                  {profile?.avatar_url ? <img src={storageImageUrl(profile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : (profile?.full_name || "U").slice(0, 2).toUpperCase()}
-                </div>
+                <AvatarSquare src={profile?.avatar_url} name={profile?.full_name || "U"} size="lg" />
                 <div className="flex-1 min-w-0">
                   <p className="text-[18px] font-bold" style={{ color: "#1A1A1A" }}>{profile?.full_name || "You"}</p>
                   <p className="text-[13px]" style={{ color: "#6B6B6B" }}>{profile?.headline || profile?.role || ""}</p>

@@ -1,4 +1,4 @@
-import { storageImageUrl } from "@/lib/imageTransform";
+import AvatarSquare from "@/components/ui/AvatarSquare";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Users, Shield, Send, ExternalLink, CheckCircle, Layers } from "lucide-react";
@@ -126,11 +126,7 @@ const ProjectHub = () => {
             {/* Owner */}
             {project.owner && (
               <Link to={`/app/profile/${project.owner.id}`} className="relative flex items-center gap-3 py-2.5 group">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[11px] font-bold text-white shrink-0 group-hover:scale-110 transition-transform relative z-10 overflow-hidden"
-                  style={{ backgroundColor: ROLE_COLORS[project.owner.role || ""] || "#6B7280" }}>
-                  {project.owner.avatar_url ? <img src={storageImageUrl(project.owner.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> :
-                    (project.owner.full_name || "O").split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
-                </div>
+                <AvatarSquare src={project.owner.avatar_url} name={project.owner.full_name || "Owner"} size="md" bgColor={ROLE_COLORS[project.owner.role || ""] || "#6B7280"} className="group-hover:scale-110 transition-transform relative z-10" />
                 <div className="min-w-0">
                   <p className="text-[13px] font-bold group-hover:underline" style={{ color: "var(--text-1)" }}>{project.owner.full_name || "Owner"}</p>
                   <p className="text-[11px]" style={{ color: "var(--text-3)" }}>Owner</p>
@@ -142,11 +138,7 @@ const ProjectHub = () => {
               if (!m) return null;
               return (
                 <Link key={tm.id} to={`/app/profile/${m.id}`} className="relative flex items-center gap-3 py-2.5 group">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[11px] font-bold text-white shrink-0 group-hover:scale-110 transition-transform relative z-10 overflow-hidden"
-                    style={{ backgroundColor: ROLE_COLORS[m.role || ""] || "#6B7280" }}>
-                    {m.avatar_url ? <img src={storageImageUrl(m.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" /> :
-                      (m.full_name || "M").split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
-                  </div>
+                  <AvatarSquare src={m.avatar_url} name={m.full_name || "Member"} size="md" bgColor={ROLE_COLORS[m.role || ""] || "#6B7280"} className="group-hover:scale-110 transition-transform relative z-10" />
                   <div className="min-w-0">
                     <p className="text-[13px] font-bold group-hover:underline" style={{ color: "var(--text-1)" }}>{m.full_name || "Member"}</p>
                     <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{tm.role_in_project || "Member"}</p>

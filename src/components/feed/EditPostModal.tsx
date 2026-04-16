@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { X, Loader2, Image as ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { storageImageUrl } from "@/lib/imageTransform";
+import { fixStorageUrl } from "@/components/ui/AvatarSquare";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface EditPostModalProps {
@@ -81,7 +81,7 @@ const EditPostModal = ({ post, onClose, onSaved }: EditPostModalProps) => {
           <div className="flex gap-2 mt-3 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
             {post.image_urls.map((url: string, i: number) => (
               <div key={i} className="w-16 h-16 rounded-lg overflow-hidden shrink-0" style={{ background: "var(--surface-2)" }}>
-                <img src={storageImageUrl(url, "avatar")} alt="" className="w-full h-full object-cover" />
+                <img src={fixStorageUrl(url) || ""} alt="" className="w-full h-full object-cover" />
               </div>
             ))}
           </div>

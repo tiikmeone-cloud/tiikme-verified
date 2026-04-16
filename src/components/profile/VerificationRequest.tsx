@@ -1,4 +1,4 @@
-import { storageImageUrl } from "@/lib/imageTransform";
+import AvatarSquare from "@/components/ui/AvatarSquare";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Search, Send, CheckCircle, Clock, XCircle, Mail, Copy, ExternalLink, RefreshCw, X } from "lucide-react";
@@ -329,10 +329,7 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
                           background: selectedVerifier?.user_id === v.user_id ? "rgba(232,115,58,0.06)" : "transparent",
                           border: `1.5px solid ${selectedVerifier?.user_id === v.user_id ? "#E8733A" : "rgba(0,0,0,0.06)"}`,
                         }}>
-                        <div className="w-9 h-9 flex items-center justify-center text-[10px] font-bold text-white overflow-hidden shrink-0"
-                          style={{ borderRadius: 0, background: hashColor(v.profile?.full_name || "U") }}>
-                          {v.profile?.avatar_url ? <img src={storageImageUrl(v.profile.avatar_url, "avatar")} className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : (v.profile?.full_name || "U").slice(0, 2).toUpperCase()}
-                        </div>
+                        <AvatarSquare src={v.profile?.avatar_url} name={v.profile?.full_name || "U"} size="sm" />
                         <div className="text-left min-w-0">
                           <p style={{ fontSize: 12, fontWeight: 600, color: "#1A1A2E" }}>{v.profile?.full_name}</p>
                           <p style={{ fontSize: 10, color: "#9CA3C0" }}>{v.title || v.role}</p>
@@ -372,10 +369,7 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
                         disabled={submitting}
                         className="flex items-center gap-3 w-full p-2.5 rounded-xl cursor-pointer transition-colors hover:bg-gray-50"
                         style={{ border: "1px solid rgba(0,0,0,0.04)" }}>
-                        <div className="w-8 h-8 flex items-center justify-center text-[9px] font-bold text-white overflow-hidden shrink-0"
-                          style={{ borderRadius: 0, background: hashColor(u.full_name || "U") }}>
-                          {u.avatar_url ? <img src={storageImageUrl(u.avatar_url, "avatar")} className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : (u.full_name || "U").slice(0, 2).toUpperCase()}
-                        </div>
+                        <AvatarSquare src={u.avatar_url} name={u.full_name || "U"} size="sm" />
                         <div className="text-left min-w-0 flex-1">
                           <p style={{ fontSize: 12, fontWeight: 600, color: "#1A1A2E" }}>{u.full_name}</p>
                           <p style={{ fontSize: 10, color: "#9CA3C0" }}>{u.role}{u.institution_name ? ` · ${u.institution_name}` : ""}</p>
