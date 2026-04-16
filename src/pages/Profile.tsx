@@ -384,9 +384,9 @@ const Profile = () => {
       }
     }
 
-    // Load profile roles
-    const { data: rolesData } = await supabase.from("profile_roles").select("*").eq("user_id", targetUserId).order("created_at", { ascending: false });
-    setProfileRoles(rolesData || []);
+    // Load profile roles (parallel with avatar fetch above — already awaited)
+    supabase.from("profile_roles").select("*").eq("user_id", targetUserId).order("created_at", { ascending: false })
+      .then(({ data: rolesData }) => setProfileRoles(rolesData || []));
 
     setDataLoading(false);
   }, [targetUserId, isOwnProfile, authProfile]);

@@ -367,7 +367,7 @@ const Pings = () => {
                           <>
                             {/* Image attachment */}
                             {msg.attachment_type === "image" && msg.attachment_url && (
-                              <img src={msg.attachment_url} alt="" className="w-full max-w-[240px] rounded-xl mb-2 cursor-pointer" onClick={() => window.open(msg.attachment_url!, "_blank")} onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                              <img src={msg.attachment_url} alt="" loading="lazy" className="w-full max-w-[240px] rounded-xl mb-2 cursor-pointer" onClick={() => window.open(msg.attachment_url!, "_blank")} onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
                             )}
                             {/* PDF/Doc attachment */}
                             {(msg.attachment_type === "pdf" || msg.attachment_type === "document") && msg.attachment_url && (

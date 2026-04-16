@@ -114,7 +114,7 @@ export default function FindTab() {
                 {/* Circular avatar 48px */}
                 <div className="w-12 h-12 rounded-full overflow-hidden shrink-0" style={{ border: "2px solid rgba(232,115,58,0.20)" }}>
                   {p.profile?.avatar_url ? (
-                    <img src={p.profile.avatar_url} alt={name} className="w-full h-full object-cover" />
+                    <img src={p.profile.avatar_url} alt={name} loading="lazy" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-[14px] font-bold" style={{ background: "var(--surface-2)", color: "var(--text-2)" }}>
                       {name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}

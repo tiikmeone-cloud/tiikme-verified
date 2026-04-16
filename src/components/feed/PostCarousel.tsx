@@ -41,6 +41,7 @@ const PostCarousel = ({ images }: PostCarouselProps) => {
         <img
           src={storageImageUrl(images[0], "feed")}
           alt=""
+          loading="lazy"
           className="w-full max-h-[500px] object-cover cursor-pointer"
           onClick={() => setLightbox(true)}
           onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
@@ -68,6 +69,7 @@ const PostCarousel = ({ images }: PostCarouselProps) => {
         <img
           src={storageImageUrl(images[current], "feed")}
           alt=""
+          loading="lazy"
           className="w-full max-h-[500px] object-cover cursor-pointer"
           onClick={() => setLightbox(true)}
           onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}

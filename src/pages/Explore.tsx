@@ -51,10 +51,13 @@ const Explore = () => {
   const fetchAll = useCallback(async () => {
     if (!user) return { people: [], companies: [], colleges: [], hospitals: [], govOrgs: [], ngos: [], trendingTopics: [], trendingPosts: [], postAuthors: {}, startups: [], investors: [], sMap: {}, fMap: {} };
     
-    // Strands
-    const { data: strands } = await supabase.from("strands")
-      .select("requester_id, receiver_id, status")
-      .or(`requester_id.eq.${user.id},receiver_id.eq.${user.id}`);
+    // Strands + Follows + Tracked pages in parallel
+    const [strandsRes, followsRes, trackedPagesRes] = await Promise.all([
+      supabase.from("strands").select("requester_id, receiver_id, status").or(`requester_id.eq.${user.id},receiver_id.eq.${user.id}`),
+      supabase.from("org_followers").select("org_id").eq("user_id", user.id),
+      supabase.from("page_trackers").select("page_id").eq("user_id", user.id),
+    ]);
+    const strands = strandsRes.data;
     const sMap: Record<string, string> = {};
     const connectedIds = new Set<string>();
     (strands || []).forEach((s: any) => {
@@ -64,11 +67,9 @@ const Explore = () => {
         if (s.status === "accepted") connectedIds.add(otherId);
       }
     });
-
-    // Follows
-    const { data: follows } = await supabase.from("org_followers").select("org_id").eq("user_id", user.id);
     const fMap: Record<string, boolean> = {};
-    (follows || []).forEach((f: any) => { fMap[f.org_id] = true; });
+    (followsRes.data || []).forEach((f: any) => { fMap[f.org_id] = true; });
+    const trackedPageIds = new Set((trackedPagesRes.data || []).map((t: any) => t.page_id));
 
     const excludedIds = new Set<string>();
     (strands || []).forEach((s: any) => {
@@ -126,8 +127,6 @@ const Explore = () => {
     };
 
     const followedOrgIds = new Set(Object.keys(fMap).filter(k => fMap[k]));
-    const { data: trackedPages } = await supabase.from("page_trackers").select("page_id").eq("user_id", user.id);
-    const trackedPageIds = new Set((trackedPages || []).map((t: any) => t.page_id));
 
     const fetchOrgs = async (type: string) => {
       const { data } = await supabase.from("organizations")
