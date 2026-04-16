@@ -706,11 +706,40 @@ const Profile = () => {
 
   const renderConnectButton = () => {
     const { status, direction } = connectionStatus;
-    if (status === "accepted") return (
-      <button type="button" className="cursor-default" style={{ height: 32, padding: "0 16px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "rgba(52,199,89,0.10)", color: "#34C759", border: "1px solid rgba(52,199,89,0.25)", display: "inline-flex", alignItems: "center", gap: 4 }}>
-        <CheckCircle className="w-3.5 h-3.5" /> Connected
-      </button>
-    );
+    if (status === "accepted") {
+      const handleDisconnect = async () => {
+        if (!connectionStatus.id && user && targetUserId) {
+          // Find the strand ID
+          const { data } = await supabase.from("strands").select("id")
+            .or(`and(requester_id.eq.${user.id},receiver_id.eq.${targetUserId}),and(requester_id.eq.${targetUserId},receiver_id.eq.${user.id})`)
+            .eq("status", "accepted").maybeSingle();
+          if (data) {
+            await supabase.from("strands").delete().eq("id", data.id);
+            setConnectionStatus({ status: null, direction: null, id: null });
+            toast.success("Disconnected");
+            return;
+          }
+        }
+        if (connectionStatus.id) {
+          await supabase.from("strands").delete().eq("id", connectionStatus.id);
+          setConnectionStatus({ status: null, direction: null, id: null });
+          toast.success("Disconnected");
+        }
+      };
+
+      return (
+        <div className="relative group">
+          <button type="button" className="cursor-pointer" style={{ height: 32, padding: "0 16px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "rgba(52,199,89,0.10)", color: "#34C759", border: "1px solid rgba(52,199,89,0.25)", display: "inline-flex", alignItems: "center", gap: 4 }}>
+            <CheckCircle className="w-3.5 h-3.5" /> Connected
+          </button>
+          <div className="absolute top-full left-0 mt-1 hidden group-hover:block z-20" style={{ background: "#FFFFFF", border: "1px solid #E5E7EB", borderRadius: 10, boxShadow: "0 4px 16px rgba(0,0,0,0.1)", padding: 4, minWidth: 120 }}>
+            <button type="button" onClick={handleDisconnect} className="w-full text-left cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "8px 12px", fontSize: 13, color: "#EF4444", borderRadius: 6 }}>
+              <UserX className="w-3.5 h-3.5 inline mr-2" />Disconnect
+            </button>
+          </div>
+        </div>
+      );
+    }
     if (status === "pending" && direction === "sent") return (
       <button type="button" className="cursor-default" style={{ height: 32, padding: "0 16px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "rgba(255,184,0,0.10)", color: "#FFB800", border: "1px solid rgba(255,184,0,0.25)", display: "inline-flex", alignItems: "center" }}>Requested</button>
     );
