@@ -206,7 +206,7 @@ const CreateGroupModal = ({ open, onClose, userId, onCreate }: CreateGroupModalP
             disabled={creating || selectedIds.length === 0}
             className="w-full h-10 rounded-[10px] text-[14px] font-semibold cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
             style={{ background: "linear-gradient(135deg, #E8733A, #FF9A62)", color: "#fff" }}>
-            {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : `Create Group (${selectedIds.length + 1} members)`}
+            {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : `Create Group (${selectedIds.length + 1} ${selectedIds.length + 1 === 1 ? "member" : "members"})`}
           </button>
         </div>
       )}
@@ -392,10 +392,12 @@ const GroupChat = ({ group, userId, onBack, onSendMessage, onDeleteMessage, fetc
                       <p className="text-[12px] italic" style={{ color: "#9CA3C0" }}>This message was deleted</p>
                     ) : (
                       <>
-                        <p className="text-[13px] whitespace-pre-wrap break-words" style={{ color: "#1A1A2E" }}>{msg.content}</p>
+                        <p className="text-[13px] whitespace-pre-wrap break-words" style={{ color: "#1A1A2E" }}>
+                          <ChatMessageContent text={msg.content} />
+                        </p>
                         {msg.attachment_url && (
                           msg.attachment_type?.startsWith("image/") ? (
-                            <img src={msg.attachment_url} alt="" className="mt-1 rounded-md" style={{ maxWidth: 200, maxHeight: 150, objectFit: "cover" }} />
+                            <img src={msg.attachment_url} alt="" loading="lazy" className="mt-1 rounded-md cursor-pointer" style={{ maxWidth: 240, maxHeight: 200, objectFit: "cover" }} onClick={() => window.open(msg.attachment_url!, "_blank")} />
                           ) : (
                             <a href={msg.attachment_url} target="_blank" rel="noopener noreferrer"
                               className="flex items-center gap-1 mt-1 text-[11px] font-semibold" style={{ color: "#4A90D9" }}>
