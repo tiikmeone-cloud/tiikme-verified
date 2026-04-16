@@ -324,7 +324,14 @@ const PostCard = ({
   const isOpen = commentsOpen.has(post.id);
   const comments = commentsData[post.id] || [];
   const commentText = commentInputs[post.id] || "";
-  const repostCount = post.repost_count || 0;
+  const [localRepostCount, setLocalRepostCount] = useState(post.repost_count || 0);
+  const [hasReposted, setHasReposted] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("post_reposts").select("id").eq("post_id", post.id).eq("reposted_by", user.id).maybeSingle()
+      .then(({ data }) => setHasReposted(!!data));
+  }, [post.id, user]);
 
   const sortedComments = useMemo(() => {
     const arr = [...comments];
@@ -357,6 +364,8 @@ const PostCard = ({
           actionUrl: `/post/${post.id}`,
         });
       }
+      setLocalRepostCount(prev => prev + 1);
+      setHasReposted(true);
       toast.success("Reposted");
     } catch (e) { console.warn("[Feed] repost failed:", e); }
     setConfirmRepost(false);
@@ -418,8 +427,8 @@ const PostCard = ({
             <AvatarSquare src={displayAvatar} name={displayName} size={40} />
           </Link>
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1 overflow-hidden" style={{ lineHeight: "18px" }}>
-              <Link to={profileLink} className="hover:underline truncate shrink-0" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", maxWidth: "40%" }}>{displayName}</Link>
+            <div className="flex items-center flex-wrap" style={{ gap: "0 4px", lineHeight: "18px" }}>
+              <Link to={profileLink} className="hover:underline" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", wordBreak: "break-word" }}>{displayName}</Link>
               {(author?.is_verified || post.org?.is_verified) && <VerifiedBadge size={14} />}
               {(viaName || companyName) && (
                 <>
@@ -505,9 +514,9 @@ const PostCard = ({
         )}
 
         {/* Repost info */}
-        {repostCount >= 2 && (
+        {localRepostCount >= 2 && (
           <p style={{ fontSize: 12, color: "#9CA3C0", marginTop: 4 }}>
-            {displayName} and {repostCount - 1} other{repostCount > 2 ? "s" : ""} reposted
+            {displayName} and {localRepostCount - 1} other{localRepostCount > 2 ? "s" : ""} reposted
           </p>
         )}
 
@@ -531,8 +540,8 @@ const PostCard = ({
             <button type="button" onClick={handleRepost}
               className="flex items-center cursor-pointer"
               style={{ gap: 4, padding: "6px 10px", borderRadius: 8, background: "rgba(255,255,255,0.10)" }}>
-              <Repeat2 style={{ width: 16, height: 16, color: "#9CA3C0" }} />
-              {repostCount > 0 && <span style={{ fontSize: 12, color: "#9CA3C0" }}>{repostCount}</span>}
+              <Repeat2 style={{ width: 16, height: 16, color: hasReposted ? "#E8733A" : "#9CA3C0" }} />
+              {localRepostCount > 0 && <span style={{ fontSize: 12, color: hasReposted ? "#E8733A" : "#9CA3C0" }}>{localRepostCount}</span>}
             </button>
             {confirmRepost && (
               <div className="absolute bottom-full left-0 mb-1 flex items-center gap-1 px-2 py-1 z-10" style={{ borderRadius: 8, whiteSpace: "nowrap", background: "var(--bg-card)", border: "1px solid var(--border-glass)", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>

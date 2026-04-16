@@ -36,45 +36,46 @@ export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonC
         width: 280, minWidth: 280,
         scrollSnapAlign: "start", flexShrink: 0,
         transition: "transform 200ms, box-shadow 200ms",
+        alignItems: "center",
       }}
       onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(26,26,78,0.12)"; }}
       onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
       onClick={() => navigate(`/app/profile/${p.id}`)}
     >
-      <AvatarSquare src={p.avatar_url} name={name} size={64} />
+      <AvatarSquare src={p.avatar_url} name={name} size={48} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 1, minWidth: 0 }}>
         <div className="flex items-center gap-1">
-          <span className="truncate" style={{ fontWeight: 700, fontSize: 15, color: "var(--text-primary)" }}>{name}</span>
+          <span className="truncate" style={{ fontWeight: 700, fontSize: 14, color: "var(--text-primary)" }}>{name}</span>
           {p.is_verified && <VerifiedBadge size={14} />}
         </div>
         {designation && (
-          <span className="truncate" style={{ fontSize: 13, color: "var(--text-secondary)" }}>{designation}</span>
+          <span className="truncate" style={{ fontSize: 12, color: "var(--text-secondary)" }}>{designation}</span>
         )}
         {company && (
-          <span className="truncate" style={{ fontSize: 12, color: "var(--text-muted)" }}>{company}</span>
-        )}
-        {currentUserId !== p.id && (
-          <button
-            type="button"
-            disabled={strandStatus !== "none"}
-            onClick={e => { e.stopPropagation(); onStrand(); }}
-            className="cursor-pointer"
-            style={{
-              marginTop: 6, padding: "5px 16px", borderRadius: 8,
-              fontSize: 12, fontWeight: 600, border: "none",
-              alignSelf: "flex-start",
-              ...(isConnected
-                ? { background: "rgba(52,199,89,0.10)", color: "#34C759" }
-                : isPending
-                ? { background: "rgba(232,115,58,0.12)", color: "#E8733A" }
-                : { background: "#F97316", color: "#fff" }
-              ),
-            }}
-          >
-            {isConnected ? "Connected" : isPending ? "Requested" : "+ Connect"}
-          </button>
+          <span className="truncate" style={{ fontSize: 11, color: "var(--text-muted)" }}>{company}</span>
         )}
       </div>
+      {currentUserId !== p.id && (
+        <button
+          type="button"
+          disabled={strandStatus !== "none"}
+          onClick={e => { e.stopPropagation(); onStrand(); }}
+          className="cursor-pointer shrink-0"
+          style={{
+            padding: "5px 12px", borderRadius: 8,
+            fontSize: 11, fontWeight: 600, border: "none",
+            whiteSpace: "nowrap",
+            ...(isConnected
+              ? { background: "rgba(52,199,89,0.10)", color: "#34C759" }
+              : isPending
+              ? { background: "rgba(232,115,58,0.12)", color: "#E8733A" }
+              : { background: "#F97316", color: "#fff" }
+            ),
+          }}
+        >
+          {isConnected ? "Connected" : isPending ? "Requested" : "+ Connect"}
+        </button>
+      )}
     </article>
   );
 }
@@ -100,34 +101,35 @@ export function OrgCard({ org, following, onToggleFollow, navigateTo }: OrgCardP
         width: 280, minWidth: 280,
         scrollSnapAlign: "start", flexShrink: 0,
         transition: "transform 200ms, box-shadow 200ms",
+        alignItems: "center",
       }}
       onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(26,26,78,0.12)"; }}
       onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
       onClick={() => navigate(navigateTo)}
     >
-      <AvatarSquare src={org.logo_url} name={org.name || "?"} size={64} />
+      <AvatarSquare src={org.logo_url} name={org.name || "?"} size={48} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 1, minWidth: 0 }}>
-        <span className="truncate" style={{ fontWeight: 700, fontSize: 15, color: "var(--text-primary)" }}>{org.name}</span>
-        <span className="truncate" style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+        <span className="truncate" style={{ fontWeight: 700, fontSize: 14, color: "var(--text-primary)" }}>{org.name}</span>
+        <span className="truncate" style={{ fontSize: 12, color: "var(--text-secondary)" }}>
           {typeLabel}{subtype ? ` · ${subtype}` : ""}
         </span>
-        <button
-          type="button"
-          onClick={e => { e.stopPropagation(); onToggleFollow(e); }}
-          className="cursor-pointer"
-          style={{
-            marginTop: 6, padding: "5px 16px", borderRadius: 8,
-            fontSize: 12, fontWeight: 600, border: "none",
-            alignSelf: "flex-start",
-            ...(following
-              ? { background: "rgba(52,199,89,0.10)", color: "#34C759" }
-              : { background: "#F97316", color: "#fff" }
-            ),
-          }}
-        >
-          {following ? "Following" : "+ Follow"}
-        </button>
       </div>
+      <button
+        type="button"
+        onClick={e => { e.stopPropagation(); onToggleFollow(e); }}
+        className="cursor-pointer shrink-0"
+        style={{
+          padding: "5px 12px", borderRadius: 8,
+          fontSize: 11, fontWeight: 600, border: "none",
+          whiteSpace: "nowrap",
+          ...(following
+            ? { background: "rgba(52,199,89,0.10)", color: "#34C759" }
+            : { background: "#F97316", color: "#fff" }
+          ),
+        }}
+      >
+        {following ? "Following" : "+ Follow"}
+      </button>
     </article>
   );
 }
