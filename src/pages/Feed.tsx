@@ -599,7 +599,7 @@ const PostCard = ({
             {/* Comment input */}
             {user && (
               <div className="flex items-center" style={{ gap: 8, marginTop: 8, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.15)" }}>
-                <AvatarSquare src={authProfile?.avatar_url} name={authProfile?.full_name || "You"} size={24} />
+                <AvatarSquare src={authProfile?.avatar_url} name={authProfile?.full_name || "You"} size="sm" />
                 <input
                   value={commentText}
                   onChange={(e) => setCommentInputs((p) => ({ ...p, [post.id]: e.target.value }))}

@@ -161,21 +161,19 @@ const PostDetail = () => {
             <AvatarSquare src={author?.avatar_url} name={name} size={44} bgColor={roleColor} />
           </Link>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <Link to={`/app/profile/${author?.id || ""}`} className="text-[14px] font-bold hover:underline" style={{ color: "var(--text-1)" }}>{name}</Link>
-              {username && <span className="text-[12px]" style={{ color: "var(--text-3)" }}>{username}</span>}
-              <span className="text-[12px]" style={{ color: "var(--text-3)" }}>·</span>
-              <span className="text-[11px]" style={{ color: "var(--text-3)" }}>{post.created_at ? getTimeAgo(new Date(post.created_at)) : ""}</span>
-              {post.is_edited && <span className="text-[11px] italic" style={{ color: "var(--text-3)" }}>(edited)</span>}
+            <div className="flex items-center gap-1 overflow-hidden" style={{ lineHeight: "18px" }}>
+              <Link to={`/app/profile/${author?.id || ""}`} className="text-[14px] font-bold hover:underline truncate shrink-0" style={{ color: "var(--text-1)", maxWidth: "40%" }}>{name}</Link>
+              {username && <span className="text-[12px] shrink-0" style={{ color: "var(--text-3)" }}>{username}</span>}
+              {companyName && (
+                <>
+                  <span className="text-[12px] shrink-0" style={{ color: "var(--text-3)" }}>·</span>
+                  <span className="text-[12px] truncate" style={{ color: "var(--text-3)", maxWidth: "30%" }}>{companyName}</span>
+                </>
+              )}
+              <span className="text-[12px] shrink-0" style={{ color: "var(--text-3)" }}>·</span>
+              <span className="text-[11px] shrink-0" style={{ color: "var(--text-3)" }}>{post.created_at ? getTimeAgo(new Date(post.created_at)) : ""}</span>
+              {post.is_edited && <span className="text-[11px] italic shrink-0" style={{ color: "var(--text-3)" }}>(edited)</span>}
             </div>
-            {companyName && (
-              <div className="flex items-center gap-1.5">
-                <div className="w-3.5 h-3.5 rounded flex items-center justify-center shrink-0" style={{ background: "rgba(232,115,58,0.15)" }}>
-                  <span className="text-[7px] font-bold" style={{ color: "var(--brand)" }}>{companyName.charAt(0).toUpperCase()}</span>
-                </div>
-                <span className="text-[12px]" style={{ color: "var(--text-3)" }}>{companyName}</span>
-              </div>
-            )}
           </div>
           <div className="relative" ref={menuRef}>
             <button type="button" onClick={() => setShowMenu(!showMenu)} className="p-2 rounded-lg cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center" style={{ color: "var(--text-2)" }}>
