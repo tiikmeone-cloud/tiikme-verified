@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { Plus, X, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,23 +74,24 @@ export default function AchievementsTab({ isOwnProfile, achievements = [], userI
     return `${months[date.getMonth()]} ${date.getFullYear()}`;
   };
 
-  const renderModal = () => (
+  const renderModal = () => createPortal(
     <AnimatePresence>
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} onClick={() => setShowAddModal(false)}>
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} onClick={() => setShowAddModal(false)}>
           <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-            className="glass-card p-6 max-w-md w-full" onClick={e => e.stopPropagation()}>
+            className="p-6 max-w-md w-full" style={{ background: "#FFFFFF", borderRadius: 20, boxShadow: "0 25px 80px rgba(0,0,0,0.25)" }} onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[17px] font-extrabold" style={{ color: "var(--text-1)" }}>{addStep === 0 ? "Choose type" : "Achievement details"}</h2>
-              <button type="button" onClick={() => setShowAddModal(false)} className="p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
+              <h2 className="text-[17px] font-extrabold" style={{ color: "#1A1A2E" }}>{addStep === 0 ? "Choose type" : "Achievement details"}</h2>
+              <button type="button" onClick={() => setShowAddModal(false)} className="p-1 cursor-pointer" style={{ color: "#6B7094" }}><X className="w-5 h-5" /></button>
             </div>
             {addStep === 0 && (
               <div className="grid grid-cols-2 gap-2">
                 {achievementTypes.map(t => (
                   <button type="button" key={t.value} onClick={() => { setSelectedType(t.value); setAddStep(1); }}
-                    className="t-card t-card-hover p-3 text-left cursor-pointer">
+                    className="p-3 text-left cursor-pointer rounded-xl transition-all hover:scale-[1.01]"
+                    style={{ background: "#F8F9FC", border: "1px solid #E8E8E8" }}>
                     <span className="text-lg">{t.emoji}</span>
-                    <p className="text-[12px] font-bold mt-1" style={{ color: "var(--text-1)" }}>{t.label}</p>
+                    <p className="text-[12px] font-bold mt-1" style={{ color: "#1A1A2E" }}>{t.label}</p>
                   </button>
                 ))}
               </div>
@@ -99,15 +101,15 @@ export default function AchievementsTab({ isOwnProfile, achievements = [], userI
                 <Input placeholder="Title *" value={form.title} onChange={e => u("title", e.target.value.slice(0, 80))} maxLength={80} />
                 <Input placeholder="Issued by / Organisation" value={form.issuedBy} onChange={e => u("issuedBy", e.target.value.slice(0, 60))} maxLength={60} />
                 <div className="grid grid-cols-2 gap-2">
-                  <select value={form.month} onChange={e => u("month", e.target.value)} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }}>
+                  <select value={form.month} onChange={e => u("month", e.target.value)} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={{ background: "#F8F9FC", border: "1px solid #E8E8E8", color: "#1A1A2E" }}>
                     <option value="">Month</option>{months.map(m => <option key={m}>{m}</option>)}
                   </select>
-                  <select value={form.year} onChange={e => u("year", e.target.value)} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }}>
+                  <select value={form.year} onChange={e => u("year", e.target.value)} className="w-full h-10 rounded-lg px-2 text-[13px] outline-none cursor-pointer" style={{ background: "#F8F9FC", border: "1px solid #E8E8E8", color: "#1A1A2E" }}>
                     <option value="">Year</option>{years.map(y => <option key={y}>{y}</option>)}
                   </select>
                 </div>
                 <textarea placeholder="Description (optional, 200 chars)" value={form.description} onChange={e => u("description", e.target.value.slice(0, 200))} rows={2} maxLength={200}
-                  className="w-full rounded-xl p-3 text-[12px] outline-none resize-none" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }} />
+                  className="w-full rounded-xl p-3 text-[12px] outline-none resize-none" style={{ background: "#F8F9FC", border: "1px solid #E8E8E8", color: "#1A1A2E" }} />
                 <Input placeholder="Credential URL (optional)" value={form.credentialUrl} onChange={e => u("credentialUrl", e.target.value)} />
                 <div className="flex gap-3 pt-2">
                   <Button variant="ghost" className="flex-1" onClick={() => setAddStep(0)}>Back</Button>
@@ -120,7 +122,8 @@ export default function AchievementsTab({ isOwnProfile, achievements = [], userI
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 
   // Empty state

@@ -1,4 +1,5 @@
 import { useEffect, useCallback, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import type { LucideIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
@@ -34,7 +35,7 @@ const GlassModal = ({ open, onClose, title, icon: Icon, accentColor, children, a
     }
   }, [open, handleKeyDown]);
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {open && (
         <motion.div
@@ -42,7 +43,7 @@ const GlassModal = ({ open, onClose, title, icon: Icon, accentColor, children, a
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
           style={{
             background: "rgba(26, 26, 78, 0.40)",
             backdropFilter: "blur(8px)",
@@ -100,7 +101,8 @@ const GlassModal = ({ open, onClose, title, icon: Icon, accentColor, children, a
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };
 

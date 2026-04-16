@@ -1,5 +1,6 @@
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { X, Mail, UserCheck, FileText, Building2, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -100,33 +101,33 @@ const GetTiikedModal = ({ open, onClose, userId, userRole, onVerified }: Props) 
     }
   })();
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} onClick={onClose}>
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} onClick={onClose}>
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-        className="glass-card p-6 max-w-md w-full max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        className="p-6 max-w-md w-full max-h-[85vh] overflow-y-auto" style={{ background: "#FFFFFF", borderRadius: 20, boxShadow: "0 25px 80px rgba(0,0,0,0.25)" }} onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Shield className="w-5 h-5" style={{ color: "#F59E0B" }} />
-            <h2 className="text-[18px] font-extrabold" style={{ color: "var(--text-1)" }}>
+            <h2 className="text-[18px] font-extrabold" style={{ color: "#1A1A2E" }}>
               {step === "choose" ? "Get Tiiked" : step === "email" ? "Email Verification" : step === "document" ? "Document Upload" : "Peer Verification"}
             </h2>
           </div>
-          <button type="button" onClick={() => { onClose(); setStep("choose"); }} className="p-1 cursor-pointer" style={{ color: "var(--text-3)" }}><X className="w-5 h-5" /></button>
+          <button type="button" onClick={() => { onClose(); setStep("choose"); }} className="p-1 cursor-pointer" style={{ color: "#6B7094" }}><X className="w-5 h-5" /></button>
         </div>
 
         {step === "choose" && (
           <div className="space-y-3">
-            <p className="text-[13px] mb-3" style={{ color: "var(--text-2)" }}>Choose how you'd like to get verified:</p>
+            <p className="text-[13px] mb-3" style={{ color: "#6B7094" }}>Choose how you'd like to get verified:</p>
             {cards.map(c => (
               <button type="button" key={c.id} onClick={c.action}
                 className="w-full flex items-start gap-3 p-4 rounded-xl text-left cursor-pointer transition-all duration-150 hover:scale-[1.01]"
-                style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
+                style={{ background: "#F8F9FC", border: "1px solid #E8E8E8" }}>
                 <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgba(245,158,11,0.1)" }}>
                   <c.icon className="w-5 h-5" style={{ color: "#F59E0B" }} />
                 </div>
                 <div>
-                  <p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>{c.title}</p>
-                  <p className="text-[12px]" style={{ color: "var(--text-3)" }}>{c.desc}</p>
+                  <p className="text-[14px] font-bold" style={{ color: "#1A1A2E" }}>{c.title}</p>
+                  <p className="text-[12px]" style={{ color: "#9CA3C0" }}>{c.desc}</p>
                 </div>
               </button>
             ))}
@@ -135,7 +136,7 @@ const GetTiikedModal = ({ open, onClose, userId, userRole, onVerified }: Props) 
 
         {step === "email" && (
           <div className="space-y-4">
-            <p className="text-[13px]" style={{ color: "var(--text-2)" }}>Enter your official email address to receive a verification link.</p>
+            <p className="text-[13px]" style={{ color: "#6B7094" }}>Enter your official email address to receive a verification link.</p>
             <Input value={email} onChange={e => setEmail(e.target.value)} placeholder={userRole === "government" ? "name@gov.in or name@nic.in" : userRole === "student" ? "name@college.ac.in" : "name@company.com"} type="email" />
             <div className="flex gap-3">
               <Button variant="ghost" className="flex-1" onClick={() => setStep("choose")}>Back</Button>
@@ -146,33 +147,33 @@ const GetTiikedModal = ({ open, onClose, userId, userRole, onVerified }: Props) 
 
         {step === "peer" && (
           <div className="space-y-4">
-            <p className="text-[13px]" style={{ color: "var(--text-2)" }}>Search for your {userRole === "student" ? "professor or guide" : userRole === "doctor" ? "hospital admin or HOD" : "manager or HR"} on Tiikme.</p>
+            <p className="text-[13px]" style={{ color: "#6B7094" }}>Search for your {userRole === "student" ? "professor or guide" : userRole === "doctor" ? "hospital admin or HOD" : "manager or HR"} on Tiikme.</p>
             <Input value={peerSearch} onChange={e => searchPeers(e.target.value)} placeholder="Search by name or @username..." autoFocus />
             <div className="max-h-[250px] overflow-y-auto space-y-1">
               {peerResults.map(u => (
                 <button type="button" key={u.id} onClick={() => sendPeerRequest(u.id, u.full_name || u.username)}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left cursor-pointer transition-all hover:bg-[var(--surface-2)]"
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left cursor-pointer transition-all hover:bg-[#F5F5F5]"
                   disabled={sending}>
                   <AvatarSquare src={u.avatar_url} name={u.full_name || "U"} size="sm" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-bold truncate" style={{ color: "var(--text-1)" }}>{u.full_name || u.username}</p>
-                    <p className="text-[11px]" style={{ color: "var(--text-3)" }}>@{u.username} · {u.role}{u.institution_name ? ` · ${u.institution_name}` : ""}</p>
+                    <p className="text-[13px] font-bold truncate" style={{ color: "#1A1A2E" }}>{u.full_name || u.username}</p>
+                    <p className="text-[11px]" style={{ color: "#9CA3C0" }}>@{u.username} · {u.role}{u.institution_name ? ` · ${u.institution_name}` : ""}</p>
                   </div>
-                  <span className="text-[11px] font-bold shrink-0" style={{ color: "var(--brand)" }}>Send request</span>
+                  <span className="text-[11px] font-bold shrink-0" style={{ color: "#E8733A" }}>Send request</span>
                 </button>
               ))}
               {peerSearch.length >= 2 && peerResults.length === 0 && (
-                <p className="text-[12px] text-center py-4" style={{ color: "var(--text-3)" }}>No users found</p>
+                <p className="text-[12px] text-center py-4" style={{ color: "#9CA3C0" }}>No users found</p>
               )}
             </div>
-            <Button variant="ghost" className="w-full" onClick={() => setStep("choose")}>← Back</Button>
+            <Button variant="ghost" className="w-full" onClick={() => setStep("choose")}>Back</Button>
           </div>
         )}
 
         {step === "document" && (
           <div className="space-y-4">
-            <p className="text-[13px]" style={{ color: "var(--text-2)" }}>Upload your experience letter, relieving letter, or official document for verification.</p>
-            <div className="rounded-xl p-6 text-center cursor-pointer" style={{ border: "2px dashed var(--border)", background: "var(--surface-2)" }}
+            <p className="text-[13px]" style={{ color: "#6B7094" }}>Upload your experience letter, relieving letter, or official document for verification.</p>
+            <div className="rounded-xl p-6 text-center cursor-pointer" style={{ border: "2px dashed #E8E8E8", background: "#F8F9FC" }}
               onClick={() => {
                 const input = document.createElement("input");
                 input.type = "file";
@@ -194,15 +195,16 @@ const GetTiikedModal = ({ open, onClose, userId, userRole, onVerified }: Props) 
                 };
                 input.click();
               }}>
-              <FileText className="w-8 h-8 mx-auto mb-2" style={{ color: "var(--text-3)" }} />
-              <p className="text-[14px] font-semibold" style={{ color: "var(--text-1)" }}>Click to upload PDF or image</p>
-              <p className="text-[12px] mt-1" style={{ color: "var(--text-3)" }}>Max 10MB · PDF, JPG, PNG</p>
+              <FileText className="w-8 h-8 mx-auto mb-2" style={{ color: "#9CA3C0" }} />
+              <p className="text-[14px] font-semibold" style={{ color: "#1A1A2E" }}>Click to upload PDF or image</p>
+              <p className="text-[12px] mt-1" style={{ color: "#9CA3C0" }}>Max 10MB - PDF, JPG, PNG</p>
             </div>
-            <Button variant="ghost" className="w-full" onClick={() => setStep("choose")}>← Back</Button>
+            <Button variant="ghost" className="w-full" onClick={() => setStep("choose")}>Back</Button>
           </div>
         )}
       </motion.div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
