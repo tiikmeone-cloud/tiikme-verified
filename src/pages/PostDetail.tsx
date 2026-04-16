@@ -224,7 +224,11 @@ const PostDetail = () => {
           <span className="h-9 px-3 rounded-xl text-[13px] font-semibold flex items-center gap-1.5" style={{ color: "var(--text-2)" }}>
             <MessageSquare className="w-4 h-4" /> {comments.length}
           </span>
+          <button type="button" onClick={() => setShareOpen(true)} className="h-9 px-3 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all" style={{ color: "var(--text-2)" }}>
+            <Send className="w-4 h-4" /> Share
+          </button>
         </div>
+        {shareOpen && postId && <ShareModal open postId={postId} onClose={() => setShareOpen(false)} />}
 
         {/* Comments */}
         <div className="px-4 pb-4 pt-3 space-y-3" style={{ borderTop: "1px solid var(--border)" }}>
