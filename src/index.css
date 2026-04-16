@@ -711,3 +711,7 @@
   0%,100% { transform: translate(0, 0) scale(1); }
   50% { transform: translate(-50px, 40px) scale(1.08); }
 }
+@keyframes refetchSlide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
