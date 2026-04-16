@@ -113,13 +113,16 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
     });
     if (error) { toast.error(error.message); setSubmitting(false); return; }
 
-    await supabase.from("alerts").insert({
-      user_id: verifierId,
+    // Send notification via helper (writes to notifications table)
+    const { sendNotification } = await import("@/lib/notify");
+    sendNotification({
+      userId: verifierId,
+      actorId: user.id,
       type: "verification_request",
       title: "Verification Request",
       body: `${profile?.full_name || "Someone"} wants you to verify their ${itemType} at ${companyName}`,
-      action_url: `/app/profile/${user.id}`,
-      data: { actor_id: user.id, item_id: item.id, item_type: itemType, org_id: selectedOrg?.id } as any,
+      actionUrl: `/app/profile/${user.id}`,
+      data: { item_id: item.id, item_type: itemType, org_id: selectedOrg?.id },
     });
 
     const table = itemType === "achievement" ? "achievements" : "work_items";
