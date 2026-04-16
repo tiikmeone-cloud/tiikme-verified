@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageSEO } from "@/hooks/usePageSEO";
 import { AnimatePresence } from "framer-motion";
-import { Search, Briefcase, MapPin, Bookmark, Clock, Plus, Building2, Users as UsersIcon, Eye, Trophy, GraduationCap, Code, Zap, Hammer, CalendarDays, Shield } from "lucide-react";
+import { Search, Briefcase, MapPin, Bookmark, Clock, Plus, Building2, Users as UsersIcon, Eye, Trophy, GraduationCap, Code, Zap, Hammer, CalendarDays, Shield, Heart, MessageCircle, Link2, Send, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -13,6 +13,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import ApplyModal from "@/components/opportunities/ApplyModal";
 import GlassBox from "@/components/ui/GlassBox";
+import FindTab from "@/components/opportunities/FindTab";
+import ReferModal from "@/components/opportunities/ReferModal";
+import AvatarSquare from "@/components/ui/AvatarSquare";
 
 const TYPE_META: Record<string, { label: string; color: string; icon: any }> = {
   full_time: { label: "Full-time", color: "#2563EB", icon: Briefcase },
@@ -32,7 +35,7 @@ const TYPE_META: Record<string, { label: string; color: string; icon: any }> = {
   volunteer: { label: "Volunteer", color: "#10B981", icon: UsersIcon },
 };
 
-const FILTER_TABS = ["All", "Full-time", "Internship", "Freelance", "Hackathon", "Remote"];
+const FILTER_TABS = ["All", "Full-time", "Internship", "Freelance", "Hackathon", "Remote", "Find"];
 const filterMap: Record<string, (q: any) => any> = {
   "Full-time": q => q.or("type.eq.full_time,type.eq.fulltime,type.eq.full-time,type.eq.job"),
   "Internship": q => q.eq("type", "internship"),
@@ -65,7 +68,6 @@ const Opportunities = () => {
   useEffect(() => { const t = setTimeout(() => setDebouncedSearch(search), 300); return () => clearTimeout(t); }, [search]);
 
   const fetchOppsData = useCallback(async () => {
-    // Auto-expire past-due opportunities
     await supabase
       .from("opportunities")
       .update({ is_expired: true, is_open: false } as any)
@@ -77,7 +79,7 @@ const Opportunities = () => {
       .select("*, org:organizations!opportunities_org_id_fkey(id, name, logo_url, type, slug, is_verified)")
       .eq("is_open", true).eq("status", "active").order("created_at", { ascending: false }).limit(50);
     if (debouncedSearch.trim()) query = query.or(`title.ilike.%${debouncedSearch}%,description.ilike.%${debouncedSearch}%`);
-    if (activeType !== "All" && filterMap[activeType]) query = filterMap[activeType](query);
+    if (activeType !== "All" && activeType !== "Find" && filterMap[activeType]) query = filterMap[activeType](query);
     const { data } = await query;
 
     const scored = (data || []).map((opp: any) => ({
@@ -101,6 +103,7 @@ const Opportunities = () => {
     queryKey: ["opportunities", debouncedSearch, activeType],
     queryFn: fetchOppsData,
     staleTime: 3 * 60 * 1000,
+    enabled: activeType !== "Find",
   });
 
   const { data: appliedIds = new Set<string>() } = useQuery({
@@ -119,7 +122,6 @@ const Opportunities = () => {
     toast.success(saved.has(id) ? "Removed" : "Saved");
   };
 
-  // Smart matching — recommended opps based on skills & score
   const recommended = useMemo(() => {
     if (!profile?.skills?.length || isInstitution) return [];
     const userSkills = new Set((profile.skills as string[]).map(s => s.toLowerCase()));
@@ -140,7 +142,6 @@ const Opportunities = () => {
   const displayOpps = tab === "mine" ? myOpps : opps;
   const daysAgo = (d: string) => { const diff = Math.floor((Date.now() - new Date(d).getTime()) / 86400000); return diff === 0 ? "Today" : `${diff}d ago`; };
   const daysLeft = (d: string) => { const diff = Math.ceil((new Date(d).getTime() - Date.now()) / 86400000); return diff > 0 ? `${diff} days left` : "Expired"; };
-  
 
   return (
     <SubscriptionGate feature="opportunities">
@@ -172,17 +173,19 @@ const Opportunities = () => {
 
       {/* Filter bar */}
       <div className="sticky top-0 z-10 py-3 flex items-center gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: "var(--text-3)" }} />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search roles, companies..."
-            className="w-full h-[48px] rounded-[20px] pl-12 pr-4 text-[14px] outline-none transition-all duration-200 glass-input" />
-        </div>
+        {activeType !== "Find" && (
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: "var(--text-3)" }} />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search roles, companies..."
+              className="w-full h-[48px] rounded-[20px] pl-12 pr-4 text-[14px] outline-none transition-all duration-200 glass-input" />
+          </div>
+        )}
         <div className="flex gap-2 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
           {FILTER_TABS.map(f => (
             <button key={f} type="button" onClick={() => setActiveType(f)}
               className="h-9 px-5 rounded-[20px] text-[13px] font-semibold cursor-pointer transition-all duration-200 shrink-0 btn-glass-pill"
               style={activeType === f
-                ? { background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 4px 16px rgba(232,115,58,0.30)" }
+                ? { background: f === "Find" ? "linear-gradient(135deg, #10B981, #34D399)" : "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: f === "Find" ? "0 4px 16px rgba(16,185,129,0.30)" : "0 4px 16px rgba(232,115,58,0.30)" }
                 : {}
               }>
               {f}
@@ -191,39 +194,46 @@ const Opportunities = () => {
         </div>
       </div>
 
-      {/* Recommended Section */}
-      {recommended.length > 0 && tab === "all" && !search.trim() && activeType === "All" && (
-        <div className="mb-6">
-          <h2 className="text-[16px] font-bold mb-3 flex items-center gap-2" style={{ color: "var(--text-1)" }}>
-            <Zap className="w-4 h-4" style={{ color: "#F59E0B" }} /> Recommended for You
-          </h2>
-          <div className="space-y-3">
-            {recommended.map(o => <OpportunityCard key={`rec-${o.id}`} o={o} user={user} appliedIds={appliedIds} saved={saved} onSave={toggleSave} onApply={setShowApply} navigate={navigate} daysAgo={daysAgo} daysLeft={daysLeft} />)}
-          </div>
-        </div>
-      )}
-
-      {/* Cards */}
-      {loading && !opps.length ? (
-        <div className="space-y-4 mt-4">{[1,2,3].map(i => (
-          <div key={i} className="animate-pulse rounded-xl p-5 glass-light" style={{ minHeight: 120 }}>
-            <div className="flex gap-3"><div className="w-11 h-11 rounded-xl" style={{ background: "var(--surface-2)" }} /><div className="flex-1 space-y-2"><div className="h-5 w-2/3 rounded" style={{ background: "var(--surface-2)" }} /><div className="h-4 w-1/3 rounded" style={{ background: "var(--surface-2)" }} /></div></div>
-          </div>
-        ))}</div>
-      ) : displayOpps.length === 0 ? (
-        <div className="text-center py-16">
-          <Briefcase className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
-          <p className="text-[16px] font-bold" style={{ color: "var(--text-1)" }}>No opportunities yet</p>
-          <p className="text-[13px] mt-1" style={{ color: "var(--text-3)" }}>Check back later</p>
-        </div>
+      {/* Find Tab */}
+      {activeType === "Find" ? (
+        <FindTab />
       ) : (
         <>
+          {/* Recommended Section */}
           {recommended.length > 0 && tab === "all" && !search.trim() && activeType === "All" && (
-            <h2 className="text-[16px] font-bold mb-3" style={{ color: "var(--text-1)" }}>All Opportunities</h2>
+            <div className="mb-6">
+              <h2 className="text-[16px] font-bold mb-3 flex items-center gap-2" style={{ color: "var(--text-1)" }}>
+                <Zap className="w-4 h-4" style={{ color: "#F59E0B" }} /> Recommended for You
+              </h2>
+              <div className="space-y-3">
+                {recommended.map(o => <OpportunityCard key={`rec-${o.id}`} o={o} user={user} profile={profile} isInstitution={isInstitution} appliedIds={appliedIds} saved={saved} onSave={toggleSave} onApply={setShowApply} navigate={navigate} daysAgo={daysAgo} daysLeft={daysLeft} />)}
+              </div>
+            </div>
           )}
-          <div className="space-y-3">
-            {displayOpps.map(o => <OpportunityCard key={o.id} o={o} user={user} appliedIds={appliedIds} saved={saved} onSave={toggleSave} onApply={setShowApply} navigate={navigate} daysAgo={daysAgo} daysLeft={daysLeft} />)}
-          </div>
+
+          {/* Cards */}
+          {loading && !opps.length ? (
+            <div className="space-y-4 mt-4">{[1,2,3].map(i => (
+              <div key={i} className="animate-pulse rounded-xl p-5 glass-light" style={{ minHeight: 120 }}>
+                <div className="flex gap-3"><div className="w-11 h-11 rounded-xl" style={{ background: "var(--surface-2)" }} /><div className="flex-1 space-y-2"><div className="h-5 w-2/3 rounded" style={{ background: "var(--surface-2)" }} /><div className="h-4 w-1/3 rounded" style={{ background: "var(--surface-2)" }} /></div></div>
+              </div>
+            ))}</div>
+          ) : displayOpps.length === 0 ? (
+            <div className="text-center py-16">
+              <Briefcase className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
+              <p className="text-[16px] font-bold" style={{ color: "var(--text-1)" }}>No opportunities yet</p>
+              <p className="text-[13px] mt-1" style={{ color: "var(--text-3)" }}>Check back later</p>
+            </div>
+          ) : (
+            <>
+              {recommended.length > 0 && tab === "all" && !search.trim() && activeType === "All" && (
+                <h2 className="text-[16px] font-bold mb-3" style={{ color: "var(--text-1)" }}>All Opportunities</h2>
+              )}
+              <div className="space-y-3">
+                {displayOpps.map(o => <OpportunityCard key={o.id} o={o} user={user} profile={profile} isInstitution={isInstitution} appliedIds={appliedIds} saved={saved} onSave={toggleSave} onApply={setShowApply} navigate={navigate} daysAgo={daysAgo} daysLeft={daysLeft} />)}
+              </div>
+            </>
+          )}
         </>
       )}
 
@@ -236,85 +246,241 @@ const Opportunities = () => {
 };
 
 /* ─── Opportunity Card Component ─── */
-function OpportunityCard({ o, user, appliedIds, saved, onSave, onApply, navigate, daysAgo, daysLeft }: any) {
+function OpportunityCard({ o, user, profile, isInstitution, appliedIds, saved, onSave, onApply, navigate, daysAgo, daysLeft }: any) {
   const orgData = o.org;
   const meta = TYPE_META[o.type || "job"] || TYPE_META.job;
   const TypeIcon = meta.icon;
   const applied = appliedIds.has(o.id);
 
+  // Engagement state
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [commentCount, setCommentCount] = useState(0);
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState<any[]>([]);
+  const [commentText, setCommentText] = useState("");
+  const [showRefer, setShowRefer] = useState(false);
+  const [referrers, setReferrers] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!o.id) return;
+    let cancelled = false;
+    (async () => {
+      const [likeCountRes, likedRes, commentCountRes, referralsRes] = await Promise.all([
+        supabase.from("opportunity_likes").select("*", { count: "exact", head: true }).eq("opportunity_id", o.id),
+        user?.id ? supabase.from("opportunity_likes").select("id").eq("opportunity_id", o.id).eq("user_id", user.id).maybeSingle() : Promise.resolve({ data: null }),
+        supabase.from("opportunity_comments").select("*", { count: "exact", head: true }).eq("opportunity_id", o.id),
+        supabase.from("opportunity_referrals").select("referrer_id").eq("opportunity_id", o.id).limit(5),
+      ]);
+      if (cancelled) return;
+      setLikeCount(likeCountRes.count || 0);
+      setLiked(!!likedRes.data);
+      setCommentCount(commentCountRes.count || 0);
+
+      // Fetch referrer profiles
+      const refData = (referralsRes as any).data || [];
+      if (refData.length > 0) {
+        const refIds = [...new Set(refData.map((r: any) => r.referrer_id))];
+        const { data: profs } = await supabase.from("profiles").select("id, full_name, avatar_url").in("id", refIds as string[]);
+        if (!cancelled) setReferrers(profs || []);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [o.id, user?.id]);
+
+  const toggleLike = async () => {
+    if (!user?.id) return;
+    if (liked) {
+      setLiked(false); setLikeCount(p => Math.max(0, p - 1));
+      const { error } = await supabase.from("opportunity_likes").delete().eq("opportunity_id", o.id).eq("user_id", user.id);
+      if (error) { setLiked(true); setLikeCount(p => p + 1); }
+    } else {
+      setLiked(true); setLikeCount(p => p + 1);
+      const { error } = await supabase.from("opportunity_likes").insert({ opportunity_id: o.id, user_id: user.id } as any);
+      if (error) { setLiked(false); setLikeCount(p => Math.max(0, p - 1)); }
+    }
+  };
+
+  const loadComments = async () => {
+    const { data } = await supabase
+      .from("opportunity_comments")
+      .select("id, content, user_id, created_at")
+      .eq("opportunity_id", o.id)
+      .order("created_at", { ascending: true })
+      .limit(20);
+    if (data?.length) {
+      const uids = [...new Set(data.map(c => c.user_id))];
+      const { data: profs } = await supabase.from("profiles").select("id, full_name, avatar_url").in("id", uids);
+      const profMap: Record<string, any> = {};
+      for (const p of profs || []) profMap[p.id] = p;
+      setComments(data.map(c => ({ ...c, author: profMap[c.user_id] })));
+    } else {
+      setComments([]);
+    }
+  };
+
+  const toggleComments = async () => {
+    if (!showComments) await loadComments();
+    setShowComments(p => !p);
+  };
+
+  const submitComment = async () => {
+    if (!user?.id || !commentText.trim()) return;
+    const { data, error } = await supabase.from("opportunity_comments")
+      .insert({ opportunity_id: o.id, user_id: user.id, content: commentText.trim() } as any)
+      .select("id, content, user_id, created_at")
+      .single();
+    if (error) { toast.error(error.message); return; }
+    setComments(prev => [...prev, { ...data, author: { id: user.id, full_name: profile?.full_name, avatar_url: profile?.avatar_url } }]);
+    setCommentCount(p => p + 1);
+    setCommentText("");
+  };
+
+  const handleRefer = () => {
+    if (isInstitution) {
+      setShowRefer(true);
+    } else {
+      const url = `${window.location.origin}/app/opportunities`;
+      navigator.clipboard.writeText(url);
+      toast.success("Link copied! Share with your connections.");
+    }
+  };
+
   return (
-    <GlassBox accent={meta.color}>
-      {/* Top row */}
-      <div className="flex items-start gap-3">
-        <div className="w-11 h-11 rounded-xl flex items-center justify-center text-[13px] font-bold shrink-0 overflow-hidden" style={{ background: "var(--surface-2)", border: "1.5px solid var(--border)" }}>
-          {orgData?.logo_url ? <img src={storageImageUrl(orgData.logo_url, "thumbnail")} alt="" className="w-full h-full object-cover" /> : <Building2 className="w-5 h-5" style={{ color: meta.color }} />}
+    <>
+      <GlassBox accent={meta.color}>
+        {/* Top row */}
+        <div className="flex items-start gap-3">
+          <div className="w-11 h-11 rounded-xl flex items-center justify-center text-[13px] font-bold shrink-0 overflow-hidden" style={{ background: "var(--surface-2)", border: "1.5px solid var(--border)" }}>
+            {orgData?.logo_url ? <img src={storageImageUrl(orgData.logo_url, "thumbnail")} alt="" className="w-full h-full object-cover" /> : <Building2 className="w-5 h-5" style={{ color: meta.color }} />}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-[14px] font-semibold" style={{ color: "var(--text-1)" }}>{orgData?.name || "Organization"}</span>
+              {orgData?.is_verified && <Shield className="w-3.5 h-3.5" style={{ color: "#10B981" }} />}
+            </div>
+          </div>
+          <span className="text-[11px] shrink-0" style={{ color: "var(--text-3)" }}>{o.created_at ? daysAgo(o.created_at) : ""}</span>
         </div>
-        <div className="flex-1 min-w-0">
+
+        <h3 className="text-[16px] font-bold mt-2" style={{ color: "var(--text-1)" }}>{o.title}</h3>
+
+        {/* Tags */}
+        <div className="flex flex-wrap gap-1.5 mt-2">
+          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1" style={{ background: `${meta.color}14`, color: meta.color }}>
+            <TypeIcon className="w-3 h-3" />{meta.label}
+          </span>
+          {o.location && <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full flex items-center gap-1" style={{ background: "#F0FDF4", color: "#16A34A" }}><MapPin className="w-3 h-3" />{o.location}</span>}
+          {o.is_remote && <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full" style={{ background: "#EFF6FF", color: "#2563EB" }}>Remote</span>}
+          {o.compensation && <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full" style={{ background: "#FFF3EC", color: "#E8580A" }}>{o.compensation}</span>}
+          {o.activity_score_min > 0 && <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full" style={{ background: "#FEF3C7", color: "#D97706" }}>Score: {o.activity_score_min}+</span>}
+          {(() => {
+            const eb = expiryBadge(o.expires_at);
+            return eb ? <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full flex items-center gap-1" style={{ background: eb.bg, color: eb.color }}><Clock className="w-3 h-3" />{eb.label}</span> : null;
+          })()}
+        </div>
+
+        {o.description && <p className="text-[13px] mt-2 line-clamp-2" style={{ color: "var(--text-2)" }}>{o.description}</p>}
+
+        {/* Skills */}
+        {o.skills_required?.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-2">
+            {(o.skills_required as string[]).slice(0, 4).map((s: string) => (
+              <span key={s} className="text-[11px] px-2.5 py-0.5 rounded-full" style={{ background: "var(--surface-2)", color: "var(--text-2)" }}>{s}</span>
+            ))}
+            {o.skills_required.length > 4 && <span className="text-[11px] px-2 py-0.5" style={{ color: "var(--text-3)" }}>+{o.skills_required.length - 4}</span>}
+          </div>
+        )}
+
+        {/* Referrer avatars */}
+        {referrers.length > 0 && (
+          <div className="flex items-center gap-1.5 mt-2">
+            <span className="text-[11px]" style={{ color: "var(--text-3)" }}>Referred by</span>
+            <div className="flex -space-x-1.5">
+              {referrers.slice(0, 3).map(r => (
+                <div key={r.id} className="cursor-pointer" onClick={() => navigate(`/app/profile/${r.id}`)} title={r.full_name}>
+                  <AvatarSquare src={r.avatar_url} name={r.full_name || "U"} size={20} />
+                </div>
+              ))}
+            </div>
+            {referrers.length === 1 && <span className="text-[11px] font-medium" style={{ color: "var(--text-2)" }}>{referrers[0].full_name}</span>}
+          </div>
+        )}
+
+        {/* Engagement row */}
+        <div className="flex items-center gap-4 mt-3 pt-2" style={{ borderTop: "1px solid var(--border)" }}>
+          <button type="button" onClick={toggleLike} className="flex items-center gap-1.5 cursor-pointer active:scale-95" style={{ background: "none", border: "none" }}>
+            <Heart className="w-4 h-4" style={{ color: liked ? "#EF4444" : "var(--text-3)", fill: liked ? "#EF4444" : "none", transition: "all 150ms" }} />
+            <span className="text-[12px] font-semibold" style={{ color: liked ? "#EF4444" : "var(--text-3)" }}>{likeCount || ""}</span>
+          </button>
+          <button type="button" onClick={toggleComments} className="flex items-center gap-1.5 cursor-pointer active:scale-95" style={{ background: "none", border: "none" }}>
+            <MessageCircle className="w-4 h-4" style={{ color: showComments ? "#E8733A" : "var(--text-3)", transition: "all 150ms" }} />
+            <span className="text-[12px] font-semibold" style={{ color: showComments ? "#E8733A" : "var(--text-3)" }}>{commentCount || ""}</span>
+          </button>
+          <button type="button" onClick={handleRefer} className="flex items-center gap-1.5 cursor-pointer active:scale-95" style={{ background: "none", border: "none" }}>
+            <Link2 className="w-4 h-4" style={{ color: "var(--text-3)" }} />
+            <span className="text-[12px] font-semibold" style={{ color: "var(--text-3)" }}>Refer</span>
+          </button>
+        </div>
+
+        {/* Comments section */}
+        {showComments && (
+          <div className="mt-2 pt-2 space-y-2" style={{ borderTop: "1px solid var(--border)" }}>
+            {comments.map(c => (
+              <div key={c.id} className="flex items-start gap-2">
+                <AvatarSquare src={c.author?.avatar_url} name={c.author?.full_name || "U"} size={24} />
+                <div className="flex-1 min-w-0">
+                  <span className="text-[12px] font-semibold" style={{ color: "var(--text-1)" }}>{c.author?.full_name || "User"}</span>
+                  <p className="text-[12px]" style={{ color: "var(--text-2)" }}>{c.content}</p>
+                </div>
+              </div>
+            ))}
+            {user && (
+              <div className="flex items-center gap-2">
+                <input value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="Add a comment..."
+                  className="flex-1 h-8 rounded-lg px-3 text-[12px] outline-none glass-input"
+                  onKeyDown={e => { if (e.key === "Enter" && commentText.trim()) submitComment(); }} />
+                <button type="button" onClick={submitComment} disabled={!commentText.trim()}
+                  className="w-7 h-7 rounded-full flex items-center justify-center cursor-pointer active:scale-95 disabled:opacity-40"
+                  style={{ background: commentText.trim() ? "#E8733A" : "var(--surface-2)" }}>
+                  <Send className="w-3 h-3" style={{ color: commentText.trim() ? "white" : "var(--text-3)" }} />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Bottom actions */}
+        <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
+          <div className="flex items-center gap-3 text-[12px]" style={{ color: "var(--text-3)" }}>
+            <span><UsersIcon className="w-3.5 h-3.5 inline mr-1" />{o.responses_count || 0} applicants</span>
+            {o.deadline && <span><Clock className="w-3.5 h-3.5 inline mr-1" />{daysLeft(o.deadline)}</span>}
+          </div>
           <div className="flex items-center gap-2">
-            <span className="text-[14px] font-semibold" style={{ color: "var(--text-1)" }}>{orgData?.name || "Organization"}</span>
-            {orgData?.is_verified && <Shield className="w-3.5 h-3.5" style={{ color: "#10B981" }} />}
+            {o.poster_id === user?.id ? (
+              <Button onClick={() => navigate(`/app/opportunities/${o.id}/applications`)}
+                variant="outline" style={{ height: 40, borderRadius: 12, borderColor: "var(--brand)", color: "var(--brand)" }}>
+                <Eye className="w-4 h-4 mr-1" /> {o.responses_count || 0} Applications
+              </Button>
+            ) : (
+              <>
+                <button type="button" onClick={() => onSave(o.id)} className="w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer"
+                  style={{ border: "1.5px solid var(--border)" }}>
+                  <Bookmark className="w-4 h-4" style={{ color: saved.has(o.id) ? "#E8580A" : "var(--text-3)", fill: saved.has(o.id) ? "#E8580A" : "none" }} />
+                </button>
+                {applied ? (
+                  <Button disabled style={{ height: 40, borderRadius: 12, background: "#F0FDF4", color: "#16A34A", border: "1.5px solid #16A34A" }}>Applied</Button>
+                ) : (
+                  <Button onClick={() => onApply(o)} className="btn-liquid-primary" style={{ height: 40, borderRadius: 12 }}>Apply Now</Button>
+                )}
+              </>
+            )}
           </div>
         </div>
-        <span className="text-[11px] shrink-0" style={{ color: "var(--text-3)" }}>{o.created_at ? daysAgo(o.created_at) : ""}</span>
-      </div>
+      </GlassBox>
 
-      <h3 className="text-[16px] font-bold mt-2" style={{ color: "var(--text-1)" }}>{o.title}</h3>
-
-      {/* Tags */}
-      <div className="flex flex-wrap gap-1.5 mt-2">
-        <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1" style={{ background: `${meta.color}14`, color: meta.color }}>
-          <TypeIcon className="w-3 h-3" />{meta.label}
-        </span>
-        {o.location && <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full flex items-center gap-1" style={{ background: "#F0FDF4", color: "#16A34A" }}><MapPin className="w-3 h-3" />{o.location}</span>}
-        {o.is_remote && <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full" style={{ background: "#EFF6FF", color: "#2563EB" }}>Remote</span>}
-        {o.compensation && <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full" style={{ background: "#FFF3EC", color: "#E8580A" }}>{o.compensation}</span>}
-        {o.activity_score_min > 0 && <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full" style={{ background: "#FEF3C7", color: "#D97706" }}>Score: {o.activity_score_min}+</span>}
-        {(() => {
-          const eb = expiryBadge(o.expires_at);
-          return eb ? <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full flex items-center gap-1" style={{ background: eb.bg, color: eb.color }}><Clock className="w-3 h-3" />{eb.label}</span> : null;
-        })()}
-      </div>
-
-      {o.description && <p className="text-[13px] mt-2 line-clamp-2" style={{ color: "var(--text-2)" }}>{o.description}</p>}
-
-      {/* Skills */}
-      {o.skills_required?.length > 0 && (
-        <div className="flex flex-wrap gap-1 mt-2">
-          {(o.skills_required as string[]).slice(0, 4).map((s: string) => (
-            <span key={s} className="text-[11px] px-2.5 py-0.5 rounded-full" style={{ background: "var(--surface-2)", color: "var(--text-2)" }}>{s}</span>
-          ))}
-          {o.skills_required.length > 4 && <span className="text-[11px] px-2 py-0.5" style={{ color: "var(--text-3)" }}>+{o.skills_required.length - 4}</span>}
-        </div>
-      )}
-
-      {/* Bottom */}
-      <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
-        <div className="flex items-center gap-3 text-[12px]" style={{ color: "var(--text-3)" }}>
-          <span><UsersIcon className="w-3.5 h-3.5 inline mr-1" />{o.responses_count || 0} applicants</span>
-          {o.deadline && <span><Clock className="w-3.5 h-3.5 inline mr-1" />{daysLeft(o.deadline)}</span>}
-        </div>
-        <div className="flex items-center gap-2">
-          {o.poster_id === user?.id ? (
-            <Button onClick={() => navigate(`/app/opportunities/${o.id}/applications`)}
-              variant="outline" style={{ height: 40, borderRadius: 12, borderColor: "var(--brand)", color: "var(--brand)" }}>
-              <Eye className="w-4 h-4 mr-1" /> {o.responses_count || 0} Applications
-            </Button>
-          ) : (
-            <>
-              <button type="button" onClick={() => onSave(o.id)} className="w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer"
-                style={{ border: "1.5px solid var(--border)" }}>
-                <Bookmark className="w-4 h-4" style={{ color: saved.has(o.id) ? "#E8580A" : "var(--text-3)", fill: saved.has(o.id) ? "#E8580A" : "none" }} />
-              </button>
-              {applied ? (
-                <Button disabled style={{ height: 40, borderRadius: 12, background: "#F0FDF4", color: "#16A34A", border: "1.5px solid #16A34A" }}>Applied ✓</Button>
-              ) : (
-                <Button onClick={() => onApply(o)} className="btn-liquid-primary" style={{ height: 40, borderRadius: 12 }}>Apply Now</Button>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-    </GlassBox>
+      {showRefer && <ReferModal open={showRefer} onClose={() => setShowRefer(false)} opportunity={o} />}
+    </>
   );
 }
 
