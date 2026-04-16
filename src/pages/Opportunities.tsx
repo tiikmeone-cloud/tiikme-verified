@@ -315,7 +315,6 @@ function OpportunityCard({ o, user, appliedIds, saved, onSave, onApply, navigate
         </div>
       </div>
     </GlassBox>
-    </SubscriptionGate>
   );
 }
 
