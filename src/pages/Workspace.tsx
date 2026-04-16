@@ -34,6 +34,45 @@ const formatDateSep = (d: string) => {
   return date.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
 };
 
+const URL_RE = /(https?:\/\/[^\s<]+)/g;
+
+/* Renders text with clickable URLs */
+const ChatMessageContent = ({ text }: { text: string }) => {
+  if (!text) return null;
+  const parts = text.split(URL_RE);
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (URL_RE.test(part)) {
+          URL_RE.lastIndex = 0;
+          let url = part;
+          let trailing = "";
+          const trailingMatch = url.match(/[.,;:!?)]+$/);
+          if (trailingMatch) { trailing = trailingMatch[0]; url = url.slice(0, -trailing.length); }
+          return (
+            <span key={i}>
+              <a href={url} target="_blank" rel="noopener noreferrer"
+                className="font-medium hover:underline" style={{ color: "#4A90D9" }}>
+                {url.replace(/^https?:\/\/(www\.)?/, "").slice(0, 40)}
+                {url.replace(/^https?:\/\/(www\.)?/, "").length > 40 ? "..." : ""}
+              </a>
+              {trailing}
+            </span>
+          );
+        }
+        return <span key={i}>{part}</span>;
+      })}
+    </>
+  );
+};
+  const date = new Date(d);
+  const now = new Date();
+  if (date.toDateString() === now.toDateString()) return "Today";
+  const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
+  if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
+  return date.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
+};
+
 /* ══════════════════════════════════════════════════════════════ */
 /*  AVATAR COMPONENT                                             */
 /* ══════════════════════════════════════════════════════════════ */
