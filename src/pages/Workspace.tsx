@@ -474,6 +474,12 @@ export default function Workspace() {
   const [activeGroup, setActiveGroup] = useState<WorkspaceGroup | null>(null);
   const [mobileShowChat, setMobileShowChat] = useState(false);
 
+  const handleCloseCreate = () => {
+    setShowCreate(false);
+    fetchGroups();
+  };
+  const [mobileShowChat, setMobileShowChat] = useState(false);
+
   // Separate pending invites from accepted groups
   const pendingInvites = groups.filter(g => g.invitation_status === "pending");
   const acceptedGroups = groups.filter(g => g.invitation_status === "accepted");
@@ -617,7 +623,7 @@ export default function Workspace() {
       {/* Create Group Modal */}
       <CreateGroupModal
         open={showCreate}
-        onClose={() => setShowCreate(false)}
+        onClose={handleCloseCreate}
         userId={userId}
         onCreate={createGroup}
       />
