@@ -157,7 +157,7 @@ export function TrendingPostCard({ post, authorProfile }: PostCardProps) {
       }}
       onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(26,26,78,0.12)"; }}
       onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
-      onClick={() => navigate(`/app/post/${post.id}`)}
+      onClick={() => navigate(`/post/${post.id}`)}
     >
       <div className="flex items-center gap-2" style={{ marginBottom: 8 }}>
         <AvatarSquare src={authorProfile?.avatar_url} name={name} size={28} />
