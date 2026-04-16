@@ -83,21 +83,20 @@ const AppShell = ({ children }: { children: ReactNode }) => {
     return pathname === path || pathname.startsWith(path + "/");
   };
 
-  const fetchUnreadPings = async () => {
+  const fetchUnreadPings = useCallback(async () => {
     if (!user?.id) return;
     const { data: convos } = await supabase.from("conversations").select("id")
       .or(`participant_1.eq.${user.id},participant_2.eq.${user.id}`);
     if (!convos?.length) { setUnreadPings(0); return; }
     const convIds = convos.map(c => c.id);
-    const { data: unreadRows } = await supabase.from("pings")
-      .select("conversation_id")
+    const { count } = await supabase.from("pings")
+      .select("id", { count: "exact", head: true })
       .in("conversation_id", convIds)
       .eq("is_read", false)
       .neq("sender_id", user.id)
       .or("is_deleted.is.null,is_deleted.eq.false");
-    const distinctConvos = new Set((unreadRows || []).map((r: any) => r.conversation_id));
-    setUnreadPings(distinctConvos.size);
-  };
+    setUnreadPings(count || 0);
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user?.id) return;
