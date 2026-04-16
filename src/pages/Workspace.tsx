@@ -132,7 +132,6 @@ const CreateGroupModal = ({ open, onClose, userId, onCreate }: CreateGroupModalP
 
   const handleCreate = async () => {
     if (!name.trim()) { toast.error("Group name is required"); return; }
-    if (selectedIds.length === 0) { toast.error("Add at least 1 member"); return; }
     setCreating(true);
     try {
       const result = await onCreate(name.trim(), desc.trim(), null, selectedIds);
@@ -141,10 +140,11 @@ const CreateGroupModal = ({ open, onClose, userId, onCreate }: CreateGroupModalP
         setStep(1); setName(""); setDesc(""); setSelectedIds([]);
         onClose();
       } else {
-        toast.error("Failed to create group — check permissions");
+        toast.error("Failed to create group — check console for details");
       }
-    } catch {
-      toast.error("Failed to create group");
+    } catch (e: any) {
+      console.error("Group creation error:", e);
+      toast.error("Failed to create group: " + (e?.message || "Unknown error"));
     }
     setCreating(false);
   };
@@ -236,7 +236,7 @@ const CreateGroupModal = ({ open, onClose, userId, onCreate }: CreateGroupModalP
           </div>
 
           <button type="button" onClick={handleCreate}
-            disabled={creating || selectedIds.length === 0}
+            disabled={creating}
             className="w-full h-10 rounded-[10px] text-[14px] font-semibold cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
             style={{ background: "linear-gradient(135deg, #E8733A, #FF9A62)", color: "#fff" }}>
             {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : `Create Group (${selectedIds.length + 1} ${selectedIds.length + 1 === 1 ? "member" : "members"})`}
