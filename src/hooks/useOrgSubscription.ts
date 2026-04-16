@@ -43,7 +43,7 @@ export function useOrgSubscription() {
 
   const hasAccess = (() => {
     if (!isInstitution) return true; // non-institution users aren't gated
-    if (!subscription) return false;
+    if (!subscription) return true; // No record = allow (fail open, trial not yet created)
     if (subscription.plan === "trial" && new Date(subscription.trial_ends_at) > new Date()) return true;
     if (subscription.plan !== "trial" && subscription.status === "active") return true;
     return false;
