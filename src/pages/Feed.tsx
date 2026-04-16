@@ -514,9 +514,9 @@ const PostCard = ({
         )}
 
         {/* Repost info */}
-        {repostCount >= 2 && (
+        {localRepostCount >= 2 && (
           <p style={{ fontSize: 12, color: "#9CA3C0", marginTop: 4 }}>
-            {displayName} and {repostCount - 1} other{repostCount > 2 ? "s" : ""} reposted
+            {displayName} and {localRepostCount - 1} other{localRepostCount > 2 ? "s" : ""} reposted
           </p>
         )}
 
