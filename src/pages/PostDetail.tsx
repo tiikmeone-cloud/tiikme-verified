@@ -11,6 +11,7 @@ import MentionText from "@/components/feed/MentionText";
 import PostCarousel from "@/components/feed/PostCarousel";
 import EditPostModal from "@/components/feed/EditPostModal";
 import DeletePostDialog from "@/components/feed/DeletePostDialog";
+import ShareModal from "@/components/feed/ShareModal";
 
 const roleColorMap: Record<string, string> = {
   student: "#4F46E5", professional: "#0369A1", doctor: "#0E7490",
