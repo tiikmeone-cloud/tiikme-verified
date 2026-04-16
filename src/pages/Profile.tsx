@@ -770,22 +770,9 @@ const Profile = () => {
         }}>
           <div className="flex profile-info-flex" style={{ gap: 16, alignItems: "flex-start" }}>
             {/* Avatar — clickable with popover */}
-            <div className="relative shrink-0">
-              <div className="cursor-pointer" onClick={() => isOwnProfile && setShowAvatarMenu(!showAvatarMenu)}>
+              <div className="shrink-0">
                 <AvatarSquare src={profileData.avatar_url} name={displayName || "U"} size="profile" bgColor={roleColor} className="shadow-md" />
               </div>
-              {showAvatarMenu && isOwnProfile && (
-                <div className="absolute z-50" style={{ top: "100%", left: 0, marginTop: 4, background: "#fff", borderRadius: 10, boxShadow: "0 4px 20px rgba(0,0,0,0.15)", border: "1px solid rgba(0,0,0,0.08)", overflow: "hidden", minWidth: 160 }}>
-                  <button type="button" onClick={() => avatarFileRef.current?.click()} className="w-full flex items-center gap-2 cursor-pointer" style={{ padding: "10px 14px", fontSize: 13, fontWeight: 500, color: "#1A1A2E", background: "none", border: "none", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
-                    <Camera style={{ width: 14, height: 14, color: "#E8733A" }} /> Change photo
-                  </button>
-                  <button type="button" onClick={handleRemovePhoto} className="w-full flex items-center gap-2 cursor-pointer" style={{ padding: "10px 14px", fontSize: 13, fontWeight: 500, color: "#EF4444", background: "none", border: "none" }}>
-                    <Trash2 style={{ width: 14, height: 14 }} /> Remove photo
-                  </button>
-                </div>
-              )}
-              <input ref={avatarFileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChangePhoto} />
-            </div>
 
             {/* Info */}
             <div className="profile-info-body" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
