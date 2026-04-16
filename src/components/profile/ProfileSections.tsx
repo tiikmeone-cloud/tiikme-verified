@@ -414,9 +414,21 @@ export const SkillsSection = ({ skills, isOwnProfile, onAdd, onRemoveSkill }: {
 /* ═══ POSTS ═══ */
 export const PostsSection = ({ posts, stats }: { posts: any[]; stats: { posts: number } }) => {
   const getLikeCount = (p: any) => {
+    // Use aggregated count from post_reactions relation
+    if (Array.isArray(p.post_reactions) && p.post_reactions.length > 0) {
+      return p.post_reactions[0]?.count || 0;
+    }
+    // Fallback to reactions object
     const r = p.reactions;
     if (!r || typeof r !== "object") return 0;
     return (r.useful || 0) + (r.inspiring || 0) + (r.insightful || 0);
+  };
+
+  const getCommentCount = (p: any) => {
+    if (Array.isArray(p.post_comments) && p.post_comments.length > 0) {
+      return p.post_comments[0]?.count || 0;
+    }
+    return p.comment_count || 0;
   };
 
   return (
@@ -432,7 +444,7 @@ export const PostsSection = ({ posts, stats }: { posts: any[]; stats: { posts: n
               {p.image_urls && p.image_urls.length > 0 && (
                 <div className="flex gap-1 mt-1.5 overflow-hidden" style={{ borderRadius: 8 }}>
                   {p.image_urls.slice(0, 3).map((url: string, i: number) => (
-                    <img key={i} src={url} alt="" className="object-cover" style={{ width: p.image_urls.length === 1 ? "100%" : 80, height: 56, borderRadius: 6 }} />
+                    <img key={i} src={url} alt="" loading="lazy" className="object-cover" style={{ width: p.image_urls.length === 1 ? "100%" : 80, height: 56, borderRadius: 6 }} />
                   ))}
                   {p.image_urls.length > 3 && <span style={{ width: 80, height: 56, borderRadius: 6, background: "rgba(0,0,0,0.06)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "var(--text-muted)" }}>+{p.image_urls.length - 3}</span>}
                 </div>
@@ -443,7 +455,7 @@ export const PostsSection = ({ posts, stats }: { posts: any[]; stats: { posts: n
                   <Star style={{ width: 12, height: 12, color: "#FF6B9D" }} /> {getLikeCount(p)}
                 </span>
                 <span className="flex items-center" style={{ gap: 3, fontSize: 12, color: "var(--text-muted)" }}>
-                  <MessageCircle style={{ width: 12, height: 12 }} /> {p.comment_count || 0}
+                  <MessageCircle style={{ width: 12, height: 12 }} /> {getCommentCount(p)}
                 </span>
                 <span className="flex items-center" style={{ gap: 3, fontSize: 12, color: "var(--text-muted)" }}>
                   <Rocket style={{ width: 12, height: 12 }} /> {p.repost_count || 0}
@@ -475,7 +487,7 @@ export const RolesSection = ({ items, isOwnProfile, onAdd, onDelete }: {
   };
 
   return (
-    <SectionBox title="Roles" icon={Star} iconColor="#0369A1" borderColor="#0369A1" count={items.length} isOwnProfile={isOwnProfile} onAdd={onAdd}>
+    <SectionBox title="Moonlighting" icon={Star} iconColor="#0369A1" borderColor="#0369A1" count={items.length} isOwnProfile={isOwnProfile} onAdd={onAdd}>
       {items.length === 0 ? (
         <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "4px 0" }}>No additional roles added</p>
       ) : (

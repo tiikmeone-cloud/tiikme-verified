@@ -359,7 +359,7 @@ const Profile = () => {
       isOwnProfile ? Promise.resolve({ data: authProfile }) : supabase.from("profiles").select("id, full_name, username, role, role_subtype, headline, bio, avatar_url, institution_name, location_city, location_state, activity_score, is_public, custom_links, open_to_work, designation, sector, languages, department, is_verified, role_metadata, about_qa, verification_badge_text, verification_type, created_at, account_type, org_id, skills").eq("id", targetUserId).maybeSingle(),
       supabase.from("work_items").select("id, title, job_title, description, company_name, institution_name, item_type, employment_type, work_location, start_date, end_date, start_month, start_year, end_month, end_year, is_current, status, visibility, verification_status, verified_by_user, verified_at, is_tiik_approved, created_at, owner_id").eq("owner_id", targetUserId).order("is_current", { ascending: false }).order("created_at", { ascending: false }),
       supabase.from("strands").select("id", { count: "exact", head: true }).or(`requester_id.eq.${targetUserId},receiver_id.eq.${targetUserId}`).eq("status", "accepted"),
-      supabase.from("posts").select("id, content, created_at, image_urls, comment_count, repost_count, reactions").eq("author_id", targetUserId).order("created_at", { ascending: false }).limit(5),
+      supabase.from("posts").select("id, content, created_at, image_urls, repost_count, post_reactions(count), post_comments(count)").eq("author_id", targetUserId).order("created_at", { ascending: false }).limit(5),
       supabase.from("achievements").select("id, title, type, description, icon_emoji, achievement_date, issued_by, certificate_url, certificate_file_url, source_type, source_workspace_name, visibility, created_at, user_id").eq("user_id", targetUserId).order("created_at", { ascending: false }),
       supabase.from("certificates").select("id, title, description, issued_date, expiry_date, certificate_url, is_verified, issued_by, issued_to, org_id, created_at, org:organizations(name, logo_url)").eq("issued_to", targetUserId).order("created_at", { ascending: false }),
       supabase.from("strands").select("requester_id, receiver_id").or(`requester_id.eq.${targetUserId},receiver_id.eq.${targetUserId}`).eq("status", "accepted").limit(6),
@@ -770,22 +770,9 @@ const Profile = () => {
         }}>
           <div className="flex profile-info-flex" style={{ gap: 16, alignItems: "flex-start" }}>
             {/* Avatar — clickable with popover */}
-            <div className="relative shrink-0">
-              <div className="cursor-pointer" onClick={() => isOwnProfile && setShowAvatarMenu(!showAvatarMenu)}>
+              <div className="shrink-0">
                 <AvatarSquare src={profileData.avatar_url} name={displayName || "U"} size="profile" bgColor={roleColor} className="shadow-md" />
               </div>
-              {showAvatarMenu && isOwnProfile && (
-                <div className="absolute z-50" style={{ top: "100%", left: 0, marginTop: 4, background: "#fff", borderRadius: 10, boxShadow: "0 4px 20px rgba(0,0,0,0.15)", border: "1px solid rgba(0,0,0,0.08)", overflow: "hidden", minWidth: 160 }}>
-                  <button type="button" onClick={() => avatarFileRef.current?.click()} className="w-full flex items-center gap-2 cursor-pointer" style={{ padding: "10px 14px", fontSize: 13, fontWeight: 500, color: "#1A1A2E", background: "none", border: "none", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
-                    <Camera style={{ width: 14, height: 14, color: "#E8733A" }} /> Change photo
-                  </button>
-                  <button type="button" onClick={handleRemovePhoto} className="w-full flex items-center gap-2 cursor-pointer" style={{ padding: "10px 14px", fontSize: 13, fontWeight: 500, color: "#EF4444", background: "none", border: "none" }}>
-                    <Trash2 style={{ width: 14, height: 14 }} /> Remove photo
-                  </button>
-                </div>
-              )}
-              <input ref={avatarFileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChangePhoto} />
-            </div>
 
             {/* Info */}
             <div className="profile-info-body" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
@@ -795,9 +782,11 @@ const Profile = () => {
               </div>
 
               {/* ROW 2: Current position / headline */}
+              {(currentExp || headline) && (
               <p style={{ fontSize: 13, fontWeight: 400, color: "#6B7094" }}>
-                {currentExp ? `${currentExp.job_title || currentExp.title} at ${currentExp.company_name || ""}` : headline || roleLabel}
+                {currentExp ? `${currentExp.job_title || currentExp.title} at ${currentExp.company_name || ""}` : headline}
               </p>
+              )}
 
               {/* ROW 3: @username + location + badges */}
               <div className="flex items-center flex-wrap" style={{ gap: 8 }}>
@@ -1053,7 +1042,7 @@ const Profile = () => {
         )}
       </GlassModal>
 
-      <GlassModal open={modalSection === "role"} onClose={() => setModalSection(null)} title="Add Role" icon={Layers} accentColor="#0369A1"
+      <GlassModal open={modalSection === "role"} onClose={() => setModalSection(null)} title="Add Moonlighting" icon={Layers} accentColor="#0369A1"
         actions={<>
           <button type="button" onClick={saveRole} disabled={saving} className="cursor-pointer" style={{ padding: "10px 28px", borderRadius: 16, fontSize: 14, fontWeight: 600, background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 4px 20px rgba(232,115,58,0.35)" }}>{saving ? "Saving..." : "Save"}</button>
           <button type="button" onClick={() => setModalSection(null)} className="cursor-pointer" style={{ padding: "10px 20px", borderRadius: 16, fontSize: 14, fontWeight: 500, background: "rgba(255,255,255,0.08)", color: "#fff", border: "1px solid rgba(255,255,255,0.25)" }}>Cancel</button>
