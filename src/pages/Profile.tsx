@@ -1024,7 +1024,21 @@ const Profile = () => {
         )}
       </GlassModal>
 
-      <EditProfileDrawer open={editOpen} onClose={() => setEditOpen(false)} onSaved={loadProfile} />
+      <GlassModal open={modalSection === "role"} onClose={() => setModalSection(null)} title="Add Role" icon={Layers} accentColor="#0369A1"
+        actions={<>
+          <button type="button" onClick={saveRole} disabled={saving} className="cursor-pointer" style={{ padding: "10px 28px", borderRadius: 16, fontSize: 14, fontWeight: 600, background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 4px 20px rgba(232,115,58,0.35)" }}>{saving ? "Saving..." : "Save"}</button>
+          <button type="button" onClick={() => setModalSection(null)} className="cursor-pointer" style={{ padding: "10px 20px", borderRadius: 16, fontSize: 14, fontWeight: 500, background: "rgba(255,255,255,0.08)", color: "#fff", border: "1px solid rgba(255,255,255,0.25)" }}>Cancel</button>
+        </>}
+      >
+        <div><label style={labelStyle}>Role Type *</label>
+          <select value={roleForm.roleType} onChange={e => setRoleForm({ ...roleForm, roleType: e.target.value })} style={gSelectStyle}>
+            {["Side Hustle", "Freelance", "Dual Employment", "Moonlighting"].map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </div>
+        <div><label style={labelStyle}>Title *</label><input value={roleForm.title} onChange={e => setRoleForm({ ...roleForm, title: e.target.value })} style={gInputStyle} placeholder="e.g. Freelance Designer" /></div>
+        <div><label style={labelStyle}>Description</label><textarea value={roleForm.description} onChange={e => setRoleForm({ ...roleForm, description: e.target.value.slice(0, 300) })} style={gTextareaStyle} placeholder="Brief description..." maxLength={300} /></div>
+      </GlassModal>
+
       {user && <GetTiikedModal open={showGetTiiked} onClose={() => setShowGetTiiked(false)} userId={user.id} userRole={role} onVerified={loadProfile} />}
     </div>
   );
