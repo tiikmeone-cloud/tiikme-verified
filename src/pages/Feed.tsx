@@ -653,7 +653,7 @@ const SuggestedWidget = ({ connectionIds }: { connectionIds: Set<string> }) => {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("id, full_name, role, avatar_url, institution_name")
+    supabase.from("profiles").select("id, full_name, role, avatar_url, institution_name, designation, role_metadata")
       .neq("id", user.id).order("activity_score", { ascending: false }).limit(20)
       .then(({ data }) => {
         const filtered = (data || []).filter(p => !connectionIds.has(p.id));
