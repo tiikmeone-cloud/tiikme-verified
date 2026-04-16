@@ -11,6 +11,7 @@ import MentionText from "@/components/feed/MentionText";
 import PostCarousel from "@/components/feed/PostCarousel";
 import EditPostModal from "@/components/feed/EditPostModal";
 import DeletePostDialog from "@/components/feed/DeletePostDialog";
+import ShareModal from "@/components/feed/ShareModal";
 
 const roleColorMap: Record<string, string> = {
   student: "#4F46E5", professional: "#0369A1", doctor: "#0E7490",
@@ -40,6 +41,7 @@ const PostDetail = () => {
   const [showMenu, setShowMenu] = useState(false);
   const [editingPost, setEditingPost] = useState<any | null>(null);
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -222,7 +224,11 @@ const PostDetail = () => {
           <span className="h-9 px-3 rounded-xl text-[13px] font-semibold flex items-center gap-1.5" style={{ color: "var(--text-2)" }}>
             <MessageSquare className="w-4 h-4" /> {comments.length}
           </span>
+          <button type="button" onClick={() => setShareOpen(true)} className="h-9 px-3 rounded-xl text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all" style={{ color: "var(--text-2)" }}>
+            <Send className="w-4 h-4" /> Share
+          </button>
         </div>
+        {shareOpen && postId && <ShareModal open postId={postId} onClose={() => setShareOpen(false)} />}
 
         {/* Comments */}
         <div className="px-4 pb-4 pt-3 space-y-3" style={{ borderTop: "1px solid var(--border)" }}>
