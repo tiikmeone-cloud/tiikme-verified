@@ -1,9 +1,10 @@
-import { ReactNode, useEffect, useState, useCallback } from "react";
+import { ReactNode, useEffect, useState, useCallback, useRef } from "react";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutGrid, Compass, Users, Target, User,
   Link2, MessageCircle, Bell, SlidersHorizontal, PencilLine, Plus, LogOut, Home,
+  X as XIcon,
 } from "lucide-react";
 import ThemeLogo from "@/components/ThemeLogo";
 import { toast } from "sonner";
@@ -58,6 +59,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
   const openPostCreate = () => navigate("/post/create");
   const { profile, initials, displayName, user } = useAuth();
   const [orgData, setOrgData] = useState<{ name: string; logo_url: string | null; type: string; slug: string } | null>(null);
+  const [showActionSheet, setShowActionSheet] = useState(false);
 
   const isInstitution = profile?.account_type === "institution" && !!profile?.org_id;
 
@@ -151,6 +153,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (isActive("/app/alerts")) setUnreadAlerts(0);
+    setShowActionSheet(false);
   }, [pathname]);
 
   const getBadge = (path: string) => {
@@ -365,18 +368,24 @@ const AppShell = ({ children }: { children: ReactNode }) => {
                 <button
                   type="button"
                   key="post"
-                  onClick={openPostCreate}
+                  onClick={() => setShowActionSheet(true)}
                   className="shrink-0 flex items-center justify-center active:scale-[0.92]"
                   style={{
                     width: 40,
                     height: 40,
                     borderRadius: "50%",
-                    background: "linear-gradient(135deg, #E8733A, #FF6B9D)",
-                    boxShadow: "0 4px 16px rgba(232,115,58,0.30)",
+                    background: showActionSheet
+                      ? "rgba(232,115,58,0.15)"
+                      : "linear-gradient(135deg, #E8733A, #FF6B9D)",
+                    boxShadow: showActionSheet ? "none" : "0 4px 16px rgba(232,115,58,0.30)",
                     cursor: "pointer",
+                    transition: "all 200ms ease",
                   }}
                 >
-                  <Plus style={{ width: 20, height: 20, color: "white" }} strokeWidth={2.5} />
+                  {showActionSheet
+                    ? <XIcon style={{ width: 20, height: 20, color: "#E8733A" }} strokeWidth={2.5} />
+                    : <Plus style={{ width: 20, height: 20, color: "white" }} strokeWidth={2.5} />
+                  }
                 </button>
               );
             }
@@ -410,6 +419,70 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           })}
         </div>
       </nav>
+
+      {/* ═══ MOBILE ACTION SHEET ═══ */}
+      {showActionSheet && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-[60] md:hidden"
+            style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(4px)" }}
+            onClick={() => setShowActionSheet(false)}
+          />
+          {/* Sheet */}
+          <div
+            className="fixed left-0 right-0 z-[61] md:hidden"
+            style={{
+              bottom: "calc(56px + env(safe-area-inset-bottom))",
+              padding: "8px 16px 12px",
+              background: "rgba(255,255,255,0.92)",
+              backdropFilter: "blur(24px)",
+              WebkitBackdropFilter: "blur(24px)",
+              borderTop: "1px solid rgba(255,255,255,0.40)",
+              borderRadius: "20px 20px 0 0",
+              animation: "actionSheetUp 200ms ease-out",
+            }}
+          >
+            {[
+              { label: "New Post", icon: PencilLine, action: () => { setShowActionSheet(false); openPostCreate(); } },
+              { label: "Workspace", icon: Users, action: () => { setShowActionSheet(false); navigate("/app/workspace"); } },
+              { label: "Opportunities", icon: Target, action: () => { setShowActionSheet(false); navigate("/app/opportunities"); } },
+              { label: "Connections", icon: Link2, action: () => { setShowActionSheet(false); navigate("/app/connections"); } },
+              { label: "Settings", icon: SlidersHorizontal, action: () => { setShowActionSheet(false); navigate("/app/settings"); } },
+            ].map((item) => (
+              <button
+                key={item.label}
+                type="button"
+                onClick={item.action}
+                className="w-full flex items-center active:scale-[0.98]"
+                style={{
+                  gap: 14,
+                  height: 52,
+                  padding: "0 12px",
+                  borderRadius: 14,
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  transition: "background 100ms",
+                  fontSize: 15,
+                  fontWeight: 600,
+                  color: "var(--text-primary)",
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = "rgba(232,115,58,0.08)")}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+              >
+                <div style={{
+                  width: 40, height: 40, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center",
+                  background: "rgba(232,115,58,0.10)",
+                }}>
+                  <item.icon style={{ width: 20, height: 20, color: "#E8733A" }} strokeWidth={1.8} />
+                </div>
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 };
