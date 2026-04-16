@@ -411,7 +411,13 @@ const SubscriptionSection = ({ userId }: { userId: string | null }) => {
 
 const SettingsPage = () => {
   const navigate = useNavigate();
-  const { user, refreshProfile } = useAuth();
+  const { user, refreshProfile, profile: authProfile } = useAuth();
+  const isInstitutionAccount = authProfile?.account_type === "institution";
+
+  const settingsNavItems = [
+    ...navItems,
+    ...(isInstitutionAccount ? [{ id: "subscription", label: "Subscription", icon: CreditCard }] : []),
+  ];
 
   const [activeTab, setActiveTab] = useState("profile");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
