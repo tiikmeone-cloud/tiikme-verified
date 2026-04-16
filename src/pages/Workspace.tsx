@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import SubscriptionGate from "@/components/SubscriptionGate";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import {
   Users, Plus, Search, Send, Trash2, X, Settings, Paperclip,
@@ -496,6 +497,7 @@ export default function Workspace() {
 
   /* ── LAYOUT ── */
   return (
+    <SubscriptionGate feature="workspace">
     <div className="max-w-[960px] mx-auto" style={{ height: "calc(100vh - 80px)" }}>
       <div className="flex h-full" style={{ gap: 0 }}>
 
@@ -616,5 +618,6 @@ export default function Workspace() {
         onCreate={createGroup}
       />
     </div>
+    </SubscriptionGate>
   );
 }

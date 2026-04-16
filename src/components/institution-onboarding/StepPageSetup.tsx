@@ -103,6 +103,19 @@ export default function StepPageSetup({ form, update, onComplete }: Props) {
         onboarding_complete: true,
       }).eq("id", user.id);
 
+      // Create subscription record (90-day trial)
+      await supabase.from("org_subscriptions" as any).insert({
+        org_id: org.id,
+        profile_id: user.id,
+        plan: "trial",
+        status: "active",
+        trial_started_at: new Date().toISOString(),
+        trial_ends_at: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+        amount: 0,
+        currency: "INR",
+        discount_months_remaining: 3,
+      });
+
       toast.success("Organisation created!");
       onComplete(slug);
     } catch (e: any) {

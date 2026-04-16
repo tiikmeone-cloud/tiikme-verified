@@ -1,4 +1,5 @@
 import { storageImageUrl } from "@/lib/imageTransform";
+import SubscriptionGate from "@/components/SubscriptionGate";
 import { calculateOpportunityMatch } from "@/lib/algorithms";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -142,6 +143,7 @@ const Opportunities = () => {
   
 
   return (
+    <SubscriptionGate feature="opportunities">
     <main className="max-w-[960px] mx-auto px-4 md:px-6 py-6">
       <PageSEO
         title="Opportunities | Tiikme"
@@ -229,6 +231,7 @@ const Opportunities = () => {
         {showApply && <ApplyModal open={!!showApply} onClose={() => setShowApply(null)} opportunity={showApply} orgName={showApply?.org?.name} onApplied={() => { queryClient.invalidateQueries({ queryKey: ["applied-opportunities"] }); setShowApply(null); }} />}
       </AnimatePresence>
     </main>
+    </SubscriptionGate>
   );
 };
 
