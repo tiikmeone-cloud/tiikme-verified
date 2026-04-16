@@ -188,78 +188,56 @@ const FeedComposer = ({ onPublished }: { onPublished: () => void }) => {
   if (!user) return null;
 
   return (
-    <div style={{ padding: 12, borderRadius: 16, marginBottom: 12, background: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.50)", backdropFilter: "blur(20px)", boxShadow: "0 8px 32px rgba(26,26,78,0.08)" }}>
-      <div className="flex" style={{ gap: 10, alignItems: "flex-start" }}>
-        <AvatarSquare src={profile?.avatar_url} name={profile?.full_name || "You"} size={40} />
+    <div style={{ background: "#FFFFFF", border: "1px solid #E8E8E8", borderRadius: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.04)", padding: "12px 16px", marginBottom: 16 }}>
+      <div className="flex items-center" style={{ gap: 10 }}>
+        <AvatarSquare src={profile?.avatar_url} name={profile?.full_name || "You"} size={36} />
         <div className="flex-1 min-w-0 relative">
-          <textarea
-            ref={textareaRef}
+          <input
+            type="text"
             value={content}
-            onChange={handleChange}
-            onKeyDown={handleKeyDown}
+            onChange={(e) => setContent(e.target.value.slice(0, 3000))}
             placeholder="What's on your mind?"
-            className="w-full resize-none outline-none"
+            className="w-full outline-none"
             style={{
-              minHeight: 40, maxHeight: 160,
-              background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.20)", borderRadius: 10,
-              padding: "10px 12px", fontSize: 14, fontWeight: 400, lineHeight: "20px",
-              color: "var(--text-primary)",
+              height: 40, background: "#F5F5F5", border: "1px solid #E8E8E8", borderRadius: 10,
+              padding: "0 12px", fontSize: 14, color: "#1A1A2E",
             }}
             onFocus={e => { e.currentTarget.style.borderColor = "rgba(232,115,58,0.50)"; }}
-            onBlur={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.20)"; }}
+            onBlur={e => { e.currentTarget.style.borderColor = "#E8E8E8"; }}
+            onKeyDown={(e) => { if (e.key === "Enter" && (content.trim() || attachFiles.length > 0)) handlePublish(); }}
           />
-
-          {/* Mention suggestions */}
-          {showSuggestions && suggestions.length > 0 && (
-            <div className="absolute left-0 z-30 overflow-y-auto" style={{ top: "100%", marginTop: 4, width: 280, maxHeight: 200, padding: 4, borderRadius: 10, background: "var(--bg-card)", border: "1px solid var(--border-glass)", boxShadow: "0 4px 16px rgba(0,0,0,0.1)" }}>
-              {suggestions.map((s, idx) => (
-                <button key={s.id} type="button" onClick={() => insertMention(s)}
-                  className="flex items-center gap-2 w-full text-left cursor-pointer"
-                  style={{ padding: 8, borderRadius: 6, background: idx === selectedIdx ? "var(--bg-card-hover)" : "transparent" }}>
-                  <AvatarSquare src={s.avatar_url} name={s.display} size={32} />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate" style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}>{s.display}</p>
-                    {s.username && <p style={{ fontSize: 12, color: "var(--text-muted)" }}>@{cleanUsername(s.username)}</p>}
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Attachment previews */}
-          {attachPreviews.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-2">
-              {attachPreviews.map((att, i) => (
-                <div key={i} className="relative" style={{ borderRadius: 6, overflow: "hidden", border: "1px solid var(--border-subtle)" }}>
-                  {att.type.startsWith("image/") ? (
-                    <img src={att.url} alt="" style={{ height: 80, width: "auto", maxWidth: 120, objectFit: "cover", borderRadius: 6 }} />
-                  ) : (
-                    <div className="flex items-center gap-2" style={{ height: 36, padding: "0 10px", background: "var(--bg-input)", fontSize: 12, color: "var(--text-secondary)" }}>
-                      <Paperclip style={{ width: 14, height: 14 }} />
-                      <span className="truncate" style={{ maxWidth: 100 }}>{att.name}</span>
-                      <span style={{ color: "var(--text-muted)" }}>{(att.size / 1024).toFixed(0)}KB</span>
-                    </div>
-                  )}
-                  <button type="button" onClick={() => removeAttach(i)} className="absolute top-1 right-1 cursor-pointer flex items-center justify-center" style={{ width: 16, height: 16, borderRadius: 8, background: "rgba(0,0,0,0.5)" }}>
-                    <X style={{ width: 10, height: 10, color: "white" }} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Action bar */}
-          <div className="flex items-center justify-between" style={{ marginTop: 8 }}>
-            <button type="button" onClick={handleAttach} className="cursor-pointer p-1" style={{ color: "#9CA3C0" }}>
-              <Paperclip style={{ width: 20, height: 20 }} />
-            </button>
-            <button type="button" onClick={handlePublish} disabled={publishing || (!content.trim() && attachFiles.length === 0)}
-              className="btn-primary-sm disabled:opacity-50 cursor-pointer" style={{ fontSize: 13, fontWeight: 600 }}>
-              {publishing ? <Loader2 className="w-4 h-4 animate-spin" /> : "Post"}
-            </button>
-          </div>
         </div>
+        <button type="button" onClick={handleAttach} className="cursor-pointer shrink-0 flex items-center justify-center" style={{ width: 36, height: 36, color: "#9CA3C0" }}>
+          <Paperclip style={{ width: 18, height: 18 }} />
+        </button>
+        <button type="button" onClick={handlePublish} disabled={publishing || (!content.trim() && attachFiles.length === 0)}
+          className="shrink-0 disabled:opacity-50 cursor-pointer"
+          style={{ fontSize: 13, fontWeight: 600, height: 36, padding: "0 16px", borderRadius: 10, background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none" }}>
+          {publishing ? <Loader2 className="w-4 h-4 animate-spin" /> : "Post"}
+        </button>
       </div>
+
+      {/* Attachment previews */}
+      {attachPreviews.length > 0 && (
+        <div className="flex flex-wrap gap-2" style={{ marginTop: 8 }}>
+          {attachPreviews.map((att, i) => (
+            <div key={i} className="relative" style={{ borderRadius: 6, overflow: "hidden", border: "1px solid #E8E8E8" }}>
+              {att.type.startsWith("image/") ? (
+                <img src={att.url} alt="" style={{ height: 80, width: "auto", maxWidth: 120, objectFit: "cover", borderRadius: 6 }} />
+              ) : (
+                <div className="flex items-center gap-2" style={{ height: 36, padding: "0 10px", background: "#F5F5F5", fontSize: 12, color: "#6B7094" }}>
+                  <Paperclip style={{ width: 14, height: 14 }} />
+                  <span className="truncate" style={{ maxWidth: 100 }}>{att.name}</span>
+                  <span style={{ color: "#9CA3C0" }}>{(att.size / 1024).toFixed(0)}KB</span>
+                </div>
+              )}
+              <button type="button" onClick={() => removeAttach(i)} className="absolute top-1 right-1 cursor-pointer flex items-center justify-center" style={{ width: 16, height: 16, borderRadius: 8, background: "rgba(0,0,0,0.5)" }}>
+                <X style={{ width: 10, height: 10, color: "white" }} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
       <input ref={fileInputRef} type="file" accept="image/*,.pdf,.doc,.docx" multiple className="hidden" onChange={handleFileChange} />
     </div>
   );
@@ -415,48 +393,37 @@ const PostCard = ({
 
   return (
     <>
-      <article className="glass-card" style={{ padding: 12, borderRadius: 16, marginBottom: 8, borderLeft: isTownhall ? "4px solid var(--accent)" : undefined }}>
+      <article style={{ background: "#FFFFFF", border: "1px solid #E8E8E8", borderRadius: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.04)", padding: 20, marginBottom: 16, borderLeft: isTownhall ? "4px solid #E8733A" : undefined }}>
         {isTownhall && (
           <div style={{ paddingBottom: 4 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--accent)" }}>TOWNHALL</span>
+            <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#E8733A" }}>TOWNHALL</span>
           </div>
         )}
 
-        {/* HEADER — single row */}
+        {/* HEADER — single row: avatar · name · company · time · menu */}
         <div className="flex items-center" style={{ gap: 10 }}>
           <Link to={profileLink} className="shrink-0">
             <AvatarSquare src={displayAvatar} name={displayName} size={40} />
           </Link>
           <div className="min-w-0 flex-1">
-            <div className="flex items-center flex-wrap" style={{ gap: "0 4px", lineHeight: "18px" }}>
-              <Link to={profileLink} className="hover:underline" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", wordBreak: "break-word" }}>{displayName}</Link>
+            <div className="flex items-center flex-wrap" style={{ gap: "0 5px", lineHeight: "20px" }}>
+              <Link to={profileLink} className="hover:underline shrink-0" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{displayName}</Link>
               {(author?.is_verified || post.org?.is_verified) && <VerifiedBadge size={14} />}
               {(viaName || companyName) && (
                 <>
-                  <span className="shrink-0" style={{ fontSize: 12, color: "#9CA3C0" }}>·</span>
-                  <span className="truncate" style={{ fontSize: 12, color: "#6B7094", maxWidth: "30%" }}>
+                  <span className="shrink-0" style={{ fontSize: 13, color: "#9CA3C0" }}>·</span>
+                  <span style={{ fontSize: 13, color: "#6B7094" }}>
                     {viaName ? `via ${viaName}` : companyName}
                   </span>
                 </>
               )}
-              <span className="shrink-0" style={{ fontSize: 12, color: "#9CA3C0" }}>·</span>
-              <span className="shrink-0" style={{ fontSize: 12, color: "#9CA3C0" }}>{timeAgo}</span>
+              <span className="shrink-0" style={{ fontSize: 13, color: "#9CA3C0" }}>·</span>
+              <span className="shrink-0" style={{ fontSize: 13, color: "#9CA3C0" }}>{timeAgo}</span>
               {isEdited && <span className="shrink-0" style={{ fontSize: 11, fontStyle: "italic", color: "#9CA3C0" }}>(edited)</span>}
             </div>
           </div>
 
-          {/* Connect button */}
-          {showFollow && followState === "none" && (
-            <button type="button" onClick={handleFollow} className="cursor-pointer shrink-0"
-              style={{ fontSize: 12, fontWeight: 700, padding: "4px 12px", borderRadius: 6, background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", whiteSpace: "nowrap" }}>
-              + Connect
-            </button>
-          )}
-          {showFollow && followState === "pending" && (
-            <span className="shrink-0" style={{ fontSize: 12, fontWeight: 600, padding: "4px 10px", borderRadius: 6, background: "rgba(255,184,0,0.10)", color: "#FFB800", border: "1px solid rgba(255,184,0,0.25)", whiteSpace: "nowrap" }}>Requested</span>
-          )}
-
-          {/* Three-dot menu */}
+          {/* Three-dot menu — solid white dropdown */}
           <div className="relative shrink-0" ref={menuRef}>
             <button type="button" onClick={() => setShowMenu(!showMenu)}
               className="flex items-center justify-center cursor-pointer"
@@ -464,25 +431,25 @@ const PostCard = ({
               <MoreHorizontal style={{ width: 16, height: 16 }} />
             </button>
             {showMenu && (
-              <div className="absolute right-0 top-8 z-20" style={{ width: 170, borderRadius: 10, padding: 4, background: "var(--bg-card)", border: "1px solid var(--border-glass)", boxShadow: "0 4px 16px rgba(0,0,0,0.1)" }}>
+              <div className="absolute right-0 top-8 z-[100]" style={{ width: 180, borderRadius: 12, padding: "8px 0", background: "#FFFFFF", border: "1px solid #E5E7EB", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
                 <button type="button" onClick={handleCopyLink}
-                  className="flex items-center gap-2 w-full cursor-pointer" style={{ padding: "8px 12px", fontSize: 13, color: "#6B7094", borderRadius: 6 }}>
+                  className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "10px 16px", fontSize: 14, color: "#1A1A2E" }}>
                   <Copy style={{ width: 14, height: 14 }} /> Copy Link
                 </button>
                 {isOwn ? (
                   <>
                     <button type="button" onClick={() => { onEdit(post); setShowMenu(false); }}
-                      className="flex items-center gap-2 w-full cursor-pointer" style={{ padding: "8px 12px", fontSize: 13, color: "#6B7094", borderRadius: 6 }}>
+                      className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "10px 16px", fontSize: 14, color: "#1A1A2E" }}>
                       <Pencil style={{ width: 14, height: 14 }} /> Edit Post
                     </button>
                     <button type="button" onClick={() => { onDelete(post.id); setShowMenu(false); }}
-                      className="flex items-center gap-2 w-full cursor-pointer" style={{ padding: "8px 12px", fontSize: 13, color: "#EF4444", borderRadius: 6 }}>
+                      className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "10px 16px", fontSize: 14, color: "#EF4444" }}>
                       <Trash2 style={{ width: 14, height: 14 }} /> Delete Post
                     </button>
                   </>
                 ) : (
                   <button type="button" onClick={handleReport}
-                    className="flex items-center gap-2 w-full cursor-pointer" style={{ padding: "8px 12px", fontSize: 13, color: "#6B7094", borderRadius: 6 }}>
+                    className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "10px 16px", fontSize: 14, color: "#1A1A2E" }}>
                     <Flag style={{ width: 14, height: 14 }} /> Report
                   </button>
                 )}
@@ -492,10 +459,10 @@ const PostCard = ({
         </div>
 
         {/* CONTENT */}
-        <div style={{ marginTop: 8 }}>
+        <div style={{ marginTop: 12 }}>
           <div ref={contentRef}
             style={{
-              fontSize: 14, fontWeight: 400, lineHeight: "20px", color: "#1A1A2E",
+              fontSize: 15, fontWeight: 400, lineHeight: "22px", color: "#1A1A2E",
               ...((!expanded && needsClamp) ? { maxHeight: 100, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 5, WebkitBoxOrient: "vertical" as any } : {}),
             }}>
             <MentionText text={post.content} />
@@ -507,9 +474,9 @@ const PostCard = ({
           )}
         </div>
 
-        {/* IMAGES — use raw URLs, no transform */}
+        {/* IMAGES */}
         {post.image_urls?.length > 0 && (
-          <div style={{ marginTop: 8 }}>
+          <div style={{ marginTop: 12 }}>
             <ImageGrid images={post.image_urls} />
           </div>
         )}
@@ -522,17 +489,17 @@ const PostCard = ({
         )}
 
         {/* REACTION BAR */}
-        <div className="flex items-center" style={{ marginTop: 8, gap: 4 }}>
+        <div className="flex items-center" style={{ marginTop: 12, gap: 4, borderTop: "1px solid #F0F0F0", paddingTop: 10 }}>
           <button type="button" onClick={handleLike}
             className="flex items-center cursor-pointer active:scale-95"
-            style={{ gap: 4, padding: "6px 10px", borderRadius: 8, background: "rgba(255,255,255,0.10)", transform: likeAnimating ? "scale(1.2)" : "scale(1)", transition: "transform 150ms ease" }}>
+            style={{ gap: 4, padding: "6px 10px", borderRadius: 8, transform: likeAnimating ? "scale(1.2)" : "scale(1)", transition: "transform 150ms ease" }}>
             <Heart style={{ width: 16, height: 16, fill: liked ? "#E8733A" : "none", color: liked ? "#E8733A" : "#9CA3C0" }} />
             <span style={{ fontSize: 12, color: liked ? "#E8733A" : "#9CA3C0" }}>{likeCount || ""}</span>
           </button>
 
           <button type="button" onClick={() => toggleComments(post.id)}
             className="flex items-center cursor-pointer"
-            style={{ gap: 4, padding: "6px 10px", borderRadius: 8, background: "rgba(255,255,255,0.10)" }}>
+            style={{ gap: 4, padding: "6px 10px", borderRadius: 8 }}>
             <MessageCircle style={{ width: 16, height: 16, color: isOpen ? "#E8733A" : "#9CA3C0" }} />
             <span style={{ fontSize: 12, color: isOpen ? "#E8733A" : "#9CA3C0" }}>{commentCount || ""}</span>
           </button>
@@ -540,12 +507,12 @@ const PostCard = ({
           <div className="relative">
             <button type="button" onClick={handleRepost}
               className="flex items-center cursor-pointer"
-              style={{ gap: 4, padding: "6px 10px", borderRadius: 8, background: "rgba(255,255,255,0.10)" }}>
+              style={{ gap: 4, padding: "6px 10px", borderRadius: 8 }}>
               <Repeat2 style={{ width: 16, height: 16, color: hasReposted ? "#E8733A" : "#9CA3C0" }} />
               {localRepostCount > 0 && <span style={{ fontSize: 12, color: hasReposted ? "#E8733A" : "#9CA3C0" }}>{localRepostCount}</span>}
             </button>
             {confirmRepost && (
-              <div className="absolute bottom-full left-0 mb-1 flex items-center gap-1 px-2 py-1 z-10" style={{ borderRadius: 8, whiteSpace: "nowrap", background: "var(--bg-card)", border: "1px solid var(--border-glass)", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
+              <div className="absolute bottom-full left-0 mb-1 flex items-center gap-1 px-2 py-1 z-10" style={{ borderRadius: 8, whiteSpace: "nowrap", background: "#FFFFFF", border: "1px solid #E5E7EB", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
                 <span style={{ fontSize: 11, color: "#6B7094" }}>Repost?</span>
                 <button type="button" onClick={handleRepost} className="cursor-pointer" style={{ fontSize: 11, fontWeight: 700, color: "#E8733A", padding: "0 4px" }}>Yes</button>
                 <button type="button" onClick={() => setConfirmRepost(false)} className="cursor-pointer" style={{ fontSize: 11, color: "#9CA3C0", padding: "0 4px" }}>No</button>
@@ -555,14 +522,14 @@ const PostCard = ({
 
           <button type="button" onClick={() => setSharePostId(post.id)}
             className="flex items-center cursor-pointer"
-            style={{ padding: "6px 10px", borderRadius: 8, background: "rgba(255,255,255,0.10)" }}>
+            style={{ padding: "6px 10px", borderRadius: 8 }}>
             <Send style={{ width: 16, height: 16, color: "#9CA3C0" }} />
           </button>
         </div>
 
         {/* COMMENT SECTION */}
         {isOpen && (
-          <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.15)" }}>
+          <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #F0F0F0" }}>
             {visibleComments.length === 0 && <p style={{ fontSize: 12, color: "#9CA3C0", padding: "4px 0" }}>No comments yet. Be the first!</p>}
             {visibleComments.map((c: any) => {
               const cName = c.author?.full_name || "User";
@@ -600,14 +567,14 @@ const PostCard = ({
 
             {/* Comment input */}
             {user && (
-              <div className="flex items-center" style={{ gap: 8, marginTop: 8, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.15)" }}>
+              <div className="flex items-center" style={{ gap: 8, marginTop: 8, paddingTop: 8, borderTop: "1px solid #F0F0F0" }}>
                 <AvatarSquare src={authProfile?.avatar_url} name={authProfile?.full_name || "You"} size="sm" />
                 <input
                   value={commentText}
                   onChange={(e) => setCommentInputs((p) => ({ ...p, [post.id]: e.target.value }))}
                   placeholder="Write a comment..."
                   className="flex-1 outline-none"
-                  style={{ height: 36, borderRadius: 18, padding: "0 12px", fontSize: 13, background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.20)", color: "#1A1A2E" }}
+                  style={{ height: 36, borderRadius: 18, padding: "0 12px", fontSize: 13, background: "#F5F5F5", border: "1px solid #E8E8E8", color: "#1A1A2E" }}
                   onKeyDown={(e) => { if (e.key === "Enter" && commentText.trim()) submitComment(post.id); }}
                 />
                 <button type="button" onClick={() => { if (commentText.trim()) submitComment(post.id); }}
@@ -767,7 +734,7 @@ const Feed = () => {
   }, [hasMore, loadingMore, loadMore]);
 
   return (
-    <main className="feed-main max-w-2xl 2xl:max-w-3xl" style={{ margin: "0 auto", padding: 16 }}>
+    <main className="feed-main" style={{ maxWidth: 680, width: "100%", margin: "0 auto", padding: "0 16px" }}>
       <PageSEO title="Feed | Tiikme" description="Your professional feed — posts, updates, and insights from verified professionals and organizations on Tiikme." noIndex />
 
       <div className="flex" style={{ gap: 16 }}>
