@@ -551,7 +551,7 @@ const SettingsPage = () => {
         {/* Desktop nav */}
         <div className="hidden md:block w-[200px] shrink-0">
           <div className="sticky top-20 space-y-0.5">
-            {navItems.map(item => (
+            {settingsNavItems.map(item => (
               <button type="button" key={item.id} onClick={() => setActiveTab(item.id)}
                 className="w-full text-left text-[13px] px-3 h-[42px] rounded-xl flex items-center gap-2.5 cursor-pointer"
                 style={{
@@ -580,7 +580,7 @@ const SettingsPage = () => {
         <div className="flex-1 min-w-0">
           {/* Mobile tabs */}
           <div className="md:hidden flex flex-wrap gap-1.5 mb-5">
-            {navItems.map(item => (
+            {settingsNavItems.map(item => (
               <button type="button" key={item.id} onClick={() => setActiveTab(item.id)}
                 className="text-[11px] px-3 h-7 rounded-full cursor-pointer"
                 style={{
