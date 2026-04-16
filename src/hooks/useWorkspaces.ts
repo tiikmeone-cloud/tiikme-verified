@@ -132,36 +132,42 @@ export function useWorkspaces(userId: string | undefined) {
         created_by: userId,
         member_count: 1 + memberIds.length,
         last_message_at: new Date().toISOString(),
-      } as any)
+      })
       .select("id, name, description, avatar_url, workspace_type, created_by, is_active, last_message_at, created_at, org_id, institution_id, member_count")
       .single();
 
-    if (wsErr || !ws) return null;
+    if (wsErr || !ws) {
+      console.error("Failed to create workspace:", wsErr);
+      return null;
+    }
 
     // Add creator as admin member
-    await supabase.from("workspace_members").insert({
+    const { error: memErr } = await supabase.from("workspace_members").insert({
       workspace_id: ws.id,
       user_id: userId,
       role: "admin",
       status: "active",
       invitation_status: "accepted",
-    } as any);
+    });
+    if (memErr) console.error("Failed to add creator as member:", memErr);
 
     // Create default channel
-    const { data: ch } = await supabase.from("workspace_channels").insert({
+    const { data: ch, error: chErr } = await supabase.from("workspace_channels").insert({
       workspace_id: ws.id,
       name: "general",
       channel_type: "group",
       created_by: userId,
     }).select("id").single();
+    if (chErr) console.error("Failed to create channel:", chErr);
 
     // Add creator to channel
     if (ch) {
-      await supabase.from("workspace_channel_members").insert({
+      const { error: cmErr } = await supabase.from("workspace_channel_members").insert({
         channel_id: ch.id,
         user_id: userId,
         role: "admin",
       });
+      if (cmErr) console.error("Failed to add creator to channel:", cmErr);
     }
 
     // Add invited members
@@ -173,7 +179,7 @@ export function useWorkspaces(userId: string | undefined) {
         status: "active",
         invitation_status: "pending",
         invited_by: userId,
-      } as any);
+      });
 
       // Add to channel
       if (ch) {
