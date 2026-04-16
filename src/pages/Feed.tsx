@@ -17,6 +17,7 @@ import SkeletonCard from "@/components/SkeletonCard";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import EditPostModal from "@/components/feed/EditPostModal";
 import DeletePostDialog from "@/components/feed/DeletePostDialog";
+import CommentLoveButton from "@/components/feed/CommentLoveButton";
 import { useFeedPosts } from "@/hooks/useFeedPosts";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -587,6 +588,7 @@ const PostCard = ({
                     </div>
                     <p style={{ fontSize: 13, fontWeight: 400, color: "#1A1A2E", lineHeight: "18px", marginTop: 2 }}><MentionText text={c.content} /></p>
                   </div>
+                  <CommentLoveButton commentId={c.id} userId={user?.id} />
                 </div>
               );
             })}
