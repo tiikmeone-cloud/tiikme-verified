@@ -129,7 +129,7 @@ const ShareModal = ({ open, onClose, postId }: ShareModalProps) => {
     toast.success("Link copied!");
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center" style={{ background: "rgba(0,0,0,0.40)" }} onClick={onClose} onKeyDown={e => { if (e.key === "Escape") onClose(); }}>
       <div className="w-[90vw] max-w-[480px] max-h-[70vh] flex flex-col" style={{ background: "#FFFFFF", borderRadius: 20, border: "1px solid #E5E7EB", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }} onClick={e => e.stopPropagation()}>
         {/* Header */}
@@ -150,7 +150,6 @@ const ShareModal = ({ open, onClose, postId }: ShareModalProps) => {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto" style={{ padding: "0 16px" }}>
-          {/* Connections */}
           {filtered.length === 0 && filteredGroups.length === 0 && (
             <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "16px 0", textAlign: "center" }}>
               {connections.length === 0 ? "Connect with people to share posts" : "No results"}
@@ -206,7 +205,8 @@ const ShareModal = ({ open, onClose, postId }: ShareModalProps) => {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
