@@ -118,17 +118,10 @@ const Connections = () => {
 
   const handleConnect = async (profileId: string) => {
     if (!user) return;
-    const { data: existing } = await supabase.from("strands").select("id")
-      .or(`and(requester_id.eq.${user.id},receiver_id.eq.${profileId}),and(requester_id.eq.${profileId},receiver_id.eq.${user.id})`)
-      .maybeSingle();
-    if (existing) { toast.info("Request already exists"); return; }
-    await supabase.from("strands").insert({ requester_id: user.id, receiver_id: profileId });
-    sendNotification({
-      userId: profileId, actorId: user.id, type: "connection_request",
-      title: `${profile?.full_name || "Someone"} wants to connect`,
-      actionUrl: `/app/connections`,
-    });
-    toast.success("Request sent!");
+    const { sendConnectionRequest } = await import("@/hooks/useConnectionStatus");
+    const result = await sendConnectionRequest(user.id, profileId, profile?.full_name || "Someone");
+    if (result === null) { toast.info("Request already exists"); return; }
+    toast.success(result === "accepted" ? "Connected!" : "Request sent!");
     fetchStrands();
   };
 
