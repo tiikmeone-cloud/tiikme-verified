@@ -156,7 +156,7 @@ export function useConversations(userId: string | undefined) {
         .eq("conversation_id", convoId)
         .neq("sender_id", userId)
         .eq("is_read", false);
-      // Notify sidebar to refresh unread count
+      // Notify sidebar to refresh unread count AFTER the DB update completes
       window.dispatchEvent(new Event("pings-read"));
     }
   }, [userId]);

@@ -108,6 +108,16 @@ const Alerts = () => {
 
   useEffect(() => { fetchAlerts(); }, [fetchAlerts]);
 
+  // Realtime: refetch when new alerts/notifications arrive
+  useEffect(() => {
+    if (!user) return;
+    const ch1 = supabase.channel("alerts-rt-" + user.id)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, () => fetchAlerts())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "alerts", filter: `user_id=eq.${user.id}` }, () => fetchAlerts())
+      .subscribe();
+    return () => { supabase.removeChannel(ch1); };
+  }, [user, fetchAlerts]);
+
   const markAllRead = async () => {
     if (!user) return;
     await Promise.allSettled([

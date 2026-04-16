@@ -139,7 +139,7 @@ export function usePostComments(postId: string, enabled: boolean) {
             type: "comment",
             title: "Commented on your post",
             body: `${profile?.full_name || "Someone"}: "${content.substring(0, 50)}"`,
-            actionUrl: `/post/${postId}`,
+            actionUrl: `/app/post/${postId}`,
             data: { post_id: postId, comment_id: data.id },
           });
         }
