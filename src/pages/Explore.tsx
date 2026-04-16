@@ -351,8 +351,8 @@ const Explore = () => {
         ))}
       </div>
 
-      {/* Loading */}
-      {loading && (
+      {/* Loading — only on first load when no cached data */}
+      {loading && !exploreData && (
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           {[1, 2, 3].map(i => (
             <div key={i}>
@@ -365,7 +365,7 @@ const Explore = () => {
         </div>
       )}
 
-      {!loading && (
+      {(
         <>
           {/* 1. People You May Know */}
           {people.length > 0 && (activeFilter === "All" || activeFilter === "People") && (
@@ -425,7 +425,6 @@ const Explore = () => {
           )}
         </>
       )}
-    </main>
   );
 };
 
