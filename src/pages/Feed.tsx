@@ -653,7 +653,7 @@ const SuggestedWidget = ({ connectionIds }: { connectionIds: Set<string> }) => {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("id, full_name, role, avatar_url, institution_name")
+    supabase.from("profiles").select("id, full_name, role, avatar_url, institution_name, designation, role_metadata")
       .neq("id", user.id).order("activity_score", { ascending: false }).limit(20)
       .then(({ data }) => {
         const filtered = (data || []).filter(p => !connectionIds.has(p.id));
@@ -690,7 +690,7 @@ const SuggestedWidget = ({ connectionIds }: { connectionIds: Set<string> }) => {
           </Link>
           <div className="flex-1 min-w-0">
             <Link to={`/app/profile/${s.id}`} className="hover:underline truncate block" style={{ fontSize: 13, fontWeight: 500, color: "#1A1A2E" }}>{s.full_name || "User"}</Link>
-            <p className="truncate" style={{ fontSize: 12, color: "#9CA3C0" }}>{s.role || ""}</p>
+            <p className="truncate" style={{ fontSize: 12, color: "#9CA3C0" }}>{s.designation || (s.role_metadata as any)?.jobTitle || s.role || ""}</p>
           </div>
           <button className="btn-glass-pill cursor-pointer" style={{ fontSize: 12, fontWeight: 500, padding: "4px 10px" }}
             onClick={() => handleConnect(s.id)}>Connect</button>

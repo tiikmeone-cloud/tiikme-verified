@@ -1,22 +1,19 @@
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import VerifiedBadge from "@/components/VerifiedBadge";
-import { MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-const ROLE_COLORS: Record<string, { bg: string; text: string }> = {
-  student: { bg: "rgba(109,40,217,0.12)", text: "#6D28D9" },
-  professional: { bg: "rgba(22,101,52,0.12)", text: "#166534" },
-  hr: { bg: "rgba(194,65,12,0.12)", text: "#C2410C" },
-  government: { bg: "rgba(217,119,6,0.12)", text: "#D97706" },
-  doctor: { bg: "rgba(14,116,144,0.12)", text: "#0E7490" },
-  faculty: { bg: "rgba(146,64,14,0.12)", text: "#92400E" },
-  skilled_trade: { bg: "rgba(194,65,12,0.12)", text: "#C2410C" },
-  aspirant: { bg: "rgba(55,65,81,0.12)", text: "#374151" },
-  builder: { bg: "rgba(124,58,237,0.12)", text: "#7C3AED" },
-};
-
 interface PersonCardProps {
-  p: { id: string; full_name: string | null; username: string | null; avatar_url: string | null; role: string | null; location_city: string | null; is_verified?: boolean | null };
+  p: {
+    id: string;
+    full_name: string | null;
+    username: string | null;
+    avatar_url: string | null;
+    role: string | null;
+    is_verified?: boolean | null;
+    designation?: string | null;
+    role_metadata?: any;
+    institution_name?: string | null;
+  };
   strandStatus: string;
   onStrand: () => void;
   currentUserId?: string;
@@ -25,18 +22,18 @@ interface PersonCardProps {
 export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonCardProps) {
   const navigate = useNavigate();
   const name = p.full_name || p.username || "User";
-  const role = p.role || "student";
-  const roleLabel = role.charAt(0).toUpperCase() + role.slice(1).replace(/_/g, " ");
-  const colors = ROLE_COLORS[role] || { bg: "rgba(107,112,148,0.12)", text: "#6B7094" };
+  const designation = p.designation || p.role_metadata?.jobTitle || (p.role ? p.role.charAt(0).toUpperCase() + p.role.slice(1).replace(/_/g, " ") : "");
+  const company = p.role_metadata?.company || p.institution_name || "";
 
   const isConnected = strandStatus === "accepted";
   const isPending = strandStatus === "pending";
 
   return (
     <article
-      className="glass-card cursor-pointer flex flex-col items-center text-center"
+      className="glass-card cursor-pointer"
       style={{
-        width: 190, minWidth: 190, padding: 12, borderRadius: 16,
+        display: "flex", gap: 12, padding: 14, borderRadius: 12,
+        width: 280, minWidth: 280,
         scrollSnapAlign: "start", flexShrink: 0,
         transition: "transform 200ms, box-shadow 200ms",
       }}
@@ -44,51 +41,43 @@ export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonC
       onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
       onClick={() => navigate(`/app/profile/${p.id}`)}
     >
-      <AvatarSquare src={p.avatar_url} name={name} size={56} bgColor={colors.text} />
-      <div className="flex items-center gap-1 justify-center" style={{ marginTop: 8, width: "100%" }}>
-        <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</p>
-        {p.is_verified && <VerifiedBadge size={14} />}
-      </div>
-      <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 10px", borderRadius: 99, marginTop: 4, background: colors.bg, color: colors.text, flexShrink: 0 }}>{roleLabel}</span>
-      {p.location_city && (
-        <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)", marginTop: 4, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
-          <MapPin style={{ width: 12, height: 12, flexShrink: 0 }} /> {p.location_city}
-        </p>
-      )}
-      <div style={{ marginTop: "auto", width: "100%", paddingTop: 8 }}>
+      <AvatarSquare src={p.avatar_url} name={name} size={64} />
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 1, minWidth: 0 }}>
+        <div className="flex items-center gap-1">
+          <span className="truncate" style={{ fontWeight: 700, fontSize: 15, color: "var(--text-primary)" }}>{name}</span>
+          {p.is_verified && <VerifiedBadge size={14} />}
+        </div>
+        {designation && (
+          <span className="truncate" style={{ fontSize: 13, color: "var(--text-secondary)" }}>{designation}</span>
+        )}
+        {company && (
+          <span className="truncate" style={{ fontSize: 12, color: "var(--text-muted)" }}>{company}</span>
+        )}
         {currentUserId !== p.id && (
           <button
             type="button"
             disabled={strandStatus !== "none"}
-            onClick={(e) => { e.stopPropagation(); onStrand(); }}
+            onClick={e => { e.stopPropagation(); onStrand(); }}
+            className="cursor-pointer"
             style={{
-              width: "100%", height: 32, borderRadius: 12, fontSize: 11, fontWeight: 700,
-              transition: "all 150ms", cursor: strandStatus === "none" ? "pointer" : "default",
+              marginTop: 6, padding: "5px 16px", borderRadius: 8,
+              fontSize: 12, fontWeight: 600, border: "none",
+              alignSelf: "flex-start",
               ...(isConnected
-                ? { background: "rgba(52,199,89,0.10)", color: "#34C759", border: "1px solid rgba(52,199,89,0.25)" }
+                ? { background: "rgba(52,199,89,0.10)", color: "#34C759" }
                 : isPending
-                ? { background: "rgba(232,115,58,0.12)", color: "#E8733A", border: "1px solid rgba(232,115,58,0.25)" }
-                : { background: "var(--bg-card)", backdropFilter: "blur(12px)", color: "var(--text-primary)", border: "1px solid var(--border-glass)" }
+                ? { background: "rgba(232,115,58,0.12)", color: "#E8733A" }
+                : { background: "#F97316", color: "#fff" }
               ),
             }}
           >
-            {isConnected ? "Connected" : isPending ? "Requested" : "Connect"}
+            {isConnected ? "Connected" : isPending ? "Requested" : "+ Connect"}
           </button>
         )}
       </div>
     </article>
   );
 }
-
-const ORG_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
-  company: { bg: "rgba(29,78,216,0.12)", text: "#1D4ED8" },
-  education: { bg: "rgba(52,199,89,0.12)", text: "#34C759" },
-  college: { bg: "rgba(52,199,89,0.12)", text: "#34C759" },
-  hospital: { bg: "rgba(190,18,60,0.12)", text: "#BE123C" },
-  government: { bg: "rgba(21,128,61,0.12)", text: "#15803D" },
-  ngo: { bg: "rgba(109,40,217,0.12)", text: "#6D28D9" },
-  startup: { bg: "rgba(124,58,237,0.12)", text: "#7C3AED" },
-};
 
 interface OrgCardProps {
   org: any;
@@ -100,14 +89,15 @@ interface OrgCardProps {
 export function OrgCard({ org, following, onToggleFollow, navigateTo }: OrgCardProps) {
   const navigate = useNavigate();
   const typeKey = org.type || org.page_type || "company";
-  const typeColors = ORG_TYPE_COLORS[typeKey] || { bg: "rgba(107,112,148,0.12)", text: "#6B7094" };
   const typeLabel = typeKey.charAt(0).toUpperCase() + typeKey.slice(1);
+  const subtype = org.subtype;
 
   return (
     <article
-      className="glass-card cursor-pointer flex flex-col items-center text-center"
+      className="glass-card cursor-pointer"
       style={{
-        width: 190, minWidth: 190, padding: 12, borderRadius: 16,
+        display: "flex", gap: 12, padding: 14, borderRadius: 12,
+        width: 280, minWidth: 280,
         scrollSnapAlign: "start", flexShrink: 0,
         transition: "transform 200ms, box-shadow 200ms",
       }}
@@ -115,28 +105,27 @@ export function OrgCard({ org, following, onToggleFollow, navigateTo }: OrgCardP
       onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
       onClick={() => navigate(navigateTo)}
     >
-      <AvatarSquare src={org.logo_url} name={org.name || "?"} size={56} bgColor={typeColors.text} />
-      <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", marginTop: 8, width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{org.name}</p>
-      <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 10px", borderRadius: 99, marginTop: 4, background: typeColors.bg, color: typeColors.text }}>{typeLabel}</span>
-      {(org.city || org.location_city) && (
-        <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)", marginTop: 4, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
-          <MapPin style={{ width: 12, height: 12, flexShrink: 0 }} /> {org.city || org.location_city}
-        </p>
-      )}
-      <div style={{ marginTop: "auto", width: "100%", paddingTop: 8 }}>
+      <AvatarSquare src={org.logo_url} name={org.name || "?"} size={64} />
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 1, minWidth: 0 }}>
+        <span className="truncate" style={{ fontWeight: 700, fontSize: 15, color: "var(--text-primary)" }}>{org.name}</span>
+        <span className="truncate" style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+          {typeLabel}{subtype ? ` · ${subtype}` : ""}
+        </span>
         <button
           type="button"
-          onClick={(e) => { e.stopPropagation(); onToggleFollow(e); }}
+          onClick={e => { e.stopPropagation(); onToggleFollow(e); }}
+          className="cursor-pointer"
           style={{
-            width: "100%", height: 32, borderRadius: 12, fontSize: 11, fontWeight: 700,
-            transition: "all 150ms", cursor: "pointer", border: "none",
+            marginTop: 6, padding: "5px 16px", borderRadius: 8,
+            fontSize: 12, fontWeight: 600, border: "none",
+            alignSelf: "flex-start",
             ...(following
-              ? { background: "rgba(52,199,89,0.10)", color: "#34C759", border: "1px solid rgba(52,199,89,0.25)" }
-              : { background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", boxShadow: "0 4px 14px rgba(232,115,58,0.25)" }
+              ? { background: "rgba(52,199,89,0.10)", color: "#34C759" }
+              : { background: "#F97316", color: "#fff" }
             ),
           }}
         >
-          {following ? "Following" : "Follow"}
+          {following ? "Following" : "+ Follow"}
         </button>
       </div>
     </article>
@@ -172,7 +161,7 @@ export function TrendingPostCard({ post, authorProfile }: PostCardProps) {
     >
       <div className="flex items-center gap-2" style={{ marginBottom: 8 }}>
         <AvatarSquare src={authorProfile?.avatar_url} name={name} size={28} />
-        <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{name}</p>
+        <p className="truncate" style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", flex: 1 }}>{name}</p>
         <span style={{ fontSize: 11, fontWeight: 400, color: "var(--text-muted)", flexShrink: 0 }}>{timeAgo}</span>
       </div>
       <p style={{ fontSize: 13, fontWeight: 400, lineHeight: "18px", color: "var(--text-secondary)", flex: 1, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
@@ -218,9 +207,10 @@ export function StartupCard({ startup, page }: { startup: any; page?: any }) {
 
   return (
     <article
-      className="glass-card cursor-pointer flex flex-col items-center text-center"
+      className="glass-card cursor-pointer"
       style={{
-        width: 190, minWidth: 190, padding: 12, borderRadius: 16,
+        display: "flex", gap: 12, padding: 14, borderRadius: 12,
+        width: 280, minWidth: 280,
         scrollSnapAlign: "start", flexShrink: 0,
         transition: "transform 200ms, box-shadow 200ms",
       }}
@@ -228,25 +218,24 @@ export function StartupCard({ startup, page }: { startup: any; page?: any }) {
       onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
       onClick={() => slug ? navigate(`/page/${slug}`) : undefined}
     >
-      <AvatarSquare src={page?.logo_url} name={name} size={56} bgColor="#7C3AED" />
-      <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", marginTop: 8, width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</p>
-      {stage && (
-        <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 10px", borderRadius: 99, marginTop: 4, background: "rgba(124,58,237,0.12)", color: "#7C3AED" }}>{stage}</span>
-      )}
-      {sectors.length > 0 && (
-        <div className="flex flex-wrap gap-1 justify-center" style={{ marginTop: 6 }}>
-          {sectors.slice(0, 3).map((s: string) => (
-            <span key={s} style={{ fontSize: 9, padding: "2px 6px", borderRadius: 99, background: "var(--bg-card)", color: "var(--text-muted)", border: "1px solid var(--border-subtle)" }}>{s}</span>
-          ))}
-        </div>
-      )}
-      <div style={{ marginTop: "auto", width: "100%", paddingTop: 8 }}>
-        <span style={{
-          display: "block", width: "100%", height: 32, borderRadius: 12, fontSize: 11, fontWeight: 700,
-          lineHeight: "32px", textAlign: "center",
-          background: "linear-gradient(135deg, #7C3AED, #A855F7)", color: "#fff",
-          boxShadow: "0 4px 16px rgba(124,58,237,0.25)",
-        }}>Learn More</span>
+      <AvatarSquare src={page?.logo_url} name={name} size={64} bgColor="#7C3AED" />
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 1, minWidth: 0 }}>
+        <span className="truncate" style={{ fontWeight: 700, fontSize: 15, color: "var(--text-primary)" }}>{name}</span>
+        {stage && (
+          <span style={{ fontSize: 12, color: "#7C3AED" }}>{stage}</span>
+        )}
+        {sectors.length > 0 && (
+          <span className="truncate" style={{ fontSize: 12, color: "var(--text-muted)" }}>{sectors.slice(0, 3).join(", ")}</span>
+        )}
+        <span
+          className="cursor-pointer"
+          style={{
+            marginTop: 6, padding: "5px 16px", borderRadius: 8,
+            fontSize: 12, fontWeight: 600, border: "none",
+            alignSelf: "flex-start",
+            background: "linear-gradient(135deg, #7C3AED, #A855F7)", color: "#fff",
+          }}
+        >Learn More</span>
       </div>
     </article>
   );
@@ -265,9 +254,10 @@ export function InvestorCard({ investor }: { investor: any }) {
 
   return (
     <article
-      className="glass-card cursor-pointer flex flex-col items-center text-center"
+      className="glass-card cursor-pointer"
       style={{
-        width: 190, minWidth: 190, padding: 12, borderRadius: 16,
+        display: "flex", gap: 12, padding: 14, borderRadius: 12,
+        width: 280, minWidth: 280,
         scrollSnapAlign: "start", flexShrink: 0,
         transition: "transform 200ms, box-shadow 200ms",
       }}
@@ -275,17 +265,15 @@ export function InvestorCard({ investor }: { investor: any }) {
       onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
       onClick={() => navigate(`/app/profile/${investor.id}`)}
     >
-      <AvatarSquare src={investor.avatar_url} name={name} size={56} bgColor="#059669" />
-      <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", marginTop: 8, width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</p>
-      <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 10px", borderRadius: 99, marginTop: 4, background: "rgba(5,150,105,0.12)", color: "#059669" }}>Investor</span>
-      {range && <p style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 4 }}>{range}</p>}
-      {sectors.length > 0 && (
-        <div className="flex flex-wrap gap-1 justify-center" style={{ marginTop: 6 }}>
-          {sectors.slice(0, 2).map((s: string) => (
-            <span key={s} style={{ fontSize: 9, padding: "2px 6px", borderRadius: 99, background: "var(--bg-card)", color: "var(--text-muted)", border: "1px solid var(--border-subtle)" }}>{s}</span>
-          ))}
-        </div>
-      )}
+      <AvatarSquare src={investor.avatar_url} name={name} size={64} bgColor="#059669" />
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 1, minWidth: 0 }}>
+        <span className="truncate" style={{ fontWeight: 700, fontSize: 15, color: "var(--text-primary)" }}>{name}</span>
+        <span style={{ fontSize: 12, color: "#059669" }}>Investor</span>
+        {range && <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{range}</span>}
+        {sectors.length > 0 && (
+          <span className="truncate" style={{ fontSize: 12, color: "var(--text-muted)" }}>{sectors.slice(0, 2).join(", ")}</span>
+        )}
+      </div>
     </article>
   );
 }
