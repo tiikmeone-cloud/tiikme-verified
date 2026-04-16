@@ -412,24 +412,97 @@ export const SkillsSection = ({ skills, isOwnProfile, onAdd, onRemoveSkill }: {
 };
 
 /* ═══ POSTS ═══ */
-export const PostsSection = ({ posts, stats }: { posts: any[]; stats: { posts: number } }) => (
-  <SectionBox title="Posts" icon={MessageCircle} iconColor="#E8733A" borderColor="#E8733A" count={stats.posts} isOwnProfile={false}>
-    {posts.length === 0 ? (
-      <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "4px 0" }}>No posts yet</p>
-    ) : (
-      <>
-        {posts.slice(0, 2).map((p: any, idx: number) => (
-          <Link key={p.id} to={`/post/${p.id}`} className="block" style={{ padding: "8px 0", borderBottom: idx < Math.min(posts.length, 2) - 1 ? "1px solid var(--border-subtle)" : "none" }}>
-            <p style={{ fontSize: 13, fontWeight: 400, color: "var(--text-primary)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{p.content}</p>
-            <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)", marginTop: 2 }}>
-              {p.comment_count || 0} comments · {p.created_at ? getTimeAgo(new Date(p.created_at)) : ""}
-            </p>
-          </Link>
-        ))}
-        {posts.length > 2 && (
-          <Link to="/app/feed" style={{ fontSize: 12, color: "#E8733A", marginTop: 4, display: "block" }}>See all posts →</Link>
-        )}
-      </>
-    )}
-  </SectionBox>
-);
+export const PostsSection = ({ posts, stats }: { posts: any[]; stats: { posts: number } }) => {
+  const getLikeCount = (p: any) => {
+    const r = p.reactions;
+    if (!r || typeof r !== "object") return 0;
+    return (r.useful || 0) + (r.inspiring || 0) + (r.insightful || 0);
+  };
+
+  return (
+    <SectionBox title="Posts" icon={MessageCircle} iconColor="#E8733A" borderColor="#E8733A" count={stats.posts} isOwnProfile={false}>
+      {posts.length === 0 ? (
+        <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "4px 0" }}>No posts yet</p>
+      ) : (
+        <>
+          {posts.slice(0, 3).map((p: any, idx: number) => (
+            <Link key={p.id} to={`/app/post/${p.id}`} className="block" style={{ padding: "8px 0", borderBottom: idx < Math.min(posts.length, 3) - 1 ? "1px solid var(--border-subtle)" : "none" }}>
+              <p style={{ fontSize: 13, fontWeight: 400, color: "var(--text-primary)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{p.content}</p>
+              {/* Post images */}
+              {p.image_urls && p.image_urls.length > 0 && (
+                <div className="flex gap-1 mt-1.5 overflow-hidden" style={{ borderRadius: 8 }}>
+                  {p.image_urls.slice(0, 3).map((url: string, i: number) => (
+                    <img key={i} src={url} alt="" className="object-cover" style={{ width: p.image_urls.length === 1 ? "100%" : 80, height: 56, borderRadius: 6 }} />
+                  ))}
+                  {p.image_urls.length > 3 && <span style={{ width: 80, height: 56, borderRadius: 6, background: "rgba(0,0,0,0.06)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "var(--text-muted)" }}>+{p.image_urls.length - 3}</span>}
+                </div>
+              )}
+              {/* Engagement row */}
+              <div className="flex items-center" style={{ gap: 12, marginTop: 6 }}>
+                <span className="flex items-center" style={{ gap: 3, fontSize: 12, color: "var(--text-muted)" }}>
+                  <Star style={{ width: 12, height: 12, color: "#FF6B9D" }} /> {getLikeCount(p)}
+                </span>
+                <span className="flex items-center" style={{ gap: 3, fontSize: 12, color: "var(--text-muted)" }}>
+                  <MessageCircle style={{ width: 12, height: 12 }} /> {p.comment_count || 0}
+                </span>
+                <span className="flex items-center" style={{ gap: 3, fontSize: 12, color: "var(--text-muted)" }}>
+                  <Rocket style={{ width: 12, height: 12 }} /> {p.repost_count || 0}
+                </span>
+                <span style={{ fontSize: 11, color: "var(--text-muted)", marginLeft: "auto" }}>
+                  {p.created_at ? getTimeAgo(new Date(p.created_at)) : ""}
+                </span>
+              </div>
+            </Link>
+          ))}
+          {posts.length > 3 && (
+            <Link to="/app/feed" style={{ fontSize: 12, color: "#E8733A", marginTop: 4, display: "block" }}>See all posts →</Link>
+          )}
+        </>
+      )}
+    </SectionBox>
+  );
+};
+
+/* ═══ ROLES ═══ */
+export const RolesSection = ({ items, isOwnProfile, onAdd, onDelete }: {
+  items: any[]; isOwnProfile: boolean; onAdd: () => void; onDelete: (id: string) => void;
+}) => {
+  const ROLE_TYPE_COLORS: Record<string, string> = {
+    "Side Hustle": "#E8733A",
+    "Freelance": "#8B5CF6",
+    "Dual Employment": "#4A90D9",
+    "Moonlighting": "#34C759",
+  };
+
+  return (
+    <SectionBox title="Roles" icon={Star} iconColor="#0369A1" borderColor="#0369A1" count={items.length} isOwnProfile={isOwnProfile} onAdd={onAdd}>
+      {items.length === 0 ? (
+        <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "4px 0" }}>No additional roles added</p>
+      ) : (
+        <div className="flex flex-wrap" style={{ gap: 8, padding: "8px 0" }}>
+          {items.map((r: any) => {
+            const color = ROLE_TYPE_COLORS[r.role_type] || "#6B7094";
+            return (
+              <div key={r.id} style={{
+                padding: "8px 12px", borderRadius: 10,
+                background: `${color}0D`, border: `1px solid ${color}26`,
+                display: "flex", flexDirection: "column", gap: 2, maxWidth: "100%",
+              }}>
+                <div className="flex items-center" style={{ gap: 6 }}>
+                  <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 4, background: `${color}1A`, color }}>{r.role_type}</span>
+                  {isOwnProfile && (
+                    <button type="button" onClick={() => onDelete(r.id)} className="cursor-pointer ml-auto" style={{ color: "var(--text-muted)", background: "none", border: "none", padding: 0 }}>
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{r.title}</span>
+                {r.description && <span style={{ fontSize: 12, fontWeight: 400, color: "var(--text-secondary)" }}>{r.description}</span>}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </SectionBox>
+  );
+};

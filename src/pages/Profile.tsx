@@ -7,12 +7,12 @@ import {
   MapPin, Copy, Shield, X, MessageCircle, CheckCircle, Building2, Link2, Plus,
   Pencil, Trash2, Briefcase, GraduationCap, Award, Code2, Eye, EyeOff,
   Heart, Rocket, Send, Share2, Users, Globe, ExternalLink, LinkIcon, TrendingUp,
-  Mail, Settings
+  Mail, Settings, Camera, UserX, Layers
 } from "lucide-react";
 import { detectPlatform } from "@/lib/platformDetect";
 import GlassModal, { glassInputDarkStyle as gInputStyle, glassSelectDarkStyle as gSelectStyle, glassTextareaDarkStyle as gTextareaStyle, labelStyle } from "@/components/ui/GlassModal";
 import GetTiikedModal from "@/components/profile/GetTiikedModal";
-import { ExperienceSection, EducationSection, ProjectsSection, AchievementsSection, SkillsSection, PostsSection } from "@/components/profile/ProfileSections";
+import { ExperienceSection, EducationSection, ProjectsSection, AchievementsSection, SkillsSection, PostsSection, RolesSection } from "@/components/profile/ProfileSections";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -334,6 +334,10 @@ const Profile = () => {
   const [eduForm, setEduForm] = useState({ institution: "", degree: "", branch: "", startYear: "", endYear: "", isCurrent: false, grade: "" });
   const [projForm, setProjForm] = useState({ title: "", org: "", description: "", techStack: "", startMonth: "", startYear: "", endMonth: "", endYear: "", isCurrent: false });
   const [achForm, setAchForm] = useState({ title: "", issuedBy: "", dateMonth: "", dateYear: "", description: "", url: "" });
+  const [profileRoles, setProfileRoles] = useState<any[]>([]);
+  const [roleForm, setRoleForm] = useState({ roleType: "Side Hustle", title: "", description: "" });
+  const [showAvatarMenu, setShowAvatarMenu] = useState(false);
+  const avatarFileRef = useRef<HTMLInputElement>(null);
 
   const [connectionStatus, setConnectionStatus] = useState<{ status: string | null; direction: string | null; id: string | null }>({ status: null, direction: null, id: null });
   const [connectLoading, setConnectLoading] = useState(false);
@@ -355,7 +359,7 @@ const Profile = () => {
       isOwnProfile ? Promise.resolve({ data: authProfile }) : supabase.from("profiles").select("id, full_name, username, role, role_subtype, headline, bio, avatar_url, institution_name, location_city, location_state, activity_score, is_public, custom_links, open_to_work, designation, sector, languages, department, is_verified, role_metadata, about_qa, verification_badge_text, verification_type, created_at, account_type, org_id, skills").eq("id", targetUserId).maybeSingle(),
       supabase.from("work_items").select("id, title, job_title, description, company_name, institution_name, item_type, employment_type, work_location, start_date, end_date, start_month, start_year, end_month, end_year, is_current, status, visibility, verification_status, verified_by_user, verified_at, is_tiik_approved, created_at, owner_id").eq("owner_id", targetUserId).order("is_current", { ascending: false }).order("created_at", { ascending: false }),
       supabase.from("strands").select("id", { count: "exact", head: true }).or(`requester_id.eq.${targetUserId},receiver_id.eq.${targetUserId}`).eq("status", "accepted"),
-      supabase.from("posts").select("id, content, created_at, image_urls, comment_count").eq("author_id", targetUserId).order("created_at", { ascending: false }).limit(5),
+      supabase.from("posts").select("id, content, created_at, image_urls, comment_count, repost_count, reactions").eq("author_id", targetUserId).order("created_at", { ascending: false }).limit(5),
       supabase.from("achievements").select("id, title, type, description, icon_emoji, achievement_date, issued_by, certificate_url, certificate_file_url, source_type, source_workspace_name, visibility, created_at, user_id").eq("user_id", targetUserId).order("created_at", { ascending: false }),
       supabase.from("certificates").select("id, title, description, issued_date, expiry_date, certificate_url, is_verified, issued_by, issued_to, org_id, created_at, org:organizations(name, logo_url)").eq("issued_to", targetUserId).order("created_at", { ascending: false }),
       supabase.from("strands").select("requester_id, receiver_id").or(`requester_id.eq.${targetUserId},receiver_id.eq.${targetUserId}`).eq("status", "accepted").limit(6),
@@ -379,6 +383,11 @@ const Profile = () => {
         setConnectedAvatars(avatars || []);
       }
     }
+
+    // Load profile roles
+    const { data: rolesData } = await supabase.from("profile_roles").select("*").eq("user_id", targetUserId).order("created_at", { ascending: false });
+    setProfileRoles(rolesData || []);
+
     setDataLoading(false);
   }, [targetUserId, isOwnProfile, authProfile]);
 
@@ -636,6 +645,60 @@ const Profile = () => {
     await supabase.from(table).update({ visibility: newVis }).eq("id", id);
   };
 
+  /* Avatar click handlers */
+  const handleAvatarChangePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    if (file.size > 2 * 1024 * 1024) { toast.error("Max 2MB"); return; }
+    const canvas = document.createElement("canvas");
+    canvas.width = 400; canvas.height = 400;
+    const ctx = canvas.getContext("2d")!;
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    await new Promise(r => img.onload = r);
+    const size = Math.min(img.width, img.height);
+    ctx.drawImage(img, (img.width - size) / 2, (img.height - size) / 2, size, size, 0, 0, 400, 400);
+    const blob = await new Promise<Blob | null>(r => canvas.toBlob(r, "image/webp", 0.85));
+    if (!blob) return;
+    const path = `${user.id}/avatar.webp`;
+    await supabase.storage.from("avatars").upload(path, blob, { upsert: true, contentType: "image/webp" });
+    const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
+    const avatarUrl = urlData.publicUrl + "?t=" + Date.now();
+    await supabase.from("profiles").update({ avatar_url: avatarUrl }).eq("id", user.id);
+    toast.success("Photo updated");
+    setShowAvatarMenu(false);
+    await refreshProfile(); loadProfile();
+  };
+
+  const handleRemovePhoto = async () => {
+    if (!user) return;
+    await supabase.from("profiles").update({ avatar_url: null }).eq("id", user.id);
+    toast.success("Photo removed");
+    setShowAvatarMenu(false);
+    await refreshProfile(); loadProfile();
+  };
+
+  /* Role save/delete */
+  const saveRole = async () => {
+    if (!roleForm.title.trim() || !user) return;
+    setSaving(true);
+    const { data, error } = await supabase.from("profile_roles" as any).insert({
+      user_id: user.id, role_type: roleForm.roleType, title: roleForm.title.trim(), description: roleForm.description.trim() || null,
+    }).select().single();
+    setSaving(false);
+    if (error) { toast.error(error.message); return; }
+    if (data) setProfileRoles(prev => [data as any, ...prev]);
+    setModalSection(null);
+    setRoleForm({ roleType: "Side Hustle", title: "", description: "" });
+    toast.success("Role added");
+  };
+
+  const deleteRole = async (id: string) => {
+    await supabase.from("profile_roles" as any).delete().eq("id", id);
+    setProfileRoles(prev => prev.filter(r => r.id !== id));
+    toast.success("Deleted");
+  };
+
   const currentExp = experiences.find((e: any) => e.is_current);
   const seoProps = profileSEO(profileData as any);
   const activityScore = profileData.activity_score || 0;
@@ -677,23 +740,29 @@ const Profile = () => {
           boxShadow: "0 8px 32px rgba(26,26,78,0.08), inset 0 1px 0 rgba(255,255,255,0.60)",
         }}>
           <div className="flex profile-info-flex" style={{ gap: 16, alignItems: "flex-start" }}>
-            {/* Avatar — 100x100 true square */}
-            <AvatarSquare src={profileData.avatar_url} name={displayName || "U"} size="profile" bgColor={roleColor} className="shadow-md" />
+            {/* Avatar — clickable with popover */}
+            <div className="relative shrink-0">
+              <div className="cursor-pointer" onClick={() => isOwnProfile && setShowAvatarMenu(!showAvatarMenu)}>
+                <AvatarSquare src={profileData.avatar_url} name={displayName || "U"} size="profile" bgColor={roleColor} className="shadow-md" />
+              </div>
+              {showAvatarMenu && isOwnProfile && (
+                <div className="absolute z-50" style={{ top: "100%", left: 0, marginTop: 4, background: "#fff", borderRadius: 10, boxShadow: "0 4px 20px rgba(0,0,0,0.15)", border: "1px solid rgba(0,0,0,0.08)", overflow: "hidden", minWidth: 160 }}>
+                  <button type="button" onClick={() => avatarFileRef.current?.click()} className="w-full flex items-center gap-2 cursor-pointer" style={{ padding: "10px 14px", fontSize: 13, fontWeight: 500, color: "#1A1A2E", background: "none", border: "none", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+                    <Camera style={{ width: 14, height: 14, color: "#E8733A" }} /> Change photo
+                  </button>
+                  <button type="button" onClick={handleRemovePhoto} className="w-full flex items-center gap-2 cursor-pointer" style={{ padding: "10px 14px", fontSize: 13, fontWeight: 500, color: "#EF4444", background: "none", border: "none" }}>
+                    <Trash2 style={{ width: 14, height: 14 }} /> Remove photo
+                  </button>
+                </div>
+              )}
+              <input ref={avatarFileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChangePhoto} />
+            </div>
 
             {/* Info */}
             <div className="profile-info-body" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
               {/* ROW 1: Name + Edit */}
               <div className="flex items-center" style={{ justifyContent: "space-between" }}>
                 <p style={{ fontSize: 20, fontWeight: 700, lineHeight: "28px", color: "#1A1A2E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</p>
-                {isOwnProfile && (
-                  <button type="button" onClick={() => setEditOpen(true)} className="cursor-pointer shrink-0" style={{
-                    height: 26, padding: "0 10px", borderRadius: 6, fontSize: 11, fontWeight: 500,
-                    background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.40)",
-                    color: "#1A1A2E", display: "inline-flex", alignItems: "center", gap: 4,
-                  }}>
-                    <Pencil style={{ width: 11, height: 11 }} /> Edit Profile
-                  </button>
-                )}
               </div>
 
               {/* ROW 2: Current position / headline */}
@@ -730,23 +799,11 @@ const Profile = () => {
                   <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{stats.posts}</span>
                   <span style={{ fontSize: 12, fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Posts</span>
                 </div>
-                <div>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{activityScore}</span>
-                  <span style={{ fontSize: 12, fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>{tier.name}</span>
-                </div>
               </div>
 
               {/* ROW 5: Action buttons */}
               <div className="flex items-center" style={{ gap: 8, marginTop: 8 }}>
-                {isOwnProfile ? (
-                  <button type="button" onClick={handleCopyLink} className="cursor-pointer" style={{
-                    height: 32, padding: "0 16px", borderRadius: 8, fontSize: 12, fontWeight: 500,
-                    background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.40)",
-                    color: "#1A1A2E", display: "inline-flex", alignItems: "center", gap: 4,
-                  }}>
-                    <Share2 style={{ width: 13, height: 13 }} /> Share Profile
-                  </button>
-                ) : (
+                {isOwnProfile ? null : (
                   <>
                     {renderConnectButton()}
                     <button type="button" onClick={() => navigate(`/app/pings?to=${targetUserId}`)} className="cursor-pointer" style={{
@@ -766,8 +823,6 @@ const Profile = () => {
         {/* ── ABOUT ── */}
         <AboutSection about={aboutText} isOwnProfile={isOwnProfile} userId={targetUserId || ""} />
 
-        {/* ── CONTACT ── */}
-        <ContactSection isOwnProfile={isOwnProfile} profile={profileData} userEmail={userEmail} />
 
         {/* ── SECTION GRID ── */}
         <div className="grid grid-cols-1 md:grid-cols-[280px_1fr]" style={{ marginTop: 12, gap: 12 }}>
@@ -862,6 +917,7 @@ const Profile = () => {
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <ExperienceSection items={experiences} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("experience")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
             <EducationSection items={education} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("education")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
+            <RolesSection items={profileRoles} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("role")} onDelete={deleteRole} />
             <ProjectsSection items={projects} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("project")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
             <AchievementsSection items={achievements} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("achievement")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} />
             <SkillsSection skills={skills} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("skills")} onRemoveSkill={removeSkill} />
@@ -968,7 +1024,21 @@ const Profile = () => {
         )}
       </GlassModal>
 
-      <EditProfileDrawer open={editOpen} onClose={() => setEditOpen(false)} onSaved={loadProfile} />
+      <GlassModal open={modalSection === "role"} onClose={() => setModalSection(null)} title="Add Role" icon={Layers} accentColor="#0369A1"
+        actions={<>
+          <button type="button" onClick={saveRole} disabled={saving} className="cursor-pointer" style={{ padding: "10px 28px", borderRadius: 16, fontSize: 14, fontWeight: 600, background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 4px 20px rgba(232,115,58,0.35)" }}>{saving ? "Saving..." : "Save"}</button>
+          <button type="button" onClick={() => setModalSection(null)} className="cursor-pointer" style={{ padding: "10px 20px", borderRadius: 16, fontSize: 14, fontWeight: 500, background: "rgba(255,255,255,0.08)", color: "#fff", border: "1px solid rgba(255,255,255,0.25)" }}>Cancel</button>
+        </>}
+      >
+        <div><label style={labelStyle}>Role Type *</label>
+          <select value={roleForm.roleType} onChange={e => setRoleForm({ ...roleForm, roleType: e.target.value })} style={gSelectStyle}>
+            {["Side Hustle", "Freelance", "Dual Employment", "Moonlighting"].map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </div>
+        <div><label style={labelStyle}>Title *</label><input value={roleForm.title} onChange={e => setRoleForm({ ...roleForm, title: e.target.value })} style={gInputStyle} placeholder="e.g. Freelance Designer" /></div>
+        <div><label style={labelStyle}>Description</label><textarea value={roleForm.description} onChange={e => setRoleForm({ ...roleForm, description: e.target.value.slice(0, 300) })} style={gTextareaStyle} placeholder="Brief description..." maxLength={300} /></div>
+      </GlassModal>
+
       {user && <GetTiikedModal open={showGetTiiked} onClose={() => setShowGetTiiked(false)} userId={user.id} userRole={role} onVerified={loadProfile} />}
     </div>
   );
