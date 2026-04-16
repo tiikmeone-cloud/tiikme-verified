@@ -653,6 +653,45 @@ export type Database = {
           },
         ]
       }
+      open_to_work_profiles: {
+        Row: {
+          created_at: string
+          desired_title: string | null
+          id: string
+          is_active: boolean
+          location_type: string | null
+          pitch: string | null
+          preferred_location: string | null
+          role_types: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          desired_title?: string | null
+          id?: string
+          is_active?: boolean
+          location_type?: string | null
+          pitch?: string | null
+          preferred_location?: string | null
+          role_types?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          desired_title?: string | null
+          id?: string
+          is_active?: boolean
+          location_type?: string | null
+          pitch?: string | null
+          preferred_location?: string | null
+          role_types?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       opportunities: {
         Row: {
           activity_score_min: number | null
@@ -927,6 +966,112 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "opportunity_applications_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opportunity_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          opportunity_id: string
+          parent_id: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          opportunity_id: string
+          parent_id?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          opportunity_id?: string
+          parent_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_comments_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "opportunity_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opportunity_likes: {
+        Row: {
+          created_at: string
+          id: string
+          opportunity_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          opportunity_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          opportunity_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_likes_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opportunity_referrals: {
+        Row: {
+          created_at: string
+          id: string
+          opportunity_id: string
+          referred_user_id: string
+          referrer_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          opportunity_id: string
+          referred_user_id: string
+          referrer_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          opportunity_id?: string
+          referred_user_id?: string
+          referrer_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_referrals_opportunity_id_fkey"
             columns: ["opportunity_id"]
             isOneToOne: false
             referencedRelation: "opportunities"
