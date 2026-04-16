@@ -207,7 +207,7 @@ export function useWorkspaces(userId: string | undefined) {
   const acceptInvite = useCallback(async (workspaceId: string) => {
     if (!userId) return;
     await supabase.from("workspace_members")
-      .update({ invitation_status: "accepted", joined_at: new Date().toISOString() } as any)
+      .update({ invitation_status: "accepted", joined_at: new Date().toISOString() })
       .eq("workspace_id", workspaceId)
       .eq("user_id", userId);
     await fetchGroups();
@@ -216,7 +216,7 @@ export function useWorkspaces(userId: string | undefined) {
   const declineInvite = useCallback(async (workspaceId: string) => {
     if (!userId) return;
     await supabase.from("workspace_members")
-      .update({ invitation_status: "declined", status: "inactive" } as any)
+      .update({ invitation_status: "declined", status: "inactive" })
       .eq("workspace_id", workspaceId)
       .eq("user_id", userId);
     await fetchGroups();
@@ -225,7 +225,7 @@ export function useWorkspaces(userId: string | undefined) {
   const leaveGroup = useCallback(async (workspaceId: string) => {
     if (!userId) return;
     await supabase.from("workspace_members")
-      .update({ status: "inactive", left_at: new Date().toISOString() } as any)
+      .update({ status: "inactive", left_at: new Date().toISOString() })
       .eq("workspace_id", workspaceId)
       .eq("user_id", userId);
     await fetchGroups();
