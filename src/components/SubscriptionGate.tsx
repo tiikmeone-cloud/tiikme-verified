@@ -50,7 +50,7 @@ export default function SubscriptionGate({ feature, children }: SubscriptionGate
 
         <Button
           onClick={() =>
-            tiikToast.info("Payment integration coming soon. Contact support@tiikme.com")
+            tiikToast("Payment integration coming soon. Contact support@tiikme.com")
           }
           className="w-full h-12 rounded-xl text-[15px] font-semibold text-white"
           style={{ background: "#E8733A" }}
