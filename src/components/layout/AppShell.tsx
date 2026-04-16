@@ -153,6 +153,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (isActive("/app/alerts")) setUnreadAlerts(0);
+    setShowActionSheet(false);
   }, [pathname]);
 
   const getBadge = (path: string) => {
