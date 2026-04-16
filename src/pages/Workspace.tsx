@@ -478,7 +478,6 @@ export default function Workspace() {
     setShowCreate(false);
     fetchGroups();
   };
-  const [mobileShowChat, setMobileShowChat] = useState(false);
 
   // Separate pending invites from accepted groups
   const pendingInvites = groups.filter(g => g.invitation_status === "pending");
