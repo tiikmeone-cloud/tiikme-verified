@@ -1,4 +1,5 @@
 import { storageImageUrl } from "@/lib/imageTransform";
+import SubscriptionGate from "@/components/SubscriptionGate";
 import { calculateOpportunityMatch } from "@/lib/algorithms";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";

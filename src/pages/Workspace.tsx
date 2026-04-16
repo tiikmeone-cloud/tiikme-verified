@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import SubscriptionGate from "@/components/SubscriptionGate";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import {
   Users, Plus, Search, Send, Trash2, X, Settings, Paperclip,
@@ -617,4 +618,6 @@ export default function Workspace() {
       />
     </div>
   );
+
+  return <SubscriptionGate feature="workspace">{content}</SubscriptionGate>;
 }
