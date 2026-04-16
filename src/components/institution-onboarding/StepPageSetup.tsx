@@ -104,7 +104,7 @@ export default function StepPageSetup({ form, update, onComplete }: Props) {
       }).eq("id", user.id);
 
       // Create subscription record (90-day trial)
-      await supabase.from("org_subscriptions" as any).insert({
+      await supabase.from("org_subscriptions").insert({
         org_id: org.id,
         profile_id: user.id,
         plan: "trial",
