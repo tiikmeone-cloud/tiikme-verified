@@ -645,6 +645,60 @@ const Profile = () => {
     await supabase.from(table).update({ visibility: newVis }).eq("id", id);
   };
 
+  /* Avatar click handlers */
+  const handleAvatarChangePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    if (file.size > 2 * 1024 * 1024) { toast.error("Max 2MB"); return; }
+    const canvas = document.createElement("canvas");
+    canvas.width = 400; canvas.height = 400;
+    const ctx = canvas.getContext("2d")!;
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    await new Promise(r => img.onload = r);
+    const size = Math.min(img.width, img.height);
+    ctx.drawImage(img, (img.width - size) / 2, (img.height - size) / 2, size, size, 0, 0, 400, 400);
+    const blob = await new Promise<Blob | null>(r => canvas.toBlob(r, "image/webp", 0.85));
+    if (!blob) return;
+    const path = `${user.id}/avatar.webp`;
+    await supabase.storage.from("avatars").upload(path, blob, { upsert: true, contentType: "image/webp" });
+    const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
+    const avatarUrl = urlData.publicUrl + "?t=" + Date.now();
+    await supabase.from("profiles").update({ avatar_url: avatarUrl }).eq("id", user.id);
+    toast.success("Photo updated");
+    setShowAvatarMenu(false);
+    await refreshProfile(); loadProfile();
+  };
+
+  const handleRemovePhoto = async () => {
+    if (!user) return;
+    await supabase.from("profiles").update({ avatar_url: null }).eq("id", user.id);
+    toast.success("Photo removed");
+    setShowAvatarMenu(false);
+    await refreshProfile(); loadProfile();
+  };
+
+  /* Role save/delete */
+  const saveRole = async () => {
+    if (!roleForm.title.trim() || !user) return;
+    setSaving(true);
+    const { data, error } = await supabase.from("profile_roles" as any).insert({
+      user_id: user.id, role_type: roleForm.roleType, title: roleForm.title.trim(), description: roleForm.description.trim() || null,
+    }).select().single();
+    setSaving(false);
+    if (error) { toast.error(error.message); return; }
+    if (data) setProfileRoles(prev => [data as any, ...prev]);
+    setModalSection(null);
+    setRoleForm({ roleType: "Side Hustle", title: "", description: "" });
+    toast.success("Role added");
+  };
+
+  const deleteRole = async (id: string) => {
+    await supabase.from("profile_roles" as any).delete().eq("id", id);
+    setProfileRoles(prev => prev.filter(r => r.id !== id));
+    toast.success("Deleted");
+  };
+
   const currentExp = experiences.find((e: any) => e.is_current);
   const seoProps = profileSEO(profileData as any);
   const activityScore = profileData.activity_score || 0;
