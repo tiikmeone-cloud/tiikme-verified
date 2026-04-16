@@ -244,19 +244,11 @@ const Explore = () => {
 
   const handleStrand = async (personId: string) => {
     if (!user) return;
-    // Duplicate check
-    const { data: existing } = await supabase.from("strands").select("id")
-      .or(`and(requester_id.eq.${user.id},receiver_id.eq.${personId}),and(requester_id.eq.${personId},receiver_id.eq.${user.id})`)
-      .maybeSingle();
-    if (existing) return;
-    await supabase.from("strands").insert({ requester_id: user.id, receiver_id: personId });
-    setStrandMap(prev => ({ ...prev, [personId]: "pending" }));
-    sendNotification({
-      userId: personId, actorId: user.id, type: "connection_request",
-      title: `${profile?.full_name || "Someone"} wants to connect`, actionUrl: `/app/connections`,
-      data: { actor_id: user.id },
-    });
-    toast.success("Request sent");
+    const { sendConnectionRequest } = await import("@/hooks/useConnectionStatus");
+    const result = await sendConnectionRequest(user.id, personId, profile?.full_name || "Someone");
+    if (result === null) return;
+    setStrandMap(prev => ({ ...prev, [personId]: result }));
+    toast.success(result === "accepted" ? "Connected!" : "Request sent");
   };
 
   const toggleFollow = async (orgId: string, createdBy?: string) => {
