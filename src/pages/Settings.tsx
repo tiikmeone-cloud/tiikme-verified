@@ -323,6 +323,92 @@ const AdditionalRolesSection = ({ userId }: { userId: string }) => {
   );
 };
 
+const SubscriptionSection = ({ userId }: { userId: string | null }) => {
+  const { subscription, trialDaysRemaining, isTrialExpired, hasAccess } = useOrgSubscription();
+
+  if (!subscription) {
+    return (
+      <div className="glass-light" style={{ padding: 20, borderRadius: 20 }}>
+        <p className="text-[14px]" style={{ color: "#6B7094" }}>No subscription found. Contact support@tiikme.com.</p>
+      </div>
+    );
+  }
+
+  const planLabel = subscription.plan === "trial" ? "Free Trial" : subscription.plan === "basic" ? "Basic" : "Premium";
+  const statusColor = hasAccess ? "#34C759" : "#EF4444";
+
+  return (
+    <div className="space-y-5">
+      <div className="glass-light" style={{ padding: 20, borderRadius: 20 }}>
+        <h3 className="text-[16px] font-semibold mb-4" style={{ color: "#1A1A2E" }}>Subscription</h3>
+
+        <div className="grid grid-cols-2 gap-3 mb-5">
+          <div className="rounded-xl p-4" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
+            <p className="text-[11px] font-medium mb-1" style={{ color: "#6B7094" }}>Current Plan</p>
+            <p className="text-[18px] font-bold" style={{ color: "#1A1A2E" }}>{planLabel}</p>
+          </div>
+          <div className="rounded-xl p-4" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
+            <p className="text-[11px] font-medium mb-1" style={{ color: "#6B7094" }}>Status</p>
+            <div className="flex items-center gap-2">
+              <div className="w-2.5 h-2.5 rounded-full" style={{ background: statusColor }} />
+              <p className="text-[18px] font-bold" style={{ color: statusColor }}>{hasAccess ? "Active" : "Expired"}</p>
+            </div>
+          </div>
+        </div>
+
+        {subscription.plan === "trial" && (
+          <div className="rounded-xl p-4 mb-4" style={{
+            background: isTrialExpired ? "rgba(239,68,68,0.06)" : "rgba(232,115,58,0.06)",
+            border: `1px solid ${isTrialExpired ? "rgba(239,68,68,0.15)" : "rgba(232,115,58,0.15)"}`,
+          }}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[13px] font-semibold" style={{ color: isTrialExpired ? "#EF4444" : "#E8733A" }}>
+                  {isTrialExpired ? "Trial Expired" : `${trialDaysRemaining} days remaining`}
+                </p>
+                <p className="text-[12px] mt-0.5" style={{ color: "#6B7094" }}>
+                  Trial ends {new Date(subscription.trial_ends_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                </p>
+              </div>
+              {!isTrialExpired && (
+                <div className="h-8 px-3 rounded-lg flex items-center" style={{ background: "rgba(232,115,58,0.12)" }}>
+                  <p className="text-[12px] font-bold" style={{ color: "#E8733A" }}>{trialDaysRemaining}d</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="rounded-xl p-4 mb-4" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
+          <p className="text-[13px] font-semibold mb-2" style={{ color: "#1A1A2E" }}>Included Features</p>
+          <div className="space-y-2">
+            {["Workspace & Team Messaging", "Verification Approvals", "Opportunity Posting"].map(f => (
+              <div key={f} className="flex items-center gap-2">
+                <Check className="w-4 h-4" style={{ color: hasAccess ? "#34C759" : "#9CA3AF" }} />
+                <span className="text-[13px]" style={{ color: hasAccess ? "#1A1A2E" : "#9CA3AF" }}>{f}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {(isTrialExpired || subscription.plan === "trial") && (
+          <button
+            type="button"
+            onClick={() => tiikToast("Payment integration coming soon. Contact support@tiikme.com")}
+            className="w-full h-12 rounded-xl text-[15px] font-semibold text-white cursor-pointer active:scale-[0.98]"
+            style={{ background: "linear-gradient(135deg, #E8733A, #FF6B9D)", border: "none" }}
+          >
+            {isTrialExpired ? "Subscribe — ₹299/month" : "Upgrade to Basic — ₹299/month"}
+          </button>
+        )}
+        <p className="text-[11px] text-center mt-2" style={{ color: "#9CA3AF" }}>
+          50% off for the first 3 months. Regular price ₹599/month.
+        </p>
+      </div>
+    </div>
+  );
+};
+
 const SettingsPage = () => {
   const navigate = useNavigate();
   const { user, refreshProfile } = useAuth();
