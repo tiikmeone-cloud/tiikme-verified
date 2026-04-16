@@ -367,18 +367,24 @@ const AppShell = ({ children }: { children: ReactNode }) => {
                 <button
                   type="button"
                   key="post"
-                  onClick={openPostCreate}
+                  onClick={() => setShowActionSheet(true)}
                   className="shrink-0 flex items-center justify-center active:scale-[0.92]"
                   style={{
                     width: 40,
                     height: 40,
                     borderRadius: "50%",
-                    background: "linear-gradient(135deg, #E8733A, #FF6B9D)",
-                    boxShadow: "0 4px 16px rgba(232,115,58,0.30)",
+                    background: showActionSheet
+                      ? "rgba(232,115,58,0.15)"
+                      : "linear-gradient(135deg, #E8733A, #FF6B9D)",
+                    boxShadow: showActionSheet ? "none" : "0 4px 16px rgba(232,115,58,0.30)",
                     cursor: "pointer",
+                    transition: "all 200ms ease",
                   }}
                 >
-                  <Plus style={{ width: 20, height: 20, color: "white" }} strokeWidth={2.5} />
+                  {showActionSheet
+                    ? <XIcon style={{ width: 20, height: 20, color: "#E8733A" }} strokeWidth={2.5} />
+                    : <Plus style={{ width: 20, height: 20, color: "white" }} strokeWidth={2.5} />
+                  }
                 </button>
               );
             }
