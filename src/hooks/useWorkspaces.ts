@@ -277,7 +277,7 @@ export function useWorkspaces(userId: string | undefined) {
     // Update last_message_at on workspace
     const { data: ch } = await supabase.from("workspace_channels").select("workspace_id").eq("id", channelId).single();
     if (ch) {
-      await supabase.from("workspaces").update({ last_message_at: new Date().toISOString() } as any).eq("id", ch.workspace_id);
+      await supabase.from("workspaces").update({ last_message_at: new Date().toISOString() }).eq("id", ch.workspace_id!);
     }
   }, [userId]);
 
