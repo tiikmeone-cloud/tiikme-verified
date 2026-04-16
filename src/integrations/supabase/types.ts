@@ -2122,6 +2122,33 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_roles: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          role_type: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          role_type: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          role_type?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           about: string | null
