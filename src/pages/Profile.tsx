@@ -7,12 +7,12 @@ import {
   MapPin, Copy, Shield, X, MessageCircle, CheckCircle, Building2, Link2, Plus,
   Pencil, Trash2, Briefcase, GraduationCap, Award, Code2, Eye, EyeOff,
   Heart, Rocket, Send, Share2, Users, Globe, ExternalLink, LinkIcon, TrendingUp,
-  Mail, Settings
+  Mail, Settings, Camera, UserX, Layers
 } from "lucide-react";
 import { detectPlatform } from "@/lib/platformDetect";
 import GlassModal, { glassInputDarkStyle as gInputStyle, glassSelectDarkStyle as gSelectStyle, glassTextareaDarkStyle as gTextareaStyle, labelStyle } from "@/components/ui/GlassModal";
 import GetTiikedModal from "@/components/profile/GetTiikedModal";
-import { ExperienceSection, EducationSection, ProjectsSection, AchievementsSection, SkillsSection, PostsSection } from "@/components/profile/ProfileSections";
+import { ExperienceSection, EducationSection, ProjectsSection, AchievementsSection, SkillsSection, PostsSection, RolesSection } from "@/components/profile/ProfileSections";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -334,6 +334,10 @@ const Profile = () => {
   const [eduForm, setEduForm] = useState({ institution: "", degree: "", branch: "", startYear: "", endYear: "", isCurrent: false, grade: "" });
   const [projForm, setProjForm] = useState({ title: "", org: "", description: "", techStack: "", startMonth: "", startYear: "", endMonth: "", endYear: "", isCurrent: false });
   const [achForm, setAchForm] = useState({ title: "", issuedBy: "", dateMonth: "", dateYear: "", description: "", url: "" });
+  const [profileRoles, setProfileRoles] = useState<any[]>([]);
+  const [roleForm, setRoleForm] = useState({ roleType: "Side Hustle", title: "", description: "" });
+  const [showAvatarMenu, setShowAvatarMenu] = useState(false);
+  const avatarFileRef = useRef<HTMLInputElement>(null);
 
   const [connectionStatus, setConnectionStatus] = useState<{ status: string | null; direction: string | null; id: string | null }>({ status: null, direction: null, id: null });
   const [connectLoading, setConnectLoading] = useState(false);
