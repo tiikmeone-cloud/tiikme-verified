@@ -685,15 +685,6 @@ const Profile = () => {
               {/* ROW 1: Name + Edit */}
               <div className="flex items-center" style={{ justifyContent: "space-between" }}>
                 <p style={{ fontSize: 20, fontWeight: 700, lineHeight: "28px", color: "#1A1A2E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</p>
-                {isOwnProfile && (
-                  <button type="button" onClick={() => setEditOpen(true)} className="cursor-pointer shrink-0" style={{
-                    height: 26, padding: "0 10px", borderRadius: 6, fontSize: 11, fontWeight: 500,
-                    background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.40)",
-                    color: "#1A1A2E", display: "inline-flex", alignItems: "center", gap: 4,
-                  }}>
-                    <Pencil style={{ width: 11, height: 11 }} /> Edit Profile
-                  </button>
-                )}
               </div>
 
               {/* ROW 2: Current position / headline */}
@@ -730,23 +721,11 @@ const Profile = () => {
                   <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{stats.posts}</span>
                   <span style={{ fontSize: 12, fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Posts</span>
                 </div>
-                <div>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{activityScore}</span>
-                  <span style={{ fontSize: 12, fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>{tier.name}</span>
-                </div>
               </div>
 
               {/* ROW 5: Action buttons */}
               <div className="flex items-center" style={{ gap: 8, marginTop: 8 }}>
-                {isOwnProfile ? (
-                  <button type="button" onClick={handleCopyLink} className="cursor-pointer" style={{
-                    height: 32, padding: "0 16px", borderRadius: 8, fontSize: 12, fontWeight: 500,
-                    background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.40)",
-                    color: "#1A1A2E", display: "inline-flex", alignItems: "center", gap: 4,
-                  }}>
-                    <Share2 style={{ width: 13, height: 13 }} /> Share Profile
-                  </button>
-                ) : (
+                {isOwnProfile ? null : (
                   <>
                     {renderConnectButton()}
                     <button type="button" onClick={() => navigate(`/app/pings?to=${targetUserId}`)} className="cursor-pointer" style={{
@@ -766,8 +745,6 @@ const Profile = () => {
         {/* ── ABOUT ── */}
         <AboutSection about={aboutText} isOwnProfile={isOwnProfile} userId={targetUserId || ""} />
 
-        {/* ── CONTACT ── */}
-        <ContactSection isOwnProfile={isOwnProfile} profile={profileData} userEmail={userEmail} />
 
         {/* ── SECTION GRID ── */}
         <div className="grid grid-cols-1 md:grid-cols-[280px_1fr]" style={{ marginTop: 12, gap: 12 }}>
