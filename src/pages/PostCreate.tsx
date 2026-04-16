@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { sendNotification } from "@/lib/notify";
 import MentionInput from "@/components/feed/MentionInput";
 
 const MAX_IMAGES = 20;
@@ -117,16 +118,18 @@ const PostCreate = () => {
           .in("slug", mentionUsernames);
 
         const mentionInserts: any[] = [];
-        const alertInserts: any[] = [];
 
         for (const mu of mentionedUsers || []) {
           if (mu.id === user.id) continue;
           mentionInserts.push({ post_id: newPost.id, mentioned_user_id: mu.id });
-          alertInserts.push({
-            user_id: mu.id, type: "mention",
-            title: `${profile?.full_name || "Someone"} mentioned you in a post`,
+          sendNotification({
+            userId: mu.id,
+            actorId: user.id,
+            type: "mention",
+            title: "Mentioned you in a post",
             body: content.slice(0, 80),
-            action_url: `/post/${newPost.id}`,
+            actionUrl: `/post/${newPost.id}`,
+            data: { post_id: newPost.id },
           });
         }
 
@@ -136,9 +139,6 @@ const PostCreate = () => {
 
         if (mentionInserts.length > 0) {
           await supabase.from("post_mentions").insert(mentionInserts);
-        }
-        if (alertInserts.length > 0) {
-          await supabase.from("alerts").insert(alertInserts);
         }
       }
 
