@@ -231,6 +231,7 @@ const Opportunities = () => {
         {showApply && <ApplyModal open={!!showApply} onClose={() => setShowApply(null)} opportunity={showApply} orgName={showApply?.org?.name} onApplied={() => { queryClient.invalidateQueries({ queryKey: ["applied-opportunities"] }); setShowApply(null); }} />}
       </AnimatePresence>
     </main>
+    </SubscriptionGate>
   );
 };
 
