@@ -47,7 +47,7 @@ const navGroups = [
 const mobileNav = [
   { label: "Home", icon: Home, path: "/app/feed" },
   { label: "Explore", icon: Compass, path: "/app/explore" },
-  { label: "Post", icon: Plus, path: "__post__" },
+  { label: "Opportunities", icon: Target, path: "/app/opportunities" },
   { label: "Pings", icon: MessageCircle, path: "/app/pings" },
   { label: "Profile", icon: User, path: "/app/profile" },
 ];
@@ -363,47 +363,20 @@ const AppShell = ({ children }: { children: ReactNode }) => {
       >
         <div className="flex items-center justify-around w-full" style={{ height: 56 }}>
           {mobileNav.map((item) => {
-            if (item.path === "__post__") {
-              return (
-                <button
-                  type="button"
-                  key="post"
-                  onClick={() => setShowActionSheet(true)}
-                  className="shrink-0 flex items-center justify-center active:scale-[0.92]"
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: "50%",
-                    background: showActionSheet
-                      ? "rgba(232,115,58,0.15)"
-                      : "linear-gradient(135deg, #E8733A, #FF6B9D)",
-                    boxShadow: showActionSheet ? "none" : "0 4px 16px rgba(232,115,58,0.30)",
-                    cursor: "pointer",
-                    transition: "all 200ms ease",
-                  }}
-                >
-                  {showActionSheet
-                    ? <XIcon style={{ width: 20, height: 20, color: "#E8733A" }} strokeWidth={2.5} />
-                    : <Plus style={{ width: 20, height: 20, color: "white" }} strokeWidth={2.5} />
-                  }
-                </button>
-              );
-            }
-
             const active = isActive(item.path);
             const badge = item.path === "/app/pings" ? unreadPings : undefined;
 
             if (item.path === "/app/profile") {
               return (
-                <Link key={item.path} to={profilePath} className="flex flex-col items-center justify-center" style={{ flex: 1, gap: 2 }}>
+                <Link key={item.path} to={profilePath} className="flex flex-col items-center justify-center" style={{ flex: 1, gap: 2, minWidth: 0 }}>
                   <AvatarSquare src={identityAvatar} name={identityName || "You"} size={22} />
-                  <span style={{ fontSize: 10, fontWeight: 500, color: active ? "#E8733A" : "var(--text-muted)" }}>Profile</span>
+                  <span className="truncate" style={{ fontSize: 10, fontWeight: 500, color: active ? "#E8733A" : "var(--text-muted)", maxWidth: "100%" }}>Profile</span>
                 </Link>
               );
             }
 
             return (
-              <Link key={item.path} to={item.path} className="flex flex-col items-center justify-center" style={{ flex: 1, gap: 2 }}>
+              <Link key={item.path} to={item.path} className="flex flex-col items-center justify-center" style={{ flex: 1, gap: 2, minWidth: 0 }}>
                 <div className="relative">
                   <item.icon style={{ width: 22, height: 22, color: active ? "#E8733A" : "var(--text-muted)" }} strokeWidth={active ? 2.2 : 1.8} />
                   {badge && badge > 0 && (
@@ -413,7 +386,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
                     }}>{badge}</span>
                   )}
                 </div>
-                <span style={{ fontSize: 10, fontWeight: 500, color: active ? "#E8733A" : "var(--text-muted)" }}>{item.label}</span>
+                <span className="truncate" style={{ fontSize: 10, fontWeight: 500, color: active ? "#E8733A" : "var(--text-muted)", maxWidth: "100%" }}>{item.label}</span>
               </Link>
             );
           })}

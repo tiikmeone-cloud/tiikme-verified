@@ -102,10 +102,14 @@ const CreateGroupModal = ({ open, onClose, userId, onCreate }: CreateGroupModalP
     if (selectedIds.length === 0) { toast.error("Add at least 1 member"); return; }
     setCreating(true);
     try {
-      await onCreate(name.trim(), desc.trim(), null, selectedIds);
-      toast.success("Group created");
-      onClose();
-      setStep(1); setName(""); setDesc(""); setSelectedIds([]);
+      const result = await onCreate(name.trim(), desc.trim(), null, selectedIds);
+      if (result) {
+        toast.success("Group created");
+        setStep(1); setName(""); setDesc(""); setSelectedIds([]);
+        onClose();
+      } else {
+        toast.error("Failed to create group — check permissions");
+      }
     } catch {
       toast.error("Failed to create group");
     }
