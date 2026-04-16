@@ -91,7 +91,7 @@ export function usePostReactions(
                 type: "like",
                 title: "Liked your post",
                 body: `${p?.full_name || "Someone"} liked your post`,
-                actionUrl: `/post/${postId}`,
+                actionUrl: `/app/post/${postId}`,
                 data: { post_id: postId },
               });
             });
