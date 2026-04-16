@@ -4,8 +4,8 @@ import { storageImageUrl } from "@/lib/imageTransform";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import {
   Building2, MapPin, Globe, Users, Heart, Briefcase, Shield, Calendar,
-  Share2, Settings, Award, FileText, ExternalLink, Trophy, Plus,
-  Image as ImageIcon, X
+  Share2, Settings, Award, FileText, ExternalLink, Plus, MessageCircle,
+  Star, Rocket, ChevronDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,14 +15,20 @@ import { toast } from "sonner";
 
 const AVATAR_COLORS = ["#E8733A", "#4A90D9", "#34C759", "#FF6B9D", "#8B5CF6", "#FFB800"];
 const hashColor = (s: string) => AVATAR_COLORS[Math.abs([...s].reduce((a, c) => a + c.charCodeAt(0), 0)) % AVATAR_COLORS.length];
-const initials = (name: string) => name?.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "?";
 const daysAgo = (d: string) => {
   const diff = Math.floor((Date.now() - new Date(d).getTime()) / 86400000);
   return diff === 0 ? "Today" : diff === 1 ? "1d ago" : `${diff}d ago`;
 };
 
-const orgTabs = ["About", "Members", "Opportunities", "Posts"] as const;
-type Tab = typeof orgTabs[number];
+function getTimeAgo(d: Date): string {
+  const s = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (s < 60) return "just now";
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
 
 export default function OrganizationPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -33,12 +39,10 @@ export default function OrganizationPage() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [activeTab, setActiveTab] = useState<Tab>("About");
   const [members, setMembers] = useState<any[]>([]);
   const [opps, setOpps] = useState<any[]>([]);
   const [posts, setPosts] = useState<any[]>([]);
-  const [deptFilter, setDeptFilter] = useState("all");
-  const [oppFilter, setOppFilter] = useState<"all" | "active" | "closed">("all");
+  const [showUnfollow, setShowUnfollow] = useState(false);
 
   useEffect(() => {
     if (!slug) return;
@@ -53,7 +57,7 @@ export default function OrganizationPage() {
           .select("*, profile:profiles!org_members_user_id_fkey(id, full_name, avatar_url, headline, role)")
           .eq("org_id", data.id).eq("is_current", true).order("joined_at", { ascending: true }),
         supabase.from("opportunities").select("*").eq("org_id", data.id).order("created_at", { ascending: false }).limit(50),
-        supabase.from("posts").select("*, author:profiles!posts_author_id_fkey(full_name, avatar_url)")
+        supabase.from("posts").select("*, author:profiles!posts_author_id_fkey(full_name, avatar_url), post_reactions(count), post_comments(count)")
           .eq("posted_by_org", data.id).order("created_at", { ascending: false }).limit(20),
       ]);
 
@@ -81,10 +85,10 @@ export default function OrganizationPage() {
     if (isFollowing) {
       await supabase.from("org_followers").delete().eq("org_id", org.id).eq("user_id", user.id);
       setIsFollowing(false); setFollowerCount(p => Math.max(0, p - 1));
+      setShowUnfollow(false);
     } else {
       await supabase.from("org_followers").insert({ org_id: org.id, user_id: user.id });
       setIsFollowing(true); setFollowerCount(p => p + 1);
-      // Notify org creator about new follower
       if (org.created_by) {
         sendNotification({
           userId: org.created_by,
@@ -97,279 +101,383 @@ export default function OrganizationPage() {
     }
   };
 
-  const departments = useMemo(() => Array.from(new Set(members.map(m => m.department).filter(Boolean))), [members]);
-  const filteredMembers = useMemo(() => deptFilter === "all" ? members : members.filter(m => m.department === deptFilter), [members, deptFilter]);
-  const filteredOpps = useMemo(() => {
-    if (oppFilter === "active") return opps.filter(o => o.is_open);
-    if (oppFilter === "closed") return opps.filter(o => !o.is_open);
-    return opps;
-  }, [opps, oppFilter]);
+  const activeOpps = useMemo(() => opps.filter(o => o.is_open), [opps]);
+  const typeLabel = org?.type?.charAt(0).toUpperCase() + org?.type?.slice(1).replace(/_/g, " ");
 
   if (loading) return (
-    <div className="max-w-[960px] mx-auto px-4 py-8">
-      <div className="animate-pulse space-y-4">
-        <div className="h-52 rounded-2xl" style={{ background: "var(--glass-bg)" }} />
-        <div className="h-8 w-1/3 rounded-xl" style={{ background: "var(--glass-bg)" }} />
+    <div className="min-h-screen" style={{ background: "transparent" }}>
+      <div style={{ maxWidth: 960, margin: "0 auto", padding: 16 }}>
+        <div className="animate-pulse space-y-3">
+          <div className="glass-card" style={{ height: 140, borderRadius: 16 }} />
+          <div className="glass-card" style={{ height: 80, borderRadius: 16 }} />
+        </div>
       </div>
     </div>
   );
 
   if (!org) return (
-    <div className="max-w-[960px] mx-auto px-4 py-16 text-center">
-      <Building2 className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--color-text-muted)" }} />
-      <h1 className="text-[20px] font-bold mb-1" style={{ color: "var(--color-text)" }}>Organisation not found</h1>
-      <p className="text-[13px] mb-4" style={{ color: "var(--color-text-muted)" }}>No organisation matches "{slug}"</p>
-      <Button onClick={() => navigate(-1)} variant="secondary">Go back</Button>
+    <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
+      <Building2 style={{ width: 48, height: 48, color: "#9CA3C0", marginBottom: 12 }} />
+      <p style={{ fontSize: 16, fontWeight: 700, color: "#1A1A2E" }}>Organisation not found</p>
+      <p style={{ fontSize: 13, color: "#9CA3C0", marginTop: 4 }}>No organisation matches "{slug}"</p>
+      <button type="button" onClick={() => navigate(-1)} className="cursor-pointer" style={{ fontSize: 13, marginTop: 12, color: "#E8733A", background: "none", border: "none" }}>Go back</button>
     </div>
   );
 
-  const typeLabel = org.type?.charAt(0).toUpperCase() + org.type?.slice(1).replace(/_/g, " ");
+  const getLikeCount = (p: any) => {
+    if (Array.isArray(p.post_reactions) && p.post_reactions.length > 0) return p.post_reactions[0]?.count || 0;
+    return 0;
+  };
+  const getCommentCount = (p: any) => {
+    if (Array.isArray(p.post_comments) && p.post_comments.length > 0) return p.post_comments[0]?.count || 0;
+    return p.comment_count || 0;
+  };
+
+  /* Info cards data */
+  const infoCards: { label: string; value: string }[] = [];
+  if (org.type) infoCards.push({ label: "Type", value: `${typeLabel}${org.subtype ? ` · ${org.subtype}` : ""}` });
+  if (org.founded_year) infoCards.push({ label: "Established", value: String(org.founded_year) });
+  if (org.city || org.state) infoCards.push({ label: "Headquarters", value: [org.city, org.state].filter(Boolean).join(", ") });
+  if (org.employee_count) infoCards.push({ label: "Team Size", value: org.employee_count });
+  if (org.website_url) infoCards.push({ label: "Website", value: org.website_url.replace(/https?:\/\//, "") });
 
   return (
-    <div className="max-w-[960px] mx-auto px-0 md:px-4 pb-8">
-      {/* ── COVER ── */}
-      <div className="w-full h-[200px] md:h-[240px] relative overflow-hidden" style={{
-        borderRadius: "0 0 20px 20px",
-        background: org.cover_url ? `url(${org.cover_url}) center/cover` : "linear-gradient(135deg, var(--color-accent), #8B5CF6)",
-      }}>
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(13,13,30,0.6) 0%, transparent 60%)" }} />
-        {!org.cover_url && (
-          <div className="absolute inset-0 flex items-center justify-center opacity-15">
-            <Building2 className="w-24 h-24 text-white" />
-          </div>
-        )}
-      </div>
+    <div className="min-h-screen pb-8">
+      <div style={{ maxWidth: 960, margin: "0 auto", padding: 16 }}>
 
-      {/* ── LOGO + IDENTITY ── */}
-      <div className="relative px-4 md:px-6 -mt-12 mb-4">
-        <div className="flex items-end gap-4">
-          <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-[22px] font-bold shrink-0 overflow-hidden"
-            style={{
-              background: org.logo_url ? "var(--glass-bg)" : hashColor(org.id),
-              color: "white",
-              border: "3px solid var(--glass-border-color, rgba(255,255,255,0.2))",
-              boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
-            }}>
-            {org.logo_url
-              ? <img src={storageImageUrl(org.logo_url, "thumbnail")} alt="" className="w-full h-full object-cover" />
-              : initials(org.name)}
-          </div>
-          <div className="flex-1 min-w-0 pb-1">
-            <div className="flex items-center gap-2">
-              <h1 className="text-[22px] font-extrabold truncate" style={{ color: "var(--color-text)" }}>{org.name}</h1>
-              {org.is_verified && <Shield className="w-5 h-5 shrink-0" style={{ color: "#FFB800" }} />}
-            </div>
-            <div className="flex items-center gap-2 flex-wrap mt-0.5">
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(232,115,58,0.12)", color: "var(--color-accent)" }}>{typeLabel}</span>
-              {org.tagline && <span className="text-[12px]" style={{ color: "var(--color-text-secondary)" }}>{org.tagline}</span>}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
-          <div className="flex items-center gap-4 text-[12px]" style={{ color: "var(--color-text-secondary)" }}>
-            {(org.city || org.state) && <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{[org.city, org.state].filter(Boolean).join(", ")}</span>}
-            <span>{followerCount} followers</span>
-            <span>{members.length} members</span>
-          </div>
-          <div className="flex items-center gap-2">
-            {isAdmin && (
-              <Button variant="ghost" size="sm" className="rounded-xl" onClick={() => navigate("/app/workspace")}>
-                <Settings className="w-3.5 h-3.5 mr-1" /> Manage
-              </Button>
-            )}
-            <button className={`text-[12px] px-4 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${isFollowing ? "glass-light" : "btn-liquid-primary"}`}
-              onClick={toggleFollow}>
-              <Heart className="w-3.5 h-3.5 mr-1 inline" style={{ fill: isFollowing ? "currentColor" : "none" }} />
-              {isFollowing ? "Following" : "Follow"}
-            </button>
-            <Button variant="ghost" size="sm" className="rounded-xl" onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success("Link copied"); }}>
-              <Share2 className="w-3.5 h-3.5" />
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* ── INFO STRIP ── */}
-      <div className="mx-4 md:mx-6 mb-4 px-4 py-2.5 rounded-2xl flex items-center gap-3 overflow-x-auto scrollbar-hide text-[12px]"
-        style={{ background: "var(--glass-bg)", border: "1px solid var(--glass-border-color, rgba(255,255,255,0.12))", backdropFilter: "blur(20px)" }}>
-        {org.type && <span className="flex items-center gap-1 shrink-0" style={{ color: "var(--color-text-secondary)" }}><Building2 className="w-3.5 h-3.5" /> {typeLabel}</span>}
-        {org.employee_count && <><span style={{ color: "var(--glass-border-color)" }}>|</span><span className="flex items-center gap-1 shrink-0" style={{ color: "var(--color-text-secondary)" }}><Users className="w-3.5 h-3.5" /> {org.employee_count}</span></>}
-        {org.founded_year && <><span style={{ color: "var(--glass-border-color)" }}>|</span><span className="flex items-center gap-1 shrink-0" style={{ color: "var(--color-text-secondary)" }}><Calendar className="w-3.5 h-3.5" /> Est. {org.founded_year}</span></>}
-        {org.website_url && <><span style={{ color: "var(--glass-border-color)" }}>|</span><a href={org.website_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 shrink-0 hover:underline" style={{ color: "var(--color-accent)" }}><Globe className="w-3.5 h-3.5" /> Website</a></>}
-      </div>
-
-      {/* ── TAB NAVIGATION ── */}
-      <div className="mx-4 md:mx-6 mb-4 flex gap-1.5 overflow-x-auto scrollbar-hide">
-        {orgTabs.map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)}
-            className="px-4 py-2 text-[13px] font-semibold rounded-xl shrink-0 transition-all cursor-pointer"
-            style={{
-              background: activeTab === tab ? "linear-gradient(135deg, var(--color-accent), #FF6B9D)" : "var(--glass-bg)",
-              color: activeTab === tab ? "white" : "var(--color-text-secondary)",
-              border: activeTab === tab ? "none" : "1px solid var(--glass-border-color, rgba(255,255,255,0.12))",
-            }}>
-            {tab}
-          </button>
-        ))}
-      </div>
-
-      {/* ── TAB CONTENT ── */}
-      <div className="px-4 md:px-6">
-
-        {activeTab === "About" && (
-          <div className="space-y-4">
-            <div className="glass-light rounded-2xl p-4" style={{ boxShadow: "inset 0 1px 0 var(--glass-highlight)" }}>
-              <h3 className="text-[14px] font-bold mb-2" style={{ color: "var(--color-text)" }}>About</h3>
-              {org.description
-                ? <p className="text-[13px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--color-text-secondary)" }}>{org.description}</p>
-                : <p className="text-[13px]" style={{ color: "var(--color-text-muted)" }}>No description added yet.</p>}
+        {/* ── PROFILE INFO CARD (matching user profile style) ── */}
+        <div className="glass-card" style={{
+          padding: 20, borderRadius: 16,
+          background: "rgba(255,255,255,0.25)", backdropFilter: "blur(20px)",
+          border: "1px solid rgba(255,255,255,0.40)",
+          boxShadow: "0 8px 32px rgba(26,26,78,0.08), inset 0 1px 0 rgba(255,255,255,0.60)",
+        }}>
+          <div className="flex" style={{ gap: 16, alignItems: "flex-start" }}>
+            {/* Logo */}
+            <div className="shrink-0">
+              <AvatarSquare src={org.logo_url ? storageImageUrl(org.logo_url, "thumbnail") : undefined} name={org.name} size="profile" bgColor={hashColor(org.id)} className="shadow-md" />
             </div>
 
-            {/* Details grid */}
-            <div className="glass-light rounded-2xl p-4" style={{ boxShadow: "inset 0 1px 0 var(--glass-highlight)" }}>
-              <h3 className="text-[14px] font-bold mb-3" style={{ color: "var(--color-text)" }}>Details</h3>
-              <div className="grid grid-cols-2 gap-3">
-                {org.founded_year && <InfoCell label="Founded" value={org.founded_year.toString()} />}
-                {org.employee_count && <InfoCell label="Employees" value={org.employee_count} />}
-                {org.email && <InfoCell label="Email" value={org.email} />}
-                {org.phone && <InfoCell label="Phone" value={org.phone} />}
-                {(org.city || org.state) && <InfoCell label="Location" value={[org.city, org.state].filter(Boolean).join(", ")} />}
-                {org.website_url && <InfoCell label="Website" value={org.website_url.replace(/https?:\/\//, "")} />}
+            {/* Info */}
+            <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
+              {/* Row 1: Name + verified */}
+              <div className="flex items-center" style={{ gap: 6 }}>
+                <p style={{ fontSize: 20, fontWeight: 700, lineHeight: "28px", color: "#1A1A2E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{org.name}</p>
+                {org.is_verified && (
+                  <div className="flex items-center justify-center shrink-0" style={{ width: 20, height: 20, borderRadius: 10, background: "#FFB800", boxShadow: "0 0 8px rgba(255,184,0,0.40)" }}>
+                    <Shield className="w-3 h-3 text-white" />
+                  </div>
+                )}
               </div>
-            </div>
 
-            {/* Social links */}
-            {org.social_links && Object.keys(org.social_links as any).length > 0 && (
-              <div className="glass-light rounded-2xl p-4" style={{ boxShadow: "inset 0 1px 0 var(--glass-highlight)" }}>
-                <h3 className="text-[14px] font-bold mb-2" style={{ color: "var(--color-text)" }}>Social</h3>
-                <div className="flex flex-wrap gap-2">
-                  {Object.entries(org.social_links as Record<string, string>).filter(([, v]) => v).map(([k, v]) => (
-                    <a key={k} href={v} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] font-semibold transition-all hover:-translate-y-0.5"
-                      style={{ background: "var(--glass-bg)", border: "1px solid var(--glass-border-color)", color: "var(--color-accent)" }}>
-                      <ExternalLink className="w-3 h-3" /> {k}
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+              {/* Row 2: tagline */}
+              {org.tagline && (
+                <p style={{ fontSize: 13, fontWeight: 400, color: "#6B7094" }}>{org.tagline}</p>
+              )}
 
-        {activeTab === "Members" && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
-              <button onClick={() => setDeptFilter("all")}
-                className="text-[12px] px-3 py-1.5 rounded-xl shrink-0 font-semibold cursor-pointer"
-                style={{ background: deptFilter === "all" ? "var(--color-accent)" : "var(--glass-bg)", color: deptFilter === "all" ? "white" : "var(--color-text-secondary)", border: deptFilter !== "all" ? "1px solid var(--glass-border-color)" : "none" }}>
-                All ({members.length})
-              </button>
-              {departments.map(d => (
-                <button key={d} onClick={() => setDeptFilter(d)}
-                  className="text-[12px] px-3 py-1.5 rounded-xl shrink-0 font-semibold cursor-pointer"
-                  style={{ background: deptFilter === d ? "var(--color-accent)" : "var(--glass-bg)", color: deptFilter === d ? "white" : "var(--color-text-secondary)", border: deptFilter !== d ? "1px solid var(--glass-border-color)" : "none" }}>
-                  {d}
-                </button>
-              ))}
-            </div>
-            {filteredMembers.length === 0 ? (
-              <div className="glass-light rounded-2xl p-8 text-center">
-                <Users className="w-10 h-10 mx-auto mb-2" style={{ color: "var(--color-text-muted)" }} />
-                <p className="text-[13px]" style={{ color: "var(--color-text-muted)" }}>No members found</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {filteredMembers.map(m => (
-                  <Link key={m.id} to={`/app/profile/${m.user_id}`}
-                    className="glass-light rounded-2xl p-3 flex items-center gap-3 transition-all hover:-translate-y-0.5"
-                    style={{ boxShadow: "inset 0 1px 0 var(--glass-highlight)" }}>
-                    <AvatarSquare src={m.profile?.avatar_url} name={m.profile?.full_name || "Member"} size="md" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[13px] font-semibold truncate" style={{ color: "var(--color-text)" }}>{m.profile?.full_name || "Member"}</p>
-                      <p className="text-[11px] truncate" style={{ color: "var(--color-text-muted)" }}>{m.title || m.role}{m.department ? ` · ${m.department}` : ""}</p>
-                    </div>
-                    {m.is_verified && <Shield className="w-4 h-4 shrink-0" style={{ color: "#FFB800" }} />}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === "Opportunities" && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              {(["all", "active", "closed"] as const).map(f => (
-                <button key={f} onClick={() => setOppFilter(f)}
-                  className="text-[12px] px-3 py-1.5 rounded-xl font-semibold cursor-pointer capitalize"
-                  style={{ background: oppFilter === f ? "var(--color-accent)" : "var(--glass-bg)", color: oppFilter === f ? "white" : "var(--color-text-secondary)", border: oppFilter !== f ? "1px solid var(--glass-border-color)" : "none" }}>
-                  {f} ({f === "all" ? opps.length : f === "active" ? opps.filter(o => o.is_open).length : opps.filter(o => !o.is_open).length})
-                </button>
-              ))}
-            </div>
-            {filteredOpps.length === 0 ? (
-              <div className="glass-light rounded-2xl p-8 text-center">
-                <Briefcase className="w-10 h-10 mx-auto mb-2" style={{ color: "var(--color-text-muted)" }} />
-                <p className="text-[14px] font-semibold mb-1" style={{ color: "var(--color-text)" }}>No opportunities</p>
-              </div>
-            ) : (
-              filteredOpps.map(o => (
-                <div key={o.id} onClick={() => navigate("/app/opportunities")}
-                  className="glass-light rounded-2xl p-4 cursor-pointer transition-all hover:-translate-y-0.5"
-                  style={{ boxShadow: "inset 0 1px 0 var(--glass-highlight)" }}>
-                  <div className="flex items-start justify-between">
-                    <div className="min-w-0 flex-1">
-                      <h4 className="text-[14px] font-semibold" style={{ color: "var(--color-text)" }}>{o.title}</h4>
-                      <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg" style={{ background: "rgba(74,144,217,0.1)", color: "#4A90D9" }}>{(o.type || "job").replace(/[-_]/g, " ")}</span>
-                        {o.location && <span className="text-[11px] flex items-center gap-0.5" style={{ color: "var(--color-text-muted)" }}><MapPin className="w-3 h-3" />{o.location}</span>}
-                        {o.is_remote && <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg" style={{ background: "rgba(52,199,89,0.1)", color: "#34C759" }}>Remote</span>}
-                      </div>
-                      {o.compensation && <p className="text-[12px] mt-1 font-semibold" style={{ color: "var(--color-accent)" }}>{o.compensation}</p>}
-                    </div>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg shrink-0"
-                      style={{ background: o.is_open ? "rgba(52,199,89,0.1)" : "rgba(156,163,175,0.1)", color: o.is_open ? "#34C759" : "var(--color-text-muted)" }}>
-                      {o.is_open ? "Active" : "Closed"}
+              {/* Row 3: @slug + location */}
+              <div className="flex items-center flex-wrap" style={{ gap: 8 }}>
+                <span style={{ fontSize: 12, fontWeight: 400, color: "#9CA3C0" }}>@{org.slug}</span>
+                {(org.city || org.state) && (
+                  <>
+                    <span style={{ width: 3, height: 3, borderRadius: "50%", background: "#9CA3C0", flexShrink: 0 }} />
+                    <span className="flex items-center" style={{ gap: 2, fontSize: 12, color: "#9CA3C0" }}>
+                      <MapPin style={{ width: 12, height: 12 }} />{[org.city, org.state].filter(Boolean).join(", ")}
                     </span>
-                  </div>
+                  </>
+                )}
+              </div>
+
+              {/* Row 4: Stats */}
+              <div className="flex items-center" style={{ gap: 16, marginTop: 4 }}>
+                <div>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{followerCount}</span>
+                  <span style={{ fontSize: 12, fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Followers</span>
                 </div>
-              ))
-            )}
+                <div>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{members.length}</span>
+                  <span style={{ fontSize: 12, fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Members</span>
+                </div>
+              </div>
+
+              {/* Row 5: Action buttons */}
+              <div className="flex items-center" style={{ gap: 8, marginTop: 8 }}>
+                {isFollowing ? (
+                  <div className="relative group">
+                    <button type="button" className="cursor-pointer" style={{
+                      height: 32, padding: "0 16px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+                      background: "rgba(52,199,89,0.10)", color: "#34C759", border: "1px solid rgba(52,199,89,0.25)",
+                      display: "inline-flex", alignItems: "center", gap: 4,
+                    }}>
+                      <Heart style={{ width: 13, height: 13, fill: "currentColor" }} /> Following
+                    </button>
+                    <div className="absolute top-full left-0 mt-1 hidden group-hover:block z-20" style={{
+                      background: "#FFFFFF", border: "1px solid #E5E7EB", borderRadius: 10,
+                      boxShadow: "0 4px 16px rgba(0,0,0,0.1)", padding: 4, minWidth: 120,
+                    }}>
+                      <button type="button" onClick={toggleFollow} className="w-full text-left cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "8px 12px", fontSize: 13, color: "#EF4444", borderRadius: 6 }}>
+                        Unfollow
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button type="button" onClick={toggleFollow} className="cursor-pointer" style={{
+                    height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 700,
+                    background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none",
+                    boxShadow: "0 2px 12px rgba(232,115,58,0.25)", display: "inline-flex", alignItems: "center", gap: 4,
+                  }}>
+                    <Heart style={{ width: 13, height: 13 }} /> Follow
+                  </button>
+                )}
+
+                {org.allow_messages && org.created_by && (
+                  <button type="button" onClick={() => navigate(`/app/pings?to=${org.created_by}`)} className="cursor-pointer" style={{
+                    height: 32, padding: "0 16px", borderRadius: 8, fontSize: 12, fontWeight: 500,
+                    background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.40)",
+                    color: "#1A1A2E", display: "inline-flex", alignItems: "center", gap: 4,
+                  }}>
+                    <MessageCircle style={{ width: 13, height: 13 }} /> Message
+                  </button>
+                )}
+
+                <button type="button" onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success("Link copied"); }} className="cursor-pointer" style={{
+                  height: 32, width: 32, borderRadius: 8, fontSize: 12,
+                  background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.40)",
+                  color: "#1A1A2E", display: "inline-flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <Share2 style={{ width: 13, height: 13 }} />
+                </button>
+
+                {isAdmin && (
+                  <button type="button" onClick={() => navigate("/app/workspace")} className="cursor-pointer" style={{
+                    height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 500,
+                    background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.40)",
+                    color: "#1A1A2E", display: "inline-flex", alignItems: "center", gap: 4,
+                  }}>
+                    <Settings style={{ width: 13, height: 13 }} /> Manage
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── COMPANY INFO CARDS ── */}
+        {infoCards.length > 0 && (
+          <div className="flex flex-wrap" style={{ gap: 8, marginTop: 12 }}>
+            {infoCards.map((card, i) => (
+              <div key={i} className="glass-card" style={{
+                padding: "10px 16px", borderRadius: 12, flex: "1 1 140px", minWidth: 140,
+                background: "rgba(255,255,255,0.25)", backdropFilter: "blur(20px)",
+                border: "1px solid rgba(255,255,255,0.40)",
+                boxShadow: "0 4px 16px rgba(26,26,78,0.05), inset 0 1px 0 rgba(255,255,255,0.60)",
+              }}>
+                <p style={{ fontSize: 10, fontWeight: 600, color: "#9CA3C0", textTransform: "uppercase", letterSpacing: "0.04em" }}>{card.label}</p>
+                <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{card.value}</p>
+              </div>
+            ))}
           </div>
         )}
 
-        {activeTab === "Posts" && (
-          <div className="space-y-3">
-            {posts.length === 0 ? (
-              <div className="glass-light rounded-2xl p-8 text-center">
-                <FileText className="w-10 h-10 mx-auto mb-2" style={{ color: "var(--color-text-muted)" }} />
-                <p className="text-[13px]" style={{ color: "var(--color-text-muted)" }}>No posts yet</p>
+        {/* ── ABOUT ── */}
+        <div className="glass-card" style={{
+          padding: 16, borderRadius: 16, marginTop: 12,
+          background: "rgba(255,255,255,0.25)", backdropFilter: "blur(20px)",
+          border: "1px solid rgba(255,255,255,0.40)",
+          boxShadow: "0 4px 16px rgba(26,26,78,0.05), inset 0 1px 0 rgba(255,255,255,0.60)",
+        }}>
+          <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", marginBottom: 6 }}>About</p>
+          {org.description ? (
+            <p style={{ fontSize: 13, fontWeight: 400, color: "#6B7094", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{org.description}</p>
+          ) : (
+            <p style={{ fontSize: 13, color: "#9CA3C0" }}>No description added yet.</p>
+          )}
+          {/* Social links */}
+          {org.social_links && Object.keys(org.social_links as any).length > 0 && (
+            <div className="flex flex-wrap" style={{ gap: 6, marginTop: 10 }}>
+              {Object.entries(org.social_links as Record<string, string>).filter(([, v]) => v).map(([k, v]) => (
+                <a key={k} href={v} target="_blank" rel="noopener noreferrer" className="flex items-center" style={{
+                  height: 28, padding: "0 10px", borderRadius: 6, gap: 6,
+                  background: "rgba(255,255,255,0.12)", border: "1px solid rgba(0,0,0,0.06)",
+                }}>
+                  <ExternalLink style={{ width: 12, height: 12, color: "#E8733A", flexShrink: 0 }} />
+                  <span style={{ fontSize: 12, fontWeight: 400, color: "#1A1A2E" }}>{k}</span>
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ── SECTION GRID ── */}
+        <div className="grid grid-cols-1 md:grid-cols-[280px_1fr]" style={{ marginTop: 12, gap: 12 }}>
+
+          {/* ═══ LEFT COLUMN ═══ */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {/* Followers card */}
+            <div className="glass-card" style={{ padding: 12, borderRadius: 16 }}>
+              <p style={{ fontSize: 11, fontWeight: 600, color: "#9CA3C0", textTransform: "uppercase", letterSpacing: "0.02em" }}>FOLLOWERS</p>
+              <p style={{ fontSize: 28, fontWeight: 700, color: "#1A1A2E", margin: "4px 0", lineHeight: "36px", letterSpacing: "-0.02em" }}>{followerCount}</p>
+            </div>
+
+            {/* Quick details */}
+            <div className="glass-card" style={{ padding: 12, borderRadius: 16 }}>
+              <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", marginBottom: 8 }}>Details</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {org.email && <DetailRow icon={Globe} label="Email" value={org.email} />}
+                {org.phone && <DetailRow icon={Globe} label="Phone" value={org.phone} />}
+                {org.founded_year && <DetailRow icon={Calendar} label="Founded" value={String(org.founded_year)} />}
+                {org.website_url && (
+                  <a href={org.website_url} target="_blank" rel="noopener noreferrer" className="flex items-center" style={{ gap: 6, fontSize: 12, color: "#E8733A" }}>
+                    <Globe style={{ width: 13, height: 13 }} /> Website
+                  </a>
+                )}
               </div>
-            ) : (
-              posts.map(p => (
-                <Link key={p.id} to={`/post/${p.id}`}
-                  className="glass-light rounded-2xl p-4 block transition-all hover:-translate-y-0.5"
-                  style={{ boxShadow: "inset 0 1px 0 var(--glass-highlight)" }}>
-                  <p className="text-[13px] line-clamp-3" style={{ color: "var(--color-text)" }}>{p.content}</p>
-                  <div className="flex items-center gap-3 mt-2 text-[11px]" style={{ color: "var(--color-text-muted)" }}>
-                    {p.author?.full_name && <span>by {p.author.full_name}</span>}
-                    <span>{daysAgo(p.created_at)}</span>
-                    {(p.comment_count || 0) > 0 && <span>{p.comment_count} comments</span>}
-                  </div>
-                </Link>
-              ))
-            )}
+            </div>
           </div>
-        )}
+
+          {/* ═══ RIGHT COLUMN ═══ */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+
+            {/* Members section */}
+            <SectionBox title="Members" icon={Users} iconColor="#4A90D9" borderColor="#4A90D9" count={members.length}>
+              {members.length === 0 ? (
+                <p style={{ fontSize: 13, color: "#9CA3C0", padding: "4px 0" }}>No members yet</p>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {members.slice(0, 6).map(m => (
+                    <Link key={m.id} to={`/app/profile/${m.user_id}`} className="flex items-center" style={{ gap: 10, padding: "6px 0", borderBottom: "1px solid rgba(0,0,0,0.04)" }}>
+                      <AvatarSquare src={m.profile?.avatar_url} name={m.profile?.full_name || "Member"} size="sm" />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.profile?.full_name || "Member"}</p>
+                        <p style={{ fontSize: 11, color: "#9CA3C0" }}>{m.title || m.role}{m.department ? ` · ${m.department}` : ""}</p>
+                      </div>
+                      {m.is_verified && (
+                        <div className="flex items-center justify-center shrink-0" style={{ width: 18, height: 18, borderRadius: 9, background: "#FFB800" }}>
+                          <Shield className="w-2.5 h-2.5 text-white" />
+                        </div>
+                      )}
+                    </Link>
+                  ))}
+                  {members.length > 6 && (
+                    <p style={{ fontSize: 12, color: "#E8733A", marginTop: 4 }}>+{members.length - 6} more members</p>
+                  )}
+                </div>
+              )}
+            </SectionBox>
+
+            {/* Opportunities section */}
+            <SectionBox title="Opportunities" icon={Briefcase} iconColor="#34C759" borderColor="#34C759" count={activeOpps.length}>
+              {opps.length === 0 ? (
+                <p style={{ fontSize: 13, color: "#9CA3C0", padding: "4px 0" }}>No opportunities posted</p>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {opps.slice(0, 5).map((o, idx) => (
+                    <div key={o.id} onClick={() => navigate("/app/opportunities")} className="cursor-pointer" style={{
+                      padding: "8px 0",
+                      borderBottom: idx < Math.min(opps.length, 5) - 1 ? "1px solid rgba(0,0,0,0.04)" : "none",
+                    }}>
+                      <div className="flex items-start justify-between">
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>{o.title}</p>
+                          <div className="flex items-center flex-wrap" style={{ gap: 6, marginTop: 3 }}>
+                            <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 4, background: "rgba(74,144,217,0.1)", color: "#4A90D9" }}>
+                              {(o.type || "job").replace(/[-_]/g, " ")}
+                            </span>
+                            {o.location && <span style={{ fontSize: 11, color: "#9CA3C0" }}>{o.location}</span>}
+                            {o.is_remote && <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 4, background: "rgba(52,199,89,0.1)", color: "#34C759" }}>Remote</span>}
+                          </div>
+                          {o.compensation && <p style={{ fontSize: 12, fontWeight: 600, color: "#E8733A", marginTop: 3 }}>{o.compensation}</p>}
+                        </div>
+                        <span style={{
+                          fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 4, flexShrink: 0,
+                          background: o.is_open ? "rgba(52,199,89,0.1)" : "rgba(156,163,175,0.1)",
+                          color: o.is_open ? "#34C759" : "#9CA3C0",
+                        }}>
+                          {o.is_open ? "Active" : "Closed"}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  {opps.length > 5 && (
+                    <Link to="/app/opportunities" style={{ fontSize: 12, color: "#E8733A", marginTop: 4, display: "block" }}>See all opportunities →</Link>
+                  )}
+                </div>
+              )}
+            </SectionBox>
+
+            {/* Posts section */}
+            <SectionBox title="Posts" icon={MessageCircle} iconColor="#E8733A" borderColor="#E8733A" count={posts.length}>
+              {posts.length === 0 ? (
+                <p style={{ fontSize: 13, color: "#9CA3C0", padding: "4px 0" }}>No posts yet</p>
+              ) : (
+                <>
+                  {posts.slice(0, 5).map((p, idx) => (
+                    <Link key={p.id} to={`/app/post/${p.id}`} className="block" style={{
+                      padding: "8px 0",
+                      borderBottom: idx < Math.min(posts.length, 5) - 1 ? "1px solid rgba(0,0,0,0.04)" : "none",
+                    }}>
+                      <p style={{ fontSize: 13, fontWeight: 400, color: "#1A1A2E", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{p.content}</p>
+                      {p.image_urls && p.image_urls.length > 0 && (
+                        <div className="flex gap-1 mt-1.5 overflow-hidden" style={{ borderRadius: 8 }}>
+                          {p.image_urls.slice(0, 3).map((url: string, i: number) => (
+                            <img key={i} src={url} alt="" loading="lazy" className="object-cover" style={{ width: p.image_urls.length === 1 ? "100%" : 80, height: 56, borderRadius: 6 }} />
+                          ))}
+                        </div>
+                      )}
+                      <div className="flex items-center" style={{ gap: 12, marginTop: 6 }}>
+                        <span className="flex items-center" style={{ gap: 3, fontSize: 12, color: "#9CA3C0" }}>
+                          <Star style={{ width: 12, height: 12, color: "#FF6B9D" }} /> {getLikeCount(p)}
+                        </span>
+                        <span className="flex items-center" style={{ gap: 3, fontSize: 12, color: "#9CA3C0" }}>
+                          <MessageCircle style={{ width: 12, height: 12 }} /> {getCommentCount(p)}
+                        </span>
+                        <span className="flex items-center" style={{ gap: 3, fontSize: 12, color: "#9CA3C0" }}>
+                          <Rocket style={{ width: 12, height: 12 }} /> {p.repost_count || 0}
+                        </span>
+                        <span style={{ fontSize: 11, color: "#9CA3C0", marginLeft: "auto" }}>
+                          {p.created_at ? getTimeAgo(new Date(p.created_at)) : ""}
+                        </span>
+                      </div>
+                    </Link>
+                  ))}
+                  {posts.length > 5 && (
+                    <Link to="/app/feed" style={{ fontSize: 12, color: "#E8733A", marginTop: 4, display: "block" }}>See all posts →</Link>
+                  )}
+                </>
+              )}
+            </SectionBox>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-const InfoCell = ({ label, value }: { label: string; value: string }) => (
-  <div className="p-2.5 rounded-xl" style={{ background: "var(--glass-bg)", border: "1px solid var(--glass-border-color, rgba(255,255,255,0.12))" }}>
-    <p className="text-[10px] font-bold" style={{ color: "var(--color-text-muted)" }}>{label}</p>
-    <p className="text-[13px] font-semibold truncate" style={{ color: "var(--color-text)" }}>{value}</p>
+/* ── Reusable Section Box (matches user profile style) ── */
+const SectionBox = ({ title, icon: Icon, iconColor, borderColor, count, children }: {
+  title: string; icon: any; iconColor: string; borderColor: string; count?: number; children: React.ReactNode;
+}) => (
+  <div className="glass-card" style={{
+    padding: 16, borderRadius: 16,
+    borderLeft: `3px solid ${borderColor}`,
+    background: "rgba(255,255,255,0.25)", backdropFilter: "blur(20px)",
+    border: `1px solid rgba(255,255,255,0.40)`,
+    borderLeftColor: borderColor, borderLeftWidth: 3,
+    boxShadow: "0 4px 16px rgba(26,26,78,0.05), inset 0 1px 0 rgba(255,255,255,0.60)",
+  }}>
+    <div className="flex items-center" style={{ gap: 8, marginBottom: 10 }}>
+      <Icon style={{ width: 16, height: 16, color: iconColor }} />
+      <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", flex: 1 }}>{title}</span>
+      {count !== undefined && <span style={{ fontSize: 12, fontWeight: 500, color: "#9CA3C0" }}>{count}</span>}
+    </div>
+    {children}
+  </div>
+);
+
+/* ── Detail row helper ── */
+const DetailRow = ({ icon: Icon, label, value }: { icon: any; label: string; value: string }) => (
+  <div className="flex items-center" style={{ gap: 6 }}>
+    <span style={{ fontSize: 11, fontWeight: 500, color: "#9CA3C0", minWidth: 60 }}>{label}</span>
+    <span style={{ fontSize: 12, fontWeight: 500, color: "#1A1A2E" }}>{value}</span>
   </div>
 );
