@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { storageImageUrl } from "@/lib/imageTransform";
 import { cleanUsername } from "@/lib/cleanUsername";
+import AvatarSquare from "@/components/ui/AvatarSquare";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Heart, MessageSquare, Send, Trash2, MoreHorizontal, Pencil, Copy, Flag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -158,9 +158,7 @@ const PostDetail = () => {
       <article className="glass-liquid rounded-2xl overflow-hidden">
         <div className="flex items-center gap-3 px-4 pt-4 pb-2">
           <Link to={`/app/profile/${author?.id || ""}`}>
-            <div className="w-11 h-11 flex items-center justify-center text-[14px] font-bold text-white shrink-0 overflow-hidden" style={{ borderRadius: 0, backgroundColor: roleColor, border: "2px solid rgba(255,255,255,0.30)" }}>
-              {author?.avatar_url ? <img src={storageImageUrl(author.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : initials}
-            </div>
+            <AvatarSquare src={author?.avatar_url} name={name} size={44} bgColor={roleColor} />
           </Link>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
@@ -237,9 +235,7 @@ const PostDetail = () => {
             const isOwnComment = user?.id === c.user_id;
             return (
               <div key={c.id} className="flex items-start gap-2 group">
-                <div className="w-7 h-7 flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden" style={{ borderRadius: 0, backgroundColor: cColor }}>
-                  {c.author?.avatar_url ? <img src={storageImageUrl(c.author.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : cInit}
-                </div>
+                <AvatarSquare src={c.author?.avatar_url} name={cName} size="xs" bgColor={cColor} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-[13px] font-bold" style={{ color: "var(--text-1)" }}>{cName}</span>
@@ -257,9 +253,7 @@ const PostDetail = () => {
           })}
           {user && (
             <div className="flex items-center gap-2 mt-2">
-              <div className="w-7 h-7 flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden" style={{ borderRadius: 0, background: "var(--brand)" }}>
-                {profile?.avatar_url ? <img src={storageImageUrl(profile.avatar_url, "avatar")} alt="" className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : userInitials}
-              </div>
+              <AvatarSquare src={profile?.avatar_url} name={profile?.full_name || "U"} size="xs" />
               <input value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="Write a comment..."
                 className="flex-1 h-9 rounded-xl px-3 text-[13px] outline-none"
                 style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }}
