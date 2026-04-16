@@ -324,7 +324,14 @@ const PostCard = ({
   const isOpen = commentsOpen.has(post.id);
   const comments = commentsData[post.id] || [];
   const commentText = commentInputs[post.id] || "";
-  const repostCount = post.repost_count || 0;
+  const [localRepostCount, setLocalRepostCount] = useState(post.repost_count || 0);
+  const [hasReposted, setHasReposted] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("post_reposts").select("id").eq("post_id", post.id).eq("reposted_by", user.id).maybeSingle()
+      .then(({ data }) => setHasReposted(!!data));
+  }, [post.id, user]);
 
   const sortedComments = useMemo(() => {
     const arr = [...comments];
@@ -357,6 +364,8 @@ const PostCard = ({
           actionUrl: `/post/${post.id}`,
         });
       }
+      setLocalRepostCount(prev => prev + 1);
+      setHasReposted(true);
       toast.success("Reposted");
     } catch (e) { console.warn("[Feed] repost failed:", e); }
     setConfirmRepost(false);
