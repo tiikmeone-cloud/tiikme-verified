@@ -1,4 +1,4 @@
-import { storageImageUrl } from "@/lib/imageTransform";
+import { fixStorageUrl } from "@/components/ui/AvatarSquare";
 import { useState, useRef, useEffect } from "react";
 import { X, Loader2, Image as ImageIcon, AtSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
