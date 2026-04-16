@@ -202,7 +202,7 @@ const Opportunities = () => {
       )}
 
       {/* Cards */}
-      {loading ? (
+      {loading && !opps.length ? (
         <div className="space-y-4 mt-4">{[1,2,3].map(i => (
           <div key={i} className="animate-pulse rounded-xl p-5 glass-light" style={{ minHeight: 120 }}>
             <div className="flex gap-3"><div className="w-11 h-11 rounded-xl" style={{ background: "var(--surface-2)" }} /><div className="flex-1 space-y-2"><div className="h-5 w-2/3 rounded" style={{ background: "var(--surface-2)" }} /><div className="h-4 w-1/3 rounded" style={{ background: "var(--surface-2)" }} /></div></div>

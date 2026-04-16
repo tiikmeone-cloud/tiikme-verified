@@ -763,8 +763,8 @@ const Feed = () => {
         <div className="flex-1 min-w-0">
           <FeedComposer onPublished={refresh} />
 
-          {loading && <SkeletonCard count={3} />}
-          {!loading && visiblePosts.map((post: any) => (
+          {loading && !visiblePosts.length && <SkeletonCard count={3} />}
+          {visiblePosts.map((post: any) => (
             <PostCard
               key={post.id} post={post} connectionIds={connectionIds}
               likeCounts={likeCounts} myLikes={myLikes} toggleLike={toggleLike}
@@ -776,7 +776,7 @@ const Feed = () => {
             />
           ))}
 
-          {!loading && visiblePosts.length === 0 && (
+          {!loading && !visiblePosts.length && (
             <div className="glass-card text-center" style={{ padding: 20, borderRadius: 16 }}>
               <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", marginBottom: 4 }}>Nothing here yet</p>
               <p style={{ fontSize: 13, color: "#9CA3C0" }}>Be the first to post something.</p>
@@ -789,7 +789,7 @@ const Feed = () => {
               <Loader2 className="animate-spin" style={{ width: 24, height: 24, color: "#E8733A" }} />
             </div>
           )}
-          {!loading && !hasMore && visiblePosts.length > 0 && (
+          {!loading && !hasMore && visiblePosts.length > 0 && !loadingMore && (
             <div className="glass-card text-center" style={{ padding: 20, borderRadius: 16, marginTop: 8 }}>
               <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>You're all caught up!</p>
             </div>

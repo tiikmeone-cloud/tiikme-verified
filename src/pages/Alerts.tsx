@@ -180,7 +180,7 @@ const Alerts = () => {
     groups[g].push(a);
   });
 
-  if (loading) {
+  if (loading && alerts.length === 0) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-2">
         {[1, 2, 3].map(i => (
