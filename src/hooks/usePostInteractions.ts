@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { sendNotification, getPostAuthorId } from "@/lib/notify";
 
 export function usePostInteractions(postIds: string[]) {
   const { user } = useAuth();
@@ -56,6 +57,21 @@ export function usePostInteractions(postIds: string[]) {
       if (error) {
         setLiked(prev => ({ ...prev, [postId]: false }));
         setLikes(prev => ({ ...prev, [postId]: Math.max(0, (prev[postId] || 0) - 1) }));
+      } else {
+        // Send notification to post author
+        getPostAuthorId(postId).then(authorId => {
+          if (authorId && user.id) {
+            sendNotification({
+              userId: authorId,
+              actorId: user.id,
+              type: "like",
+              title: "Liked your post",
+              body: "Someone liked your post",
+              actionUrl: `/post/${postId}`,
+              data: { post_id: postId },
+            });
+          }
+        });
       }
     }
   }, [user, liked]);

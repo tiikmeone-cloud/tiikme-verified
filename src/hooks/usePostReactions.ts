@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { sendNotification, getPostAuthorId } from "@/lib/notify";
 
 export function usePostReactions(
   postId: string,
@@ -79,6 +80,24 @@ export function usePostReactions(
       const { error } = await supabase.from("post_reactions")
         .insert({ post_id: postId, user_id: userId, reaction_type: "like" });
       if (error) { setLiked(false); setLikeCount(p => Math.max(0, p - 1)); }
+      else {
+        // Send notification to post author
+        getPostAuthorId(postId).then(authorId => {
+          if (authorId) {
+            supabase.from("profiles").select("full_name").eq("id", userId).maybeSingle().then(({ data: p }) => {
+              sendNotification({
+                userId: authorId,
+                actorId: userId,
+                type: "like",
+                title: "Liked your post",
+                body: `${p?.full_name || "Someone"} liked your post`,
+                actionUrl: `/post/${postId}`,
+                data: { post_id: postId },
+              });
+            });
+          }
+        });
+      }
     }
   }, [postId, userId, liked]);
 
