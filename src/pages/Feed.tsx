@@ -325,29 +325,40 @@ const PostCard = ({
   const [showAllComments, setShowAllComments] = useState(false);
   const visibleComments = showAllComments ? sortedComments : sortedComments.slice(0, 3);
 
-  const [confirmRepost, setConfirmRepost] = useState(false);
+  const [reposting, setReposting] = useState(false);
   const handleRepost = async () => {
-    if (!user) return;
-    if (!confirmRepost) { setConfirmRepost(true); return; }
+    if (!user || reposting) return;
+    setReposting(true);
     try {
-      await supabase.from("posts").insert({
-        author_id: user.id, content: post.content, repost_of: post.id,
-        post_type: "thought", type: "thought", visibility: "everyone",
-        image_urls: post.image_urls || [],
-      } as any);
-      await supabase.from("post_reposts").insert({ post_id: post.id, reposted_by: user.id });
-      if (post.author_id) {
-        sendNotification({
-          userId: post.author_id, actorId: user.id, type: "repost",
-          title: `${authProfile?.full_name || "Someone"} reposted your post`,
-          actionUrl: `/post/${post.id}`,
-        });
+      if (hasReposted) {
+        // Undo repost
+        const { data: existing } = await supabase.from("posts").select("id").eq("repost_of", post.id).eq("author_id", user.id).maybeSingle();
+        if (existing) await supabase.from("posts").delete().eq("id", existing.id);
+        await supabase.from("post_reposts").delete().eq("post_id", post.id).eq("reposted_by", user.id);
+        setLocalRepostCount(prev => Math.max(0, prev - 1));
+        setHasReposted(false);
+        toast.success("Repost removed");
+      } else {
+        // Create repost
+        await supabase.from("posts").insert({
+          author_id: user.id, content: post.content, repost_of: post.id,
+          post_type: "thought", type: "thought", visibility: "everyone",
+          image_urls: post.image_urls || [],
+        } as any);
+        await supabase.from("post_reposts").insert({ post_id: post.id, reposted_by: user.id });
+        if (post.author_id && post.author_id !== user.id) {
+          sendNotification({
+            userId: post.author_id, actorId: user.id, type: "repost",
+            title: `${authProfile?.full_name || "Someone"} reposted your post`,
+            actionUrl: `/post/${post.id}`,
+          });
+        }
+        setLocalRepostCount(prev => prev + 1);
+        setHasReposted(true);
+        toast.success("Reposted");
       }
-      setLocalRepostCount(prev => prev + 1);
-      setHasReposted(true);
-      toast.success("Reposted");
     } catch (e) { console.warn("[Feed] repost failed:", e); }
-    setConfirmRepost(false);
+    setReposting(false);
   };
 
   const handleLike = () => {
@@ -504,21 +515,12 @@ const PostCard = ({
             <span style={{ fontSize: 12, color: isOpen ? "#E8733A" : "#9CA3C0" }}>{commentCount || ""}</span>
           </button>
 
-          <div className="relative">
-            <button type="button" onClick={handleRepost}
-              className="flex items-center cursor-pointer"
-              style={{ gap: 4, padding: "6px 10px", borderRadius: 8 }}>
-              <Repeat2 style={{ width: 16, height: 16, color: hasReposted ? "#E8733A" : "#9CA3C0" }} />
-              {localRepostCount > 0 && <span style={{ fontSize: 12, color: hasReposted ? "#E8733A" : "#9CA3C0" }}>{localRepostCount}</span>}
-            </button>
-            {confirmRepost && (
-              <div className="absolute bottom-full left-0 mb-1 flex items-center gap-1 px-2 py-1 z-10" style={{ borderRadius: 8, whiteSpace: "nowrap", background: "#FFFFFF", border: "1px solid #E5E7EB", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
-                <span style={{ fontSize: 11, color: "#6B7094" }}>Repost?</span>
-                <button type="button" onClick={handleRepost} className="cursor-pointer" style={{ fontSize: 11, fontWeight: 700, color: "#E8733A", padding: "0 4px" }}>Yes</button>
-                <button type="button" onClick={() => setConfirmRepost(false)} className="cursor-pointer" style={{ fontSize: 11, color: "#9CA3C0", padding: "0 4px" }}>No</button>
-              </div>
-            )}
-          </div>
+          <button type="button" onClick={handleRepost} disabled={reposting}
+            className="flex items-center cursor-pointer"
+            style={{ gap: 4, padding: "6px 10px", borderRadius: 8, opacity: reposting ? 0.5 : 1 }}>
+            <Repeat2 style={{ width: 16, height: 16, color: hasReposted ? "#E8733A" : "#9CA3C0" }} />
+            {localRepostCount > 0 && <span style={{ fontSize: 12, color: hasReposted ? "#E8733A" : "#9CA3C0" }}>{localRepostCount}</span>}
+          </button>
 
           <button type="button" onClick={() => setSharePostId(post.id)}
             className="flex items-center cursor-pointer"

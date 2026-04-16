@@ -129,8 +129,8 @@ const ShareModal = ({ open, onClose, postId }: ShareModalProps) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(26,26,78,0.40)", backdropFilter: "blur(8px)" }} onClick={onClose}>
-      <div className="w-[90vw] max-w-[420px] max-h-[70vh] flex flex-col" style={{ background: "var(--bg-card)", borderRadius: 16, border: "1px solid var(--border-glass)", boxShadow: "0 8px 32px rgba(26,26,78,0.12)" }} onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center" style={{ background: "rgba(0,0,0,0.40)" }} onClick={onClose} onKeyDown={e => { if (e.key === "Escape") onClose(); }}>
+      <div className="w-[90vw] max-w-[480px] max-h-[70vh] flex flex-col" style={{ background: "#FFFFFF", borderRadius: 20, border: "1px solid #E5E7EB", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }} onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between" style={{ padding: "14px 16px", borderBottom: "1px solid var(--border-subtle)" }}>
           <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>Share with</h3>
