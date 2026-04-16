@@ -418,6 +418,70 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           })}
         </div>
       </nav>
+
+      {/* ═══ MOBILE ACTION SHEET ═══ */}
+      {showActionSheet && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-[60] md:hidden"
+            style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(4px)" }}
+            onClick={() => setShowActionSheet(false)}
+          />
+          {/* Sheet */}
+          <div
+            className="fixed left-0 right-0 z-[61] md:hidden"
+            style={{
+              bottom: "calc(56px + env(safe-area-inset-bottom))",
+              padding: "8px 16px 12px",
+              background: "rgba(255,255,255,0.92)",
+              backdropFilter: "blur(24px)",
+              WebkitBackdropFilter: "blur(24px)",
+              borderTop: "1px solid rgba(255,255,255,0.40)",
+              borderRadius: "20px 20px 0 0",
+              animation: "actionSheetUp 200ms ease-out",
+            }}
+          >
+            {[
+              { label: "New Post", icon: PencilLine, action: () => { setShowActionSheet(false); openPostCreate(); } },
+              { label: "Workspace", icon: Users, action: () => { setShowActionSheet(false); navigate("/app/workspace"); } },
+              { label: "Opportunities", icon: Target, action: () => { setShowActionSheet(false); navigate("/app/opportunities"); } },
+              { label: "Connections", icon: Link2, action: () => { setShowActionSheet(false); navigate("/app/connections"); } },
+              { label: "Settings", icon: SlidersHorizontal, action: () => { setShowActionSheet(false); navigate("/app/settings"); } },
+            ].map((item) => (
+              <button
+                key={item.label}
+                type="button"
+                onClick={item.action}
+                className="w-full flex items-center active:scale-[0.98]"
+                style={{
+                  gap: 14,
+                  height: 52,
+                  padding: "0 12px",
+                  borderRadius: 14,
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  transition: "background 100ms",
+                  fontSize: 15,
+                  fontWeight: 600,
+                  color: "var(--text-primary)",
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = "rgba(232,115,58,0.08)")}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+              >
+                <div style={{
+                  width: 40, height: 40, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center",
+                  background: "rgba(232,115,58,0.10)",
+                }}>
+                  <item.icon style={{ width: 20, height: 20, color: "#E8733A" }} strokeWidth={1.8} />
+                </div>
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 };
