@@ -418,8 +418,8 @@ const PostCard = ({
             <AvatarSquare src={displayAvatar} name={displayName} size={40} />
           </Link>
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1 overflow-hidden" style={{ lineHeight: "18px" }}>
-              <Link to={profileLink} className="hover:underline truncate shrink-0" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", maxWidth: "40%" }}>{displayName}</Link>
+            <div className="flex items-center flex-wrap" style={{ gap: "0 4px", lineHeight: "18px" }}>
+              <Link to={profileLink} className="hover:underline" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", wordBreak: "break-word" }}>{displayName}</Link>
               {(author?.is_verified || post.org?.is_verified) && <VerifiedBadge size={14} />}
               {(viaName || companyName) && (
                 <>
@@ -531,8 +531,8 @@ const PostCard = ({
             <button type="button" onClick={handleRepost}
               className="flex items-center cursor-pointer"
               style={{ gap: 4, padding: "6px 10px", borderRadius: 8, background: "rgba(255,255,255,0.10)" }}>
-              <Repeat2 style={{ width: 16, height: 16, color: "#9CA3C0" }} />
-              {repostCount > 0 && <span style={{ fontSize: 12, color: "#9CA3C0" }}>{repostCount}</span>}
+              <Repeat2 style={{ width: 16, height: 16, color: hasReposted ? "#E8733A" : "#9CA3C0" }} />
+              {localRepostCount > 0 && <span style={{ fontSize: 12, color: hasReposted ? "#E8733A" : "#9CA3C0" }}>{localRepostCount}</span>}
             </button>
             {confirmRepost && (
               <div className="absolute bottom-full left-0 mb-1 flex items-center gap-1 px-2 py-1 z-10" style={{ borderRadius: 8, whiteSpace: "nowrap", background: "var(--bg-card)", border: "1px solid var(--border-glass)", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
