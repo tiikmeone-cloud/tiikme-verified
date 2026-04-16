@@ -352,7 +352,7 @@ function OpportunityCard({ o, user, profile, isInstitution, appliedIds, saved, o
         {/* Top row */}
         <div className="flex items-start gap-3">
           <div className="w-11 h-11 rounded-xl flex items-center justify-center text-[13px] font-bold shrink-0 overflow-hidden" style={{ background: "var(--surface-2)", border: "1.5px solid var(--border)" }}>
-            {orgData?.logo_url ? <img src={storageImageUrl(orgData.logo_url, "thumbnail")} alt="" className="w-full h-full object-cover" /> : <Building2 className="w-5 h-5" style={{ color: meta.color }} />}
+            {orgData?.logo_url ? <img src={storageImageUrl(orgData.logo_url, "thumbnail")} alt="" loading="lazy" className="w-full h-full object-cover" /> : <Building2 className="w-5 h-5" style={{ color: meta.color }} />}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
