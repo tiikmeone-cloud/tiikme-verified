@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutGrid, Compass, Users, Target, User,
   Link2, MessageCircle, Bell, SlidersHorizontal, PencilLine, Plus, LogOut, Home,
+  X as XIcon,
 } from "lucide-react";
 import ThemeLogo from "@/components/ThemeLogo";
 import { toast } from "sonner";
