@@ -41,6 +41,7 @@ const PostDetail = () => {
   const [showMenu, setShowMenu] = useState(false);
   const [editingPost, setEditingPost] = useState<any | null>(null);
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
