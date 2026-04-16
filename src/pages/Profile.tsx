@@ -917,6 +917,7 @@ const Profile = () => {
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <ExperienceSection items={experiences} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("experience")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
             <EducationSection items={education} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("education")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
+            <RolesSection items={profileRoles} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("role")} onDelete={deleteRole} />
             <ProjectsSection items={projects} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("project")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
             <AchievementsSection items={achievements} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("achievement")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} />
             <SkillsSection skills={skills} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("skills")} onRemoveSkill={removeSkill} />
