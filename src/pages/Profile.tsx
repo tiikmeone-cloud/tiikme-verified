@@ -1042,7 +1042,7 @@ const Profile = () => {
         )}
       </GlassModal>
 
-      <GlassModal open={modalSection === "role"} onClose={() => setModalSection(null)} title="Add Role" icon={Layers} accentColor="#0369A1"
+      <GlassModal open={modalSection === "role"} onClose={() => setModalSection(null)} title="Add Moonlighting" icon={Layers} accentColor="#0369A1"
         actions={<>
           <button type="button" onClick={saveRole} disabled={saving} className="cursor-pointer" style={{ padding: "10px 28px", borderRadius: 16, fontSize: 14, fontWeight: 600, background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 4px 20px rgba(232,115,58,0.35)" }}>{saving ? "Saving..." : "Save"}</button>
           <button type="button" onClick={() => setModalSection(null)} className="cursor-pointer" style={{ padding: "10px 20px", borderRadius: 16, fontSize: 14, fontWeight: 500, background: "rgba(255,255,255,0.08)", color: "#fff", border: "1px solid rgba(255,255,255,0.25)" }}>Cancel</button>
