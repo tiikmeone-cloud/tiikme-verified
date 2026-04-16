@@ -59,6 +59,9 @@ const AppShell = ({ children }: { children: ReactNode }) => {
   const openPostCreate = () => navigate("/post/create");
   const { profile, initials, displayName, user } = useAuth();
   const [orgData, setOrgData] = useState<{ name: string; logo_url: string | null; type: string; slug: string } | null>(null);
+  const [showActionSheet, setShowActionSheet] = useState(false);
+  const { profile, initials, displayName, user } = useAuth();
+  const [orgData, setOrgData] = useState<{ name: string; logo_url: string | null; type: string; slug: string } | null>(null);
 
   const isInstitution = profile?.account_type === "institution" && !!profile?.org_id;
 
