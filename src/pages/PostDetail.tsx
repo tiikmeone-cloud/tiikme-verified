@@ -12,6 +12,7 @@ import PostCarousel from "@/components/feed/PostCarousel";
 import EditPostModal from "@/components/feed/EditPostModal";
 import DeletePostDialog from "@/components/feed/DeletePostDialog";
 import ShareModal from "@/components/feed/ShareModal";
+import CommentLoveButton from "@/components/feed/CommentLoveButton";
 
 const roleColorMap: Record<string, string> = {
   student: "#4F46E5", professional: "#0369A1", doctor: "#0E7490",
@@ -252,6 +253,7 @@ const PostDetail = () => {
                   </div>
                   <p className="text-[13px]" style={{ color: "var(--text-2)" }}>{c.content}</p>
                 </div>
+                <CommentLoveButton commentId={c.id} userId={user?.id} />
               </div>
             );
           })}
