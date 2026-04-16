@@ -421,43 +421,42 @@ const PostCard = ({
           </div>
         )}
 
-        {/* HEADER */}
+        {/* HEADER — single row */}
         <div className="flex items-center" style={{ gap: 10 }}>
-          <Link to={profileLink}>
+          <Link to={profileLink} className="shrink-0">
             <AvatarSquare src={displayAvatar} name={displayName} size={40} />
           </Link>
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <Link to={profileLink} className="hover:underline" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{displayName}</Link>
-              {(author?.is_verified || post.org?.is_verified) && <VerifiedBadge size={16} />}
-              {isConnected && <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#34C759", display: "inline-block" }} />}
-              {showFollow && followState === "none" && (
-                <button type="button" onClick={handleFollow} className="cursor-pointer"
-                  style={{ fontSize: 12, fontWeight: 700, padding: "2px 10px", borderRadius: 6, ...({background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none"}) }}>
-                  + Connect
-                </button>
+            <div className="flex items-center gap-1 overflow-hidden" style={{ lineHeight: "18px" }}>
+              <Link to={profileLink} className="hover:underline truncate shrink-0" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", maxWidth: "40%" }}>{displayName}</Link>
+              {(author?.is_verified || post.org?.is_verified) && <VerifiedBadge size={14} />}
+              {(viaName || companyName) && (
+                <>
+                  <span className="shrink-0" style={{ fontSize: 12, color: "#9CA3C0" }}>·</span>
+                  <span className="truncate" style={{ fontSize: 12, color: "#6B7094", maxWidth: "30%" }}>
+                    {viaName ? `via ${viaName}` : companyName}
+                  </span>
+                </>
               )}
-              {showFollow && followState === "pending" && (
-                <span style={{ fontSize: 12, fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "rgba(255,184,0,0.10)", color: "#FFB800", border: "1px solid rgba(255,184,0,0.25)" }}>Requested</span>
-              )}
-              <span style={{ fontSize: 12, color: "#9CA3C0" }}>·</span>
-              <span style={{ fontSize: 12, color: "#9CA3C0" }}>{timeAgo}</span>
-              {isEdited && <span style={{ fontSize: 12, fontStyle: "italic", color: "#9CA3C0" }}>(edited)</span>}
+              <span className="shrink-0" style={{ fontSize: 12, color: "#9CA3C0" }}>·</span>
+              <span className="shrink-0" style={{ fontSize: 12, color: "#9CA3C0" }}>{timeAgo}</span>
+              {isEdited && <span className="shrink-0" style={{ fontSize: 11, fontStyle: "italic", color: "#9CA3C0" }}>(edited)</span>}
             </div>
-            {viaName ? (
-              <span style={{ fontSize: 12, color: "#6B7094" }}>via {viaName}</span>
-            ) : companyName ? (
-              <div className="flex items-center gap-1">
-                <div className="flex items-center justify-center shrink-0 overflow-hidden" style={{ width: 14, height: 14, borderRadius: 0, background: "rgba(232,115,58,0.15)" }}>
-                  <span style={{ fontSize: 7, fontWeight: 700, color: "#E8733A" }}>{companyName.charAt(0).toUpperCase()}</span>
-                </div>
-                <span style={{ fontSize: 12, color: "#6B7094" }}>{companyName}</span>
-              </div>
-            ) : null}
           </div>
 
+          {/* Connect button */}
+          {showFollow && followState === "none" && (
+            <button type="button" onClick={handleFollow} className="cursor-pointer shrink-0"
+              style={{ fontSize: 12, fontWeight: 700, padding: "4px 12px", borderRadius: 6, background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", whiteSpace: "nowrap" }}>
+              + Connect
+            </button>
+          )}
+          {showFollow && followState === "pending" && (
+            <span className="shrink-0" style={{ fontSize: 12, fontWeight: 600, padding: "4px 10px", borderRadius: 6, background: "rgba(255,184,0,0.10)", color: "#FFB800", border: "1px solid rgba(255,184,0,0.25)", whiteSpace: "nowrap" }}>Requested</span>
+          )}
+
           {/* Three-dot menu */}
-          <div className="relative" ref={menuRef}>
+          <div className="relative shrink-0" ref={menuRef}>
             <button type="button" onClick={() => setShowMenu(!showMenu)}
               className="flex items-center justify-center cursor-pointer"
               style={{ width: 32, height: 32, color: "#9CA3C0" }}>
@@ -570,24 +569,24 @@ const PostCard = ({
               const isOwnComment = user?.id === c.user_id;
               return (
                 <div key={c.id} className="flex group" style={{ gap: 8, padding: "6px 0", alignItems: "flex-start" }}>
-                  <div style={{ marginTop: 2, flexShrink: 0 }}>
-                    <AvatarSquare src={c.author?.avatar_url} name={cName} size={24} />
+                  <div className="shrink-0" style={{ marginTop: 2 }}>
+                    <AvatarSquare src={c.author?.avatar_url} name={cName} size="sm" />
                   </div>
-                  <div className="flex-1 min-w-0" style={{ background: "rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "8px 10px" }}>
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center" style={{ gap: 6 }}>
-                      <Link to={`/app/profile/${c.author?.id || c.user_id}`} className="hover:underline" style={{ fontSize: 12, fontWeight: 600, color: "#1A1A2E" }}>{cName}</Link>
+                      <Link to={`/app/profile/${c.author?.id || c.user_id}`} className="hover:underline" style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>{cName}</Link>
                       <span style={{ fontSize: 12, color: "#9CA3C0" }}>·</span>
-                      <span style={{ fontSize: 12, fontWeight: 400, color: "#9CA3C0" }}>{cTime}</span>
+                      <span style={{ fontSize: 12, color: "#9CA3C0" }}>{cTime}</span>
+                      {isOwnComment && (
+                        <button type="button" onClick={() => deleteComment(post.id, c.id)}
+                          className="opacity-0 group-hover:opacity-100 cursor-pointer"
+                          style={{ color: "#EF4444", marginLeft: 2 }}>
+                          <Trash2 style={{ width: 12, height: 12 }} />
+                        </button>
+                      )}
                     </div>
                     <p style={{ fontSize: 13, fontWeight: 400, color: "#1A1A2E", lineHeight: "18px", marginTop: 2 }}><MentionText text={c.content} /></p>
                   </div>
-                  {isOwnComment && (
-                    <button type="button" onClick={() => deleteComment(post.id, c.id)}
-                      className="opacity-0 group-hover:opacity-100 cursor-pointer shrink-0"
-                      style={{ color: "#EF4444", marginTop: 4 }}>
-                      <Trash2 style={{ width: 12, height: 12 }} />
-                    </button>
-                  )}
                 </div>
               );
             })}
