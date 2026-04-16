@@ -208,7 +208,6 @@ export async function sendConnectionRequest(
 
   return status;
 }
-};
 
 /* Batch check for feed: returns Set of connected user IDs */
 export async function fetchConnectedIds(userId: string): Promise<Set<string>> {
