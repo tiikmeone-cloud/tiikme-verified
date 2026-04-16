@@ -237,7 +237,7 @@ export function useWorkspaces(userId: string | undefined) {
   const fetchMessages = useCallback(async (channelId: string): Promise<GroupMessage[]> => {
     const { data } = await supabase
       .from("workspace_messages")
-      .select("id, content, sender_id, channel_id, created_at, attachment_url, attachment_name")
+      .select("id, content, sender_id, channel_id, created_at, attachment_url, attachment_type, attachment_name")
       .eq("channel_id", channelId)
       .order("created_at", { ascending: true })
       .limit(200);

@@ -767,7 +767,7 @@ const Feed = () => {
   }, [hasMore, loadingMore, loadMore]);
 
   return (
-    <main className="feed-main" style={{ maxWidth: 700, margin: "0 auto", padding: 16 }}>
+    <main className="feed-main max-w-2xl 2xl:max-w-3xl" style={{ margin: "0 auto", padding: 16 }}>
       <PageSEO title="Feed | Tiikme" description="Your professional feed — posts, updates, and insights from verified professionals and organizations on Tiikme." noIndex />
 
       <div className="flex" style={{ gap: 16 }}>
