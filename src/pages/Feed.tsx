@@ -669,7 +669,6 @@ const SuggestedWidget = ({ connectionIds }: { connectionIds: Set<string> }) => {
     const result = await sendConnectionRequest(user.id, targetId, profile?.full_name || "Someone");
     if (result === null) { toast.info("Request already exists"); return; }
     if (result === "accepted") {
-      setConnectedIds(prev => new Set(prev).add(targetId));
       toast.success("Connected!");
     } else {
       setSentIds(prev => new Set(prev).add(targetId));
