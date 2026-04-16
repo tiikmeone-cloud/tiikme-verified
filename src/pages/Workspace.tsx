@@ -64,14 +64,8 @@ const ChatMessageContent = ({ text }: { text: string }) => {
       })}
     </>
   );
-};
-  const date = new Date(d);
-  const now = new Date();
-  if (date.toDateString() === now.toDateString()) return "Today";
-  const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
-  if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
-  return date.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
-};
+
+
 
 /* ══════════════════════════════════════════════════════════════ */
 /*  AVATAR COMPONENT                                             */
