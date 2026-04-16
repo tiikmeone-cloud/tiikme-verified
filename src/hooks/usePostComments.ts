@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { sendNotification, getPostAuthorId } from "@/lib/notify";
 
 // Helper: fetch profiles for comment authors
 async function attachCommentAuthors(comments: any[]): Promise<any[]> {
@@ -128,6 +129,21 @@ export function usePostComments(postId: string, enabled: boolean) {
       };
       // Replace optimistic with real
       setComments(prev => prev.map(c => c.id === tempId ? (enriched as any) : c));
+
+      // Send notification to post author
+      getPostAuthorId(postId).then(authorId => {
+        if (authorId) {
+          sendNotification({
+            userId: authorId,
+            actorId: userId,
+            type: "comment",
+            title: "Commented on your post",
+            body: `${profile?.full_name || "Someone"}: "${content.substring(0, 50)}"`,
+            actionUrl: `/post/${postId}`,
+            data: { post_id: postId, comment_id: data.id },
+          });
+        }
+      });
     } else if (error && mountedRef.current) {
       // Remove optimistic on error
       setComments(prev => prev.filter(c => c.id !== tempId));
