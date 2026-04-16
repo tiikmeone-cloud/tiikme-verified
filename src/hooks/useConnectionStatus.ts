@@ -56,18 +56,42 @@ export function useConnectionStatus(targetUserId: string | null | undefined) {
       .maybeSingle();
     if (existing) { setLoading(false); toast.info("Request already exists"); return; }
 
-    const { error } = await supabase.from("strands").insert({ requester_id: user.id, receiver_id: targetUserId });
-    if (error) { toast.error(error.message); setLoading(false); return; }
-    sendNotification({
-      userId: targetUserId,
-      actorId: user.id,
-      type: "connection_request",
-      title: `${profile?.full_name || "Someone"} wants to connect`,
-      actionUrl: `/app/connections`,
-      data: { actor_id: user.id },
+    // Check if target is an institution → instant connect
+    const { data: targetProfile } = await supabase
+      .from("profiles")
+      .select("account_type, org_id")
+      .eq("id", targetUserId)
+      .maybeSingle();
+
+    const isInstitution = targetProfile?.account_type === "institution";
+    const insertStatus = isInstitution ? "accepted" : "pending";
+
+    const { error } = await supabase.from("strands").insert({
+      requester_id: user.id,
+      receiver_id: targetUserId,
+      status: insertStatus,
     });
-    setInfo({ state: "pending_sent", strandId: null });
-    toast.success("Connection request sent");
+    if (error) { toast.error(error.message); setLoading(false); return; }
+
+    if (isInstitution) {
+      // Also follow the org
+      if (targetProfile?.org_id) {
+        await supabase.from("org_followers").insert({ org_id: targetProfile.org_id, user_id: user.id }).then(() => {});
+      }
+      setInfo({ state: "accepted", strandId: null });
+      toast.success("Connected!");
+    } else {
+      sendNotification({
+        userId: targetUserId,
+        actorId: user.id,
+        type: "connection_request",
+        title: `${profile?.full_name || "Someone"} wants to connect`,
+        actionUrl: `/app/connections`,
+        data: { actor_id: user.id },
+      });
+      setInfo({ state: "pending_sent", strandId: null });
+      toast.success("Connection request sent");
+    }
     setLoading(false);
   }, [user?.id, targetUserId, profile, loading]);
 
