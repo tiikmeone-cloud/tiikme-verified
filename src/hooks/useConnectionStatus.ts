@@ -153,7 +153,60 @@ export const connectionButtonLabel = (state: ConnectionState): string => {
     case "pending_received": return "Accept";
     case "accepted": return "Connected";
     default: return "Connect";
+}
+
+/**
+ * Shared helper: check if target is institution → insert as accepted, else pending.
+ * Returns the status that was inserted.
+ */
+export async function sendConnectionRequest(
+  currentUserId: string,
+  targetUserId: string,
+  senderName: string
+): Promise<"accepted" | "pending" | null> {
+  // Duplicate check
+  const { data: existing } = await supabase
+    .from("strands")
+    .select("id")
+    .or(
+      `and(requester_id.eq.${currentUserId},receiver_id.eq.${targetUserId}),and(requester_id.eq.${targetUserId},receiver_id.eq.${currentUserId})`
+    )
+    .maybeSingle();
+  if (existing) return null;
+
+  const { data: targetProfile } = await supabase
+    .from("profiles")
+    .select("account_type, org_id")
+    .eq("id", targetUserId)
+    .maybeSingle();
+
+  const isInstitution = targetProfile?.account_type === "institution";
+  const status = isInstitution ? "accepted" : "pending";
+
+  const { error } = await supabase.from("strands").insert({
+    requester_id: currentUserId,
+    receiver_id: targetUserId,
+    status,
+  });
+  if (error) return null;
+
+  if (isInstitution) {
+    if (targetProfile?.org_id) {
+      await supabase.from("org_followers").insert({ org_id: targetProfile.org_id, user_id: currentUserId }).then(() => {});
+    }
+  } else {
+    sendNotification({
+      userId: targetUserId,
+      actorId: currentUserId,
+      type: "connection_request",
+      title: `${senderName || "Someone"} wants to connect`,
+      actionUrl: `/app/connections`,
+      data: { actor_id: currentUserId },
+    });
   }
+
+  return status;
+}
 };
 
 /* Batch check for feed: returns Set of connected user IDs */
