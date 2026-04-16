@@ -153,7 +153,8 @@ export const connectionButtonLabel = (state: ConnectionState): string => {
     case "pending_received": return "Accept";
     case "accepted": return "Connected";
     default: return "Connect";
-}
+  }
+};
 
 /**
  * Shared helper: check if target is institution → insert as accepted, else pending.
