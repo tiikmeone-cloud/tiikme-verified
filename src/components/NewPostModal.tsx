@@ -1,5 +1,6 @@
 import { fixStorageUrl } from "@/components/ui/AvatarSquare";
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X, Loader2, Image as ImageIcon, AtSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -143,8 +144,8 @@ const NewPostModal = ({ open, onClose, onPublished }: NewPostModalProps) => {
     if (el) { el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 300) + "px"; }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-0 sm:px-4" style={{ background: "rgba(4,6,26,0.7)", backdropFilter: "blur(12px)" }} onClick={onClose}>
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center px-0 sm:px-4" style={{ background: "rgba(4,6,26,0.7)", backdropFilter: "blur(12px)" }} onClick={onClose}>
       <div className="w-full sm:max-w-[560px] max-h-[85vh] overflow-y-auto rounded-t-[20px] sm:rounded-2xl border border-border/30" style={{ background: "var(--surface)" }} onClick={e => e.stopPropagation()}>
         <div className="sm:hidden flex justify-center pt-2"><div className="w-9 h-[5px] rounded-full" style={{ background: "var(--border-2)" }} /></div>
         <div className="flex items-center justify-between px-5 py-4 border-b border-border/30">
@@ -193,7 +194,8 @@ const NewPostModal = ({ open, onClose, onPublished }: NewPostModalProps) => {
         </div>
         <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
