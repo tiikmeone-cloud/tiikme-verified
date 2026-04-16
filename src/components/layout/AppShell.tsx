@@ -178,10 +178,10 @@ const AppShell = ({ children }: { children: ReactNode }) => {
         className="hidden md:flex flex-col fixed inset-y-0 left-0 z-40"
         style={{
           width: 220,
-          background: "rgba(255,255,255,0.10)",
+          background: "rgba(255,255,255,0.72)",
           backdropFilter: "blur(24px)",
           WebkitBackdropFilter: "blur(24px)",
-          borderRight: "1px solid rgba(255,255,255,0.12)",
+          borderRight: "1px solid rgba(0,0,0,0.06)",
           padding: "16px 12px",
           justifyContent: "space-between",
         }}
@@ -221,15 +221,15 @@ const AppShell = ({ children }: { children: ReactNode }) => {
                         borderRadius: 10,
                         gap: 10,
                         marginBottom: 2,
-                        background: active ? "rgba(255,255,255,0.28)" : "transparent",
+                        background: active ? "rgba(232,115,58,0.08)" : "transparent",
                         color: active ? "#E8733A" : "var(--text-primary)",
                         fontWeight: active ? 600 : 500,
                         fontSize: 13,
-                        boxShadow: active ? "-3px 0 10px rgba(232,115,58,0.20)" : "none",
+                        borderLeft: active ? "3px solid #E8733A" : "3px solid transparent",
                         transition: "all 150ms ease",
                       }}
-                      onMouseEnter={e => { if (!active) e.currentTarget.style.background = "rgba(255,255,255,0.18)"; }}
-                      onMouseLeave={e => { if (!active) e.currentTarget.style.background = active ? "rgba(255,255,255,0.28)" : "transparent"; }}
+                      onMouseEnter={e => { if (!active) e.currentTarget.style.background = "rgba(0,0,0,0.03)"; }}
+                      onMouseLeave={e => { if (!active) e.currentTarget.style.background = active ? "rgba(232,115,58,0.08)" : "transparent"; }}
                     >
                       <item.icon style={{ width: 18, height: 18, flexShrink: 0, color: active ? "#E8733A" : "var(--text-secondary)" }} strokeWidth={1.8} />
                       <span>{item.label}</span>
@@ -281,7 +281,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
         </div>
 
         {/* Bottom: user section */}
-        <div style={{ paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.10)" }}>
+        <div style={{ paddingTop: 12, borderTop: "1px solid rgba(0,0,0,0.06)" }}>
           <Link to={profilePath} className="flex items-center" style={{ gap: 10 }}>
             <AvatarSquare src={identityAvatar} name={identityName || "You"} size={32} />
             <div className="min-w-0 flex-1">
