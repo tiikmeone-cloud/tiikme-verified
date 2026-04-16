@@ -2,7 +2,7 @@ import AvatarSquare from "@/components/ui/AvatarSquare";
 import { storageImageUrl } from "@/lib/imageTransform";
 import { cleanUsername } from "@/lib/cleanUsername";
 import { useState, useEffect, useRef } from "react";
-import { Check, Camera, User, Eye, Lock, LogOut, Users, Copy, Share2, TrendingUp, HelpCircle, MessageSquare, Send } from "lucide-react";
+import { Check, Camera, User, Eye, Lock, LogOut, Users, Copy, Share2, TrendingUp, HelpCircle, MessageSquare, Send, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { tiikToast } from "@/components/ui/tiik-toast";
@@ -646,6 +646,11 @@ const SettingsPage = () => {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* Subscription (institution only) */}
+          {activeTab === "subscription" && (
+            <SubscriptionSection userId={userId} />
           )}
 
           {/* Help */}
