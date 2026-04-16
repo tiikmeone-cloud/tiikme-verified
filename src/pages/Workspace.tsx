@@ -102,10 +102,14 @@ const CreateGroupModal = ({ open, onClose, userId, onCreate }: CreateGroupModalP
     if (selectedIds.length === 0) { toast.error("Add at least 1 member"); return; }
     setCreating(true);
     try {
-      await onCreate(name.trim(), desc.trim(), null, selectedIds);
-      toast.success("Group created");
-      onClose();
-      setStep(1); setName(""); setDesc(""); setSelectedIds([]);
+      const result = await onCreate(name.trim(), desc.trim(), null, selectedIds);
+      if (result) {
+        toast.success("Group created");
+        setStep(1); setName(""); setDesc(""); setSelectedIds([]);
+        onClose();
+      } else {
+        toast.error("Failed to create group — check permissions");
+      }
     } catch {
       toast.error("Failed to create group");
     }
@@ -470,6 +474,11 @@ export default function Workspace() {
   const [activeGroup, setActiveGroup] = useState<WorkspaceGroup | null>(null);
   const [mobileShowChat, setMobileShowChat] = useState(false);
 
+  const handleCloseCreate = () => {
+    setShowCreate(false);
+    fetchGroups();
+  };
+
   // Separate pending invites from accepted groups
   const pendingInvites = groups.filter(g => g.invitation_status === "pending");
   const acceptedGroups = groups.filter(g => g.invitation_status === "accepted");
@@ -613,7 +622,7 @@ export default function Workspace() {
       {/* Create Group Modal */}
       <CreateGroupModal
         open={showCreate}
-        onClose={() => setShowCreate(false)}
+        onClose={handleCloseCreate}
         userId={userId}
         onCreate={createGroup}
       />

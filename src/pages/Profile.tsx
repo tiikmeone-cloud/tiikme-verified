@@ -505,7 +505,9 @@ const Profile = () => {
 
   /* Save functions */
   const saveExperience = async () => {
-    if (!expForm.company.trim() || !expForm.title.trim() || !user) return;
+    if (!user) return;
+    if (!expForm.company.trim()) { toast.error("Company name is required"); return; }
+    if (!expForm.title.trim()) { toast.error("Job title is required"); return; }
     setSaving(true);
     const startDate = expForm.startMonth && expForm.startYear ? `${expForm.startYear}-${String(months.indexOf(expForm.startMonth) + 1).padStart(2, "0")}-01` : null;
     const endDate = !expForm.isCurrent && expForm.endMonth && expForm.endYear ? `${expForm.endYear}-${String(months.indexOf(expForm.endMonth) + 1).padStart(2, "0")}-01` : null;
