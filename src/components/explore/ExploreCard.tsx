@@ -42,8 +42,8 @@ export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonC
       onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
       onClick={() => navigate(`/app/profile/${p.id}`)}
     >
-      <AvatarSquare src={p.avatar_url} name={name} size={48} />
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 1, minWidth: 0 }}>
+      <AvatarSquare src={p.avatar_url} name={name} size={80} />
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 2, minWidth: 0 }}>
         <div className="flex items-center gap-1">
           <span className="truncate" style={{ fontWeight: 700, fontSize: 14, color: "var(--text-primary)" }}>{name}</span>
           {p.is_verified && <VerifiedBadge size={14} />}
@@ -60,10 +60,10 @@ export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonC
           type="button"
           disabled={strandStatus !== "none"}
           onClick={e => { e.stopPropagation(); onStrand(); }}
-          className="cursor-pointer shrink-0"
+          className="cursor-pointer shrink-0 self-center"
           style={{
-            padding: "5px 12px", borderRadius: 8,
-            fontSize: 11, fontWeight: 600, border: "none",
+            padding: "6px 14px", borderRadius: 8,
+            fontSize: 12, fontWeight: 600, border: "none",
             whiteSpace: "nowrap",
             ...(isConnected
               ? { background: "rgba(52,199,89,0.10)", color: "#34C759" }
@@ -90,8 +90,8 @@ interface OrgCardProps {
 export function OrgCard({ org, following, onToggleFollow, navigateTo }: OrgCardProps) {
   const navigate = useNavigate();
   const typeKey = org.type || org.page_type || "company";
-  const typeLabel = typeKey.charAt(0).toUpperCase() + typeKey.slice(1);
-  const subtype = org.subtype;
+  const typeLabel = typeKey.charAt(0).toUpperCase() + typeKey.slice(1).replace(/_/g, " ");
+  const subtype = org.subtype || org.sub_type;
 
   return (
     <article
@@ -107,8 +107,8 @@ export function OrgCard({ org, following, onToggleFollow, navigateTo }: OrgCardP
       onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
       onClick={() => navigate(navigateTo)}
     >
-      <AvatarSquare src={org.logo_url} name={org.name || "?"} size={48} />
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 1, minWidth: 0 }}>
+      <AvatarSquare src={org.logo_url} name={org.name || "?"} size={80} />
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 2, minWidth: 0 }}>
         <span className="truncate" style={{ fontWeight: 700, fontSize: 14, color: "var(--text-primary)" }}>{org.name}</span>
         <span className="truncate" style={{ fontSize: 12, color: "var(--text-secondary)" }}>
           {typeLabel}{subtype ? ` · ${subtype}` : ""}
@@ -117,10 +117,10 @@ export function OrgCard({ org, following, onToggleFollow, navigateTo }: OrgCardP
       <button
         type="button"
         onClick={e => { e.stopPropagation(); onToggleFollow(e); }}
-        className="cursor-pointer shrink-0"
+        className="cursor-pointer shrink-0 self-center"
         style={{
-          padding: "5px 12px", borderRadius: 8,
-          fontSize: 11, fontWeight: 600, border: "none",
+          padding: "6px 14px", borderRadius: 8,
+          fontSize: 12, fontWeight: 600, border: "none",
           whiteSpace: "nowrap",
           ...(following
             ? { background: "rgba(52,199,89,0.10)", color: "#34C759" }
@@ -159,7 +159,7 @@ export function TrendingPostCard({ post, authorProfile }: PostCardProps) {
       }}
       onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(26,26,78,0.12)"; }}
       onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
-      onClick={() => navigate(`/post/${post.id}`)}
+      onClick={() => navigate(`/app/feed?post=${post.id}`)}
     >
       <div className="flex items-center gap-2" style={{ marginBottom: 8 }}>
         <AvatarSquare src={authorProfile?.avatar_url} name={name} size={28} />
