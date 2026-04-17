@@ -233,9 +233,12 @@ const Pings = () => {
                 <div className="relative">
                   <AvatarSquare src={other?.avatar_url} name={name} size={44} bgColor={roleColor} />
                   {hasUnread && (
-                    <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-bold text-white px-1" style={{ background: "var(--brand)" }}>
-                      {convo.unread_count}
-                    </span>
+                    <span className="absolute" style={{
+                      top: -2, right: -2,
+                      width: 10, height: 10, borderRadius: "50%",
+                      background: "var(--brand)",
+                      border: "2px solid rgba(255,255,255,0.95)",
+                    }} />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
