@@ -690,6 +690,9 @@ const Feed = () => {
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
   const [editedPosts, setEditedPosts] = useState<Record<string, any>>({});
   const [connectionIds, setConnectionIds] = useState<Set<string>>(new Set());
+  const [searchParams] = useSearchParams();
+  const targetPostId = searchParams.get("post");
+  const scrolledRef = useRef(false);
 
   // Load connection IDs
   useEffect(() => {
@@ -723,6 +726,26 @@ const Feed = () => {
   } = useComments();
 
   useEffect(() => { loadCommentCounts(postIds); }, [postIdsKey, loadCommentCounts]);
+
+  // Scroll to ?post=<id> when present and post is loaded
+  useEffect(() => {
+    if (!targetPostId || scrolledRef.current) return;
+    if (!visiblePosts.some((p: any) => p.id === targetPostId)) {
+      // Post not yet in loaded set — try to load more
+      if (hasMore && !loadingMore && !loading) loadMore();
+      return;
+    }
+    const el = document.getElementById(`post-${targetPostId}`);
+    if (el) {
+      requestAnimationFrame(() => {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        el.style.transition = "box-shadow 600ms";
+        el.style.boxShadow = "0 0 0 2px #E8733A, 0 1px 4px rgba(0,0,0,0.04)";
+        setTimeout(() => { el.style.boxShadow = "0 1px 4px rgba(0,0,0,0.04)"; }, 1800);
+      });
+      scrolledRef.current = true;
+    }
+  }, [targetPostId, visiblePosts, hasMore, loadingMore, loading, loadMore]);
 
   // Infinite scroll
   useEffect(() => {
