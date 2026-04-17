@@ -201,17 +201,32 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
 
       {expanded && createPortal(
         <div
-          className="fixed inset-0 flex items-center justify-center px-4"
-          style={{ zIndex: 9999, background: "rgba(26,26,78,0.40)", backdropFilter: "blur(8px)" }}
+          style={{
+            position: "fixed",
+            top: 0, left: 0, right: 0, bottom: 0,
+            zIndex: 9999,
+            background: "rgba(26,26,78,0.40)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16,
+          }}
           onClick={() => setExpanded(false)}
         >
           <div
-            className="w-full flex flex-col"
+            className="flex flex-col"
             style={{
-              maxWidth: 520, maxHeight: "85vh", borderRadius: 20,
-              background: "#fff", border: "1px solid rgba(0,0,0,0.08)",
+              width: "100%",
+              maxWidth: 520,
+              maxHeight: "85vh",
+              borderRadius: 20,
+              background: "#fff",
+              border: "1px solid rgba(0,0,0,0.08)",
               boxShadow: "0 24px 80px rgba(26,26,78,0.20)",
               overflow: "hidden",
+              margin: "auto",
             }}
             onClick={e => e.stopPropagation()}
           >
