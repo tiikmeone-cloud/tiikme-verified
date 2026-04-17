@@ -36,7 +36,7 @@ export default function CertificatePage() {
           {/* Header */}
           <div className="p-8 text-center" style={{ borderBottom: "1px solid var(--border)" }}>
             {cert.org?.logo_url ? (
-              <img src={cert.org.logo_url} className="w-16 h-16 mx-auto rounded-xl object-cover mb-3" />
+              <img src={cert.org.logo_url} alt="" loading="lazy" className="w-16 h-16 mx-auto rounded-xl object-cover mb-3" />
             ) : (
               <div className="w-16 h-16 mx-auto rounded-xl flex items-center justify-center mb-3" style={{ background: "var(--brand)" }}>
                 <Award className="w-8 h-8 text-white" />
@@ -52,7 +52,7 @@ export default function CertificatePage() {
             <p className="text-[13px] mb-1" style={{ color: "var(--text-3)" }}>Awarded to</p>
             <div className="flex items-center justify-center gap-3 mb-4">
               {cert.recipient?.avatar_url && (
-                <img src={cert.recipient.avatar_url} className="w-12 h-12 object-cover" style={{ borderRadius: 0 }} />
+                <img src={cert.recipient.avatar_url} alt="" loading="lazy" className="w-12 h-12 object-cover" style={{ borderRadius: 0 }} />
               )}
               <p className="text-[20px] font-bold" style={{ color: "var(--text-1)" }}>{cert.recipient?.full_name || "User"}</p>
             </div>

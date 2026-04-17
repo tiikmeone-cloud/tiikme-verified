@@ -51,7 +51,7 @@ const PostCarousel = ({ images }: PostCarouselProps) => {
             <button type="button" className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center cursor-pointer z-10" onClick={() => setLightbox(false)}>
               <X className="w-6 h-6 text-white" />
             </button>
-            <img src={storageImageUrl(images[0], "lightbox")} alt="" className="max-w-[95vw] max-h-[90vh] object-contain" onClick={e => e.stopPropagation()} />
+            <img src={storageImageUrl(images[0], "lightbox")} alt="" loading="lazy" className="max-w-[95vw] max-h-[90vh] object-contain" onClick={e => e.stopPropagation()} />
           </div>
         )}
       </>
@@ -116,7 +116,7 @@ const PostCarousel = ({ images }: PostCarouselProps) => {
               <ChevronRight className="w-6 h-6" />
             </button>
           )}
-          <img src={storageImageUrl(images[current], "lightbox")} alt="" className="max-w-[95vw] max-h-[85vh] object-contain" onClick={e => e.stopPropagation()} />
+          <img src={storageImageUrl(images[current], "lightbox")} alt="" loading="lazy" className="max-w-[95vw] max-h-[85vh] object-contain" onClick={e => e.stopPropagation()} />
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
             {images.map((_, i) => (
               <button type="button" key={i} onClick={(e) => { e.stopPropagation(); setCurrent(i); }}

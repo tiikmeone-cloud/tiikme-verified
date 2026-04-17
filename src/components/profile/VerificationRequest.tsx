@@ -281,7 +281,7 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
                       style={{ border: "1px solid rgba(0,0,0,0.06)" }}>
                       <div className="w-10 h-10 flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden"
                         style={{ borderRadius: 0, background: org.logo_url ? "transparent" : hashColor(org.name) }}>
-                        {org.logo_url ? <img src={org.logo_url} className="w-full h-full object-cover" style={{ borderRadius: 0 }} alt="" /> : org.name.slice(0, 2).toUpperCase()}
+                        {org.logo_url ? <img src={org.logo_url} loading="lazy" className="w-full h-full object-cover" style={{ borderRadius: 0 }} alt="" /> : org.name.slice(0, 2).toUpperCase()}
                       </div>
                       <div className="min-w-0">
                         <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>{org.name}</p>
@@ -314,7 +314,7 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
                   <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: "rgba(16,185,129,0.04)", border: "1px solid rgba(16,185,129,0.12)" }}>
                     <div className="w-10 h-10 flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden"
                       style={{ borderRadius: 0, background: selectedOrg.logo_url ? "transparent" : hashColor(selectedOrg.name) }}>
-                      {selectedOrg.logo_url ? <img src={selectedOrg.logo_url} className="w-full h-full object-cover" style={{ borderRadius: 0 }} alt="" /> : selectedOrg.name.slice(0, 2).toUpperCase()}
+                      {selectedOrg.logo_url ? <img src={selectedOrg.logo_url} loading="lazy" className="w-full h-full object-cover" style={{ borderRadius: 0 }} alt="" /> : selectedOrg.name.slice(0, 2).toUpperCase()}
                     </div>
                     <div>
                       <p style={{ fontSize: 13, fontWeight: 700, color: "#1A1A2E" }}>Send request to {selectedOrg.name}?</p>

@@ -223,7 +223,7 @@ const FeedComposer = ({ onPublished }: { onPublished: () => void }) => {
           {attachPreviews.map((att, i) => (
             <div key={i} className="relative" style={{ borderRadius: 6, overflow: "hidden", border: "1px solid #E8E8E8" }}>
               {att.type.startsWith("image/") ? (
-                <img src={att.url} alt="" style={{ height: 80, width: "auto", maxWidth: 120, objectFit: "cover", borderRadius: 6 }} />
+                <img src={att.url} alt="" loading="lazy" style={{ height: 80, width: "auto", maxWidth: 120, objectFit: "cover", borderRadius: 6 }} />
               ) : (
                 <div className="flex items-center gap-2" style={{ height: 36, padding: "0 10px", background: "#F5F5F5", fontSize: 12, color: "#6B7094" }}>
                   <Paperclip style={{ width: 14, height: 14 }} />

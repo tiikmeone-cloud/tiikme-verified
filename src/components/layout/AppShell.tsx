@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQueryClient } from "@tanstack/react-query";
+import { prefetchRoute, prefetchAdjacent } from "@/lib/prefetchRoutes";
 
 const navGroups = [
   {
@@ -153,6 +154,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (isActive("/app/alerts")) setUnreadAlerts(0);
     setShowActionSheet(false);
+    prefetchAdjacent(pathname);
   }, [pathname]);
 
   const getBadge = (path: string) => {
@@ -227,7 +229,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
                         borderLeft: active ? "3px solid #E8733A" : "3px solid transparent",
                         transition: "all 150ms ease",
                       }}
-                      onMouseEnter={e => { if (!active) e.currentTarget.style.background = "rgba(0,0,0,0.03)"; }}
+                      onMouseEnter={e => { prefetchRoute(item.path); if (!active) e.currentTarget.style.background = "rgba(0,0,0,0.03)"; }}
                       onMouseLeave={e => { if (!active) e.currentTarget.style.background = active ? "rgba(232,115,58,0.08)" : "transparent"; }}
                     >
                       <div className="relative" style={{ display: "flex", alignItems: "center" }}>

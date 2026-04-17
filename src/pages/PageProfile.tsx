@@ -190,7 +190,7 @@ const PageProfile = () => {
               boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
             }}>
             {page.logo_url
-              ? <img src={storageImageUrl(page.logo_url, "thumbnail")} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              ? <img src={storageImageUrl(page.logo_url, "thumbnail")} alt="" loading="lazy" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
               : logoLetters}
           </div>
           <div className="flex-1 min-w-0 pb-1">
@@ -502,7 +502,7 @@ const PageProfile = () => {
                   <div key={i} className="rounded-2xl overflow-hidden cursor-pointer transition-all hover:scale-[1.02]"
                     style={{ background: "var(--glass-bg)" }}
                     onClick={() => setLightboxUrl(p)}>
-                    <img src={p} alt="" className="w-full h-40 object-cover" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                    <img src={p} alt="" loading="lazy" className="w-full h-40 object-cover" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
                   </div>
                 ))}
               </div>
@@ -606,7 +606,7 @@ const PageProfile = () => {
           <button className="absolute top-4 right-4 text-white cursor-pointer" onClick={() => setLightboxUrl(null)}>
             <X className="w-6 h-6" />
           </button>
-          <img src={lightboxUrl} alt="" className="max-w-[90vw] max-h-[85vh] object-contain rounded-2xl" />
+          <img src={lightboxUrl} alt="" loading="lazy" className="max-w-[90vw] max-h-[85vh] object-contain rounded-2xl" />
         </div>
       )}
 
