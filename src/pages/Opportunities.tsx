@@ -15,6 +15,7 @@ import ApplyModal from "@/components/opportunities/ApplyModal";
 import GlassBox from "@/components/ui/GlassBox";
 import FindTab from "@/components/opportunities/FindTab";
 import ReferModal from "@/components/opportunities/ReferModal";
+import ReferralsTab from "@/components/opportunities/ReferralsTab";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 
 const TYPE_META: Record<string, { label: string; color: string; icon: any }> = {
@@ -35,7 +36,7 @@ const TYPE_META: Record<string, { label: string; color: string; icon: any }> = {
   volunteer: { label: "Volunteer", color: "#10B981", icon: UsersIcon },
 };
 
-const FILTER_TABS = ["All", "Full-time", "Internship", "Freelance", "Hackathon", "Remote", "Find"];
+const FILTER_TABS = ["All", "Full-time", "Internship", "Freelance", "Hackathon", "Remote", "Find", "Referrals"];
 const filterMap: Record<string, (q: any) => any> = {
   "Full-time": q => q.or("type.eq.full_time,type.eq.fulltime,type.eq.full-time,type.eq.job"),
   "Internship": q => q.eq("type", "internship"),
@@ -103,7 +104,7 @@ const Opportunities = () => {
     queryKey: ["opportunities", debouncedSearch, activeType],
     queryFn: fetchOppsData,
     staleTime: 3 * 60 * 1000,
-    enabled: activeType !== "Find",
+    enabled: activeType !== "Find" && activeType !== "Referrals",
   });
 
   const { data: appliedIds = new Set<string>() } = useQuery({
@@ -173,7 +174,7 @@ const Opportunities = () => {
 
       {/* Filter bar */}
       <div className="sticky top-0 z-10 py-3 flex items-center gap-3 flex-wrap">
-        {activeType !== "Find" && (
+        {activeType !== "Find" && activeType !== "Referrals" && (
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: "var(--text-3)" }} />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search roles, companies..."
@@ -197,6 +198,8 @@ const Opportunities = () => {
       {/* Find Tab */}
       {activeType === "Find" ? (
         <FindTab />
+      ) : activeType === "Referrals" ? (
+        <ReferralsTab />
       ) : (
         <>
           {/* Recommended Section */}
