@@ -230,24 +230,18 @@ const AppShell = ({ children }: { children: ReactNode }) => {
                       onMouseEnter={e => { if (!active) e.currentTarget.style.background = "rgba(0,0,0,0.03)"; }}
                       onMouseLeave={e => { if (!active) e.currentTarget.style.background = active ? "rgba(232,115,58,0.08)" : "transparent"; }}
                     >
-                      <item.icon style={{ width: 18, height: 18, flexShrink: 0, color: active ? "#E8733A" : "var(--text-secondary)" }} strokeWidth={1.8} />
-                      <span>{item.label}</span>
-                      {badge && badge > 0 && (
-                        <span
-                          className="absolute flex items-center justify-center"
-                          style={{
-                            right: 12,
-                            minWidth: 18,
-                            height: 18,
-                            borderRadius: 9,
+                      <div className="relative" style={{ display: "flex", alignItems: "center" }}>
+                        <item.icon style={{ width: 18, height: 18, flexShrink: 0, color: active ? "#E8733A" : "var(--text-secondary)" }} strokeWidth={1.8} />
+                        {badge && badge > 0 && (
+                          <span style={{
+                            position: "absolute", top: -1, right: -3,
+                            width: 8, height: 8, borderRadius: "50%",
                             background: "#E8733A",
-                            color: "white",
-                            fontSize: 10,
-                            fontWeight: 700,
-                            padding: "0 4px",
-                          }}
-                        >{badge}</span>
-                      )}
+                            border: "1.5px solid rgba(255,255,255,0.95)",
+                          }} />
+                        )}
+                      </div>
+                      <span>{item.label}</span>
                     </Link>
                   );
                 })}
@@ -379,10 +373,12 @@ const AppShell = ({ children }: { children: ReactNode }) => {
                 <div className="relative">
                   <item.icon style={{ width: 22, height: 22, color: active ? "#E8733A" : "var(--text-muted)" }} strokeWidth={active ? 2.2 : 1.8} />
                   {badge && badge > 0 && (
-                    <span className="absolute flex items-center justify-center" style={{
-                      top: -4, right: -6, minWidth: 14, height: 14, borderRadius: 7,
-                      background: "#E8733A", color: "white", fontSize: 9, fontWeight: 700, padding: "0 3px",
-                    }}>{badge}</span>
+                    <span style={{
+                      position: "absolute", top: -2, right: -2,
+                      width: 8, height: 8, borderRadius: "50%",
+                      background: "#E8733A",
+                      border: "1.5px solid rgba(255,255,255,0.95)",
+                    }} />
                   )}
                 </div>
                 <span className="truncate" style={{ fontSize: 10, fontWeight: 500, color: active ? "#E8733A" : "var(--text-muted)", maxWidth: "100%" }}>{item.label}</span>
