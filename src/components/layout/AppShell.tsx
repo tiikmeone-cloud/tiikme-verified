@@ -229,7 +229,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
                         borderLeft: active ? "3px solid #E8733A" : "3px solid transparent",
                         transition: "all 150ms ease",
                       }}
-                      onMouseEnter={e => { if (!active) e.currentTarget.style.background = "rgba(0,0,0,0.03)"; }}
+                      onMouseEnter={e => { prefetchRoute(item.path); if (!active) e.currentTarget.style.background = "rgba(0,0,0,0.03)"; }}
                       onMouseLeave={e => { if (!active) e.currentTarget.style.background = active ? "rgba(232,115,58,0.08)" : "transparent"; }}
                     >
                       <div className="relative" style={{ display: "flex", alignItems: "center" }}>
