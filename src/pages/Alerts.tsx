@@ -233,7 +233,7 @@ const Alerts = () => {
       {Object.entries(groups).map(([group, groupAlerts]) => (
         <div key={group} className="mb-6">
           <p className="text-[11px] font-bold tracking-wider uppercase mb-2 px-1" style={{ color: "#6B7094" }}>{group}</p>
-          <div className="space-y-2">
+          <div style={{ borderRadius: 12, overflow: "hidden", border: "1px solid #F1F3F5", background: "#FFFFFF" }}>
             {groupAlerts.map((notif, i) => {
               const unread = !notif.is_read;
               const style = ICON_STYLES[notif.type] || ICON_STYLES.score;
