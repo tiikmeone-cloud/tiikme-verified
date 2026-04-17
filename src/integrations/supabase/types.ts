@@ -1044,6 +1044,45 @@ export type Database = {
           },
         ]
       }
+      opportunity_reactions: {
+        Row: {
+          created_at: string | null
+          id: string
+          opportunity_id: string | null
+          reaction_type: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          opportunity_id?: string | null
+          reaction_type?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          opportunity_id?: string | null
+          reaction_type?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_reactions_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_reactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       opportunity_referrals: {
         Row: {
           created_at: string
@@ -2354,6 +2393,7 @@ export type Database = {
           location_state: string | null
           onboarding_complete: boolean | null
           open_to_work: boolean | null
+          open_to_work_preferences: Json | null
           org_id: string | null
           phone: string | null
           phone_hash: string | null
@@ -2400,6 +2440,7 @@ export type Database = {
           location_state?: string | null
           onboarding_complete?: boolean | null
           open_to_work?: boolean | null
+          open_to_work_preferences?: Json | null
           org_id?: string | null
           phone?: string | null
           phone_hash?: string | null
@@ -2446,6 +2487,7 @@ export type Database = {
           location_state?: string | null
           onboarding_complete?: boolean | null
           open_to_work?: boolean | null
+          open_to_work_preferences?: Json | null
           org_id?: string | null
           phone?: string | null
           phone_hash?: string | null
@@ -2471,6 +2513,58 @@ export type Database = {
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referrals: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string | null
+          opportunity_id: string | null
+          referred_user_id: string | null
+          referrer_id: string | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          opportunity_id?: string | null
+          referred_user_id?: string | null
+          referrer_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          opportunity_id?: string | null
+          referred_user_id?: string | null
+          referrer_id?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referred_user_id_fkey"
+            columns: ["referred_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
