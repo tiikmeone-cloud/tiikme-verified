@@ -116,7 +116,7 @@ const PostCarousel = ({ images }: PostCarouselProps) => {
               <ChevronRight className="w-6 h-6" />
             </button>
           )}
-          <img src={storageImageUrl(images[current], "lightbox")} alt="" className="max-w-[95vw] max-h-[85vh] object-contain" onClick={e => e.stopPropagation()} />
+          <img src={storageImageUrl(images[current], "lightbox")} alt="" loading="lazy" className="max-w-[95vw] max-h-[85vh] object-contain" onClick={e => e.stopPropagation()} />
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
             {images.map((_, i) => (
               <button type="button" key={i} onClick={(e) => { e.stopPropagation(); setCurrent(i); }}
