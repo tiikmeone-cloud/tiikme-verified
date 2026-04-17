@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQueryClient } from "@tanstack/react-query";
+import { prefetchRoute, prefetchAdjacent } from "@/lib/prefetchRoutes";
 
 const navGroups = [
   {
@@ -153,6 +154,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (isActive("/app/alerts")) setUnreadAlerts(0);
     setShowActionSheet(false);
+    prefetchAdjacent(pathname);
   }, [pathname]);
 
   const getBadge = (path: string) => {
