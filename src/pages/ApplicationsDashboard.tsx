@@ -80,12 +80,16 @@ export default function ApplicationsDashboard() {
     if (selectedApp?.id === appId) setSelectedApp((p: any) => ({ ...p, status }));
     toast.success(`Status updated to ${status}`);
     const app = applications.find(a => a.id === appId);
-    if (app) {
-      await supabase.from("alerts").insert({
-        user_id: app.applicant_id, type: "opportunity",
+    if (app && user) {
+      const { sendNotification } = await import("@/lib/notify");
+      sendNotification({
+        userId: app.applicant_id,
+        actorId: user.id,
+        type: status === "selected" ? "offer" : "opportunity",
         title: status === "selected" ? `You've been selected!` : `Application update`,
         body: `Your application for "${opp?.title}" has been ${status}.`,
-        action_url: "/app/opportunities",
+        actionUrl: "/app/opportunities",
+        data: { opportunity_id: opp?.id, org_id: opp?.org_id, org_name: opp?.org?.name, role_title: opp?.title },
       });
     }
   };
