@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { MapPin, ChevronDown, ChevronUp, Sparkles, Search as SearchIcon } from "lucide-react";
+import { MapPin, ChevronDown, ChevronUp, Sparkles, Search as SearchIcon, Send } from "lucide-react";
 import AvatarSquare from "@/components/ui/AvatarSquare";
+import { useAuth } from "@/contexts/AuthContext";
+import SendJDModal from "@/components/opportunities/SendJDModal";
 
 interface OTWProfile {
   id: string;
@@ -24,10 +26,13 @@ interface OTWProfile {
 
 export default function FindTab() {
   const navigate = useNavigate();
+  const { profile } = useAuth();
+  const isInstitution = profile?.account_type === "institution";
   const [profiles, setProfiles] = useState<OTWProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [sendJdTarget, setSendJdTarget] = useState<{ id: string; full_name: string | null } | null>(null);
 
   useEffect(() => {
     (async () => {
