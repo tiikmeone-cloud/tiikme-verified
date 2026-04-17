@@ -233,7 +233,7 @@ const Alerts = () => {
       {Object.entries(groups).map(([group, groupAlerts]) => (
         <div key={group} className="mb-6">
           <p className="text-[11px] font-bold tracking-wider uppercase mb-2 px-1" style={{ color: "#6B7094" }}>{group}</p>
-          <div className="space-y-2">
+          <div style={{ borderRadius: 12, overflow: "hidden", border: "1px solid #F1F3F5", background: "#FFFFFF" }}>
             {groupAlerts.map((notif, i) => {
               const unread = !notif.is_read;
               const style = ICON_STYLES[notif.type] || ICON_STYLES.score;
@@ -246,10 +246,11 @@ const Alerts = () => {
 
               return (
                 <motion.div key={notif.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}
-                  className="glass-light flex items-start gap-3 cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
+                  className="flex items-start gap-3 cursor-pointer transition-colors duration-150"
                   style={{
-                    padding: 12, borderRadius: 16,
-                    background: unread ? "rgba(232,115,58,0.05)" : undefined,
+                    padding: 16,
+                    background: unread ? "#FFF8F5" : "#FFFFFF",
+                    borderBottom: i === groupAlerts.length - 1 ? "none" : "1px solid #F1F3F5",
                   }}
                   onClick={async () => {
                     if (unread) {
@@ -268,7 +269,7 @@ const Alerts = () => {
                       return (
                         <div className="relative shrink-0">
                           <AvatarSquare src={actor.avatar_url} name={actor.full_name || "U"} size={36} />
-                          <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: isOffer ? "rgba(22,163,74,0.9)" : style.bg, border: "2px solid var(--bg)" }}>
+                          <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: isOffer ? "rgba(22,163,74,0.9)" : style.bg, border: "2px solid #FFFFFF" }}>
                             <Icon className="w-2.5 h-2.5" style={{ color: isOffer ? "#fff" : style.color }} />
                           </div>
                         </div>
@@ -281,11 +282,11 @@ const Alerts = () => {
                     );
                   })()}
                   <div className="flex-1 min-w-0">
-                    <p className={`text-[14px] leading-relaxed ${unread ? "font-semibold" : "font-normal"}`} style={{ color: unread ? "var(--text-1)" : "var(--text-2)" }}>
+                    <p className="text-[14px] leading-relaxed" style={{ color: "#1A1A2E", fontWeight: 500 }}>
                       {notif.title || notif.body}
                     </p>
                     {notif.body && notif.title && (
-                      <p className="text-[12px] mt-0.5" style={{ color: "#6B7094" }}>{notif.body}</p>
+                      <p className="text-[13px] mt-0.5" style={{ color: "#6B7094" }}>{notif.body}</p>
                     )}
                     {isStrandRequest && !handled && notif.data?.actor_id && (
                       <div className="flex gap-2 mt-2">
