@@ -80,7 +80,7 @@ const SquareAvatar = ({ url, name, size = 48, color }: { url?: string | null; na
         border: "2px solid rgba(255,255,255,0.30)",
         fontSize: Math.max(size * 0.3, 10), fontWeight: 700, color: "#fff",
       }}>
-      {url ? <img src={fixUrl(url)} alt="" className="w-full h-full object-cover" /> : initials(name)}
+      {url ? <img src={fixUrl(url)} alt="" loading="lazy" className="w-full h-full object-cover" /> : initials(name)}
     </div>
   );
 };

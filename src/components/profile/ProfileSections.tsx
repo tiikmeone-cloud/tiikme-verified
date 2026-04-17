@@ -81,7 +81,7 @@ const CompanyLogo = ({ name, logoUrl, color, size = 40 }: { name: string; logoUr
     <div className="flex items-center justify-center shrink-0 overflow-hidden"
       style={{ width: size, height: size, borderRadius: 0, backgroundColor: logoUrl ? "transparent" : bg, border: "2px solid rgba(255,255,255,0.30)" }}>
       {logoUrl ? (
-        <img src={fixStorageUrl(logoUrl) || ""} alt="" className="w-full h-full object-cover" style={{ borderRadius: 0 }}
+        <img src={fixStorageUrl(logoUrl) || ""} alt="" loading="lazy" className="w-full h-full object-cover" style={{ borderRadius: 0 }}
           onError={e => { (e.target as HTMLImageElement).style.display = "none"; e.currentTarget.parentElement!.style.backgroundColor = bg; }} />
       ) : <span style={{ color: "#fff", fontWeight: 700, fontSize: 13 }}>{initials}</span>}
     </div>

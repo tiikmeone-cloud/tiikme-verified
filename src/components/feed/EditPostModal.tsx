@@ -81,7 +81,7 @@ const EditPostModal = ({ post, onClose, onSaved }: EditPostModalProps) => {
           <div className="flex gap-2 mt-3 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
             {post.image_urls.map((url: string, i: number) => (
               <div key={i} className="w-16 h-16 rounded-lg overflow-hidden shrink-0" style={{ background: "var(--surface-2)" }}>
-                <img src={fixStorageUrl(url) || ""} alt="" className="w-full h-full object-cover" />
+                <img src={fixStorageUrl(url) || ""} alt="" loading="lazy" className="w-full h-full object-cover" />
               </div>
             ))}
           </div>

@@ -67,7 +67,7 @@ export default function CertificatesSection({ certificates, setCertificates, isO
       {orgIssued.map((cert: any) => (
         <div key={cert.id} className="flex items-center gap-3 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
           <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--brand-dim)" }}>
-            {cert.org?.logo_url ? <img src={cert.org.logo_url} className="w-full h-full object-cover rounded-xl" /> : <Award className="w-4 h-4" style={{ color: "var(--brand)" }} />}
+            {cert.org?.logo_url ? <img src={cert.org.logo_url} alt="" loading="lazy" className="w-full h-full object-cover rounded-xl" /> : <Award className="w-4 h-4" style={{ color: "var(--brand)" }} />}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[14px] font-bold" style={{ color: "var(--text-1)" }}>{cert.title}</p>

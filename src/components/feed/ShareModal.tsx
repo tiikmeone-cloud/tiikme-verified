@@ -178,7 +178,7 @@ const ShareModal = ({ open, onClose, postId }: ShareModalProps) => {
               {filteredGroups.map(g => (
                 <div key={g.id} className="flex items-center" style={{ gap: 10, padding: "8px 0", borderBottom: "1px solid var(--border-subtle)" }}>
                   <div className="w-9 h-9 flex items-center justify-center shrink-0" style={{ borderRadius: 0, background: "#E8733A", color: "#fff", fontSize: 13, fontWeight: 700 }}>
-                    {g.avatar_url ? <img src={g.avatar_url} alt="" className="w-full h-full object-cover" /> :
+                    {g.avatar_url ? <img src={g.avatar_url} alt="" loading="lazy" className="w-full h-full object-cover" /> :
                       <Users style={{ width: 16, height: 16 }} />}
                   </div>
                   <span className="flex-1 min-w-0 truncate" style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}>{g.name}</span>
