@@ -7,7 +7,7 @@ import {
   MapPin, Copy, Shield, X, MessageCircle, CheckCircle, Building2, Link2, Plus,
   Pencil, Trash2, Briefcase, GraduationCap, Award, Code2, Eye, EyeOff,
   Heart, Rocket, Send, Share2, Users, Globe, ExternalLink, LinkIcon, TrendingUp,
-  Mail, Settings, Camera, UserX, Layers
+  Mail, Settings, Camera, UserX, Layers, ChevronRight, LifeBuoy
 } from "lucide-react";
 import { detectPlatform } from "@/lib/platformDetect";
 import GlassModal, { glassInputDarkStyle as gInputStyle, glassSelectDarkStyle as gSelectStyle, glassTextareaDarkStyle as gTextareaStyle, labelStyle } from "@/components/ui/GlassModal";
@@ -837,6 +837,39 @@ const Profile = () => {
             </div>
           </div>
         </div>
+
+        {/* ── MOBILE-ONLY QUICK NAV (own profile) ── */}
+        {isOwnProfile && (
+          <div className="md:hidden glass-card" style={{ marginTop: 12, padding: 4, borderRadius: 16, overflow: "hidden" }}>
+            {[
+              { label: "Workspace", icon: Layers, path: "/app/workspace" },
+              { label: "Connections", icon: Link2, path: "/app/connections" },
+              { label: "Settings", icon: Settings, path: "/app/settings" },
+              { label: "Help & Support", icon: LifeBuoy, path: "/grievance" },
+            ].map((item, i, arr) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className="flex items-center w-full active:scale-[0.99]"
+                style={{
+                  height: 52, padding: "0 12px", gap: 14,
+                  borderBottom: i < arr.length - 1 ? "1px solid rgba(0,0,0,0.05)" : "none",
+                  textDecoration: "none",
+                }}
+              >
+                <div style={{
+                  width: 36, height: 36, borderRadius: 10, display: "flex",
+                  alignItems: "center", justifyContent: "center",
+                  background: "rgba(232,115,58,0.10)",
+                }}>
+                  <item.icon style={{ width: 18, height: 18, color: "#E8733A" }} strokeWidth={1.8} />
+                </div>
+                <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: "#1A1A2E" }}>{item.label}</span>
+                <ChevronRight style={{ width: 16, height: 16, color: "#9CA3C0" }} />
+              </Link>
+            ))}
+          </div>
+        )}
 
         {/* ── ABOUT ── */}
         <AboutSection about={aboutText} isOwnProfile={isOwnProfile} userId={targetUserId || ""} />
