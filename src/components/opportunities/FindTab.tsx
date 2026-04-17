@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { MapPin, ChevronDown, ChevronUp, Sparkles, Search as SearchIcon } from "lucide-react";
+import { MapPin, ChevronDown, ChevronUp, Sparkles, Search as SearchIcon, Send } from "lucide-react";
 import AvatarSquare from "@/components/ui/AvatarSquare";
+import { useAuth } from "@/contexts/AuthContext";
+import SendJDModal from "@/components/opportunities/SendJDModal";
 
 interface OTWProfile {
   id: string;
@@ -24,10 +26,13 @@ interface OTWProfile {
 
 export default function FindTab() {
   const navigate = useNavigate();
+  const { profile } = useAuth();
+  const isInstitution = profile?.account_type === "institution";
   const [profiles, setProfiles] = useState<OTWProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [sendJdTarget, setSendJdTarget] = useState<{ id: string; full_name: string | null } | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -169,12 +174,39 @@ export default function FindTab() {
                       <span key={r} className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full" style={{ background: "rgba(232,115,58,0.10)", color: "#E8733A" }}>{r}</span>
                     ))}
                   </div>
+
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      type="button"
+                      onClick={e => { e.stopPropagation(); navigate(`/app/profile/${p.user_id}`); }}
+                      className="flex-1 h-9 rounded-lg text-[12px] font-semibold cursor-pointer"
+                      style={{ background: "var(--surface-2)", color: "var(--text-2)", border: "1.5px solid var(--border)" }}>
+                      View Profile
+                    </button>
+                    {isInstitution && (
+                      <button
+                        type="button"
+                        onClick={e => { e.stopPropagation(); setSendJdTarget({ id: p.user_id, full_name: p.profile?.full_name || null }); }}
+                        className="flex-1 h-9 rounded-lg text-[12px] font-semibold cursor-pointer flex items-center justify-center gap-1.5"
+                        style={{ background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none" }}>
+                        <Send className="w-3.5 h-3.5" /> Send JD
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
           );
         })}
       </div>
+
+      {sendJdTarget && (
+        <SendJDModal
+          open={!!sendJdTarget}
+          onClose={() => setSendJdTarget(null)}
+          targetUser={sendJdTarget}
+        />
+      )}
     </div>
   );
 }

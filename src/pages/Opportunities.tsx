@@ -7,7 +7,7 @@ import { PageSEO } from "@/hooks/usePageSEO";
 import { AnimatePresence } from "framer-motion";
 import { Search, Briefcase, MapPin, Bookmark, Clock, Plus, Building2, Users as UsersIcon, Eye, Trophy, GraduationCap, Code, Zap, Hammer, CalendarDays, Shield, Heart, MessageCircle, Link2, Send, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,7 @@ import ApplyModal from "@/components/opportunities/ApplyModal";
 import GlassBox from "@/components/ui/GlassBox";
 import FindTab from "@/components/opportunities/FindTab";
 import ReferModal from "@/components/opportunities/ReferModal";
+import ReferralsTab from "@/components/opportunities/ReferralsTab";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 
 const TYPE_META: Record<string, { label: string; color: string; icon: any }> = {
@@ -35,7 +36,7 @@ const TYPE_META: Record<string, { label: string; color: string; icon: any }> = {
   volunteer: { label: "Volunteer", color: "#10B981", icon: UsersIcon },
 };
 
-const FILTER_TABS = ["All", "Full-time", "Internship", "Freelance", "Hackathon", "Remote", "Find"];
+const FILTER_TABS = ["All", "Full-time", "Internship", "Freelance", "Hackathon", "Remote", "Find", "Referrals"];
 const filterMap: Record<string, (q: any) => any> = {
   "Full-time": q => q.or("type.eq.full_time,type.eq.fulltime,type.eq.full-time,type.eq.job"),
   "Internship": q => q.eq("type", "internship"),
@@ -64,6 +65,13 @@ const Opportunities = () => {
   const [showApply, setShowApply] = useState<any>(null);
   const [tab, setTab] = useState<"all" | "mine">(isInstitution ? "mine" : "all");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const t = searchParams.get("tab");
+    if (t === "referrals") setActiveType("Referrals");
+    else if (t === "find") setActiveType("Find");
+  }, [searchParams]);
 
   useEffect(() => { const t = setTimeout(() => setDebouncedSearch(search), 300); return () => clearTimeout(t); }, [search]);
 
@@ -103,7 +111,7 @@ const Opportunities = () => {
     queryKey: ["opportunities", debouncedSearch, activeType],
     queryFn: fetchOppsData,
     staleTime: 3 * 60 * 1000,
-    enabled: activeType !== "Find",
+    enabled: activeType !== "Find" && activeType !== "Referrals",
   });
 
   const { data: appliedIds = new Set<string>() } = useQuery({
@@ -173,7 +181,7 @@ const Opportunities = () => {
 
       {/* Filter bar */}
       <div className="sticky top-0 z-10 py-3 flex items-center gap-3 flex-wrap">
-        {activeType !== "Find" && (
+        {activeType !== "Find" && activeType !== "Referrals" && (
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: "var(--text-3)" }} />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search roles, companies..."
@@ -197,6 +205,8 @@ const Opportunities = () => {
       {/* Find Tab */}
       {activeType === "Find" ? (
         <FindTab />
+      ) : activeType === "Referrals" ? (
+        <ReferralsTab />
       ) : (
         <>
           {/* Recommended Section */}
