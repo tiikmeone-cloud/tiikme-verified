@@ -7,7 +7,7 @@ import {
   Trash2, Pencil, Copy, Flag, Paperclip, Loader2, X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import ImageGrid from "@/components/feed/ImageGrid";
 import MentionText from "@/components/feed/MentionText";
 import ShareModal from "@/components/feed/ShareModal";
@@ -404,7 +404,7 @@ const PostCard = ({
 
   return (
     <>
-      <article style={{ background: "#FFFFFF", border: "1px solid #E8E8E8", borderRadius: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.04)", padding: 20, marginBottom: 16, borderLeft: isTownhall ? "4px solid #E8733A" : undefined }}>
+      <article id={`post-${post.id}`} style={{ background: "#FFFFFF", border: "1px solid #E8E8E8", borderRadius: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.04)", padding: 20, marginBottom: 16, borderLeft: isTownhall ? "4px solid #E8733A" : undefined, scrollMarginTop: 80 }}>
         {isTownhall && (
           <div style={{ paddingBottom: 4 }}>
             <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#E8733A" }}>TOWNHALL</span>
