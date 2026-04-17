@@ -250,8 +250,7 @@ const Alerts = () => {
                   style={{
                     padding: 16,
                     background: unread ? "#FFF8F5" : "#FFFFFF",
-                    borderBottom: "1px solid #F1F3F5",
-                    borderRadius: i === 0 ? "12px 12px 0 0" : i === groupAlerts.length - 1 ? "0 0 12px 12px" : 0,
+                    borderBottom: i === groupAlerts.length - 1 ? "none" : "1px solid #F1F3F5",
                   }}
                   onClick={async () => {
                     if (unread) {
