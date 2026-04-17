@@ -7,7 +7,7 @@ import { PageSEO } from "@/hooks/usePageSEO";
 import { AnimatePresence } from "framer-motion";
 import { Search, Briefcase, MapPin, Bookmark, Clock, Plus, Building2, Users as UsersIcon, Eye, Trophy, GraduationCap, Code, Zap, Hammer, CalendarDays, Shield, Heart, MessageCircle, Link2, Send, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -65,6 +65,13 @@ const Opportunities = () => {
   const [showApply, setShowApply] = useState<any>(null);
   const [tab, setTab] = useState<"all" | "mine">(isInstitution ? "mine" : "all");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const t = searchParams.get("tab");
+    if (t === "referrals") setActiveType("Referrals");
+    else if (t === "find") setActiveType("Find");
+  }, [searchParams]);
 
   useEffect(() => { const t = setTimeout(() => setDebouncedSearch(search), 300); return () => clearTimeout(t); }, [search]);
 
