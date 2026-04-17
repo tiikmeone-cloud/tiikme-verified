@@ -130,21 +130,21 @@ const Explore = () => {
 
     const fetchOrgs = async (type: string) => {
       const { data } = await supabase.from("organizations")
-        .select("id, name, slug, type, logo_url, city, state, followers_count, created_by, created_at")
+        .select("id, name, slug, type, subtype, logo_url, city, state, followers_count, created_by, created_at")
         .eq("type", type).order("followers_count", { ascending: false }).limit(40);
       return rankItems((data || []).filter((o: any) => !followedOrgIds.has(o.id)));
     };
     const fetchPages = async (pageType: string) => {
       const { data } = await supabase.from("pages")
-        .select("id, name, slug, page_type, logo_url, city, state, industry, naac_grade, nabh_accredited, specialisations, tracker_count, trust_score, created_at")
+        .select("id, name, slug, page_type, sub_type, logo_url, city, state, industry, naac_grade, nabh_accredited, specialisations, tracker_count, trust_score, created_at")
         .eq("page_type", pageType).order("tracker_count", { ascending: false }).limit(40);
-      return rankItems((data || []).filter((p: any) => !trackedPageIds.has(p.id)).map((p: any) => ({ ...p, type: p.page_type })));
+      return rankItems((data || []).filter((p: any) => !trackedPageIds.has(p.id)).map((p: any) => ({ ...p, type: p.page_type, subtype: p.sub_type })));
     };
 
     const [companyData, collegeData, hospitalData, govData, ngoData] = await Promise.all([
       show("Companies") ? fetchOrgs("company") : Promise.resolve([]),
       show("Colleges") ? fetchPages("college").then(async pages => {
-        const { data: eduOrgs } = await supabase.from("organizations").select("id, name, slug, type, logo_url, city, followers_count, created_by").eq("type", "education").order("followers_count", { ascending: false }).limit(20);
+        const { data: eduOrgs } = await supabase.from("organizations").select("id, name, slug, type, subtype, logo_url, city, followers_count, created_by").eq("type", "education").order("followers_count", { ascending: false }).limit(20);
         return [...pages, ...(eduOrgs || [])];
       }) : Promise.resolve([]),
       show("Hospitals") ? fetchPages("hospital") : Promise.resolve([]),
