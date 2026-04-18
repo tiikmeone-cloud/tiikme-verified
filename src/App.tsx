@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -52,6 +52,7 @@ const JoinAsInstitution = lazyWithRetry(() => import("./pages/JoinAsInstitution.
 const ApplicationsDashboard = lazyWithRetry(() => import("./pages/ApplicationsDashboard.tsx"), "ApplicationsDashboard");
 const OpportunityCreate = lazyWithRetry(() => import("./pages/OpportunityCreate.tsx"), "OpportunityCreate");
 const WorkspacePage = lazyWithRetry(() => import("./pages/Workspace.tsx"), "WorkspacePage");
+const CirclesPage = lazyWithRetry(() => import("./pages/Circles.tsx"), "CirclesPage");
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -111,7 +112,9 @@ const App = () => (
             <Route path="/app/opportunities" element={<Shell><Opportunities /></Shell>} />
             <Route path="/app/opportunities/create" element={<Shell><OpportunityCreate /></Shell>} />
             <Route path="/app/opportunities/:id/applications" element={<Shell><ApplicationsDashboard /></Shell>} />
-            <Route path="/app/workspace" element={<Shell><WorkspacePage /></Shell>} />
+            <Route path="/app/workspace" element={<Navigate to="/app/circles" replace />} />
+            <Route path="/app/circles" element={<Shell><CirclesPage /></Shell>} />
+            <Route path="/app/circles/:circleSlug" element={<Shell><CirclesPage /></Shell>} />
             <Route path="/app/connections" element={<Shell><ConnectionsPage /></Shell>} />
             <Route path="/app/strands" element={<Shell><Strands /></Shell>} />
             <Route path="/app/pings" element={<Shell><Pings /></Shell>} />
