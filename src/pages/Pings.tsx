@@ -97,6 +97,29 @@ const Pings = () => {
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
+  // Mark all incoming pings as read when the page opens
+  useEffect(() => {
+    if (!user?.id) return;
+    (async () => {
+      const { data: convos } = await supabase
+        .from("conversations")
+        .select("id")
+        .or(`participant_1.eq.${user.id},participant_2.eq.${user.id}`);
+      if (!convos?.length) {
+        window.dispatchEvent(new Event("pings-read"));
+        return;
+      }
+      const convIds = convos.map((c: any) => c.id);
+      await supabase
+        .from("pings")
+        .update({ is_read: true })
+        .in("conversation_id", convIds)
+        .neq("sender_id", user.id)
+        .eq("is_read", false);
+      window.dispatchEvent(new Event("pings-read"));
+    })();
+  }, [user?.id]);
+
   // Auto-resize textarea
   const autoResize = () => {
     const el = textareaRef.current;
