@@ -12,13 +12,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrgSubscription } from "@/hooks/useOrgSubscription";
 
-const navItems = [
+const baseNavItems = [
   { id: "profile", label: "Profile", icon: User },
   { id: "account", label: "Account", icon: Lock },
   { id: "roles", label: "Additional Roles", icon: TrendingUp },
   { id: "privacy", label: "Privacy", icon: Eye },
   { id: "invite", label: "Invite", icon: Users },
   { id: "help", label: "Help & Support", icon: HelpCircle },
+];
+
+const ORG_TYPE_OPTIONS = [
+  { value: "product_company", label: "Product Company" },
+  { value: "saas", label: "SaaS" },
+  { value: "agency", label: "Agency" },
+  { value: "services", label: "Services" },
+  { value: "ecommerce", label: "E-commerce" },
+  { value: "ngo", label: "NGO/Non-Profit" },
+  { value: "educational", label: "Educational Institution" },
+  { value: "government", label: "Government" },
+  { value: "hospital", label: "Hospital/Healthcare" },
+  { value: "other", label: "Other" },
 ];
 
 const ADDITIONAL_ROLES = [
@@ -415,7 +428,7 @@ const SettingsPage = () => {
   const isInstitutionAccount = authProfile?.account_type === "institution";
 
   const settingsNavItems = [
-    ...navItems,
+    ...baseNavItems.filter(item => !(isInstitutionAccount && item.id === "roles")),
     ...(isInstitutionAccount ? [{ id: "subscription", label: "Subscription", icon: CreditCard }] : []),
   ];
 
@@ -424,8 +437,8 @@ const SettingsPage = () => {
   const [deleteText, setDeleteText] = useState("");
   const [loggingOut, setLoggingOut] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [profile, setProfile] = useState({ name: "", headline: "", bio: "", institution: "", city: "", state: "", slug: "", avatar_url: "" });
-  const [originalProfile, setOriginalProfile] = useState({ name: "", headline: "", bio: "", institution: "", city: "", state: "", slug: "", avatar_url: "" });
+  const [profile, setProfile] = useState({ name: "", headline: "", bio: "", institution: "", city: "", state: "", slug: "", avatar_url: "", org_type: "" });
+  const [originalProfile, setOriginalProfile] = useState({ name: "", headline: "", bio: "", institution: "", city: "", state: "", slug: "", avatar_url: "", org_type: "" });
   const [userId, setUserId] = useState<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [inviteCount, setInviteCount] = useState(0);
@@ -449,7 +462,20 @@ const SettingsPage = () => {
           state: data.location_state || "",
           slug: data.username || "",
           avatar_url: data.avatar_url || "",
+          org_type: "",
         };
+        if (isInstitutionAccount && authProfile?.org_id) {
+          const { data: orgData } = await supabase
+            .from("organizations")
+            .select("name, logo_url, type, slug")
+            .eq("id", authProfile.org_id)
+            .maybeSingle();
+          if (orgData) {
+            p.name = orgData.name || p.name;
+            p.avatar_url = orgData.logo_url || p.avatar_url;
+            p.org_type = orgData.type || "";
+          }
+        }
         setProfile(p);
         setOriginalProfile(p);
         if (data.username) {
@@ -459,7 +485,7 @@ const SettingsPage = () => {
       }
     };
     loadProfile();
-  }, []);
+  }, [isInstitutionAccount, authProfile?.org_id]);
 
   const handleSaveProfile = async () => {
     if (!userId) return;
@@ -473,8 +499,16 @@ const SettingsPage = () => {
       location_state: profile.state,
       username: profile.slug,
     }).eq("id", userId);
+    if (error) { setSaving(false); tiikToast.error("Failed to save"); return; }
+
+    if (isInstitutionAccount && authProfile?.org_id) {
+      const { error: orgErr } = await supabase.from("organizations")
+        .update({ name: profile.name, type: profile.org_type || null })
+        .eq("id", authProfile.org_id);
+      if (orgErr) { setSaving(false); tiikToast.error("Failed to save organization"); return; }
+    }
+
     setSaving(false);
-    if (error) { tiikToast.error("Failed to save"); return; }
     setOriginalProfile({ ...profile });
     await refreshProfile();
     tiikToast.success("Saved");
@@ -619,14 +653,29 @@ const SettingsPage = () => {
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "#6B7094" }}>Display Name</label>
+                    <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "#6B7094" }}>{isInstitutionAccount ? "Organization Name" : "Display Name"}</label>
                     <Input value={profile.name} onChange={e => setProfile({ ...profile, name: e.target.value })} />
                   </div>
-                  <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "#6B7094" }}>Headline</label>
-                    <Input value={profile.headline} onChange={e => setProfile({ ...profile, headline: e.target.value.slice(0, 80) })} maxLength={80} />
-                    <p className="text-[10px] text-right mt-1" style={{ color: "var(--text-3)" }}>{profile.headline.length}/80</p>
-                  </div>
+                  {isInstitutionAccount ? (
+                    <div>
+                      <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "#6B7094" }}>Organization Type</label>
+                      <select
+                        value={profile.org_type}
+                        onChange={e => setProfile({ ...profile, org_type: e.target.value })}
+                        className="w-full rounded-xl px-3.5 h-11 text-[14px] outline-none"
+                        style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", color: "var(--text-1)" }}
+                      >
+                        <option value="">Select type…</option>
+                        {ORG_TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                      </select>
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "#6B7094" }}>Headline</label>
+                      <Input value={profile.headline} onChange={e => setProfile({ ...profile, headline: e.target.value.slice(0, 80) })} maxLength={80} />
+                      <p className="text-[10px] text-right mt-1" style={{ color: "var(--text-3)" }}>{profile.headline.length}/80</p>
+                    </div>
+                  )}
                   <div>
                     <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "#6B7094" }}>Bio</label>
                     <textarea value={profile.bio} onChange={e => setProfile({ ...profile, bio: e.target.value.slice(0, 300) })} placeholder="Tell people about yourself..." rows={3} maxLength={300}

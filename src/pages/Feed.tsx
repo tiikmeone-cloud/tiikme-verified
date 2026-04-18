@@ -420,12 +420,10 @@ const PostCard = ({
             <div className="flex items-center flex-wrap" style={{ gap: "0 5px", lineHeight: "20px" }}>
               <Link to={profileLink} className="hover:underline shrink-0" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{displayName}</Link>
               {(author?.is_verified || post.org?.is_verified) && <VerifiedBadge size={14} />}
-              {(viaName || companyName) && (
+              {companyName && (
                 <>
                   <span className="shrink-0" style={{ fontSize: 13, color: "#9CA3C0" }}>·</span>
-                  <span style={{ fontSize: 13, color: "#6B7094" }}>
-                    {viaName ? `via ${viaName}` : companyName}
-                  </span>
+                  <span style={{ fontSize: 13, color: "#6B7094" }}>{companyName}</span>
                 </>
               )}
               <span className="shrink-0" style={{ fontSize: 13, color: "#9CA3C0" }}>·</span>
