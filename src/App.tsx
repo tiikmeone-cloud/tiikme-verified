@@ -52,6 +52,7 @@ const JoinAsInstitution = lazyWithRetry(() => import("./pages/JoinAsInstitution.
 const ApplicationsDashboard = lazyWithRetry(() => import("./pages/ApplicationsDashboard.tsx"), "ApplicationsDashboard");
 const OpportunityCreate = lazyWithRetry(() => import("./pages/OpportunityCreate.tsx"), "OpportunityCreate");
 const WorkspacePage = lazyWithRetry(() => import("./pages/Workspace.tsx"), "WorkspacePage");
+const CirclesPage = lazyWithRetry(() => import("./pages/Circles.tsx"), "CirclesPage");
 
 const queryClient = new QueryClient({
   defaultOptions: {
