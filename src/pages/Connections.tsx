@@ -1,7 +1,7 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import AvatarSquare from "@/components/ui/AvatarSquare";
-import { Link2, Search, MessageCircle, Compass, MoreHorizontal, X, Clock, UserPlus } from "lucide-react";
+import { Link2, Search, MessageCircle, Compass, MoreHorizontal, X, Clock, UserPlus, UserX } from "lucide-react";
 import { toast } from "sonner";
 import { sendNotification } from "@/lib/notify";
 import { useNavigate } from "react-router-dom";
@@ -41,6 +41,17 @@ const Connections = () => {
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<TabKey>("connected");
   const [search, setSearch] = useState("");
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!openMenuId) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setOpenMenuId(null);
+    };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [openMenuId]);
 
   const fetchStrandsData = useCallback(async () => {
     if (!user) return { connected: [], pendingIncoming: [], pendingSent: [], suggested: [] };
@@ -113,6 +124,12 @@ const Connections = () => {
   const handleWithdraw = async (s: StrandRow) => {
     await supabase.from("strands").delete().eq("id", s.id);
     toast.info("Request withdrawn");
+    fetchStrands();
+  };
+
+  const handleDisconnect = async (s: StrandRow) => {
+    await supabase.from("strands").delete().eq("id", s.id);
+    toast.info("Disconnected");
     fetchStrands();
   };
 
@@ -196,12 +213,36 @@ const Connections = () => {
                       <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{other?.full_name || "User"}</p>
                       <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>{roleLabel(other?.role || "")} · {other?.institution_name || "—"}</p>
                     </div>
-                    <button type="button"
-                      onClick={e => { e.stopPropagation(); navigate("/app/pings"); }}
-                      className="flex items-center gap-1 cursor-pointer transition-all"
-                      style={{ height: 32, padding: "0 10px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "rgba(255,255,255,0.20)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.25)", color: "#1A1A2E" }}>
-                      <MessageCircle style={{ width: 14, height: 14 }} /> Ping
-                    </button>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button type="button"
+                        onClick={e => { e.stopPropagation(); navigate("/app/pings"); }}
+                        className="flex items-center gap-1 cursor-pointer transition-all"
+                        style={{ height: 32, padding: "0 10px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+                          background: "rgba(232,115,58,0.08)", color: "#E8733A", border: "1px solid rgba(232,115,58,0.20)" }}>
+                        <MessageCircle style={{ width: 13, height: 13 }} /> Ping
+                      </button>
+                      <div className="relative" ref={openMenuId === s.id ? menuRef : undefined}>
+                        <button type="button"
+                          onClick={e => { e.stopPropagation(); setOpenMenuId(openMenuId === s.id ? null : s.id); }}
+                          className="cursor-pointer flex items-center justify-center"
+                          style={{ width: 32, height: 32, borderRadius: 8, border: "1px solid rgba(0,0,0,0.08)",
+                            background: "transparent", color: "#9CA3C0" }}>
+                          <MoreHorizontal style={{ width: 14, height: 14 }} />
+                        </button>
+                        {openMenuId === s.id && (
+                          <div className="absolute right-0 top-9 z-20"
+                            style={{ minWidth: 140, borderRadius: 10, background: "#FFFFFF",
+                              border: "1px solid #E5E7EB", boxShadow: "0 4px 16px rgba(0,0,0,0.10)", padding: "4px 0" }}>
+                            <button type="button"
+                              onClick={e => { e.stopPropagation(); handleDisconnect(s); setOpenMenuId(null); }}
+                              className="w-full text-left flex items-center gap-2 cursor-pointer hover:bg-[#FFF5F5]"
+                              style={{ padding: "9px 14px", fontSize: 13, color: "#EF4444" }}>
+                              <UserX style={{ width: 14, height: 14 }} /> Disconnect
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 );
               })}
