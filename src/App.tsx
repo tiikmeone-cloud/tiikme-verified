@@ -112,7 +112,9 @@ const App = () => (
             <Route path="/app/opportunities" element={<Shell><Opportunities /></Shell>} />
             <Route path="/app/opportunities/create" element={<Shell><OpportunityCreate /></Shell>} />
             <Route path="/app/opportunities/:id/applications" element={<Shell><ApplicationsDashboard /></Shell>} />
-            <Route path="/app/workspace" element={<Shell><WorkspacePage /></Shell>} />
+            <Route path="/app/workspace" element={<Navigate to="/app/circles" replace />} />
+            <Route path="/app/circles" element={<Shell><CirclesPage /></Shell>} />
+            <Route path="/app/circles/:circleSlug" element={<Shell><CirclesPage /></Shell>} />
             <Route path="/app/connections" element={<Shell><ConnectionsPage /></Shell>} />
             <Route path="/app/strands" element={<Shell><Strands /></Shell>} />
             <Route path="/app/pings" element={<Shell><Pings /></Shell>} />
