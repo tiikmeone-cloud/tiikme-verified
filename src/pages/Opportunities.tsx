@@ -36,7 +36,7 @@ const TYPE_META: Record<string, { label: string; color: string; icon: any }> = {
   volunteer: { label: "Volunteer", color: "#10B981", icon: UsersIcon },
 };
 
-const FILTER_TABS = ["All", "Full-time", "Internship", "Freelance", "Hackathon", "Remote", "Find", "Referrals"];
+const FILTER_TABS = ["All", "Full-time", "Internship", "Freelance", "Hackathon", "Remote"];
 const filterMap: Record<string, (q: any) => any> = {
   "Full-time": q => q.or("type.eq.full_time,type.eq.fulltime,type.eq.full-time,type.eq.job"),
   "Internship": q => q.eq("type", "internship"),
@@ -44,6 +44,9 @@ const filterMap: Record<string, (q: any) => any> = {
   "Hackathon": q => q.eq("type", "hackathon"),
   "Remote": q => q.eq("is_remote", true),
 };
+
+type UserTab = "jobs" | "find" | "referrals" | "applications";
+type OrgTab = "post" | "listings" | "talent";
 
 function expiryBadge(d: string | null) {
   if (!d) return null;
@@ -63,14 +66,16 @@ const Opportunities = () => {
   const [search, setSearch] = useState("");
   const [saved, setSaved] = useState<Set<string>>(new Set());
   const [showApply, setShowApply] = useState<any>(null);
-  const [tab, setTab] = useState<"all" | "mine">(isInstitution ? "mine" : "all");
+  const [userTab, setUserTab] = useState<UserTab>("jobs");
+  const [orgTab, setOrgTab] = useState<OrgTab>("listings");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
     const t = searchParams.get("tab");
-    if (t === "referrals") setActiveType("Referrals");
-    else if (t === "find") setActiveType("Find");
+    if (t === "referrals") setUserTab("referrals");
+    else if (t === "find") setUserTab("find");
+    else if (t === "applications") setUserTab("applications");
   }, [searchParams]);
 
   useEffect(() => { const t = setTimeout(() => setDebouncedSearch(search), 300); return () => clearTimeout(t); }, [search]);
@@ -87,7 +92,7 @@ const Opportunities = () => {
       .select("*, org:organizations!opportunities_org_id_fkey(id, name, logo_url, type, slug, is_verified)")
       .eq("is_open", true).eq("status", "active").order("created_at", { ascending: false }).limit(50);
     if (debouncedSearch.trim()) query = query.or(`title.ilike.%${debouncedSearch}%,description.ilike.%${debouncedSearch}%`);
-    if (activeType !== "All" && activeType !== "Find" && filterMap[activeType]) query = filterMap[activeType](query);
+    if (activeType !== "All" && filterMap[activeType]) query = filterMap[activeType](query);
     const { data } = await query;
 
     const scored = (data || []).map((opp: any) => ({
@@ -111,7 +116,6 @@ const Opportunities = () => {
     queryKey: ["opportunities", debouncedSearch, activeType],
     queryFn: fetchOppsData,
     staleTime: 3 * 60 * 1000,
-    enabled: activeType !== "Find" && activeType !== "Referrals",
   });
 
   const { data: appliedIds = new Set<string>() } = useQuery({
@@ -147,9 +151,10 @@ const Opportunities = () => {
   }, [opps, profile, user, isInstitution]);
 
   const myOpps = opps.filter(o => o.poster_id === user?.id);
-  const displayOpps = tab === "mine" ? myOpps : opps;
   const daysAgo = (d: string) => { const diff = Math.floor((Date.now() - new Date(d).getTime()) / 86400000); return diff === 0 ? "Today" : `${diff}d ago`; };
   const daysLeft = (d: string) => { const diff = Math.ceil((new Date(d).getTime() - Date.now()) / 86400000); return diff > 0 ? `${diff} days left` : "Expired"; };
+
+  const cardProps = { user, profile, isInstitution, appliedIds, saved, onSave: toggleSave, onApply: setShowApply, navigate, daysAgo, daysLeft };
 
   return (
     <SubscriptionGate feature="opportunities">
@@ -160,95 +165,141 @@ const Opportunities = () => {
         canonical="https://tiikme.in/app/opportunities"
       />
       {/* Header */}
-      <div className="flex items-center justify-between mb-1">
+      <div className="flex items-center justify-between mb-3">
         <div>
           <h1 className="text-[28px] font-bold" style={{ color: "var(--text-1)" }}>Opportunities</h1>
           <p className="text-[14px]" style={{ color: "var(--text-3)" }}>
-            {isInstitution ? "Manage your job postings and applications" : "Roles matched to your profile"}
+            {isInstitution ? "Manage your job postings and find talent" : "Roles matched to your profile"}
           </p>
         </div>
-        {isInstitution && (
-          <div className="flex items-center gap-2">
-            <Button variant="secondary" size="sm" onClick={() => setTab(tab === "mine" ? "all" : "mine")}>
-              {tab === "mine" ? "Browse All" : "My Postings"}
-            </Button>
-            <Button size="sm" onClick={() => navigate("/app/opportunities/create")}>
-              <Plus className="w-4 h-4 mr-1" /> Post
-            </Button>
-          </div>
-        )}
       </div>
 
-      {/* Filter bar */}
-      <div className="sticky top-0 z-10 py-3 flex items-center gap-3 flex-wrap">
-        {activeType !== "Find" && activeType !== "Referrals" && (
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: "var(--text-3)" }} />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search roles, companies..."
-              className="w-full h-[48px] rounded-[20px] pl-12 pr-4 text-[14px] outline-none transition-all duration-200 glass-input" />
-          </div>
-        )}
-        <div className="flex gap-2 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
-          {FILTER_TABS.map(f => (
-            <button key={f} type="button" onClick={() => setActiveType(f)}
-              className="h-9 px-5 rounded-[20px] text-[13px] font-semibold cursor-pointer transition-all duration-200 shrink-0 btn-glass-pill"
-              style={activeType === f
-                ? { background: f === "Find" ? "linear-gradient(135deg, #10B981, #34D399)" : "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: f === "Find" ? "0 4px 16px rgba(16,185,129,0.30)" : "0 4px 16px rgba(232,115,58,0.30)" }
-                : {}
-              }>
-              {f}
-            </button>
-          ))}
+      {/* USER TAB BAR */}
+      {!isInstitution && (
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-4 pb-1">
+          {(["jobs", "find", "referrals", "applications"] as UserTab[]).map(t => {
+            const labels: Record<UserTab, string> = { jobs: "Jobs", find: "Find", referrals: "Referrals", applications: "My Applications" };
+            return (
+              <button key={t} type="button" onClick={() => setUserTab(t)}
+                className="shrink-0 cursor-pointer transition-all"
+                style={{
+                  height: 36, padding: "0 20px", borderRadius: 20, fontSize: 13, fontWeight: 600,
+                  ...(userTab === t
+                    ? { background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 4px 16px rgba(232,115,58,0.30)" }
+                    : { background: "rgba(255,255,255,0.20)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.25)", color: "#1A1A2E" }),
+                }}>
+                {labels[t]}
+              </button>
+            );
+          })}
         </div>
-      </div>
+      )}
 
-      {/* Find Tab */}
-      {activeType === "Find" ? (
-        <FindTab />
-      ) : activeType === "Referrals" ? (
-        <ReferralsTab />
-      ) : (
+      {/* ORG TAB BAR */}
+      {isInstitution && (
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-4 pb-1">
+          {(["post", "listings", "talent"] as OrgTab[]).map(t => {
+            const labels: Record<OrgTab, string> = { post: "Post Job", listings: "My Job List", talent: "Find Talent" };
+            return (
+              <button key={t} type="button" onClick={() => setOrgTab(t)}
+                className="shrink-0 cursor-pointer transition-all"
+                style={{
+                  height: 36, padding: "0 20px", borderRadius: 20, fontSize: 13, fontWeight: 600,
+                  ...(orgTab === t
+                    ? { background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 4px 16px rgba(232,115,58,0.30)" }
+                    : { background: "rgba(255,255,255,0.20)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.25)", color: "#1A1A2E" }),
+                }}>
+                {labels[t]}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* USER: JOBS TAB */}
+      {!isInstitution && userTab === "jobs" && (
         <>
-          {/* Recommended Section */}
-          {recommended.length > 0 && tab === "all" && !search.trim() && activeType === "All" && (
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-3" style={{ scrollbarWidth: "none" }}>
+            {FILTER_TABS.map(f => (
+              <button key={f} type="button" onClick={() => setActiveType(f)}
+                className="h-8 px-4 rounded-full text-[12px] font-semibold cursor-pointer transition-all shrink-0 btn-glass-pill"
+                style={activeType === f ? { background: "#E8733A", color: "#fff", border: "none" } : {}}>
+                {f}
+              </button>
+            ))}
+          </div>
+          <div className="relative mb-4">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-3)" }} />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search roles, companies..."
+              className="w-full h-11 rounded-2xl pl-11 pr-4 text-[14px] outline-none glass-input" />
+          </div>
+
+          {recommended.length > 0 && !search.trim() && activeType === "All" && (
             <div className="mb-6">
               <h2 className="text-[16px] font-bold mb-3 flex items-center gap-2" style={{ color: "var(--text-1)" }}>
                 <Zap className="w-4 h-4" style={{ color: "#F59E0B" }} /> Recommended for You
               </h2>
               <div className="space-y-3">
-                {recommended.map(o => <OpportunityCard key={`rec-${o.id}`} o={o} user={user} profile={profile} isInstitution={isInstitution} appliedIds={appliedIds} saved={saved} onSave={toggleSave} onApply={setShowApply} navigate={navigate} daysAgo={daysAgo} daysLeft={daysLeft} />)}
+                {recommended.map(o => <OpportunityCard key={`rec-${o.id}`} o={o} {...cardProps} />)}
               </div>
             </div>
           )}
 
-          {/* Cards */}
           {loading && !opps.length ? (
             <div className="space-y-4 mt-4">{[1,2,3].map(i => (
               <div key={i} className="animate-pulse rounded-xl p-5 glass-light" style={{ minHeight: 120 }}>
                 <div className="flex gap-3"><div className="w-11 h-11 rounded-xl" style={{ background: "var(--surface-2)" }} /><div className="flex-1 space-y-2"><div className="h-5 w-2/3 rounded" style={{ background: "var(--surface-2)" }} /><div className="h-4 w-1/3 rounded" style={{ background: "var(--surface-2)" }} /></div></div>
               </div>
             ))}</div>
-          ) : displayOpps.length === 0 ? (
+          ) : opps.length === 0 ? (
             <div className="text-center py-16">
               <Briefcase className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
               <p className="text-[16px] font-bold" style={{ color: "var(--text-1)" }}>No opportunities yet</p>
               <p className="text-[13px] mt-1" style={{ color: "var(--text-3)" }}>Check back later</p>
             </div>
           ) : (
-            <>
-              {recommended.length > 0 && tab === "all" && !search.trim() && activeType === "All" && (
-                <h2 className="text-[16px] font-bold mb-3" style={{ color: "var(--text-1)" }}>All Opportunities</h2>
-              )}
-              <div className="space-y-3">
-                {displayOpps.map(o => <OpportunityCard key={o.id} o={o} user={user} profile={profile} isInstitution={isInstitution} appliedIds={appliedIds} saved={saved} onSave={toggleSave} onApply={setShowApply} navigate={navigate} daysAgo={daysAgo} daysLeft={daysLeft} />)}
-              </div>
-            </>
+            <div className="space-y-3">
+              {opps.map(o => <OpportunityCard key={o.id} o={o} {...cardProps} />)}
+            </div>
           )}
         </>
       )}
 
+      {!isInstitution && userTab === "find" && <FindTab />}
+      {!isInstitution && userTab === "referrals" && <ReferralsTab />}
+      {!isInstitution && userTab === "applications" && <MyApplicationsTab userId={user?.id} />}
+
+      {/* ORG: POST */}
+      {isInstitution && orgTab === "post" && (
+        <div className="text-center py-12">
+          <Button onClick={() => navigate("/app/opportunities/create")}
+            className="btn-liquid-primary h-12 px-8 rounded-2xl text-[15px] font-bold">
+            <Plus className="w-5 h-5 mr-2" /> Create New Job Posting
+          </Button>
+        </div>
+      )}
+
+      {/* ORG: LISTINGS */}
+      {isInstitution && orgTab === "listings" && (
+        <div className="space-y-3">
+          {loading && !opps.length ? (
+            [1,2,3].map(i => <div key={i} className="animate-pulse glass-light rounded-xl" style={{ height: 120 }} />)
+          ) : myOpps.length === 0 ? (
+            <div className="text-center py-16">
+              <Briefcase className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
+              <p className="text-[16px] font-bold" style={{ color: "#1A1A2E" }}>No active postings</p>
+              <button type="button" onClick={() => setOrgTab("post")} className="mt-3 text-[13px] font-semibold cursor-pointer"
+                style={{ color: "#E8733A", background: "none", border: "none" }}>Post your first job →</button>
+            </div>
+          ) : myOpps.map(o => <OpportunityCard key={o.id} o={o} {...cardProps} />)}
+        </div>
+      )}
+
+      {/* ORG: FIND TALENT */}
+      {isInstitution && orgTab === "talent" && <FindTalentTab />}
+
       <AnimatePresence>
-        {showApply && <ApplyModal open={!!showApply} onClose={() => setShowApply(null)} opportunity={showApply} orgName={showApply?.org?.name} onApplied={() => { queryClient.invalidateQueries({ queryKey: ["applied-opportunities"] }); setShowApply(null); }} />}
+        {showApply && <ApplyModal open={!!showApply} onClose={() => setShowApply(null)} opportunity={showApply} orgName={showApply?.org?.name} onApplied={() => { queryClient.invalidateQueries({ queryKey: ["applied-opportunities"] }); queryClient.invalidateQueries({ queryKey: ["opportunities"] }); setShowApply(null); }} />}
       </AnimatePresence>
     </main>
     </SubscriptionGate>
