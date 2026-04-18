@@ -280,6 +280,159 @@ export type Database = {
           },
         ]
       }
+      circle_members: {
+        Row: {
+          circle_id: string
+          id: string
+          joined_at: string
+          user_id: string
+        }
+        Insert: {
+          circle_id: string
+          id?: string
+          joined_at?: string
+          user_id: string
+        }
+        Update: {
+          circle_id?: string
+          id?: string
+          joined_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "circle_members_circle_id_fkey"
+            columns: ["circle_id"]
+            isOneToOne: false
+            referencedRelation: "circles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      circle_post_upvotes: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "circle_post_upvotes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "circle_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      circle_posts: {
+        Row: {
+          author_id: string
+          circle_id: string
+          content: string
+          created_at: string
+          id: string
+          is_pinned: boolean
+          post_type: string
+          reply_count: number
+          signtype: string
+          updated_at: string
+          upvote_count: number
+        }
+        Insert: {
+          author_id: string
+          circle_id: string
+          content: string
+          created_at?: string
+          id?: string
+          is_pinned?: boolean
+          post_type?: string
+          reply_count?: number
+          signtype?: string
+          updated_at?: string
+          upvote_count?: number
+        }
+        Update: {
+          author_id?: string
+          circle_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_pinned?: boolean
+          post_type?: string
+          reply_count?: number
+          signtype?: string
+          updated_at?: string
+          upvote_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "circle_posts_circle_id_fkey"
+            columns: ["circle_id"]
+            isOneToOne: false
+            referencedRelation: "circles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      circles: {
+        Row: {
+          active_7d: number
+          created_at: string
+          created_by: string | null
+          description: string | null
+          icon_url: string | null
+          id: string
+          is_unlocked: boolean
+          member_count: number
+          name: string
+          slug: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          active_7d?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          icon_url?: string | null
+          id?: string
+          is_unlocked?: boolean
+          member_count?: number
+          name: string
+          slug: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          active_7d?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          icon_url?: string | null
+          id?: string
+          is_unlocked?: boolean
+          member_count?: number
+          name?: string
+          slug?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       comment_reactions: {
         Row: {
           comment_id: string
