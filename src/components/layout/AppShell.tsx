@@ -315,7 +315,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
       </aside>
 
       {/* ═══ MAIN CONTENT ═══ */}
-      <main className="min-h-screen md:ml-[220px] pb-[72px] md:pb-0">
+      <main className="min-h-screen md:ml-[220px] pb-[88px] md:pb-0">
         {/* Mobile top header */}
         <header
           className="md:hidden sticky top-0 z-50 flex items-center justify-between px-4"
@@ -446,7 +446,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           <div
             className="fixed left-0 right-0 z-[61] md:hidden"
             style={{
-              bottom: "calc(56px + env(safe-area-inset-bottom))",
+              bottom: "calc(72px + env(safe-area-inset-bottom))",
               padding: "8px 16px 12px",
               background: "rgba(255,255,255,0.92)",
               backdropFilter: "blur(24px)",
