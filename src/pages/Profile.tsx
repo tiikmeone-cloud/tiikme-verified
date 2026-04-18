@@ -842,7 +842,7 @@ const Profile = () => {
         {isOwnProfile && (
           <div className="md:hidden glass-card" style={{ marginTop: 12, padding: 4, borderRadius: 16, overflow: "hidden" }}>
             {[
-              { label: "Workspace", icon: Layers, path: "/app/workspace" },
+              { label: "Circles", icon: Layers, path: "/app/circles" },
               { label: "Connections", icon: Link2, path: "/app/connections" },
               { label: "Settings", icon: Settings, path: "/app/settings" },
               { label: "Help & Support", icon: LifeBuoy, path: "/grievance" },
