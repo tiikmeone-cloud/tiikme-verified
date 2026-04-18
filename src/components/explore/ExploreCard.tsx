@@ -176,7 +176,7 @@ export function TrendingPostCard({ post, authorProfile }: PostCardProps) {
         {post.content}
       </p>
       {firstImage && (
-        <img src={firstImage} alt="" loading="lazy" style={{ width: "100%", height: 120, objectFit: "cover", borderRadius: 8, marginTop: 6 }} />
+        <img src={firstImage} alt="" loading="lazy" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} style={{ width: "100%", height: 120, objectFit: "cover", borderRadius: 8, marginTop: 6 }} />
       )}
       <p style={{ fontSize: 11, fontWeight: 400, color: "var(--text-muted)", marginTop: 8 }}>
         {reactionTotal} likes · {post.comment_count || 0} comments
