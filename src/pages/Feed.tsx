@@ -323,7 +323,7 @@ const PostCard = ({
   }, [comments, user?.id]);
 
   const [showAllComments, setShowAllComments] = useState(false);
-  const visibleComments = showAllComments ? sortedComments : sortedComments.slice(0, 3);
+  const visibleComments = showAllComments ? sortedComments : sortedComments.slice(0, 5);
 
   const [reposting, setReposting] = useState(false);
   const handleRepost = async () => {
@@ -566,9 +566,14 @@ const PostCard = ({
                 </div>
               );
             })}
-            {sortedComments.length > 3 && !showAllComments && (
+            {sortedComments.length > 5 && !showAllComments && (
               <button type="button" onClick={() => setShowAllComments(true)} className="cursor-pointer" style={{ fontSize: 12, fontWeight: 500, color: "#E8733A", padding: "4px 0" }}>
-                View more comments
+                View all {sortedComments.length} comments
+              </button>
+            )}
+            {showAllComments && sortedComments.length > 5 && (
+              <button type="button" onClick={() => setShowAllComments(false)} className="cursor-pointer" style={{ fontSize: 12, fontWeight: 500, color: "#9CA3C0", padding: "4px 0" }}>
+                Show less
               </button>
             )}
 
