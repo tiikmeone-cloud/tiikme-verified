@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutGrid, Compass, Users, Target, User,
   Link2, MessageCircle, Bell, SlidersHorizontal, PencilLine, Plus, LogOut, Home,
-  X as XIcon,
+  X as XIcon, MoreHorizontal,
 } from "lucide-react";
 import ThemeLogo from "@/components/ThemeLogo";
 import { toast } from "sonner";
@@ -25,7 +25,7 @@ const navGroups = [
     label: "WORK",
     items: [
       { label: "Profile", icon: User, path: "/app/profile" },
-      { label: "Workspace", icon: Users, path: "/app/workspace" },
+      { label: "Circles", icon: Users, path: "/app/circles" },
       { label: "Opportunities", icon: Target, path: "/app/opportunities" },
     ],
   },
@@ -315,7 +315,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
       </aside>
 
       {/* ═══ MAIN CONTENT ═══ */}
-      <main className="min-h-screen md:ml-[220px] pb-[72px] md:pb-0">
+      <main className="min-h-screen md:ml-[220px] pb-[88px] md:pb-0">
         {/* Mobile top header */}
         <header
           className="md:hidden sticky top-0 z-50 flex items-center justify-between px-4"
@@ -344,49 +344,92 @@ const AppShell = ({ children }: { children: ReactNode }) => {
         <div className="page-enter">{children}</div>
       </main>
 
-      {/* ═══ MOBILE BOTTOM NAV ═══ */}
+      {/* ═══ MOBILE FLOATING PILL NAV ═══ */}
       <nav
-        className="flex md:hidden fixed bottom-0 left-0 right-0 z-50"
+        className="flex md:hidden fixed z-50"
         style={{
-          height: "calc(56px + env(safe-area-inset-bottom))",
-          paddingBottom: "env(safe-area-inset-bottom)",
-          background: "rgba(255,255,255,0.80)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-          borderTop: "1px solid rgba(255,255,255,0.30)",
+          bottom: "calc(12px + env(safe-area-inset-bottom))",
+          left: "50%",
+          transform: "translateX(-50%)",
+          background: "rgba(255,255,255,0.92)",
+          backdropFilter: "blur(24px)",
+          WebkitBackdropFilter: "blur(24px)",
+          border: "1px solid rgba(255,255,255,0.50)",
+          borderRadius: 32,
+          boxShadow: "0 8px 32px rgba(26,26,78,0.16), 0 2px 8px rgba(0,0,0,0.08)",
+          padding: "6px 8px",
         }}
       >
-        <div className="flex items-center justify-around w-full" style={{ height: 56 }}>
-          {mobileNav.map((item) => {
+        <div className="flex items-center" style={{ gap: 4 }}>
+          {[
+            { label: "Home", icon: Home, path: "/app/feed" },
+            { label: "Explore", icon: Compass, path: "/app/explore" },
+            { label: "Opps", icon: Target, path: "/app/opportunities" },
+            { label: "Pings", icon: MessageCircle, path: "/app/pings" },
+          ].map((item) => {
             const active = isActive(item.path);
             const badge = item.path === "/app/pings" ? unreadPings : undefined;
-
-            if (item.path === "/app/profile") {
-              return (
-                <Link key={item.path} to={profilePath} className="flex flex-col items-center justify-center" style={{ flex: 1, gap: 2, minWidth: 0 }}>
-                  <AvatarSquare src={identityAvatar} name={identityName || "You"} size={22} />
-                  <span className="truncate" style={{ fontSize: 10, fontWeight: 500, color: active ? "#E8733A" : "var(--text-muted)", maxWidth: "100%" }}>Profile</span>
-                </Link>
-              );
-            }
-
             return (
-              <Link key={item.path} to={item.path} className="flex flex-col items-center justify-center" style={{ flex: 1, gap: 2, minWidth: 0 }}>
+              <Link
+                key={item.path}
+                to={item.path}
+                className="flex flex-col items-center justify-center"
+                style={{
+                  width: 54, height: 48, borderRadius: 24, gap: 2,
+                  background: active ? "rgba(232,115,58,0.12)" : "transparent",
+                  transition: "background 150ms ease",
+                }}
+              >
                 <div className="relative">
-                  <item.icon style={{ width: 22, height: 22, color: active ? "#E8733A" : "var(--text-muted)" }} strokeWidth={active ? 2.2 : 1.8} />
+                  <item.icon
+                    style={{ width: 22, height: 22, color: active ? "#E8733A" : "#6B7094" }}
+                    strokeWidth={active ? 2.2 : 1.8}
+                  />
                   {badge && badge > 0 && (
                     <span style={{
                       position: "absolute", top: -2, right: -2,
                       width: 8, height: 8, borderRadius: "50%",
-                      background: "#E8733A",
-                      border: "1.5px solid rgba(255,255,255,0.95)",
+                      background: "#E8733A", border: "1.5px solid rgba(255,255,255,0.95)",
                     }} />
                   )}
                 </div>
-                <span className="truncate" style={{ fontSize: 10, fontWeight: 500, color: active ? "#E8733A" : "var(--text-muted)", maxWidth: "100%" }}>{item.label}</span>
+                <span style={{ fontSize: 9, fontWeight: active ? 700 : 500, color: active ? "#E8733A" : "#6B7094" }}>
+                  {item.label}
+                </span>
               </Link>
             );
           })}
+
+          {/* Profile avatar pill */}
+          <Link
+            to={profilePath}
+            className="flex flex-col items-center justify-center"
+            style={{
+              width: 54, height: 48, borderRadius: 24, gap: 2,
+              background: isActive(profilePath) ? "rgba(232,115,58,0.12)" : "transparent",
+              transition: "background 150ms ease",
+            }}
+          >
+            <AvatarSquare src={identityAvatar} name={identityName || "You"} size={22} />
+            <span style={{ fontSize: 9, fontWeight: 500, color: isActive(profilePath) ? "#E8733A" : "#6B7094" }}>
+              {isInstitution ? "Org" : "Me"}
+            </span>
+          </Link>
+
+          {/* More button — opens action sheet */}
+          <button
+            type="button"
+            onClick={() => setShowActionSheet(true)}
+            className="flex flex-col items-center justify-center"
+            style={{
+              width: 54, height: 48, borderRadius: 24, gap: 2,
+              background: showActionSheet ? "rgba(232,115,58,0.12)" : "transparent",
+              border: "none", cursor: "pointer", transition: "background 150ms ease",
+            }}
+          >
+            <MoreHorizontal style={{ width: 22, height: 22, color: showActionSheet ? "#E8733A" : "#6B7094" }} strokeWidth={1.8} />
+            <span style={{ fontSize: 9, fontWeight: 500, color: showActionSheet ? "#E8733A" : "#6B7094" }}>More</span>
+          </button>
         </div>
       </nav>
 
@@ -403,7 +446,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           <div
             className="fixed left-0 right-0 z-[61] md:hidden"
             style={{
-              bottom: "calc(56px + env(safe-area-inset-bottom))",
+              bottom: "calc(72px + env(safe-area-inset-bottom))",
               padding: "8px 16px 12px",
               background: "rgba(255,255,255,0.92)",
               backdropFilter: "blur(24px)",
@@ -415,9 +458,9 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           >
             {[
               { label: "New Post", icon: PencilLine, action: () => { setShowActionSheet(false); openPostCreate(); } },
-              { label: "Workspace", icon: Users, action: () => { setShowActionSheet(false); navigate("/app/workspace"); } },
-              { label: "Opportunities", icon: Target, action: () => { setShowActionSheet(false); navigate("/app/opportunities"); } },
+              { label: "Circles", icon: Users, action: () => { setShowActionSheet(false); navigate("/app/circles"); } },
               { label: "Connections", icon: Link2, action: () => { setShowActionSheet(false); navigate("/app/connections"); } },
+              { label: "Alerts", icon: Bell, action: () => { setShowActionSheet(false); navigate("/app/alerts"); } },
               { label: "Settings", icon: SlidersHorizontal, action: () => { setShowActionSheet(false); navigate("/app/settings"); } },
             ].map((item) => (
               <button
