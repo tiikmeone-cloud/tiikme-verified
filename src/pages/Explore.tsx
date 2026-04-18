@@ -83,7 +83,7 @@ const Explore = () => {
     let peopleResult: any[] = [];
     if (show("People")) {
       const { data } = await supabase.from("profiles")
-        .select("id, full_name, username, avatar_url, role, headline, institution_name, location_city, is_verified, activity_score, privacy_settings, sector, skills, location_state, designation, role_metadata")
+        .select("id, full_name, username, avatar_url, role, headline, institution_name, location_city, is_verified, activity_score, privacy_settings, sector, skills, location_state, designation, role_metadata, account_type")
         .eq("is_public", true).not("full_name", "is", null).neq("id", user.id)
         .order("activity_score", { ascending: false }).limit(60);
       const filtered = (data || []).filter((p: any) => {

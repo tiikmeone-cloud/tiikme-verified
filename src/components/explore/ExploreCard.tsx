@@ -13,6 +13,7 @@ interface PersonCardProps {
     designation?: string | null;
     role_metadata?: any;
     institution_name?: string | null;
+    account_type?: string | null;
   };
   strandStatus: string;
   onStrand: () => void;
@@ -47,6 +48,11 @@ export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonC
         <div className="flex items-center gap-1">
           <span className="truncate" style={{ fontWeight: 700, fontSize: 14, color: "var(--text-primary)" }}>{name}</span>
           {p.is_verified && <VerifiedBadge size={14} />}
+          {p.account_type === "institution" && (
+            <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 999, background: "rgba(37,99,235,0.10)", color: "#2563EB", marginLeft: 2 }}>
+              Company
+            </span>
+          )}
         </div>
         {designation && (
           <span className="truncate" style={{ fontSize: 12, color: "var(--text-secondary)" }}>{designation}</span>
@@ -170,7 +176,7 @@ export function TrendingPostCard({ post, authorProfile }: PostCardProps) {
         {post.content}
       </p>
       {firstImage && (
-        <img src={firstImage} alt="" loading="lazy" style={{ width: "100%", height: 120, objectFit: "cover", borderRadius: 8, marginTop: 6 }} />
+        <img src={firstImage} alt="" loading="lazy" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} style={{ width: "100%", height: 120, objectFit: "cover", borderRadius: 8, marginTop: 6 }} />
       )}
       <p style={{ fontSize: 11, fontWeight: 400, color: "var(--text-muted)", marginTop: 8 }}>
         {reactionTotal} likes · {post.comment_count || 0} comments
