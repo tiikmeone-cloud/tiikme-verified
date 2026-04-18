@@ -437,8 +437,8 @@ const SettingsPage = () => {
   const [deleteText, setDeleteText] = useState("");
   const [loggingOut, setLoggingOut] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [profile, setProfile] = useState({ name: "", headline: "", bio: "", institution: "", city: "", state: "", slug: "", avatar_url: "", org_type: "" });
-  const [originalProfile, setOriginalProfile] = useState({ name: "", headline: "", bio: "", institution: "", city: "", state: "", slug: "", avatar_url: "", org_type: "" });
+  const [profile, setProfile] = useState({ name: "", headline: "", bio: "", institution: "", city: "", state: "", slug: "", avatar_url: "", org_type: "", open_to_work: false });
+  const [originalProfile, setOriginalProfile] = useState({ name: "", headline: "", bio: "", institution: "", city: "", state: "", slug: "", avatar_url: "", org_type: "", open_to_work: false });
   const [userId, setUserId] = useState<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [inviteCount, setInviteCount] = useState(0);
@@ -451,7 +451,7 @@ const SettingsPage = () => {
       const { data: { user: u } } = await supabase.auth.getUser();
       if (!u) return;
       setUserId(u.id);
-      const { data } = await supabase.from("profiles").select("full_name, headline, bio, institution_name, location_city, location_state, username, avatar_url").eq("id", u.id).maybeSingle();
+      const { data } = await supabase.from("profiles").select("full_name, headline, bio, institution_name, location_city, location_state, username, avatar_url, open_to_work").eq("id", u.id).maybeSingle();
       if (data) {
         const p = {
           name: data.full_name || "",
@@ -463,6 +463,7 @@ const SettingsPage = () => {
           slug: data.username || "",
           avatar_url: data.avatar_url || "",
           org_type: "",
+          open_to_work: !!data.open_to_work,
         };
         if (isInstitutionAccount && authProfile?.org_id) {
           const { data: orgData } = await supabase
@@ -498,6 +499,7 @@ const SettingsPage = () => {
       location_city: profile.city,
       location_state: profile.state,
       username: profile.slug,
+      open_to_work: profile.open_to_work,
     }).eq("id", userId);
     if (error) { setSaving(false); tiikToast.error("Failed to save"); return; }
 
@@ -695,6 +697,20 @@ const SettingsPage = () => {
                     </div>
                     <p className="text-[10px] mt-1" style={{ color: "var(--text-3)" }}>Username cannot be changed</p>
                   </div>
+                  {!isInstitutionAccount && (
+                    <div className="flex items-center justify-between py-3" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+                      <div>
+                        <span className="text-[14px] font-semibold" style={{ color: "#1A1A2E" }}>Open to Work</span>
+                        <p className="text-[12px] mt-0.5" style={{ color: "#6B7094" }}>Show recruiters and connections you're looking for opportunities</p>
+                      </div>
+                      <button type="button"
+                        onClick={() => setProfile(p => ({ ...p, open_to_work: !p.open_to_work }))}
+                        className="w-11 h-6 rounded-full flex items-center px-0.5 cursor-pointer active:scale-95 shrink-0"
+                        style={{ background: profile.open_to_work ? "#34C759" : "rgba(0,0,0,0.12)", border: "none", transition: "all 0.2s" }}>
+                        <div className="w-5 h-5 rounded-full bg-white" style={{ transition: "transform 0.2s", transform: profile.open_to_work ? "translateX(20px)" : "translateX(0)" }} />
+                      </button>
+                    </div>
+                  )}
                   <div className="flex justify-end">
                     <button type="button" onClick={handleSaveProfile} disabled={saving || !hasChanges}
                       className="h-10 px-6 rounded-2xl text-[13px] font-bold transition-all duration-200 disabled:opacity-50"
