@@ -13,6 +13,7 @@ interface PersonCardProps {
     designation?: string | null;
     role_metadata?: any;
     institution_name?: string | null;
+    account_type?: string | null;
   };
   strandStatus: string;
   onStrand: () => void;
