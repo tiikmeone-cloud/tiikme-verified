@@ -48,6 +48,11 @@ export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonC
         <div className="flex items-center gap-1">
           <span className="truncate" style={{ fontWeight: 700, fontSize: 14, color: "var(--text-primary)" }}>{name}</span>
           {p.is_verified && <VerifiedBadge size={14} />}
+          {p.account_type === "institution" && (
+            <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 999, background: "rgba(37,99,235,0.10)", color: "#2563EB", marginLeft: 2 }}>
+              Company
+            </span>
+          )}
         </div>
         {designation && (
           <span className="truncate" style={{ fontSize: 12, color: "var(--text-secondary)" }}>{designation}</span>
