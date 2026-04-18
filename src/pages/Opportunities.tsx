@@ -545,4 +545,107 @@ function OpportunityCard({ o, user, profile, isInstitution, appliedIds, saved, o
   );
 }
 
+/* ─── My Applications Tab ─── */
+function MyApplicationsTab({ userId }: { userId: string | undefined }) {
+  const [applications, setApplications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!userId) { setLoading(false); return; }
+    supabase.from("opportunity_applications")
+      .select("id, status, created_at, opportunity:opportunities(id, title, type, location, org:organizations!opportunities_org_id_fkey(name, logo_url))")
+      .eq("applicant_id", userId)
+      .order("created_at", { ascending: false })
+      .then(({ data }) => { setApplications(data || []); setLoading(false); });
+  }, [userId]);
+
+  const statusColors: Record<string, { bg: string; color: string; label: string }> = {
+    under_review: { bg: "rgba(255,184,0,0.12)", color: "#FFB800", label: "Under Review" },
+    qualified: { bg: "rgba(16,185,129,0.12)", color: "#10B981", label: "Qualified" },
+    shortlisted: { bg: "rgba(59,130,246,0.12)", color: "#3B82F6", label: "Shortlisted" },
+    offered: { bg: "rgba(52,199,89,0.12)", color: "#34C759", label: "Offered" },
+    rejected: { bg: "rgba(239,68,68,0.10)", color: "#EF4444", label: "Not Selected" },
+  };
+
+  if (loading) return <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="animate-pulse glass-light rounded-xl" style={{ height: 80 }} />)}</div>;
+  if (applications.length === 0) return (
+    <div className="text-center py-16">
+      <Briefcase className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
+      <p className="text-[16px] font-bold" style={{ color: "#1A1A2E" }}>No applications yet</p>
+      <p className="text-[13px] mt-1" style={{ color: "#6B7094" }}>Apply to jobs and track your status here</p>
+    </div>
+  );
+
+  return (
+    <div className="space-y-3">
+      {applications.map((app: any) => {
+        const s = statusColors[app.status] || statusColors.under_review;
+        const opp = app.opportunity;
+        return (
+          <div key={app.id} className="glass-card" style={{ padding: 14, borderRadius: 14 }}>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center"
+                style={{ background: "var(--surface-2)", border: "1.5px solid var(--border)", flexShrink: 0 }}>
+                {opp?.org?.logo_url
+                  ? <img src={opp.org.logo_url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                  : <Building2 className="w-5 h-5" style={{ color: "#6B7094" }} />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold truncate" style={{ fontSize: 14, color: "#1A1A2E" }}>{opp?.title || "Opportunity"}</p>
+                <p className="text-[12px] truncate" style={{ color: "#6B7094" }}>{opp?.org?.name || "—"}</p>
+              </div>
+              <span className="text-[11px] font-semibold px-3 py-1 rounded-full shrink-0"
+                style={{ background: s.bg, color: s.color }}>{s.label}</span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ─── Find Talent Tab ─── */
+function FindTalentTab() {
+  const [talent, setTalent] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    supabase.from("profiles")
+      .select("id, full_name, avatar_url, role, headline, location_city, skills, activity_score")
+      .eq("open_to_work", true)
+      .eq("is_public", true)
+      .order("activity_score", { ascending: false })
+      .limit(30)
+      .then(({ data }) => { setTalent(data || []); setLoading(false); });
+  }, []);
+
+  if (loading) return <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="animate-pulse glass-light rounded-xl" style={{ height: 64 }} />)}</div>;
+  if (talent.length === 0) return (
+    <div className="text-center py-16">
+      <UsersIcon className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
+      <p className="text-[14px]" style={{ color: "#6B7094" }}>No candidates marked open to work yet</p>
+    </div>
+  );
+
+  return (
+    <div className="space-y-2">
+      {talent.map((p: any) => (
+        <div key={p.id} className="glass-card flex items-center gap-3 cursor-pointer"
+          style={{ padding: 12, borderRadius: 12 }}
+          onClick={() => navigate(`/app/profile/${p.id}`)}>
+          <AvatarSquare src={p.avatar_url} name={p.full_name || "U"} size={44} />
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold truncate" style={{ fontSize: 14, color: "#1A1A2E" }}>{p.full_name}</p>
+            <p className="text-[12px] truncate" style={{ color: "#6B7094" }}>{p.headline || p.role}</p>
+            {p.location_city && <p className="text-[11px]" style={{ color: "#9CA3C0" }}>{p.location_city}</p>}
+          </div>
+          <span className="text-[11px] font-semibold px-2 py-1 rounded-full shrink-0"
+            style={{ background: "rgba(52,199,89,0.10)", color: "#34C759" }}>Open</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default Opportunities;
