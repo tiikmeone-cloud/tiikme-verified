@@ -337,6 +337,7 @@ export default function OnboardingDetails() {
   const navigate = useNavigate();
   const { user, profile, refetchProfile } = useAuth();
   const role = sessionStorage.getItem("ob_role") || "student";
+  const roleSubtype = sessionStorage.getItem("ob_role_subtype") || null;
   const [submitting, setSubmitting] = useState(false);
 
   // Identity
@@ -437,6 +438,7 @@ export default function OnboardingDetails() {
       full_name: fullName.trim(),
       username: username.trim().toLowerCase(),
       role,
+      role_subtype: roleSubtype,
       headline: headline || "",
       location_city: city.trim(),
       location_state: state,
@@ -454,6 +456,7 @@ export default function OnboardingDetails() {
     if (error) { toast.error("Failed to save profile"); console.error(error); return; }
 
     sessionStorage.removeItem("ob_role");
+    sessionStorage.removeItem("ob_role_subtype");
     sessionStorage.removeItem("ob_email");
     if (referredBy) localStorage.removeItem("tiikme-referrer");
     await refetchProfile();
@@ -471,6 +474,7 @@ export default function OnboardingDetails() {
       updated_at: new Date().toISOString(),
     } as any, { onConflict: "id" });
     sessionStorage.removeItem("ob_role");
+    sessionStorage.removeItem("ob_role_subtype");
     navigate("/app/feed");
   };
 

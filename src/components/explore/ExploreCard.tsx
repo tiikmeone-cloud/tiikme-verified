@@ -9,6 +9,7 @@ interface PersonCardProps {
     username: string | null;
     avatar_url: string | null;
     role: string | null;
+    role_subtype?: string | null;
     is_verified?: boolean | null;
     designation?: string | null;
     role_metadata?: any;
@@ -56,6 +57,19 @@ export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonC
         </div>
         {designation && (
           <span className="truncate" style={{ fontSize: 12, color: "var(--text-secondary)" }}>{designation}</span>
+        )}
+        {p.role_subtype && (
+          <span
+            className="truncate"
+            style={{
+              fontSize: 11, color: "var(--text-muted)",
+              background: "rgba(156,163,192,0.12)",
+              padding: "1px 8px", borderRadius: 999,
+              alignSelf: "flex-start", marginTop: 1,
+            }}
+          >
+            {p.role_subtype}
+          </span>
         )}
         {company && (
           <span className="truncate" style={{ fontSize: 11, color: "var(--text-muted)" }}>{company}</span>
