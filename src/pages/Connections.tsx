@@ -9,6 +9,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { connectionButtonStyle } from "@/hooks/useConnectionStatus";
 import VerifiedBadge from "@/components/VerifiedBadge";
+import PrimaryTabs from "@/components/filters/PrimaryTabs";
+import FilterBar, { useScrollPastThreshold } from "@/components/filters/FilterBar";
+import BottomSheet from "@/components/ui/BottomSheet";
+import { useFilterFlag, useFilterParam } from "@/lib/useFilterParam";
 
 const ROLE_COLORS: Record<string, string> = {
   student: "#4F46E5", professional: "#0369A1", government: "#166534",
