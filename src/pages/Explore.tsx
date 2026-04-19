@@ -12,6 +12,10 @@ import HorizontalCarousel from "@/components/explore/HorizontalCarousel";
 import { PersonCard, OrgCard, TrendingPostCard, TopicPill, StartupCard, InvestorCard } from "@/components/explore/ExploreCard";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import { getOrgTypeConfig } from "@/lib/orgTypes";
+import PrimaryTabs from "@/components/filters/PrimaryTabs";
+import FilterBar, { useScrollPastThreshold } from "@/components/filters/FilterBar";
+import BottomSheet from "@/components/ui/BottomSheet";
+import { useFilterParam } from "@/lib/useFilterParam";
 
 const FILTER_TABS = ["All", "People", "Companies", "Colleges", "Hospitals", "Government", "NGO", "Startups", "Investors", "Trending"];
 
