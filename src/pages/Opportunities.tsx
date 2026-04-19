@@ -276,6 +276,66 @@ const Opportunities = () => {
   );
 };
 
+/* ─── Sticky 2-row Tab + Filter header for Opportunities ─── */
+function StickyOppHeader({ isInstitution, userTab, setUserTab, orgTab, setOrgTab, activeType, setActiveType }: any) {
+  const scrolled = useScrollPastThreshold(120);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const filterCount = activeType !== "All" ? 1 : 0;
+
+  const userTabs = [
+    { key: "jobs", label: "For you" },
+    { key: "referrals", label: "Referrals" },
+    { key: "applications", label: "Applications" },
+  ];
+  const orgTabs = [
+    { key: "post", label: "Post Job" },
+    { key: "listings", label: "My Listings" },
+    { key: "talent", label: "Find Talent" },
+  ];
+  const showFilters = (!isInstitution && userTab === "jobs") || (isInstitution && orgTab === "listings");
+
+  return (
+    <div className="sticky z-30" style={{ top: 0, background: "rgba(255,255,255,0.78)", backdropFilter: "blur(14px)", marginInline: -16, paddingInline: 16, borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+      {!isInstitution
+        ? <PrimaryTabs tabs={userTabs as any} active={userTab} onChange={setUserTab} />
+        : <PrimaryTabs tabs={orgTabs as any} active={orgTab} onChange={setOrgTab} />}
+      {showFilters && (
+        <FilterBar
+          condensed={scrolled}
+          activeCount={filterCount}
+          onClearAll={() => setActiveType("All")}
+          onMore={() => setMoreOpen(true)}
+          chips={FILTER_TABS.filter(f => f !== "All").map(f => ({
+            key: f, label: f, active: activeType === f,
+            onToggle: () => setActiveType(activeType === f ? "All" : f),
+          }))}
+        />
+      )}
+      <BottomSheet open={moreOpen} onClose={() => setMoreOpen(false)} title="Filter opportunities" description="Pick one to narrow results"
+        footer={
+          <>
+            <button type="button" onClick={() => setActiveType("All")} className="flex-1 cursor-pointer"
+              style={{ height: 40, borderRadius: 10, fontSize: 13, fontWeight: 600, background: "rgba(0,0,0,0.06)", color: "#1A1A2E", border: "none" }}>Reset</button>
+            <button type="button" onClick={() => setMoreOpen(false)} className="flex-1 cursor-pointer"
+              style={{ height: 40, borderRadius: 10, fontSize: 13, fontWeight: 700, background: "#F97316", color: "#fff", border: "none" }}>Apply</button>
+          </>
+        }>
+        <div className="flex flex-wrap gap-2">
+          {FILTER_TABS.map(f => (
+            <button key={f} type="button" onClick={() => setActiveType(f)}
+              className="cursor-pointer"
+              style={{
+                height: 32, padding: "0 12px", borderRadius: 999, fontSize: 12, fontWeight: 600,
+                background: activeType === f ? "#F97316" : "rgba(0,0,0,0.05)",
+                color: activeType === f ? "#fff" : "#1A1A2E", border: "none",
+              }}>{f}</button>
+          ))}
+        </div>
+      </BottomSheet>
+    </div>
+  );
+}
+
 /* ─── Opportunity Card Component ─── */
 function OpportunityCard({ o, user, profile, isInstitution, appliedIds, saved, onSave, onApply, navigate, daysAgo, daysLeft }: any) {
   const orgData = o.org;
