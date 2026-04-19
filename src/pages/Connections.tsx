@@ -67,6 +67,16 @@ const Connections = () => {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
+  const scrolled = useScrollPastThreshold(120);
+
+  // URL-backed filters
+  const [verifiedOnly, setVerifiedOnly] = useFilterFlag("verified");
+  const [withCompany, setWithCompany] = useFilterFlag("with_company");
+  const [activeRecent, setActiveRecent] = useFilterFlag("recent");
+  const [roleFilter, setRoleFilter] = useFilterParam("role", "");
+  const [moreOpen, setMoreOpen] = useState(false);
+  const filterCount = (verifiedOnly ? 1 : 0) + (withCompany ? 1 : 0) + (activeRecent ? 1 : 0) + (roleFilter ? 1 : 0);
+  const clearAllFilters = () => { setVerifiedOnly(false); setWithCompany(false); setActiveRecent(false); setRoleFilter(null); };
 
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
