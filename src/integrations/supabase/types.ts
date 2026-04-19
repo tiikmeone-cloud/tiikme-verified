@@ -3718,7 +3718,20 @@ export type Database = {
       update_all_activity_scores: { Args: never; Returns: undefined }
     }
     Enums: {
-      [_ in never]: never
+      circle_post_type:
+        | "discussion"
+        | "poll"
+        | "question"
+        | "salary_share"
+        | "company_review"
+        | "link_share"
+      circle_type: "company" | "college" | "sector" | "city" | "role" | "topic"
+      post_signtype:
+        | "full_profile"
+        | "verified_employee"
+        | "verified_alumni"
+        | "verified_role"
+        | "verified_anonymous"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3845,6 +3858,23 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      circle_post_type: [
+        "discussion",
+        "poll",
+        "question",
+        "salary_share",
+        "company_review",
+        "link_share",
+      ],
+      circle_type: ["company", "college", "sector", "city", "role", "topic"],
+      post_signtype: [
+        "full_profile",
+        "verified_employee",
+        "verified_alumni",
+        "verified_role",
+        "verified_anonymous",
+      ],
+    },
   },
 } as const

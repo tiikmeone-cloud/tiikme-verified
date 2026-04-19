@@ -518,83 +518,135 @@ const Profile = () => {
     if (!expForm.company.trim()) { toast.error("Company name is required"); return; }
     if (!expForm.title.trim()) { toast.error("Job title is required"); return; }
     setSaving(true);
-    const startDate = expForm.startMonth && expForm.startYear ? `${expForm.startYear}-${String(months.indexOf(expForm.startMonth) + 1).padStart(2, "0")}-01` : null;
-    const endDate = !expForm.isCurrent && expForm.endMonth && expForm.endYear ? `${expForm.endYear}-${String(months.indexOf(expForm.endMonth) + 1).padStart(2, "0")}-01` : null;
-    const { data, error } = await supabase.from("work_items").insert({
-      owner_id: user.id, title: expForm.title.trim(), job_title: expForm.title.trim(),
-      description: expForm.description.trim(), company_name: expForm.company.trim(), institution_name: expForm.company.trim(),
-      employment_type: expForm.type, type: expForm.type, item_type: "experience",
-      work_location: expForm.city.trim() || null,
-      start_month: expForm.startMonth || null, start_year: expForm.startYear ? Number(expForm.startYear) : null,
-      end_month: !expForm.isCurrent ? (expForm.endMonth || null) : null, end_year: !expForm.isCurrent && expForm.endYear ? Number(expForm.endYear) : null,
-      start_date: startDate, end_date: endDate, is_current: expForm.isCurrent,
-      skills_used: expForm.skills ? expForm.skills.split(",").map(s => s.trim()).filter(Boolean) : [],
-      tech_stack: expForm.skills ? expForm.skills.split(",").map(s => s.trim()).filter(Boolean) : [],
-      status: "active", visibility: "public",
-    }).select().single();
-    setSaving(false);
-    if (error) { toast.error(error.message); return; }
-    if (data) setWorkItems(prev => [data, ...prev]);
-    setModalSection(null);
-    setExpForm({ company: "", title: "", type: "Full-time", city: "", isCurrent: true, startMonth: "", startYear: "", endMonth: "", endYear: "", description: "", skills: "" });
-    toast.success("Experience added");
+    try {
+      const startDate = expForm.startMonth && expForm.startYear ? `${expForm.startYear}-${String(months.indexOf(expForm.startMonth) + 1).padStart(2, "0")}-01` : null;
+      const endDate = !expForm.isCurrent && expForm.endMonth && expForm.endYear ? `${expForm.endYear}-${String(months.indexOf(expForm.endMonth) + 1).padStart(2, "0")}-01` : null;
+      const payload = {
+        owner_id: user.id, title: expForm.title.trim(), job_title: expForm.title.trim(),
+        description: expForm.description.trim(), company_name: expForm.company.trim(), institution_name: expForm.company.trim(),
+        employment_type: expForm.type, type: expForm.type, item_type: "experience",
+        work_location: expForm.city.trim() || null,
+        start_month: expForm.startMonth || null, start_year: expForm.startYear ? Number(expForm.startYear) : null,
+        end_month: !expForm.isCurrent ? (expForm.endMonth || null) : null, end_year: !expForm.isCurrent && expForm.endYear ? Number(expForm.endYear) : null,
+        start_date: startDate, end_date: endDate, is_current: expForm.isCurrent,
+        skills_used: expForm.skills ? expForm.skills.split(",").map(s => s.trim()).filter(Boolean) : [],
+        tech_stack: expForm.skills ? expForm.skills.split(",").map(s => s.trim()).filter(Boolean) : [],
+        status: "active", visibility: "public",
+      };
+      if (import.meta.env.DEV) console.log("[saveExperience] payload:", payload);
+      const { data, error } = await supabase.from("work_items").insert(payload).select().single();
+      if (error) {
+        console.error("[saveExperience]", error);
+        toast.error(error.message || "Save failed — please try again");
+        setSaving(false);
+        return;
+      }
+      setSaving(false);
+      if (data) setWorkItems(prev => [data, ...prev]);
+      setModalSection(null);
+      setExpForm({ company: "", title: "", type: "Full-time", city: "", isCurrent: true, startMonth: "", startYear: "", endMonth: "", endYear: "", description: "", skills: "" });
+      toast.success("Experience added");
+    } catch (e: any) {
+      console.error("[saveExperience] exception", e);
+      toast.error(e?.message || "Network error — check your connection");
+      setSaving(false);
+    }
   };
 
   const saveEducation = async () => {
     if (!eduForm.institution.trim() || !user) return;
     setSaving(true);
-    const { data, error } = await supabase.from("work_items").insert({
-      owner_id: user.id, title: eduForm.degree + (eduForm.branch ? ` - ${eduForm.branch}` : ""),
-      degree_type: eduForm.degree.trim() || null, field_of_study: eduForm.branch.trim() || null,
-      institution_name_edu: eduForm.institution.trim(), institution_name: eduForm.institution.trim(),
-      grade_score: eduForm.grade.trim() || null, item_type: "education",
-      start_year: eduForm.startYear ? Number(eduForm.startYear) : null,
-      end_year: !eduForm.isCurrent && eduForm.endYear ? Number(eduForm.endYear) : null,
-      start_date: eduForm.startYear ? `${eduForm.startYear}-01-01` : null,
-      end_date: !eduForm.isCurrent && eduForm.endYear ? `${eduForm.endYear}-12-31` : null,
-      is_current: eduForm.isCurrent, status: "active", visibility: "public",
-    }).select().single();
-    setSaving(false);
-    if (error) { toast.error(error.message); return; }
-    if (data) setWorkItems(prev => [data, ...prev]);
-    setModalSection(null);
-    setEduForm({ institution: "", degree: "", branch: "", startYear: "", endYear: "", isCurrent: false, grade: "" });
-    toast.success("Education added");
+    try {
+      const payload = {
+        owner_id: user.id, title: eduForm.degree + (eduForm.branch ? ` - ${eduForm.branch}` : ""),
+        degree_type: eduForm.degree.trim() || null, field_of_study: eduForm.branch.trim() || null,
+        institution_name_edu: eduForm.institution.trim(), institution_name: eduForm.institution.trim(),
+        grade_score: eduForm.grade.trim() || null, item_type: "education",
+        start_year: eduForm.startYear ? Number(eduForm.startYear) : null,
+        end_year: !eduForm.isCurrent && eduForm.endYear ? Number(eduForm.endYear) : null,
+        start_date: eduForm.startYear ? `${eduForm.startYear}-01-01` : null,
+        end_date: !eduForm.isCurrent && eduForm.endYear ? `${eduForm.endYear}-12-31` : null,
+        is_current: eduForm.isCurrent, status: "active", visibility: "public",
+      };
+      if (import.meta.env.DEV) console.log("[saveEducation] payload:", payload);
+      const { data, error } = await supabase.from("work_items").insert(payload).select().single();
+      if (error) {
+        console.error("[saveEducation]", error);
+        toast.error(error.message || "Save failed — please try again");
+        setSaving(false);
+        return;
+      }
+      setSaving(false);
+      if (data) setWorkItems(prev => [data, ...prev]);
+      setModalSection(null);
+      setEduForm({ institution: "", degree: "", branch: "", startYear: "", endYear: "", isCurrent: false, grade: "" });
+      toast.success("Education added");
+    } catch (e: any) {
+      console.error("[saveEducation] exception", e);
+      toast.error(e?.message || "Network error — check your connection");
+      setSaving(false);
+    }
   };
 
   const saveProject = async () => {
     if (!projForm.title.trim() || !user) return;
     setSaving(true);
-    const { data, error } = await supabase.from("work_items").insert({
-      owner_id: user.id, title: projForm.title.trim(), description: projForm.description.trim(),
-      company_name: projForm.org.trim() || null, item_type: "project",
-      tech_stack: projForm.techStack ? projForm.techStack.split(",").map(s => s.trim()).filter(Boolean) : [],
-      start_year: projForm.startYear ? Number(projForm.startYear) : null,
-      end_year: !projForm.isCurrent && projForm.endYear ? Number(projForm.endYear) : null,
-      is_current: projForm.isCurrent, status: "active", visibility: "public",
-    }).select().single();
-    setSaving(false);
-    if (error) { toast.error(error.message); return; }
-    if (data) setWorkItems(prev => [data, ...prev]);
-    setModalSection(null);
-    setProjForm({ title: "", org: "", description: "", techStack: "", startMonth: "", startYear: "", endMonth: "", endYear: "", isCurrent: false });
-    toast.success("Project added");
+    try {
+      const payload = {
+        owner_id: user.id, title: projForm.title.trim(), description: projForm.description.trim(),
+        company_name: projForm.org.trim() || null, item_type: "project",
+        tech_stack: projForm.techStack ? projForm.techStack.split(",").map(s => s.trim()).filter(Boolean) : [],
+        start_year: projForm.startYear ? Number(projForm.startYear) : null,
+        end_year: !projForm.isCurrent && projForm.endYear ? Number(projForm.endYear) : null,
+        is_current: projForm.isCurrent, status: "active", visibility: "public",
+      };
+      if (import.meta.env.DEV) console.log("[saveProject] payload:", payload);
+      const { data, error } = await supabase.from("work_items").insert(payload).select().single();
+      if (error) {
+        console.error("[saveProject]", error);
+        toast.error(error.message || "Save failed — please try again");
+        setSaving(false);
+        return;
+      }
+      setSaving(false);
+      if (data) setWorkItems(prev => [data, ...prev]);
+      setModalSection(null);
+      setProjForm({ title: "", org: "", description: "", techStack: "", startMonth: "", startYear: "", endMonth: "", endYear: "", isCurrent: false });
+      toast.success("Project added");
+    } catch (e: any) {
+      console.error("[saveProject] exception", e);
+      toast.error(e?.message || "Network error — check your connection");
+      setSaving(false);
+    }
   };
 
   const saveAchievement = async () => {
     if (!achForm.title.trim() || !user) return;
     setSaving(true);
-    const dateStr = achForm.dateYear ? `${achForm.dateYear}-${achForm.dateMonth ? String(months.indexOf(achForm.dateMonth) + 1).padStart(2, "0") : "01"}-01` : null;
-    const { data, error } = await supabase.from("achievements").insert({
-      user_id: user.id, title: achForm.title.trim(), issued_by: achForm.issuedBy,
-      achievement_date: dateStr, description: achForm.description, certificate_url: achForm.url || null, type: "award",
-    }).select().single();
-    setSaving(false);
-    if (error) { toast.error(error.message); return; }
-    if (data) setAchievements(prev => [data, ...prev]);
-    setModalSection(null);
-    setAchForm({ title: "", issuedBy: "", dateMonth: "", dateYear: "", description: "", url: "" });
-    toast.success("Achievement added");
+    try {
+      const dateStr = achForm.dateYear ? `${achForm.dateYear}-${achForm.dateMonth ? String(months.indexOf(achForm.dateMonth) + 1).padStart(2, "0") : "01"}-01` : null;
+      const payload = {
+        user_id: user.id, title: achForm.title.trim(), issued_by: achForm.issuedBy,
+        achievement_date: dateStr, description: achForm.description, certificate_url: achForm.url || null, type: "award",
+      };
+      if (import.meta.env.DEV) console.log("[saveAchievement] payload:", payload);
+      const { data, error } = await supabase.from("achievements").insert(payload).select().single();
+      if (error) {
+        console.error("[saveAchievement]", error);
+        toast.error(error.message || "Save failed — please try again");
+        setSaving(false);
+        return;
+      }
+      setSaving(false);
+      if (data) setAchievements(prev => [data, ...prev]);
+      setModalSection(null);
+      setAchForm({ title: "", issuedBy: "", dateMonth: "", dateYear: "", description: "", url: "" });
+      toast.success("Achievement added");
+    } catch (e: any) {
+      console.error("[saveAchievement] exception", e);
+      toast.error(e?.message || "Network error — check your connection");
+      setSaving(false);
+    }
   };
 
   const addLink = async () => {
@@ -682,15 +734,28 @@ const Profile = () => {
   const saveRole = async () => {
     if (!roleForm.title.trim() || !user) return;
     setSaving(true);
-    const { data, error } = await supabase.from("profile_roles" as any).insert({
-      user_id: user.id, role_type: roleForm.roleType, title: roleForm.title.trim(), description: roleForm.description.trim() || null,
-    }).select().single();
-    setSaving(false);
-    if (error) { toast.error(error.message); return; }
-    if (data) setProfileRoles(prev => [data as any, ...prev]);
-    setModalSection(null);
-    setRoleForm({ roleType: "Side Hustle", title: "", description: "" });
-    toast.success("Role added");
+    try {
+      const payload = {
+        user_id: user.id, role_type: roleForm.roleType, title: roleForm.title.trim(), description: roleForm.description.trim() || null,
+      };
+      if (import.meta.env.DEV) console.log("[saveRole] payload:", payload);
+      const { data, error } = await supabase.from("profile_roles" as any).insert(payload).select().single();
+      if (error) {
+        console.error("[saveRole]", error);
+        toast.error(error.message || "Save failed — please try again");
+        setSaving(false);
+        return;
+      }
+      setSaving(false);
+      if (data) setProfileRoles(prev => [data as any, ...prev]);
+      setModalSection(null);
+      setRoleForm({ roleType: "Side Hustle", title: "", description: "" });
+      toast.success("Role added");
+    } catch (e: any) {
+      console.error("[saveRole] exception", e);
+      toast.error(e?.message || "Network error — check your connection");
+      setSaving(false);
+    }
   };
 
   const deleteRole = async (id: string) => {
