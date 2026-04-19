@@ -119,10 +119,30 @@ const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose:
     await supabase.from("profiles").update({
       full_name: form.name, headline: form.headline.slice(0, 80), bio: form.bio.slice(0, 300),
       username: form.username.toLowerCase().replace(/[^a-z0-9._-]/g, ""),
-      location_city: form.city, location_state: form.state, open_to_work: form.open_to_work,
+      location_city: form.city, location_state: form.state,
+      open_to_work: form.open_to_work,
+      otw_visibility: form.otw_visibility,
       role_subtype: subtypeAllowed ? (form.role_subtype || null) : null,
       custom_links: customLinks.filter(l => l.url) as any,
     } as any).eq("id", userId);
+
+    // Upsert OTW preferences when open_to_work is on
+    if (form.open_to_work) {
+      const otwPayload = {
+        user_id: userId,
+        role_types: otwRoleTypes,
+        preferred_location: otwLocation || null,
+        location_type: otwLocationType,
+        pitch: otwPitch.slice(0, 200),
+        is_active: true,
+        updated_at: new Date().toISOString(),
+      };
+      const { error: otwErr } = await supabase.from("open_to_work_profiles").upsert(otwPayload as any, { onConflict: "user_id" });
+      if (otwErr) console.warn("[otw upsert]", otwErr.message);
+    } else {
+      await supabase.from("open_to_work_profiles").update({ is_active: false } as any).eq("user_id", userId);
+    }
+
     setSaving(false);
     toast.success("Profile updated");
     await refreshProfile();
@@ -173,11 +193,78 @@ const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose:
               </select>
             </div>
           )}
-          <div className="flex items-center justify-between py-3" style={{ borderTop: "1px solid rgba(0,0,0,0.06)", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
-            <span style={{ fontSize: 14, fontWeight: 500, color: "#1A1A2E" }}>Open to work</span>
-            <button type="button" onClick={() => setForm({ ...form, open_to_work: !form.open_to_work })} className="cursor-pointer" style={{ width: 44, height: 24, borderRadius: 12, background: form.open_to_work ? "#E8733A" : "#ddd", display: "flex", alignItems: "center", padding: 2, border: "none" }}>
-              <div style={{ width: 20, height: 20, borderRadius: 10, background: "#fff", transform: form.open_to_work ? "translateX(20px)" : "translateX(0)", transition: "transform 0.2s" }} />
-            </button>
+          {/* OPEN TO WORK CARD */}
+          <div className="rounded-xl p-4 space-y-3" style={{ background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.20)" }}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p style={{ fontSize: 14, fontWeight: 700, color: "#1A1A2E" }}>Open to Work</p>
+                <p style={{ fontSize: 11, color: "#6B7094", marginTop: 2 }}>Let recruiters know you're available</p>
+              </div>
+              <button type="button" onClick={() => setForm({ ...form, open_to_work: !form.open_to_work })} className="cursor-pointer" style={{ width: 44, height: 24, borderRadius: 12, background: form.open_to_work ? "#10B981" : "#ddd", display: "flex", alignItems: "center", padding: 2, border: "none" }}>
+                <div style={{ width: 20, height: 20, borderRadius: 10, background: "#fff", transform: form.open_to_work ? "translateX(20px)" : "translateX(0)", transition: "transform 0.2s" }} />
+              </button>
+            </div>
+
+            {form.open_to_work && (
+              <>
+                <div>
+                  <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#6B7094", marginBottom: 6 }}>Visibility</p>
+                  <div className="space-y-1.5">
+                    {[
+                      { v: "all", label: "Everyone can see", desc: "Show the green badge on your profile to anyone" },
+                      { v: "recruiters", label: "Only recruiters", desc: "Visible only to institution accounts" },
+                      { v: "hidden", label: "Hidden for now", desc: "Save preferences but don't display" },
+                    ].map(opt => (
+                      <label key={opt.v} className="flex items-start gap-2 cursor-pointer p-2 rounded-lg" style={{ background: form.otw_visibility === opt.v ? "rgba(16,185,129,0.08)" : "transparent" }}>
+                        <input type="radio" name="otw_vis" checked={form.otw_visibility === opt.v} onChange={() => setForm({ ...form, otw_visibility: opt.v })} style={{ marginTop: 3, accentColor: "#10B981" }} />
+                        <div>
+                          <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>{opt.label}</p>
+                          <p style={{ fontSize: 11, color: "#6B7094" }}>{opt.desc}</p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#6B7094", marginBottom: 6 }}>Roles open to</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {OTW_ROLE_TAGS.map(r => {
+                      const on = otwRoleTypes.includes(r);
+                      return (
+                        <button key={r} type="button" onClick={() => setOtwRoleTypes(p => on ? p.filter(x => x !== r) : [...p, r])}
+                          className="cursor-pointer" style={{ fontSize: 12, fontWeight: 600, padding: "6px 10px", borderRadius: 999, background: on ? "#10B981" : "#fff", color: on ? "#fff" : "#1A1A2E", border: on ? "1px solid #10B981" : "1px solid rgba(0,0,0,0.10)" }}>
+                          {r}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#6B7094", marginBottom: 4 }}>City</p>
+                    <Input value={otwLocation} onChange={e => setOtwLocation(e.target.value)} placeholder="e.g. Mumbai" />
+                  </div>
+                  <div>
+                    <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#6B7094", marginBottom: 4 }}>Mode</p>
+                    <select value={otwLocationType} onChange={e => setOtwLocationType(e.target.value)} className="w-full outline-none cursor-pointer" style={{ height: 40, borderRadius: 10, padding: "0 12px", fontSize: 14, background: "#fff", border: "1px solid rgba(0,0,0,0.10)", color: "#1A1A2E" }}>
+                      <option value="onsite">Onsite</option>
+                      <option value="remote">Remote</option>
+                      <option value="hybrid">Hybrid</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#6B7094", marginBottom: 4 }}>Short pitch</p>
+                  <textarea value={otwPitch} onChange={e => setOtwPitch(e.target.value.slice(0, 200))} rows={2} maxLength={200}
+                    placeholder="Why should recruiters pick you?"
+                    className="w-full outline-none resize-none" style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.10)", borderRadius: 10, padding: 10, fontSize: 13, color: "#1A1A2E" }} />
+                  <p className="text-right" style={{ fontSize: 10, color: otwPitch.length >= 190 ? "#EF4444" : "#9CA3C0" }}>{otwPitch.length}/200</p>
+                </div>
+              </>
+            )}
           </div>
           <div>
             <label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.05em", display: "block", marginBottom: 4, color: "#9CA3C0" }}>Custom Links</label>
