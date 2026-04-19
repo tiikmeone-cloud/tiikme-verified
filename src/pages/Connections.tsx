@@ -1,13 +1,14 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import AvatarSquare from "@/components/ui/AvatarSquare";
-import { Link2, Search, MessageCircle, Compass, MoreHorizontal, X, Clock, UserPlus, UserX, BellOff, Ban, Flag } from "lucide-react";
+import { Link2, Search, MessageCircle, Compass, MoreHorizontal, Clock, UserPlus, UserX, BellOff, Ban, Flag, ChevronDown, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { sendNotification } from "@/lib/notify";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { connectionButtonStyle } from "@/hooks/useConnectionStatus";
+import VerifiedBadge from "@/components/VerifiedBadge";
 
 const ROLE_COLORS: Record<string, string> = {
   student: "#4F46E5", professional: "#0369A1", government: "#166534",
@@ -16,7 +17,8 @@ const ROLE_COLORS: Record<string, string> = {
 };
 
 interface ProfileLite {
-  id: string; full_name: string | null; avatar_url: string | null; role: string | null; institution_name: string | null;
+  id: string; full_name: string | null; avatar_url: string | null; role: string | null;
+  role_subtype?: string | null; institution_name: string | null; is_verified?: boolean | null;
   last_active?: string | null; updated_at?: string | null;
 }
 interface StrandRow {
@@ -25,7 +27,8 @@ interface StrandRow {
   receiver?: ProfileLite;
 }
 
-type TabKey = "connected" | "pending" | "sent" | "suggested";
+type TabKey = "all" | "requests";
+type SortKey = "recent_activity" | "alphabetical" | "mutual" | "recently_connected";
 
 const roleLabel = (r: string) => r ? r.charAt(0).toUpperCase() + r.slice(1).replace(/_/g, " ") : "";
 
@@ -39,40 +42,53 @@ function getTimeAgo(dateStr: string): string {
   return `${Math.floor(h / 24)}d ago`;
 }
 
+const SkeletonRow = () => (
+  <div className="glass-card animate-pulse flex items-center gap-3" style={{ padding: 12, borderRadius: 12, height: 72 }}>
+    <div style={{ width: 44, height: 44, borderRadius: 10, background: "rgba(0,0,0,0.06)" }} />
+    <div className="flex-1 space-y-2">
+      <div style={{ height: 12, width: "40%", borderRadius: 6, background: "rgba(0,0,0,0.06)" }} />
+      <div style={{ height: 10, width: "65%", borderRadius: 6, background: "rgba(0,0,0,0.04)" }} />
+    </div>
+    <div style={{ width: 70, height: 32, borderRadius: 8, background: "rgba(0,0,0,0.05)" }} />
+  </div>
+);
+
 const Connections = () => {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  const queryClient = useQueryClient();
-  const [tab, setTab] = useState<TabKey>("connected");
+  const [tab, setTab] = useState<TabKey>("all");
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<SortKey>("recent_activity");
+  const [sortOpen, setSortOpen] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const sortRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!openMenuId) return;
     const onDocClick = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setOpenMenuId(null);
+      if (openMenuId && menuRef.current && !menuRef.current.contains(e.target as Node)) setOpenMenuId(null);
+      if (sortOpen && sortRef.current && !sortRef.current.contains(e.target as Node)) setSortOpen(false);
     };
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpenMenuId(null); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { setOpenMenuId(null); setSortOpen(false); } };
     document.addEventListener("mousedown", onDocClick);
     document.addEventListener("keydown", onKey);
     return () => {
       document.removeEventListener("mousedown", onDocClick);
       document.removeEventListener("keydown", onKey);
     };
-  }, [openMenuId]);
+  }, [openMenuId, sortOpen]);
 
   const fetchStrandsData = useCallback(async () => {
     if (!user) return { connected: [], pendingIncoming: [], pendingSent: [], suggested: [] };
     const [acceptedRes, incomingRes, sentRes] = await Promise.allSettled([
       supabase.from("strands")
-        .select("id, requester_id, receiver_id, status, created_at, requester:profiles!strands_requester_id_fkey(id, full_name, avatar_url, role, institution_name, last_active, updated_at), receiver:profiles!strands_receiver_id_fkey(id, full_name, avatar_url, role, institution_name, last_active, updated_at)")
+        .select("id, requester_id, receiver_id, status, created_at, requester:profiles!strands_requester_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified, last_active, updated_at), receiver:profiles!strands_receiver_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified, last_active, updated_at)")
         .or(`requester_id.eq.${user.id},receiver_id.eq.${user.id}`).eq("status", "accepted"),
       supabase.from("strands")
-        .select("id, requester_id, receiver_id, status, created_at, requester:profiles!strands_requester_id_fkey(id, full_name, avatar_url, role, institution_name)")
+        .select("id, requester_id, receiver_id, status, created_at, requester:profiles!strands_requester_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified)")
         .eq("receiver_id", user.id).eq("status", "pending"),
       supabase.from("strands")
-        .select("id, requester_id, receiver_id, status, created_at, receiver:profiles!strands_receiver_id_fkey(id, full_name, avatar_url, role, institution_name)")
+        .select("id, requester_id, receiver_id, status, created_at, receiver:profiles!strands_receiver_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified)")
         .eq("requester_id", user.id).eq("status", "pending"),
     ]);
     const accepted = acceptedRes.status === "fulfilled" ? (acceptedRes.value as any).data || [] : [];
@@ -146,95 +162,172 @@ const Connections = () => {
     fetchStrands();
   };
 
-  const handleConnect = async (profileId: string) => {
-    if (!user) return;
-    const { sendConnectionRequest } = await import("@/hooks/useConnectionStatus");
-    const result = await sendConnectionRequest(user.id, profileId, profile?.full_name || "Someone");
-    if (result === null) { toast.info("Request already exists"); return; }
-    toast.success(result === "accepted" ? "Connected!" : "Request sent!");
-    fetchStrands();
+  const handleMute = async (otherId: string) => {
+    if (!user || !otherId) return;
+    const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { error } = await (supabase as any).from("user_mutes").upsert({
+      muter_id: user.id, muted_id: otherId, expires_at: expires,
+    }, { onConflict: "muter_id,muted_id" });
+    if (error) { toast.error("Could not mute"); return; }
+    toast.success("Muted for 30 days");
   };
 
-  const filteredConnected = useMemo(() => connected.filter(s => {
-    if (!search) return true;
-    const other = getOther(s);
-    return (other?.full_name || "").toLowerCase().includes(search.toLowerCase());
-  }), [connected, search, user?.id]);
+  const filteredConnected = useMemo(() => {
+    let list = connected.slice();
+    if (search) {
+      const q = search.toLowerCase();
+      list = list.filter(s => (getOther(s)?.full_name || "").toLowerCase().includes(q));
+    }
+    list.sort((a, b) => {
+      const oa = getOther(a), ob = getOther(b);
+      switch (sortBy) {
+        case "alphabetical":
+          return (oa?.full_name || "").localeCompare(ob?.full_name || "");
+        case "recently_connected":
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case "mutual":
+          // Placeholder: real mutual count would need extra query — fall back to recent activity
+          return new Date(ob?.last_active || ob?.updated_at || 0).getTime()
+               - new Date(oa?.last_active || oa?.updated_at || 0).getTime();
+        case "recent_activity":
+        default:
+          return new Date(ob?.last_active || ob?.updated_at || 0).getTime()
+               - new Date(oa?.last_active || oa?.updated_at || 0).getTime();
+      }
+    });
+    return list;
+  }, [connected, search, sortBy, user?.id]);
 
-  const tabs: { key: TabKey; label: string; badge?: number }[] = [
-    { key: "connected", label: `All Connections (${connected.length})` },
-    { key: "pending", label: "Requests", badge: pendingIncoming.length },
-    { key: "sent", label: `Sent (${pendingSent.length})` },
-    { key: "suggested", label: "Suggestions" },
-  ];
+  const sortLabels: Record<SortKey, string> = {
+    recent_activity: "Recent activity",
+    alphabetical: "Alphabetical",
+    mutual: "Mutual connections",
+    recently_connected: "Recently connected",
+  };
 
-  if (loading) return (
-    <main style={{ maxWidth: 960, margin: "0 auto", padding: 16 }}>
-      <div className="space-y-2">
-        {[1, 2, 3, 4].map(i => <div key={i} className="glass-card animate-pulse" style={{ height: 56, borderRadius: 10 }} />)}
-      </div>
-    </main>
-  );
+  const totalConnections = connected.length;
+  const totalRequests = pendingIncoming.length;
 
   return (
     <main style={{ maxWidth: 960, margin: "0 auto", padding: 16 }}>
-      <div className="flex items-center gap-3 mb-3">
-        <Link2 style={{ width: 22, height: 22, color: "#E8733A" }} />
-        <h1 style={{ fontSize: 20, fontWeight: 700, color: "#1A1A2E" }}>My Connections</h1>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <Link2 style={{ width: 22, height: 22, color: "#E8733A" }} />
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: "#1A1A2E" }}>My Network</h1>
+        </div>
+        <div className="flex items-center gap-1.5"
+          style={{ height: 32, padding: "0 12px", borderRadius: 999,
+            background: "rgba(232,115,58,0.10)", border: "1px solid rgba(232,115,58,0.20)",
+            fontSize: 12, fontWeight: 700, color: "#E8733A" }}>
+          {totalConnections} {totalConnections === 1 ? "connection" : "connections"}
+        </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-4 pb-1">
-        {tabs.map(t => (
+      {/* Primary Tabs */}
+      <div className="flex gap-2 mb-4">
+        {([
+          { key: "all" as const, label: "All", count: totalConnections },
+          { key: "requests" as const, label: "Requests", count: totalRequests },
+        ]).map(t => (
           <button type="button" key={t.key} onClick={() => setTab(t.key)}
-            className="shrink-0 flex items-center gap-1.5 cursor-pointer transition-all duration-200"
+            className="flex items-center gap-1.5 cursor-pointer transition-all"
             style={{
-              height: 34, padding: "0 18px", borderRadius: 12, fontSize: 13, fontWeight: 600, whiteSpace: "nowrap",
+              height: 36, padding: "0 20px", borderRadius: 12, fontSize: 13, fontWeight: 600,
               ...(tab === t.key
                 ? { background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 4px 16px rgba(232,115,58,0.30)" }
                 : { background: "rgba(255,255,255,0.20)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.25)", color: "#1A1A2E" }),
             }}>
             {t.label}
-            {t.badge && t.badge > 0 && tab !== t.key && (
-              <span style={{ minWidth: 18, height: 18, borderRadius: 9, background: "#E8733A", color: "#fff", fontSize: 10, fontWeight: 700, display: "inline-flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>
-                {t.badge}
+            {t.count > 0 && (
+              <span style={{ minWidth: 20, height: 20, borderRadius: 10, padding: "0 6px",
+                background: tab === t.key ? "rgba(255,255,255,0.25)" : "#E8733A",
+                color: "#fff", fontSize: 10, fontWeight: 700,
+                display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                {t.count}
               </span>
             )}
           </button>
         ))}
       </div>
 
-      {/* ALL CONNECTIONS */}
-      {tab === "connected" && (
-        <div>
-          <div className="relative mb-3">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2" style={{ width: 16, height: 16, color: "#6B7094" }} />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search connections..."
-              className="w-full outline-none transition-all"
-              style={{ height: 40, borderRadius: 12, paddingLeft: 36, paddingRight: 12, fontSize: 13, background: "rgba(255,255,255,0.20)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.30)", color: "#1A1A2E" }} />
+      {/* ALL TAB */}
+      {tab === "all" && (
+        <>
+          {/* Search + Sort */}
+          <div className="flex gap-2 mb-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2" style={{ width: 16, height: 16, color: "#6B7094" }} />
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search connections..."
+                className="w-full outline-none transition-all"
+                style={{ height: 40, borderRadius: 12, paddingLeft: 36, paddingRight: 12, fontSize: 13,
+                  background: "rgba(255,255,255,0.20)", backdropFilter: "blur(20px)",
+                  border: "1px solid rgba(255,255,255,0.30)", color: "#1A1A2E" }} />
+            </div>
+            <div className="relative" ref={sortRef}>
+              <button type="button" onClick={() => setSortOpen(o => !o)}
+                aria-label="Sort connections"
+                className="flex items-center gap-1.5 cursor-pointer"
+                style={{ height: 40, padding: "0 14px", borderRadius: 12, fontSize: 13, fontWeight: 600,
+                  background: "rgba(255,255,255,0.20)", backdropFilter: "blur(20px)",
+                  border: "1px solid rgba(255,255,255,0.30)", color: "#1A1A2E", whiteSpace: "nowrap" }}>
+                {sortLabels[sortBy]}
+                <ChevronDown style={{ width: 14, height: 14 }} />
+              </button>
+              {sortOpen && (
+                <div className="absolute right-0 top-11 z-50"
+                  style={{ minWidth: 200, borderRadius: 12, padding: "4px 0",
+                    background: "rgba(255,255,255,0.95)", backdropFilter: "blur(20px)",
+                    border: "1px solid rgba(255,255,255,0.40)", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
+                  {(Object.keys(sortLabels) as SortKey[]).map(k => (
+                    <button type="button" key={k}
+                      onClick={() => { setSortBy(k); setSortOpen(false); }}
+                      className="w-full text-left cursor-pointer hover:bg-black/5 transition-colors"
+                      style={{ padding: "9px 14px", fontSize: 13,
+                        color: sortBy === k ? "#E8733A" : "#1A1A2E",
+                        fontWeight: sortBy === k ? 700 : 500 }}>
+                      {sortLabels[k]}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-          {filteredConnected.length > 0 ? (
-            <div className="space-y-1.5">
+
+          {loading ? (
+            <div className="space-y-2">{[1, 2, 3].map(i => <SkeletonRow key={i} />)}</div>
+          ) : filteredConnected.length > 0 ? (
+            <div className="space-y-2">
               {filteredConnected.map(s => {
                 const other = getOther(s);
                 const lastActiveSrc = other?.last_active || other?.updated_at;
+                const subtype = other?.role_subtype;
                 return (
-                  <div key={s.id} className="glass-card flex items-center gap-2.5 cursor-pointer transition-all duration-200 hover:shadow-sm"
-                    style={{ padding: 10, borderRadius: 10 }}
+                  <div key={s.id} className="glass-card flex items-center gap-3 cursor-pointer transition-all duration-200 hover:shadow-sm"
+                    style={{ padding: 12, borderRadius: 12, minHeight: 72 }}
                     onClick={() => navigate(`/app/profile/${other?.id}`)}>
-                    <AvatarSquare src={other?.avatar_url} name={other?.full_name || "U"} size={40} bgColor={ROLE_COLORS[other?.role || ""] || "#6B7280"} />
+                    <AvatarSquare src={other?.avatar_url} name={other?.full_name || "U"} size={44} bgColor={ROLE_COLORS[other?.role || ""] || "#6B7280"} />
                     <div className="flex-1 min-w-0">
-                      <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{other?.full_name || "User"}</p>
-                      <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>{roleLabel(other?.role || "")} · {other?.institution_name || "—"}</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{other?.full_name || "User"}</p>
+                        {other?.is_verified && <VerifiedBadge size={14} />}
+                      </div>
+                      <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>
+                        {roleLabel(other?.role || "")}
+                        {subtype && <span style={{ opacity: 0.75 }}> · {subtype}</span>}
+                        {other?.institution_name && <span> · {other.institution_name}</span>}
+                      </p>
                       {lastActiveSrc && (
-                        <p className="truncate" style={{ fontSize: 11, color: "#9CA3C0", marginTop: 1 }}>Last active {getTimeAgo(lastActiveSrc)}</p>
+                        <p className="truncate" style={{ fontSize: 11, color: "#9CA3C0", marginTop: 2 }}>
+                          Last active {getTimeAgo(lastActiveSrc)}
+                        </p>
                       )}
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       <button type="button"
                         onClick={e => { e.stopPropagation(); navigate("/app/pings?userId=" + other?.id); }}
                         className="flex items-center gap-1 cursor-pointer transition-all"
-                        style={{ height: 32, padding: "0 10px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+                        style={{ height: 34, padding: "0 12px", borderRadius: 8, fontSize: 12, fontWeight: 600,
                           background: "rgba(232,115,58,0.08)", color: "#E8733A", border: "1px solid rgba(232,115,58,0.20)" }}>
                         <MessageCircle style={{ width: 13, height: 13 }} /> Ping
                       </button>
@@ -243,14 +336,14 @@ const Connections = () => {
                           onClick={e => { e.stopPropagation(); setOpenMenuId(openMenuId === s.id ? null : s.id); }}
                           aria-label="More options"
                           className="cursor-pointer flex items-center justify-center transition-all"
-                          style={{ height: 32, padding: "0 8px", borderRadius: 8,
+                          style={{ height: 34, width: 34, borderRadius: 8,
                             background: "rgba(232,115,58,0.08)", color: "#E8733A", border: "1px solid rgba(232,115,58,0.20)" }}>
                           <MoreHorizontal style={{ width: 14, height: 14 }} />
                         </button>
                         {openMenuId === s.id && (
-                          <div className="absolute right-0 top-9 z-50"
-                            style={{ minWidth: 200, borderRadius: 12,
-                              background: "rgba(255,255,255,0.92)", backdropFilter: "blur(20px)",
+                          <div className="absolute right-0 top-10 z-50"
+                            style={{ minWidth: 220, borderRadius: 12,
+                              background: "rgba(255,255,255,0.95)", backdropFilter: "blur(20px)",
                               border: "1px solid rgba(255,255,255,0.40)", boxShadow: "0 8px 24px rgba(0,0,0,0.12)", padding: "4px 0" }}>
                             <button type="button"
                               onClick={e => { e.stopPropagation(); setOpenMenuId(null); navigate("/app/pings?userId=" + other?.id); }}
@@ -259,10 +352,16 @@ const Connections = () => {
                               <MessageCircle style={{ width: 14, height: 14, color: "#6B7094" }} /> Message
                             </button>
                             <button type="button"
-                              onClick={e => { e.stopPropagation(); setOpenMenuId(null); toast.success("Muted for 30 days"); }}
+                              onClick={e => { e.stopPropagation(); setOpenMenuId(null); navigate(`/app/profile/${other?.id}`); }}
                               className="w-full text-left flex items-center gap-2.5 cursor-pointer hover:bg-black/5 transition-colors"
                               style={{ padding: "9px 14px", fontSize: 13, color: "#1A1A2E" }}>
-                              <BellOff style={{ width: 14, height: 14, color: "#6B7094" }} /> Mute notifications
+                              <Eye style={{ width: 14, height: 14, color: "#6B7094" }} /> View profile
+                            </button>
+                            <button type="button"
+                              onClick={e => { e.stopPropagation(); setOpenMenuId(null); if (other?.id) handleMute(other.id); }}
+                              className="w-full text-left flex items-center gap-2.5 cursor-pointer hover:bg-black/5 transition-colors"
+                              style={{ padding: "9px 14px", fontSize: 13, color: "#1A1A2E" }}>
+                              <BellOff style={{ width: 14, height: 14, color: "#6B7094" }} /> Mute notifications for 30 days
                             </button>
                             <div style={{ height: 1, background: "rgba(0,0,0,0.06)", margin: "4px 0" }} />
                             <button type="button"
@@ -294,98 +393,138 @@ const Connections = () => {
           ) : (
             <div style={{ textAlign: "center", padding: "48px 0" }}>
               <Link2 style={{ width: 40, height: 40, margin: "0 auto 12px", color: "#6B7094" }} />
-              <p style={{ fontSize: 14, fontWeight: 700, color: "#1A1A2E" }}>No connections yet</p>
+              <p style={{ fontSize: 14, fontWeight: 700, color: "#1A1A2E" }}>
+                {search ? "No connections match your search" : "No connections yet"}
+              </p>
               <button type="button" onClick={() => navigate("/app/explore")}
                 className="flex items-center gap-1.5 mx-auto mt-3 cursor-pointer"
-                style={{ height: 40, padding: "0 20px", borderRadius: 12, fontSize: 13, fontWeight: 600, background: "rgba(255,255,255,0.20)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.25)", color: "#1A1A2E" }}>
-                <Compass style={{ width: 16, height: 16 }} /> Explore
+                style={{ height: 40, padding: "0 20px", borderRadius: 12, fontSize: 13, fontWeight: 600,
+                  background: "rgba(255,255,255,0.20)", backdropFilter: "blur(12px)",
+                  border: "1px solid rgba(255,255,255,0.25)", color: "#1A1A2E" }}>
+                <Compass style={{ width: 16, height: 16 }} /> Find people
               </button>
             </div>
           )}
-        </div>
-      )}
 
-      {/* REQUESTS */}
-      {tab === "pending" && (
-        <div className="space-y-1.5">
-          {pendingIncoming.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "48px 0" }}>
-              <UserPlus style={{ width: 40, height: 40, margin: "0 auto 12px", color: "#6B7094" }} />
-              <p style={{ fontSize: 14, color: "#6B7094" }}>No pending requests</p>
-            </div>
-          ) : pendingIncoming.map(s => (
-            <div key={s.id} className="glass-card flex items-center gap-2.5" style={{ padding: 10, borderRadius: 10 }}>
-              <AvatarSquare src={s.requester?.avatar_url} name={s.requester?.full_name || "U"} size={40} bgColor={ROLE_COLORS[s.requester?.role || ""] || "#6B7280"} />
-              <div className="flex-1 min-w-0">
-                <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{s.requester?.full_name || "User"}</p>
-                <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>
-                  {roleLabel(s.requester?.role || "")} · {getTimeAgo(s.created_at)}
-                </p>
+          {/* Suggestions strip when there are connections */}
+          {!loading && filteredConnected.length > 0 && suggested.length > 0 && (
+            <div className="mt-6">
+              <h2 style={{ fontSize: 14, fontWeight: 700, color: "#1A1A2E", marginBottom: 10 }}>People you may know</h2>
+              <div className="space-y-2">
+                {suggested.slice(0, 4).map((person: any) => (
+                  <div key={person.id} className="glass-card flex items-center gap-3 cursor-pointer transition-all hover:shadow-sm"
+                    style={{ padding: 12, borderRadius: 12 }}
+                    onClick={() => navigate(`/app/profile/${person.id}`)}>
+                    <AvatarSquare src={person.avatar_url} name={person.full_name || "U"} size={44} bgColor={ROLE_COLORS[person.role || ""] || "#6B7280"} />
+                    <div className="flex-1 min-w-0">
+                      <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{person.full_name || "User"}</p>
+                      <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>
+                        {roleLabel(person.role || "")}
+                        {person.location_city && ` · ${person.location_city}`}
+                        {person.institution_name && ` · ${person.institution_name}`}
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="flex gap-1.5 shrink-0">
-                <button type="button" onClick={() => handleAccept(s)} className="cursor-pointer transition-all"
-                  style={{ height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 700, ...connectionButtonStyle("pending_received") }}>
-                  Accept
-                </button>
-                <button type="button" onClick={() => handleDecline(s)} className="cursor-pointer transition-all"
-                  style={{ height: 32, padding: "0 10px", borderRadius: 8, fontSize: 12, fontWeight: 700, background: "transparent", color: "#EF4444", border: "1px solid rgba(239,68,68,0.25)" }}>
-                  Decline
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* SENT */}
-      {tab === "sent" && (
-        <div className="space-y-1.5">
-          {pendingSent.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "48px 0" }}>
-              <Clock style={{ width: 40, height: 40, margin: "0 auto 12px", color: "#6B7094" }} />
-              <p style={{ fontSize: 14, color: "#6B7094" }}>No pending requests sent</p>
-            </div>
-          ) : pendingSent.map(s => (
-            <div key={s.id} className="glass-card flex items-center gap-2.5" style={{ padding: 10, borderRadius: 10 }}>
-              <AvatarSquare src={s.receiver?.avatar_url} name={s.receiver?.full_name || "U"} size={40} bgColor={ROLE_COLORS[s.receiver?.role || ""] || "#6B7280"} />
-              <div className="flex-1 min-w-0">
-                <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{s.receiver?.full_name || "User"}</p>
-                <p style={{ fontSize: 12, color: "#6B7094" }}>{getTimeAgo(s.created_at)}</p>
-              </div>
-              <button type="button" onClick={() => handleWithdraw(s)} className="cursor-pointer transition-all"
-                style={{ height: 32, padding: "0 12px", borderRadius: 8, fontSize: 12, fontWeight: 600, ...connectionButtonStyle("pending_sent") }}>
-                Withdraw
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* SUGGESTIONS */}
-      {tab === "suggested" && (
-        <div className="space-y-1.5">
-          {suggested.length > 0 ? suggested.map(person => (
-            <div key={person.id} className="glass-card flex items-center gap-2.5 cursor-pointer transition-all duration-200 hover:shadow-sm"
-              style={{ padding: 10, borderRadius: 10 }}
-              onClick={() => navigate(`/app/profile/${person.id}`)}>
-              <AvatarSquare src={person.avatar_url} name={person.full_name || "U"} size={48} bgColor={ROLE_COLORS[person.role || ""] || "#6B7280"} />
-              <div className="flex-1 min-w-0">
-                <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{person.full_name || "User"}</p>
-                <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>
-                  {roleLabel(person.role || "")} {person.location_city ? `· ${person.location_city}` : ""} {person.institution_name ? `· ${person.institution_name}` : ""}
-                </p>
-              </div>
-              <button type="button" onClick={e => { e.stopPropagation(); handleConnect(person.id); }}
-                className="cursor-pointer transition-all"
-                style={{ height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 700, ...connectionButtonStyle("none") }}>
-                Connect
-              </button>
-            </div>
-          )) : (
-            <div style={{ textAlign: "center", padding: "48px 0" }}>
-              <p style={{ fontSize: 14, color: "#6B7094" }}>No suggestions right now</p>
             </div>
           )}
+        </>
+      )}
+
+      {/* REQUESTS TAB */}
+      {tab === "requests" && (
+        <div className="space-y-6">
+          {/* Received */}
+          <section>
+            <div className="flex items-center justify-between mb-2">
+              <h2 style={{ fontSize: 14, fontWeight: 700, color: "#1A1A2E" }}>Received ({pendingIncoming.length})</h2>
+            </div>
+            {loading ? (
+              <div className="space-y-2">{[1, 2].map(i => <SkeletonRow key={i} />)}</div>
+            ) : pendingIncoming.length === 0 ? (
+              <div className="glass-card" style={{ padding: "32px 16px", borderRadius: 12, textAlign: "center" }}>
+                <UserPlus style={{ width: 36, height: 36, margin: "0 auto 10px", color: "#6B7094" }} />
+                <p style={{ fontSize: 13, color: "#6B7094", marginBottom: 12 }}>No pending requests</p>
+                <button type="button" onClick={() => navigate("/app/explore")}
+                  className="inline-flex items-center gap-1.5 cursor-pointer"
+                  style={{ height: 36, padding: "0 16px", borderRadius: 10, fontSize: 12, fontWeight: 600,
+                    background: "rgba(232,115,58,0.10)", color: "#E8733A", border: "1px solid rgba(232,115,58,0.20)" }}>
+                  <Compass style={{ width: 14, height: 14 }} /> Find people
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {pendingIncoming.map(s => (
+                  <div key={s.id} className="glass-card flex items-center gap-3" style={{ padding: 12, borderRadius: 12, minHeight: 72 }}>
+                    <AvatarSquare src={s.requester?.avatar_url} name={s.requester?.full_name || "U"} size={44} bgColor={ROLE_COLORS[s.requester?.role || ""] || "#6B7280"} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{s.requester?.full_name || "User"}</p>
+                        {s.requester?.is_verified && <VerifiedBadge size={14} />}
+                      </div>
+                      <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>
+                        {roleLabel(s.requester?.role || "")}
+                        {s.requester?.role_subtype && <span style={{ opacity: 0.75 }}> · {s.requester.role_subtype}</span>}
+                        {s.requester?.institution_name && <span> · {s.requester.institution_name}</span>}
+                      </p>
+                      <p style={{ fontSize: 11, color: "#9CA3C0", marginTop: 2 }}>{getTimeAgo(s.created_at)}</p>
+                    </div>
+                    <div className="flex gap-1.5 shrink-0">
+                      <button type="button" onClick={() => handleAccept(s)} className="cursor-pointer transition-all"
+                        style={{ height: 34, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 700, ...connectionButtonStyle("pending_received") }}>
+                        Accept
+                      </button>
+                      <button type="button" onClick={() => handleDecline(s)} className="cursor-pointer transition-all"
+                        style={{ height: 34, padding: "0 12px", borderRadius: 8, fontSize: 12, fontWeight: 700,
+                          background: "transparent", color: "#EF4444", border: "1px solid rgba(239,68,68,0.25)" }}>
+                        Decline
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Sent */}
+          <section>
+            <div className="flex items-center justify-between mb-2">
+              <h2 style={{ fontSize: 14, fontWeight: 700, color: "#1A1A2E" }}>Sent ({pendingSent.length})</h2>
+            </div>
+            {loading ? (
+              <div className="space-y-2">{[1, 2].map(i => <SkeletonRow key={`s${i}`} />)}</div>
+            ) : pendingSent.length === 0 ? (
+              <div className="glass-card" style={{ padding: "24px 16px", borderRadius: 12, textAlign: "center" }}>
+                <Clock style={{ width: 32, height: 32, margin: "0 auto 8px", color: "#6B7094" }} />
+                <p style={{ fontSize: 13, color: "#6B7094" }}>No pending requests sent</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {pendingSent.map(s => (
+                  <div key={s.id} className="glass-card flex items-center gap-3" style={{ padding: 12, borderRadius: 12, minHeight: 72 }}>
+                    <AvatarSquare src={s.receiver?.avatar_url} name={s.receiver?.full_name || "U"} size={44} bgColor={ROLE_COLORS[s.receiver?.role || ""] || "#6B7280"} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{s.receiver?.full_name || "User"}</p>
+                        {s.receiver?.is_verified && <VerifiedBadge size={14} />}
+                      </div>
+                      <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>
+                        {roleLabel(s.receiver?.role || "")}
+                        {s.receiver?.role_subtype && <span style={{ opacity: 0.75 }}> · {s.receiver.role_subtype}</span>}
+                        {s.receiver?.institution_name && <span> · {s.receiver.institution_name}</span>}
+                      </p>
+                      <p style={{ fontSize: 11, color: "#9CA3C0", marginTop: 2 }}>Sent {getTimeAgo(s.created_at)}</p>
+                    </div>
+                    <button type="button" onClick={() => handleWithdraw(s)} className="cursor-pointer transition-all shrink-0"
+                      style={{ height: 34, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 600, ...connectionButtonStyle("pending_sent") }}>
+                      Withdraw
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
         </div>
       )}
     </main>

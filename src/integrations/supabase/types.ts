@@ -2962,6 +2962,27 @@ export type Database = {
           },
         ]
       }
+      user_mutes: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          muted_id: string
+          muter_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          muted_id: string
+          muter_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          muted_id?: string
+          muter_id?: string
+        }
+        Relationships: []
+      }
       user_power: {
         Row: {
           current_power: number | null
