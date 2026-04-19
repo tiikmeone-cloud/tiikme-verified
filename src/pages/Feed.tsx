@@ -23,6 +23,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useLikes } from "@/hooks/useLikes";
 import { useComments } from "@/hooks/useComments";
+import PrimaryTabs from "@/components/filters/PrimaryTabs";
+import FilterBar, { useScrollPastThreshold } from "@/components/filters/FilterBar";
+import BottomSheet from "@/components/ui/BottomSheet";
+import { useFilterParam } from "@/lib/useFilterParam";
 
 /* ─── HELPERS ─── */
 const roleColorMap: Record<string, string> = {

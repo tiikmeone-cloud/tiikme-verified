@@ -17,6 +17,10 @@ import FindTab from "@/components/opportunities/FindTab";
 import ReferModal from "@/components/opportunities/ReferModal";
 import ReferralsTab from "@/components/opportunities/ReferralsTab";
 import AvatarSquare from "@/components/ui/AvatarSquare";
+import PrimaryTabs from "@/components/filters/PrimaryTabs";
+import FilterBar, { useScrollPastThreshold } from "@/components/filters/FilterBar";
+import BottomSheet from "@/components/ui/BottomSheet";
+import { useFilterFlag, useFilterParam } from "@/lib/useFilterParam";
 
 const TYPE_META: Record<string, { label: string; color: string; icon: any }> = {
   full_time: { label: "Full-time", color: "#2563EB", icon: Briefcase },
