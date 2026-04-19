@@ -37,7 +37,7 @@ const Explore = () => {
       const term = `%${search}%`;
       const [{ data: profiles }, { data: orgs }] = await Promise.all([
         supabase.from("profiles").select("id, full_name, username, avatar_url, role").eq("is_public", true).neq("id", user?.id || "").or(`full_name.ilike.${term},username.ilike.${term}`).limit(5),
-        supabase.from("organizations").select("id, name, slug, type, logo_url").or(`name.ilike.${term}`).limit(5),
+        supabase.from("organizations").select("id, name, slug, type, subtype, logo_url").or(`name.ilike.${term}`).limit(5),
       ]);
       const results: any[] = [];
       (profiles || []).forEach(p => results.push({ ...p, kind: "person" }));
@@ -324,7 +324,23 @@ const Explore = () => {
                 <AvatarSquare src={r.avatar_url || r.logo_url} name={r.full_name || r.name || "?"} size={32} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.full_name || r.name}</p>
-                  <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)" }}>{r.kind === "person" ? `@${cleanUsername(r.username) || "user"}` : r.type}</p>
+                  {r.kind === "person" ? (
+                    <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)" }}>@{cleanUsername(r.username) || "user"}</p>
+                  ) : (() => {
+                    const conf = getOrgTypeConfig(r.type);
+                    return (
+                      <span style={{
+                        display: "inline-flex", alignItems: "center", marginTop: 2,
+                        padding: "2px 6px", borderRadius: 5,
+                        fontSize: 9, fontWeight: 700, letterSpacing: 0.3,
+                        background: conf.bg, color: conf.color,
+                        textTransform: "uppercase",
+                      }}>
+                        {conf.label}
+                        {r.subtype && <span style={{ marginLeft: 5, opacity: 0.7, textTransform: "none", fontWeight: 500 }}>· {r.subtype}</span>}
+                      </span>
+                    );
+                  })()}
                 </div>
               </button>
             ))}

@@ -1,6 +1,7 @@
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import { useNavigate } from "react-router-dom";
+import { ORG_TYPE_CONFIG, getOrgTypeConfig } from "@/lib/orgTypes";
 
 interface PersonCardProps {
   p: {
@@ -128,11 +129,23 @@ export function OrgCard({ org, following, onToggleFollow, navigateTo }: OrgCardP
       onClick={() => navigate(navigateTo)}
     >
       <AvatarSquare src={org.logo_url} name={org.name || "?"} size={80} />
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 2, minWidth: 0 }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 4, minWidth: 0 }}>
         <span className="truncate" style={{ fontWeight: 700, fontSize: 14, color: "var(--text-primary)" }}>{org.name}</span>
-        <span className="truncate" style={{ fontSize: 12, color: "var(--text-secondary)" }}>
-          {typeLabel}{subtype ? ` · ${subtype}` : ""}
-        </span>
+        {(() => {
+          const conf = getOrgTypeConfig(org.type || org.page_type);
+          return (
+            <span style={{
+              display: "inline-flex", alignItems: "center", alignSelf: "flex-start",
+              padding: "3px 8px", borderRadius: 6,
+              fontSize: 10, fontWeight: 700, letterSpacing: 0.3,
+              background: conf.bg, color: conf.color,
+              textTransform: "uppercase",
+            }}>
+              {conf.label}
+              {subtype && <span style={{ marginLeft: 6, opacity: 0.7, textTransform: "none", fontWeight: 500 }}>· {subtype}</span>}
+            </span>
+          );
+        })()}
       </div>
       <button
         type="button"
