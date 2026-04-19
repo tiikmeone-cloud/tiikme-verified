@@ -69,9 +69,29 @@ export default function OnboardingRole() {
           })}
         </div>
 
+        {/* Conditional subtype select — appears after a role with subtypes is picked */}
+        {subtypeRequired && (
+          <div className="mt-6">
+            <label className="block text-[13px] font-bold mb-2" style={{ color: "#111827" }}>
+              What kind of {selected}?
+            </label>
+            <select
+              value={subtype}
+              onChange={e => setSubtype(e.target.value)}
+              className="w-full h-12 rounded-2xl px-4 cursor-pointer outline-none text-[14px]"
+              style={{ background: "#fff", border: "2px solid #E5E7EB", color: "#111827" }}
+            >
+              <option value="">Select one…</option>
+              {SUBTYPE_OPTIONS[selected!].map(opt => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <button
           type="button"
-          onClick={handleContinue} disabled={!selected}
+          onClick={handleContinue} disabled={!canContinue}
           className="w-full h-12 rounded-2xl text-[15px] font-bold text-white cursor-pointer transition-all hover:opacity-90 disabled:opacity-50 mt-7"
           style={{ background: "#E8580A" }}
         >

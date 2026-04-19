@@ -54,7 +54,7 @@ const formatDuration = (start: string | null, end: string | null, isCurrent: boo
 /* ── Edit Profile Drawer ── */
 const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose: () => void; onSaved: () => void }) => {
   const { refreshProfile } = useAuth();
-  const [form, setForm] = useState({ name: "", headline: "", bio: "", city: "", state: "", username: "", open_to_work: false, avatar_url: "", about: "" });
+  const [form, setForm] = useState({ name: "", headline: "", bio: "", city: "", state: "", username: "", open_to_work: false, avatar_url: "", about: "", role: "", role_subtype: "" });
   const [saving, setSaving] = useState(false);
   const [customLinks, setCustomLinks] = useState<{ url: string; label: string }[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
@@ -66,9 +66,9 @@ const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose:
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       setUserId(user.id);
-      const { data } = await supabase.from("profiles").select("full_name, headline, bio, location_city, location_state, username, open_to_work, avatar_url, custom_links").eq("id", user.id).maybeSingle();
+      const { data } = await supabase.from("profiles").select("full_name, headline, bio, location_city, location_state, username, open_to_work, avatar_url, custom_links, role, role_subtype").eq("id", user.id).maybeSingle();
       if (data) {
-        setForm({ name: data.full_name || "", headline: data.headline || "", bio: data.bio || "", city: data.location_city || "", state: data.location_state || "", username: data.username || "", open_to_work: data.open_to_work || false, avatar_url: data.avatar_url || "", about: (data as any).about || "" });
+        setForm({ name: data.full_name || "", headline: data.headline || "", bio: data.bio || "", city: data.location_city || "", state: data.location_state || "", username: data.username || "", open_to_work: data.open_to_work || false, avatar_url: data.avatar_url || "", about: (data as any).about || "", role: (data as any).role || "", role_subtype: (data as any).role_subtype || "" });
         setCustomLinks(Array.isArray(data.custom_links) ? (data.custom_links as any[]).map(l => ({ url: l.url || "", label: l.label || "" })) : []);
       }
     })();
@@ -100,12 +100,14 @@ const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose:
   const handleSave = async () => {
     if (!userId) return;
     setSaving(true);
+    const subtypeAllowed = hasSubtypes(form.role);
     await supabase.from("profiles").update({
       full_name: form.name, headline: form.headline.slice(0, 80), bio: form.bio.slice(0, 300),
       username: form.username.toLowerCase().replace(/[^a-z0-9._-]/g, ""),
       location_city: form.city, location_state: form.state, open_to_work: form.open_to_work,
+      role_subtype: subtypeAllowed ? (form.role_subtype || null) : null,
       custom_links: customLinks.filter(l => l.url) as any,
-    }).eq("id", userId);
+    } as any).eq("id", userId);
     setSaving(false);
     toast.success("Profile updated");
     await refreshProfile();
@@ -138,6 +140,24 @@ const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose:
               </select>
             </div>
           </div>
+          {hasSubtypes(form.role) && (
+            <div>
+              <label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.05em", display: "block", marginBottom: 4, color: "#9CA3C0" }}>
+                Role subtype
+              </label>
+              <select
+                value={form.role_subtype}
+                onChange={e => setForm({ ...form, role_subtype: e.target.value })}
+                className="w-full outline-none cursor-pointer"
+                style={{ height: 40, borderRadius: 10, padding: "0 12px", fontSize: 14, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(0,0,0,0.10)", color: "#1A1A2E" }}
+              >
+                <option value="">Select…</option>
+                {SUBTYPE_OPTIONS[form.role].map(opt => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="flex items-center justify-between py-3" style={{ borderTop: "1px solid rgba(0,0,0,0.06)", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
             <span style={{ fontSize: 14, fontWeight: 500, color: "#1A1A2E" }}>Open to work</span>
             <button type="button" onClick={() => setForm({ ...form, open_to_work: !form.open_to_work })} className="cursor-pointer" style={{ width: 44, height: 24, borderRadius: 12, background: form.open_to_work ? "#E8733A" : "#ddd", display: "flex", alignItems: "center", padding: 2, border: "none" }}>
@@ -845,6 +865,13 @@ const Profile = () => {
               <div className="flex items-center" style={{ justifyContent: "space-between" }}>
                 <p style={{ fontSize: 20, fontWeight: 700, lineHeight: "28px", color: "#1A1A2E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</p>
               </div>
+
+              {/* ROW 1b: Role · Subtype */}
+              <p style={{ fontSize: 12, fontWeight: 600, color: roleColor }}>
+                {profileData.role_subtype
+                  ? `${roleLabel} · ${profileData.role_subtype}`
+                  : roleLabel}
+              </p>
 
               {/* ROW 2: Current position / headline */}
               {(currentExp || headline) && (
