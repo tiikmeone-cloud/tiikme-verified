@@ -1040,6 +1040,8 @@ const Profile = () => {
               </div>
             </div>
           </div>
+            );
+          })()}
         </div>
 
         {/* ── MOBILE-ONLY QUICK NAV (own profile) ── */}
