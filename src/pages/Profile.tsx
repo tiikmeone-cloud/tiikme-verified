@@ -478,7 +478,7 @@ const Profile = () => {
     if (!targetUserId) { setDataLoading(false); return; }
     setDataLoading(true);
     const [profileRes, itemsRes, strandCountRes, postsRes, achvsRes, certsRes, connAvatarsRes] = await Promise.allSettled([
-      isOwnProfile ? Promise.resolve({ data: authProfile }) : supabase.from("profiles").select("id, full_name, username, role, role_subtype, headline, bio, avatar_url, institution_name, location_city, location_state, activity_score, is_public, custom_links, open_to_work, designation, sector, languages, department, is_verified, role_metadata, about_qa, verification_badge_text, verification_type, created_at, account_type, org_id, skills").eq("id", targetUserId).maybeSingle(),
+      isOwnProfile ? Promise.resolve({ data: authProfile }) : supabase.from("profiles").select("id, full_name, username, role, role_subtype, headline, bio, avatar_url, institution_name, location_city, location_state, activity_score, is_public, custom_links, open_to_work, otw_visibility, designation, sector, languages, department, is_verified, role_metadata, about_qa, verification_badge_text, verification_type, created_at, account_type, org_id, skills").eq("id", targetUserId).maybeSingle(),
       supabase.from("work_items").select("id, title, job_title, description, company_name, institution_name, item_type, employment_type, work_location, start_date, end_date, start_month, start_year, end_month, end_year, is_current, status, visibility, verification_status, verified_by_user, verified_at, is_tiik_approved, created_at, owner_id").eq("owner_id", targetUserId).order("is_current", { ascending: false }).order("created_at", { ascending: false }),
       supabase.from("strands").select("id", { count: "exact", head: true }).or(`requester_id.eq.${targetUserId},receiver_id.eq.${targetUserId}`).eq("status", "accepted"),
       supabase.from("posts").select("id, content, created_at, image_urls, repost_count, post_reactions(count), post_comments(count)").eq("author_id", targetUserId).order("created_at", { ascending: false }).limit(5),
@@ -955,9 +955,18 @@ const Profile = () => {
           border: "1px solid rgba(255,255,255,0.40)",
           boxShadow: "0 8px 32px rgba(26,26,78,0.08), inset 0 1px 0 rgba(255,255,255,0.60)",
         }}>
+          {(() => {
+            const otwVis = (profileData as any).otw_visibility || "recruiters";
+            const viewerIsRecruiter = authProfile?.account_type === "institution";
+            const showOTW = !!profileData.open_to_work && (
+              isOwnProfile ||
+              otwVis === "all" ||
+              (otwVis === "recruiters" && viewerIsRecruiter)
+            );
+            return (
           <div className="flex profile-info-flex" style={{ gap: 16, alignItems: "flex-start" }}>
-            {/* Avatar — clickable with popover */}
-              <div className="shrink-0">
+            {/* Avatar — green ring when Open to Work and visible to viewer */}
+              <div className="shrink-0" style={showOTW ? { padding: 3, borderRadius: 14, background: "#10B981" } : undefined}>
                 <AvatarSquare src={profileData.avatar_url} name={displayName || "U"} size="profile" bgColor={roleColor} className="shadow-md" />
               </div>
 
@@ -994,11 +1003,12 @@ const Profile = () => {
                 {((city || state) || username) && (
                   <span style={{ width: 3, height: 3, borderRadius: "50%", background: "#9CA3C0", flexShrink: 0 }} />
                 )}
-                {profileData.open_to_work ? (
-                  <span style={{ fontSize: 10, fontWeight: 600, height: 18, padding: "0 6px", borderRadius: 4, background: "rgba(52,199,89,0.12)", color: "#34C759", display: "inline-flex", alignItems: "center" }}>Open to work</span>
-                ) : (
-                  <span style={{ fontSize: 10, fontWeight: 600, height: 18, padding: "0 6px", borderRadius: 4, background: "rgba(156,163,192,0.12)", color: "#9CA3C0", display: "inline-flex", alignItems: "center" }}>Not looking</span>
-                )}
+                {showOTW ? (
+                  <span style={{ fontSize: 11, fontWeight: 700, height: 20, padding: "0 8px", borderRadius: 999, background: "rgba(16,185,129,0.12)", color: "#10B981", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981" }} />
+                    Open to Work · Contact for roles
+                  </span>
+                ) : null}
               </div>
 
               {/* ROW 4: Stats */}
