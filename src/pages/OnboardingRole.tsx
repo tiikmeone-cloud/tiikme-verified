@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Check, GraduationCap, Briefcase, Stethoscope, UserCheck, BookOpen, Building2, Wrench, Rocket, Target } from "lucide-react";
 import OnboardingShell from "@/components/onboarding/OnboardingShell";
+import { SUBTYPE_OPTIONS, hasSubtypes } from "@/lib/roleSubtypes";
 
 const roles = [
   { id: "student", icon: GraduationCap, label: "Student", desc: "College, university or school", color: "#4F46E5" },
@@ -18,10 +19,16 @@ const roles = [
 export default function OnboardingRole() {
   const navigate = useNavigate();
   const [selected, setSelected] = useState<string | null>(null);
+  const [subtype, setSubtype] = useState<string>("");
+
+  const subtypeRequired = selected ? hasSubtypes(selected) : false;
+  const canContinue = !!selected && (!subtypeRequired || !!subtype);
 
   const handleContinue = () => {
-    if (!selected) return;
-    sessionStorage.setItem("ob_role", selected);
+    if (!canContinue) return;
+    sessionStorage.setItem("ob_role", selected!);
+    if (subtypeRequired && subtype) sessionStorage.setItem("ob_role_subtype", subtype);
+    else sessionStorage.removeItem("ob_role_subtype");
     navigate("/onboarding/details");
   };
 
