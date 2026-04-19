@@ -6,6 +6,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { CIRCLE_TYPE_CONFIG, POST_TYPE_CONFIG, SIGNTYPE_CONFIG } from "@/lib/circlesMeta";
 import AvatarSquare from "@/components/ui/AvatarSquare";
+import PrimaryTabs from "@/components/filters/PrimaryTabs";
+import FilterBar, { useScrollPastThreshold } from "@/components/filters/FilterBar";
+import BottomSheet from "@/components/ui/BottomSheet";
+import { useFilterParam } from "@/lib/useFilterParam";
 
 // -------- DISCOVERY SCREEN --------
 function CirclesDiscovery() {
