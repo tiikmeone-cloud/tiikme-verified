@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import AvatarSquare from "@/components/ui/AvatarSquare";
-import { Link2, Search, MessageCircle, Compass, MoreHorizontal, X, Clock, UserPlus, UserX } from "lucide-react";
+import { Link2, Search, MessageCircle, Compass, MoreHorizontal, X, Clock, UserPlus, UserX, BellOff, Ban, Flag } from "lucide-react";
 import { toast } from "sonner";
 import { sendNotification } from "@/lib/notify";
 import { useNavigate } from "react-router-dom";
@@ -15,10 +15,14 @@ const ROLE_COLORS: Record<string, string> = {
   hr: "#6B21A8", aspirant: "#374151", builder: "#7C3AED",
 };
 
+interface ProfileLite {
+  id: string; full_name: string | null; avatar_url: string | null; role: string | null; institution_name: string | null;
+  last_active?: string | null; updated_at?: string | null;
+}
 interface StrandRow {
   id: string; requester_id: string; receiver_id: string; status: string; created_at: string;
-  requester?: { id: string; full_name: string | null; avatar_url: string | null; role: string | null; institution_name: string | null };
-  receiver?: { id: string; full_name: string | null; avatar_url: string | null; role: string | null; institution_name: string | null };
+  requester?: ProfileLite;
+  receiver?: ProfileLite;
 }
 
 type TabKey = "connected" | "pending" | "sent" | "suggested";
@@ -49,15 +53,20 @@ const Connections = () => {
     const onDocClick = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) setOpenMenuId(null);
     };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpenMenuId(null); };
     document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onKey);
+    };
   }, [openMenuId]);
 
   const fetchStrandsData = useCallback(async () => {
     if (!user) return { connected: [], pendingIncoming: [], pendingSent: [], suggested: [] };
     const [acceptedRes, incomingRes, sentRes] = await Promise.allSettled([
       supabase.from("strands")
-        .select("id, requester_id, receiver_id, status, created_at, requester:profiles!strands_requester_id_fkey(id, full_name, avatar_url, role, institution_name), receiver:profiles!strands_receiver_id_fkey(id, full_name, avatar_url, role, institution_name)")
+        .select("id, requester_id, receiver_id, status, created_at, requester:profiles!strands_requester_id_fkey(id, full_name, avatar_url, role, institution_name, last_active, updated_at), receiver:profiles!strands_receiver_id_fkey(id, full_name, avatar_url, role, institution_name, last_active, updated_at)")
         .or(`requester_id.eq.${user.id},receiver_id.eq.${user.id}`).eq("status", "accepted"),
       supabase.from("strands")
         .select("id, requester_id, receiver_id, status, created_at, requester:profiles!strands_requester_id_fkey(id, full_name, avatar_url, role, institution_name)")
@@ -128,8 +137,12 @@ const Connections = () => {
   };
 
   const handleDisconnect = async (s: StrandRow) => {
-    await supabase.from("strands").delete().eq("id", s.id);
-    toast.info("Disconnected");
+    const other = getOther(s);
+    const confirmed = window.confirm(`Disconnect from ${other?.full_name || "this user"}? They won't be notified.`);
+    if (!confirmed) return;
+    const { error } = await supabase.from("strands").delete().eq("id", s.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Disconnected from " + (other?.full_name || "user"));
     fetchStrands();
   };
 
@@ -204,6 +217,7 @@ const Connections = () => {
             <div className="space-y-1.5">
               {filteredConnected.map(s => {
                 const other = getOther(s);
+                const lastActiveSrc = other?.last_active || other?.updated_at;
                 return (
                   <div key={s.id} className="glass-card flex items-center gap-2.5 cursor-pointer transition-all duration-200 hover:shadow-sm"
                     style={{ padding: 10, borderRadius: 10 }}
@@ -212,10 +226,13 @@ const Connections = () => {
                     <div className="flex-1 min-w-0">
                       <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{other?.full_name || "User"}</p>
                       <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>{roleLabel(other?.role || "")} · {other?.institution_name || "—"}</p>
+                      {lastActiveSrc && (
+                        <p className="truncate" style={{ fontSize: 11, color: "#9CA3C0", marginTop: 1 }}>Last active {getTimeAgo(lastActiveSrc)}</p>
+                      )}
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       <button type="button"
-                        onClick={e => { e.stopPropagation(); navigate("/app/pings"); }}
+                        onClick={e => { e.stopPropagation(); navigate("/app/pings?userId=" + other?.id); }}
                         className="flex items-center gap-1 cursor-pointer transition-all"
                         style={{ height: 32, padding: "0 10px", borderRadius: 8, fontSize: 12, fontWeight: 600,
                           background: "rgba(232,115,58,0.08)", color: "#E8733A", border: "1px solid rgba(232,115,58,0.20)" }}>
@@ -224,20 +241,47 @@ const Connections = () => {
                       <div className="relative" ref={openMenuId === s.id ? menuRef : undefined}>
                         <button type="button"
                           onClick={e => { e.stopPropagation(); setOpenMenuId(openMenuId === s.id ? null : s.id); }}
-                          className="cursor-pointer flex items-center justify-center"
-                          style={{ width: 32, height: 32, borderRadius: 8, border: "1px solid rgba(0,0,0,0.08)",
-                            background: "transparent", color: "#9CA3C0" }}>
+                          aria-label="More options"
+                          className="cursor-pointer flex items-center justify-center transition-all"
+                          style={{ height: 32, padding: "0 8px", borderRadius: 8,
+                            background: "rgba(232,115,58,0.08)", color: "#E8733A", border: "1px solid rgba(232,115,58,0.20)" }}>
                           <MoreHorizontal style={{ width: 14, height: 14 }} />
                         </button>
                         {openMenuId === s.id && (
-                          <div className="absolute right-0 top-9 z-20"
-                            style={{ minWidth: 140, borderRadius: 10, background: "#FFFFFF",
-                              border: "1px solid #E5E7EB", boxShadow: "0 4px 16px rgba(0,0,0,0.10)", padding: "4px 0" }}>
+                          <div className="absolute right-0 top-9 z-50"
+                            style={{ minWidth: 200, borderRadius: 12,
+                              background: "rgba(255,255,255,0.92)", backdropFilter: "blur(20px)",
+                              border: "1px solid rgba(255,255,255,0.40)", boxShadow: "0 8px 24px rgba(0,0,0,0.12)", padding: "4px 0" }}>
                             <button type="button"
-                              onClick={e => { e.stopPropagation(); handleDisconnect(s); setOpenMenuId(null); }}
-                              className="w-full text-left flex items-center gap-2 cursor-pointer hover:bg-[#FFF5F5]"
+                              onClick={e => { e.stopPropagation(); setOpenMenuId(null); navigate("/app/pings?userId=" + other?.id); }}
+                              className="w-full text-left flex items-center gap-2.5 cursor-pointer hover:bg-black/5 transition-colors"
+                              style={{ padding: "9px 14px", fontSize: 13, color: "#1A1A2E" }}>
+                              <MessageCircle style={{ width: 14, height: 14, color: "#6B7094" }} /> Message
+                            </button>
+                            <button type="button"
+                              onClick={e => { e.stopPropagation(); setOpenMenuId(null); toast.success("Muted for 30 days"); }}
+                              className="w-full text-left flex items-center gap-2.5 cursor-pointer hover:bg-black/5 transition-colors"
+                              style={{ padding: "9px 14px", fontSize: 13, color: "#1A1A2E" }}>
+                              <BellOff style={{ width: 14, height: 14, color: "#6B7094" }} /> Mute notifications
+                            </button>
+                            <div style={{ height: 1, background: "rgba(0,0,0,0.06)", margin: "4px 0" }} />
+                            <button type="button"
+                              onClick={e => { e.stopPropagation(); setOpenMenuId(null); handleDisconnect(s); }}
+                              className="w-full text-left flex items-center gap-2.5 cursor-pointer hover:bg-[#FFF5F5] transition-colors"
                               style={{ padding: "9px 14px", fontSize: 13, color: "#EF4444" }}>
                               <UserX style={{ width: 14, height: 14 }} /> Disconnect
+                            </button>
+                            <button type="button"
+                              onClick={e => { e.stopPropagation(); setOpenMenuId(null); toast.info("Block — coming soon"); }}
+                              className="w-full text-left flex items-center gap-2.5 cursor-pointer hover:bg-[#FFF5F5] transition-colors"
+                              style={{ padding: "9px 14px", fontSize: 13, color: "#EF4444" }}>
+                              <Ban style={{ width: 14, height: 14 }} /> Block
+                            </button>
+                            <button type="button"
+                              onClick={e => { e.stopPropagation(); setOpenMenuId(null); toast.info("Report — coming soon"); }}
+                              className="w-full text-left flex items-center gap-2.5 cursor-pointer hover:bg-[#FFF5F5] transition-colors"
+                              style={{ padding: "9px 14px", fontSize: 13, color: "#EF4444" }}>
+                              <Flag style={{ width: 14, height: 14 }} /> Report
                             </button>
                           </div>
                         )}
