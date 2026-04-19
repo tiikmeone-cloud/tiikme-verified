@@ -108,15 +108,8 @@ export default function FindTab() {
   };
 
   const startReferFor = (target: { id: string; full_name: string | null }) => {
-    if (!myOpps.length) {
-      toast.error("Post an opportunity first to refer candidates");
-      return;
-    }
-    if (myOpps.length === 1) {
-      setReferralTarget(target);
-      return;
-    }
-    setPickingOppFor(target);
+    // ReferModal now handles opportunity selection (my opps + external) internally
+    setReferralTarget(target);
   };
 
   const filtered = search.trim()
@@ -158,9 +151,7 @@ export default function FindTab() {
     );
   }
 
-  const selectedOpportunity = referralTarget
-    ? myOpps.find(o => o.id === (referralTarget as any)._oppId) || myOpps[0]
-    : null;
+  // ReferModal manages its own opportunity selection now
 
   return (
     <div className="mt-2">
@@ -181,8 +172,8 @@ export default function FindTab() {
             <div key={p.id} className="glass-light rounded-xl overflow-hidden transition-all duration-200" style={{ cursor: "pointer" }}
               onClick={() => navigate(`/app/profile/${p.user_id}`)}>
               <div className="flex items-center gap-3 p-3">
-                {/* Circular avatar 48px */}
-                <div className="w-12 h-12 rounded-full overflow-hidden shrink-0" style={{ border: "2px solid rgba(232,115,58,0.20)" }}>
+                {/* Circular avatar 48px with green ring (always OTW here) */}
+                <div className="w-12 h-12 rounded-full overflow-hidden shrink-0" style={{ outline: "3px solid #10B981", outlineOffset: "2px" }}>
                   {p.profile?.avatar_url ? (
                     <img src={p.profile.avatar_url} alt={name} loading="lazy" className="w-full h-full object-cover" />
                   ) : (
