@@ -1,7 +1,7 @@
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import { useNavigate } from "react-router-dom";
-import { ORG_TYPE_CONFIG, getOrgTypeConfig } from "@/lib/orgTypes";
+import { getOrgTypeConfig } from "@/lib/orgTypes";
 
 interface PersonCardProps {
   p: {
