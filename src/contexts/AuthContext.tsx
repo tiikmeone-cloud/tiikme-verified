@@ -18,6 +18,7 @@ export interface UserProfile {
   is_public: boolean | null;
   custom_links: any[];
   open_to_work: boolean | null;
+  otw_visibility: string | null;
   designation: string | null;
   sector: string | null;
   languages: string[] | null;

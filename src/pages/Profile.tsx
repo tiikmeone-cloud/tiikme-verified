@@ -53,9 +53,15 @@ const formatDuration = (start: string | null, end: string | null, isCurrent: boo
 };
 
 /* ── Edit Profile Drawer ── */
+const OTW_ROLE_TAGS = ["Frontend", "Backend", "Full-stack", "Product", "Design", "Data", "Marketing", "Sales", "Operations", "Research"];
+
 const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose: () => void; onSaved: () => void }) => {
   const { refreshProfile } = useAuth();
-  const [form, setForm] = useState({ name: "", headline: "", bio: "", city: "", state: "", username: "", open_to_work: false, avatar_url: "", about: "", role: "", role_subtype: "" });
+  const [form, setForm] = useState({ name: "", headline: "", bio: "", city: "", state: "", username: "", open_to_work: false, otw_visibility: "recruiters", avatar_url: "", about: "", role: "", role_subtype: "" });
+  const [otwRoleTypes, setOtwRoleTypes] = useState<string[]>([]);
+  const [otwLocation, setOtwLocation] = useState("");
+  const [otwLocationType, setOtwLocationType] = useState("onsite");
+  const [otwPitch, setOtwPitch] = useState("");
   const [saving, setSaving] = useState(false);
   const [customLinks, setCustomLinks] = useState<{ url: string; label: string }[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
