@@ -2588,6 +2588,7 @@ export type Database = {
           open_to_work: boolean | null
           open_to_work_preferences: Json | null
           org_id: string | null
+          otw_visibility: string | null
           phone: string | null
           phone_hash: string | null
           privacy_settings: Json | null
@@ -2635,6 +2636,7 @@ export type Database = {
           open_to_work?: boolean | null
           open_to_work_preferences?: Json | null
           org_id?: string | null
+          otw_visibility?: string | null
           phone?: string | null
           phone_hash?: string | null
           privacy_settings?: Json | null
@@ -2682,6 +2684,7 @@ export type Database = {
           open_to_work?: boolean | null
           open_to_work_preferences?: Json | null
           org_id?: string | null
+          otw_visibility?: string | null
           phone?: string | null
           phone_hash?: string | null
           privacy_settings?: Json | null
