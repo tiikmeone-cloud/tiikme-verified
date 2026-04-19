@@ -42,7 +42,7 @@ export default function FindTab() {
   const [referralTarget, setReferralTarget] = useState<{ id: string; full_name: string | null } | null>(null);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [myOpps, setMyOpps] = useState<any[]>([]);
-  const [pickingOppFor, setPickingOppFor] = useState<{ id: string; full_name: string | null } | null>(null);
+  const [_pickingOppFor, setPickingOppFor] = useState<{ id: string; full_name: string | null } | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -108,15 +108,8 @@ export default function FindTab() {
   };
 
   const startReferFor = (target: { id: string; full_name: string | null }) => {
-    if (!myOpps.length) {
-      toast.error("Post an opportunity first to refer candidates");
-      return;
-    }
-    if (myOpps.length === 1) {
-      setReferralTarget(target);
-      return;
-    }
-    setPickingOppFor(target);
+    // ReferModal now handles opportunity selection (my opps + external) internally
+    setReferralTarget(target);
   };
 
   const filtered = search.trim()
@@ -158,9 +151,7 @@ export default function FindTab() {
     );
   }
 
-  const selectedOpportunity = referralTarget
-    ? myOpps.find(o => o.id === (referralTarget as any)._oppId) || myOpps[0]
-    : null;
+  // ReferModal manages its own opportunity selection now
 
   return (
     <div className="mt-2">
@@ -181,8 +172,8 @@ export default function FindTab() {
             <div key={p.id} className="glass-light rounded-xl overflow-hidden transition-all duration-200" style={{ cursor: "pointer" }}
               onClick={() => navigate(`/app/profile/${p.user_id}`)}>
               <div className="flex items-center gap-3 p-3">
-                {/* Circular avatar 48px */}
-                <div className="w-12 h-12 rounded-full overflow-hidden shrink-0" style={{ border: "2px solid rgba(232,115,58,0.20)" }}>
+                {/* Circular avatar 48px with green ring (always OTW here) */}
+                <div className="w-12 h-12 rounded-full overflow-hidden shrink-0" style={{ outline: "3px solid #10B981", outlineOffset: "2px" }}>
                   {p.profile?.avatar_url ? (
                     <img src={p.profile.avatar_url} alt={name} loading="lazy" className="w-full h-full object-cover" />
                   ) : (
@@ -295,41 +286,12 @@ export default function FindTab() {
         />
       )}
 
-      {/* Opportunity picker — when institution has multiple postings */}
-      {pickingOppFor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)" }}>
-          <div className="w-full max-w-[400px] mx-4 rounded-2xl p-5" style={{ background: "#fff", boxShadow: "0 24px 64px rgba(0,0,0,0.18)" }}>
-            <p className="text-[15px] font-bold mb-3" style={{ color: "var(--text-1)" }}>Refer for which opportunity?</p>
-            <div className="space-y-2 max-h-[320px] overflow-y-auto">
-              {myOpps.map(o => (
-                <button
-                  key={o.id}
-                  type="button"
-                  onClick={() => {
-                    setReferralTarget({ ...pickingOppFor, ...({ _oppId: o.id } as any) });
-                    setPickingOppFor(null);
-                  }}
-                  className="w-full text-left p-3 rounded-xl cursor-pointer transition-all hover:bg-[var(--surface-2)]"
-                  style={{ border: "1px solid var(--border)" }}>
-                  <p className="text-[13px] font-semibold" style={{ color: "var(--text-1)" }}>{o.title}</p>
-                  {o.org?.name && <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{o.org.name}</p>}
-                </button>
-              ))}
-            </div>
-            <button type="button" onClick={() => setPickingOppFor(null)}
-              className="mt-3 w-full h-9 rounded-lg text-[12px] font-semibold cursor-pointer"
-              style={{ background: "var(--surface-2)", color: "var(--text-2)", border: "1.5px solid var(--border)" }}>
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-      {referralTarget && selectedOpportunity && (
+      {referralTarget && (
         <ReferModal
           open={!!referralTarget}
           onClose={() => setReferralTarget(null)}
-          opportunity={selectedOpportunity}
+          candidateId={referralTarget.id}
+          candidateName={referralTarget.full_name || "this candidate"}
         />
       )}
     </div>

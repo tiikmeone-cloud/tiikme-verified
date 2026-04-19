@@ -53,9 +53,15 @@ const formatDuration = (start: string | null, end: string | null, isCurrent: boo
 };
 
 /* ── Edit Profile Drawer ── */
+const OTW_ROLE_TAGS = ["Frontend", "Backend", "Full-stack", "Product", "Design", "Data", "Marketing", "Sales", "Operations", "Research"];
+
 const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose: () => void; onSaved: () => void }) => {
   const { refreshProfile } = useAuth();
-  const [form, setForm] = useState({ name: "", headline: "", bio: "", city: "", state: "", username: "", open_to_work: false, avatar_url: "", about: "", role: "", role_subtype: "" });
+  const [form, setForm] = useState({ name: "", headline: "", bio: "", city: "", state: "", username: "", open_to_work: false, otw_visibility: "recruiters", avatar_url: "", about: "", role: "", role_subtype: "" });
+  const [otwRoleTypes, setOtwRoleTypes] = useState<string[]>([]);
+  const [otwLocation, setOtwLocation] = useState("");
+  const [otwLocationType, setOtwLocationType] = useState("onsite");
+  const [otwPitch, setOtwPitch] = useState("");
   const [saving, setSaving] = useState(false);
   const [customLinks, setCustomLinks] = useState<{ url: string; label: string }[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
@@ -67,10 +73,18 @@ const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose:
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       setUserId(user.id);
-      const { data } = await supabase.from("profiles").select("full_name, headline, bio, location_city, location_state, username, open_to_work, avatar_url, custom_links, role, role_subtype").eq("id", user.id).maybeSingle();
+      const { data } = await supabase.from("profiles").select("full_name, headline, bio, location_city, location_state, username, open_to_work, otw_visibility, avatar_url, custom_links, role, role_subtype").eq("id", user.id).maybeSingle();
       if (data) {
-        setForm({ name: data.full_name || "", headline: data.headline || "", bio: data.bio || "", city: data.location_city || "", state: data.location_state || "", username: data.username || "", open_to_work: data.open_to_work || false, avatar_url: data.avatar_url || "", about: (data as any).about || "", role: (data as any).role || "", role_subtype: (data as any).role_subtype || "" });
+        setForm({ name: data.full_name || "", headline: data.headline || "", bio: data.bio || "", city: data.location_city || "", state: data.location_state || "", username: data.username || "", open_to_work: data.open_to_work || false, otw_visibility: (data as any).otw_visibility || "recruiters", avatar_url: data.avatar_url || "", about: (data as any).about || "", role: (data as any).role || "", role_subtype: (data as any).role_subtype || "" });
         setCustomLinks(Array.isArray(data.custom_links) ? (data.custom_links as any[]).map(l => ({ url: l.url || "", label: l.label || "" })) : []);
+      }
+      // Load OTW preferences
+      const { data: otw } = await supabase.from("open_to_work_profiles").select("role_types, preferred_location, location_type, pitch").eq("user_id", user.id).maybeSingle();
+      if (otw) {
+        setOtwRoleTypes(otw.role_types || []);
+        setOtwLocation(otw.preferred_location || "");
+        setOtwLocationType(otw.location_type || "onsite");
+        setOtwPitch(otw.pitch || "");
       }
     })();
   }, [open]);
@@ -105,10 +119,30 @@ const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose:
     await supabase.from("profiles").update({
       full_name: form.name, headline: form.headline.slice(0, 80), bio: form.bio.slice(0, 300),
       username: form.username.toLowerCase().replace(/[^a-z0-9._-]/g, ""),
-      location_city: form.city, location_state: form.state, open_to_work: form.open_to_work,
+      location_city: form.city, location_state: form.state,
+      open_to_work: form.open_to_work,
+      otw_visibility: form.otw_visibility,
       role_subtype: subtypeAllowed ? (form.role_subtype || null) : null,
       custom_links: customLinks.filter(l => l.url) as any,
     } as any).eq("id", userId);
+
+    // Upsert OTW preferences when open_to_work is on
+    if (form.open_to_work) {
+      const otwPayload = {
+        user_id: userId,
+        role_types: otwRoleTypes,
+        preferred_location: otwLocation || null,
+        location_type: otwLocationType,
+        pitch: otwPitch.slice(0, 200),
+        is_active: true,
+        updated_at: new Date().toISOString(),
+      };
+      const { error: otwErr } = await supabase.from("open_to_work_profiles").upsert(otwPayload as any, { onConflict: "user_id" });
+      if (otwErr) console.warn("[otw upsert]", otwErr.message);
+    } else {
+      await supabase.from("open_to_work_profiles").update({ is_active: false } as any).eq("user_id", userId);
+    }
+
     setSaving(false);
     toast.success("Profile updated");
     await refreshProfile();
@@ -159,11 +193,78 @@ const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose:
               </select>
             </div>
           )}
-          <div className="flex items-center justify-between py-3" style={{ borderTop: "1px solid rgba(0,0,0,0.06)", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
-            <span style={{ fontSize: 14, fontWeight: 500, color: "#1A1A2E" }}>Open to work</span>
-            <button type="button" onClick={() => setForm({ ...form, open_to_work: !form.open_to_work })} className="cursor-pointer" style={{ width: 44, height: 24, borderRadius: 12, background: form.open_to_work ? "#E8733A" : "#ddd", display: "flex", alignItems: "center", padding: 2, border: "none" }}>
-              <div style={{ width: 20, height: 20, borderRadius: 10, background: "#fff", transform: form.open_to_work ? "translateX(20px)" : "translateX(0)", transition: "transform 0.2s" }} />
-            </button>
+          {/* OPEN TO WORK CARD */}
+          <div className="rounded-xl p-4 space-y-3" style={{ background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.20)" }}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p style={{ fontSize: 14, fontWeight: 700, color: "#1A1A2E" }}>Open to Work</p>
+                <p style={{ fontSize: 11, color: "#6B7094", marginTop: 2 }}>Let recruiters know you're available</p>
+              </div>
+              <button type="button" onClick={() => setForm({ ...form, open_to_work: !form.open_to_work })} className="cursor-pointer" style={{ width: 44, height: 24, borderRadius: 12, background: form.open_to_work ? "#10B981" : "#ddd", display: "flex", alignItems: "center", padding: 2, border: "none" }}>
+                <div style={{ width: 20, height: 20, borderRadius: 10, background: "#fff", transform: form.open_to_work ? "translateX(20px)" : "translateX(0)", transition: "transform 0.2s" }} />
+              </button>
+            </div>
+
+            {form.open_to_work && (
+              <>
+                <div>
+                  <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#6B7094", marginBottom: 6 }}>Visibility</p>
+                  <div className="space-y-1.5">
+                    {[
+                      { v: "all", label: "Everyone can see", desc: "Show the green badge on your profile to anyone" },
+                      { v: "recruiters", label: "Only recruiters", desc: "Visible only to institution accounts" },
+                      { v: "hidden", label: "Hidden for now", desc: "Save preferences but don't display" },
+                    ].map(opt => (
+                      <label key={opt.v} className="flex items-start gap-2 cursor-pointer p-2 rounded-lg" style={{ background: form.otw_visibility === opt.v ? "rgba(16,185,129,0.08)" : "transparent" }}>
+                        <input type="radio" name="otw_vis" checked={form.otw_visibility === opt.v} onChange={() => setForm({ ...form, otw_visibility: opt.v })} style={{ marginTop: 3, accentColor: "#10B981" }} />
+                        <div>
+                          <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>{opt.label}</p>
+                          <p style={{ fontSize: 11, color: "#6B7094" }}>{opt.desc}</p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#6B7094", marginBottom: 6 }}>Roles open to</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {OTW_ROLE_TAGS.map(r => {
+                      const on = otwRoleTypes.includes(r);
+                      return (
+                        <button key={r} type="button" onClick={() => setOtwRoleTypes(p => on ? p.filter(x => x !== r) : [...p, r])}
+                          className="cursor-pointer" style={{ fontSize: 12, fontWeight: 600, padding: "6px 10px", borderRadius: 999, background: on ? "#10B981" : "#fff", color: on ? "#fff" : "#1A1A2E", border: on ? "1px solid #10B981" : "1px solid rgba(0,0,0,0.10)" }}>
+                          {r}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#6B7094", marginBottom: 4 }}>City</p>
+                    <Input value={otwLocation} onChange={e => setOtwLocation(e.target.value)} placeholder="e.g. Mumbai" />
+                  </div>
+                  <div>
+                    <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#6B7094", marginBottom: 4 }}>Mode</p>
+                    <select value={otwLocationType} onChange={e => setOtwLocationType(e.target.value)} className="w-full outline-none cursor-pointer" style={{ height: 40, borderRadius: 10, padding: "0 12px", fontSize: 14, background: "#fff", border: "1px solid rgba(0,0,0,0.10)", color: "#1A1A2E" }}>
+                      <option value="onsite">Onsite</option>
+                      <option value="remote">Remote</option>
+                      <option value="hybrid">Hybrid</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#6B7094", marginBottom: 4 }}>Short pitch</p>
+                  <textarea value={otwPitch} onChange={e => setOtwPitch(e.target.value.slice(0, 200))} rows={2} maxLength={200}
+                    placeholder="Why should recruiters pick you?"
+                    className="w-full outline-none resize-none" style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.10)", borderRadius: 10, padding: 10, fontSize: 13, color: "#1A1A2E" }} />
+                  <p className="text-right" style={{ fontSize: 10, color: otwPitch.length >= 190 ? "#EF4444" : "#9CA3C0" }}>{otwPitch.length}/200</p>
+                </div>
+              </>
+            )}
           </div>
           <div>
             <label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.05em", display: "block", marginBottom: 4, color: "#9CA3C0" }}>Custom Links</label>
@@ -377,7 +478,7 @@ const Profile = () => {
     if (!targetUserId) { setDataLoading(false); return; }
     setDataLoading(true);
     const [profileRes, itemsRes, strandCountRes, postsRes, achvsRes, certsRes, connAvatarsRes] = await Promise.allSettled([
-      isOwnProfile ? Promise.resolve({ data: authProfile }) : supabase.from("profiles").select("id, full_name, username, role, role_subtype, headline, bio, avatar_url, institution_name, location_city, location_state, activity_score, is_public, custom_links, open_to_work, designation, sector, languages, department, is_verified, role_metadata, about_qa, verification_badge_text, verification_type, created_at, account_type, org_id, skills").eq("id", targetUserId).maybeSingle(),
+      isOwnProfile ? Promise.resolve({ data: authProfile }) : supabase.from("profiles").select("id, full_name, username, role, role_subtype, headline, bio, avatar_url, institution_name, location_city, location_state, activity_score, is_public, custom_links, open_to_work, otw_visibility, designation, sector, languages, department, is_verified, role_metadata, about_qa, verification_badge_text, verification_type, created_at, account_type, org_id, skills").eq("id", targetUserId).maybeSingle(),
       supabase.from("work_items").select("id, title, job_title, description, company_name, institution_name, item_type, employment_type, work_location, start_date, end_date, start_month, start_year, end_month, end_year, is_current, status, visibility, verification_status, verified_by_user, verified_at, is_tiik_approved, created_at, owner_id").eq("owner_id", targetUserId).order("is_current", { ascending: false }).order("created_at", { ascending: false }),
       supabase.from("strands").select("id", { count: "exact", head: true }).or(`requester_id.eq.${targetUserId},receiver_id.eq.${targetUserId}`).eq("status", "accepted"),
       supabase.from("posts").select("id, content, created_at, image_urls, repost_count, post_reactions(count), post_comments(count)").eq("author_id", targetUserId).order("created_at", { ascending: false }).limit(5),
@@ -854,9 +955,18 @@ const Profile = () => {
           border: "1px solid rgba(255,255,255,0.40)",
           boxShadow: "0 8px 32px rgba(26,26,78,0.08), inset 0 1px 0 rgba(255,255,255,0.60)",
         }}>
+          {(() => {
+            const otwVis = (profileData as any).otw_visibility || "recruiters";
+            const viewerIsRecruiter = authProfile?.account_type === "institution";
+            const showOTW = !!profileData.open_to_work && (
+              isOwnProfile ||
+              otwVis === "all" ||
+              (otwVis === "recruiters" && viewerIsRecruiter)
+            );
+            return (
           <div className="flex profile-info-flex" style={{ gap: 16, alignItems: "flex-start" }}>
-            {/* Avatar — clickable with popover */}
-              <div className="shrink-0">
+            {/* Avatar — green ring when Open to Work and visible to viewer */}
+              <div className="shrink-0" style={showOTW ? { padding: 3, borderRadius: 14, background: "#10B981" } : undefined}>
                 <AvatarSquare src={profileData.avatar_url} name={displayName || "U"} size="profile" bgColor={roleColor} className="shadow-md" />
               </div>
 
@@ -893,11 +1003,12 @@ const Profile = () => {
                 {((city || state) || username) && (
                   <span style={{ width: 3, height: 3, borderRadius: "50%", background: "#9CA3C0", flexShrink: 0 }} />
                 )}
-                {profileData.open_to_work ? (
-                  <span style={{ fontSize: 10, fontWeight: 600, height: 18, padding: "0 6px", borderRadius: 4, background: "rgba(52,199,89,0.12)", color: "#34C759", display: "inline-flex", alignItems: "center" }}>Open to work</span>
-                ) : (
-                  <span style={{ fontSize: 10, fontWeight: 600, height: 18, padding: "0 6px", borderRadius: 4, background: "rgba(156,163,192,0.12)", color: "#9CA3C0", display: "inline-flex", alignItems: "center" }}>Not looking</span>
-                )}
+                {showOTW ? (
+                  <span style={{ fontSize: 11, fontWeight: 700, height: 20, padding: "0 8px", borderRadius: 999, background: "rgba(16,185,129,0.12)", color: "#10B981", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981" }} />
+                    Open to Work · Contact for roles
+                  </span>
+                ) : null}
               </div>
 
               {/* ROW 4: Stats */}
@@ -929,6 +1040,8 @@ const Profile = () => {
               </div>
             </div>
           </div>
+            );
+          })()}
         </div>
 
         {/* ── MOBILE-ONLY QUICK NAV (own profile) ── */}
