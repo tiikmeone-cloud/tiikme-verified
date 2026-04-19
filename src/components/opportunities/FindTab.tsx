@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { MapPin, ChevronDown, ChevronUp, Sparkles, Search as SearchIcon, Send } from "lucide-react";
-import AvatarSquare from "@/components/ui/AvatarSquare";
+import { MapPin, ChevronDown, ChevronUp, Sparkles, Search as SearchIcon, Send, Link2, Bookmark, BookmarkCheck } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import SendJDModal from "@/components/opportunities/SendJDModal";
+import ReferModal from "@/components/opportunities/ReferModal";
+import ActivityScoreRing from "@/components/ActivityScoreRing";
+import { toast } from "sonner";
 
 interface OTWProfile {
   id: string;
@@ -15,50 +17,107 @@ interface OTWProfile {
   desired_title: string | null;
   pitch: string | null;
   profile?: {
+    id?: string;
     full_name: string | null;
     avatar_url: string | null;
     role: string | null;
     headline: string | null;
     location_city: string | null;
     bio: string | null;
+    open_to_work?: boolean | null;
+    activity_score?: number | null;
+    is_verified?: boolean | null;
   };
 }
 
 export default function FindTab() {
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const isInstitution = profile?.account_type === "institution";
   const [profiles, setProfiles] = useState<OTWProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [sendJdTarget, setSendJdTarget] = useState<{ id: string; full_name: string | null } | null>(null);
+  const [referralTarget, setReferralTarget] = useState<{ id: string; full_name: string | null } | null>(null);
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const [myOpps, setMyOpps] = useState<any[]>([]);
+  const [pickingOppFor, setPickingOppFor] = useState<{ id: string; full_name: string | null } | null>(null);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const { data: otw } = await supabase
-        .from("open_to_work_profiles")
-        .select("id, user_id, role_types, preferred_location, location_type, desired_title, pitch")
-        .eq("is_active", true)
-        .order("updated_at", { ascending: false })
+
+      const { data: directOtw } = await supabase
+        .from("profiles")
+        .select("id, full_name, avatar_url, role, headline, location_city, bio, open_to_work, activity_score, is_verified")
+        .eq("open_to_work", true)
+        .eq("is_public", true)
+        .order("activity_score", { ascending: false, nullsFirst: false })
         .limit(50);
 
-      if (!otw?.length) { setProfiles([]); setLoading(false); return; }
+      const ids = (directOtw || []).map(p => p.id);
+      const { data: otwExtra } = ids.length
+        ? await supabase
+            .from("open_to_work_profiles")
+            .select("user_id, role_types, preferred_location, location_type, desired_title, pitch")
+            .eq("is_active", true)
+            .in("user_id", ids)
+        : { data: [] as any[] };
 
-      const userIds = otw.map(o => o.user_id);
-      const { data: profs } = await supabase
-        .from("profiles")
-        .select("id, full_name, avatar_url, role, headline, location_city, bio")
-        .in("id", userIds);
+      const extraMap: Record<string, any> = {};
+      for (const o of otwExtra || []) extraMap[o.user_id] = o;
 
-      const profMap: Record<string, any> = {};
-      for (const p of profs || []) profMap[p.id] = p;
-
-      setProfiles(otw.map(o => ({ ...o, profile: profMap[o.user_id] || undefined })));
+      const merged: OTWProfile[] = (directOtw || []).map(p => ({
+        id: p.id,
+        user_id: p.id,
+        profile: p as any,
+        role_types: extraMap[p.id]?.role_types || [],
+        preferred_location: extraMap[p.id]?.preferred_location || p.location_city,
+        location_type: extraMap[p.id]?.location_type || "flexible",
+        desired_title: extraMap[p.id]?.desired_title || p.headline,
+        pitch: extraMap[p.id]?.pitch || p.bio,
+      }));
+      setProfiles(merged);
       setLoading(false);
     })();
   }, []);
+
+  // Load this institution's own opportunities for the Refer flow
+  useEffect(() => {
+    if (!user?.id || !isInstitution) return;
+    (async () => {
+      const { data } = await supabase
+        .from("opportunities")
+        .select("id, title, org:organizations!opportunities_org_id_fkey(name)")
+        .eq("poster_id", user.id)
+        .eq("is_open", true)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      setMyOpps(data || []);
+    })();
+  }, [user?.id, isInstitution]);
+
+  const toggleSave = (userId: string) => {
+    setSavedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(userId)) { next.delete(userId); toast.success("Removed from saved"); }
+      else { next.add(userId); toast.success("Saved candidate"); }
+      return next;
+    });
+  };
+
+  const startReferFor = (target: { id: string; full_name: string | null }) => {
+    if (!myOpps.length) {
+      toast.error("Post an opportunity first to refer candidates");
+      return;
+    }
+    if (myOpps.length === 1) {
+      setReferralTarget(target);
+      return;
+    }
+    setPickingOppFor(target);
+  };
 
   const filtered = search.trim()
     ? profiles.filter(p => {
@@ -99,6 +158,10 @@ export default function FindTab() {
     );
   }
 
+  const selectedOpportunity = referralTarget
+    ? myOpps.find(o => o.id === (referralTarget as any)._oppId) || myOpps[0]
+    : null;
+
   return (
     <div className="mt-2">
       <div className="relative mb-4">
@@ -112,10 +175,12 @@ export default function FindTab() {
           const isExpanded = expanded === p.id;
           const name = p.profile?.full_name || "User";
           const location = p.preferred_location || p.profile?.location_city || null;
+          const isSaved = savedIds.has(p.user_id);
 
           return (
-            <div key={p.id} className="glass-light rounded-xl overflow-hidden transition-all duration-200">
-              <div className="flex items-center gap-3 p-3 cursor-pointer" onClick={() => navigate(`/app/profile/${p.user_id}`)}>
+            <div key={p.id} className="glass-light rounded-xl overflow-hidden transition-all duration-200" style={{ cursor: "pointer" }}
+              onClick={() => navigate(`/app/profile/${p.user_id}`)}>
+              <div className="flex items-center gap-3 p-3">
                 {/* Circular avatar 48px */}
                 <div className="w-12 h-12 rounded-full overflow-hidden shrink-0" style={{ border: "2px solid rgba(232,115,58,0.20)" }}>
                   {p.profile?.avatar_url ? (
@@ -128,7 +193,14 @@ export default function FindTab() {
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <p className="text-[14px] font-semibold truncate" style={{ color: "var(--text-1)" }}>{name}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-[14px] font-semibold truncate" style={{ color: "var(--text-1)" }}>{name}</p>
+                    {p.profile?.activity_score != null ? (
+                      <ActivityScoreRing score={p.profile.activity_score} size={28} strokeWidth={3} />
+                    ) : (
+                      <span className="text-[11px]" style={{ color: "var(--text-3)" }}>—</span>
+                    )}
+                  </div>
                   <p className="text-[12px] truncate" style={{ color: "var(--text-2)" }}>
                     {p.desired_title || p.profile?.headline || p.profile?.role || "Professional"}
                   </p>
@@ -157,7 +229,7 @@ export default function FindTab() {
 
               {/* Expanded section */}
               {isExpanded && (
-                <div className="px-4 pb-4 pt-1" style={{ borderTop: "1px solid var(--border)" }}>
+                <div className="px-4 pb-4 pt-1" style={{ borderTop: "1px solid var(--border)" }} onClick={e => e.stopPropagation()}>
                   {p.pitch && (
                     <div className="mb-2">
                       <p className="text-[12px] font-bold flex items-center gap-1 mb-1" style={{ color: "#E8733A" }}>
@@ -175,11 +247,11 @@ export default function FindTab() {
                     ))}
                   </div>
 
-                  <div className="flex gap-2 mt-3">
+                  <div className="flex flex-wrap gap-2 mt-3">
                     <button
                       type="button"
                       onClick={e => { e.stopPropagation(); navigate(`/app/profile/${p.user_id}`); }}
-                      className="flex-1 h-9 rounded-lg text-[12px] font-semibold cursor-pointer"
+                      className="flex-1 min-w-[110px] h-9 rounded-lg text-[12px] font-semibold cursor-pointer"
                       style={{ background: "var(--surface-2)", color: "var(--text-2)", border: "1.5px solid var(--border)" }}>
                       View Profile
                     </button>
@@ -187,11 +259,26 @@ export default function FindTab() {
                       <button
                         type="button"
                         onClick={e => { e.stopPropagation(); setSendJdTarget({ id: p.user_id, full_name: p.profile?.full_name || null }); }}
-                        className="flex-1 h-9 rounded-lg text-[12px] font-semibold cursor-pointer flex items-center justify-center gap-1.5"
+                        className="flex-1 min-w-[110px] h-9 rounded-lg text-[12px] font-semibold cursor-pointer flex items-center justify-center gap-1.5"
                         style={{ background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none" }}>
                         <Send className="w-3.5 h-3.5" /> Send JD
                       </button>
                     )}
+                    <button
+                      type="button"
+                      onClick={e => { e.stopPropagation(); startReferFor({ id: p.user_id, full_name: p.profile?.full_name || null }); }}
+                      className="flex-1 min-w-[90px] h-9 rounded-lg text-[12px] font-semibold cursor-pointer flex items-center justify-center gap-1.5"
+                      style={{ background: "rgba(99,102,241,0.10)", color: "#6366F1", border: "1.5px solid rgba(99,102,241,0.25)" }}>
+                      <Link2 className="w-3.5 h-3.5" /> Refer
+                    </button>
+                    <button
+                      type="button"
+                      onClick={e => { e.stopPropagation(); toggleSave(p.user_id); }}
+                      aria-label={isSaved ? "Unsave" : "Save"}
+                      className="h-9 w-9 rounded-lg cursor-pointer flex items-center justify-center"
+                      style={{ background: isSaved ? "rgba(232,115,58,0.10)" : "var(--surface-2)", color: isSaved ? "#E8733A" : "var(--text-2)", border: "1.5px solid var(--border)" }}>
+                      {isSaved ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
+                    </button>
                   </div>
                 </div>
               )}
@@ -205,6 +292,44 @@ export default function FindTab() {
           open={!!sendJdTarget}
           onClose={() => setSendJdTarget(null)}
           targetUser={sendJdTarget}
+        />
+      )}
+
+      {/* Opportunity picker — when institution has multiple postings */}
+      {pickingOppFor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)" }}>
+          <div className="w-full max-w-[400px] mx-4 rounded-2xl p-5" style={{ background: "#fff", boxShadow: "0 24px 64px rgba(0,0,0,0.18)" }}>
+            <p className="text-[15px] font-bold mb-3" style={{ color: "var(--text-1)" }}>Refer for which opportunity?</p>
+            <div className="space-y-2 max-h-[320px] overflow-y-auto">
+              {myOpps.map(o => (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => {
+                    setReferralTarget({ ...pickingOppFor, ...({ _oppId: o.id } as any) });
+                    setPickingOppFor(null);
+                  }}
+                  className="w-full text-left p-3 rounded-xl cursor-pointer transition-all hover:bg-[var(--surface-2)]"
+                  style={{ border: "1px solid var(--border)" }}>
+                  <p className="text-[13px] font-semibold" style={{ color: "var(--text-1)" }}>{o.title}</p>
+                  {o.org?.name && <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{o.org.name}</p>}
+                </button>
+              ))}
+            </div>
+            <button type="button" onClick={() => setPickingOppFor(null)}
+              className="mt-3 w-full h-9 rounded-lg text-[12px] font-semibold cursor-pointer"
+              style={{ background: "var(--surface-2)", color: "var(--text-2)", border: "1.5px solid var(--border)" }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {referralTarget && selectedOpportunity && (
+        <ReferModal
+          open={!!referralTarget}
+          onClose={() => setReferralTarget(null)}
+          opportunity={selectedOpportunity}
         />
       )}
     </div>
