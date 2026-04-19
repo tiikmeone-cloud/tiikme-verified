@@ -247,32 +247,94 @@ const Connections = () => {
         </div>
       </div>
 
-      {/* Primary Tabs */}
-      <div className="flex gap-2 mb-4">
-        {([
-          { key: "all" as const, label: "All", count: totalConnections },
-          { key: "requests" as const, label: "Requests", count: totalRequests },
-        ]).map(t => (
-          <button type="button" key={t.key} onClick={() => setTab(t.key)}
-            className="flex items-center gap-1.5 cursor-pointer transition-all"
-            style={{
-              height: 36, padding: "0 20px", borderRadius: 12, fontSize: 13, fontWeight: 600,
-              ...(tab === t.key
-                ? { background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 4px 16px rgba(232,115,58,0.30)" }
-                : { background: "rgba(255,255,255,0.20)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.25)", color: "#1A1A2E" }),
-            }}>
-            {t.label}
-            {t.count > 0 && (
-              <span style={{ minWidth: 20, height: 20, borderRadius: 10, padding: "0 6px",
-                background: tab === t.key ? "rgba(255,255,255,0.25)" : "#E8733A",
-                color: "#fff", fontSize: 10, fontWeight: 700,
-                display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-                {t.count}
-              </span>
-            )}
-          </button>
-        ))}
+      {/* Sticky 2-row header: Tabs + Filters */}
+      <div className="sticky z-30" style={{ top: 0, background: "rgba(255,255,255,0.78)", backdropFilter: "blur(14px)", marginInline: -16, paddingInline: 16, borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+        <PrimaryTabs<TabKey>
+          tabs={[
+            { key: "all", label: "All", badge: totalConnections },
+            { key: "requests", label: "Requests", badge: totalRequests },
+          ]}
+          active={tab}
+          onChange={setTab}
+        />
+        {tab === "all" && (
+          <FilterBar
+            condensed={scrolled}
+            activeCount={filterCount}
+            onClearAll={clearAllFilters}
+            onMore={() => setMoreOpen(true)}
+            chips={[
+              { key: "verified", label: "Verified", active: verifiedOnly, onToggle: () => setVerifiedOnly(!verifiedOnly) },
+              { key: "with_company", label: "With company", active: withCompany, onToggle: () => setWithCompany(!withCompany) },
+              { key: "recent", label: "Active this week", active: activeRecent, onToggle: () => setActiveRecent(!activeRecent) },
+              { key: "role_student", label: "Students", active: roleFilter === "student", onToggle: () => setRoleFilter(roleFilter === "student" ? null : "student") },
+              { key: "role_pro", label: "Professionals", active: roleFilter === "professional", onToggle: () => setRoleFilter(roleFilter === "professional" ? null : "professional") },
+              { key: "role_doctor", label: "Doctors", active: roleFilter === "doctor", onToggle: () => setRoleFilter(roleFilter === "doctor" ? null : "doctor") },
+              { key: "role_faculty", label: "Faculty", active: roleFilter === "faculty", onToggle: () => setRoleFilter(roleFilter === "faculty" ? null : "faculty") },
+              { key: "role_government", label: "Government", active: roleFilter === "government", onToggle: () => setRoleFilter(roleFilter === "government" ? null : "government") },
+            ]}
+          />
+        )}
       </div>
+
+      <div style={{ height: 12 }} />
+
+      <BottomSheet
+        open={moreOpen}
+        onClose={() => setMoreOpen(false)}
+        title="Filter connections"
+        description="Narrow down your network"
+        footer={
+          <>
+            <button type="button" onClick={() => { clearAllFilters(); }}
+              className="flex-1 cursor-pointer"
+              style={{ height: 40, borderRadius: 10, fontSize: 13, fontWeight: 600, background: "rgba(0,0,0,0.06)", color: "#1A1A2E", border: "none" }}>
+              Reset
+            </button>
+            <button type="button" onClick={() => setMoreOpen(false)}
+              className="flex-1 cursor-pointer"
+              style={{ height: 40, borderRadius: 10, fontSize: 13, fontWeight: 700, background: "#F97316", color: "#fff", border: "none" }}>
+              Apply
+            </button>
+          </>
+        }>
+        <div className="space-y-5">
+          <div>
+            <p className="mb-2" style={{ fontSize: 12, fontWeight: 700, color: "#6B7094", textTransform: "uppercase", letterSpacing: 0.5 }}>Status</p>
+            <label className="flex items-center gap-2 py-2 cursor-pointer">
+              <input type="checkbox" checked={verifiedOnly} onChange={e => setVerifiedOnly(e.target.checked)} />
+              <span style={{ fontSize: 13, color: "#1A1A2E" }}>Verified profiles only</span>
+            </label>
+            <label className="flex items-center gap-2 py-2 cursor-pointer">
+              <input type="checkbox" checked={withCompany} onChange={e => setWithCompany(e.target.checked)} />
+              <span style={{ fontSize: 13, color: "#1A1A2E" }}>Has company / institution</span>
+            </label>
+            <label className="flex items-center gap-2 py-2 cursor-pointer">
+              <input type="checkbox" checked={activeRecent} onChange={e => setActiveRecent(e.target.checked)} />
+              <span style={{ fontSize: 13, color: "#1A1A2E" }}>Active this week</span>
+            </label>
+          </div>
+          <div>
+            <p className="mb-2" style={{ fontSize: 12, fontWeight: 700, color: "#6B7094", textTransform: "uppercase", letterSpacing: 0.5 }}>Role</p>
+            <div className="flex flex-wrap gap-2">
+              {["student", "professional", "doctor", "faculty", "government", "skilled_trade", "hr", "builder"].map(r => {
+                const active = roleFilter === r;
+                return (
+                  <button key={r} type="button" onClick={() => setRoleFilter(active ? null : r)}
+                    className="cursor-pointer"
+                    style={{
+                      height: 32, padding: "0 12px", borderRadius: 999, fontSize: 12, fontWeight: 600,
+                      background: active ? "#F97316" : "rgba(0,0,0,0.05)",
+                      color: active ? "#fff" : "#1A1A2E", border: "none",
+                    }}>
+                    {roleLabel(r)}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </BottomSheet>
 
       {/* ALL TAB */}
       {tab === "all" && (
