@@ -174,10 +174,10 @@ const Opportunities = () => {
         </div>
       </div>
 
-      {/* USER TAB BAR */}
+      {/* USER TAB BAR — Find is institution-only, hidden here */}
       {!isInstitution && (
         <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-4 pb-1">
-          {(["jobs", "find", "referrals", "applications"] as UserTab[]).map(t => {
+          {(["jobs", "referrals", "applications"] as UserTab[]).map(t => {
             const labels: Record<UserTab, string> = { jobs: "Jobs", find: "Find", referrals: "Referrals", applications: "My Applications" };
             return (
               <button key={t} type="button" onClick={() => setUserTab(t)}
@@ -265,7 +265,13 @@ const Opportunities = () => {
         </>
       )}
 
-      {!isInstitution && userTab === "find" && <FindTab />}
+      {!isInstitution && userTab === "find" && (
+        <div className="text-center py-16 px-6">
+          <UsersIcon className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
+          <p className="text-[16px] font-bold" style={{ color: "var(--text-1)" }}>Find is for recruiters and institutions</p>
+          <p className="text-[13px] mt-2" style={{ color: "var(--text-3)" }}>If you're hiring, switch to an institution account.</p>
+        </div>
+      )}
       {!isInstitution && userTab === "referrals" && <ReferralsTab />}
       {!isInstitution && userTab === "applications" && <MyApplicationsTab userId={user?.id} />}
 
