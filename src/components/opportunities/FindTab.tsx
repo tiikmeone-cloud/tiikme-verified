@@ -42,7 +42,7 @@ export default function FindTab() {
   const [referralTarget, setReferralTarget] = useState<{ id: string; full_name: string | null } | null>(null);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [myOpps, setMyOpps] = useState<any[]>([]);
-  const [pickingOppFor, setPickingOppFor] = useState<{ id: string; full_name: string | null } | null>(null);
+  const [_pickingOppFor, setPickingOppFor] = useState<{ id: string; full_name: string | null } | null>(null);
 
   useEffect(() => {
     (async () => {
