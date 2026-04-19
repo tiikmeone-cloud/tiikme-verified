@@ -192,6 +192,16 @@ const Connections = () => {
       const q = search.toLowerCase();
       list = list.filter(s => (getOther(s)?.full_name || "").toLowerCase().includes(q));
     }
+    if (verifiedOnly) list = list.filter(s => getOther(s)?.is_verified);
+    if (withCompany) list = list.filter(s => !!getOther(s)?.institution_name);
+    if (activeRecent) {
+      const week = Date.now() - 7 * 86400000;
+      list = list.filter(s => {
+        const ts = getOther(s)?.last_active || getOther(s)?.updated_at;
+        return ts && new Date(ts).getTime() > week;
+      });
+    }
+    if (roleFilter) list = list.filter(s => getOther(s)?.role === roleFilter);
     list.sort((a, b) => {
       const oa = getOther(a), ob = getOther(b);
       switch (sortBy) {
@@ -200,7 +210,6 @@ const Connections = () => {
         case "recently_connected":
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         case "mutual":
-          // Placeholder: real mutual count would need extra query — fall back to recent activity
           return new Date(ob?.last_active || ob?.updated_at || 0).getTime()
                - new Date(oa?.last_active || oa?.updated_at || 0).getTime();
         case "recent_activity":
@@ -210,7 +219,7 @@ const Connections = () => {
       }
     });
     return list;
-  }, [connected, search, sortBy, user?.id]);
+  }, [connected, search, sortBy, user?.id, verifiedOnly, withCompany, activeRecent, roleFilter]);
 
   const sortLabels: Record<SortKey, string> = {
     recent_activity: "Recent activity",
