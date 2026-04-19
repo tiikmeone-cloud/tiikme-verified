@@ -341,10 +341,14 @@ export type Database = {
       circle_posts: {
         Row: {
           author_id: string
+          body: string | null
           circle_id: string
-          content: string
+          comment_count: number
+          content: string | null
           created_at: string
+          hot_score: number
           id: string
+          is_flagged: boolean
           is_pinned: boolean
           link_url: string | null
           poll_ends_at: string | null
@@ -353,15 +357,20 @@ export type Database = {
           post_type: string
           reply_count: number
           signtype: string
+          title: string | null
           updated_at: string
           upvote_count: number
         }
         Insert: {
           author_id: string
+          body?: string | null
           circle_id: string
-          content: string
+          comment_count?: number
+          content?: string | null
           created_at?: string
+          hot_score?: number
           id?: string
+          is_flagged?: boolean
           is_pinned?: boolean
           link_url?: string | null
           poll_ends_at?: string | null
@@ -370,15 +379,20 @@ export type Database = {
           post_type?: string
           reply_count?: number
           signtype?: string
+          title?: string | null
           updated_at?: string
           upvote_count?: number
         }
         Update: {
           author_id?: string
+          body?: string | null
           circle_id?: string
-          content?: string
+          comment_count?: number
+          content?: string | null
           created_at?: string
+          hot_score?: number
           id?: string
+          is_flagged?: boolean
           is_pinned?: boolean
           link_url?: string | null
           poll_ends_at?: string | null
@@ -387,10 +401,18 @@ export type Database = {
           post_type?: string
           reply_count?: number
           signtype?: string
+          title?: string | null
           updated_at?: string
           upvote_count?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "circle_posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "circle_posts_circle_id_fkey"
             columns: ["circle_id"]
@@ -411,9 +433,11 @@ export type Database = {
           is_unlocked: boolean
           member_count: number
           name: string
+          post_count: number
           slug: string
           type: string
           updated_at: string
+          visibility: string
         }
         Insert: {
           active_7d?: number
@@ -425,9 +449,11 @@ export type Database = {
           is_unlocked?: boolean
           member_count?: number
           name: string
+          post_count?: number
           slug: string
           type?: string
           updated_at?: string
+          visibility?: string
         }
         Update: {
           active_7d?: number
@@ -439,9 +465,11 @@ export type Database = {
           is_unlocked?: boolean
           member_count?: number
           name?: string
+          post_count?: number
           slug?: string
           type?: string
           updated_at?: string
+          visibility?: string
         }
         Relationships: []
       }
