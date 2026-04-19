@@ -178,61 +178,21 @@ const Opportunities = () => {
         </div>
       </div>
 
-      {/* USER TAB BAR — Find is institution-only, hidden here */}
-      {!isInstitution && (
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-4 pb-1">
-          {(["jobs", "referrals", "applications"] as UserTab[]).map(t => {
-            const labels: Record<UserTab, string> = { jobs: "Jobs", find: "Find", referrals: "Referrals", applications: "My Applications" };
-            return (
-              <button key={t} type="button" onClick={() => setUserTab(t)}
-                className="shrink-0 cursor-pointer transition-all"
-                style={{
-                  height: 36, padding: "0 20px", borderRadius: 20, fontSize: 13, fontWeight: 600,
-                  ...(userTab === t
-                    ? { background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 4px 16px rgba(232,115,58,0.30)" }
-                    : { background: "rgba(255,255,255,0.20)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.25)", color: "#1A1A2E" }),
-                }}>
-                {labels[t]}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      {/* ORG TAB BAR */}
-      {isInstitution && (
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-4 pb-1">
-          {(["post", "listings", "talent"] as OrgTab[]).map(t => {
-            const labels: Record<OrgTab, string> = { post: "Post Job", listings: "My Job List", talent: "Find Talent" };
-            return (
-              <button key={t} type="button" onClick={() => setOrgTab(t)}
-                className="shrink-0 cursor-pointer transition-all"
-                style={{
-                  height: 36, padding: "0 20px", borderRadius: 20, fontSize: 13, fontWeight: 600,
-                  ...(orgTab === t
-                    ? { background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 4px 16px rgba(232,115,58,0.30)" }
-                    : { background: "rgba(255,255,255,0.20)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.25)", color: "#1A1A2E" }),
-                }}>
-                {labels[t]}
-              </button>
-            );
-          })}
-        </div>
-      )}
+      {/* STICKY TAB + FILTER BAND */}
+      <StickyOppHeader
+        isInstitution={isInstitution}
+        userTab={userTab}
+        setUserTab={setUserTab}
+        orgTab={orgTab}
+        setOrgTab={setOrgTab}
+        activeType={activeType}
+        setActiveType={setActiveType}
+      />
 
       {/* USER: JOBS TAB */}
       {!isInstitution && userTab === "jobs" && (
         <>
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-3" style={{ scrollbarWidth: "none" }}>
-            {FILTER_TABS.map(f => (
-              <button key={f} type="button" onClick={() => setActiveType(f)}
-                className="h-8 px-4 rounded-full text-[12px] font-semibold cursor-pointer transition-all shrink-0 btn-glass-pill"
-                style={activeType === f ? { background: "#E8733A", color: "#fff", border: "none" } : {}}>
-                {f}
-              </button>
-            ))}
-          </div>
-          <div className="relative mb-4">
+          <div className="relative mb-4 mt-3">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-3)" }} />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search roles, companies..."
               className="w-full h-11 rounded-2xl pl-11 pr-4 text-[14px] outline-none glass-input" />
