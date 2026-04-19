@@ -73,10 +73,18 @@ const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose:
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       setUserId(user.id);
-      const { data } = await supabase.from("profiles").select("full_name, headline, bio, location_city, location_state, username, open_to_work, avatar_url, custom_links, role, role_subtype").eq("id", user.id).maybeSingle();
+      const { data } = await supabase.from("profiles").select("full_name, headline, bio, location_city, location_state, username, open_to_work, otw_visibility, avatar_url, custom_links, role, role_subtype").eq("id", user.id).maybeSingle();
       if (data) {
-        setForm({ name: data.full_name || "", headline: data.headline || "", bio: data.bio || "", city: data.location_city || "", state: data.location_state || "", username: data.username || "", open_to_work: data.open_to_work || false, avatar_url: data.avatar_url || "", about: (data as any).about || "", role: (data as any).role || "", role_subtype: (data as any).role_subtype || "" });
+        setForm({ name: data.full_name || "", headline: data.headline || "", bio: data.bio || "", city: data.location_city || "", state: data.location_state || "", username: data.username || "", open_to_work: data.open_to_work || false, otw_visibility: (data as any).otw_visibility || "recruiters", avatar_url: data.avatar_url || "", about: (data as any).about || "", role: (data as any).role || "", role_subtype: (data as any).role_subtype || "" });
         setCustomLinks(Array.isArray(data.custom_links) ? (data.custom_links as any[]).map(l => ({ url: l.url || "", label: l.label || "" })) : []);
+      }
+      // Load OTW preferences
+      const { data: otw } = await supabase.from("open_to_work_profiles").select("role_types, preferred_location, location_type, pitch").eq("user_id", user.id).maybeSingle();
+      if (otw) {
+        setOtwRoleTypes(otw.role_types || []);
+        setOtwLocation(otw.preferred_location || "");
+        setOtwLocationType(otw.location_type || "onsite");
+        setOtwPitch(otw.pitch || "");
       }
     })();
   }, [open]);
