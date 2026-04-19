@@ -346,6 +346,10 @@ export type Database = {
           created_at: string
           id: string
           is_pinned: boolean
+          link_url: string | null
+          poll_ends_at: string | null
+          poll_options: Json | null
+          poll_votes: Json | null
           post_type: string
           reply_count: number
           signtype: string
@@ -359,6 +363,10 @@ export type Database = {
           created_at?: string
           id?: string
           is_pinned?: boolean
+          link_url?: string | null
+          poll_ends_at?: string | null
+          poll_options?: Json | null
+          poll_votes?: Json | null
           post_type?: string
           reply_count?: number
           signtype?: string
@@ -372,6 +380,10 @@ export type Database = {
           created_at?: string
           id?: string
           is_pinned?: boolean
+          link_url?: string | null
+          poll_ends_at?: string | null
+          poll_options?: Json | null
+          poll_votes?: Json | null
           post_type?: string
           reply_count?: number
           signtype?: string
