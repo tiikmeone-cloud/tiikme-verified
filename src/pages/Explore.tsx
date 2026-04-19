@@ -11,6 +11,7 @@ import { calculateExploreScore } from "@/lib/algorithms";
 import HorizontalCarousel from "@/components/explore/HorizontalCarousel";
 import { PersonCard, OrgCard, TrendingPostCard, TopicPill, StartupCard, InvestorCard } from "@/components/explore/ExploreCard";
 import AvatarSquare from "@/components/ui/AvatarSquare";
+import { getOrgTypeConfig } from "@/lib/orgTypes";
 
 const FILTER_TABS = ["All", "People", "Companies", "Colleges", "Hospitals", "Government", "NGO", "Startups", "Investors", "Trending"];
 
