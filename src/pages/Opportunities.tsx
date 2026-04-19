@@ -174,10 +174,10 @@ const Opportunities = () => {
         </div>
       </div>
 
-      {/* USER TAB BAR */}
+      {/* USER TAB BAR — Find is institution-only, hidden here */}
       {!isInstitution && (
         <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-4 pb-1">
-          {(["jobs", "find", "referrals", "applications"] as UserTab[]).map(t => {
+          {(["jobs", "referrals", "applications"] as UserTab[]).map(t => {
             const labels: Record<UserTab, string> = { jobs: "Jobs", find: "Find", referrals: "Referrals", applications: "My Applications" };
             return (
               <button key={t} type="button" onClick={() => setUserTab(t)}
