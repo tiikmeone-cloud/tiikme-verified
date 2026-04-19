@@ -286,41 +286,12 @@ export default function FindTab() {
         />
       )}
 
-      {/* Opportunity picker — when institution has multiple postings */}
-      {pickingOppFor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)" }}>
-          <div className="w-full max-w-[400px] mx-4 rounded-2xl p-5" style={{ background: "#fff", boxShadow: "0 24px 64px rgba(0,0,0,0.18)" }}>
-            <p className="text-[15px] font-bold mb-3" style={{ color: "var(--text-1)" }}>Refer for which opportunity?</p>
-            <div className="space-y-2 max-h-[320px] overflow-y-auto">
-              {myOpps.map(o => (
-                <button
-                  key={o.id}
-                  type="button"
-                  onClick={() => {
-                    setReferralTarget({ ...pickingOppFor, ...({ _oppId: o.id } as any) });
-                    setPickingOppFor(null);
-                  }}
-                  className="w-full text-left p-3 rounded-xl cursor-pointer transition-all hover:bg-[var(--surface-2)]"
-                  style={{ border: "1px solid var(--border)" }}>
-                  <p className="text-[13px] font-semibold" style={{ color: "var(--text-1)" }}>{o.title}</p>
-                  {o.org?.name && <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{o.org.name}</p>}
-                </button>
-              ))}
-            </div>
-            <button type="button" onClick={() => setPickingOppFor(null)}
-              className="mt-3 w-full h-9 rounded-lg text-[12px] font-semibold cursor-pointer"
-              style={{ background: "var(--surface-2)", color: "var(--text-2)", border: "1.5px solid var(--border)" }}>
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-      {referralTarget && selectedOpportunity && (
+      {referralTarget && (
         <ReferModal
           open={!!referralTarget}
           onClose={() => setReferralTarget(null)}
-          opportunity={selectedOpportunity}
+          candidateId={referralTarget.id}
+          candidateName={referralTarget.full_name || "this candidate"}
         />
       )}
     </div>
