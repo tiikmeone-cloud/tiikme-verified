@@ -39,9 +39,17 @@ function CirclesDiscovery() {
 
   const join = async (circleId: string) => {
     if (!user) { toast.error("Sign in to join"); return; }
-    const { error } = await supabase.from("circle_members").insert({ circle_id: circleId, user_id: user.id });
-    if (error) { toast.error(error.message); return; }
+    // Optimistic: bump joined + member_count immediately
     setJoined(prev => [...prev, circleId]);
+    setAllCircles(prev => prev.map(c => c.id === circleId ? { ...c, member_count: (c.member_count || 0) + 1 } : c));
+    const { error } = await supabase.from("circle_members").insert({ circle_id: circleId, user_id: user.id });
+    if (error) {
+      // Rollback
+      setJoined(prev => prev.filter(id => id !== circleId));
+      setAllCircles(prev => prev.map(c => c.id === circleId ? { ...c, member_count: Math.max(0, (c.member_count || 1) - 1) } : c));
+      toast.error(error.message);
+      return;
+    }
     toast.success("Joined");
   };
 
