@@ -581,7 +581,11 @@ const Profile = () => {
     );
   }
 
-  const displayName = profileData.full_name || authDisplayName || "";
+  const dpFlags = isOwnProfile
+    ? { showName: true, showRole: true, showCompany: true }
+    : getDisplayFlags(profileData);
+  const realName = profileData.full_name || authDisplayName || "";
+  const displayName = dpFlags.showName ? realName : safeDisplayName(profileData, "Tiikme member");
   const username = cleanUsername(profileData.username || "");
   const headline = profileData.headline || "";
   const city = showLocation || isOwnProfile ? (profileData.location_city || "") : "";
