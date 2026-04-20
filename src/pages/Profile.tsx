@@ -1052,64 +1052,6 @@ const Profile = () => {
             );
             return (
           <div className="flex profile-info-flex" style={{ gap: 16, alignItems: "flex-start" }}>
-            {/* Avatar — green ring when Open to Work and visible to viewer */}
-              <div className="shrink-0" style={showOTW ? { padding: 3, borderRadius: 14, background: "#10B981" } : undefined}>
-                <AvatarSquare src={profileData.avatar_url} name={displayName || "U"} size="profile" bgColor={roleColor} className="shadow-md" />
-              </div>
-
-            {/* Info */}
-            <div className="profile-info-body" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
-              {/* ROW 1: Name + Edit */}
-              <div className="flex items-center" style={{ justifyContent: "space-between" }}>
-                <p style={{ fontSize: 20, fontWeight: 700, lineHeight: "28px", color: "#1A1A2E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</p>
-              </div>
-
-              {/* ROW 1b: Role · Subtype */}
-              {dpFlags.showRole && (
-                <p style={{ fontSize: 12, fontWeight: 600, color: roleColor }}>
-                  {profileData.role_subtype
-                    ? `${roleLabel} · ${profileData.role_subtype}`
-                    : roleLabel}
-                </p>
-              )}
-
-              {/* ROW 1c: Role-metadata-derived inline summary (BITS Pilani · 3rd Year, etc.) */}
-              {dpFlags.showCompany && (() => {
-                const m = (profileData as any).role_metadata as Record<string, any> | null;
-                if (!m || typeof m !== "object") return null;
-                const r = profileData.role;
-                let parts: string[] = [];
-                if (r === "student") parts = [m.institution, m.current_year].filter(Boolean);
-                else if (r === "professional") parts = [m.company, m.years_experience ? `${m.years_experience} yrs` : ""].filter(Boolean);
-                else if (r === "doctor") parts = [m.hospital, m.specialty === "Other" ? m.specialty_other : m.specialty].filter(Boolean);
-                else if (r === "faculty") parts = [m.institution, m.department].filter(Boolean);
-                if (parts.length === 0) {
-                  // Fallback to currently_working_at / institution_name
-                  const fallback = (profileData as any).currently_working_at || profileData.institution_name;
-                  if (!fallback) return null;
-                  return (
-                    <p style={{ fontSize: 12, fontWeight: 500, color: "#6B7094" }}>{fallback}</p>
-                  );
-                }
-                return (
-                  <p style={{ fontSize: 12, fontWeight: 500, color: "#6B7094" }}>
-                    {parts.join(" · ")}
-                  </p>
-                );
-              })()}
-
-              {/* ROW 2: Current position / headline */}
-              {dpFlags.showRole && (currentExp || headline) && (
-              <p style={{ fontSize: 13, fontWeight: 400, color: "#6B7094" }}>
-                {currentExp ? `${currentExp.job_title || currentExp.title} at ${currentExp.company_name || ""}` : headline}
-              </p>
-              )}
-
-              {/* ROW 3: @username + location + badges */}
-              <div className="flex items-center flex-wrap" style={{ gap: 8 }}>
-                {username && <span style={{ fontSize: 12, fontWeight: 400, color: "#9CA3C0" }}>@{username}</span>}
-                {username && (city || state) && <span style={{ width: 3, height: 3, borderRadius: "50%", background: "#9CA3C0", flexShrink: 0 }} />}
-          <div className="flex profile-info-flex" style={{ gap: 16, alignItems: "flex-start" }}>
             {/* LEFT COLUMN: Avatar + OTW switch (own) / badge (other) */}
             <div className="shrink-0 flex flex-col items-center" style={{ width: 110, gap: 10 }}>
               <div style={showOTW ? { padding: 3, borderRadius: 14, background: "#10B981" } : undefined}>
