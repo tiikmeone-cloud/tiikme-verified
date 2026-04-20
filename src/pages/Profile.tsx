@@ -1078,13 +1078,13 @@ const Profile = () => {
                       if (!profileData?.id) return;
                       const next = !profileData.open_to_work;
                       // Optimistic update
-                      setProfileData({ ...profileData, open_to_work: next } as any);
+                      setViewedProfile({ ...profileData, open_to_work: next });
                       const { error } = await supabase
                         .from("profiles")
                         .update({ open_to_work: next } as any)
                         .eq("id", profileData.id);
                       if (error) {
-                        setProfileData({ ...profileData, open_to_work: !next } as any);
+                        setViewedProfile({ ...profileData, open_to_work: !next });
                         toast.error("Could not update");
                       } else {
                         toast.success(next ? "Open to Work enabled" : "Open to Work disabled");
