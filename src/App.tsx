@@ -54,6 +54,7 @@ const ApplicationsDashboard = lazyWithRetry(() => import("./pages/ApplicationsDa
 const OpportunityCreate = lazyWithRetry(() => import("./pages/OpportunityCreate.tsx"), "OpportunityCreate");
 const WorkspacePage = lazyWithRetry(() => import("./pages/Workspace.tsx"), "WorkspacePage");
 const CirclesPage = lazyWithRetry(() => import("./pages/Circles.tsx"), "CirclesPage");
+const VerificationInbox = lazyWithRetry(() => import("./pages/VerificationInbox.tsx"), "VerificationInbox");
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -125,6 +126,7 @@ const AppRoutes = () => {
             <Route path="/app/pings" element={<Shell><Pings /></Shell>} />
             <Route path="/app/pings/:id" element={<Shell><Pings /></Shell>} />
             <Route path="/app/alerts" element={<Shell><Alerts /></Shell>} />
+            <Route path="/app/verification-inbox" element={<Shell><VerificationInbox /></Shell>} />
             <Route path="/app/settings" element={<Shell><SettingsPage /></Shell>} />
 
             {/* Organization profiles */}

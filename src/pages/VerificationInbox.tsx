@@ -350,6 +350,7 @@ export default function VerificationInbox() {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
