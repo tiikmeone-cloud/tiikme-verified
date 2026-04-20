@@ -659,27 +659,35 @@ const Profile = () => {
 
   /* Save functions */
   const saveExperience = async () => {
-    if (!user) return;
     if (!expForm.company.trim()) { toast.error("Company name is required"); return; }
     if (!expForm.title.trim()) { toast.error("Job title is required"); return; }
     setSaving(true);
     try {
+      // Always pull the live auth user so RLS (owner_id = auth.uid()) cannot fail on a stale ref
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+      if (authError || !authUser) {
+        toast.error("You must be logged in to save");
+        setSaving(false);
+        return;
+      }
       const startDate = expForm.startMonth && expForm.startYear ? `${expForm.startYear}-${String(months.indexOf(expForm.startMonth) + 1).padStart(2, "0")}-01` : null;
       const endDate = !expForm.isCurrent && expForm.endMonth && expForm.endYear ? `${expForm.endYear}-${String(months.indexOf(expForm.endMonth) + 1).padStart(2, "0")}-01` : null;
       const payload = {
-        owner_id: user.id, title: expForm.title.trim(), job_title: expForm.title.trim(),
+        owner_id: authUser.id, // REQUIRED — RLS checks this
+        title: expForm.title.trim() || expForm.company.trim() || "Untitled",
+        job_title: expForm.title.trim(),
         description: expForm.description.trim(), company_name: expForm.company.trim(), institution_name: expForm.company.trim(),
-        employment_type: expForm.type, type: expForm.type, item_type: "experience",
+        employment_type: expForm.type, type: expForm.type || "experience", item_type: "experience",
         work_location: expForm.city.trim() || null,
         start_month: expForm.startMonth || null, start_year: expForm.startYear ? Number(expForm.startYear) : null,
         end_month: !expForm.isCurrent ? (expForm.endMonth || null) : null, end_year: !expForm.isCurrent && expForm.endYear ? Number(expForm.endYear) : null,
         start_date: startDate, end_date: endDate, is_current: expForm.isCurrent,
         skills_used: expForm.skills ? expForm.skills.split(",").map(s => s.trim()).filter(Boolean) : [],
         tech_stack: expForm.skills ? expForm.skills.split(",").map(s => s.trim()).filter(Boolean) : [],
-        status: "active", visibility: "public",
+        status: "active", visibility: "public", verification_status: "unverified",
       };
       if (import.meta.env.DEV) console.log("[saveExperience] payload:", payload);
-      const { data, error } = await supabase.from("work_items").insert(payload).select().single();
+      const { data, error } = await supabase.from("work_items").insert(payload as any).select().single();
       if (error) {
         console.error("[saveExperience]", error);
         toast.error(error.message || "Save failed — please try again");
@@ -699,22 +707,29 @@ const Profile = () => {
   };
 
   const saveEducation = async () => {
-    if (!eduForm.institution.trim() || !user) return;
+    if (!eduForm.institution.trim()) { toast.error("Institution is required"); return; }
     setSaving(true);
     try {
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+      if (authError || !authUser) {
+        toast.error("You must be logged in to save");
+        setSaving(false);
+        return;
+      }
       const payload = {
-        owner_id: user.id, title: eduForm.degree + (eduForm.branch ? ` - ${eduForm.branch}` : ""),
+        owner_id: authUser.id, // REQUIRED — RLS checks this
+        title: (eduForm.degree + (eduForm.branch ? ` - ${eduForm.branch}` : "")).trim() || eduForm.institution.trim() || "Untitled",
         degree_type: eduForm.degree.trim() || null, field_of_study: eduForm.branch.trim() || null,
         institution_name_edu: eduForm.institution.trim(), institution_name: eduForm.institution.trim(),
-        grade_score: eduForm.grade.trim() || null, item_type: "education",
+        grade_score: eduForm.grade.trim() || null, item_type: "education", type: "education",
         start_year: eduForm.startYear ? Number(eduForm.startYear) : null,
         end_year: !eduForm.isCurrent && eduForm.endYear ? Number(eduForm.endYear) : null,
         start_date: eduForm.startYear ? `${eduForm.startYear}-01-01` : null,
         end_date: !eduForm.isCurrent && eduForm.endYear ? `${eduForm.endYear}-12-31` : null,
-        is_current: eduForm.isCurrent, status: "active", visibility: "public",
+        is_current: eduForm.isCurrent, status: "active", visibility: "public", verification_status: "unverified",
       };
       if (import.meta.env.DEV) console.log("[saveEducation] payload:", payload);
-      const { data, error } = await supabase.from("work_items").insert(payload).select().single();
+      const { data, error } = await supabase.from("work_items").insert(payload as any).select().single();
       if (error) {
         console.error("[saveEducation]", error);
         toast.error(error.message || "Save failed — please try again");
@@ -734,19 +749,27 @@ const Profile = () => {
   };
 
   const saveProject = async () => {
-    if (!projForm.title.trim() || !user) return;
+    if (!projForm.title.trim()) { toast.error("Title is required"); return; }
     setSaving(true);
     try {
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+      if (authError || !authUser) {
+        toast.error("You must be logged in to save");
+        setSaving(false);
+        return;
+      }
       const payload = {
-        owner_id: user.id, title: projForm.title.trim(), description: projForm.description.trim(),
-        company_name: projForm.org.trim() || null, item_type: "project",
+        owner_id: authUser.id, // REQUIRED — RLS checks this
+        title: projForm.title.trim() || "Untitled",
+        description: projForm.description.trim(),
+        company_name: projForm.org.trim() || null, item_type: "project", type: "project",
         tech_stack: projForm.techStack ? projForm.techStack.split(",").map(s => s.trim()).filter(Boolean) : [],
         start_year: projForm.startYear ? Number(projForm.startYear) : null,
         end_year: !projForm.isCurrent && projForm.endYear ? Number(projForm.endYear) : null,
-        is_current: projForm.isCurrent, status: "active", visibility: "public",
+        is_current: projForm.isCurrent, status: "active", visibility: "public", verification_status: "unverified",
       };
       if (import.meta.env.DEV) console.log("[saveProject] payload:", payload);
-      const { data, error } = await supabase.from("work_items").insert(payload).select().single();
+      const { data, error } = await supabase.from("work_items").insert(payload as any).select().single();
       if (error) {
         console.error("[saveProject]", error);
         toast.error(error.message || "Save failed — please try again");
