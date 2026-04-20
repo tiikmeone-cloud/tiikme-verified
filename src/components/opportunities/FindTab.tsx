@@ -7,6 +7,7 @@ import SendJDModal from "@/components/opportunities/SendJDModal";
 import ReferModal from "@/components/opportunities/ReferModal";
 import { ActivityScoreMini } from "@/components/profile/ActivityScoreCard";
 import { toast } from "sonner";
+import { getDisplayFlags, safeDisplayName, formatRoleLine } from "@/utils/displayProfile";
 
 interface OTWProfile {
   id: string;
@@ -21,12 +22,17 @@ interface OTWProfile {
     full_name: string | null;
     avatar_url: string | null;
     role: string | null;
+    role_subtype?: string | null;
     headline: string | null;
+    designation?: string | null;
     location_city: string | null;
     bio: string | null;
     open_to_work?: boolean | null;
     activity_score?: number | null;
     is_verified?: boolean | null;
+    display_preference?: string | null;
+    currently_working_at?: string | null;
+    institution_name?: string | null;
   };
 }
 
@@ -52,7 +58,7 @@ export default function FindTab() {
 
       const { data: directOtw } = await supabase
         .from("profiles")
-        .select("id, full_name, avatar_url, role, headline, location_city, bio, open_to_work, activity_score, is_verified")
+        .select("id, full_name, avatar_url, role, role_subtype, headline, designation, location_city, bio, open_to_work, activity_score, is_verified, display_preference, currently_working_at, institution_name")
         .eq("open_to_work", true)
         .eq("is_public", true)
         .order("activity_score", { ascending: false, nullsFirst: false })
