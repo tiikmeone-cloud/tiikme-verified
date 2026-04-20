@@ -377,6 +377,8 @@ const AppShell = ({ children }: { children: ReactNode }) => {
       </main>
 
       {/* ═══ MOBILE BOTTOM NAV — 5 items (Feed · Circles · Create · Opps · Profile) ═══ */}
+      {/* Hidden inside a Ping thread (e.g. /app/pings/:id) for full-screen mobile chat */}
+      {!/^\/app\/pings\/[^/]+$/.test(pathname) && (
       <nav
         className="md:hidden fixed left-0 right-0 z-50"
         style={{
