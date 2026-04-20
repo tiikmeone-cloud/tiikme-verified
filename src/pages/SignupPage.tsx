@@ -8,6 +8,8 @@ import OnboardingShell from "@/components/onboarding/OnboardingShell";
 import { checkPassword, MIN_PASSWORD_LENGTH } from "@/lib/passwordStrength";
 import { markRecentAuth } from "@/lib/idleLogout";
 
+const TERMS_VERSION = "2025-04-20";
+
 const validatePassword = (pw: string, email: string) => {
   if (pw.length < MIN_PASSWORD_LENGTH) return `Password must be at least ${MIN_PASSWORD_LENGTH} characters`;
   const result = checkPassword(pw, email ? [email, email.split("@")[0]] : []);
