@@ -101,13 +101,13 @@ const Connections = () => {
     if (!user) return { connected: [], pendingIncoming: [], pendingSent: [], suggested: [] };
     const [acceptedRes, incomingRes, sentRes] = await Promise.allSettled([
       supabase.from("strands")
-        .select("id, requester_id, receiver_id, status, created_at, requester:profiles!strands_requester_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified, last_active, updated_at), receiver:profiles!strands_receiver_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified, last_active, updated_at)")
+        .select("id, requester_id, receiver_id, status, created_at, requester:profiles!strands_requester_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified, last_active, updated_at, display_preference, currently_working_at, designation, headline), receiver:profiles!strands_receiver_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified, last_active, updated_at, display_preference, currently_working_at, designation, headline)")
         .or(`requester_id.eq.${user.id},receiver_id.eq.${user.id}`).eq("status", "accepted"),
       supabase.from("strands")
-        .select("id, requester_id, receiver_id, status, created_at, requester:profiles!strands_requester_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified)")
+        .select("id, requester_id, receiver_id, status, created_at, requester:profiles!strands_requester_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified, display_preference, currently_working_at, designation, headline)")
         .eq("receiver_id", user.id).eq("status", "pending"),
       supabase.from("strands")
-        .select("id, requester_id, receiver_id, status, created_at, receiver:profiles!strands_receiver_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified)")
+        .select("id, requester_id, receiver_id, status, created_at, receiver:profiles!strands_receiver_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified, display_preference, currently_working_at, designation, headline)")
         .eq("requester_id", user.id).eq("status", "pending"),
     ]);
     const accepted = acceptedRes.status === "fulfilled" ? (acceptedRes.value as any).data || [] : [];
@@ -121,7 +121,7 @@ const Connections = () => {
     connectedIds.add(user.id);
 
     const { data: suggestedData } = await supabase.from("profiles")
-      .select("id, full_name, avatar_url, role, institution_name, location_city")
+      .select("id, full_name, avatar_url, role, institution_name, location_city, display_preference, role_subtype, currently_working_at, designation, headline")
       .eq("is_public", true)
       .not("id", "in", `(${Array.from(connectedIds).join(",")})`)
       .order("activity_score", { ascending: false }).limit(12);
