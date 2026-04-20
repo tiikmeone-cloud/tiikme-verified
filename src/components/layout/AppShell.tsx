@@ -522,6 +522,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           })}
         </div>
       </nav>
+      )}
     </div>
   );
 };
