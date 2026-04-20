@@ -1076,13 +1076,13 @@ const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen pb-8">
+    <div className="min-h-screen pb-6 md:pb-8">
       <PageSEO {...seoProps} />
 
-      <div style={{ maxWidth: 960, margin: "0 auto", padding: 16 }}>
+      <div className="mx-auto p-3 md:p-4" style={{ maxWidth: 960 }}>
         {/* ── PROFILE INFO CARD (no cover) ── */}
-        <div className="glass-card relative" style={{
-          padding: 20, borderRadius: 16,
+        <div className="glass-card relative p-3 md:p-5" style={{
+          borderRadius: 16,
           background: "rgba(255,255,255,0.25)", backdropFilter: "blur(20px)",
           border: "1px solid rgba(255,255,255,0.40)",
           boxShadow: "0 8px 32px rgba(26,26,78,0.08), inset 0 1px 0 rgba(255,255,255,0.60)",
