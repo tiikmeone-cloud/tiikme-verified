@@ -17,6 +17,7 @@ interface PersonCardProps {
     role_metadata?: any;
     institution_name?: string | null;
     account_type?: string | null;
+    activity_score?: number | null;
   };
   strandStatus: string;
   onStrand: () => void;
