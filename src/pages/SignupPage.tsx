@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import OnboardingShell from "@/components/onboarding/OnboardingShell";
 import { checkPassword, MIN_PASSWORD_LENGTH } from "@/lib/passwordStrength";
 import { markRecentAuth } from "@/lib/idleLogout";
+import { PageSEO } from "@/hooks/usePageSEO";
 
 const TERMS_VERSION = "2025-04-20";
 

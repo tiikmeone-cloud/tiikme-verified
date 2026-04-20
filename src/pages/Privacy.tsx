@@ -1,4 +1,5 @@
 import LegalPageLayout, { LegalSection, Callout, type TocItem } from "@/components/legal/LegalPageLayout";
+import { PageSEO } from "@/hooks/usePageSEO";
 
 const toc: TocItem[] = [
   { id: "section-1", label: "1. Who Is Responsible" },
