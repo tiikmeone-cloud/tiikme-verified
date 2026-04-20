@@ -2036,6 +2036,7 @@ export type Database = {
           created_at: string | null
           id: string
           org_id: string | null
+          role_category: string | null
         }
         Insert: {
           assigned_to_user_id?: string | null
@@ -2044,6 +2045,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           org_id?: string | null
+          role_category?: string | null
         }
         Update: {
           assigned_to_user_id?: string | null
@@ -2052,6 +2054,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           org_id?: string | null
+          role_category?: string | null
         }
         Relationships: [
           {
@@ -3454,18 +3457,26 @@ export type Database = {
       verification_requests: {
         Row: {
           assigned_to: string | null
+          auto_triggered: boolean | null
           context_note: string | null
           created_at: string | null
           document_type: string | null
           document_url: string | null
+          entity_id: string | null
+          entity_type: string | null
           id: string
           item_id: string
           item_type: string
-          org_id: string
+          org_id: string | null
+          rejection_reason: string | null
           requested_doc_message: string | null
+          requested_role: string | null
           requester_id: string
+          resolved_at: string | null
           review_note: string | null
+          review_thread: Json | null
           reviewed_by: string | null
+          role_category: string | null
           status: string | null
           submitted_id: string
           supporting_doc_url: string | null
@@ -3473,18 +3484,26 @@ export type Database = {
         }
         Insert: {
           assigned_to?: string | null
+          auto_triggered?: boolean | null
           context_note?: string | null
           created_at?: string | null
           document_type?: string | null
           document_url?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
           id?: string
           item_id: string
           item_type: string
-          org_id: string
+          org_id?: string | null
+          rejection_reason?: string | null
           requested_doc_message?: string | null
+          requested_role?: string | null
           requester_id: string
+          resolved_at?: string | null
           review_note?: string | null
+          review_thread?: Json | null
           reviewed_by?: string | null
+          role_category?: string | null
           status?: string | null
           submitted_id: string
           supporting_doc_url?: string | null
@@ -3492,18 +3511,26 @@ export type Database = {
         }
         Update: {
           assigned_to?: string | null
+          auto_triggered?: boolean | null
           context_note?: string | null
           created_at?: string | null
           document_type?: string | null
           document_url?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
           id?: string
           item_id?: string
           item_type?: string
-          org_id?: string
+          org_id?: string | null
+          rejection_reason?: string | null
           requested_doc_message?: string | null
+          requested_role?: string | null
           requester_id?: string
+          resolved_at?: string | null
           review_note?: string | null
+          review_thread?: Json | null
           reviewed_by?: string | null
+          role_category?: string | null
           status?: string | null
           submitted_id?: string
           supporting_doc_url?: string | null
@@ -4209,6 +4236,10 @@ export type Database = {
           explore_score: number
           page_id: string
         }[]
+      }
+      resolve_verification_assignee: {
+        Args: { _org_id: string; _role_category: string }
+        Returns: string
       }
       update_all_activity_scores: { Args: never; Returns: undefined }
       update_all_activity_scores_v2: { Args: never; Returns: undefined }
