@@ -35,17 +35,18 @@ const PostCreate = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const charLimit = 3000;
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
     const remaining = MAX_IMAGES - imageFiles.length;
     if (remaining <= 0) { toast.error(`Max ${MAX_IMAGES} images`); return; }
+    const { validateUpload } = await import("@/lib/uploadValidation");
     const toAdd = files.slice(0, remaining);
     const valid: File[] = [];
     const previews: string[] = [];
     for (const file of toAdd) {
-      if (!file.type.startsWith("image/")) continue;
-      if (file.size > 10 * 1024 * 1024) { toast.error(`${file.name} is over 10MB`); continue; }
+      const err = validateUpload(file, { maxBytes: 10 * 1024 * 1024, allowImages: true });
+      if (err) { toast.error(`${file.name}: ${err}`); continue; }
       valid.push(file);
       previews.push(URL.createObjectURL(file));
     }

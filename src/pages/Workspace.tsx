@@ -308,6 +308,9 @@ const GroupChat = ({ group, userId, onBack, onSendMessage, onDeleteMessage, fetc
       let attachment: { url: string; type: string; name: string } | undefined;
       if (pendingAttachment) {
         const file = pendingAttachment.file;
+        const { validateUpload } = await import("@/lib/uploadValidation");
+        const verr = validateUpload(file, { maxBytes: 25 * 1024 * 1024, allowImages: true, allowPdf: true, allowOffice: true });
+        if (verr) { toast.error(verr); setSending(false); return; }
         const path = `${userId}/${Date.now()}-${file.name.replace(/[^a-z0-9.]/gi, "_")}`;
         const { error } = await supabase.storage.from("message-attachments").upload(path, file);
         if (error) { toast.error("Upload failed"); setSending(false); return; }

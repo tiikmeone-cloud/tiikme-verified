@@ -30,19 +30,16 @@ export default function ImageUpload({
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
   const maxSize = bucket === "avatars" ? 2 * 1024 * 1024 : 10 * 1024 * 1024;
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!allowedTypes.includes(file.type)) {
-      setError("Only JPEG, PNG, WebP, and GIF allowed");
-      return;
-    }
-    if (file.size > maxSize) {
-      setError(`Max size is ${bucket === "avatars" ? "2MB" : "10MB"}`);
+    const { validateUpload } = await import("@/lib/uploadValidation");
+    const validationErr = validateUpload(file, { maxBytes: maxSize, allowImages: true });
+    if (validationErr) {
+      setError(validationErr);
       return;
     }
 

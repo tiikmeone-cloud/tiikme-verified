@@ -11,8 +11,9 @@ import { useConversations } from "@/hooks/useConversations";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 
+import { validateUpload } from "@/lib/uploadValidation";
+
 const ROLE_COLORS: Record<string, string> = { faculty: "#92400E", professional: "#0369A1", doctor: "#0E7490", student: "#4F46E5", skilled_trade: "#C2410C", hr: "#6B21A8", government: "#166534" };
-const ALLOWED_ATTACH = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "image/jpeg", "image/png", "image/webp", "image/gif"];
 
 /** Render URLs in message text as clickable links */
 function renderLinkedText(text: string, isOwnMessage: boolean): React.ReactNode {
@@ -139,8 +140,8 @@ const Pings = () => {
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user || !activeConvoId) return;
-    if (!ALLOWED_ATTACH.includes(file.type)) { toast.error("Only images, PDFs and documents allowed"); return; }
-    if (file.size > 25 * 1024 * 1024) { toast.error("File must be under 25MB"); return; }
+    const validationErr = validateUpload(file, { maxBytes: 25 * 1024 * 1024, allowImages: true, allowPdf: true, allowOffice: true });
+    if (validationErr) { toast.error(validationErr); e.target.value = ""; return; }
 
     setUploading(true);
     const isImage = file.type.startsWith("image/");
