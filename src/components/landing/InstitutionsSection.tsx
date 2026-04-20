@@ -32,7 +32,7 @@ const InstitutionsSection = () => (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-12 md:mb-14 text-left">
         {cols.map((c) => (
           <div key={c.title}>
-            <h3 className="text-[18px] md:text-[20px] font-bold mb-3" style={{ color: "#E8580A" }}>
+            <h3 className="text-[18px] md:text-[20px] font-bold mb-3" style={{ color: "#FFB088" }}>
               {c.title}
             </h3>
             <p className="text-[15px] md:text-[16px] leading-[1.7]" style={{ color: "rgba(255,255,255,0.8)" }}>
@@ -45,9 +45,9 @@ const InstitutionsSection = () => (
       <Link to="/join-as-institution">
         <button
           className="h-[52px] px-8 rounded-xl font-bold text-[16px] text-white cursor-pointer transition-colors mb-6"
-          style={{ backgroundColor: "#E8580A" }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#C94A07")}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#E8580A")}
+          style={{ backgroundColor: "#B8460C" }}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#9C3A0A")}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#B8460C")}
         >
           Create Your Organisation Page — Free
         </button>

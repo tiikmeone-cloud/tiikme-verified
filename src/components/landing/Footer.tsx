@@ -8,9 +8,9 @@ const Footer = () => (
         <ThemeLogo className="h-8 w-auto brightness-0 invert" />
         <span className="text-[12px] text-white/50">© 2026 Veenavarse Private Limited</span>
       </div>
-      <p className="text-center text-[12px] text-white/40 mb-6">A Veenavarse Private Limited product</p>
+      <p className="text-center text-[12px] text-white/70 mb-6">A Veenavarse Private Limited product</p>
 
-      <div className="text-sm text-gray-500 flex flex-wrap gap-6 justify-center py-6 border-t border-white/10">
+      <div className="text-sm text-white/80 flex flex-wrap gap-6 justify-center py-6 border-t border-white/10">
         <Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
         <Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
         <a href="mailto:contact@tiikme.com" className="hover:text-white transition-colors">Contact</a>

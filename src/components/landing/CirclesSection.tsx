@@ -64,9 +64,9 @@ const CirclesSection = () => (
         <Link to="/signup">
           <button
             className="h-[52px] px-8 rounded-xl font-bold text-[16px] text-white cursor-pointer transition-colors"
-            style={{ backgroundColor: "#E8580A" }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#C94A07")}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#E8580A")}
+            style={{ backgroundColor: "#B8460C" }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#9C3A0A")}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#B8460C")}
           >
             Join a Circle
           </button>
