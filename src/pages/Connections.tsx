@@ -629,27 +629,34 @@ const Connections = () => {
               </div>
             ) : (
               <div className="space-y-2">
-                {pendingSent.map(s => (
-                  <div key={s.id} className="glass-card flex items-center gap-3" style={{ padding: 12, borderRadius: 12, minHeight: 72 }}>
-                    <AvatarSquare src={s.receiver?.avatar_url} name={s.receiver?.full_name || "U"} size={44} bgColor={ROLE_COLORS[s.receiver?.role || ""] || "#6B7280"} />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{s.receiver?.full_name || "User"}</p>
-                        {s.receiver?.is_verified && <VerifiedBadge size={14} />}
+                {pendingSent.map(s => {
+                  const flags = getDisplayFlags(s.receiver);
+                  const cardName = flags.showName ? (s.receiver?.full_name || "User") : "Tiikme member";
+                  const company = s.receiver?.currently_working_at || s.receiver?.institution_name;
+                  return (
+                    <div key={s.id} className="glass-card flex items-center gap-3" style={{ padding: 12, borderRadius: 12, minHeight: 72 }}>
+                      <AvatarSquare src={s.receiver?.avatar_url} name={cardName} size={44} bgColor={ROLE_COLORS[s.receiver?.role || ""] || "#6B7280"} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{cardName}</p>
+                          {s.receiver?.is_verified && <VerifiedBadge size={14} />}
+                        </div>
+                        {flags.showRole && (
+                          <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>
+                            {roleLabel(s.receiver?.role || "")}
+                            {s.receiver?.role_subtype && <span style={{ opacity: 0.75 }}> · {s.receiver.role_subtype}</span>}
+                            {flags.showCompany && company && <span> · {company}</span>}
+                          </p>
+                        )}
+                        <p style={{ fontSize: 11, color: "#9CA3C0", marginTop: 2 }}>Sent {getTimeAgo(s.created_at)}</p>
                       </div>
-                      <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>
-                        {roleLabel(s.receiver?.role || "")}
-                        {s.receiver?.role_subtype && <span style={{ opacity: 0.75 }}> · {s.receiver.role_subtype}</span>}
-                        {s.receiver?.institution_name && <span> · {s.receiver.institution_name}</span>}
-                      </p>
-                      <p style={{ fontSize: 11, color: "#9CA3C0", marginTop: 2 }}>Sent {getTimeAgo(s.created_at)}</p>
+                      <button type="button" onClick={() => handleWithdraw(s)} className="cursor-pointer transition-all shrink-0"
+                        style={{ height: 34, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 600, ...connectionButtonStyle("pending_sent") }}>
+                        Withdraw
+                      </button>
                     </div>
-                    <button type="button" onClick={() => handleWithdraw(s)} className="cursor-pointer transition-all shrink-0"
-                      style={{ height: 34, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 600, ...connectionButtonStyle("pending_sent") }}>
-                      Withdraw
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </section>
