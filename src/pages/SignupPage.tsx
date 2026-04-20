@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import OnboardingShell from "@/components/onboarding/OnboardingShell";
 import { checkPassword, MIN_PASSWORD_LENGTH } from "@/lib/passwordStrength";
 import { markRecentAuth } from "@/lib/idleLogout";
+import { PageSEO } from "@/hooks/usePageSEO";
 
 const TERMS_VERSION = "2025-04-20";
 
@@ -128,6 +129,15 @@ export default function SignupPage() {
 
   return (
     <OnboardingShell step={1}>
+      <PageSEO
+        title="Sign Up — Tiikme"
+        description="Create your free Tiikme profile. Join India's professional network for students, freelancers, founders, and creators. No fees. Ever."
+        ogTitle="Sign Up — Tiikme"
+        ogDescription="Built for the ones who build. Students, freelancers, founders, creators."
+        ogImage="https://tiikme.com/og-image.png"
+        twitterCard="summary_large_image"
+        canonical="https://tiikme.com/signup"
+      />
       <div className="rounded-3xl p-8 sm:p-10" style={{ background: "#fff", border: "1px solid #F3F4F6", boxShadow: "0 4px 24px rgba(0,0,0,0.06)" }}>
         <h1 className="text-[28px] font-extrabold text-center mb-1" style={{ color: "#111827", letterSpacing: "-0.02em" }}>Create your account</h1>
         <p className="text-center text-[14px] mb-7" style={{ color: "#6B7280" }}>Your verified professional identity starts here.</p>

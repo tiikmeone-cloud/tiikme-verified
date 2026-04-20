@@ -5,6 +5,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import ThemeLogo from "@/components/ThemeLogo";
+import { PageSEO } from "@/hooks/usePageSEO";
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -90,6 +91,15 @@ const SignIn = () => {
   return (
     <div className="relative flex items-center justify-center overflow-hidden"
       style={{ width: "100vw", minHeight: "100vh", background: "linear-gradient(135deg, #1A1A4E 0%, #0D0D2B 100%)" }}>
+      <PageSEO
+        title="Sign In — Tiikme"
+        description="Sign in to Tiikme, India's professional network for students, freelancers, founders, and creators."
+        ogTitle="Sign In — Tiikme"
+        ogDescription="Built for the ones who build."
+        ogImage="https://tiikme.com/og-image.png"
+        twitterCard="summary_large_image"
+        canonical="https://tiikme.com/signin"
+      />
       {/* Animated blobs */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute rounded-full" style={{ width: 800, height: 800, top: "10%", left: "20%", background: "radial-gradient(circle 400px at center, rgba(232,115,58,0.12) 0%, transparent 100%)", animation: "driftBlob1 20s ease-in-out infinite alternate" }} />
