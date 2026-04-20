@@ -20,6 +20,7 @@ const baseNavItems = [
   { id: "display", label: "Profile Display", icon: Sparkles },
   { id: "privacy", label: "Privacy", icon: Eye },
   { id: "invite", label: "Invite", icon: Users },
+  { id: "legal", label: "Legal", icon: Shield },
   { id: "help", label: "Help & Support", icon: HelpCircle },
 ];
 
