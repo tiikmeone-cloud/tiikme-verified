@@ -410,22 +410,27 @@ const Connections = () => {
               {filteredConnected.map(s => {
                 const other = getOther(s);
                 const lastActiveSrc = other?.last_active || other?.updated_at;
+                const flags = getDisplayFlags(other);
+                const cardName = flags.showName ? (other?.full_name || "User") : "Tiikme member";
                 const subtype = other?.role_subtype;
+                const company = other?.currently_working_at || other?.institution_name;
                 return (
                   <div key={s.id} className="glass-card flex items-center gap-3 cursor-pointer transition-all duration-200 hover:shadow-sm"
                     style={{ padding: 12, borderRadius: 12, minHeight: 72 }}
                     onClick={() => navigate(`/app/profile/${other?.id}`)}>
-                    <AvatarSquare src={other?.avatar_url} name={other?.full_name || "U"} size={44} bgColor={ROLE_COLORS[other?.role || ""] || "#6B7280"} />
+                    <AvatarSquare src={other?.avatar_url} name={cardName} size={44} bgColor={ROLE_COLORS[other?.role || ""] || "#6B7280"} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{other?.full_name || "User"}</p>
+                        <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{cardName}</p>
                         {other?.is_verified && <VerifiedBadge size={14} />}
                       </div>
-                      <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>
-                        {roleLabel(other?.role || "")}
-                        {subtype && <span style={{ opacity: 0.75 }}> · {subtype}</span>}
-                        {other?.institution_name && <span> · {other.institution_name}</span>}
-                      </p>
+                      {flags.showRole && (
+                        <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>
+                          {roleLabel(other?.role || "")}
+                          {subtype && <span style={{ opacity: 0.75 }}> · {subtype}</span>}
+                          {flags.showCompany && company && <span> · {company}</span>}
+                        </p>
+                      )}
                       {lastActiveSrc && (
                         <p className="truncate" style={{ fontSize: 11, color: "#9CA3C0", marginTop: 2 }}>
                           Last active {getTimeAgo(lastActiveSrc)}
