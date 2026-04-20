@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { sendNotification } from "@/lib/notify";
+import { encryptMessage, decryptMessage, getOrCreateKeypair } from "@/lib/messageEncryption";
 
 interface ConversationWithProfile {
   id: string;
