@@ -27,6 +27,7 @@ import PrimaryTabs from "@/components/filters/PrimaryTabs";
 import FilterBar, { useScrollPastThreshold } from "@/components/filters/FilterBar";
 import BottomSheet from "@/components/ui/BottomSheet";
 import { useFilterParam } from "@/lib/useFilterParam";
+import { getDisplayFlags, formatRoleLine } from "@/utils/displayProfile";
 
 /* ─── HELPERS ─── */
 const roleColorMap: Record<string, string> = {
