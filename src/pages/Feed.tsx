@@ -540,69 +540,14 @@ const PostCard = ({
           </button>
         </div>
 
-        {/* COMMENT SECTION */}
+        {/* COMMENT PANEL — fixed-height scrollable, never pushes other posts down */}
         {isOpen && (
-          <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #F0F0F0" }}>
-            {visibleComments.length === 0 && <p style={{ fontSize: 12, color: "#9CA3C0", padding: "4px 0" }}>No comments yet. Be the first!</p>}
-            {visibleComments.map((c: any) => {
-              const cName = c.author?.full_name || "User";
-              const cTime = c.created_at ? getTimeAgo(new Date(c.created_at)) : "";
-              const isOwnComment = user?.id === c.user_id;
-              return (
-                <div key={c.id} className="flex group" style={{ gap: 8, padding: "6px 0", alignItems: "flex-start" }}>
-                  <div className="shrink-0" style={{ marginTop: 2 }}>
-                    <AvatarSquare src={c.author?.avatar_url} name={cName} size="sm" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center" style={{ gap: 6 }}>
-                      <Link to={`/app/profile/${c.author?.id || c.user_id}`} className="hover:underline" style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>{cName}</Link>
-                      <span style={{ fontSize: 12, color: "#9CA3C0" }}>·</span>
-                      <span style={{ fontSize: 12, color: "#9CA3C0" }}>{cTime}</span>
-                      {isOwnComment && (
-                        <button type="button" onClick={() => deleteComment(post.id, c.id)}
-                          className="opacity-0 group-hover:opacity-100 cursor-pointer"
-                          style={{ color: "#EF4444", marginLeft: 2 }}>
-                          <Trash2 style={{ width: 12, height: 12 }} />
-                        </button>
-                      )}
-                    </div>
-                    <p style={{ fontSize: 13, fontWeight: 400, color: "#1A1A2E", lineHeight: "18px", marginTop: 2 }}><MentionText text={c.content} /></p>
-                  </div>
-                  <CommentLoveButton commentId={c.id} userId={user?.id} />
-                </div>
-              );
-            })}
-            {sortedComments.length > 5 && !showAllComments && (
-              <button type="button" onClick={() => setShowAllComments(true)} className="cursor-pointer" style={{ fontSize: 12, fontWeight: 500, color: "#E8733A", padding: "4px 0" }}>
-                View all {sortedComments.length} comments
-              </button>
-            )}
-            {showAllComments && sortedComments.length > 5 && (
-              <button type="button" onClick={() => setShowAllComments(false)} className="cursor-pointer" style={{ fontSize: 12, fontWeight: 500, color: "#9CA3C0", padding: "4px 0" }}>
-                Show less
-              </button>
-            )}
-
-            {/* Comment input */}
-            {user && (
-              <div className="flex items-center" style={{ gap: 8, marginTop: 8, paddingTop: 8, borderTop: "1px solid #F0F0F0" }}>
-                <AvatarSquare src={authProfile?.avatar_url} name={authProfile?.full_name || "You"} size="sm" />
-                <input
-                  value={commentText}
-                  onChange={(e) => setCommentInputs((p) => ({ ...p, [post.id]: e.target.value }))}
-                  placeholder="Write a comment..."
-                  className="flex-1 outline-none"
-                  style={{ height: 36, borderRadius: 18, padding: "0 12px", fontSize: 13, background: "#F5F5F5", border: "1px solid #E8E8E8", color: "#1A1A2E" }}
-                  onKeyDown={(e) => { if (e.key === "Enter" && commentText.trim()) submitComment(post.id); }}
-                />
-                <button type="button" onClick={() => { if (commentText.trim()) submitComment(post.id); }}
-                  className="cursor-pointer" style={{ color: commentText.trim() ? "#E8733A" : "#9CA3C0" }}
-                  disabled={!commentText.trim()}>
-                  <SendHorizontal style={{ width: 16, height: 16 }} />
-                </button>
-              </div>
-            )}
-          </div>
+          <CommentPanel
+            postId={post.id}
+            table="post_comments"
+            postAuthorId={post.author_id}
+            postUrlPrefix="/app/post"
+          />
         )}
       </article>
 
