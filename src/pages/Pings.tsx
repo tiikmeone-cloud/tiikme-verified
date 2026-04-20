@@ -316,6 +316,24 @@ const Pings = () => {
                   </div>
                 </Link>
               )}
+              <button
+                type="button"
+                onClick={() => setShowKeyManager(true)}
+                className="ml-auto p-2 rounded-lg cursor-pointer active:scale-95 shrink-0"
+                title="Encryption keys"
+                style={{ color: "var(--text-2)", background: "var(--surface-2)" }}>
+                <Key className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* E2EE indicator banner */}
+            <div className="px-5 py-1.5 flex items-center gap-1.5" style={{ background: "rgba(16,185,129,0.06)", borderBottom: "1px solid rgba(16,185,129,0.15)" }}>
+              <Lock className="w-3 h-3" style={{ color: "#10B981" }} />
+              <p className="text-[11px]" style={{ color: "var(--text-2)" }}>
+                {activeConvo?.other_user && (activeConvo.other_user as any).public_key
+                  ? "Messages in this chat are end-to-end encrypted. Tiikme cannot read them."
+                  : "Recipient hasn't enabled secure messaging yet — your messages will go as plaintext until they sign in."}
+              </p>
             </div>
 
             {!dismissedBanner && activeConvo?.other_user?.is_verified && (
