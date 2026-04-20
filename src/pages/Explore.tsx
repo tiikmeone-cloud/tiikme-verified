@@ -119,7 +119,7 @@ const Explore = () => {
     /* ─── PEOPLE (relevance filtered, backfill with top activity) ─── */
     const { data: peopleRaw } = await supabase
       .from("profiles")
-      .select("id, full_name, username, avatar_url, role, role_subtype, headline, institution_name, location_city, is_verified, activity_score, privacy_settings, sector, skills, interests, designation, role_metadata, account_type")
+      .select("id, full_name, username, avatar_url, role, role_subtype, headline, designation, institution_name, currently_working_at, display_preference, location_city, is_verified, activity_score, privacy_settings, sector, skills, interests, role_metadata, account_type")
       .eq("is_public", true)
       .not("full_name", "is", null)
       .neq("id", user.id)
