@@ -347,7 +347,7 @@ const SettingsPage = () => {
   const isInstitutionAccount = authProfile?.account_type === "institution";
 
   const settingsNavItems = [
-    ...baseNavItems.filter(item => !(isInstitutionAccount && item.id === "roles")),
+    ...baseNavItems.filter(item => !(isInstitutionAccount && item.id === "display")),
     ...(isInstitutionAccount ? [{ id: "subscription", label: "Subscription", icon: CreditCard }] : []),
   ];
 
