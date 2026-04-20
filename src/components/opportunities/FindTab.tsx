@@ -160,11 +160,28 @@ export default function FindTab() {
 
   return (
     <div className="mt-2">
-      <div className="relative mb-4">
+      <div className="relative mb-3">
         <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-3)" }} />
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name, title, or role type..."
           className="w-full h-10 rounded-xl pl-10 pr-4 text-[13px] outline-none glass-input" />
       </div>
+
+      {isInstitution && (
+        <div className="mb-4 px-3 py-2.5 rounded-xl glass-light flex items-center gap-3">
+          <span className="text-[12px] font-semibold shrink-0" style={{ color: "var(--text-2)" }}>Min score</span>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            step={5}
+            value={minScore}
+            onChange={e => setMinScore(Number(e.target.value))}
+            className="flex-1 accent-[#E8733A] cursor-pointer"
+            aria-label="Minimum activity score filter"
+          />
+          <span className="text-[12px] font-bold tabular-nums w-8 text-right" style={{ color: "var(--text-1)" }}>{minScore}</span>
+        </div>
+      )}
 
       <div className="space-y-3">
         {filtered.map(p => {
