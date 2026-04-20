@@ -2,7 +2,8 @@ import AvatarSquare from "@/components/ui/AvatarSquare";
 import { storageImageUrl } from "@/lib/imageTransform";
 import { cleanUsername } from "@/lib/cleanUsername";
 import { useState, useEffect, useRef } from "react";
-import { Check, Camera, User, Eye, Lock, LogOut, Users, Copy, Share2, HelpCircle, MessageSquare, Send, CreditCard, Sparkles } from "lucide-react";
+import { Check, Camera, User, Eye, Lock, LogOut, Users, Copy, Share2, HelpCircle, MessageSquare, Send, CreditCard, Sparkles, FileText, Shield, Trash2, Mail } from "lucide-react";
+import DeleteAccountModal from "@/components/legal/DeleteAccountModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { tiikToast } from "@/components/ui/tiik-toast";
@@ -19,6 +20,7 @@ const baseNavItems = [
   { id: "display", label: "Profile Display", icon: Sparkles },
   { id: "privacy", label: "Privacy", icon: Eye },
   { id: "invite", label: "Invite", icon: Users },
+  { id: "legal", label: "Legal", icon: Shield },
   { id: "help", label: "Help & Support", icon: HelpCircle },
 ];
 
@@ -717,24 +719,20 @@ const SettingsPage = () => {
             <SubscriptionSection userId={userId} />
           )}
 
+          {/* Legal */}
+          {activeTab === "legal" && <LegalSection />}
+
           {/* Help */}
           {activeTab === "help" && (
             <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
               <h3 className="text-[16px] font-semibold mb-4" style={{ color: "#1A1A2E" }}>Help & Support</h3>
               <p className="text-[14px] mb-4" style={{ color: "#6B7094" }}>Need help? Reach out to us.</p>
               <div className="space-y-3">
-                <a href="mailto:support@tiikme.in" className="flex items-center gap-3 p-3 rounded-xl cursor-pointer" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
-                  <Copy className="w-4 h-4" style={{ color: "#E8733A" }} />
+                <a href="mailto:contact@tiikme.com" className="flex items-center gap-3 p-3 rounded-xl cursor-pointer" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
+                  <Mail className="w-4 h-4" style={{ color: "#E8733A" }} />
                   <div>
                     <p className="text-[14px] font-medium" style={{ color: "#1A1A2E" }}>Email Support</p>
-                    <p className="text-[12px]" style={{ color: "#6B7094" }}>support@tiikme.in</p>
-                  </div>
-                </a>
-                <a href="/grievance" className="flex items-center gap-3 p-3 rounded-xl cursor-pointer" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
-                  <HelpCircle className="w-4 h-4" style={{ color: "#E8733A" }} />
-                  <div>
-                    <p className="text-[14px] font-medium" style={{ color: "#1A1A2E" }}>File a Grievance</p>
-                    <p className="text-[12px]" style={{ color: "#6B7094" }}>Report issues or concerns</p>
+                    <p className="text-[12px]" style={{ color: "#6B7094" }}>contact@tiikme.com</p>
                   </div>
                 </a>
               </div>
@@ -743,6 +741,47 @@ const SettingsPage = () => {
         </div>
       </div>
     </motion.div>
+  );
+};
+
+const LegalSection = () => {
+  const { user } = useAuth();
+  const [showDelete, setShowDelete] = useState(false);
+  const items = [
+    { icon: FileText, label: "Terms of Service", desc: "Read our terms", href: "/terms", external: true },
+    { icon: Shield, label: "Privacy Policy", desc: "How we handle your data", href: "/privacy", external: true },
+    { icon: Mail, label: "Contact Support", desc: "contact@tiikme.com", href: "mailto:contact@tiikme.com", external: false },
+  ];
+  return (
+    <>
+      <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
+        <h3 className="text-[16px] font-semibold mb-1" style={{ color: "#1A1A2E" }}>Legal</h3>
+        <p className="text-[13px] mb-4" style={{ color: "#6B7094" }}>Terms, privacy, and account controls.</p>
+        <div className="space-y-3">
+          {items.map(it => (
+            <a key={it.label} href={it.href} target={it.external ? "_blank" : undefined} rel={it.external ? "noopener noreferrer" : undefined}
+              className="flex items-center gap-3 p-3 rounded-xl cursor-pointer"
+              style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
+              <it.icon className="w-4 h-4" style={{ color: "#E8733A" }} />
+              <div>
+                <p className="text-[14px] font-medium" style={{ color: "#1A1A2E" }}>{it.label}</p>
+                <p className="text-[12px]" style={{ color: "#6B7094" }}>{it.desc}</p>
+              </div>
+            </a>
+          ))}
+          <button type="button" onClick={() => setShowDelete(true)}
+            className="w-full flex items-center gap-3 p-3 rounded-xl cursor-pointer text-left"
+            style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)" }}>
+            <Trash2 className="w-4 h-4" style={{ color: "#EF4444" }} />
+            <div>
+              <p className="text-[14px] font-medium" style={{ color: "#EF4444" }}>Delete My Account</p>
+              <p className="text-[12px]" style={{ color: "#6B7094" }}>Permanently remove your account and data</p>
+            </div>
+          </button>
+        </div>
+      </div>
+      <DeleteAccountModal open={showDelete} onClose={() => setShowDelete(false)} userId={user?.id ?? null} />
+    </>
   );
 };
 

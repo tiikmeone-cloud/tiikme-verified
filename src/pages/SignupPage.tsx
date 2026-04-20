@@ -8,6 +8,8 @@ import OnboardingShell from "@/components/onboarding/OnboardingShell";
 import { checkPassword, MIN_PASSWORD_LENGTH } from "@/lib/passwordStrength";
 import { markRecentAuth } from "@/lib/idleLogout";
 
+const TERMS_VERSION = "2025-04-20";
+
 const validatePassword = (pw: string, email: string) => {
   if (pw.length < MIN_PASSWORD_LENGTH) return `Password must be at least ${MIN_PASSWORD_LENGTH} characters`;
   const result = checkPassword(pw, email ? [email, email.split("@")[0]] : []);
@@ -33,6 +35,7 @@ export default function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [agreed, setAgreed] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Persist deep-link target so the onboarding flow can return the user there
@@ -74,6 +77,8 @@ export default function SignupPage() {
     if (!confirmPassword) errs.confirmPassword = "Please confirm your password";
     else if (password !== confirmPassword) errs.confirmPassword = "Passwords do not match";
 
+    if (!agreed) errs.agreed = "You must agree to the Terms and Privacy Policy";
+
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
 
@@ -95,6 +100,16 @@ export default function SignupPage() {
     if (data.user && data.user.identities && data.user.identities.length === 0) {
       setErrors({ email: "This email is already registered. Please sign in instead." });
       return;
+    }
+
+    // Stamp consent on the profile (best-effort; trigger creates the row)
+    if (data.user?.id) {
+      supabase.from("profiles").update({
+        terms_accepted_at: new Date().toISOString(),
+        terms_version: TERMS_VERSION,
+      }).eq("id", data.user.id).then(({ error: updErr }) => {
+        if (updErr) console.warn("[Signup] Failed to stamp terms consent:", updErr.message);
+      });
     }
 
     sessionStorage.setItem("ob_email", email);
@@ -186,10 +201,27 @@ export default function SignupPage() {
             <FieldError field="confirmPassword" />
           </div>
 
+          <label className="flex items-start gap-3 cursor-pointer" style={{ fontSize: 13, color: "#4B5563", lineHeight: 1.5 }}>
+            <input
+              type="checkbox"
+              checked={agreed}
+              onChange={e => { setAgreed(e.target.checked); clearError("agreed"); }}
+              style={{ marginTop: 3, accentColor: "#E8580A", width: 16, height: 16, flexShrink: 0 }}
+            />
+            <span>
+              I have read and agree to the
+              <Link to="/terms" target="_blank" className="mx-1 underline" style={{ color: "#E8580A" }}>Terms of Service</Link>
+              and
+              <Link to="/privacy" target="_blank" className="mx-1 underline" style={{ color: "#E8580A" }}>Privacy Policy</Link>
+              of Tiikme. I confirm I am 18 years or older.
+            </span>
+          </label>
+          <FieldError field="agreed" />
+
           <button
             type="button"
-            onClick={handleSubmit} disabled={submitting}
-            className="w-full h-12 rounded-2xl text-[15px] font-bold text-white cursor-pointer transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+            onClick={handleSubmit} disabled={submitting || !agreed}
+            className="w-full h-12 rounded-2xl text-[15px] font-bold text-white cursor-pointer transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             style={{ background: "#E8580A" }}
           >
             {submitting ? "Creating..." : "Create account →"}
