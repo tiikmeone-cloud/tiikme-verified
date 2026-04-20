@@ -3,6 +3,7 @@ import VerifiedBadge from "@/components/VerifiedBadge";
 import { useNavigate } from "react-router-dom";
 import { getOrgTypeConfig } from "@/lib/orgTypes";
 import { ActivityScoreMini } from "@/components/profile/ActivityScoreCard";
+import { getDisplayFlags } from "@/utils/displayProfile";
 
 interface PersonCardProps {
   p: {
@@ -16,8 +17,10 @@ interface PersonCardProps {
     designation?: string | null;
     role_metadata?: any;
     institution_name?: string | null;
+    currently_working_at?: string | null;
     account_type?: string | null;
     activity_score?: number | null;
+    display_preference?: string | null;
   };
   strandStatus: string;
   onStrand: () => void;
@@ -26,9 +29,10 @@ interface PersonCardProps {
 
 export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonCardProps) {
   const navigate = useNavigate();
-  const name = p.full_name || p.username || "User";
+  const flags = getDisplayFlags(p);
+  const name = flags.showName ? (p.full_name || p.username || "User") : "Tiikme member";
   const designation = p.designation || p.role_metadata?.jobTitle || (p.role ? p.role.charAt(0).toUpperCase() + p.role.slice(1).replace(/_/g, " ") : "");
-  const company = p.role_metadata?.company || p.institution_name || "";
+  const company = p.currently_working_at || p.role_metadata?.company || p.institution_name || "";
 
   const isConnected = strandStatus === "accepted";
   const isPending = strandStatus === "pending";
@@ -61,10 +65,10 @@ export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonC
             </span>
           )}
         </div>
-        {designation && (
+        {flags.showRole && designation && (
           <span className="truncate" style={{ fontSize: 12, color: "var(--text-secondary)" }}>{designation}</span>
         )}
-        {p.role_subtype && (
+        {flags.showRole && p.role_subtype && (
           <span
             className="truncate"
             style={{
@@ -77,7 +81,7 @@ export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonC
             {p.role_subtype}
           </span>
         )}
-        {company && (
+        {flags.showCompany && company && (
           <span className="truncate" style={{ fontSize: 11, color: "var(--text-muted)" }}>{company}</span>
         )}
       </div>
