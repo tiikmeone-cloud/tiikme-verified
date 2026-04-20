@@ -996,14 +996,16 @@ const Profile = () => {
               </div>
 
               {/* ROW 1b: Role · Subtype */}
-              <p style={{ fontSize: 12, fontWeight: 600, color: roleColor }}>
-                {profileData.role_subtype
-                  ? `${roleLabel} · ${profileData.role_subtype}`
-                  : roleLabel}
-              </p>
+              {dpFlags.showRole && (
+                <p style={{ fontSize: 12, fontWeight: 600, color: roleColor }}>
+                  {profileData.role_subtype
+                    ? `${roleLabel} · ${profileData.role_subtype}`
+                    : roleLabel}
+                </p>
+              )}
 
               {/* ROW 1c: Role-metadata-derived inline summary (BITS Pilani · 3rd Year, etc.) */}
-              {(() => {
+              {dpFlags.showCompany && (() => {
                 const m = (profileData as any).role_metadata as Record<string, any> | null;
                 if (!m || typeof m !== "object") return null;
                 const r = profileData.role;
@@ -1012,7 +1014,14 @@ const Profile = () => {
                 else if (r === "professional") parts = [m.company, m.years_experience ? `${m.years_experience} yrs` : ""].filter(Boolean);
                 else if (r === "doctor") parts = [m.hospital, m.specialty === "Other" ? m.specialty_other : m.specialty].filter(Boolean);
                 else if (r === "faculty") parts = [m.institution, m.department].filter(Boolean);
-                if (parts.length === 0) return null;
+                if (parts.length === 0) {
+                  // Fallback to currently_working_at / institution_name
+                  const fallback = (profileData as any).currently_working_at || profileData.institution_name;
+                  if (!fallback) return null;
+                  return (
+                    <p style={{ fontSize: 12, fontWeight: 500, color: "#6B7094" }}>{fallback}</p>
+                  );
+                }
                 return (
                   <p style={{ fontSize: 12, fontWeight: 500, color: "#6B7094" }}>
                     {parts.join(" · ")}
@@ -1021,7 +1030,7 @@ const Profile = () => {
               })()}
 
               {/* ROW 2: Current position / headline */}
-              {(currentExp || headline) && (
+              {dpFlags.showRole && (currentExp || headline) && (
               <p style={{ fontSize: 13, fontWeight: 400, color: "#6B7094" }}>
                 {currentExp ? `${currentExp.job_title || currentExp.title} at ${currentExp.company_name || ""}` : headline}
               </p>
