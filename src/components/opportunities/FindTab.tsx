@@ -7,6 +7,7 @@ import SendJDModal from "@/components/opportunities/SendJDModal";
 import ReferModal from "@/components/opportunities/ReferModal";
 import { ActivityScoreMini } from "@/components/profile/ActivityScoreCard";
 import { toast } from "sonner";
+import { getDisplayFlags, safeDisplayName, formatRoleLine } from "@/utils/displayProfile";
 
 interface OTWProfile {
   id: string;
@@ -21,12 +22,17 @@ interface OTWProfile {
     full_name: string | null;
     avatar_url: string | null;
     role: string | null;
+    role_subtype?: string | null;
     headline: string | null;
+    designation?: string | null;
     location_city: string | null;
     bio: string | null;
     open_to_work?: boolean | null;
     activity_score?: number | null;
     is_verified?: boolean | null;
+    display_preference?: string | null;
+    currently_working_at?: string | null;
+    institution_name?: string | null;
   };
 }
 
@@ -52,7 +58,7 @@ export default function FindTab() {
 
       const { data: directOtw } = await supabase
         .from("profiles")
-        .select("id, full_name, avatar_url, role, headline, location_city, bio, open_to_work, activity_score, is_verified")
+        .select("id, full_name, avatar_url, role, role_subtype, headline, designation, location_city, bio, open_to_work, activity_score, is_verified, display_preference, currently_working_at, institution_name")
         .eq("open_to_work", true)
         .eq("is_public", true)
         .order("activity_score", { ascending: false, nullsFirst: false })
@@ -186,7 +192,10 @@ export default function FindTab() {
       <div className="space-y-3">
         {filtered.map(p => {
           const isExpanded = expanded === p.id;
-          const name = p.profile?.full_name || "User";
+          const flags = getDisplayFlags(p.profile);
+          const name = safeDisplayName(p.profile, "Tiikme member");
+          const roleLine = flags.showRole ? (p.desired_title || formatRoleLine(p.profile) || p.profile?.headline || "Professional") : "Professional";
+          const company = flags.showCompany ? (p.profile?.currently_working_at || p.profile?.institution_name || null) : null;
           const location = p.preferred_location || p.profile?.location_city || null;
           const isSaved = savedIds.has(p.user_id);
 
@@ -212,9 +221,10 @@ export default function FindTab() {
                       <ActivityScoreMini score={p.profile.activity_score} viewerIsOwner={user?.id === p.user_id} />
                     )}
                   </div>
-                  <p className="text-[12px] truncate" style={{ color: "var(--text-2)" }}>
-                    {p.desired_title || p.profile?.headline || p.profile?.role || "Professional"}
-                  </p>
+                  <p className="text-[12px] truncate" style={{ color: "var(--text-2)" }}>{roleLine}</p>
+                  {company && (
+                    <p className="text-[11px] truncate" style={{ color: "var(--text-3)" }}>{company}</p>
+                  )}
                   {location && (
                     <span className="text-[11px] flex items-center gap-0.5 mt-0.5" style={{ color: "var(--text-3)" }}>
                       <MapPin className="w-3 h-3" />{location}

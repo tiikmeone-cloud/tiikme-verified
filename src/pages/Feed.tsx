@@ -27,6 +27,7 @@ import PrimaryTabs from "@/components/filters/PrimaryTabs";
 import FilterBar, { useScrollPastThreshold } from "@/components/filters/FilterBar";
 import BottomSheet from "@/components/ui/BottomSheet";
 import { useFilterParam } from "@/lib/useFilterParam";
+import { getDisplayFlags, formatRoleLine } from "@/utils/displayProfile";
 
 /* ─── HELPERS ─── */
 const roleColorMap: Record<string, string> = {
@@ -292,11 +293,18 @@ const PostCard = ({
 
   const isOrgPost = !!post.posted_by_org && !!post.org;
   const author = post.author;
+  const authorFlags = getDisplayFlags(author);
   const displayAvatar = isOrgPost ? post.org?.logo_url : author?.avatar_url;
-  const displayName = isOrgPost ? post.org?.name : (author?.full_name || author?.username || "Unknown");
+  const displayName = isOrgPost
+    ? post.org?.name
+    : (authorFlags.showName ? (author?.full_name || author?.username || "Unknown") : "Tiikme member");
   const profileLink = isOrgPost ? `/org/${post.org?.slug}` : `/app/profile/${author?.id || ""}`;
   const viaName = isOrgPost && post.poster_profile?.full_name ? post.poster_profile.full_name : null;
-  const companyName = !isOrgPost && author?.institution_name && post.show_company_badge !== false ? author.institution_name : null;
+  const companyLine = !isOrgPost && authorFlags.showCompany
+    ? (author?.currently_working_at || author?.institution_name || null)
+    : null;
+  const companyName = !isOrgPost && companyLine && post.show_company_badge !== false ? companyLine : null;
+  const roleLine = !isOrgPost && authorFlags.showRole ? formatRoleLine(author) : null;
   const timeAgo = post.created_at ? getTimeAgo(new Date(post.created_at)) : "";
   const isOwn = user?.id === post.author_id;
   const isEdited = post.is_edited;
@@ -426,6 +434,12 @@ const PostCard = ({
             <div className="flex items-center flex-wrap" style={{ gap: "0 5px", lineHeight: "20px" }}>
               <Link to={profileLink} className="hover:underline shrink-0" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{displayName}</Link>
               {(author?.is_verified || post.org?.is_verified) && <VerifiedBadge size={14} />}
+              {roleLine && (
+                <>
+                  <span className="shrink-0" style={{ fontSize: 13, color: "#9CA3C0" }}>·</span>
+                  <span style={{ fontSize: 13, color: "#6B7094" }}>{roleLine}</span>
+                </>
+              )}
               {companyName && (
                 <>
                   <span className="shrink-0" style={{ fontSize: 13, color: "#9CA3C0" }}>·</span>

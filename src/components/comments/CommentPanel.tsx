@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import MentionText from "@/components/feed/MentionText";
 import { sendNotification } from "@/lib/notify";
+import { safeDisplayName } from "@/utils/displayProfile";
 
 /**
  * Shared scrollable comment panel for both feed posts (post_comments)
@@ -21,6 +22,7 @@ interface Author {
   full_name: string | null;
   avatar_url: string | null;
   role: string | null;
+  display_preference?: string | null;
 }
 
 interface CommentRow {
@@ -61,7 +63,7 @@ async function attachAuthors(rows: CommentRow[]): Promise<CommentRow[]> {
   if (!rows.length) return rows;
   const ids = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
   if (!ids.length) return rows;
-  const { data } = await supabase.from("profiles").select("id, full_name, avatar_url, role").in("id", ids);
+  const { data } = await supabase.from("profiles").select("id, full_name, avatar_url, role, display_preference").in("id", ids);
   const map: Record<string, Author> = {};
   for (const p of data || []) map[p.id] = p as Author;
   return rows.map(r => ({ ...r, author: map[r.user_id] || null }));
@@ -254,12 +256,12 @@ const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post"
     return (
       <div key={c.id} className="flex group" style={{ gap: 8, padding: "6px 0", paddingLeft: isReply ? 36 : 0, alignItems: "flex-start" }}>
         <div className="shrink-0" style={{ marginTop: 2 }}>
-          <AvatarSquare src={c.author?.avatar_url} name={c.author?.full_name || "User"} size={isReply ? 24 : 28} />
+          <AvatarSquare src={c.author?.avatar_url} name={safeDisplayName(c.author)} size={isReply ? 24 : 28} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center" style={{ gap: 6 }}>
             <Link to={`/app/profile/${c.user_id}`} className="hover:underline" style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>
-              {c.author?.full_name || "User"}
+              {safeDisplayName(c.author, "Tiikme member")}
             </Link>
             <span style={{ fontSize: 11, color: "#9CA3C0" }}>·</span>
             <span style={{ fontSize: 11, color: "#9CA3C0" }}>{timeAgo(c.created_at)}</span>
