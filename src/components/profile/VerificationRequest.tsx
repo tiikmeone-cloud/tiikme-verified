@@ -398,20 +398,25 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
             <div className="shrink-0 flex items-center gap-3" style={{
               padding: "12px 20px", borderTop: "1px solid rgba(0,0,0,0.06)", background: "#fff",
             }}>
-              {step === "confirm" && (
-                <button type="button"
-                  disabled={!selectedVerifier || submitting}
-                  onClick={() => handleSubmit(selectedVerifier.user_id, selectedVerifier.profile?.full_name || "")}
-                  className="cursor-pointer flex-1"
-                  style={{
-                    height: 40, borderRadius: 10, fontSize: 13, fontWeight: 600,
-                    background: selectedVerifier ? "linear-gradient(135deg, #E8733A, #FF6B9D)" : "#ddd",
-                    color: selectedVerifier ? "#fff" : "#999", border: "none",
-                    display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                  }}>
-                  <Send className="w-3.5 h-3.5" /> {submitting ? "Sending..." : "Send Request"}
-                </button>
-              )}
+              {step === "confirm" && (() => {
+                const noAdmins = verifiers.length === 0;
+                const canSend = noAdmins || !!selectedVerifier;
+                const label = noAdmins ? "Submit for Tiikme review" : "Send Request";
+                return (
+                  <button type="button"
+                    disabled={!canSend || submitting}
+                    onClick={() => handleSubmit(selectedVerifier?.user_id || null, selectedVerifier?.profile?.full_name || "")}
+                    className="cursor-pointer flex-1"
+                    style={{
+                      height: 40, borderRadius: 10, fontSize: 13, fontWeight: 600,
+                      background: canSend ? "linear-gradient(135deg, #E8733A, #FF6B9D)" : "#ddd",
+                      color: canSend ? "#fff" : "#999", border: "none",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                    }}>
+                    <Send className="w-3.5 h-3.5" /> {submitting ? "Sending..." : label}
+                  </button>
+                );
+              })()}
               {step === "search" && (
                 <button type="button" onClick={() => setExpanded(false)}
                   className="cursor-pointer flex-1"
