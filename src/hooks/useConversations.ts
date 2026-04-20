@@ -336,12 +336,38 @@ export function useConversations(userId: string | undefined) {
     if (!activeConvoId) return;
     const channel = supabase
       .channel(`pings:${activeConvoId}`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "pings", filter: `conversation_id=eq.${activeConvoId}` }, (payload) => {
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "pings", filter: `conversation_id=eq.${activeConvoId}` }, async (payload) => {
         const newMsg = payload.new as any;
         if (newMsg.sender_id !== userId) {
+          // Decrypt if needed before adding to UI
+          let content = newMsg.content;
+          let decryption_failed = false;
+          if (newMsg.is_encrypted && newMsg.encrypted_body && newMsg.nonce && userId) {
+            try {
+              const kp = await getOrCreateKeypair(userId);
+              const { data: sender } = await supabase.from("profiles").select("public_key").eq("id", newMsg.sender_id).maybeSingle();
+              const senderPub = (sender as any)?.public_key;
+              if (senderPub) {
+                content = await decryptMessage(newMsg.encrypted_body, newMsg.nonce, senderPub, kp.secretKey);
+              } else {
+                content = "[Cannot decrypt — sender has no published key]";
+                decryption_failed = true;
+              }
+            } catch {
+              content = "[Cannot decrypt]";
+              decryption_failed = true;
+            }
+          }
           setMessages(prev => {
             if (prev.some(m => m.id === newMsg.id)) return prev;
-            return [...prev, { ...newMsg, is_deleted: newMsg.is_deleted || false, status: "delivered" as const }];
+            return [...prev, {
+              ...newMsg,
+              content,
+              is_deleted: newMsg.is_deleted || false,
+              is_encrypted: !!newMsg.is_encrypted,
+              decryption_failed,
+              status: "delivered" as const,
+            }];
           });
           supabase.from("pings").update({ is_read: true }).eq("id", newMsg.id).then(() => {});
         }
@@ -351,7 +377,8 @@ export function useConversations(userId: string | undefined) {
         setMessages(prev => prev.map(m =>
           m.id === updated.id ? {
             ...m,
-            content: updated.content,
+            // Don't overwrite locally-decrypted content with ciphertext from realtime
+            content: updated.is_deleted ? updated.content : m.content,
             is_read: updated.is_read,
             is_deleted: updated.is_deleted || false,
             attachment_url: updated.is_deleted ? null : (updated.attachment_url || m.attachment_url),
