@@ -1081,12 +1081,26 @@ const Profile = () => {
 
       <div style={{ maxWidth: 960, margin: "0 auto", padding: 16 }}>
         {/* ── PROFILE INFO CARD (no cover) ── */}
-        <div className="glass-card" style={{
+        <div className="glass-card relative" style={{
           padding: 20, borderRadius: 16,
           background: "rgba(255,255,255,0.25)", backdropFilter: "blur(20px)",
           border: "1px solid rgba(255,255,255,0.40)",
           boxShadow: "0 8px 32px rgba(26,26,78,0.08), inset 0 1px 0 rgba(255,255,255,0.60)",
         }}>
+          {isOwnProfile && (
+            <Link
+              to="/app/settings"
+              aria-label="Settings"
+              className="absolute flex items-center justify-center cursor-pointer active:scale-95"
+              style={{
+                top: 12, right: 12, width: 36, height: 36, borderRadius: 10,
+                background: "rgba(255,255,255,0.40)", border: "1px solid rgba(255,255,255,0.50)",
+                color: "#1A1A2E", zIndex: 5,
+              }}
+            >
+              <Settings style={{ width: 18, height: 18 }} strokeWidth={1.8} />
+            </Link>
+          )}
           {(() => {
             const otwVis = (profileData as any).otw_visibility || "recruiters";
             const viewerIsRecruiter = authProfile?.account_type === "institution";
@@ -1281,8 +1295,6 @@ const Profile = () => {
             {[
               { label: "Circles", icon: Layers, path: "/app/circles" },
               { label: "Connections", icon: Link2, path: "/app/connections" },
-              { label: "Settings", icon: Settings, path: "/app/settings" },
-              { label: "Settings", icon: Settings, path: "/app/settings" },
             ].map((item, i, arr) => (
               <Link
                 key={item.path}
