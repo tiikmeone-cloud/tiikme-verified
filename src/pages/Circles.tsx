@@ -491,6 +491,13 @@ function CircleComposer({ circle, onClose, onPosted }: any) {
           </>
         )}
       </div>
+      <SoftWarnModal
+        open={softWarn.open}
+        category={softWarn.category}
+        matchedTerm={softWarn.matchedTerm}
+        onConfirm={() => { setSoftWarn({ open: false }); proceedInsert(); }}
+        onCancel={() => setSoftWarn({ open: false })}
+      />
     </div>
   );
 }
@@ -498,6 +505,6 @@ function CircleComposer({ circle, onClose, onPosted }: any) {
 // -------- ROUTER --------
 export default function Circles() {
   const { circleSlug } = useParams<{ circleSlug?: string }>();
-  if (circleSlug === "create") return <CreateCircle />;
+  if (circleSlug === "create") return <CircleCreatePage />;
   return circleSlug ? <CircleDetail slug={circleSlug} /> : <CirclesDiscovery />;
 }
