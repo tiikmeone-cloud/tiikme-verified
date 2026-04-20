@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,16 +13,19 @@ interface DeletePostDialogProps {
 
 const DeletePostDialog = ({ postId, onClose, onDeleted }: DeletePostDialogProps) => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [deleting, setDeleting] = useState(false);
 
   const handleDelete = async () => {
     if (!user) { toast.error("You must be signed in"); return; }
     setDeleting(true);
-    // Clean up related data first
+    // Clean up related data first (works for originals AND reposts since author_id is the deleter)
     await Promise.allSettled([
       supabase.from("post_reactions").delete().eq("post_id", postId),
       supabase.from("post_comments").delete().eq("post_id", postId),
       supabase.from("post_reposts").delete().eq("post_id", postId),
+      // If this row is itself a repost, also clear the post_reposts pointer row
+      supabase.from("post_reposts").delete().eq("reposted_by", user.id).eq("post_id", postId),
     ]);
     const { error } = await supabase
       .from("posts")
@@ -29,8 +33,25 @@ const DeletePostDialog = ({ postId, onClose, onDeleted }: DeletePostDialogProps)
       .eq("id", postId)
       .eq("author_id", user.id);
     setDeleting(false);
-    if (error) { toast.error(error.message || "Failed to delete"); return; }
-    toast.success("Post deleted");
+    if (error) {
+      console.error("[post delete]", error);
+      toast.error("Could not delete. Try again.");
+      return;
+    }
+    // Optimistic cache eviction across feed and profile views
+    queryClient.setQueriesData({ queryKey: ["feed"] }, (old: any) => {
+      if (!old?.pages) return old;
+      return {
+        ...old,
+        pages: old.pages.map((page: any) => ({
+          ...page,
+          posts: (page.posts || []).filter((p: any) => p.id !== postId),
+        })),
+      };
+    });
+    queryClient.invalidateQueries({ queryKey: ["feed"] });
+    queryClient.invalidateQueries({ queryKey: ["profile-posts"] });
+    toast.success("Deleted");
     onDeleted(postId);
     onClose();
   };
