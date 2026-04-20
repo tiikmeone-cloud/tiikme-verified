@@ -29,9 +29,12 @@ const SignIn = () => {
     const { markRecentAuth } = await import("@/lib/idleLogout");
     markRecentAuth();
 
-    // Honor ?redirect= deep link first, otherwise route by account type
-    if (safeRedirect) {
-      navigate(safeRedirect);
+    // Honor ?redirect= (or pending post_auth_redirect) deep link first, otherwise route by account type
+    const stored = sessionStorage.getItem("post_auth_redirect");
+    const finalRedirect = safeRedirect || (stored && stored.startsWith("/") ? stored : null);
+    if (finalRedirect) {
+      sessionStorage.removeItem("post_auth_redirect");
+      navigate(finalRedirect);
     } else {
       const userId = data.user?.id;
       if (userId) {
