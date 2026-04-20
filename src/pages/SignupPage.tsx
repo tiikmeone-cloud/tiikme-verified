@@ -1,27 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import OnboardingShell from "@/components/onboarding/OnboardingShell";
+import { checkPassword, MIN_PASSWORD_LENGTH } from "@/lib/passwordStrength";
+import { markRecentAuth } from "@/lib/idleLogout";
 
-const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
-
-const validatePassword = (pw: string) => {
-  if (pw.length < 8) return "Password must be at least 8 characters";
-  if (!/[A-Z]/.test(pw)) return "Must contain at least 1 uppercase letter";
-  if (!/\d/.test(pw)) return "Must contain at least 1 number";
+const validatePassword = (pw: string, email: string) => {
+  if (pw.length < MIN_PASSWORD_LENGTH) return `Password must be at least ${MIN_PASSWORD_LENGTH} characters`;
+  const result = checkPassword(pw, email ? [email, email.split("@")[0]] : []);
+  if (!result.ok) return result.feedback || "Choose a stronger password";
   return null;
-};
-
-const getStrength = (pw: string) => {
-  if (pw.length < 8) return { level: 0, label: "Weak", color: "#DC2626", pct: 20 };
-  const hasMixed = /[a-z]/.test(pw) && /[A-Z]/.test(pw) && /\d/.test(pw);
-  const hasSpecial = /[^a-zA-Z0-9]/.test(pw);
-  if (pw.length >= 12 && hasMixed && hasSpecial) return { level: 2, label: "Strong", color: "#10B981", pct: 100 };
-  if (hasMixed) return { level: 1, label: "Fair", color: "#F59E0B", pct: 60 };
-  return { level: 0, label: "Weak", color: "#DC2626", pct: 30 };
 };
 
 const inputStyle: React.CSSProperties = {
@@ -47,7 +38,11 @@ export default function SignupPage() {
     }
   }, [user]);
 
-  const strength = getStrength(password);
+  const strength = useMemo(
+    () => checkPassword(password, email ? [email, email.split("@")[0]] : []),
+    [password, email]
+  );
+  const strengthPct = ((strength.score + 1) / 5) * 100;
 
   const clearError = (field: string) => setErrors(p => ({ ...p, [field]: "" }));
 
@@ -64,7 +59,7 @@ export default function SignupPage() {
     if (!email) errs.email = "Email is required";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errs.email = "Invalid email format";
 
-    const pwErr = validatePassword(password);
+    const pwErr = validatePassword(password, email);
     if (!password) errs.password = "Password is required";
     else if (pwErr) errs.password = pwErr;
 
@@ -95,6 +90,7 @@ export default function SignupPage() {
     }
 
     sessionStorage.setItem("ob_email", email);
+    markRecentAuth();
     navigate("/verify-email");
   };
 
@@ -145,7 +141,7 @@ export default function SignupPage() {
           <div>
             <div className="relative">
               <input
-                type={showPw ? "text" : "password"} placeholder="Password (min 8 chars, 1 uppercase, 1 number)"
+                type={showPw ? "text" : "password"} placeholder={`Password (min ${MIN_PASSWORD_LENGTH} chars, mix letters/numbers)`}
                 value={password} onChange={e => { setPassword(e.target.value); clearError("password"); }}
                 style={{ ...(errors.password ? inputErrorStyle : inputStyle), paddingRight: 44 }}
               />
@@ -162,9 +158,11 @@ export default function SignupPage() {
             {password.length > 0 && !errors.password && (
               <div className="space-y-1.5 mt-2">
                 <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "#F3F4F6" }}>
-                  <div className="h-full rounded-full transition-all duration-300" style={{ width: `${strength.pct}%`, background: strength.color }} />
+                  <div className="h-full rounded-full transition-all duration-300" style={{ width: `${strengthPct}%`, background: strength.color }} />
                 </div>
-                <p className="text-[12px] font-medium" style={{ color: strength.color }}>{strength.label}</p>
+                <p className="text-[12px] font-medium" style={{ color: strength.color }}>
+                  {strength.label}{strength.feedback ? ` — ${strength.feedback}` : ""}
+                </p>
               </div>
             )}
           </div>
