@@ -208,6 +208,18 @@ export default function CircleCreate() {
           </div>
         )}
 
+        {linkedOrgId && (
+          <div
+            className="p-3 rounded-xl mb-4 flex items-center gap-2"
+            style={{ background: "rgba(232,115,58,0.08)", border: "1px solid rgba(232,115,58,0.30)" }}
+          >
+            <Users className="w-4 h-4" style={{ color: "#9A4C1F" }} />
+            <p className="text-[12px] font-semibold" style={{ color: "#9A4C1F" }}>
+              This circle will be linked to <strong>{linkedOrgName || "your organization"}</strong>.
+            </p>
+          </div>
+        )}
+
         {/* Type */}
         <p className="text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: "var(--text-3)" }}>Type</p>
         <div className="grid grid-cols-2 gap-2 mb-4">
