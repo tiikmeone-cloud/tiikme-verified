@@ -5,7 +5,7 @@ import { MapPin, ChevronDown, ChevronUp, Sparkles, Search as SearchIcon, Send, L
 import { useAuth } from "@/contexts/AuthContext";
 import SendJDModal from "@/components/opportunities/SendJDModal";
 import ReferModal from "@/components/opportunities/ReferModal";
-import ActivityScoreRing from "@/components/ActivityScoreRing";
+import { ActivityScoreMini } from "@/components/profile/ActivityScoreCard";
 import { toast } from "sonner";
 
 interface OTWProfile {
@@ -186,10 +186,8 @@ export default function FindTab() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="text-[14px] font-semibold truncate" style={{ color: "var(--text-1)" }}>{name}</p>
-                    {p.profile?.activity_score != null ? (
-                      <ActivityScoreRing score={p.profile.activity_score} size={28} strokeWidth={3} />
-                    ) : (
-                      <span className="text-[11px]" style={{ color: "var(--text-3)" }}>—</span>
+                    {p.profile?.activity_score != null && (
+                      <ActivityScoreMini score={p.profile.activity_score} viewerIsOwner={user?.id === p.user_id} />
                     )}
                   </div>
                   <p className="text-[12px] truncate" style={{ color: "var(--text-2)" }}>
