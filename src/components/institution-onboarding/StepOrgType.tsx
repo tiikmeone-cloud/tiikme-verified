@@ -98,12 +98,4 @@ export default function StepOrgType({ form, update, onNext }: Props) {
     </div>
   );
 }
-        <p className="text-[11px] mt-2" style={{ color: "var(--text-3)" }}>
-          Used to surface your page in the right discovery sections.
-        </p>
-      </div>
 
-      <Button onClick={handleNext} size="xl" className="w-full">Continue →</Button>
-    </div>
-  );
-}
