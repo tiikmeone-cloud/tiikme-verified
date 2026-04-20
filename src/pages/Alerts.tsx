@@ -178,8 +178,12 @@ const Alerts = () => {
   const unreadCount = alerts.filter(a => !a.is_read).length;
   const filteredAlerts = activeTab === "Unread" ? alerts.filter(a => !a.is_read) : alerts;
 
+  const VERIFICATION_TYPES = new Set(["verification_approved", "verification_request", "verification_rejected", "verification_declined"]);
+  const verificationAlerts = filteredAlerts.filter(a => VERIFICATION_TYPES.has(a.type));
+  const otherAlerts = filteredAlerts.filter(a => !VERIFICATION_TYPES.has(a.type));
+
   const groups: Record<string, any[]> = {};
-  filteredAlerts.forEach(a => {
+  otherAlerts.forEach(a => {
     const g = getGroup(a.created_at);
     if (!groups[g]) groups[g] = [];
     groups[g].push(a);
@@ -225,7 +229,10 @@ const Alerts = () => {
         ))}
       </div>
 
-      {Object.entries(groups).map(([group, groupAlerts]) => (
+      {[
+        ...(verificationAlerts.length > 0 ? [["Verifications", verificationAlerts] as [string, any[]]] : []),
+        ...Object.entries(groups),
+      ].map(([group, groupAlerts]) => (
         <div key={group} className="mb-6">
           <p className="text-[11px] font-bold tracking-wider uppercase mb-2 px-1" style={{ color: "#6B7094" }}>{group}</p>
           <div style={{ borderRadius: 12, overflow: "hidden", border: "1px solid #F1F3F5", background: "#FFFFFF" }}>
