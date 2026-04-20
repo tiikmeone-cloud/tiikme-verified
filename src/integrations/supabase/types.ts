@@ -2308,10 +2308,13 @@ export type Database = {
           conversation_id: string | null
           created_at: string | null
           deleted_at: string | null
+          encrypted_body: string | null
           id: string
           is_deleted: boolean | null
+          is_encrypted: boolean | null
           is_opener: boolean | null
           is_read: boolean | null
+          nonce: string | null
           pdf_url: string | null
           sender_id: string | null
           work_item_id: string | null
@@ -2325,10 +2328,13 @@ export type Database = {
           conversation_id?: string | null
           created_at?: string | null
           deleted_at?: string | null
+          encrypted_body?: string | null
           id?: string
           is_deleted?: boolean | null
+          is_encrypted?: boolean | null
           is_opener?: boolean | null
           is_read?: boolean | null
+          nonce?: string | null
           pdf_url?: string | null
           sender_id?: string | null
           work_item_id?: string | null
@@ -2342,10 +2348,13 @@ export type Database = {
           conversation_id?: string | null
           created_at?: string | null
           deleted_at?: string | null
+          encrypted_body?: string | null
           id?: string
           is_deleted?: boolean | null
+          is_encrypted?: boolean | null
           is_opener?: boolean | null
           is_read?: boolean | null
+          nonce?: string | null
           pdf_url?: string | null
           sender_id?: string | null
           work_item_id?: string | null
@@ -2853,6 +2862,7 @@ export type Database = {
           is_moderator: boolean
           is_public: boolean | null
           is_verified: boolean | null
+          key_created_at: string | null
           languages: string[] | null
           location_city: string | null
           location_state: string | null
@@ -2864,6 +2874,7 @@ export type Database = {
           phone: string | null
           phone_hash: string | null
           privacy_settings: Json | null
+          public_key: string | null
           referred_by: string | null
           role: string | null
           role_metadata: Json | null
@@ -2904,6 +2915,7 @@ export type Database = {
           is_moderator?: boolean
           is_public?: boolean | null
           is_verified?: boolean | null
+          key_created_at?: string | null
           languages?: string[] | null
           location_city?: string | null
           location_state?: string | null
@@ -2915,6 +2927,7 @@ export type Database = {
           phone?: string | null
           phone_hash?: string | null
           privacy_settings?: Json | null
+          public_key?: string | null
           referred_by?: string | null
           role?: string | null
           role_metadata?: Json | null
@@ -2955,6 +2968,7 @@ export type Database = {
           is_moderator?: boolean
           is_public?: boolean | null
           is_verified?: boolean | null
+          key_created_at?: string | null
           languages?: string[] | null
           location_city?: string | null
           location_state?: string | null
@@ -2966,6 +2980,7 @@ export type Database = {
           phone?: string | null
           phone_hash?: string | null
           privacy_settings?: Json | null
+          public_key?: string | null
           referred_by?: string | null
           role?: string | null
           role_metadata?: Json | null
