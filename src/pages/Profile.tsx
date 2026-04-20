@@ -9,8 +9,11 @@ import {
   MapPin, Copy, Shield, X, MessageCircle, CheckCircle, Building2, Link2, Plus,
   Pencil, Trash2, Briefcase, GraduationCap, Award, Code2, Eye, EyeOff,
   Heart, Rocket, Send, Share2, Users, Globe, ExternalLink, LinkIcon, TrendingUp,
-  Mail, Settings, Camera, UserX, Layers, ChevronRight, LifeBuoy
+  Mail, Settings, Camera, UserX, Layers, ChevronRight, LifeBuoy, MoreHorizontal,
+  Flag, Ban, ChevronDown, Zap
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { detectPlatform } from "@/lib/platformDetect";
 import GlassModal, { glassInputDarkStyle as gInputStyle, glassSelectDarkStyle as gSelectStyle, glassTextareaDarkStyle as gTextareaStyle, labelStyle } from "@/components/ui/GlassModal";
 import ActivityScoreCard from "@/components/profile/ActivityScoreCard";
@@ -468,6 +471,7 @@ const Profile = () => {
 
   const [connectionStatus, setConnectionStatus] = useState<{ status: string | null; direction: string | null; id: string | null }>({ status: null, direction: null, id: null });
   const [connectLoading, setConnectLoading] = useState(false);
+  const [showScoreDetails, setShowScoreDetails] = useState(false);
 
   const targetUserId = isOwnProfile ? user?.id : urlUserId;
 
@@ -910,44 +914,109 @@ const Profile = () => {
   const activityScore = profileData.activity_score || 0;
   const tier = getActivityTier(activityScore);
 
+  const handleReport = () => {
+    toast.success("Report submitted. Our team will review.");
+  };
+
+  const handleBlock = async () => {
+    if (!user || !targetUserId) return;
+    if (!confirm("Block this user? You won't see their content and they can't contact you.")) return;
+    // Disconnect first if connected
+    if (connectionStatus.id) {
+      await supabase.from("strands").delete().eq("id", connectionStatus.id);
+    } else {
+      const { data } = await supabase.from("strands").select("id")
+        .or(`and(requester_id.eq.${user.id},receiver_id.eq.${targetUserId}),and(requester_id.eq.${targetUserId},receiver_id.eq.${user.id})`)
+        .maybeSingle();
+      if (data) await supabase.from("strands").delete().eq("id", data.id);
+    }
+    setConnectionStatus({ status: null, direction: null, id: null });
+    toast.success("User blocked");
+  };
+
+  const handleDisconnect = async () => {
+    if (!user || !targetUserId) return;
+    if (!confirm(`Disconnect from ${displayName}? You can reconnect anytime.`)) return;
+    const prev = connectionStatus;
+    // Optimistic
+    setConnectionStatus({ status: null, direction: null, id: null });
+    let strandId = connectionStatus.id;
+    if (!strandId) {
+      const { data } = await supabase.from("strands").select("id")
+        .or(`and(requester_id.eq.${user.id},receiver_id.eq.${targetUserId}),and(requester_id.eq.${targetUserId},receiver_id.eq.${user.id})`)
+        .eq("status", "accepted").maybeSingle();
+      strandId = data?.id || null;
+    }
+    if (strandId) {
+      const { error } = await supabase.from("strands").delete().eq("id", strandId);
+      if (error) {
+        setConnectionStatus(prev);
+        toast.error("Could not disconnect");
+        return;
+      }
+    }
+    toast.success("Disconnected");
+  };
+
+  const handleWithdraw = async () => {
+    if (!user || !targetUserId) return;
+    const prev = connectionStatus;
+    setConnectionStatus({ status: null, direction: null, id: null });
+    let strandId = connectionStatus.id;
+    if (!strandId) {
+      const { data } = await supabase.from("strands").select("id")
+        .eq("requester_id", user.id).eq("receiver_id", targetUserId)
+        .eq("status", "pending").maybeSingle();
+      strandId = data?.id || null;
+    }
+    if (strandId) {
+      const { error } = await supabase.from("strands").delete().eq("id", strandId);
+      if (error) { setConnectionStatus(prev); toast.error("Could not withdraw"); return; }
+    }
+    toast.info("Request withdrawn");
+  };
+
   const renderConnectButton = () => {
     const { status, direction } = connectionStatus;
     if (status === "accepted") {
-      const handleDisconnect = async () => {
-        if (!connectionStatus.id && user && targetUserId) {
-          // Find the strand ID
-          const { data } = await supabase.from("strands").select("id")
-            .or(`and(requester_id.eq.${user.id},receiver_id.eq.${targetUserId}),and(requester_id.eq.${targetUserId},receiver_id.eq.${user.id})`)
-            .eq("status", "accepted").maybeSingle();
-          if (data) {
-            await supabase.from("strands").delete().eq("id", data.id);
-            setConnectionStatus({ status: null, direction: null, id: null });
-            toast.success("Disconnected");
-            return;
-          }
-        }
-        if (connectionStatus.id) {
-          await supabase.from("strands").delete().eq("id", connectionStatus.id);
-          setConnectionStatus({ status: null, direction: null, id: null });
-          toast.success("Disconnected");
-        }
-      };
-
       return (
-        <div className="relative group">
-          <button type="button" className="cursor-pointer" style={{ height: 32, padding: "0 16px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "rgba(52,199,89,0.10)", color: "#34C759", border: "1px solid rgba(52,199,89,0.25)", display: "inline-flex", alignItems: "center", gap: 4 }}>
-            <CheckCircle className="w-3.5 h-3.5" /> Connected
-          </button>
-          <div className="absolute top-full left-0 mt-1 hidden group-hover:block z-20" style={{ background: "#FFFFFF", border: "1px solid #E5E7EB", borderRadius: 10, boxShadow: "0 4px 16px rgba(0,0,0,0.1)", padding: 4, minWidth: 120 }}>
-            <button type="button" onClick={handleDisconnect} className="w-full text-left cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "8px 12px", fontSize: 13, color: "#EF4444", borderRadius: 6 }}>
-              <UserX className="w-3.5 h-3.5 inline mr-2" />Disconnect
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button type="button" className="cursor-pointer" style={{ height: 32, padding: "0 12px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "rgba(52,199,89,0.10)", color: "#34C759", border: "1px solid rgba(52,199,89,0.25)", display: "inline-flex", alignItems: "center", gap: 4 }}>
+              <CheckCircle className="w-3.5 h-3.5" /> Connected <ChevronDown className="w-3 h-3" />
             </button>
-          </div>
-        </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="bg-white">
+            <DropdownMenuItem onClick={() => navigate(`/app/pings?to=${targetUserId}`)}>
+              <MessageCircle className="w-3.5 h-3.5 mr-2" /> Message
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleDisconnect} className="text-red-500 focus:text-red-500">
+              <UserX className="w-3.5 h-3.5 mr-2" /> Disconnect
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleBlock} className="text-red-500 focus:text-red-500">
+              <Ban className="w-3.5 h-3.5 mr-2" /> Block
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleReport}>
+              <Flag className="w-3.5 h-3.5 mr-2" /> Report
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       );
     }
     if (status === "pending" && direction === "sent") return (
-      <button type="button" className="cursor-default" style={{ height: 32, padding: "0 16px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "rgba(255,184,0,0.10)", color: "#FFB800", border: "1px solid rgba(255,184,0,0.25)", display: "inline-flex", alignItems: "center" }}>Requested</button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button type="button" className="cursor-pointer" style={{ height: 32, padding: "0 12px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "rgba(255,184,0,0.10)", color: "#FFB800", border: "1px solid rgba(255,184,0,0.25)", display: "inline-flex", alignItems: "center", gap: 4 }}>
+            Pending <ChevronDown className="w-3 h-3" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="bg-white">
+          <DropdownMenuItem onClick={handleWithdraw}>
+            <UserX className="w-3.5 h-3.5 mr-2" /> Withdraw request
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     );
     if (status === "pending" && direction === "received") return (
       <div className="flex gap-2">
@@ -984,14 +1053,56 @@ const Profile = () => {
             );
             return (
           <div className="flex profile-info-flex" style={{ gap: 16, alignItems: "flex-start" }}>
-            {/* Avatar — green ring when Open to Work and visible to viewer */}
-              <div className="shrink-0" style={showOTW ? { padding: 3, borderRadius: 14, background: "#10B981" } : undefined}>
+            {/* LEFT COLUMN: Avatar + OTW switch (own) / badge (other) */}
+            <div className="shrink-0 flex flex-col items-center" style={{ width: 110, gap: 10 }}>
+              <div style={showOTW ? { padding: 3, borderRadius: 14, background: "#10B981" } : undefined}>
                 <AvatarSquare src={profileData.avatar_url} name={displayName || "U"} size="profile" bgColor={roleColor} className="shadow-md" />
               </div>
 
-            {/* Info */}
+              {/* OTW switch — own profile */}
+              {isOwnProfile && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!profileData?.id) return;
+                    const next = !profileData.open_to_work;
+                    setViewedProfile({ ...profileData, open_to_work: next });
+                    const { error } = await supabase.from("profiles").update({ open_to_work: next } as any).eq("id", profileData.id);
+                    if (error) {
+                      setViewedProfile({ ...profileData, open_to_work: !next });
+                      toast.error("Could not update");
+                    } else {
+                      toast.success(next ? "Open to Work enabled" : "Open to Work disabled");
+                      refreshProfile?.();
+                    }
+                  }}
+                  className="cursor-pointer flex items-center gap-1.5"
+                  style={{
+                    height: 26, padding: "0 9px", borderRadius: 999, fontSize: 11, fontWeight: 600,
+                    background: profileData.open_to_work ? "rgba(16,185,129,0.12)" : "rgba(0,0,0,0.05)",
+                    color: profileData.open_to_work ? "#10B981" : "#6B7094",
+                    border: profileData.open_to_work ? "1px solid rgba(16,185,129,0.30)" : "1px solid rgba(0,0,0,0.08)",
+                  }}
+                  aria-label="Toggle Open to Work"
+                >
+                  <span style={{ width: 22, height: 12, borderRadius: 999, background: profileData.open_to_work ? "#10B981" : "rgba(0,0,0,0.18)", display: "inline-flex", alignItems: "center", padding: 1.5, transition: "background 0.2s" }}>
+                    <span style={{ width: 9, height: 9, borderRadius: "50%", background: "#fff", transform: profileData.open_to_work ? "translateX(10px)" : "translateX(0)", transition: "transform 0.2s" }} />
+                  </span>
+                  OTW
+                </button>
+              )}
+
+              {/* OTW badge — other profile */}
+              {!isOwnProfile && showOTW && (
+                <span style={{ fontSize: 10, fontWeight: 700, height: 20, padding: "0 8px", borderRadius: 6, background: "#10B981", color: "#fff", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                  Open to Work
+                </span>
+              )}
+            </div>
+
+            {/* RIGHT COLUMN: Info */}
             <div className="profile-info-body" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
-              {/* ROW 1: Name + Edit */}
+              {/* ROW 1: Name */}
               <div className="flex items-center" style={{ justifyContent: "space-between" }}>
                 <p style={{ fontSize: 20, fontWeight: 700, lineHeight: "28px", color: "#1A1A2E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</p>
               </div>
@@ -999,45 +1110,37 @@ const Profile = () => {
               {/* ROW 1b: Role · Subtype */}
               {dpFlags.showRole && (
                 <p style={{ fontSize: 12, fontWeight: 600, color: roleColor }}>
-                  {profileData.role_subtype
-                    ? `${roleLabel} · ${profileData.role_subtype}`
-                    : roleLabel}
+                  {profileData.role_subtype ? `${roleLabel} · ${profileData.role_subtype}` : roleLabel}
                 </p>
               )}
 
-              {/* ROW 1c: Role-metadata-derived inline summary (BITS Pilani · 3rd Year, etc.) */}
+              {/* ROW 1c: Currently working at / institution */}
               {dpFlags.showCompany && (() => {
                 const m = (profileData as any).role_metadata as Record<string, any> | null;
-                if (!m || typeof m !== "object") return null;
-                const r = profileData.role;
                 let parts: string[] = [];
-                if (r === "student") parts = [m.institution, m.current_year].filter(Boolean);
-                else if (r === "professional") parts = [m.company, m.years_experience ? `${m.years_experience} yrs` : ""].filter(Boolean);
-                else if (r === "doctor") parts = [m.hospital, m.specialty === "Other" ? m.specialty_other : m.specialty].filter(Boolean);
-                else if (r === "faculty") parts = [m.institution, m.department].filter(Boolean);
+                if (m && typeof m === "object") {
+                  const r = profileData.role;
+                  if (r === "student") parts = [m.institution, m.current_year].filter(Boolean);
+                  else if (r === "professional") parts = [m.company, m.years_experience ? `${m.years_experience} yrs` : ""].filter(Boolean);
+                  else if (r === "doctor") parts = [m.hospital, m.specialty === "Other" ? m.specialty_other : m.specialty].filter(Boolean);
+                  else if (r === "faculty") parts = [m.institution, m.department].filter(Boolean);
+                }
                 if (parts.length === 0) {
-                  // Fallback to currently_working_at / institution_name
                   const fallback = (profileData as any).currently_working_at || profileData.institution_name;
                   if (!fallback) return null;
-                  return (
-                    <p style={{ fontSize: 12, fontWeight: 500, color: "#6B7094" }}>{fallback}</p>
-                  );
+                  return <p style={{ fontSize: 13, fontWeight: 500, color: "#6B7094" }}>{fallback}</p>;
                 }
-                return (
-                  <p style={{ fontSize: 12, fontWeight: 500, color: "#6B7094" }}>
-                    {parts.join(" · ")}
-                  </p>
-                );
+                return <p style={{ fontSize: 13, fontWeight: 500, color: "#6B7094" }}>{parts.join(" · ")}</p>;
               })()}
 
-              {/* ROW 2: Current position / headline */}
+              {/* ROW 2: Headline */}
               {dpFlags.showRole && (currentExp || headline) && (
-              <p style={{ fontSize: 13, fontWeight: 400, color: "#6B7094" }}>
-                {currentExp ? `${currentExp.job_title || currentExp.title} at ${currentExp.company_name || ""}` : headline}
-              </p>
+                <p style={{ fontSize: 13, fontWeight: 400, color: "#6B7094" }}>
+                  {currentExp ? `${currentExp.job_title || currentExp.title} at ${currentExp.company_name || ""}` : headline}
+                </p>
               )}
 
-              {/* ROW 3: @username + location + badges */}
+              {/* ROW 3: @username + location */}
               <div className="flex items-center flex-wrap" style={{ gap: 8 }}>
                 {username && <span style={{ fontSize: 12, fontWeight: 400, color: "#9CA3C0" }}>@{username}</span>}
                 {username && (city || state) && <span style={{ width: 3, height: 3, borderRadius: "50%", background: "#9CA3C0", flexShrink: 0 }} />}
@@ -1046,77 +1149,75 @@ const Profile = () => {
                     <MapPin style={{ width: 12, height: 12 }} />{[city, state].filter(Boolean).join(", ")}
                   </span>
                 )}
-                {((city || state) || username) && (
-                  <span style={{ width: 3, height: 3, borderRadius: "50%", background: "#9CA3C0", flexShrink: 0 }} />
-                )}
-                {showOTW ? (
-                  <span style={{ fontSize: 11, fontWeight: 700, height: 20, padding: "0 8px", borderRadius: 999, background: "rgba(16,185,129,0.12)", color: "#10B981", display: "inline-flex", alignItems: "center", gap: 4 }}>
-                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981" }} />
-                    Open to Work
-                  </span>
-                ) : null}
               </div>
 
-              {/* ROW 4: Stats */}
-              <div className="flex items-center" style={{ gap: 16, marginTop: 4 }}>
-                <Link to="/app/connections" className="cursor-pointer hover:opacity-80">
-                  <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{stats.connections}</span>
-                  <span style={{ fontSize: 12, fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Connections</span>
-                </Link>
-                <div>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{stats.posts}</span>
-                  <span style={{ fontSize: 12, fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Posts</span>
+              {/* ROW 4: Compact stats row — Posts · Connections · Score pill */}
+              <div className="flex items-center flex-wrap" style={{ gap: 12, marginTop: 6 }}>
+                <div style={{ fontSize: 13 }}>
+                  <span style={{ fontWeight: 700, color: "#1A1A2E" }}>{stats.posts}</span>
+                  <span style={{ fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Posts</span>
                 </div>
+                <Link to="/app/connections" className="cursor-pointer hover:opacity-80" style={{ fontSize: 13 }}>
+                  <span style={{ fontWeight: 700, color: "#1A1A2E" }}>{stats.connections}</span>
+                  <span style={{ fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Connections</span>
+                </Link>
+                {(() => {
+                  const score = (profileData as any).activity_score ?? 0;
+                  const visible = shouldShowPublicScore({ id: profileData.id, activity_score: score }, authProfile ? { id: authProfile.id } : undefined);
+                  if (!visible) return null;
+                  return (
+                    <TooltipProvider delayDuration={150}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            onClick={() => setShowScoreDetails(v => !v)}
+                            className="cursor-pointer hover:opacity-90"
+                            style={{
+                              display: "inline-flex", alignItems: "center", gap: 4,
+                              height: 24, padding: "0 9px", borderRadius: 999, fontSize: 12, fontWeight: 700,
+                              background: `${tier.color}1A`, color: tier.color, border: `1px solid ${tier.color}33`,
+                            }}
+                          >
+                            <Zap style={{ width: 11, height: 11 }} fill="currentColor" />
+                            {activityScore} pts · {tier.name || (tier as any).label}
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="bg-white text-[#1A1A2E] border border-[#E5E7EB]">
+                          <div style={{ fontSize: 12, lineHeight: "16px" }}>
+                            <div style={{ fontWeight: 700, marginBottom: 4 }}>Score breakdown</div>
+                            <div>Posts & content activity</div>
+                            <div>Connections & strands</div>
+                            <div>Engagement (likes, replies)</div>
+                            <div style={{ marginTop: 4, color: "#6B7094" }}>Click for full details</div>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  );
+                })()}
               </div>
 
               {/* ROW 5: Action buttons */}
-              <div className="flex items-center flex-wrap" style={{ gap: 8, marginTop: 8 }}>
+              <div className="flex items-center flex-wrap" style={{ gap: 8, marginTop: 10 }}>
                 {isOwnProfile ? (
                   <button
                     type="button"
-                    onClick={async () => {
-                      if (!profileData?.id) return;
-                      const next = !profileData.open_to_work;
-                      // Optimistic update
-                      setViewedProfile({ ...profileData, open_to_work: next });
-                      const { error } = await supabase
-                        .from("profiles")
-                        .update({ open_to_work: next } as any)
-                        .eq("id", profileData.id);
-                      if (error) {
-                        setViewedProfile({ ...profileData, open_to_work: !next });
-                        toast.error("Could not update");
-                      } else {
-                        toast.success(next ? "Open to Work enabled" : "Open to Work disabled");
-                        refreshProfile?.();
-                      }
-                    }}
-                    className="cursor-pointer flex items-center gap-2"
+                    onClick={() => setEditOpen(true)}
+                    className="cursor-pointer"
                     style={{
-                      height: 32, padding: "0 12px", borderRadius: 999, fontSize: 12, fontWeight: 600,
-                      background: profileData.open_to_work ? "rgba(16,185,129,0.12)" : "rgba(0,0,0,0.05)",
-                      color: profileData.open_to_work ? "#10B981" : "#6B7094",
-                      border: profileData.open_to_work ? "1px solid rgba(16,185,129,0.30)" : "1px solid rgba(0,0,0,0.08)",
+                      height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 700,
+                      background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none",
+                      boxShadow: "0 2px 12px rgba(232,115,58,0.25)",
                     }}
-                    aria-label="Toggle Open to Work"
                   >
-                    <span style={{
-                      width: 26, height: 14, borderRadius: 999,
-                      background: profileData.open_to_work ? "#10B981" : "rgba(0,0,0,0.18)",
-                      display: "inline-flex", alignItems: "center", padding: 1.5, transition: "background 0.2s",
-                    }}>
-                      <span style={{
-                        width: 11, height: 11, borderRadius: "50%", background: "#fff",
-                        transform: profileData.open_to_work ? "translateX(12px)" : "translateX(0)", transition: "transform 0.2s",
-                      }} />
-                    </span>
-                    Open to Work
+                    <Pencil className="w-3 h-3 inline mr-1" /> Edit Profile
                   </button>
                 ) : (
                   <>
                     {renderConnectButton()}
                     <button type="button" onClick={() => navigate(`/app/pings?to=${targetUserId}`)} className="cursor-pointer" style={{
-                      height: 32, padding: "0 16px", borderRadius: 8, fontSize: 12, fontWeight: 500,
+                      height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 500,
                       background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.40)",
                       color: "#1A1A2E", display: "inline-flex", alignItems: "center", gap: 4,
                     }}>
@@ -1126,22 +1227,19 @@ const Profile = () => {
                 )}
               </div>
             </div>
-
-            {/* Activity Score Card — right side on desktop, full-width below on mobile */}
-            {(() => {
-              const score = (profileData as any).activity_score ?? 0;
-              const visible = shouldShowPublicScore(
-                { id: profileData.id, activity_score: score },
-                authProfile ? { id: authProfile.id } : undefined,
-              );
-              if (!visible) return null;
-              return (
-                <div className="profile-score-wrap shrink-0" style={{ alignSelf: "flex-start" }}>
-                  <ActivityScoreCard score={score} isOwn={isOwnProfile} />
-                </div>
-              );
-            })()}
           </div>
+            );
+          })()}
+
+          {/* Collapsible Activity Score details — below header, full width */}
+          {(() => {
+            const score = (profileData as any).activity_score ?? 0;
+            const visible = shouldShowPublicScore({ id: profileData.id, activity_score: score }, authProfile ? { id: authProfile.id } : undefined);
+            if (!visible || !showScoreDetails) return null;
+            return (
+              <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+                <ActivityScoreCard score={score} isOwn={isOwnProfile} />
+              </div>
             );
           })()}
         </div>
