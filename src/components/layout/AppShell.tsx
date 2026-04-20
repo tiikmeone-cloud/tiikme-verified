@@ -1,10 +1,10 @@
-import { ReactNode, useEffect, useState, useCallback, useRef } from "react";
+import { ReactNode, useEffect, useState, useCallback } from "react";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutGrid, Compass, Users, Target, User,
-  Link2, MessageCircle, Bell, SlidersHorizontal, PencilLine, Plus, LogOut, Home,
-  X as XIcon, MoreHorizontal,
+  Link2, MessageCircle, Bell, SlidersHorizontal, PencilLine, LogOut, Home,
+  Plus, Search, Briefcase,
 } from "lucide-react";
 import ThemeLogo from "@/components/ThemeLogo";
 import { toast } from "sonner";
@@ -46,22 +46,13 @@ const navGroups = [
   },
 ];
 
-const mobileNav = [
-  { label: "Home", icon: Home, path: "/app/feed" },
-  { label: "Explore", icon: Compass, path: "/app/explore" },
-  { label: "Opportunities", icon: Target, path: "/app/opportunities" },
-  { label: "Pings", icon: MessageCircle, path: "/app/pings" },
-  { label: "Profile", icon: User, path: "/app/profile" },
-];
-
 const AppShell = ({ children }: { children: ReactNode }) => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const openPostCreate = () => navigate("/post/create");
-  const { profile, initials, displayName, user } = useAuth();
+  const { profile, displayName, user } = useAuth();
   const [orgData, setOrgData] = useState<{ name: string; logo_url: string | null; type: string; slug: string } | null>(null);
-  const [showActionSheet, setShowActionSheet] = useState(false);
 
   const isInstitution = profile?.account_type === "institution" && !!profile?.org_id;
 
@@ -102,7 +93,6 @@ const AppShell = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (!user?.id) return;
-    // Count unread from BOTH alerts and notifications tables
     Promise.allSettled([
       supabase.from("alerts").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("is_read", false),
       supabase.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("is_read", false),
@@ -113,7 +103,6 @@ const AppShell = ({ children }: { children: ReactNode }) => {
     });
     fetchUnreadPings();
 
-    // Listen for manual mark-read events from Pings page
     const onPingsRead = () => fetchUnreadPings();
     window.addEventListener("pings-read", onPingsRead);
 
@@ -154,7 +143,6 @@ const AppShell = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (isActive("/app/alerts")) setUnreadAlerts(0);
-    setShowActionSheet(false);
     prefetchAdjacent(pathname);
     prefetchAdjacentData(queryClient, pathname, user?.id);
   }, [pathname, user?.id]);
@@ -174,6 +162,19 @@ const AppShell = ({ children }: { children: ReactNode }) => {
 
   const resolvePath = (path: string) => path === "/app/profile" ? profilePath : path;
 
+  // Format alert count badge: 1-9 exact, 10-99 exact, 100+ shows "99+"
+  const alertCountLabel = unreadAlerts > 99 ? "99+" : String(unreadAlerts);
+
+  // Mobile bottom nav items (left-of-center and right-of-center)
+  const mobileLeftItems = [
+    { label: "Feed", icon: Home, path: "/app/feed" },
+    { label: "Circles", icon: Users, path: "/app/circles" },
+  ];
+  const mobileRightItems = [
+    { label: "Opps", icon: Briefcase, path: "/app/opportunities" },
+    { label: "Profile", icon: User, path: profilePath, isProfile: true },
+  ];
+
   return (
     <div className="min-h-screen">
       {/* ═══ DESKTOP SIDEBAR (≥768px) ═══ */}
@@ -189,25 +190,19 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           justifyContent: "space-between",
         }}
       >
-        {/* Top: logo + nav */}
         <div>
-          {/* Logo */}
           <div style={{ paddingBottom: 20 }}>
             <Link to="/app/feed" style={{ filter: "drop-shadow(0 0 10px rgba(232,115,58,0.15))" }}>
               <ThemeLogo className="h-7 w-auto" />
             </Link>
           </div>
 
-          {/* Nav groups */}
           <nav>
             {navGroups.map((group) => (
               <div key={group.label}>
                 <p style={{
-                  fontSize: 10,
-                  fontWeight: 600,
-                  color: "var(--text-muted)",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
+                  fontSize: 10, fontWeight: 600, color: "var(--text-muted)",
+                  textTransform: "uppercase", letterSpacing: "0.08em",
                   margin: "16px 0 6px 12px",
                 }}>{group.label}</p>
                 {group.items.map((item) => {
@@ -219,15 +214,10 @@ const AppShell = ({ children }: { children: ReactNode }) => {
                       to={resolvePath(item.path)}
                       className="flex items-center relative"
                       style={{
-                        height: 38,
-                        padding: "0 12px",
-                        borderRadius: 10,
-                        gap: 10,
-                        marginBottom: 2,
+                        height: 38, padding: "0 12px", borderRadius: 10, gap: 10, marginBottom: 2,
                         background: active ? "rgba(232,115,58,0.08)" : "transparent",
                         color: active ? "#E8733A" : "var(--text-primary)",
-                        fontWeight: active ? 600 : 500,
-                        fontSize: 13,
+                        fontWeight: active ? 600 : 500, fontSize: 13,
                         borderLeft: active ? "3px solid #E8733A" : "3px solid transparent",
                         transition: "all 150ms ease",
                       }}
@@ -241,8 +231,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
                           <span style={{
                             position: "absolute", top: -1, right: -3,
                             width: 8, height: 8, borderRadius: "50%",
-                            background: "#E8733A",
-                            border: "1.5px solid rgba(255,255,255,0.95)",
+                            background: "#E8733A", border: "1.5px solid rgba(255,255,255,0.95)",
                           }} />
                         )}
                       </div>
@@ -254,45 +243,32 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             ))}
           </nav>
 
-          {/* New Post button */}
           <button
             type="button"
             onClick={openPostCreate}
             className="flex items-center justify-center gap-2 active:scale-[0.97]"
             style={{
-              width: "100%",
-              height: 40,
-              margin: "12px 0",
+              width: "100%", height: 40, margin: "12px 0",
               background: "linear-gradient(135deg, #E8733A, #FF6B9D)",
-              border: "1px solid var(--border-glass)",
-              borderRadius: 10,
-              fontSize: 13,
-              fontWeight: 600,
-              color: "white",
+              border: "1px solid var(--border-glass)", borderRadius: 10,
+              fontSize: 13, fontWeight: 600, color: "white",
               boxShadow: "0 4px 16px rgba(232,115,58,0.30)",
-              cursor: "pointer",
-              transition: "all 200ms ease",
+              cursor: "pointer", transition: "all 200ms ease",
             }}
           >
             <PencilLine style={{ width: 14, height: 14 }} /> New Post
           </button>
         </div>
 
-        {/* Bottom: user section */}
         <div style={{ paddingTop: 12, borderTop: "1px solid rgba(0,0,0,0.06)" }}>
           <Link to={profilePath} className="flex items-center" style={{ gap: 10 }}>
             <AvatarSquare src={identityAvatar} name={identityName || "You"} size={32} />
             <div className="min-w-0 flex-1">
               <p className="truncate" style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{identityName || "Your Name"}</p>
               <span style={{
-                fontSize: 11,
-                fontWeight: 500,
-                padding: "0 6px",
-                borderRadius: 4,
-                background: "rgba(232,115,58,0.12)",
-                color: "#E8733A",
-                lineHeight: "14px",
-                display: "inline-block",
+                fontSize: 11, fontWeight: 500, padding: "0 6px", borderRadius: 4,
+                background: "rgba(232,115,58,0.12)", color: "#E8733A",
+                lineHeight: "14px", display: "inline-block",
               }}>{roleLabel}</span>
             </div>
           </Link>
@@ -301,13 +277,8 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             onClick={handleSignOut}
             className="flex items-center cursor-pointer active:scale-[0.97]"
             style={{
-              gap: 10,
-              marginTop: 8,
-              fontSize: 12,
-              color: "var(--text-muted)",
-              background: "none",
-              border: "none",
-              transition: "color 150ms ease",
+              gap: 10, marginTop: 8, fontSize: 12, color: "var(--text-muted)",
+              background: "none", border: "none", transition: "color 150ms ease",
             }}
             onMouseEnter={e => (e.currentTarget.style.color = "var(--text-primary)")}
             onMouseLeave={e => (e.currentTarget.style.color = "var(--text-muted)")}
@@ -319,187 +290,221 @@ const AppShell = ({ children }: { children: ReactNode }) => {
 
       {/* ═══ MAIN CONTENT ═══ */}
       <main className="min-h-screen md:ml-[220px] pb-[88px] md:pb-0">
-        {/* Mobile top header */}
+        {/* Mobile top header — Logo + Search + Bell + Pings */}
         <header
           className="md:hidden sticky top-0 z-50 flex items-center justify-between px-4"
           style={{
             height: 52,
-            background: "rgba(255,255,255,0.80)",
+            background: "rgba(255,255,255,0.92)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
-            borderBottom: "1px solid rgba(255,255,255,0.30)",
+            borderBottom: "1px solid rgba(0,0,0,0.06)",
           }}
         >
-          <Link to="/app/feed">
+          <Link to="/app/feed" aria-label="Tiikme home">
             <ThemeLogo className="h-7 w-auto" />
           </Link>
-          <Link to="/app/alerts" className="relative w-10 h-10 flex items-center justify-center active:scale-95">
-            <Bell style={{ width: 20, height: 20, color: "var(--text-secondary)" }} strokeWidth={1.8} />
-            {unreadAlerts > 0 && (
-              <span className="absolute" style={{
-                top: 6, right: 6, width: 8, height: 8, borderRadius: 4,
-                background: "#EF4444", border: "2px solid #F0F2F7",
-              }} />
-            )}
-          </Link>
+          <div className="flex items-center gap-1">
+            {/* Search → Explore */}
+            <Link
+              to="/app/explore"
+              aria-label="Search and explore"
+              className="relative w-10 h-10 flex items-center justify-center rounded-full active:scale-95"
+            >
+              <Search style={{ width: 22, height: 22, color: "#374151" }} strokeWidth={1.8} />
+            </Link>
+            {/* Alerts bell with number count */}
+            <Link
+              to="/app/alerts"
+              aria-label="Alerts"
+              className="relative w-10 h-10 flex items-center justify-center rounded-full active:scale-95"
+            >
+              <Bell style={{ width: 22, height: 22, color: "#374151" }} strokeWidth={1.8} />
+              {unreadAlerts > 0 && (
+                <span
+                  className="absolute flex items-center justify-center"
+                  style={{
+                    top: 4, right: 2,
+                    minWidth: 16, height: 16, padding: "0 4px",
+                    borderRadius: 8,
+                    background: "#EF4444", color: "white",
+                    fontSize: 10, fontWeight: 700, lineHeight: 1,
+                    border: "2px solid rgba(255,255,255,0.95)",
+                  }}
+                >
+                  {alertCountLabel}
+                </span>
+              )}
+            </Link>
+            {/* Pings — RED DOT ONLY on mobile (no number) */}
+            <Link
+              to="/app/pings"
+              aria-label="Pings messages"
+              className="relative w-10 h-10 flex items-center justify-center rounded-full active:scale-95"
+            >
+              <MessageCircle style={{ width: 22, height: 22, color: "#374151" }} strokeWidth={1.8} />
+              {unreadPings > 0 && (
+                <span
+                  className="absolute"
+                  style={{
+                    top: 8, right: 8,
+                    width: 8, height: 8, borderRadius: "50%",
+                    background: "#EF4444",
+                    border: "1.5px solid rgba(255,255,255,0.95)",
+                  }}
+                />
+              )}
+            </Link>
+          </div>
         </header>
 
-        <div className="page-enter">{children}</div>
+        <div key={pathname} className="page-enter">{children}</div>
       </main>
 
-      {/* ═══ MOBILE FLOATING PILL NAV ═══ */}
+      {/* ═══ MOBILE BOTTOM NAV — 5 items (Feed · Circles · Create · Opps · Profile) ═══ */}
       <nav
-        className="flex md:hidden fixed z-50"
+        className="md:hidden fixed left-0 right-0 z-50"
         style={{
-          bottom: "calc(12px + env(safe-area-inset-bottom))",
-          left: "50%",
-          transform: "translateX(-50%)",
-          background: "rgba(255,255,255,0.92)",
-          backdropFilter: "blur(24px)",
-          WebkitBackdropFilter: "blur(24px)",
-          border: "1px solid rgba(255,255,255,0.50)",
-          borderRadius: 32,
-          boxShadow: "0 8px 32px rgba(26,26,78,0.16), 0 2px 8px rgba(0,0,0,0.08)",
-          padding: "6px 8px",
+          bottom: 0,
+          height: "calc(64px + env(safe-area-inset-bottom))",
+          paddingBottom: "env(safe-area-inset-bottom)",
+          background: "#FFFFFF",
+          borderTop: "1px solid #E5E7EB",
         }}
+        aria-label="Primary"
       >
-        <div className="flex items-center" style={{ gap: 4 }}>
-          {[
-            { label: "Home", icon: Home, path: "/app/feed" },
-            { label: "Explore", icon: Compass, path: "/app/explore" },
-            { label: "Opps", icon: Target, path: "/app/opportunities" },
-            { label: "Pings", icon: MessageCircle, path: "/app/pings" },
-          ].map((item) => {
+        <div className="relative h-16 grid grid-cols-5">
+          {/* Tab 1 — Feed */}
+          {mobileLeftItems.map((item) => {
             const active = isActive(item.path);
-            const badge = item.path === "/app/pings" ? unreadPings : undefined;
             return (
               <Link
                 key={item.path}
                 to={item.path}
-                className="flex flex-col items-center justify-center"
+                className="flex flex-col items-center justify-center gap-0.5 active:scale-95"
+                aria-label={item.label}
+                aria-current={active ? "page" : undefined}
                 onTouchStart={() => prefetchOnHover(queryClient, item.path, user?.id)}
-                style={{
-                  width: 54, height: 48, borderRadius: 24, gap: 2,
-                  background: active ? "rgba(232,115,58,0.12)" : "transparent",
-                  transition: "background 150ms ease",
-                }}
+                style={{ transition: "transform 120ms ease" }}
               >
-                <div className="relative">
-                  <item.icon
-                    style={{ width: 22, height: 22, color: active ? "#E8733A" : "#6B7094" }}
-                    strokeWidth={active ? 2.2 : 1.8}
-                  />
-                  {badge && badge > 0 && (
-                    <span style={{
-                      position: "absolute", top: -2, right: -2,
-                      width: 8, height: 8, borderRadius: "50%",
-                      background: "#E8733A", border: "1.5px solid rgba(255,255,255,0.95)",
-                    }} />
-                  )}
-                </div>
-                <span style={{ fontSize: 9, fontWeight: active ? 700 : 500, color: active ? "#E8733A" : "#6B7094" }}>
+                {/* Active pill indicator */}
+                <span
+                  style={{
+                    width: 24, height: 4, borderRadius: 999,
+                    background: active ? "#F97316" : "transparent",
+                    marginBottom: 2,
+                  }}
+                />
+                <item.icon
+                  style={{ width: 24, height: 24, color: active ? "#F97316" : "#9CA3AF" }}
+                  strokeWidth={active ? 2.2 : 1.8}
+                />
+                <span style={{
+                  fontSize: 10, fontWeight: active ? 700 : 500,
+                  color: active ? "#F97316" : "#9CA3AF",
+                  marginTop: 1,
+                }}>
                   {item.label}
                 </span>
               </Link>
             );
           })}
 
-          {/* Profile avatar pill */}
-          <Link
-            to={profilePath}
-            className="flex flex-col items-center justify-center"
-            style={{
-              width: 54, height: 48, borderRadius: 24, gap: 2,
-              background: isActive(profilePath) ? "rgba(232,115,58,0.12)" : "transparent",
-              transition: "background 150ms ease",
-            }}
-          >
-            <AvatarSquare src={identityAvatar} name={identityName || "You"} size={22} />
-            <span style={{ fontSize: 9, fontWeight: 500, color: isActive(profilePath) ? "#E8733A" : "#6B7094" }}>
-              {isInstitution ? "Org" : "Me"}
-            </span>
-          </Link>
-
-          {/* More button — opens action sheet */}
+          {/* Tab 3 — CREATE (raised center button) */}
           <button
             type="button"
-            onClick={() => setShowActionSheet(true)}
-            className="flex flex-col items-center justify-center"
+            onClick={openPostCreate}
+            aria-label="Create new post"
+            className="flex flex-col items-center justify-end active:scale-95"
             style={{
-              width: 54, height: 48, borderRadius: 24, gap: 2,
-              background: showActionSheet ? "rgba(232,115,58,0.12)" : "transparent",
-              border: "none", cursor: "pointer", transition: "background 150ms ease",
+              background: "transparent", border: "none", cursor: "pointer",
+              transition: "transform 120ms ease",
             }}
           >
-            <MoreHorizontal style={{ width: 22, height: 22, color: showActionSheet ? "#E8733A" : "#6B7094" }} strokeWidth={1.8} />
-            <span style={{ fontSize: 9, fontWeight: 500, color: showActionSheet ? "#E8733A" : "#6B7094" }}>More</span>
+            <span
+              className="flex items-center justify-center"
+              style={{
+                position: "absolute",
+                top: -16,
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: 52, height: 52, borderRadius: "50%",
+                background: "#F97316",
+                boxShadow: "0 8px 20px rgba(249,115,22,0.35), 0 2px 6px rgba(0,0,0,0.10)",
+                border: "3px solid #FFFFFF",
+              }}
+            >
+              <Plus style={{ width: 26, height: 26, color: "white" }} strokeWidth={2.6} />
+            </span>
+            <span style={{
+              fontSize: 10, fontWeight: 600, color: "#9CA3AF",
+              marginBottom: 8,
+            }}>
+              Create
+            </span>
           </button>
+
+          {/* Tab 4 — Opportunities, Tab 5 — Profile */}
+          {mobileRightItems.map((item) => {
+            const active = isActive(item.path);
+            const isProfile = (item as any).isProfile;
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className="flex flex-col items-center justify-center gap-0.5 active:scale-95"
+                aria-label={item.label}
+                aria-current={active ? "page" : undefined}
+                onTouchStart={() => prefetchOnHover(queryClient, item.path, user?.id)}
+                style={{ transition: "transform 120ms ease" }}
+              >
+                <span
+                  style={{
+                    width: 24, height: 4, borderRadius: 999,
+                    background: active ? "#F97316" : "transparent",
+                    marginBottom: 2,
+                  }}
+                />
+                {isProfile ? (
+                  identityAvatar ? (
+                    <span
+                      style={{
+                        width: 28, height: 28, borderRadius: "50%",
+                        overflow: "hidden",
+                        border: active ? "2px solid #F97316" : "2px solid transparent",
+                        display: "inline-flex", alignItems: "center", justifyContent: "center",
+                      }}
+                    >
+                      <img
+                        src={identityAvatar}
+                        alt={identityName || "Profile"}
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      />
+                    </span>
+                  ) : (
+                    <User
+                      style={{ width: 24, height: 24, color: active ? "#F97316" : "#9CA3AF" }}
+                      strokeWidth={active ? 2.2 : 1.8}
+                    />
+                  )
+                ) : (
+                  <item.icon
+                    style={{ width: 24, height: 24, color: active ? "#F97316" : "#9CA3AF" }}
+                    strokeWidth={active ? 2.2 : 1.8}
+                  />
+                )}
+                <span style={{
+                  fontSize: 10, fontWeight: active ? 700 : 500,
+                  color: active ? "#F97316" : "#9CA3AF",
+                  marginTop: 1,
+                }}>
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
         </div>
       </nav>
-
-      {/* ═══ MOBILE ACTION SHEET ═══ */}
-      {showActionSheet && (
-        <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 z-[60] md:hidden"
-            style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(4px)" }}
-            onClick={() => setShowActionSheet(false)}
-          />
-          {/* Sheet */}
-          <div
-            className="fixed left-0 right-0 z-[61] md:hidden"
-            style={{
-              bottom: "calc(72px + env(safe-area-inset-bottom))",
-              padding: "8px 16px 12px",
-              background: "rgba(255,255,255,0.92)",
-              backdropFilter: "blur(24px)",
-              WebkitBackdropFilter: "blur(24px)",
-              borderTop: "1px solid rgba(255,255,255,0.40)",
-              borderRadius: "20px 20px 0 0",
-              animation: "actionSheetUp 200ms ease-out",
-            }}
-          >
-            {[
-              { label: "New Post", icon: PencilLine, action: () => { setShowActionSheet(false); openPostCreate(); } },
-              { label: "Circles", icon: Users, action: () => { setShowActionSheet(false); navigate("/app/circles"); } },
-              { label: "Connections", icon: Link2, action: () => { setShowActionSheet(false); navigate("/app/connections"); } },
-              { label: "Alerts", icon: Bell, action: () => { setShowActionSheet(false); navigate("/app/alerts"); } },
-              { label: "Settings", icon: SlidersHorizontal, action: () => { setShowActionSheet(false); navigate("/app/settings"); } },
-            ].map((item) => (
-              <button
-                key={item.label}
-                type="button"
-                onClick={item.action}
-                className="w-full flex items-center active:scale-[0.98]"
-                style={{
-                  gap: 14,
-                  height: 52,
-                  padding: "0 12px",
-                  borderRadius: 14,
-                  background: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  transition: "background 100ms",
-                  fontSize: 15,
-                  fontWeight: 600,
-                  color: "var(--text-primary)",
-                }}
-                onMouseEnter={e => (e.currentTarget.style.background = "rgba(232,115,58,0.08)")}
-                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-              >
-                <div style={{
-                  width: 40, height: 40, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center",
-                  background: "rgba(232,115,58,0.10)",
-                }}>
-                  <item.icon style={{ width: 20, height: 20, color: "#E8733A" }} strokeWidth={1.8} />
-                </div>
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
     </div>
   );
 };
