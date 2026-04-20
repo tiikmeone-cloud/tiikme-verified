@@ -333,6 +333,61 @@ export type Database = {
           },
         ]
       }
+      circle_post_comments: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          like_count: number | null
+          parent_id: string | null
+          post_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          like_count?: number | null
+          parent_id?: string | null
+          post_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          like_count?: number | null
+          parent_id?: string | null
+          post_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "circle_post_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "circle_post_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "circle_post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "circle_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "circle_post_comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       circle_post_upvotes: {
         Row: {
           created_at: string
@@ -2905,6 +2960,7 @@ export type Database = {
           days_active: number | null
           department: string | null
           designation: string | null
+          display_preference: string | null
           email: string | null
           full_name: string | null
           headline: string | null
@@ -2928,6 +2984,7 @@ export type Database = {
           phone: string | null
           phone_hash: string | null
           privacy_settings: Json | null
+          profession_type: string | null
           public_key: string | null
           referred_by: string | null
           role: string | null
@@ -2963,6 +3020,7 @@ export type Database = {
           days_active?: number | null
           department?: string | null
           designation?: string | null
+          display_preference?: string | null
           email?: string | null
           full_name?: string | null
           headline?: string | null
@@ -2986,6 +3044,7 @@ export type Database = {
           phone?: string | null
           phone_hash?: string | null
           privacy_settings?: Json | null
+          profession_type?: string | null
           public_key?: string | null
           referred_by?: string | null
           role?: string | null
@@ -3021,6 +3080,7 @@ export type Database = {
           days_active?: number | null
           department?: string | null
           designation?: string | null
+          display_preference?: string | null
           email?: string | null
           full_name?: string | null
           headline?: string | null
@@ -3044,6 +3104,7 @@ export type Database = {
           phone?: string | null
           phone_hash?: string | null
           privacy_settings?: Json | null
+          profession_type?: string | null
           public_key?: string | null
           referred_by?: string | null
           role?: string | null
