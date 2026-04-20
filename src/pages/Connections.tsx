@@ -576,34 +576,41 @@ const Connections = () => {
               </div>
             ) : (
               <div className="space-y-2">
-                {pendingIncoming.map(s => (
-                  <div key={s.id} className="glass-card flex items-center gap-3" style={{ padding: 12, borderRadius: 12, minHeight: 72 }}>
-                    <AvatarSquare src={s.requester?.avatar_url} name={s.requester?.full_name || "U"} size={44} bgColor={ROLE_COLORS[s.requester?.role || ""] || "#6B7280"} />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{s.requester?.full_name || "User"}</p>
-                        {s.requester?.is_verified && <VerifiedBadge size={14} />}
+                {pendingIncoming.map(s => {
+                  const flags = getDisplayFlags(s.requester);
+                  const cardName = flags.showName ? (s.requester?.full_name || "User") : "Tiikme member";
+                  const company = s.requester?.currently_working_at || s.requester?.institution_name;
+                  return (
+                    <div key={s.id} className="glass-card flex items-center gap-3" style={{ padding: 12, borderRadius: 12, minHeight: 72 }}>
+                      <AvatarSquare src={s.requester?.avatar_url} name={cardName} size={44} bgColor={ROLE_COLORS[s.requester?.role || ""] || "#6B7280"} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{cardName}</p>
+                          {s.requester?.is_verified && <VerifiedBadge size={14} />}
+                        </div>
+                        {flags.showRole && (
+                          <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>
+                            {roleLabel(s.requester?.role || "")}
+                            {s.requester?.role_subtype && <span style={{ opacity: 0.75 }}> · {s.requester.role_subtype}</span>}
+                            {flags.showCompany && company && <span> · {company}</span>}
+                          </p>
+                        )}
+                        <p style={{ fontSize: 11, color: "#9CA3C0", marginTop: 2 }}>{getTimeAgo(s.created_at)}</p>
                       </div>
-                      <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>
-                        {roleLabel(s.requester?.role || "")}
-                        {s.requester?.role_subtype && <span style={{ opacity: 0.75 }}> · {s.requester.role_subtype}</span>}
-                        {s.requester?.institution_name && <span> · {s.requester.institution_name}</span>}
-                      </p>
-                      <p style={{ fontSize: 11, color: "#9CA3C0", marginTop: 2 }}>{getTimeAgo(s.created_at)}</p>
+                      <div className="flex gap-1.5 shrink-0">
+                        <button type="button" onClick={() => handleAccept(s)} className="cursor-pointer transition-all"
+                          style={{ height: 34, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 700, ...connectionButtonStyle("pending_received") }}>
+                          Accept
+                        </button>
+                        <button type="button" onClick={() => handleDecline(s)} className="cursor-pointer transition-all"
+                          style={{ height: 34, padding: "0 12px", borderRadius: 8, fontSize: 12, fontWeight: 700,
+                            background: "transparent", color: "#EF4444", border: "1px solid rgba(239,68,68,0.25)" }}>
+                          Decline
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex gap-1.5 shrink-0">
-                      <button type="button" onClick={() => handleAccept(s)} className="cursor-pointer transition-all"
-                        style={{ height: 34, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 700, ...connectionButtonStyle("pending_received") }}>
-                        Accept
-                      </button>
-                      <button type="button" onClick={() => handleDecline(s)} className="cursor-pointer transition-all"
-                        style={{ height: 34, padding: "0 12px", borderRadius: 8, fontSize: 12, fontWeight: 700,
-                          background: "transparent", color: "#EF4444", border: "1px solid rgba(239,68,68,0.25)" }}>
-                        Decline
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </section>
