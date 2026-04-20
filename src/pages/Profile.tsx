@@ -661,6 +661,21 @@ const Profile = () => {
     setConnectionStatus({ status: null, direction: null, id: null });
   };
 
+  /* Map UI employment_type → DB type CHECK constraint values
+     Allowed: experience, education, full_time, freelance, internship, job_role,
+              part_time, research, project, volunteer, certification, achievement, other */
+  const mapEmploymentToType = (employmentType: string): string => {
+    switch (employmentType) {
+      case "Full-time": return "job_role";
+      case "Part-time": return "part_time";
+      case "Internship": return "internship";
+      case "Freelance": return "freelance";
+      case "Contract": return "job_role";
+      case "Volunteer": return "volunteer";
+      default: return "experience";
+    }
+  };
+
   /* Save functions */
   const saveExperience = async () => {
     if (!expForm.company.trim()) { toast.error("Company name is required"); return; }
