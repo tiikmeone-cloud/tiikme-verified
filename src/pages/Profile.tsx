@@ -1230,17 +1230,7 @@ const Profile = () => {
             );
           })()}
 
-          {/* Collapsible Activity Score details — below header, full width */}
-          {(() => {
-            const score = (profileData as any).activity_score ?? 0;
-            const visible = shouldShowPublicScore({ id: profileData.id, activity_score: score }, authProfile ? { id: authProfile.id } : undefined);
-            if (!visible || !showScoreDetails) return null;
-            return (
-              <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid rgba(0,0,0,0.06)" }}>
-                <ActivityScoreCard score={score} isOwn={isOwnProfile} />
-              </div>
-            );
-          })()}
+          {/* Activity Score details now render in the popover above */}
         </div>
 
         {/* ── MOBILE-ONLY QUICK NAV (own profile) ── */}
