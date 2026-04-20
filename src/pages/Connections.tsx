@@ -525,21 +525,28 @@ const Connections = () => {
             <div className="mt-6">
               <h2 style={{ fontSize: 14, fontWeight: 700, color: "#1A1A2E", marginBottom: 10 }}>People you may know</h2>
               <div className="space-y-2">
-                {suggested.slice(0, 4).map((person: any) => (
-                  <div key={person.id} className="glass-card flex items-center gap-3 cursor-pointer transition-all hover:shadow-sm"
-                    style={{ padding: 12, borderRadius: 12 }}
-                    onClick={() => navigate(`/app/profile/${person.id}`)}>
-                    <AvatarSquare src={person.avatar_url} name={person.full_name || "U"} size={44} bgColor={ROLE_COLORS[person.role || ""] || "#6B7280"} />
-                    <div className="flex-1 min-w-0">
-                      <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{person.full_name || "User"}</p>
-                      <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>
-                        {roleLabel(person.role || "")}
-                        {person.location_city && ` · ${person.location_city}`}
-                        {person.institution_name && ` · ${person.institution_name}`}
-                      </p>
+                {suggested.slice(0, 4).map((person: any) => {
+                  const flags = getDisplayFlags(person);
+                  const cardName = flags.showName ? (person.full_name || "User") : "Tiikme member";
+                  const company = person.currently_working_at || person.institution_name;
+                  return (
+                    <div key={person.id} className="glass-card flex items-center gap-3 cursor-pointer transition-all hover:shadow-sm"
+                      style={{ padding: 12, borderRadius: 12 }}
+                      onClick={() => navigate(`/app/profile/${person.id}`)}>
+                      <AvatarSquare src={person.avatar_url} name={cardName} size={44} bgColor={ROLE_COLORS[person.role || ""] || "#6B7280"} />
+                      <div className="flex-1 min-w-0">
+                        <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{cardName}</p>
+                        {flags.showRole && (
+                          <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>
+                            {roleLabel(person.role || "")}
+                            {person.location_city && ` · ${person.location_city}`}
+                            {flags.showCompany && company && ` · ${company}`}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
