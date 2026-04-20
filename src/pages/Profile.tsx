@@ -3,6 +3,7 @@ import AvatarSquare from "@/components/ui/AvatarSquare";
 import { fixStorageUrl } from "@/components/ui/AvatarSquare";
 import { cleanUsername } from "@/lib/cleanUsername";
 import { SUBTYPE_OPTIONS, hasSubtypes } from "@/lib/roleSubtypes";
+import { getDisplayFlags, safeDisplayName } from "@/utils/displayProfile";
 import { PageSEO, profileSEO } from "@/hooks/usePageSEO";
 import {
   MapPin, Copy, Shield, X, MessageCircle, CheckCircle, Building2, Link2, Plus,
