@@ -148,11 +148,13 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
     }
 
     // Mark the item as pending (scoped to owner — RLS-safe)
-    const table = itemType === "achievement" ? "achievements" : "work_items";
-    const ownerColumn = itemType === "achievement" ? "user_id" : "owner_id";
-    await supabase.from(table).update({ verification_status: "pending" } as any)
-      .eq("id", item.id)
-      .eq(ownerColumn, authUser.id);
+    if (itemType === "achievement") {
+      await supabase.from("achievements").update({ verification_status: "pending" } as any)
+        .eq("id", item.id).eq("user_id", authUser.id);
+    } else {
+      await supabase.from("work_items").update({ verification_status: "pending" } as any)
+        .eq("id", item.id).eq("owner_id", authUser.id);
+    }
 
     onStatusChange(item.id, "pending");
     toast.success(verifierId
