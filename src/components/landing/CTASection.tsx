@@ -1,14 +1,14 @@
 import { Link } from "react-router-dom";
 
 const CTASection = () => (
-  <section className="px-5 md:px-8 py-16 md:py-[100px]" style={{ backgroundColor: "#E8580A" }}>
+  <section className="px-5 md:px-8 py-16 md:py-[100px]" style={{ backgroundColor: "#B8460C" }}>
     <div className="max-w-[800px] mx-auto text-center">
       <h2 className="font-extrabold text-[28px] md:text-[48px] leading-[1.15] text-white mb-5">
         Stop explaining yourself to people
         <br className="hidden md:block" />
         {" "}who should already know.
       </h2>
-      <p className="text-[16px] md:text-[20px] mb-10" style={{ color: "rgba(255,255,255,0.85)" }}>
+      <p className="text-[16px] md:text-[20px] mb-10 text-white">
         Build your verified professional identity today.
         <br />
         Free. Ten minutes. Yours for life.
@@ -18,7 +18,7 @@ const CTASection = () => (
         <Link to="/signup" className="w-full sm:w-auto">
           <button
             className="w-full sm:w-auto h-[52px] px-8 rounded-xl font-bold text-[16px] cursor-pointer transition-colors"
-            style={{ backgroundColor: "#FFFFFF", color: "#E8580A" }}
+            style={{ backgroundColor: "#FFFFFF", color: "#B8460C" }}
             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#FFF7ED")}
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#FFFFFF")}
           >
@@ -37,7 +37,7 @@ const CTASection = () => (
         </Link>
       </div>
 
-      <p className="text-[13px]" style={{ color: "rgba(255,255,255,0.6)" }}>
+      <p className="text-[13px]" style={{ color: "rgba(255,255,255,0.95)" }}>
         No credit card. No fake profiles. No nonsense.
         <br />
         A Veenavarse Private Limited product.

@@ -36,7 +36,7 @@ const roles = [
 const WhoIsForSection = () => (
   <section id="features" className="bg-white px-5 md:px-8 py-16 md:py-[100px]">
     <div className="max-w-[1200px] mx-auto">
-      <p className="text-center text-[11px] md:text-[12px] font-bold uppercase tracking-[0.2em] mb-4" style={{ color: "#E8580A" }}>
+      <p className="text-center text-[11px] md:text-[12px] font-bold uppercase tracking-[0.2em] mb-4" style={{ color: "#B8460C" }}>
         Tiikme is for
       </p>
       <h2 className="text-center font-extrabold leading-[1.15] mb-12 md:mb-16">
@@ -69,7 +69,7 @@ const RoleCard = ({ icon: Icon, role, copy }: { icon: typeof GraduationCap; role
     style={{ border: "1px solid #E5E7EB" }}
   >
     <Icon className="w-7 h-7 mb-4" style={{ color: "#E8580A" }} strokeWidth={1.5} />
-    <p className="text-[15px] font-bold mb-2" style={{ color: "#E8580A" }}>
+    <p className="text-[15px] font-bold mb-2" style={{ color: "#B8460C" }}>
       {role}
     </p>
     <p className="text-[15px] md:text-[16px] leading-[1.7]" style={{ color: "#374151" }}>

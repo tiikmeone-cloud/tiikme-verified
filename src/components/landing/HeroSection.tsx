@@ -7,7 +7,7 @@ const HeroSection = () => {
         {/* Eyebrow */}
         <p
           className="text-[11px] md:text-[12px] font-bold uppercase tracking-[0.2em] mb-8 md:mb-10"
-          style={{ color: "#E8580A" }}
+          style={{ color: "#B8460C" }}
         >
           India's first verified professional identity platform
         </p>
@@ -47,9 +47,9 @@ const HeroSection = () => {
           <Link to="/signup" className="w-full sm:w-auto">
             <button
               className="w-full sm:w-auto h-[52px] px-8 rounded-xl font-bold text-[16px] text-white cursor-pointer transition-colors"
-              style={{ backgroundColor: "#E8580A" }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#C94A07")}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#E8580A")}
+              style={{ backgroundColor: "#B8460C" }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#9C3A0A")}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#B8460C")}
              >
               Get Tiiked — It's Free
             </button>
@@ -60,7 +60,7 @@ const HeroSection = () => {
           <a href="#how-it-works" className="w-full sm:w-auto">
             <button
               className="w-full sm:w-auto h-[52px] px-8 rounded-xl font-bold text-[16px] cursor-pointer transition-colors border-2"
-              style={{ borderColor: "#E8580A", color: "#E8580A", backgroundColor: "transparent" }}
+              style={{ borderColor: "#B8460C", color: "#B8460C", backgroundColor: "transparent" }}
               onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#FFF7ED")}
               onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
             >

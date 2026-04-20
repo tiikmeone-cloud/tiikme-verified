@@ -28,7 +28,7 @@ const ComparisonSection = () => (
               <th className="py-4 pr-4 text-[13px] font-bold" style={{ color: "#6B7280" }}>
                 Traditional Platforms
               </th>
-              <th className="py-4 text-[13px] font-bold" style={{ color: "#E8580A" }}>
+              <th className="py-4 text-[13px] font-bold" style={{ color: "#B8460C" }}>
                 Tiikme
               </th>
             </tr>
@@ -39,7 +39,7 @@ const ComparisonSection = () => (
                 <td className="py-3.5 pr-4 text-[14px] font-medium" style={{ color: "#374151" }}>
                   {r.feature}
                 </td>
-                <td className="py-3.5 pr-4 text-[14px]" style={{ color: "#9CA3AF" }}>
+                <td className="py-3.5 pr-4 text-[14px]" style={{ color: "#6B7280" }}>
                   <span className="flex items-center gap-2">
                     <X className="w-4 h-4 flex-shrink-0" style={{ color: "#EF4444" }} />
                     {r.trad}

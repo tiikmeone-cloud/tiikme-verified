@@ -29,7 +29,7 @@ const ProblemSection = () => (
           <span className="block text-[28px] md:text-[48px]" style={{ color: "#04061A" }}>
             You earned it.
           </span>
-          <span className="block text-[24px] md:text-[40px] mt-1" style={{ color: "#E8580A" }}>
+          <span className="block text-[24px] md:text-[40px] mt-1" style={{ color: "#B8460C" }}>
             Can you actually prove it?
           </span>
         </h2>
@@ -53,7 +53,7 @@ const ProblemSection = () => (
         ))}
       </div>
 
-      <p className="text-center text-[18px] md:text-[22px] font-bold" style={{ color: "#E8580A" }}>
+      <p className="text-center text-[18px] md:text-[22px] font-bold" style={{ color: "#B8460C" }}>
         This is the problem. Tiikme is the answer.
       </p>
     </div>
