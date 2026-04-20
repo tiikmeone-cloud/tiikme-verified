@@ -94,7 +94,9 @@ const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose:
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !userId) return;
-    if (file.size > 2 * 1024 * 1024) { toast.error("Max 2MB"); return; }
+    const { validateUpload } = await import("@/lib/uploadValidation");
+    const err = validateUpload(file, { maxBytes: 2 * 1024 * 1024, allowImages: true });
+    if (err) { toast.error(err); return; }
     const canvas = document.createElement("canvas");
     canvas.width = 400; canvas.height = 400;
     const ctx = canvas.getContext("2d")!;
@@ -825,7 +827,9 @@ const Profile = () => {
   const handleAvatarChangePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
-    if (file.size > 2 * 1024 * 1024) { toast.error("Max 2MB"); return; }
+    const { validateUpload } = await import("@/lib/uploadValidation");
+    const err = validateUpload(file, { maxBytes: 2 * 1024 * 1024, allowImages: true });
+    if (err) { toast.error(err); return; }
     const canvas = document.createElement("canvas");
     canvas.width = 400; canvas.height = 400;
     const ctx = canvas.getContext("2d")!;
