@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Building2 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import ThemeLogo from "@/components/ThemeLogo";
 
 const SignIn = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
+  const safeRedirect = redirectTo && redirectTo.startsWith("/") ? redirectTo : null;
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,25 +29,28 @@ const SignIn = () => {
     const { markRecentAuth } = await import("@/lib/idleLogout");
     markRecentAuth();
 
-    // Route based on account type
-    const userId = data.user?.id;
-    if (userId) {
-      const { data: prof } = await supabase.from("profiles").select("account_type").eq("id", userId).maybeSingle();
-      if (prof?.account_type === "institution") {
-        navigate("/app/workspace");
+    // Honor ?redirect= deep link first, otherwise route by account type
+    if (safeRedirect) {
+      navigate(safeRedirect);
+    } else {
+      const userId = data.user?.id;
+      if (userId) {
+        const { data: prof } = await supabase.from("profiles").select("account_type").eq("id", userId).maybeSingle();
+        navigate(prof?.account_type === "institution" ? "/app/workspace" : "/app/feed");
       } else {
         navigate("/app/feed");
       }
-    } else {
-      navigate("/app/feed");
     }
     toast.success("Welcome back!");
   };
 
   const handleGoogleAuth = async () => {
+    const oauthRedirect = safeRedirect
+      ? `${window.location.origin}/signin?redirect=${encodeURIComponent(safeRedirect)}`
+      : `${window.location.origin}/app/feed`;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: window.location.origin + "/app/feed" },
+      options: { redirectTo: oauthRedirect },
     });
     if (error) toast.error(error.message);
   };
