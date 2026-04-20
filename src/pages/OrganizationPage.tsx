@@ -13,6 +13,7 @@ import { sendNotification } from "@/lib/notify";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import OrgVerificationRouting from "@/components/verification/OrgVerificationRouting";
+import { isCreatorOrg } from "@/lib/orgTypes";
 
 const AVATAR_COLORS = ["#E8733A", "#4A90D9", "#34C759", "#FF6B9D", "#8B5CF6", "#FFB800"];
 const hashColor = (s: string) => AVATAR_COLORS[Math.abs([...s].reduce((a, c) => a + c.charCodeAt(0), 0)) % AVATAR_COLORS.length];
@@ -43,6 +44,7 @@ export default function OrganizationPage() {
   const [members, setMembers] = useState<any[]>([]);
   const [opps, setOpps] = useState<any[]>([]);
   const [posts, setPosts] = useState<any[]>([]);
+  const [communityCircles, setCommunityCircles] = useState<any[]>([]);
   const [showUnfollow, setShowUnfollow] = useState(false);
 
   useEffect(() => {
@@ -53,18 +55,21 @@ export default function OrganizationPage() {
       setOrg(data);
       setFollowerCount(data.followers_count || 0);
 
-      const [membersRes, oppsRes, postsRes] = await Promise.allSettled([
+      const [membersRes, oppsRes, postsRes, circlesRes] = await Promise.allSettled([
         supabase.from("org_members")
           .select("*, profile:profiles!org_members_user_id_fkey(id, full_name, avatar_url, headline, role)")
           .eq("org_id", data.id).eq("is_current", true).order("joined_at", { ascending: true }),
         supabase.from("opportunities").select("*").eq("org_id", data.id).order("created_at", { ascending: false }).limit(50),
         supabase.from("posts").select("*, author:profiles!posts_author_id_fkey(full_name, avatar_url), post_reactions(count), post_comments(count)")
           .eq("posted_by_org", data.id).order("created_at", { ascending: false }).limit(20),
+        supabase.from("circles").select("id, name, slug, icon_url, description, member_count, active_7d, visibility")
+          .eq("linked_org_id", data.id).order("member_count", { ascending: false }),
       ]);
 
       if (membersRes.status === "fulfilled") setMembers((membersRes.value as any).data || []);
       if (oppsRes.status === "fulfilled") setOpps((oppsRes.value as any).data || []);
       if (postsRes.status === "fulfilled") setPosts((postsRes.value as any).data || []);
+      if (circlesRes.status === "fulfilled") setCommunityCircles((circlesRes.value as any).data || []);
 
       if (user) {
         const [adminRes, folRes] = await Promise.allSettled([
@@ -104,6 +109,12 @@ export default function OrganizationPage() {
 
   const activeOpps = useMemo(() => opps.filter(o => o.is_open), [opps]);
   const typeLabel = org?.type?.charAt(0).toUpperCase() + org?.type?.slice(1).replace(/_/g, " ");
+  const isCreator = isCreatorOrg(org?.type, org?.subtype);
+  const followLabel = isCreator
+    ? (isFollowing ? "Subscribed" : "Subscribe")
+    : (isFollowing ? "Following"  : "Follow");
+  const followerLabel = isCreator ? "Subscribers" : "Followers";
+  const teamSizeLabel = isCreator ? "Subscribers" : "Team Size";
 
   if (loading) return (
     <div className="min-h-screen" style={{ background: "transparent" }}>
@@ -139,7 +150,7 @@ export default function OrganizationPage() {
   if (org.type) infoCards.push({ label: "Type", value: `${typeLabel}${org.subtype ? ` · ${org.subtype}` : ""}` });
   if (org.founded_year) infoCards.push({ label: "Established", value: String(org.founded_year) });
   if (org.city || org.state) infoCards.push({ label: "Headquarters", value: [org.city, org.state].filter(Boolean).join(", ") });
-  if (org.employee_count) infoCards.push({ label: "Team Size", value: org.employee_count });
+  if (org.employee_count) infoCards.push({ label: teamSizeLabel, value: org.employee_count });
   if (org.website_url) infoCards.push({ label: "Website", value: org.website_url.replace(/https?:\/\//, "") });
 
   return (
@@ -193,7 +204,7 @@ export default function OrganizationPage() {
               <div className="flex items-center" style={{ gap: 16, marginTop: 4 }}>
                 <div>
                   <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{followerCount}</span>
-                  <span style={{ fontSize: 12, fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Followers</span>
+                  <span style={{ fontSize: 12, fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>{followerLabel}</span>
                 </div>
                 <div>
                   <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{members.length}</span>
@@ -210,14 +221,14 @@ export default function OrganizationPage() {
                       background: "rgba(52,199,89,0.10)", color: "#34C759", border: "1px solid rgba(52,199,89,0.25)",
                       display: "inline-flex", alignItems: "center", gap: 4,
                     }}>
-                      <Heart style={{ width: 13, height: 13, fill: "currentColor" }} /> Following
+                      <Heart style={{ width: 13, height: 13, fill: "currentColor" }} /> {followLabel}
                     </button>
                     <div className="absolute top-full left-0 mt-1 hidden group-hover:block z-20" style={{
                       background: "#FFFFFF", border: "1px solid #E5E7EB", borderRadius: 10,
                       boxShadow: "0 4px 16px rgba(0,0,0,0.1)", padding: 4, minWidth: 120,
                     }}>
                       <button type="button" onClick={toggleFollow} className="w-full text-left cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "8px 12px", fontSize: 13, color: "#EF4444", borderRadius: 6 }}>
-                        Unfollow
+                        {isCreator ? "Unsubscribe" : "Unfollow"}
                       </button>
                     </div>
                   </div>
@@ -227,7 +238,7 @@ export default function OrganizationPage() {
                     background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none",
                     boxShadow: "0 2px 12px rgba(232,115,58,0.25)", display: "inline-flex", alignItems: "center", gap: 4,
                   }}>
-                    <Heart style={{ width: 13, height: 13 }} /> Follow
+                    <Heart style={{ width: 13, height: 13 }} /> {followLabel}
                   </button>
                 )}
 
@@ -335,7 +346,7 @@ export default function OrganizationPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {/* Followers card */}
             <div className="glass-card" style={{ padding: 12, borderRadius: 16 }}>
-              <p style={{ fontSize: 11, fontWeight: 600, color: "#9CA3C0", textTransform: "uppercase", letterSpacing: "0.02em" }}>FOLLOWERS</p>
+              <p style={{ fontSize: 11, fontWeight: 600, color: "#9CA3C0", textTransform: "uppercase", letterSpacing: "0.02em" }}>{followerLabel}</p>
               <p style={{ fontSize: 28, fontWeight: 700, color: "#1A1A2E", margin: "4px 0", lineHeight: "36px", letterSpacing: "-0.02em" }}>{followerCount}</p>
             </div>
 
@@ -466,6 +477,63 @@ export default function OrganizationPage() {
                 </>
               )}
             </SectionBox>
+
+            {/* Community circles section */}
+            <SectionBox
+              title="Community"
+              icon={Users}
+              iconColor="#0E7490"
+              borderColor="#0E7490"
+              count={communityCircles.length}
+              action={isAdmin ? (
+                <button
+                  type="button"
+                  onClick={() => navigate(`/app/circles/create?org=${org.id}`)}
+                  className="cursor-pointer"
+                  style={{
+                    height: 26, padding: "0 10px", borderRadius: 6, fontSize: 11, fontWeight: 600,
+                    background: "rgba(14,116,144,0.10)", color: "#0E7490", border: "1px solid rgba(14,116,144,0.20)",
+                    display: "inline-flex", alignItems: "center", gap: 4,
+                  }}
+                >
+                  <Plus style={{ width: 11, height: 11 }} /> New Community Circle
+                </button>
+              ) : null}
+            >
+              {communityCircles.length === 0 ? (
+                <p style={{ fontSize: 13, color: "#9CA3C0", padding: "4px 0" }}>
+                  {isAdmin ? "Create a circle so your followers can talk to each other." : "No community circles yet."}
+                </p>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {communityCircles.map((c, idx) => (
+                    <Link
+                      key={c.id}
+                      to={`/app/circles/${c.slug}`}
+                      className="flex items-center"
+                      style={{
+                        gap: 10, padding: "8px 0",
+                        borderBottom: idx < communityCircles.length - 1 ? "1px solid rgba(0,0,0,0.04)" : "none",
+                      }}
+                    >
+                      <div className="flex items-center justify-center shrink-0" style={{
+                        width: 36, height: 36, borderRadius: 10,
+                        background: "rgba(14,116,144,0.10)", fontSize: 18,
+                      }}>
+                        {c.icon_url || "💬"}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</p>
+                        <p style={{ fontSize: 11, color: "#9CA3C0" }}>
+                          {c.member_count || 0} member{(c.member_count || 0) === 1 ? "" : "s"}
+                          {c.active_7d ? ` · ${c.active_7d} active this week` : ""}
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </SectionBox>
           </div>
         </div>
       </div>
@@ -474,8 +542,8 @@ export default function OrganizationPage() {
 }
 
 /* ── Reusable Section Box (matches user profile style) ── */
-const SectionBox = ({ title, icon: Icon, iconColor, borderColor, count, children }: {
-  title: string; icon: any; iconColor: string; borderColor: string; count?: number; children: React.ReactNode;
+const SectionBox = ({ title, icon: Icon, iconColor, borderColor, count, action, children }: {
+  title: string; icon: any; iconColor: string; borderColor: string; count?: number; action?: React.ReactNode; children: React.ReactNode;
 }) => (
   <div className="glass-card" style={{
     padding: 16, borderRadius: 16,
@@ -489,6 +557,7 @@ const SectionBox = ({ title, icon: Icon, iconColor, borderColor, count, children
       <Icon style={{ width: 16, height: 16, color: iconColor }} />
       <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", flex: 1 }}>{title}</span>
       {count !== undefined && <span style={{ fontSize: 12, fontWeight: 500, color: "#9CA3C0" }}>{count}</span>}
+      {action}
     </div>
     {children}
   </div>

@@ -1,7 +1,7 @@
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import { useNavigate } from "react-router-dom";
-import { getOrgTypeConfig } from "@/lib/orgTypes";
+import { getOrgTypeConfig, isCreatorOrg } from "@/lib/orgTypes";
 import { ActivityScoreMini } from "@/components/profile/ActivityScoreCard";
 import { getDisplayFlags } from "@/utils/displayProfile";
 
@@ -119,9 +119,19 @@ interface OrgCardProps {
 
 export function OrgCard({ org, following, onToggleFollow, navigateTo }: OrgCardProps) {
   const navigate = useNavigate();
-  const typeKey = org.type || org.page_type || "company";
-  const typeLabel = typeKey.charAt(0).toUpperCase() + typeKey.slice(1).replace(/_/g, " ");
   const subtype = org.subtype || org.sub_type;
+  const isCreator = isCreatorOrg(org.type, subtype);
+  const followLabel = isCreator
+    ? (following ? "Subscribed" : "+ Subscribe")
+    : (following ? "Following"  : "+ Follow");
+
+  // Compact secondary line: subscriber/employee count where useful
+  const audience = org.followers_count != null ? org.followers_count : null;
+  const audienceLabel = isCreator ? "subscribers" : "followers";
+  const formatCount = (n: number) =>
+    n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M`
+    : n >= 1_000   ? `${(n / 1_000).toFixed(1)}K`
+    : String(n);
 
   return (
     <article
@@ -155,6 +165,11 @@ export function OrgCard({ org, following, onToggleFollow, navigateTo }: OrgCardP
             </span>
           );
         })()}
+        {audience != null && audience > 0 && (
+          <span className="truncate" style={{ fontSize: 11, color: "var(--text-muted)" }}>
+            {formatCount(audience)} {audienceLabel}
+          </span>
+        )}
       </div>
       <button
         type="button"
@@ -166,11 +181,13 @@ export function OrgCard({ org, following, onToggleFollow, navigateTo }: OrgCardP
           whiteSpace: "nowrap",
           ...(following
             ? { background: "rgba(52,199,89,0.10)", color: "#34C759" }
-            : { background: "#F97316", color: "#fff" }
+            : isCreator
+              ? { background: "#EF4444", color: "#fff" }
+              : { background: "#F97316", color: "#fff" }
           ),
         }}
       >
-        {following ? "Following" : "+ Follow"}
+        {followLabel}
       </button>
     </article>
   );
