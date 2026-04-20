@@ -306,7 +306,7 @@ const PostCard = ({
   const companyName = !isOrgPost && companyLine && post.show_company_badge !== false ? companyLine : null;
   const roleLine = !isOrgPost && authorFlags.showRole ? formatRoleLine(author) : null;
   const timeAgo = post.created_at ? getTimeAgo(new Date(post.created_at)) : "";
-  const isOwn = user?.id === post.author_id;
+  const isOwn = !!user?.id && (user.id === post.author_id || user.id === post.posted_by_user_id);
   const isEdited = post.is_edited;
   const isConnected = !isOrgPost && author?.id && connectionIds.has(author.id);
   const showFollow = !isOrgPost && !isOwn && !isConnected && author?.id;

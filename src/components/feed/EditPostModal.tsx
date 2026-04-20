@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { X, Loader2, Image as ImageIcon } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { fixStorageUrl } from "@/components/ui/AvatarSquare";
@@ -44,7 +44,7 @@ const EditPostModal = ({ post, onClose, onSaved }: EditPostModalProps) => {
         hashtags: (content.match(/#\w+/g) || []).map((t: string) => t.slice(1)),
       })
       .eq("id", post.id)
-      .eq("author_id", user.id)
+      .or(`author_id.eq.${user.id},posted_by_user_id.eq.${user.id}`)
       .select("*")
       .single();
     setSaving(false);
@@ -55,17 +55,26 @@ const EditPostModal = ({ post, onClose, onSaved }: EditPostModalProps) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center" onClick={onClose}>
+    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4" onClick={onClose}>
       <div className="absolute inset-0" style={{ background: "rgba(26,26,78,0.40)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }} />
       <div
-        className="relative glass-dark rounded-3xl w-full max-w-[560px] mx-4 p-6"
+        className="relative w-full max-w-[560px] mx-auto flex flex-col"
         onClick={e => e.stopPropagation()}
-        style={{ animation: "slideUp 0.3s ease" }}
+        style={{
+          background: "#FFFFFF",
+          border: "1px solid #E5E7EB",
+          borderRadius: 20,
+          boxShadow: "0 25px 80px rgba(26,26,78,0.25)",
+          padding: 24,
+          maxHeight: "90vh",
+          overflowY: "auto",
+          animation: "slideUp 0.3s ease",
+        }}
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-[16px] font-bold" style={{ color: "var(--text-1)" }}>Edit Post</h2>
-          <button type="button" onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer" style={{ background: "rgba(255,255,255,0.1)" }}>
-            <X className="w-4 h-4" style={{ color: "var(--text-2)" }} />
+          <h2 className="text-[16px] font-bold" style={{ color: "#1A1A2E" }}>Edit Post</h2>
+          <button type="button" onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:bg-[#F5F5F5]" style={{ background: "#F0F0F0" }}>
+            <X className="w-4 h-4" style={{ color: "#6B7094" }} />
           </button>
         </div>
 
@@ -73,29 +82,35 @@ const EditPostModal = ({ post, onClose, onSaved }: EditPostModalProps) => {
           ref={textareaRef}
           value={content}
           onChange={e => { setContent(e.target.value.slice(0, 3000)); autoResize(); }}
-          className="w-full min-h-[120px] px-4 py-3 text-[14px] resize-none outline-none rounded-xl glass-input-dark"
-          style={{ color: "var(--text-1)", lineHeight: 1.7 }}
+          className="w-full min-h-[120px] px-4 py-3 text-[14px] resize-none outline-none rounded-xl"
+          style={{
+            background: "#FFFFFF",
+            color: "#1A1A2E",
+            border: "1px solid #E5E7EB",
+            lineHeight: 1.7,
+          }}
         />
 
         {post.image_urls?.length > 0 && (
           <div className="flex gap-2 mt-3 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
             {post.image_urls.map((url: string, i: number) => (
-              <div key={i} className="w-16 h-16 rounded-lg overflow-hidden shrink-0" style={{ background: "var(--surface-2)" }}>
+              <div key={i} className="w-16 h-16 rounded-lg overflow-hidden shrink-0" style={{ background: "#F5F5F5" }}>
                 <img src={fixStorageUrl(url) || ""} alt="" loading="lazy" className="w-full h-full object-cover" />
               </div>
             ))}
           </div>
         )}
 
-        <div className="flex items-center justify-end gap-3 mt-4 pt-4" style={{ borderTop: "1px solid var(--border)" }}>
-          <button type="button" onClick={onClose} className="text-[13px] font-semibold px-4 py-2 cursor-pointer" style={{ color: "var(--text-2)" }}>
+        <div className="flex items-center justify-end gap-3 mt-4 pt-4" style={{ borderTop: "1px solid #E5E7EB" }}>
+          <button type="button" onClick={onClose} className="text-[13px] font-semibold px-4 py-2 cursor-pointer" style={{ color: "#6B7094", background: "none", border: "none" }}>
             Cancel
           </button>
           <button
             type="button"
             onClick={handleSave}
             disabled={saving || !content.trim()}
-            className="btn-liquid-primary rounded-full px-6 py-2 text-[13px] font-semibold disabled:opacity-50"
+            className="rounded-full px-6 py-2 text-[13px] font-semibold disabled:opacity-50 cursor-pointer"
+            style={{ background: "#F97316", color: "#FFFFFF", border: "none" }}
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}
           </button>
