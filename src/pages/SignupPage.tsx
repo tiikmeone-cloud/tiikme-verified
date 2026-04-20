@@ -201,10 +201,27 @@ export default function SignupPage() {
             <FieldError field="confirmPassword" />
           </div>
 
+          <label className="flex items-start gap-3 cursor-pointer" style={{ fontSize: 13, color: "#4B5563", lineHeight: 1.5 }}>
+            <input
+              type="checkbox"
+              checked={agreed}
+              onChange={e => { setAgreed(e.target.checked); clearError("agreed"); }}
+              style={{ marginTop: 3, accentColor: "#E8580A", width: 16, height: 16, flexShrink: 0 }}
+            />
+            <span>
+              I have read and agree to the
+              <Link to="/terms" target="_blank" className="mx-1 underline" style={{ color: "#E8580A" }}>Terms of Service</Link>
+              and
+              <Link to="/privacy" target="_blank" className="mx-1 underline" style={{ color: "#E8580A" }}>Privacy Policy</Link>
+              of Tiikme. I confirm I am 18 years or older.
+            </span>
+          </label>
+          <FieldError field="agreed" />
+
           <button
             type="button"
-            onClick={handleSubmit} disabled={submitting}
-            className="w-full h-12 rounded-2xl text-[15px] font-bold text-white cursor-pointer transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+            onClick={handleSubmit} disabled={submitting || !agreed}
+            className="w-full h-12 rounded-2xl text-[15px] font-bold text-white cursor-pointer transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             style={{ background: "#E8580A" }}
           >
             {submitting ? "Creating..." : "Create account →"}
