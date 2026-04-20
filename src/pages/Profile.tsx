@@ -681,7 +681,7 @@ const Profile = () => {
         title: expForm.title.trim() || expForm.company.trim() || "Untitled",
         job_title: expForm.title.trim(),
         description: expForm.description.trim(), company_name: expForm.company.trim(), institution_name: expForm.company.trim(),
-        employment_type: expForm.type, type: expForm.type || "experience", item_type: "experience",
+        employment_type: expForm.type, type: mapEmploymentToType(expForm.type), item_type: "experience",
         work_location: expForm.city.trim() || null,
         start_month: expForm.startMonth || null, start_year: expForm.startYear ? Number(expForm.startYear) : null,
         end_month: !expForm.isCurrent ? (expForm.endMonth || null) : null, end_year: !expForm.isCurrent && expForm.endYear ? Number(expForm.endYear) : null,
