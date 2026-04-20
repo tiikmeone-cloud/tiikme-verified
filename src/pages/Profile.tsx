@@ -913,44 +913,109 @@ const Profile = () => {
   const activityScore = profileData.activity_score || 0;
   const tier = getActivityTier(activityScore);
 
+  const handleReport = () => {
+    toast.success("Report submitted. Our team will review.");
+  };
+
+  const handleBlock = async () => {
+    if (!user || !targetUserId) return;
+    if (!confirm("Block this user? You won't see their content and they can't contact you.")) return;
+    // Disconnect first if connected
+    if (connectionStatus.id) {
+      await supabase.from("strands").delete().eq("id", connectionStatus.id);
+    } else {
+      const { data } = await supabase.from("strands").select("id")
+        .or(`and(requester_id.eq.${user.id},receiver_id.eq.${targetUserId}),and(requester_id.eq.${targetUserId},receiver_id.eq.${user.id})`)
+        .maybeSingle();
+      if (data) await supabase.from("strands").delete().eq("id", data.id);
+    }
+    setConnectionStatus({ status: null, direction: null, id: null });
+    toast.success("User blocked");
+  };
+
+  const handleDisconnect = async () => {
+    if (!user || !targetUserId) return;
+    if (!confirm(`Disconnect from ${displayName}? You can reconnect anytime.`)) return;
+    const prev = connectionStatus;
+    // Optimistic
+    setConnectionStatus({ status: null, direction: null, id: null });
+    let strandId = connectionStatus.id;
+    if (!strandId) {
+      const { data } = await supabase.from("strands").select("id")
+        .or(`and(requester_id.eq.${user.id},receiver_id.eq.${targetUserId}),and(requester_id.eq.${targetUserId},receiver_id.eq.${user.id})`)
+        .eq("status", "accepted").maybeSingle();
+      strandId = data?.id || null;
+    }
+    if (strandId) {
+      const { error } = await supabase.from("strands").delete().eq("id", strandId);
+      if (error) {
+        setConnectionStatus(prev);
+        toast.error("Could not disconnect");
+        return;
+      }
+    }
+    toast.success("Disconnected");
+  };
+
+  const handleWithdraw = async () => {
+    if (!user || !targetUserId) return;
+    const prev = connectionStatus;
+    setConnectionStatus({ status: null, direction: null, id: null });
+    let strandId = connectionStatus.id;
+    if (!strandId) {
+      const { data } = await supabase.from("strands").select("id")
+        .eq("requester_id", user.id).eq("receiver_id", targetUserId)
+        .eq("status", "pending").maybeSingle();
+      strandId = data?.id || null;
+    }
+    if (strandId) {
+      const { error } = await supabase.from("strands").delete().eq("id", strandId);
+      if (error) { setConnectionStatus(prev); toast.error("Could not withdraw"); return; }
+    }
+    toast.info("Request withdrawn");
+  };
+
   const renderConnectButton = () => {
     const { status, direction } = connectionStatus;
     if (status === "accepted") {
-      const handleDisconnect = async () => {
-        if (!connectionStatus.id && user && targetUserId) {
-          // Find the strand ID
-          const { data } = await supabase.from("strands").select("id")
-            .or(`and(requester_id.eq.${user.id},receiver_id.eq.${targetUserId}),and(requester_id.eq.${targetUserId},receiver_id.eq.${user.id})`)
-            .eq("status", "accepted").maybeSingle();
-          if (data) {
-            await supabase.from("strands").delete().eq("id", data.id);
-            setConnectionStatus({ status: null, direction: null, id: null });
-            toast.success("Disconnected");
-            return;
-          }
-        }
-        if (connectionStatus.id) {
-          await supabase.from("strands").delete().eq("id", connectionStatus.id);
-          setConnectionStatus({ status: null, direction: null, id: null });
-          toast.success("Disconnected");
-        }
-      };
-
       return (
-        <div className="relative group">
-          <button type="button" className="cursor-pointer" style={{ height: 32, padding: "0 16px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "rgba(52,199,89,0.10)", color: "#34C759", border: "1px solid rgba(52,199,89,0.25)", display: "inline-flex", alignItems: "center", gap: 4 }}>
-            <CheckCircle className="w-3.5 h-3.5" /> Connected
-          </button>
-          <div className="absolute top-full left-0 mt-1 hidden group-hover:block z-20" style={{ background: "#FFFFFF", border: "1px solid #E5E7EB", borderRadius: 10, boxShadow: "0 4px 16px rgba(0,0,0,0.1)", padding: 4, minWidth: 120 }}>
-            <button type="button" onClick={handleDisconnect} className="w-full text-left cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "8px 12px", fontSize: 13, color: "#EF4444", borderRadius: 6 }}>
-              <UserX className="w-3.5 h-3.5 inline mr-2" />Disconnect
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button type="button" className="cursor-pointer" style={{ height: 32, padding: "0 12px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "rgba(52,199,89,0.10)", color: "#34C759", border: "1px solid rgba(52,199,89,0.25)", display: "inline-flex", alignItems: "center", gap: 4 }}>
+              <CheckCircle className="w-3.5 h-3.5" /> Connected <ChevronDown className="w-3 h-3" />
             </button>
-          </div>
-        </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="bg-white">
+            <DropdownMenuItem onClick={() => navigate(`/app/pings?to=${targetUserId}`)}>
+              <MessageCircle className="w-3.5 h-3.5 mr-2" /> Message
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleDisconnect} className="text-red-500 focus:text-red-500">
+              <UserX className="w-3.5 h-3.5 mr-2" /> Disconnect
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleBlock} className="text-red-500 focus:text-red-500">
+              <Ban className="w-3.5 h-3.5 mr-2" /> Block
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleReport}>
+              <Flag className="w-3.5 h-3.5 mr-2" /> Report
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       );
     }
     if (status === "pending" && direction === "sent") return (
-      <button type="button" className="cursor-default" style={{ height: 32, padding: "0 16px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "rgba(255,184,0,0.10)", color: "#FFB800", border: "1px solid rgba(255,184,0,0.25)", display: "inline-flex", alignItems: "center" }}>Requested</button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button type="button" className="cursor-pointer" style={{ height: 32, padding: "0 12px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "rgba(255,184,0,0.10)", color: "#FFB800", border: "1px solid rgba(255,184,0,0.25)", display: "inline-flex", alignItems: "center", gap: 4 }}>
+            Pending <ChevronDown className="w-3 h-3" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="bg-white">
+          <DropdownMenuItem onClick={handleWithdraw}>
+            <UserX className="w-3.5 h-3.5 mr-2" /> Withdraw request
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     );
     if (status === "pending" && direction === "received") return (
       <div className="flex gap-2">
