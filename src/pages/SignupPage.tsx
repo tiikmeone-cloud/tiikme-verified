@@ -77,6 +77,8 @@ export default function SignupPage() {
     if (!confirmPassword) errs.confirmPassword = "Please confirm your password";
     else if (password !== confirmPassword) errs.confirmPassword = "Passwords do not match";
 
+    if (!agreed) errs.agreed = "You must agree to the Terms and Privacy Policy";
+
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
 
@@ -98,6 +100,16 @@ export default function SignupPage() {
     if (data.user && data.user.identities && data.user.identities.length === 0) {
       setErrors({ email: "This email is already registered. Please sign in instead." });
       return;
+    }
+
+    // Stamp consent on the profile (best-effort; trigger creates the row)
+    if (data.user?.id) {
+      supabase.from("profiles").update({
+        terms_accepted_at: new Date().toISOString(),
+        terms_version: TERMS_VERSION,
+      }).eq("id", data.user.id).then(({ error: updErr }) => {
+        if (updErr) console.warn("[Signup] Failed to stamp terms consent:", updErr.message);
+      });
     }
 
     sessionStorage.setItem("ob_email", email);
