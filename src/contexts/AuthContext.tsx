@@ -153,6 +153,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (user?.id) await fetchProfile(user.id);
   }, [user?.id, fetchProfile]);
 
+  // Ensure the user has an E2EE keypair generated (in IndexedDB) and published (on profile).
+  // Runs once profile is loaded; safe to re-run because publish is no-op if keys already match.
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        await ensurePublishedKey(user.id, profile?.public_key ?? null);
+        if (!cancelled && !profile?.public_key) {
+          // Refresh profile so consumers see the new public_key without a reload
+          fetchProfile(user.id);
+        }
+      } catch (e) {
+        console.warn("[E2EE] keypair init failed:", e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id, profile?.public_key, fetchProfile]);
+
   const displayName = profile?.full_name || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "";
   const initials = displayName
     .split(" ")
