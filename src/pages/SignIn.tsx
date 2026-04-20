@@ -23,6 +23,8 @@ const SignIn = () => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) { toast.error(error.message); return; }
+    const { markRecentAuth } = await import("@/lib/idleLogout");
+    markRecentAuth();
 
     // Route based on account type
     const userId = data.user?.id;

@@ -15,6 +15,12 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="canonical" href="https://tiikme.in/" />
 
+    <!-- Security headers (meta-equivalent; HTTP headers preferred when on a custom CDN) -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.supabase.co https://cdn.gpteng.co; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https: ; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openai.com https://lovable.dev; media-src 'self' blob: https://*.supabase.co; frame-src 'self' https://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self';" />
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(), payment=(), usb=()" />
+
     <meta property="og:title" content="Tiikme — Verified Professional Identity for India" />
     <meta property="og:description" content="Your work. Verified. For everyone. The professional identity platform for students, doctors, plumbers, engineers, and every working person in India." />
     <meta property="og:type" content="website" />

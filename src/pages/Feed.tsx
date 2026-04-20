@@ -138,11 +138,13 @@ const FeedComposer = ({ onPublished }: { onPublished: () => void }) => {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
+    const { validateUpload } = await import("@/lib/uploadValidation");
     Array.from(files).slice(0, 10 - attachPreviews.length).forEach(file => {
-      if (file.size > 10 * 1024 * 1024) { toast.error("File must be under 10MB"); return; }
+      const err = validateUpload(file, { maxBytes: 10 * 1024 * 1024, allowImages: true, allowPdf: true, allowOffice: true });
+      if (err) { toast.error(err); return; }
       const isImage = file.type.startsWith("image/");
       setAttachPreviews(prev => [...prev, {
         url: isImage ? URL.createObjectURL(file) : "",

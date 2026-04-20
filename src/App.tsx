@@ -5,6 +5,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { useIdleLogout } from "@/lib/idleLogout";
 import { ProtectedRoute, PublicOnlyRoute } from "@/components/RouteGuard";
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
 import PageLoader from "@/components/PageLoader";
@@ -76,14 +77,11 @@ const Shell = ({ children }: { children: React.ReactNode }) => (
   <ProtectedRoute><LayoutErrorBoundary><AppShell><PageErrorBoundary>{children}</PageErrorBoundary></AppShell></LayoutErrorBoundary></ProtectedRoute>
 );
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner position="bottom-right" />
-      {CachePerfOverlay && <Suspense fallback={null}><CachePerfOverlay /></Suspense>}
-      <BrowserRouter>
+/** Inner component runs hooks that need AuthProvider in scope (e.g. idle logout). */
+const AppRoutes = () => {
+  useIdleLogout();
+  return (
+    <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
           <Routes>
             {/* Public */}
@@ -150,7 +148,18 @@ const App = () => (
           </Routes>
         </Suspense>
       </BrowserRouter>
-    </TooltipProvider>
+  );
+};
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner position="bottom-right" />
+        {CachePerfOverlay && <Suspense fallback={null}><CachePerfOverlay /></Suspense>}
+        <AppRoutes />
+      </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

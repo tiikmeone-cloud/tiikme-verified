@@ -181,7 +181,9 @@ const GetTiikedModal = ({ open, onClose, userId, userRole, onVerified }: Props) 
                 input.onchange = async (e: any) => {
                   const file = e.target.files?.[0];
                   if (!file || !userId) return;
-                  if (file.size > 10 * 1024 * 1024) { toast.error("Max 10MB"); return; }
+                  const { validateUpload } = await import("@/lib/uploadValidation");
+                  const valErr = validateUpload(file, { maxBytes: 10 * 1024 * 1024, allowImages: true, allowPdf: true });
+                  if (valErr) { toast.error(valErr); return; }
                   try {
                     const path = `${userId}/verify-${Date.now()}-${file.name.replace(/[^a-z0-9.]/gi, "_")}`;
                     const { error: upErr } = await supabase.storage.from("work-assets").upload(path, file);
