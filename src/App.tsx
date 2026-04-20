@@ -57,14 +57,20 @@ const CirclesPage = lazyWithRetry(() => import("./pages/Circles.tsx"), "CirclesP
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000,        // 5 min — data considered fresh
-      gcTime: 30 * 60 * 1000,           // 30 min — keep unused data in cache
-      refetchOnWindowFocus: false,       // Don't refetch on tab switch
-      refetchOnMount: false,             // Don't refetch if cache exists
+      staleTime: 10 * 60 * 1000,        // 10 min — fresh window
+      gcTime: 60 * 60 * 1000,            // 1 hr — keep in cache for fast back-nav
+      refetchOnMount: "always",         // re-render from cache; refetch only if stale
+      refetchOnWindowFocus: false,       // user complaint: tab-switch should be instant
+      refetchOnReconnect: "always",
       retry: 1,
     },
+    mutations: { retry: 0 },
   },
 });
+
+const CachePerfOverlay = import.meta.env.DEV
+  ? lazyWithRetry(() => import("@/components/dev/CachePerfOverlay"), "CachePerfOverlay")
+  : null;
 
 const Shell = ({ children }: { children: React.ReactNode }) => (
   <ProtectedRoute><LayoutErrorBoundary><AppShell><PageErrorBoundary>{children}</PageErrorBoundary></AppShell></LayoutErrorBoundary></ProtectedRoute>
