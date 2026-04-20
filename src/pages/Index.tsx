@@ -1,16 +1,19 @@
+import { lazy, Suspense } from "react";
 import Navbar from "@/components/landing/Navbar";
 import HeroSection from "@/components/landing/HeroSection";
-import ProblemSection from "@/components/landing/ProblemSection";
-import HowItWorksSection from "@/components/landing/HowItWorksSection";
-import WhoIsForSection from "@/components/landing/WhoIsForSection";
-import CirclesSection from "@/components/landing/CirclesSection";
-import InstitutionsSection from "@/components/landing/InstitutionsSection";
-import ComparisonSection from "@/components/landing/ComparisonSection";
-import VisionSection from "@/components/landing/VisionSection";
-import CTASection from "@/components/landing/CTASection";
-import Footer from "@/components/landing/Footer";
-import AuthThemeToggle from "@/components/AuthThemeToggle";
 import { PageSEO } from "@/hooks/usePageSEO";
+
+// Defer below-the-fold sections to reduce initial JS payload
+const ProblemSection = lazy(() => import("@/components/landing/ProblemSection"));
+const HowItWorksSection = lazy(() => import("@/components/landing/HowItWorksSection"));
+const WhoIsForSection = lazy(() => import("@/components/landing/WhoIsForSection"));
+const CirclesSection = lazy(() => import("@/components/landing/CirclesSection"));
+const InstitutionsSection = lazy(() => import("@/components/landing/InstitutionsSection"));
+const ComparisonSection = lazy(() => import("@/components/landing/ComparisonSection"));
+const VisionSection = lazy(() => import("@/components/landing/VisionSection"));
+const CTASection = lazy(() => import("@/components/landing/CTASection"));
+const Footer = lazy(() => import("@/components/landing/Footer"));
+const AuthThemeToggle = lazy(() => import("@/components/AuthThemeToggle"));
 
 const Index = () => {
   return (
@@ -50,16 +53,18 @@ const Index = () => {
       />
       <Navbar />
       <HeroSection />
-      <ProblemSection />
-      <HowItWorksSection />
-      <WhoIsForSection />
-      <CirclesSection />
-      <InstitutionsSection />
-      <ComparisonSection />
-      <VisionSection />
-      <CTASection />
-      <Footer />
-      <AuthThemeToggle />
+      <Suspense fallback={null}>
+        <ProblemSection />
+        <HowItWorksSection />
+        <WhoIsForSection />
+        <CirclesSection />
+        <InstitutionsSection />
+        <ComparisonSection />
+        <VisionSection />
+        <CTASection />
+        <Footer />
+        <AuthThemeToggle />
+      </Suspense>
     </div>
   );
 };
