@@ -353,9 +353,14 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
                   </div>
 
                   {verifiers.length === 0 && (
-                    <p style={{ fontSize: 12, textAlign: "center", padding: 8, color: "#9CA3C0" }}>
-                      No admins found for this organization yet.
-                    </p>
+                    <div className="rounded-xl p-3" style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.18)" }}>
+                      <p style={{ fontSize: 12, fontWeight: 600, color: "#92400E" }}>
+                        No admin is currently assigned at this organization.
+                      </p>
+                      <p style={{ fontSize: 11, color: "#9CA3C0", marginTop: 4 }}>
+                        Your request will be reviewed by the Tiikme team.
+                      </p>
+                    </div>
                   )}
 
                   <div className="space-y-2" style={{ maxHeight: 200, overflowY: "auto" }}>
