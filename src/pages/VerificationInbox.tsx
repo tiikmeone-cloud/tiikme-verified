@@ -207,7 +207,9 @@ export default function VerificationInbox() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-6">
+    <>
+      <PageSEO title="Verification Inbox · Tiikme" description="Review verification requests for your organisation." noIndex />
+      <div className="max-w-3xl mx-auto px-4 py-6">
       <div className="flex items-center gap-2 mb-4">
         <ShieldCheck className="w-5 h-5" style={{ color: "var(--brand)" }} />
         <h1 className="text-[20px] font-extrabold" style={{ color: "var(--text-1)" }}>Verification Inbox</h1>
