@@ -8,7 +8,7 @@
  *    (company / college require page ownership)
  */
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Hash, MapPin, Users, Briefcase, Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,7 +36,18 @@ const MAX_PER_30D = 3;
 
 export default function CircleCreate() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, profile, loading } = useAuth();
+
+  // If invoked with ?org=<orgId>, pre-link this circle to that organization
+  const linkedOrgId = searchParams.get("org");
+  const [linkedOrgName, setLinkedOrgName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!linkedOrgId) { setLinkedOrgName(null); return; }
+    supabase.from("organizations").select("name").eq("id", linkedOrgId).maybeSingle()
+      .then(({ data }) => setLinkedOrgName(data?.name || null));
+  }, [linkedOrgId]);
 
   const [type, setType] = useState<CircleType>("topic");
   const [name, setName] = useState("");
@@ -114,6 +125,7 @@ export default function CircleCreate() {
         who_can_post: whoCanPost,
         who_can_join: whoCanJoin,
         created_by: user.id,
+        ...(linkedOrgId ? { linked_org_id: linkedOrgId } : {}),
       } as any)
       .select()
       .single();
@@ -193,6 +205,18 @@ export default function CircleCreate() {
             <ul className="text-[12px] list-disc pl-4" style={{ color: "#92400E" }}>
               {blockedReasons.map((r) => <li key={r}>{r}</li>)}
             </ul>
+          </div>
+        )}
+
+        {linkedOrgId && (
+          <div
+            className="p-3 rounded-xl mb-4 flex items-center gap-2"
+            style={{ background: "rgba(232,115,58,0.08)", border: "1px solid rgba(232,115,58,0.30)" }}
+          >
+            <Users className="w-4 h-4" style={{ color: "#9A4C1F" }} />
+            <p className="text-[12px] font-semibold" style={{ color: "#9A4C1F" }}>
+              This circle will be linked to <strong>{linkedOrgName || "your organization"}</strong>.
+            </p>
           </div>
         )}
 

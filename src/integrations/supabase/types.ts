@@ -516,6 +516,7 @@ export type Database = {
           icon_url: string | null
           id: string
           is_unlocked: boolean
+          linked_org_id: string | null
           member_count: number
           name: string
           post_count: number
@@ -535,6 +536,7 @@ export type Database = {
           icon_url?: string | null
           id?: string
           is_unlocked?: boolean
+          linked_org_id?: string | null
           member_count?: number
           name: string
           post_count?: number
@@ -554,6 +556,7 @@ export type Database = {
           icon_url?: string | null
           id?: string
           is_unlocked?: boolean
+          linked_org_id?: string | null
           member_count?: number
           name?: string
           post_count?: number
@@ -565,7 +568,15 @@ export type Database = {
           who_can_join?: string
           who_can_post?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "circles_linked_org_id_fkey"
+            columns: ["linked_org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       comment_reactions: {
         Row: {
