@@ -589,7 +589,14 @@ const Profile = () => {
   const roleLabel = role.charAt(0).toUpperCase() + role.slice(1).replace(/_/g, " ");
   const initials = displayName ? displayName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase() : authInitials || "U";
   const roleColor = ROLE_COLOR_MAP[role] || "#4F46E5";
-  const isVerified = profileData.is_verified === true;
+  const isVerified = profileData.is_verified === true && (() => {
+    // Verified badge auto-lapses 6 months after verified_at
+    const va = (profileData as any).verified_at;
+    if (!va) return true; // legacy: no timestamp → still trust until backfill catches up
+    const t = new Date(va).getTime();
+    if (!t) return true;
+    return Date.now() - t < 183 * 24 * 60 * 60 * 1000;
+  })();
   const skills: string[] = profileData.skills || [];
   const customLinks: any[] = Array.isArray(profileData.custom_links) ? profileData.custom_links : [];
   const aboutText = profileData.bio || profileData.about || "";
