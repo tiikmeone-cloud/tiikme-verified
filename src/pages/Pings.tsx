@@ -549,6 +549,10 @@ const Pings = () => {
           </div>
         </div>
       )}
+
+      {showKeyManager && user && (
+        <EncryptionKeyManager userId={user.id} onClose={() => setShowKeyManager(false)} />
+      )}
     </div>
   );
 };
