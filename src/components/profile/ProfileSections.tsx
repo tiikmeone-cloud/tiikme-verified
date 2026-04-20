@@ -3,11 +3,12 @@ import { fixStorageUrl } from "@/components/ui/AvatarSquare";
 import {
   Briefcase, GraduationCap, Rocket, Award, Code2, MessageCircle,
   MapPin, CheckCircle, Clock, Eye, EyeOff, Trash2, Plus, ExternalLink,
-  Star, X
+  Star, X, Heart, Repeat2, Share2,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import VerificationRequest from "@/components/profile/VerificationRequest";
 import { useCompanyLogos } from "@/hooks/useCompanyLogos";
+import ImageGrid from "@/components/feed/ImageGrid";
 
 /* ── Helpers ── */
 const LOGO_COLORS = ["#E8733A", "#4A90D9", "#34C759", "#FF6B9D", "#8B5CF6", "#FFB800"];
@@ -438,27 +439,27 @@ export const PostsSection = ({ posts, stats }: { posts: any[]; stats: { posts: n
       ) : (
         <>
           {posts.slice(0, 3).map((p: any, idx: number) => (
-            <Link key={p.id} to={`/app/post/${p.id}`} className="block" style={{ padding: "8px 0", borderBottom: idx < Math.min(posts.length, 3) - 1 ? "1px solid var(--border-subtle)" : "none" }}>
-              <p style={{ fontSize: 13, fontWeight: 400, color: "var(--text-primary)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{p.content}</p>
-              {/* Post images */}
+            <Link key={p.id} to={`/app/post/${p.id}`} className="block" style={{ padding: "10px 0", borderBottom: idx < Math.min(posts.length, 3) - 1 ? "1px solid var(--border-subtle)" : "none" }}>
+              <p style={{ fontSize: 13, fontWeight: 400, color: "var(--text-primary)", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: "18px" }}>{p.content}</p>
+              {/* Post images — same renderer as Feed */}
               {p.image_urls && p.image_urls.length > 0 && (
-                <div className="flex gap-1 mt-1.5 overflow-hidden" style={{ borderRadius: 8 }}>
-                  {p.image_urls.slice(0, 3).map((url: string, i: number) => (
-                    <img key={i} src={url} alt="" loading="lazy" className="object-cover" style={{ width: p.image_urls.length === 1 ? "100%" : 80, height: 56, borderRadius: 6 }} />
-                  ))}
-                  {p.image_urls.length > 3 && <span style={{ width: 80, height: 56, borderRadius: 6, background: "rgba(0,0,0,0.06)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "var(--text-muted)" }}>+{p.image_urls.length - 3}</span>}
+                <div style={{ marginTop: 8 }} onClick={e => e.preventDefault()}>
+                  <ImageGrid images={p.image_urls} />
                 </div>
               )}
-              {/* Engagement row */}
-              <div className="flex items-center" style={{ gap: 12, marginTop: 6 }}>
-                <span className="flex items-center" style={{ gap: 3, fontSize: 12, color: "var(--text-muted)" }}>
-                  <Star style={{ width: 12, height: 12, color: "#FF6B9D" }} /> {getLikeCount(p)}
+              {/* Engagement row — matches Feed icons */}
+              <div className="flex items-center" style={{ gap: 16, marginTop: 8 }}>
+                <span className="flex items-center" style={{ gap: 4, fontSize: 12, color: "var(--text-muted)" }}>
+                  <Heart style={{ width: 13, height: 13 }} /> {getLikeCount(p)}
                 </span>
-                <span className="flex items-center" style={{ gap: 3, fontSize: 12, color: "var(--text-muted)" }}>
-                  <MessageCircle style={{ width: 12, height: 12 }} /> {getCommentCount(p)}
+                <span className="flex items-center" style={{ gap: 4, fontSize: 12, color: "var(--text-muted)" }}>
+                  <MessageCircle style={{ width: 13, height: 13 }} /> {getCommentCount(p)}
                 </span>
-                <span className="flex items-center" style={{ gap: 3, fontSize: 12, color: "var(--text-muted)" }}>
-                  <Rocket style={{ width: 12, height: 12 }} /> {p.repost_count || 0}
+                <span className="flex items-center" style={{ gap: 4, fontSize: 12, color: "var(--text-muted)" }}>
+                  <Repeat2 style={{ width: 13, height: 13 }} /> {p.repost_count || 0}
+                </span>
+                <span className="flex items-center" style={{ gap: 4, fontSize: 12, color: "var(--text-muted)" }}>
+                  <Share2 style={{ width: 13, height: 13 }} />
                 </span>
                 <span style={{ fontSize: 11, color: "var(--text-muted)", marginLeft: "auto" }}>
                   {p.created_at ? getTimeAgo(new Date(p.created_at)) : ""}

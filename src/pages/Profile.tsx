@@ -1089,7 +1089,7 @@ const Profile = () => {
                   <span style={{ width: 22, height: 12, borderRadius: 999, background: profileData.open_to_work ? "#10B981" : "rgba(0,0,0,0.18)", display: "inline-flex", alignItems: "center", padding: 1.5, transition: "background 0.2s" }}>
                     <span style={{ width: 9, height: 9, borderRadius: "50%", background: "#fff", transform: profileData.open_to_work ? "translateX(10px)" : "translateX(0)", transition: "transform 0.2s" }} />
                   </span>
-                  OTW
+                  Open to Work
                 </button>
               )}
 
