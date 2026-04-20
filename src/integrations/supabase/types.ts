@@ -3493,7 +3493,7 @@ export type Database = {
           entity_type?: string | null
           id?: string
           item_id: string
-          item_type: string
+          item_type?: string
           org_id?: string | null
           rejection_reason?: string | null
           requested_doc_message?: string | null
@@ -3505,7 +3505,7 @@ export type Database = {
           reviewed_by?: string | null
           role_category?: string | null
           status?: string | null
-          submitted_id: string
+          submitted_id?: string
           supporting_doc_url?: string | null
           updated_at?: string | null
         }
