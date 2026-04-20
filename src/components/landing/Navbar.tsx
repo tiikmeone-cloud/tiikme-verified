@@ -69,6 +69,7 @@ const Navbar = () => {
 
         <button
           onClick={() => setMenuOpen(true)}
+          aria-label="Open menu"
           className="flex md:hidden p-2 cursor-pointer"
           style={{ color: "#374151" }}
         >
