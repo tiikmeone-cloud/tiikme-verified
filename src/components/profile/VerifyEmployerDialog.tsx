@@ -137,7 +137,7 @@ export default function VerifyEmployerDialog({ open, onOpenChange, defaultOrgId,
       status: "pending" as const,
     };
     const { error: upErr } = await supabase
-      .from("verification_requests")
+      .from("employer_endorsement_requests")
       .upsert(payload, { onConflict: "requester_id,org_id,requested_role" });
 
     if (upErr) {
