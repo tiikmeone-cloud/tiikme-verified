@@ -559,6 +559,73 @@ export type Database = {
         }
         Relationships: []
       }
+      employer_endorsement_requests: {
+        Row: {
+          approval_note: string | null
+          approved_by: string | null
+          created_at: string
+          email_verified: boolean
+          expires_at: string
+          id: string
+          org_id: string
+          requested_role: string
+          requester_id: string
+          resolved_at: string | null
+          status: string
+          work_email: string | null
+        }
+        Insert: {
+          approval_note?: string | null
+          approved_by?: string | null
+          created_at?: string
+          email_verified?: boolean
+          expires_at?: string
+          id?: string
+          org_id: string
+          requested_role: string
+          requester_id: string
+          resolved_at?: string | null
+          status?: string
+          work_email?: string | null
+        }
+        Update: {
+          approval_note?: string | null
+          approved_by?: string | null
+          created_at?: string
+          email_verified?: boolean
+          expires_at?: string
+          id?: string
+          org_id?: string
+          requested_role?: string
+          requester_id?: string
+          resolved_at?: string | null
+          status?: string
+          work_email?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employer_endorsement_requests_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employer_endorsement_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employer_endorsement_requests_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hiring_assessments: {
         Row: {
           created_at: string | null

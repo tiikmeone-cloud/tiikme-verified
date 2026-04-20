@@ -1,7 +1,7 @@
 /**
  * VerificationInbox
  * Shown at the top of /app/alerts ONLY for users who are admins of at least
- * one organization. Lists pending verification_requests for the orgs they admin.
+ * one organization. Lists pending employer_endorsement_requests for the orgs they admin.
  */
 import { useState, useEffect, useCallback } from "react";
 import { ShieldCheck, Check, X, ExternalLink, Mail } from "lucide-react";
@@ -45,7 +45,7 @@ export default function VerificationInbox() {
     if (orgIds.length === 0) { setRows([]); setLoading(false); return; }
 
     const { data } = await supabase
-      .from("verification_requests")
+      .from("employer_endorsement_requests")
       .select("id, requester_id, org_id, requested_role, work_email, email_verified, status, created_at")
       .in("org_id", orgIds)
       .eq("status", "pending")
@@ -79,7 +79,7 @@ export default function VerificationInbox() {
   useEffect(() => {
     if (!user) return;
     const ch = supabase.channel("verif-inbox-" + user.id)
-      .on("postgres_changes", { event: "*", schema: "public", table: "verification_requests" }, () => fetchRows())
+      .on("postgres_changes", { event: "*", schema: "public", table: "employer_endorsement_requests" }, () => fetchRows())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [user, fetchRows]);
@@ -88,7 +88,7 @@ export default function VerificationInbox() {
     if (!user) return;
     setBusyId(row.id);
     const { error } = await supabase
-      .from("verification_requests")
+      .from("employer_endorsement_requests")
       .update({
         status: "approved",
         approved_by: user.id,
@@ -121,7 +121,7 @@ export default function VerificationInbox() {
     if (!user) return;
     setBusyId(row.id);
     const { error } = await supabase
-      .from("verification_requests")
+      .from("employer_endorsement_requests")
       .update({
         status: "rejected",
         approved_by: user.id,
