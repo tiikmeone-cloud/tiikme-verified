@@ -440,6 +440,9 @@ const Pings = () => {
                         {/* Time + status */}
                         {showTime && (
                           <div className="flex items-center justify-end gap-1 mt-1">
+                            {(msg as any).is_encrypted && !isDeleted && (
+                              <Lock className="w-2.5 h-2.5" style={{ color: isMe ? "rgba(255,255,255,0.7)" : "#10B981" }} />
+                            )}
                             <p className="text-[10px] opacity-60" style={{ color: isDeleted ? "var(--text-3)" : isMe ? "rgba(255,255,255,0.7)" : "var(--text-3)" }}>{time}</p>
                             {isMe && !isDeleted && <span className="text-[9px]" style={{ color: "rgba(255,255,255,0.5)" }}>
                               {msg.status === "sending" ? "Sending…" : msg.status === "read" ? "✓✓ Seen" : "✓ Delivered"}
