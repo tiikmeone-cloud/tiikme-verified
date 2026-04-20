@@ -156,7 +156,8 @@ const AppShell = ({ children }: { children: ReactNode }) => {
     if (isActive("/app/alerts")) setUnreadAlerts(0);
     setShowActionSheet(false);
     prefetchAdjacent(pathname);
-  }, [pathname]);
+    prefetchAdjacentData(queryClient, pathname, user?.id);
+  }, [pathname, user?.id]);
 
   const getBadge = (path: string) => {
     if (path === "/app/alerts") return unreadAlerts || undefined;
@@ -230,7 +231,8 @@ const AppShell = ({ children }: { children: ReactNode }) => {
                         borderLeft: active ? "3px solid #E8733A" : "3px solid transparent",
                         transition: "all 150ms ease",
                       }}
-                      onMouseEnter={e => { prefetchRoute(item.path); if (!active) e.currentTarget.style.background = "rgba(0,0,0,0.03)"; }}
+                      onMouseEnter={e => { prefetchRoute(item.path); prefetchOnHover(queryClient, item.path, user?.id); if (!active) e.currentTarget.style.background = "rgba(0,0,0,0.03)"; }}
+                      onFocus={() => { prefetchRoute(item.path); prefetchOnHover(queryClient, item.path, user?.id); }}
                       onMouseLeave={e => { if (!active) e.currentTarget.style.background = active ? "rgba(232,115,58,0.08)" : "transparent"; }}
                     >
                       <div className="relative" style={{ display: "flex", alignItems: "center" }}>
