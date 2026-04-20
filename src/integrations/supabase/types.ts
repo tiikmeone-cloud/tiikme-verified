@@ -124,6 +124,30 @@ export type Database = {
           },
         ]
       }
+      activity_role_weights: {
+        Row: {
+          role: string
+          w_connections: number | null
+          w_content: number | null
+          w_engagement: number | null
+          w_profile: number | null
+        }
+        Insert: {
+          role: string
+          w_connections?: number | null
+          w_content?: number | null
+          w_engagement?: number | null
+          w_profile?: number | null
+        }
+        Update: {
+          role?: string
+          w_connections?: number | null
+          w_content?: number | null
+          w_engagement?: number | null
+          w_profile?: number | null
+        }
+        Relationships: []
+      }
       alerts: {
         Row: {
           action_url: string | null
@@ -347,6 +371,7 @@ export type Database = {
           content: string | null
           created_at: string
           downvote_count: number
+          flag_reason: string | null
           hot_score: number
           id: string
           is_flagged: boolean
@@ -370,6 +395,7 @@ export type Database = {
           content?: string | null
           created_at?: string
           downvote_count?: number
+          flag_reason?: string | null
           hot_score?: number
           id?: string
           is_flagged?: boolean
@@ -393,6 +419,7 @@ export type Database = {
           content?: string | null
           created_at?: string
           downvote_count?: number
+          flag_reason?: string | null
           hot_score?: number
           id?: string
           is_flagged?: boolean
@@ -2425,6 +2452,30 @@ export type Database = {
           },
         ]
       }
+      post_content_hashes: {
+        Row: {
+          author_id: string | null
+          content_hash: string | null
+          content_preview: string | null
+          created_at: string | null
+          id: string
+        }
+        Insert: {
+          author_id?: string | null
+          content_hash?: string | null
+          content_preview?: string | null
+          created_at?: string | null
+          id?: string
+        }
+        Update: {
+          author_id?: string | null
+          content_hash?: string | null
+          content_preview?: string | null
+          created_at?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
       post_mentions: {
         Row: {
           created_at: string | null
@@ -2843,6 +2894,7 @@ export type Database = {
           about_qa: Json | null
           account_type: string | null
           activity_score: number | null
+          activity_score_v2_live: boolean | null
           avatar_url: string | null
           bio: string | null
           contact_email_visible: boolean | null
@@ -2850,6 +2902,7 @@ export type Database = {
           created_at: string | null
           currently_working_at: string | null
           custom_links: Json | null
+          days_active: number | null
           department: string | null
           designation: string | null
           email: string | null
@@ -2864,6 +2917,7 @@ export type Database = {
           is_verified: boolean | null
           key_created_at: string | null
           languages: string[] | null
+          last_active_date: string | null
           location_city: string | null
           location_state: string | null
           onboarding_complete: boolean | null
@@ -2879,9 +2933,11 @@ export type Database = {
           role: string | null
           role_metadata: Json | null
           role_subtype: string | null
+          score_penalty: number | null
           section_order: Json | null
           sector: string | null
           skills: string[] | null
+          spam_flag_count: number | null
           status: string | null
           theme_preference: string | null
           updated_at: string | null
@@ -2896,6 +2952,7 @@ export type Database = {
           about_qa?: Json | null
           account_type?: string | null
           activity_score?: number | null
+          activity_score_v2_live?: boolean | null
           avatar_url?: string | null
           bio?: string | null
           contact_email_visible?: boolean | null
@@ -2903,6 +2960,7 @@ export type Database = {
           created_at?: string | null
           currently_working_at?: string | null
           custom_links?: Json | null
+          days_active?: number | null
           department?: string | null
           designation?: string | null
           email?: string | null
@@ -2917,6 +2975,7 @@ export type Database = {
           is_verified?: boolean | null
           key_created_at?: string | null
           languages?: string[] | null
+          last_active_date?: string | null
           location_city?: string | null
           location_state?: string | null
           onboarding_complete?: boolean | null
@@ -2932,9 +2991,11 @@ export type Database = {
           role?: string | null
           role_metadata?: Json | null
           role_subtype?: string | null
+          score_penalty?: number | null
           section_order?: Json | null
           sector?: string | null
           skills?: string[] | null
+          spam_flag_count?: number | null
           status?: string | null
           theme_preference?: string | null
           updated_at?: string | null
@@ -2949,6 +3010,7 @@ export type Database = {
           about_qa?: Json | null
           account_type?: string | null
           activity_score?: number | null
+          activity_score_v2_live?: boolean | null
           avatar_url?: string | null
           bio?: string | null
           contact_email_visible?: boolean | null
@@ -2956,6 +3018,7 @@ export type Database = {
           created_at?: string | null
           currently_working_at?: string | null
           custom_links?: Json | null
+          days_active?: number | null
           department?: string | null
           designation?: string | null
           email?: string | null
@@ -2970,6 +3033,7 @@ export type Database = {
           is_verified?: boolean | null
           key_created_at?: string | null
           languages?: string[] | null
+          last_active_date?: string | null
           location_city?: string | null
           location_state?: string | null
           onboarding_complete?: boolean | null
@@ -2985,9 +3049,11 @@ export type Database = {
           role?: string | null
           role_metadata?: Json | null
           role_subtype?: string | null
+          score_penalty?: number | null
           section_order?: Json | null
           sector?: string | null
           skills?: string[] | null
+          spam_flag_count?: number | null
           status?: string | null
           theme_preference?: string | null
           updated_at?: string | null
@@ -4024,6 +4090,7 @@ export type Database = {
         Returns: Json
       }
       calculate_activity_score: { Args: { p_user_id: string }; Returns: number }
+      calculate_activity_score_v2: { Args: { uid: string }; Returns: number }
       calculate_circle_post_hot_score: {
         Args: { p_id: string }
         Returns: number
@@ -4047,6 +4114,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      increment_days_active: { Args: { uid: string }; Returns: undefined }
       increment_score: {
         Args: { amount: number; uid: string }
         Returns: undefined
@@ -4071,6 +4139,7 @@ export type Database = {
         }[]
       }
       update_all_activity_scores: { Args: never; Returns: undefined }
+      update_all_activity_scores_v2: { Args: never; Returns: undefined }
     }
     Enums: {
       circle_post_type:
