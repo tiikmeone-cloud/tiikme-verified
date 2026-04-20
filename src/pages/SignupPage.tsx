@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { Eye, EyeOff, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,12 +25,20 @@ const inputErrorStyle: React.CSSProperties = { ...inputStyle, borderColor: "#EF4
 export default function SignupPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
+  const safeRedirect = redirectTo && redirectTo.startsWith("/") ? redirectTo : null;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Persist deep-link target so the onboarding flow can return the user there
+  useEffect(() => {
+    if (safeRedirect) sessionStorage.setItem("post_auth_redirect", safeRedirect);
+  }, [safeRedirect]);
 
   useEffect(() => {
     if (user) {
