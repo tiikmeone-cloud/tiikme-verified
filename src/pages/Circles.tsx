@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Plus, Search, TrendingUp, Clock, Award } from "lucide-react";
+import { Plus, Search, TrendingUp, Clock, Award, MessageCircle, MoreHorizontal, Pencil, Trash2, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -14,6 +14,7 @@ import { moderateText, logModerationFlag } from "@/lib/moderation";
 import SoftWarnModal from "@/components/moderation/SoftWarnModal";
 import ReportButton from "@/components/moderation/ReportButton";
 import CircleCreatePage from "@/pages/CircleCreate";
+import CommentPanel from "@/components/comments/CommentPanel";
 
 // -------- DISCOVERY SCREEN --------
 function CirclesDiscovery() {
@@ -337,7 +338,15 @@ function CircleDetail({ slug }: { slug: string }) {
           <div className="glass-card" style={{ padding: 24, borderRadius: 12, background: "rgba(255,255,255,0.45)", border: "1px solid rgba(255,255,255,0.30)", textAlign: "center", fontSize: 13, color: "#6B7094" }}>
             No posts yet. {isMember ? "Be the first to post." : "Join to see the conversation."}
           </div>
-        ) : posts.map(p => <CirclePostCard key={p.id} post={p} onUpvote={() => toggleUpvote(p.id, !!p.viewer_upvoted)} />)}
+        ) : posts.map(p => (
+          <CirclePostCard
+            key={p.id}
+            post={p}
+            onUpvote={() => toggleUpvote(p.id, !!p.viewer_upvoted)}
+            onDeleted={(id) => setPosts(prev => prev.filter(x => x.id !== id))}
+            onEdited={(id, body) => setPosts(prev => prev.map(x => x.id === id ? { ...x, body, content: body } : x))}
+          />
+        ))}
       </div>
 
       {showComposer && isMember && (
@@ -347,12 +356,64 @@ function CircleDetail({ slug }: { slug: string }) {
   );
 }
 
-function CirclePostCard({ post, onUpvote }: { post: any; onUpvote?: () => void }) {
+function CirclePostCard({
+  post, onUpvote, onDeleted, onEdited,
+}: {
+  post: any;
+  onUpvote?: () => void;
+  onDeleted?: (id: string) => void;
+  onEdited?: (id: string, body: string) => void;
+}) {
+  const { user } = useAuth();
   const author = post.author;
   const showName = post.signtype === "full_profile";
   const label = (SIGNTYPE_CONFIG as any)[post.signtype]?.label || "User";
   const typeConf = (POST_TYPE_CONFIG as any)[post.post_type] || POST_TYPE_CONFIG.discussion;
   const upvoted = !!post.viewer_upvoted;
+  const isOwn = user?.id === post.author_id;
+
+  const [showMenu, setShowMenu] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editBody, setEditBody] = useState(post.body || post.content || "");
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [commentDelta, setCommentDelta] = useState(0);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showMenu) return;
+    const fn = (e: MouseEvent) => { if (menuRef.current && !menuRef.current.contains(e.target as Node)) setShowMenu(false); };
+    document.addEventListener("mousedown", fn);
+    return () => document.removeEventListener("mousedown", fn);
+  }, [showMenu]);
+
+  const saveEdit = async () => {
+    const text = editBody.trim();
+    if (!text || !user) return;
+    setSavingEdit(true);
+    const { error } = await supabase.from("circle_posts")
+      .update({ body: text, content: text })
+      .eq("id", post.id).eq("author_id", user.id);
+    setSavingEdit(false);
+    if (error) { toast.error("Failed to save"); return; }
+    onEdited?.(post.id, text);
+    setEditing(false);
+    toast.success("Post updated");
+  };
+
+  const doDelete = async () => {
+    if (!user) return;
+    setDeleting(true);
+    const { error } = await supabase.from("circle_posts").delete().eq("id", post.id).eq("author_id", user.id);
+    setDeleting(false);
+    if (error) { toast.error("Failed to delete"); return; }
+    toast.success("Post deleted");
+    onDeleted?.(post.id);
+  };
+
+  const commentCount = Math.max(0, (post.comment_count || post.reply_count || 0) + commentDelta);
 
   return (
     <article className="glass-card" style={{ padding: 14, borderRadius: 12, background: "rgba(255,255,255,0.55)", border: "1px solid rgba(255,255,255,0.30)" }}>
@@ -370,19 +431,90 @@ function CirclePostCard({ post, onUpvote }: { post: any; onUpvote?: () => void }
             {typeConf.icon} {typeConf.label} · {new Date(post.created_at).toLocaleDateString()}
           </p>
         </div>
+        {isOwn && (
+          <div className="relative shrink-0" ref={menuRef}>
+            <button type="button" onClick={() => setShowMenu(s => !s)}
+              className="flex items-center justify-center cursor-pointer"
+              style={{ width: 28, height: 28, background: "none", border: "none", color: "#6B7094" }}>
+              <MoreHorizontal style={{ width: 16, height: 16 }} />
+            </button>
+            {showMenu && (
+              <div className="absolute right-0 z-[60]" style={{ top: 30, width: 160, borderRadius: 10, padding: "6px 0", background: "#FFFFFF", border: "1px solid #E5E7EB", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
+                <button type="button" onClick={() => { setEditing(true); setShowMenu(false); }}
+                  className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "8px 12px", fontSize: 13, color: "#1A1A2E", background: "none", border: "none" }}>
+                  <Pencil style={{ width: 12, height: 12 }} /> Edit post
+                </button>
+                <button type="button" onClick={() => { setConfirmDelete(true); setShowMenu(false); }}
+                  className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "8px 12px", fontSize: 13, color: "#EF4444", background: "none", border: "none" }}>
+                  <Trash2 style={{ width: 12, height: 12 }} /> Delete post
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
       {post.title && <h3 style={{ fontSize: 14, fontWeight: 700, color: "#1A1A2E", marginBottom: 6 }}>{post.title}</h3>}
-      <p style={{ fontSize: 13, color: "#374151", lineHeight: 1.55, whiteSpace: "pre-wrap" }}>{post.body || post.content}</p>
+
+      {editing ? (
+        <div>
+          <textarea value={editBody} onChange={e => setEditBody(e.target.value.slice(0, 5000))} rows={4}
+            className="w-full outline-none"
+            style={{ fontSize: 13, padding: 10, borderRadius: 10, background: "#F5F5F5", border: "1px solid #E8E8E8", resize: "vertical" }} />
+          <div className="flex items-center gap-2 mt-2">
+            <button type="button" onClick={saveEdit} disabled={savingEdit || !editBody.trim()} className="cursor-pointer disabled:opacity-50"
+              style={{ fontSize: 12, fontWeight: 700, padding: "6px 14px", borderRadius: 8, background: "#F97316", color: "#fff", border: "none" }}>
+              {savingEdit ? <Loader2 className="animate-spin" style={{ width: 12, height: 12 }} /> : "Save"}
+            </button>
+            <button type="button" onClick={() => { setEditing(false); setEditBody(post.body || post.content || ""); }} className="cursor-pointer"
+              style={{ fontSize: 12, fontWeight: 600, padding: "6px 12px", color: "#6B7094", background: "none", border: "none" }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        <p style={{ fontSize: 13, color: "#374151", lineHeight: 1.55, whiteSpace: "pre-wrap" }}>{post.body || post.content}</p>
+      )}
+
       <div className="flex items-center gap-4" style={{ marginTop: 10, fontSize: 12, color: "#6B7094" }}>
         <button type="button" onClick={onUpvote} className="cursor-pointer transition-all active:scale-95"
           style={{ background: "none", border: "none", padding: "2px 4px", borderRadius: 6, color: upvoted ? "#F97316" : "#6B7094", fontWeight: upvoted ? 700 : 500 }}>
           ▲ {post.upvote_count || 0}
         </button>
-        <span>💬 {post.comment_count || post.reply_count || 0}</span>
+        <button type="button" onClick={() => setShowComments(s => !s)}
+          className="cursor-pointer flex items-center gap-1"
+          style={{ background: "none", border: "none", padding: "2px 4px", borderRadius: 6, color: showComments ? "#F97316" : "#6B7094", fontWeight: showComments ? 700 : 500 }}>
+          <MessageCircle style={{ width: 13, height: 13 }} /> {commentCount}
+        </button>
         <div style={{ marginLeft: "auto" }}>
           <ReportButton contentType="circle_post" contentId={post.id} />
         </div>
       </div>
+
+      {showComments && (
+        <CommentPanel
+          postId={post.id}
+          table="circle_post_comments"
+          postAuthorId={post.author_id}
+          onCountChange={(d) => setCommentDelta(prev => prev + d)}
+        />
+      )}
+
+      {confirmDelete && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center" style={{ background: "rgba(0,0,0,0.45)" }} onClick={() => setConfirmDelete(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 14, padding: 20, maxWidth: 360, width: "90%", textAlign: "center" }}>
+            <h3 style={{ fontSize: 15, fontWeight: 700, color: "#1A1A2E", marginBottom: 6 }}>Delete this post?</h3>
+            <p style={{ fontSize: 13, color: "#6B7094", marginBottom: 16 }}>This cannot be undone.</p>
+            <div className="flex items-center justify-center gap-2">
+              <button type="button" onClick={() => setConfirmDelete(false)} className="cursor-pointer"
+                style={{ padding: "8px 16px", fontSize: 13, fontWeight: 600, borderRadius: 8, background: "#F5F5F5", color: "#1A1A2E", border: "none" }}>Cancel</button>
+              <button type="button" onClick={doDelete} disabled={deleting} className="cursor-pointer disabled:opacity-50"
+                style={{ padding: "8px 16px", fontSize: 13, fontWeight: 700, borderRadius: 8, background: "#DC2626", color: "#fff", border: "none" }}>
+                {deleting ? <Loader2 className="animate-spin" style={{ width: 14, height: 14 }} /> : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </article>
   );
 }
