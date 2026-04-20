@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Plus, Search, TrendingUp, Clock, Award } from "lucide-react";
+import { Plus, Search, TrendingUp, Clock, Award, MessageCircle, MoreHorizontal, Pencil, Trash2, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -14,6 +14,7 @@ import { moderateText, logModerationFlag } from "@/lib/moderation";
 import SoftWarnModal from "@/components/moderation/SoftWarnModal";
 import ReportButton from "@/components/moderation/ReportButton";
 import CircleCreatePage from "@/pages/CircleCreate";
+import CommentPanel from "@/components/comments/CommentPanel";
 
 // -------- DISCOVERY SCREEN --------
 function CirclesDiscovery() {
