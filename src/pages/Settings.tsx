@@ -2,7 +2,7 @@ import AvatarSquare from "@/components/ui/AvatarSquare";
 import { storageImageUrl } from "@/lib/imageTransform";
 import { cleanUsername } from "@/lib/cleanUsername";
 import { useState, useEffect, useRef } from "react";
-import { Check, Camera, User, Eye, Lock, LogOut, Users, Copy, Share2, TrendingUp, HelpCircle, MessageSquare, Send, CreditCard } from "lucide-react";
+import { Check, Camera, User, Eye, Lock, LogOut, Users, Copy, Share2, HelpCircle, MessageSquare, Send, CreditCard, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { tiikToast } from "@/components/ui/tiik-toast";
@@ -11,11 +11,12 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrgSubscription } from "@/hooks/useOrgSubscription";
+import { DISPLAY_PREFERENCE_OPTIONS, DEFAULT_DISPLAY_PREFERENCE, type DisplayPreference } from "@/utils/displayProfile";
 
 const baseNavItems = [
   { id: "profile", label: "Profile", icon: User },
   { id: "account", label: "Account", icon: Lock },
-  { id: "roles", label: "Additional Roles", icon: TrendingUp },
+  { id: "display", label: "Profile Display", icon: Sparkles },
   { id: "privacy", label: "Privacy", icon: Eye },
   { id: "invite", label: "Invite", icon: Users },
   { id: "help", label: "Help & Support", icon: HelpCircle },
