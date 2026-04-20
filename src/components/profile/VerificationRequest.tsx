@@ -101,35 +101,65 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
     })();
   }, [selectedOrg, item.department]);
 
-  const handleSubmit = async (verifierId: string, verifierName: string) => {
-    if (!user) return;
+  const handleSubmit = async (verifierId: string | null, verifierName: string) => {
+    // Always pull live auth user — RLS check uses auth.uid()
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    if (!authUser) { toast.error("Please log in"); return; }
     setSubmitting(true);
-    const { error } = await supabase.from("item_verification_requests").insert({
-      requester_id: user.id,
-      work_item_id: item.id,
-      verifier_id: verifierId,
+
+    const payload: any = {
+      requester_id: authUser.id,
+      item_type: item.item_type || itemType || "experience",
+      item_id: item.id,
+      submitted_id: item.id,                    // has DB default, set explicitly to be safe
       org_id: selectedOrg?.id || null,
-      message: message.trim() || null,
-    });
-    if (error) { toast.error(error.message); setSubmitting(false); return; }
+      entity_type: "work_item",
+      entity_id: item.id,
+      assigned_to: verifierId || null,          // null when org has no admin
+      requested_role: item.job_title || item.title || null,
+      role_category: item.domain || null,
+      context_note: message.trim() || null,
+      status: "pending",
+    };
 
-    // Send notification via helper (writes to notifications table)
-    const { sendNotification } = await import("@/lib/notify");
-    sendNotification({
-      userId: verifierId,
-      actorId: user.id,
-      type: "verification_request",
-      title: "Verification Request",
-      body: `${profile?.full_name || "Someone"} wants you to verify their ${itemType} at ${companyName}`,
-      actionUrl: `/app/profile/${user.id}`,
-      data: { item_id: item.id, item_type: itemType, org_id: selectedOrg?.id },
-    });
+    const { error } = await supabase.from("verification_requests").insert(payload);
 
-    const table = itemType === "achievement" ? "achievements" : "work_items";
-    await supabase.from(table).update({ verification_status: "pending" } as any).eq("id", item.id);
+    if (error) {
+      console.error("[verify] error:", error);
+      toast.error("Could not submit verification. Please try again.");
+      setSubmitting(false);
+      return;
+    }
+
+    // Notify the assigned verifier (if any)
+    if (verifierId) {
+      try {
+        const { sendNotification } = await import("@/lib/notify");
+        sendNotification({
+          userId: verifierId,
+          actorId: authUser.id,
+          type: "verification_request",
+          title: "Verification Request",
+          body: `${profile?.full_name || "Someone"} wants you to verify their ${itemType} at ${companyName}`,
+          actionUrl: `/app/profile/${authUser.id}`,
+          data: { item_id: item.id, item_type: itemType, org_id: selectedOrg?.id },
+        });
+      } catch (e) { console.warn("notify failed", e); }
+    }
+
+    // Mark the item as pending (scoped to owner — RLS-safe)
+    if (itemType === "achievement") {
+      await supabase.from("achievements").update({ verification_status: "pending" } as any)
+        .eq("id", item.id).eq("user_id", authUser.id);
+    } else {
+      await supabase.from("work_items").update({ verification_status: "pending" } as any)
+        .eq("id", item.id).eq("owner_id", authUser.id);
+    }
 
     onStatusChange(item.id, "pending");
-    toast.success("Verification request sent");
+    toast.success(verifierId
+      ? "Verification request sent"
+      : "Submitted — the Tiikme team will review it soon.");
     setStep("sent");
     setSubmitting(false);
   };
@@ -323,9 +353,14 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
                   </div>
 
                   {verifiers.length === 0 && (
-                    <p style={{ fontSize: 12, textAlign: "center", padding: 8, color: "#9CA3C0" }}>
-                      No admins found for this organization yet.
-                    </p>
+                    <div className="rounded-xl p-3" style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.18)" }}>
+                      <p style={{ fontSize: 12, fontWeight: 600, color: "#92400E" }}>
+                        No admin is currently assigned at this organization.
+                      </p>
+                      <p style={{ fontSize: 11, color: "#9CA3C0", marginTop: 4 }}>
+                        Your request will be reviewed by the Tiikme team.
+                      </p>
+                    </div>
                   )}
 
                   <div className="space-y-2" style={{ maxHeight: 200, overflowY: "auto" }}>
@@ -363,20 +398,25 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
             <div className="shrink-0 flex items-center gap-3" style={{
               padding: "12px 20px", borderTop: "1px solid rgba(0,0,0,0.06)", background: "#fff",
             }}>
-              {step === "confirm" && (
-                <button type="button"
-                  disabled={!selectedVerifier || submitting}
-                  onClick={() => handleSubmit(selectedVerifier.user_id, selectedVerifier.profile?.full_name || "")}
-                  className="cursor-pointer flex-1"
-                  style={{
-                    height: 40, borderRadius: 10, fontSize: 13, fontWeight: 600,
-                    background: selectedVerifier ? "linear-gradient(135deg, #E8733A, #FF6B9D)" : "#ddd",
-                    color: selectedVerifier ? "#fff" : "#999", border: "none",
-                    display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                  }}>
-                  <Send className="w-3.5 h-3.5" /> {submitting ? "Sending..." : "Send Request"}
-                </button>
-              )}
+              {step === "confirm" && (() => {
+                const noAdmins = verifiers.length === 0;
+                const canSend = noAdmins || !!selectedVerifier;
+                const label = noAdmins ? "Submit for Tiikme review" : "Send Request";
+                return (
+                  <button type="button"
+                    disabled={!canSend || submitting}
+                    onClick={() => handleSubmit(selectedVerifier?.user_id || null, selectedVerifier?.profile?.full_name || "")}
+                    className="cursor-pointer flex-1"
+                    style={{
+                      height: 40, borderRadius: 10, fontSize: 13, fontWeight: 600,
+                      background: canSend ? "linear-gradient(135deg, #E8733A, #FF6B9D)" : "#ddd",
+                      color: canSend ? "#fff" : "#999", border: "none",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                    }}>
+                    <Send className="w-3.5 h-3.5" /> {submitting ? "Sending..." : label}
+                  </button>
+                );
+              })()}
               {step === "search" && (
                 <button type="button" onClick={() => setExpanded(false)}
                   className="cursor-pointer flex-1"
