@@ -256,12 +256,12 @@ const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post"
     return (
       <div key={c.id} className="flex group" style={{ gap: 8, padding: "6px 0", paddingLeft: isReply ? 36 : 0, alignItems: "flex-start" }}>
         <div className="shrink-0" style={{ marginTop: 2 }}>
-          <AvatarSquare src={c.author?.avatar_url} name={c.author?.full_name || "User"} size={isReply ? 24 : 28} />
+          <AvatarSquare src={c.author?.avatar_url} name={safeDisplayName(c.author)} size={isReply ? 24 : 28} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center" style={{ gap: 6 }}>
             <Link to={`/app/profile/${c.user_id}`} className="hover:underline" style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>
-              {c.author?.full_name || "User"}
+              {safeDisplayName(c.author, "Tiikme member")}
             </Link>
             <span style={{ fontSize: 11, color: "#9CA3C0" }}>·</span>
             <span style={{ fontSize: 11, color: "#9CA3C0" }}>{timeAgo(c.created_at)}</span>
