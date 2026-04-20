@@ -204,7 +204,7 @@ export default function OrganizationPage() {
               <div className="flex items-center" style={{ gap: 16, marginTop: 4 }}>
                 <div>
                   <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{followerCount}</span>
-                  <span style={{ fontSize: 12, fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Followers</span>
+                  <span style={{ fontSize: 12, fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>{followerLabel}</span>
                 </div>
                 <div>
                   <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{members.length}</span>
@@ -221,14 +221,14 @@ export default function OrganizationPage() {
                       background: "rgba(52,199,89,0.10)", color: "#34C759", border: "1px solid rgba(52,199,89,0.25)",
                       display: "inline-flex", alignItems: "center", gap: 4,
                     }}>
-                      <Heart style={{ width: 13, height: 13, fill: "currentColor" }} /> Following
+                      <Heart style={{ width: 13, height: 13, fill: "currentColor" }} /> {followLabel}
                     </button>
                     <div className="absolute top-full left-0 mt-1 hidden group-hover:block z-20" style={{
                       background: "#FFFFFF", border: "1px solid #E5E7EB", borderRadius: 10,
                       boxShadow: "0 4px 16px rgba(0,0,0,0.1)", padding: 4, minWidth: 120,
                     }}>
                       <button type="button" onClick={toggleFollow} className="w-full text-left cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "8px 12px", fontSize: 13, color: "#EF4444", borderRadius: 6 }}>
-                        Unfollow
+                        {isCreator ? "Unsubscribe" : "Unfollow"}
                       </button>
                     </div>
                   </div>
@@ -238,7 +238,7 @@ export default function OrganizationPage() {
                     background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none",
                     boxShadow: "0 2px 12px rgba(232,115,58,0.25)", display: "inline-flex", alignItems: "center", gap: 4,
                   }}>
-                    <Heart style={{ width: 13, height: 13 }} /> Follow
+                    <Heart style={{ width: 13, height: 13 }} /> {followLabel}
                   </button>
                 )}
 
