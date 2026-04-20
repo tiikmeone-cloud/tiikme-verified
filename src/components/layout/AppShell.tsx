@@ -336,7 +336,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
                 </span>
               )}
             </Link>
-            {/* Pings — RED DOT ONLY on mobile (no number) */}
+            {/* Pings — DOT ONLY on mobile (<640px), number badge ≥640px */}
             <Link
               to="/app/pings"
               aria-label="Pings messages"
@@ -344,15 +344,30 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             >
               <MessageCircle style={{ width: 22, height: 22, color: "#374151" }} strokeWidth={1.8} />
               {unreadPings > 0 && (
-                <span
-                  className="absolute"
-                  style={{
-                    top: 8, right: 8,
-                    width: 8, height: 8, borderRadius: "50%",
-                    background: "#EF4444",
-                    border: "1.5px solid rgba(255,255,255,0.95)",
-                  }}
-                />
+                <>
+                  <span
+                    className="sm:hidden absolute rounded-full"
+                    style={{
+                      top: 8, right: 8,
+                      width: 8, height: 8,
+                      background: "#EF4444",
+                      border: "1.5px solid rgba(255,255,255,0.95)",
+                    }}
+                  />
+                  <span
+                    className="hidden sm:flex absolute items-center justify-center"
+                    style={{
+                      top: 4, right: 2,
+                      minWidth: 16, height: 16, padding: "0 4px",
+                      borderRadius: 8,
+                      background: "#EF4444", color: "white",
+                      fontSize: 10, fontWeight: 700, lineHeight: 1,
+                      border: "2px solid rgba(255,255,255,0.95)",
+                    }}
+                  >
+                    {unreadPings > 99 ? "99+" : unreadPings}
+                  </span>
+                </>
               )}
             </Link>
           </div>
