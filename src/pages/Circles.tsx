@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Plus, Search, TrendingUp, Clock } from "lucide-react";
+import { Plus, Search, TrendingUp, Clock, Award } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -10,6 +10,10 @@ import PrimaryTabs from "@/components/filters/PrimaryTabs";
 import FilterBar, { useScrollPastThreshold } from "@/components/filters/FilterBar";
 import BottomSheet from "@/components/ui/BottomSheet";
 import { useFilterParam } from "@/lib/useFilterParam";
+import { moderateText, logModerationFlag } from "@/lib/moderation";
+import SoftWarnModal from "@/components/moderation/SoftWarnModal";
+import ReportButton from "@/components/moderation/ReportButton";
+import CircleCreatePage from "@/pages/CircleCreate";
 
 // -------- DISCOVERY SCREEN --------
 function CirclesDiscovery() {
@@ -210,7 +214,7 @@ function CircleDetail({ slug }: { slug: string }) {
   const [circle, setCircle] = useState<any>(null);
   const [posts, setPosts] = useState<any[]>([]);
   const [isMember, setIsMember] = useState(false);
-  const [sort, setSort] = useState<"new" | "hot">("new");
+  const [sort, setSort] = useState<"new" | "hot" | "top">("new");
   const [showComposer, setShowComposer] = useState(false);
 
   useEffect(() => {
@@ -219,10 +223,17 @@ function CircleDetail({ slug }: { slug: string }) {
       const { data: c } = await supabase.from("circles").select("*").eq("slug", slug).maybeSingle();
       if (!c) return;
       setCircle(c);
+      const orderCol = sort === "hot" ? "hot_score" : sort === "top" ? "upvote_count" : "created_at";
+      let q = supabase.from("circle_posts").select("*, author:profiles!circle_posts_author_id_fkey(id, full_name, avatar_url, role)")
+        .eq("circle_id", c.id).eq("is_flagged", false)
+        .order(orderCol, { ascending: false }).limit(50);
+      if (sort === "top") {
+        // Top = best of last 7 days
+        const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+        q = q.gte("created_at", since);
+      }
       const [postsRes, memRes] = await Promise.all([
-        supabase.from("circle_posts").select("*, author:profiles!circle_posts_author_id_fkey(id, full_name, avatar_url, role)")
-          .eq("circle_id", c.id).eq("is_flagged", false)
-          .order(sort === "hot" ? "hot_score" : "created_at", { ascending: false }).limit(50),
+        q,
         user ? supabase.from("circle_members").select("id").eq("circle_id", c.id).eq("user_id", user.id).maybeSingle() : Promise.resolve({ data: null }),
       ]);
       const fetchedPosts = postsRes.data || [];
@@ -313,6 +324,10 @@ function CircleDetail({ slug }: { slug: string }) {
         <button onClick={() => setSort("hot")} type="button" className="flex items-center gap-1.5"
           style={{ height: 30, padding: "0 12px", borderRadius: 8, fontSize: 12, fontWeight: 700, background: sort === "hot" ? "#1A1A2E" : "rgba(255,255,255,0.2)", color: sort === "hot" ? "#fff" : "#1A1A2E", border: "none", cursor: "pointer" }}>
           <TrendingUp style={{ width: 12, height: 12 }} /> Hot
+        </button>
+        <button onClick={() => setSort("top")} type="button" className="flex items-center gap-1.5"
+          style={{ height: 30, padding: "0 12px", borderRadius: 8, fontSize: 12, fontWeight: 700, background: sort === "top" ? "#1A1A2E" : "rgba(255,255,255,0.2)", color: sort === "top" ? "#fff" : "#1A1A2E", border: "none", cursor: "pointer" }}>
+          <Award style={{ width: 12, height: 12 }} /> Top (7d)
         </button>
       </div>
 
