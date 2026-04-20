@@ -125,6 +125,7 @@ export default function CircleCreate() {
         who_can_post: whoCanPost,
         who_can_join: whoCanJoin,
         created_by: user.id,
+        ...(linkedOrgId ? { linked_org_id: linkedOrgId } : {}),
       } as any)
       .select()
       .single();
