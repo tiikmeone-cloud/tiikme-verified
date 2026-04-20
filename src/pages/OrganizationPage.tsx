@@ -109,6 +109,12 @@ export default function OrganizationPage() {
 
   const activeOpps = useMemo(() => opps.filter(o => o.is_open), [opps]);
   const typeLabel = org?.type?.charAt(0).toUpperCase() + org?.type?.slice(1).replace(/_/g, " ");
+  const isCreator = isCreatorOrg(org?.type, org?.subtype);
+  const followLabel = isCreator
+    ? (isFollowing ? "Subscribed" : "Subscribe")
+    : (isFollowing ? "Following"  : "Follow");
+  const followerLabel = isCreator ? "Subscribers" : "Followers";
+  const teamSizeLabel = isCreator ? "Subscribers" : "Team Size";
 
   if (loading) return (
     <div className="min-h-screen" style={{ background: "transparent" }}>
@@ -144,7 +150,7 @@ export default function OrganizationPage() {
   if (org.type) infoCards.push({ label: "Type", value: `${typeLabel}${org.subtype ? ` · ${org.subtype}` : ""}` });
   if (org.founded_year) infoCards.push({ label: "Established", value: String(org.founded_year) });
   if (org.city || org.state) infoCards.push({ label: "Headquarters", value: [org.city, org.state].filter(Boolean).join(", ") });
-  if (org.employee_count) infoCards.push({ label: "Team Size", value: org.employee_count });
+  if (org.employee_count) infoCards.push({ label: teamSizeLabel, value: org.employee_count });
   if (org.website_url) infoCards.push({ label: "Website", value: org.website_url.replace(/https?:\/\//, "") });
 
   return (
