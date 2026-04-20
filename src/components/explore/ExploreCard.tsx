@@ -2,6 +2,7 @@ import AvatarSquare from "@/components/ui/AvatarSquare";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import { useNavigate } from "react-router-dom";
 import { getOrgTypeConfig } from "@/lib/orgTypes";
+import { ActivityScoreMini } from "@/components/profile/ActivityScoreCard";
 
 interface PersonCardProps {
   p: {
