@@ -35,14 +35,7 @@ const ORG_TYPE_OPTIONS = [
   { value: "other", label: "Other" },
 ];
 
-const ADDITIONAL_ROLES = [
-  "Investor", "Startup Founder", "Freelancer", "Gig Worker",
-  "Stock Market Trader/Analyst", "Content Creator", "Restaurant/Cafe Owner",
-  "Small Business Owner", "Consultant", "Coach/Mentor",
-  "Real Estate Professional", "Farmer/Agriculture", "Artist/Designer",
-  "Musician", "Athlete", "Social Worker", "Politician",
-  "Journalist/Media", "Lawyer/Legal", "Chartered Accountant", "Teacher/Tutor",
-];
+// (Additional roles UI lives on the Profile page; removed from Settings to avoid duplication.)
 
 const Toggle = ({ label, desc, value, onChange }: { label: string; desc?: string; value?: boolean; onChange?: (v: boolean) => void }) => {
   const [localOn, setLocalOn] = useState(value ?? true);
@@ -173,166 +166,91 @@ const PrivacySection = ({ userId }: { userId: string | null }) => {
   );
 };
 
-/* ── Additional Roles Section ── */
-interface AdditionalRole {
-  id?: string;
-  role_name: string;
-  designation: string;
-  about: string;
-  links: { label: string; url: string }[];
-  achievements: string;
-  show_on_profile: boolean;
-}
-
-const AdditionalRolesSection = ({ userId }: { userId: string }) => {
-  const [savedRoles, setSavedRoles] = useState<AdditionalRole[]>([]);
-  const [editingRole, setEditingRole] = useState<string | null>(null);
-  const [form, setForm] = useState<AdditionalRole>({ role_name: "", designation: "", about: "", links: [], achievements: "", show_on_profile: false });
+/* ── Display Preference Section (replaces Additional Roles) ── */
+const DisplaySection = ({ userId }: { userId: string }) => {
+  const { profile, refreshProfile } = useAuth();
+  const [pref, setPref] = useState<DisplayPreference>(
+    (profile?.display_preference as DisplayPreference) || DEFAULT_DISPLAY_PREFERENCE,
+  );
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    supabase.from("user_additional_roles").select("*").eq("user_id", userId).then(({ data }) => {
-      if (data) setSavedRoles(data.map((d: any) => ({ ...d, links: d.links || [] })));
-    });
-  }, [userId]);
+    if (profile?.display_preference) setPref(profile.display_preference as DisplayPreference);
+  }, [profile?.display_preference]);
 
-  const isRoleActive = (name: string) => savedRoles.some(r => r.role_name === name);
-
-  const handleRoleClick = (name: string) => {
-    const existing = savedRoles.find(r => r.role_name === name);
-    if (existing) {
-      setEditingRole(name);
-      setForm({ ...existing });
-    } else {
-      setEditingRole(name);
-      setForm({ role_name: name, designation: "", about: "", links: [{ label: "", url: "" }], achievements: "", show_on_profile: false });
-    }
-  };
-
-  const handleSave = async () => {
+  const choose = async (val: DisplayPreference) => {
+    if (val === pref) return;
+    setPref(val);
     setSaving(true);
-    const existing = savedRoles.find(r => r.role_name === form.role_name);
-    const payload = {
-      user_id: userId,
-      role_name: form.role_name,
-      designation: form.designation || null,
-      about: form.about || null,
-      links: form.links.filter(l => l.url.trim()),
-      achievements: form.achievements || null,
-      show_on_profile: form.show_on_profile,
-      updated_at: new Date().toISOString(),
-    };
-    if (existing?.id) {
-      await supabase.from("user_additional_roles").update(payload as any).eq("id", existing.id);
-    } else {
-      await supabase.from("user_additional_roles").insert(payload as any);
-    }
-    const { data } = await supabase.from("user_additional_roles").select("*").eq("user_id", userId);
-    if (data) setSavedRoles(data.map((d: any) => ({ ...d, links: d.links || [] })));
+    const { error } = await supabase.from("profiles").update({ display_preference: val }).eq("id", userId);
     setSaving(false);
-    setEditingRole(null);
-    tiikToast.success("Role saved");
+    if (error) { tiikToast.error("Failed to save"); return; }
+    await refreshProfile();
+    tiikToast.success("Display preference updated");
   };
 
-  const handleRemove = async (roleName: string) => {
-    const existing = savedRoles.find(r => r.role_name === roleName);
-    if (existing?.id) {
-      await supabase.from("user_additional_roles").delete().eq("id", existing.id);
-      setSavedRoles(prev => prev.filter(r => r.role_name !== roleName));
-    }
-    setEditingRole(null);
-    tiikToast.success("Role removed");
-  };
+  const previewName = profile?.full_name || "Your Name";
+  const roleLabel = profile?.role
+    ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1).replace(/_/g, " ")
+    : "Your Role";
+  const previewSubtype = profile?.role_subtype || "";
+  const previewCompany = (profile as any)?.currently_working_at || profile?.institution_name || "Your Company";
 
   return (
     <div className="space-y-5">
       <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
-        <h3 className="text-[16px] font-semibold mb-1" style={{ color: "#1A1A2E" }}>Additional Roles</h3>
-        <p className="text-[13px] mb-4" style={{ color: "#6B7094" }}>Add professional roles beyond your primary profile</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {ADDITIONAL_ROLES.map(name => {
-            const active = isRoleActive(name);
+        <h3 className="text-[16px] font-semibold mb-1" style={{ color: "#1A1A2E" }}>Profile Display</h3>
+        <p className="text-[13px] mb-4" style={{ color: "#6B7094" }}>Choose how your name, role, and company appear to others across the platform.</p>
+
+        <div className="space-y-2.5">
+          {DISPLAY_PREFERENCE_OPTIONS.map(opt => {
+            const active = pref === opt.value;
+            const showName = opt.value !== "dp_only";
+            const showRole = opt.value === "dp_name_profession" || opt.value === "dp_name_profession_company";
+            const showCompany = opt.value === "dp_name_profession_company";
             return (
-              <button key={name} type="button" onClick={() => handleRoleClick(name)}
-                className="text-left px-3 py-3 rounded-[10px] cursor-pointer transition-all flex items-center gap-2"
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => choose(opt.value)}
+                disabled={saving}
+                className="w-full text-left p-3.5 rounded-xl cursor-pointer transition-all flex items-center gap-3 disabled:opacity-60"
                 style={{
                   background: active ? "rgba(232,115,58,0.08)" : "var(--surface-2)",
                   border: active ? "1.5px solid #E8733A" : "1.5px solid var(--border)",
-                }}>
-                <TrendingUp className="w-4 h-4 shrink-0" style={{ color: active ? "#E8733A" : "#6B7094" }} />
-                <span className="text-[13px] font-semibold" style={{ color: active ? "#E8733A" : "#1A1A2E" }}>{name}</span>
-                {active && <Check className="w-3.5 h-3.5 ml-auto" style={{ color: "#E8733A" }} />}
+                }}
+              >
+                <AvatarSquare src={profile?.avatar_url} name={previewName} size={40} />
+                <div className="flex-1 min-w-0">
+                  {showName ? (
+                    <p className="text-[13px] font-bold truncate" style={{ color: "#1A1A2E" }}>{previewName}</p>
+                  ) : (
+                    <p className="text-[12px] italic" style={{ color: "#9CA3AF" }}>(name hidden)</p>
+                  )}
+                  {showRole && (
+                    <p className="text-[11px] truncate" style={{ color: "#6B7094" }}>
+                      {roleLabel}{previewSubtype ? ` · ${previewSubtype}` : ""}
+                    </p>
+                  )}
+                  {showCompany && (
+                    <p className="text-[11px] truncate" style={{ color: "#9CA3AF" }}>{previewCompany}</p>
+                  )}
+                </div>
+                <div className="shrink-0">
+                  <div className="text-[12px] font-bold mb-0.5" style={{ color: active ? "#E8733A" : "#1A1A2E" }}>{opt.label}</div>
+                  <div className="text-[10px]" style={{ color: "#6B7094" }}>{opt.desc}</div>
+                </div>
+                <div className="shrink-0">
+                  <div className="w-5 h-5 rounded-full flex items-center justify-center"
+                    style={{ border: active ? "2px solid #E8733A" : "2px solid #D1D5DB", background: active ? "#E8733A" : "transparent" }}>
+                    {active && <Check className="w-3 h-3 text-white" />}
+                  </div>
+                </div>
               </button>
             );
           })}
         </div>
       </div>
-
-      {editingRole && (
-        <div className="glass-light" style={{ padding: 16, borderRadius: 20, borderLeft: "3px solid #E8733A" }}>
-          <h3 className="text-[15px] font-semibold mb-4" style={{ color: "#1A1A2E" }}>{editingRole}</h3>
-          <div className="space-y-4">
-            <div>
-              <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "#6B7094" }}>Designation/Title</label>
-              <Input value={form.designation} onChange={e => setForm({ ...form, designation: e.target.value })} placeholder="e.g. Angel Investor" />
-            </div>
-            <div>
-              <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "#6B7094" }}>About</label>
-              <textarea value={form.about} onChange={e => setForm({ ...form, about: e.target.value.slice(0, 300) })} placeholder="Describe what you do in this role" rows={3} maxLength={300}
-                className="w-full rounded-xl p-3.5 text-[14px] outline-none resize-none"
-                style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", color: "var(--text-1)" }} />
-              <p className="text-[10px] text-right mt-1" style={{ color: "var(--text-3)" }}>{form.about.length}/300</p>
-            </div>
-            <div>
-              <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "#6B7094" }}>Links (up to 3)</label>
-              {(form.links.length === 0 ? [{ label: "", url: "" }] : form.links).map((link, i) => (
-                <div key={i} className="flex gap-2 mb-2">
-                  <Input value={link.label} onChange={e => {
-                    const links = [...form.links.length ? form.links : [{ label: "", url: "" }]];
-                    links[i] = { ...links[i], label: e.target.value };
-                    setForm({ ...form, links });
-                  }} placeholder="Label" className="w-1/3" />
-                  <Input value={link.url} onChange={e => {
-                    const links = [...form.links.length ? form.links : [{ label: "", url: "" }]];
-                    links[i] = { ...links[i], url: e.target.value };
-                    setForm({ ...form, links });
-                  }} placeholder="https://..." className="flex-1" />
-                </div>
-              ))}
-              {form.links.length < 3 && (
-                <button type="button" onClick={() => setForm({ ...form, links: [...(form.links.length ? form.links : [{ label: "", url: "" }]), { label: "", url: "" }] })}
-                  className="text-[12px] font-medium cursor-pointer" style={{ color: "#E8733A" }}>+ Add link</button>
-              )}
-            </div>
-            <div>
-              <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "#6B7094" }}>Achievements/Portfolio</label>
-              <textarea value={form.achievements} onChange={e => setForm({ ...form, achievements: e.target.value.slice(0, 500) })} placeholder="Notable achievements, certifications, or portfolio highlights" rows={3} maxLength={500}
-                className="w-full rounded-xl p-3.5 text-[14px] outline-none resize-none"
-                style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", color: "var(--text-1)" }} />
-            </div>
-            <Toggle label="Show on profile" desc="Display this role on your public profile" value={form.show_on_profile} onChange={v => setForm({ ...form, show_on_profile: v })} />
-            <div className="flex gap-2">
-              <button type="button" onClick={handleSave} disabled={saving}
-                className="flex-1 h-10 rounded-2xl text-[13px] font-bold transition-all disabled:opacity-50"
-                style={{ background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", cursor: "pointer" }}>
-                {saving ? "Saving..." : "Save Role"}
-              </button>
-              {isRoleActive(editingRole) && (
-                <button type="button" onClick={() => handleRemove(editingRole)}
-                  className="h-10 px-4 rounded-2xl text-[13px] font-bold cursor-pointer"
-                  style={{ background: "rgba(220,38,38,0.08)", color: "#DC2626", border: "1px solid rgba(220,38,38,0.20)" }}>
-                  Remove
-                </button>
-              )}
-              <button type="button" onClick={() => setEditingRole(null)}
-                className="h-10 px-4 rounded-2xl text-[13px] font-medium cursor-pointer"
-                style={{ background: "var(--surface-2)", color: "#6B7094", border: "1px solid var(--border)" }}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
