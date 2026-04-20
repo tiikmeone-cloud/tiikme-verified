@@ -2579,6 +2579,7 @@ export type Database = {
           id: string
           institution_id: string | null
           institution_name: string | null
+          interests: string[] | null
           is_public: boolean | null
           is_verified: boolean | null
           languages: string[] | null
@@ -2627,6 +2628,7 @@ export type Database = {
           id: string
           institution_id?: string | null
           institution_name?: string | null
+          interests?: string[] | null
           is_public?: boolean | null
           is_verified?: boolean | null
           languages?: string[] | null
@@ -2675,6 +2677,7 @@ export type Database = {
           id?: string
           institution_id?: string | null
           institution_name?: string | null
+          interests?: string[] | null
           is_public?: boolean | null
           is_verified?: boolean | null
           languages?: string[] | null
