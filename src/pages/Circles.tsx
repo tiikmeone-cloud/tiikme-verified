@@ -84,14 +84,20 @@ function CirclesDiscovery() {
       return false;
     }).map(claim);
 
-    // 3. Role & Career — type='role' or 'sector', prefer matches to user's role
+    // 3. Role & Career — strictly type='role'
     const roleCircles = allCircles
-      .filter(c => !taken.has(c.id) && matchesQuery(c) && (c.type === "role" || c.type === "sector"))
+      .filter(c => !taken.has(c.id) && matchesQuery(c) && c.type === "role")
       .sort((a, b) => {
         const aMatch = userRole && (a.name?.toLowerCase().includes(userRole) || a.name?.toLowerCase().includes(userSubtype || "")) ? 1 : 0;
         const bMatch = userRole && (b.name?.toLowerCase().includes(userRole) || b.name?.toLowerCase().includes(userSubtype || "")) ? 1 : 0;
         return bMatch - aMatch;
       })
+      .map(claim);
+
+    // 3b. By Sector — strictly type='sector'
+    const sectorCircles = allCircles
+      .filter(c => !taken.has(c.id) && matchesQuery(c) && c.type === "sector")
+      .sort((a, b) => (b.member_count || 0) - (a.member_count || 0))
       .map(claim);
 
     // 4. Trending — by active_7d DESC, member_count DESC
@@ -105,6 +111,7 @@ function CirclesDiscovery() {
       { key: "yours", title: "Your circles", items: yours },
       { key: "city", title: "City Circles", items: cityCircles },
       { key: "role", title: "Role & Career", items: roleCircles },
+      { key: "sector", title: "By Sector", items: sectorCircles },
       { key: "trending", title: "Trending", items: trending },
     ].filter(s => s.items.length > 0);
   }, [allCircles, joined, profile, search]);
@@ -634,7 +641,13 @@ function CirclePostCard({
     if (!text || !user) return;
     setSavingEdit(true);
     const { error } = await supabase.from("circle_posts")
-      .update({ body: text, content: text, updated_at: new Date().toISOString() })
+      .update({
+        body: text,
+        content: text,
+        title: post.title || null,
+        link_url: post.link_url || null,
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", post.id).eq("author_id", user.id);
     setSavingEdit(false);
     if (error) { toast.error("Failed to save"); return; }

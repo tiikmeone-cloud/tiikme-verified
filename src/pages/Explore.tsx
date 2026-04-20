@@ -44,6 +44,7 @@ const Explore = () => {
   const [memberMap, setMemberMap] = useState<Record<string, boolean>>({});
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<SectionKey | null>(null);
 
   const sectionRefs = useRef<Record<SectionKey, HTMLDivElement | null>>({
     people: null, circles: null, orgs: null, posts: null, hashtags: null,
@@ -288,6 +289,7 @@ const Explore = () => {
   };
 
   const scrollToSection = (k: SectionKey) => {
+    setActiveFilter(prev => prev === k ? null : k);
     sectionRefs.current[k]?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
@@ -315,10 +317,10 @@ const Explore = () => {
             className="w-full outline-none"
             style={{
               height: 48, borderRadius: 16, paddingLeft: 48, paddingRight: 16, fontSize: 14, fontWeight: 400,
-              background: "var(--bg-card)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
-              border: focused ? "1px solid rgba(232,115,58,0.50)" : "1px solid var(--border-glass)",
+              background: "#FFFFFF",
+              border: focused ? "1px solid rgba(232,115,58,0.50)" : "1px solid #E5E7EB",
               boxShadow: focused ? "0 0 0 3px rgba(232,115,58,0.10)" : "none",
-              color: "var(--text-primary)", transition: "border-color 150ms, box-shadow 150ms",
+              color: "#1A1A2E", transition: "border-color 150ms, box-shadow 150ms",
             }} />
           {search && (
             <button type="button" onClick={() => setSearch("")} className="absolute" style={{ right: 16, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)" }} aria-label="Clear search">
@@ -329,7 +331,8 @@ const Explore = () => {
           {showSearchResults && searchResults.length > 0 && (
             <div className="absolute w-full overflow-y-auto" style={{
               marginTop: 4, maxHeight: 320, padding: 4, borderRadius: 12, zIndex: 30,
-              background: "var(--bg-card)", backdropFilter: "blur(20px)", border: "1px solid var(--border-glass)",
+              background: "#FFFFFF",
+              border: "1px solid #E5E7EB",
               boxShadow: "0 8px 32px rgba(26,26,78,0.12)",
             }}>
               {searchResults.map((r: any) => (
@@ -367,17 +370,27 @@ const Explore = () => {
 
         {/* Section nav pills */}
         <div className="flex overflow-x-auto" style={{ gap: 8, marginTop: 12, paddingBottom: 4, scrollbarWidth: "none" }}>
-          {SECTIONS.map(s => (
-            <button key={s.key} type="button" onClick={() => scrollToSection(s.key)}
-              style={{
-                flexShrink: 0, padding: "0 16px", height: 32, borderRadius: 999,
-                fontSize: 13, fontWeight: 600, cursor: "pointer",
-                background: "var(--bg-card)", border: "1px solid var(--border-glass)",
-                color: "var(--text-primary)", whiteSpace: "nowrap",
-              }}>
-              {s.label}
-            </button>
-          ))}
+          {SECTIONS.map(s => {
+            const isActive = activeFilter === s.key;
+            return (
+              <button
+                key={s.key}
+                type="button"
+                onClick={() => scrollToSection(s.key)}
+                className="cursor-pointer transition-all active:scale-95 hover:opacity-90"
+                style={{
+                  flexShrink: 0, padding: "0 16px", height: 32, borderRadius: 999,
+                  fontSize: 13, fontWeight: 600, whiteSpace: "nowrap",
+                  background: isActive ? "#F97316" : "#FFFFFF",
+                  border: isActive ? "1px solid #F97316" : "1px solid #E5E7EB",
+                  color: isActive ? "#FFFFFF" : "#6B7094",
+                  boxShadow: isActive ? "0 4px 12px rgba(249,115,22,0.25)" : "none",
+                }}
+              >
+                {s.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
