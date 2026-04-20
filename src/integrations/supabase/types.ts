@@ -346,6 +346,7 @@ export type Database = {
           comment_count: number
           content: string | null
           created_at: string
+          downvote_count: number
           hot_score: number
           id: string
           is_flagged: boolean
@@ -368,6 +369,7 @@ export type Database = {
           comment_count?: number
           content?: string | null
           created_at?: string
+          downvote_count?: number
           hot_score?: number
           id?: string
           is_flagged?: boolean
@@ -390,6 +392,7 @@ export type Database = {
           comment_count?: number
           content?: string | null
           created_at?: string
+          downvote_count?: number
           hot_score?: number
           id?: string
           is_flagged?: boolean
@@ -434,10 +437,13 @@ export type Database = {
           member_count: number
           name: string
           post_count: number
+          rules: string | null
           slug: string
           type: string
           updated_at: string
           visibility: string
+          who_can_join: string
+          who_can_post: string
         }
         Insert: {
           active_7d?: number
@@ -450,10 +456,13 @@ export type Database = {
           member_count?: number
           name: string
           post_count?: number
+          rules?: string | null
           slug: string
           type?: string
           updated_at?: string
           visibility?: string
+          who_can_join?: string
+          who_can_post?: string
         }
         Update: {
           active_7d?: number
@@ -466,10 +475,13 @@ export type Database = {
           member_count?: number
           name?: string
           post_count?: number
+          rules?: string | null
           slug?: string
           type?: string
           updated_at?: string
           visibility?: string
+          who_can_join?: string
+          who_can_post?: string
         }
         Relationships: []
       }
@@ -877,6 +889,63 @@ export type Database = {
             columns: ["work_item_id"]
             isOneToOne: false
             referencedRelation: "work_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      moderation_flags: {
+        Row: {
+          author_id: string | null
+          category: string | null
+          content_id: string | null
+          content_type: string
+          created_at: string
+          id: string
+          reporter_id: string | null
+          severity: number | null
+          source: string
+          status: string
+          text_preview: string | null
+        }
+        Insert: {
+          author_id?: string | null
+          category?: string | null
+          content_id?: string | null
+          content_type: string
+          created_at?: string
+          id?: string
+          reporter_id?: string | null
+          severity?: number | null
+          source?: string
+          status?: string
+          text_preview?: string | null
+        }
+        Update: {
+          author_id?: string | null
+          category?: string | null
+          content_id?: string | null
+          content_type?: string
+          created_at?: string
+          id?: string
+          reporter_id?: string | null
+          severity?: number | null
+          source?: string
+          status?: string
+          text_preview?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "moderation_flags_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "moderation_flags_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -2437,25 +2506,37 @@ export type Database = {
       }
       post_reports: {
         Row: {
+          content_id: string | null
+          content_type: string | null
           created_at: string | null
           id: string
+          notes: string | null
           post_id: string | null
           reason: string | null
           reporter_id: string | null
+          status: string
         }
         Insert: {
+          content_id?: string | null
+          content_type?: string | null
           created_at?: string | null
           id?: string
+          notes?: string | null
           post_id?: string | null
           reason?: string | null
           reporter_id?: string | null
+          status?: string
         }
         Update: {
+          content_id?: string | null
+          content_type?: string | null
           created_at?: string | null
           id?: string
+          notes?: string | null
           post_id?: string | null
           reason?: string | null
           reporter_id?: string | null
+          status?: string
         }
         Relationships: [
           {
@@ -2769,6 +2850,7 @@ export type Database = {
           institution_id: string | null
           institution_name: string | null
           interests: string[] | null
+          is_moderator: boolean
           is_public: boolean | null
           is_verified: boolean | null
           languages: string[] | null
@@ -2818,6 +2900,7 @@ export type Database = {
           institution_id?: string | null
           institution_name?: string | null
           interests?: string[] | null
+          is_moderator?: boolean
           is_public?: boolean | null
           is_verified?: boolean | null
           languages?: string[] | null
@@ -2867,6 +2950,7 @@ export type Database = {
           institution_id?: string | null
           institution_name?: string | null
           interests?: string[] | null
+          is_moderator?: boolean
           is_public?: boolean | null
           is_verified?: boolean | null
           languages?: string[] | null
@@ -3922,6 +4006,10 @@ export type Database = {
         Returns: Json
       }
       calculate_activity_score: { Args: { p_user_id: string }; Returns: number }
+      calculate_circle_post_hot_score: {
+        Args: { p_id: string }
+        Returns: number
+      }
       generate_clean_username: {
         Args: { p_full_name: string; p_user_id: string }
         Returns: string
@@ -3945,6 +4033,7 @@ export type Database = {
         Args: { amount: number; uid: string }
         Returns: undefined
       }
+      is_moderator: { Args: { _user_id: string }; Returns: boolean }
       is_org_admin: {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
