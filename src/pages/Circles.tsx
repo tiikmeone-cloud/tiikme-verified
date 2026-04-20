@@ -379,6 +379,9 @@ function CirclePostCard({ post, onUpvote }: { post: any; onUpvote?: () => void }
           ▲ {post.upvote_count || 0}
         </button>
         <span>💬 {post.comment_count || post.reply_count || 0}</span>
+        <div style={{ marginLeft: "auto" }}>
+          <ReportButton contentType="circle_post" contentId={post.id} />
+        </div>
       </div>
     </article>
   );
@@ -393,9 +396,10 @@ function CircleComposer({ circle, onClose, onPosted }: any) {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [saving, setSaving] = useState(false);
+  const [softWarn, setSoftWarn] = useState<{ open: boolean; category?: string; matchedTerm?: string }>({ open: false });
 
-  const submit = async () => {
-    if (!user || !body.trim()) { toast.error("Add a message"); return; }
+  const proceedInsert = async () => {
+    if (!user) return;
     setSaving(true);
     const { data, error } = await supabase.from("circle_posts").insert({
       circle_id: circle.id, author_id: user.id,
@@ -407,6 +411,27 @@ function CircleComposer({ circle, onClose, onPosted }: any) {
     if (error) { toast.error(error.message); return; }
     toast.success("Posted");
     onPosted(data);
+  };
+
+  const submit = async () => {
+    if (!user || !body.trim()) { toast.error("Add a message"); return; }
+    const combined = (title + " " + body).trim();
+    const mod = await moderateText(combined);
+    if (!mod.allowed) {
+      await logModerationFlag({
+        contentType: "circle_post",
+        authorId: user.id,
+        textPreview: combined,
+        result: mod,
+      });
+      toast.error("This post appears to violate community guidelines and cannot be posted.");
+      return;
+    }
+    if (mod.severity >= 0.3) {
+      setSoftWarn({ open: true, category: mod.category, matchedTerm: mod.matchedTerm });
+      return;
+    }
+    proceedInsert();
   };
 
   const showRisk = (signtype === "verified_employee" || signtype === "verified_role") && (circle.member_count || 0) < 50;
