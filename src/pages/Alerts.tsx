@@ -229,7 +229,10 @@ const Alerts = () => {
         ))}
       </div>
 
-      {Object.entries(groups).map(([group, groupAlerts]) => (
+      {[
+        ...(verificationAlerts.length > 0 ? [["Verifications", verificationAlerts] as [string, any[]]] : []),
+        ...Object.entries(groups),
+      ].map(([group, groupAlerts]) => (
         <div key={group} className="mb-6">
           <p className="text-[11px] font-bold tracking-wider uppercase mb-2 px-1" style={{ color: "#6B7094" }}>{group}</p>
           <div style={{ borderRadius: 12, overflow: "hidden", border: "1px solid #F1F3F5", background: "#FFFFFF" }}>
