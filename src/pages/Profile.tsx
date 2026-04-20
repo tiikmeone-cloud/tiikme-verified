@@ -1070,8 +1070,49 @@ const Profile = () => {
               </div>
 
               {/* ROW 5: Action buttons */}
-              <div className="flex items-center" style={{ gap: 8, marginTop: 8 }}>
-                {isOwnProfile ? null : (
+              <div className="flex items-center flex-wrap" style={{ gap: 8, marginTop: 8 }}>
+                {isOwnProfile ? (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!profileData?.id) return;
+                      const next = !profileData.open_to_work;
+                      // Optimistic update
+                      setProfileData({ ...profileData, open_to_work: next } as any);
+                      const { error } = await supabase
+                        .from("profiles")
+                        .update({ open_to_work: next } as any)
+                        .eq("id", profileData.id);
+                      if (error) {
+                        setProfileData({ ...profileData, open_to_work: !next } as any);
+                        toast.error("Could not update");
+                      } else {
+                        toast.success(next ? "Open to Work enabled" : "Open to Work disabled");
+                        refreshProfile?.();
+                      }
+                    }}
+                    className="cursor-pointer flex items-center gap-2"
+                    style={{
+                      height: 32, padding: "0 12px", borderRadius: 999, fontSize: 12, fontWeight: 600,
+                      background: profileData.open_to_work ? "rgba(16,185,129,0.12)" : "rgba(0,0,0,0.05)",
+                      color: profileData.open_to_work ? "#10B981" : "#6B7094",
+                      border: profileData.open_to_work ? "1px solid rgba(16,185,129,0.30)" : "1px solid rgba(0,0,0,0.08)",
+                    }}
+                    aria-label="Toggle Open to Work"
+                  >
+                    <span style={{
+                      width: 26, height: 14, borderRadius: 999,
+                      background: profileData.open_to_work ? "#10B981" : "rgba(0,0,0,0.18)",
+                      display: "inline-flex", alignItems: "center", padding: 1.5, transition: "background 0.2s",
+                    }}>
+                      <span style={{
+                        width: 11, height: 11, borderRadius: "50%", background: "#fff",
+                        transform: profileData.open_to_work ? "translateX(12px)" : "translateX(0)", transition: "transform 0.2s",
+                      }} />
+                    </span>
+                    Open to Work
+                  </button>
+                ) : (
                   <>
                     {renderConnectButton()}
                     <button type="button" onClick={() => navigate(`/app/pings?to=${targetUserId}`)} className="cursor-pointer" style={{
