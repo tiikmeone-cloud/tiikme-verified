@@ -36,7 +36,18 @@ const MAX_PER_30D = 3;
 
 export default function CircleCreate() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, profile, loading } = useAuth();
+
+  // If invoked with ?org=<orgId>, pre-link this circle to that organization
+  const linkedOrgId = searchParams.get("org");
+  const [linkedOrgName, setLinkedOrgName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!linkedOrgId) { setLinkedOrgName(null); return; }
+    supabase.from("organizations").select("name").eq("id", linkedOrgId).maybeSingle()
+      .then(({ data }) => setLinkedOrgName(data?.name || null));
+  }, [linkedOrgId]);
 
   const [type, setType] = useState<CircleType>("topic");
   const [name, setName] = useState("");
