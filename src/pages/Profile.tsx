@@ -13,6 +13,7 @@ import {
   Flag, Ban, ChevronDown, Zap
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { detectPlatform } from "@/lib/platformDetect";
 import GlassModal, { glassInputDarkStyle as gInputStyle, glassSelectDarkStyle as gSelectStyle, glassTextareaDarkStyle as gTextareaStyle, labelStyle } from "@/components/ui/GlassModal";
@@ -1167,34 +1168,31 @@ const Profile = () => {
                   const visible = shouldShowPublicScore({ id: profileData.id, activity_score: score }, authProfile ? { id: authProfile.id } : undefined);
                   if (!visible) return null;
                   return (
-                    <TooltipProvider delayDuration={150}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            type="button"
-                            onClick={() => setShowScoreDetails(v => !v)}
-                            className="cursor-pointer hover:opacity-90"
-                            style={{
-                              display: "inline-flex", alignItems: "center", gap: 4,
-                              height: 24, padding: "0 9px", borderRadius: 999, fontSize: 12, fontWeight: 700,
-                              background: `${tier.color}1A`, color: tier.color, border: `1px solid ${tier.color}33`,
-                            }}
-                          >
-                            <Zap style={{ width: 11, height: 11 }} fill="currentColor" />
-                            {activityScore} pts · {tier.name || (tier as any).label}
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom" className="bg-white text-[#1A1A2E] border border-[#E5E7EB]">
-                          <div style={{ fontSize: 12, lineHeight: "16px" }}>
-                            <div style={{ fontWeight: 700, marginBottom: 4 }}>Score breakdown</div>
-                            <div>Posts & content activity</div>
-                            <div>Connections & strands</div>
-                            <div>Engagement (likes, replies)</div>
-                            <div style={{ marginTop: 4, color: "#6B7094" }}>Click for full details</div>
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button
+                          type="button"
+                          className="cursor-pointer hover:opacity-90"
+                          style={{
+                            display: "inline-flex", alignItems: "center", gap: 4,
+                            height: 24, padding: "0 9px", borderRadius: 999, fontSize: 12, fontWeight: 700,
+                            background: `${tier.color}1A`, color: tier.color, border: `1px solid ${tier.color}33`,
+                          }}
+                        >
+                          <Zap style={{ width: 11, height: 11 }} fill="currentColor" />
+                          {activityScore} pts · {tier.name || (tier as any).label}
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        side="bottom"
+                        align="start"
+                        sideOffset={8}
+                        collisionPadding={16}
+                        className="bg-white border border-gray-200 shadow-xl rounded-xl p-0 w-auto z-50"
+                      >
+                        <ActivityScoreCard score={score} isOwn={isOwnProfile} />
+                      </PopoverContent>
+                    </Popover>
                   );
                 })()}
               </div>
