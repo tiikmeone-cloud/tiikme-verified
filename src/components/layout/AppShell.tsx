@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { prefetchRoute, prefetchAdjacent } from "@/lib/prefetchRoutes";
+import { prefetchOnHover, prefetchAdjacentData } from "@/lib/prefetchData";
 
 const navGroups = [
   {
