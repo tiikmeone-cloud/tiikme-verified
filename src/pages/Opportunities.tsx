@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageSEO } from "@/hooks/usePageSEO";
 import { AnimatePresence } from "framer-motion";
-import { Search, Briefcase, MapPin, Bookmark, Clock, Plus, Building2, Users as UsersIcon, Eye, Trophy, GraduationCap, Code, Zap, Hammer, CalendarDays, Shield, Heart, MessageCircle, Link2, Send, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, Briefcase, MapPin, Clock, Plus, Building2, Users as UsersIcon, Eye, Trophy, GraduationCap, Code, Zap, Hammer, CalendarDays, Shield, Heart, MessageCircle, Link2, Send, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -68,7 +68,6 @@ const Opportunities = () => {
   const queryClient = useQueryClient();
   const [activeType, setActiveType] = useState("All");
   const [search, setSearch] = useState("");
-  const [saved, setSaved] = useState<Set<string>>(new Set());
   const [showApply, setShowApply] = useState<any>(null);
   const [userTab, setUserTab] = useState<UserTab>("jobs");
   const [orgTab, setOrgTab] = useState<OrgTab>("listings");
@@ -137,11 +136,6 @@ const Opportunities = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const toggleSave = (id: string) => {
-    setSaved(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
-    toast.success(saved.has(id) ? "Removed" : "Saved");
-  };
-
   const recommended = useMemo(() => {
     if (!profile?.skills?.length || isInstitution) return [];
     const userSkills = new Set((profile.skills as string[]).map(s => s.toLowerCase()));
@@ -162,7 +156,7 @@ const Opportunities = () => {
   const daysAgo = (d: string) => { const diff = Math.floor((Date.now() - new Date(d).getTime()) / 86400000); return diff === 0 ? "Today" : `${diff}d ago`; };
   const daysLeft = (d: string) => { const diff = Math.ceil((new Date(d).getTime() - Date.now()) / 86400000); return diff > 0 ? `${diff} days left` : "Expired"; };
 
-  const cardProps = { user, profile, isInstitution, appliedIds, saved, onSave: toggleSave, onApply: setShowApply, navigate, daysAgo, daysLeft };
+  const cardProps = { user, profile, isInstitution, appliedIds, onApply: setShowApply, navigate, daysAgo, daysLeft };
 
   return (
     <SubscriptionGate feature="opportunities">
@@ -341,7 +335,7 @@ function StickyOppHeader({ isInstitution, userTab, setUserTab, orgTab, setOrgTab
 }
 
 /* ─── Opportunity Card Component ─── */
-function OpportunityCard({ o, user, profile, isInstitution, appliedIds, saved, onSave, onApply, navigate, daysAgo, daysLeft }: any) {
+function OpportunityCard({ o, user, profile, isInstitution, appliedIds, onApply, navigate, daysAgo, daysLeft }: any) {
   const orgData = o.org;
   const meta = TYPE_META[o.type || "job"] || TYPE_META.job;
   const TypeIcon = meta.icon;
@@ -559,10 +553,6 @@ function OpportunityCard({ o, user, profile, isInstitution, appliedIds, saved, o
               </Button>
             ) : (
               <>
-                <button type="button" onClick={() => onSave(o.id)} className="w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer"
-                  style={{ border: "1.5px solid var(--border)" }}>
-                  <Bookmark className="w-4 h-4" style={{ color: saved.has(o.id) ? "#E8580A" : "var(--text-3)", fill: saved.has(o.id) ? "#E8580A" : "none" }} />
-                </button>
                 {applied ? (
                   <Button disabled style={{ height: 40, borderRadius: 12, background: "#F0FDF4", color: "#16A34A", border: "1.5px solid #16A34A" }}>Applied</Button>
                 ) : (

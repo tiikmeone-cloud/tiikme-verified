@@ -166,7 +166,7 @@ const WorkDetail = () => {
                   navigate("/app/pings");
                 } catch (e) { console.warn("[WorkDetail]", e); toast.error("Failed to start conversation"); }
               }}>Reach out</Button>
-              <Button variant="secondary" className="w-full" size="sm" onClick={() => toast.success("Saved")}>Save to pool</Button>
+              
             </div>
           </div>
           {work.institution_name && (

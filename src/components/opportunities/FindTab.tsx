@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { MapPin, ChevronDown, ChevronUp, Sparkles, Search as SearchIcon, Send, Link2, Bookmark, BookmarkCheck } from "lucide-react";
+import { MapPin, ChevronDown, ChevronUp, Sparkles, Search as SearchIcon, Send, Link2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import SendJDModal from "@/components/opportunities/SendJDModal";
 import ReferModal from "@/components/opportunities/ReferModal";
@@ -46,7 +46,6 @@ export default function FindTab() {
   const [search, setSearch] = useState("");
   const [sendJdTarget, setSendJdTarget] = useState<{ id: string; full_name: string | null } | null>(null);
   const [referralTarget, setReferralTarget] = useState<{ id: string; full_name: string | null } | null>(null);
-  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [myOpps, setMyOpps] = useState<any[]>([]);
   const [_pickingOppFor, setPickingOppFor] = useState<{ id: string; full_name: string | null } | null>(null);
   // Activity Score V2: recruiters can hide low-score candidates (default 20 = no Newcomers)
@@ -105,15 +104,6 @@ export default function FindTab() {
       setMyOpps(data || []);
     })();
   }, [user?.id, isInstitution]);
-
-  const toggleSave = (userId: string) => {
-    setSavedIds(prev => {
-      const next = new Set(prev);
-      if (next.has(userId)) { next.delete(userId); toast.success("Removed from saved"); }
-      else { next.add(userId); toast.success("Saved candidate"); }
-      return next;
-    });
-  };
 
   const startReferFor = (target: { id: string; full_name: string | null }) => {
     // ReferModal now handles opportunity selection (my opps + external) internally
@@ -197,7 +187,6 @@ export default function FindTab() {
           const roleLine = flags.showRole ? (p.desired_title || formatRoleLine(p.profile) || p.profile?.headline || "Professional") : "Professional";
           const company = flags.showCompany ? (p.profile?.currently_working_at || p.profile?.institution_name || null) : null;
           const location = p.preferred_location || p.profile?.location_city || null;
-          const isSaved = savedIds.has(p.user_id);
 
           return (
             <div key={p.id} className="glass-light rounded-xl overflow-hidden transition-all duration-200" style={{ cursor: "pointer" }}
@@ -291,14 +280,6 @@ export default function FindTab() {
                       className="flex-1 min-w-[90px] h-9 rounded-lg text-[12px] font-semibold cursor-pointer flex items-center justify-center gap-1.5"
                       style={{ background: "rgba(99,102,241,0.10)", color: "#6366F1", border: "1.5px solid rgba(99,102,241,0.25)" }}>
                       <Link2 className="w-3.5 h-3.5" /> Refer
-                    </button>
-                    <button
-                      type="button"
-                      onClick={e => { e.stopPropagation(); toggleSave(p.user_id); }}
-                      aria-label={isSaved ? "Unsave" : "Save"}
-                      className="h-9 w-9 rounded-lg cursor-pointer flex items-center justify-center"
-                      style={{ background: isSaved ? "rgba(232,115,58,0.10)" : "var(--surface-2)", color: isSaved ? "#E8733A" : "var(--text-2)", border: "1.5px solid var(--border)" }}>
-                      {isSaved ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
                     </button>
                   </div>
                 </div>
