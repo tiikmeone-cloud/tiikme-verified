@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface DeletePostDialogProps {
   postId: string;
@@ -10,9 +11,11 @@ interface DeletePostDialogProps {
 }
 
 const DeletePostDialog = ({ postId, onClose, onDeleted }: DeletePostDialogProps) => {
+  const { user } = useAuth();
   const [deleting, setDeleting] = useState(false);
 
   const handleDelete = async () => {
+    if (!user) { toast.error("You must be signed in"); return; }
     setDeleting(true);
     // Clean up related data first
     await Promise.allSettled([
@@ -20,9 +23,13 @@ const DeletePostDialog = ({ postId, onClose, onDeleted }: DeletePostDialogProps)
       supabase.from("post_comments").delete().eq("post_id", postId),
       supabase.from("post_reposts").delete().eq("post_id", postId),
     ]);
-    const { error } = await supabase.from("posts").delete().eq("id", postId);
+    const { error } = await supabase
+      .from("posts")
+      .delete()
+      .eq("id", postId)
+      .eq("author_id", user.id);
     setDeleting(false);
-    if (error) { toast.error("Failed to delete"); return; }
+    if (error) { toast.error(error.message || "Failed to delete"); return; }
     toast.success("Post deleted");
     onDeleted(postId);
     onClose();

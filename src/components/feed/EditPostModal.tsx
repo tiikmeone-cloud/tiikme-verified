@@ -35,20 +35,21 @@ const EditPostModal = ({ post, onClose, onSaved }: EditPostModalProps) => {
   const handleSave = async () => {
     if (!content.trim() || !user) return;
     setSaving(true);
+    const newContent = content.trim();
     const { data, error } = await supabase
       .from("posts")
       .update({
-        content: content.trim(),
+        content: newContent,
         is_edited: true,
         updated_at: new Date().toISOString(),
-        hashtags: (content.match(/#\w+/g) || []).map((t: string) => t.slice(1)),
+        hashtags: (newContent.match(/#\w+/g) || []).map((t: string) => t.slice(1)),
       })
       .eq("id", post.id)
-      .or(`author_id.eq.${user.id},posted_by_user_id.eq.${user.id}`)
+      .eq("author_id", user.id)
       .select("*")
       .single();
     setSaving(false);
-    if (error) { toast.error("Failed to save"); return; }
+    if (error) { toast.error(error.message || "Failed to save"); return; }
     toast.success("Post updated");
     onSaved({ ...post, ...data });
     onClose();
