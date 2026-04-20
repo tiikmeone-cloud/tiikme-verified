@@ -178,8 +178,12 @@ const Alerts = () => {
   const unreadCount = alerts.filter(a => !a.is_read).length;
   const filteredAlerts = activeTab === "Unread" ? alerts.filter(a => !a.is_read) : alerts;
 
+  const VERIFICATION_TYPES = new Set(["verification_approved", "verification_request", "verification_rejected", "verification_declined"]);
+  const verificationAlerts = filteredAlerts.filter(a => VERIFICATION_TYPES.has(a.type));
+  const otherAlerts = filteredAlerts.filter(a => !VERIFICATION_TYPES.has(a.type));
+
   const groups: Record<string, any[]> = {};
-  filteredAlerts.forEach(a => {
+  otherAlerts.forEach(a => {
     const g = getGroup(a.created_at);
     if (!groups[g]) groups[g] = [];
     groups[g].push(a);
