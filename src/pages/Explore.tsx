@@ -44,6 +44,7 @@ const Explore = () => {
   const [memberMap, setMemberMap] = useState<Record<string, boolean>>({});
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<SectionKey | null>(null);
 
   const sectionRefs = useRef<Record<SectionKey, HTMLDivElement | null>>({
     people: null, circles: null, orgs: null, posts: null, hashtags: null,
@@ -288,6 +289,7 @@ const Explore = () => {
   };
 
   const scrollToSection = (k: SectionKey) => {
+    setActiveFilter(prev => prev === k ? null : k);
     sectionRefs.current[k]?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
@@ -367,17 +369,27 @@ const Explore = () => {
 
         {/* Section nav pills */}
         <div className="flex overflow-x-auto" style={{ gap: 8, marginTop: 12, paddingBottom: 4, scrollbarWidth: "none" }}>
-          {SECTIONS.map(s => (
-            <button key={s.key} type="button" onClick={() => scrollToSection(s.key)}
-              style={{
-                flexShrink: 0, padding: "0 16px", height: 32, borderRadius: 999,
-                fontSize: 13, fontWeight: 600, cursor: "pointer",
-                background: "var(--bg-card)", border: "1px solid var(--border-glass)",
-                color: "var(--text-primary)", whiteSpace: "nowrap",
-              }}>
-              {s.label}
-            </button>
-          ))}
+          {SECTIONS.map(s => {
+            const isActive = activeFilter === s.key;
+            return (
+              <button
+                key={s.key}
+                type="button"
+                onClick={() => scrollToSection(s.key)}
+                className="cursor-pointer transition-all active:scale-95 hover:opacity-90"
+                style={{
+                  flexShrink: 0, padding: "0 16px", height: 32, borderRadius: 999,
+                  fontSize: 13, fontWeight: 600, whiteSpace: "nowrap",
+                  background: isActive ? "#F97316" : "#FFFFFF",
+                  border: isActive ? "1px solid #F97316" : "1px solid #E5E7EB",
+                  color: isActive ? "#FFFFFF" : "#6B7094",
+                  boxShadow: isActive ? "0 4px 12px rgba(249,115,22,0.25)" : "none",
+                }}
+              >
+                {s.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
