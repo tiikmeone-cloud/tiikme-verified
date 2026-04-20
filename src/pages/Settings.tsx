@@ -780,7 +780,7 @@ const LegalSection = () => {
           </button>
         </div>
       </div>
-      <DeleteAccountModal open={showDelete} onClose={() => setShowDelete(false)} />
+      <DeleteAccountModal open={showDelete} onClose={() => setShowDelete(false)} userId={user?.id ?? null} />
     </>
   );
 };
