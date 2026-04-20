@@ -30,6 +30,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import MentionText from "@/components/feed/MentionText";
 import { sendNotification } from "@/lib/notify";
 import VerificationRequest from "@/components/profile/VerificationRequest";
+import VerificationStatusCard from "@/components/verification/VerificationStatusCard";
 import CertificatesSection from "@/components/profile/CertificatesSection";
 import ActivityScoreRing from "@/components/ActivityScoreRing";
 import { getActivityTier } from "@/lib/algorithms";
@@ -1285,6 +1286,8 @@ const Profile = () => {
         <div className="grid grid-cols-1 md:grid-cols-[280px_1fr]" style={{ marginTop: 12, gap: 12 }}>
           {/* ═══ LEFT COLUMN ═══ */}
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {/* Verification status (own profile only, hidden if already verified) */}
+            {isOwnProfile && <VerificationStatusCard />}
             {/* L1: Connections preview */}
             <div className="glass-card" style={{ padding: 12, borderRadius: 16 }}>
               <p style={{ fontSize: 11, fontWeight: 600, color: "#9CA3C0", textTransform: "uppercase", letterSpacing: "0.02em" }}>CONNECTIONS</p>
