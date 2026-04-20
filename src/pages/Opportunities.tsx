@@ -194,50 +194,49 @@ const Opportunities = () => {
       />
 
       {/* USER: JOBS TAB */}
-      {!isInstitution && userTab === "jobs" && (
-        <>
-          {(() => {
-            // Hide opportunities the user already applied to
-            const visibleOpps = opps.filter(o => !appliedIds.has(o.id));
-            const visibleRecommended = recommended.filter(o => !appliedIds.has(o.id));
-            return null;
-          })()}
-          <div className="relative mb-4 mt-3">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-3)" }} />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search roles, companies..."
-              className="w-full h-11 rounded-2xl pl-11 pr-4 text-[14px] outline-none glass-input" />
-          </div>
+      {!isInstitution && userTab === "jobs" && (() => {
+        // Hide opportunities the user already applied to
+        const visibleOpps = opps.filter(o => !appliedIds.has(o.id));
+        const visibleRecommended = recommended.filter(o => !appliedIds.has(o.id));
+        return (
+          <>
+            <div className="relative mb-4 mt-3">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-3)" }} />
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search roles, companies..."
+                className="w-full h-11 rounded-2xl pl-11 pr-4 text-[14px] outline-none glass-input" />
+            </div>
 
-          {recommended.length > 0 && !search.trim() && activeType === "All" && (
-            <div className="mb-6">
-              <h2 className="text-[16px] font-bold mb-3 flex items-center gap-2" style={{ color: "var(--text-1)" }}>
-                <Zap className="w-4 h-4" style={{ color: "#F59E0B" }} /> Recommended for You
-              </h2>
+            {visibleRecommended.length > 0 && !search.trim() && activeType === "All" && (
+              <div className="mb-6">
+                <h2 className="text-[16px] font-bold mb-3 flex items-center gap-2" style={{ color: "var(--text-1)" }}>
+                  <Zap className="w-4 h-4" style={{ color: "#F59E0B" }} /> Recommended for You
+                </h2>
+                <div className="space-y-3">
+                  {visibleRecommended.map(o => <OpportunityCard key={`rec-${o.id}`} o={o} {...cardProps} />)}
+                </div>
+              </div>
+            )}
+
+            {loading && !visibleOpps.length ? (
+              <div className="space-y-4 mt-4">{[1,2,3].map(i => (
+                <div key={i} className="animate-pulse rounded-xl p-5 glass-light" style={{ minHeight: 120 }}>
+                  <div className="flex gap-3"><div className="w-11 h-11 rounded-xl" style={{ background: "var(--surface-2)" }} /><div className="flex-1 space-y-2"><div className="h-5 w-2/3 rounded" style={{ background: "var(--surface-2)" }} /><div className="h-4 w-1/3 rounded" style={{ background: "var(--surface-2)" }} /></div></div>
+                </div>
+              ))}</div>
+            ) : visibleOpps.length === 0 ? (
+              <div className="text-center py-16">
+                <Briefcase className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
+                <p className="text-[16px] font-bold" style={{ color: "var(--text-1)" }}>No opportunities yet</p>
+                <p className="text-[13px] mt-1" style={{ color: "var(--text-3)" }}>Check back later</p>
+              </div>
+            ) : (
               <div className="space-y-3">
-                {recommended.map(o => <OpportunityCard key={`rec-${o.id}`} o={o} {...cardProps} />)}
+                {visibleOpps.map(o => <OpportunityCard key={o.id} o={o} {...cardProps} />)}
               </div>
-            </div>
-          )}
-
-          {loading && !opps.length ? (
-            <div className="space-y-4 mt-4">{[1,2,3].map(i => (
-              <div key={i} className="animate-pulse rounded-xl p-5 glass-light" style={{ minHeight: 120 }}>
-                <div className="flex gap-3"><div className="w-11 h-11 rounded-xl" style={{ background: "var(--surface-2)" }} /><div className="flex-1 space-y-2"><div className="h-5 w-2/3 rounded" style={{ background: "var(--surface-2)" }} /><div className="h-4 w-1/3 rounded" style={{ background: "var(--surface-2)" }} /></div></div>
-              </div>
-            ))}</div>
-          ) : opps.length === 0 ? (
-            <div className="text-center py-16">
-              <Briefcase className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
-              <p className="text-[16px] font-bold" style={{ color: "var(--text-1)" }}>No opportunities yet</p>
-              <p className="text-[13px] mt-1" style={{ color: "var(--text-3)" }}>Check back later</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {opps.map(o => <OpportunityCard key={o.id} o={o} {...cardProps} />)}
-            </div>
-          )}
-        </>
-      )}
+            )}
+          </>
+        );
+      })()}
 
       {!isInstitution && userTab === "find" && <FindTab />}
       {!isInstitution && userTab === "referrals" && <ReferralsTab />}
@@ -288,6 +287,7 @@ function StickyOppHeader({ isInstitution, userTab, setUserTab, orgTab, setOrgTab
 
   const userTabs = [
     { key: "jobs", label: "For you" },
+    { key: "find", label: "Find" },
     { key: "referrals", label: "Referrals" },
     { key: "applications", label: "Applications" },
   ];
