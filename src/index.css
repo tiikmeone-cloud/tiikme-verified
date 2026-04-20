@@ -635,6 +635,17 @@
   .profile-info-flex .profile-info-body .flex {
     justify-content: center;
   }
+  /* Activity Score card → full-width below avatar/info on mobile */
+  .profile-score-wrap {
+    width: 100% !important;
+    margin-top: 12px;
+    display: flex;
+    justify-content: center;
+  }
+  .profile-score-wrap > div {
+    width: 100% !important;
+    max-width: 320px;
+  }
 
   /* Feed main padding */
   .feed-main {

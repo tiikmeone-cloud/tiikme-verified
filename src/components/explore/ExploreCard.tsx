@@ -2,6 +2,7 @@ import AvatarSquare from "@/components/ui/AvatarSquare";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import { useNavigate } from "react-router-dom";
 import { getOrgTypeConfig } from "@/lib/orgTypes";
+import { ActivityScoreMini } from "@/components/profile/ActivityScoreCard";
 
 interface PersonCardProps {
   p: {
@@ -16,6 +17,7 @@ interface PersonCardProps {
     role_metadata?: any;
     institution_name?: string | null;
     account_type?: string | null;
+    activity_score?: number | null;
   };
   strandStatus: string;
   onStrand: () => void;
@@ -47,9 +49,12 @@ export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonC
     >
       <AvatarSquare src={p.avatar_url} name={name} size={80} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 2, minWidth: 0 }}>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           <span className="truncate" style={{ fontWeight: 700, fontSize: 14, color: "var(--text-primary)" }}>{name}</span>
           {p.is_verified && <VerifiedBadge size={14} />}
+          {typeof p.activity_score === "number" && (
+            <ActivityScoreMini score={p.activity_score} viewerIsOwner={currentUserId === p.id} />
+          )}
           {p.account_type === "institution" && (
             <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 999, background: "rgba(37,99,235,0.10)", color: "#2563EB", marginLeft: 2 }}>
               Company
