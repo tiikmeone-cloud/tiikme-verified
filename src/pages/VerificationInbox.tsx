@@ -13,7 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import VerificationDocLink from "@/components/verification/VerificationDocLink";
 import { roleCategoryLabel } from "@/lib/verificationRoles";
-import { usePageSEO } from "@/hooks/usePageSEO";
+import { PageSEO } from "@/hooks/usePageSEO";
 
 type Row = {
   id: string;
@@ -34,7 +34,6 @@ type Row = {
 type Tab = "pending" | "resolved";
 
 export default function VerificationInbox() {
-  usePageSEO({ title: "Verification Inbox · Tiikme", description: "Review verification requests for your organisation." });
   const { user } = useAuth();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
