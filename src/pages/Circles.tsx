@@ -39,9 +39,17 @@ function CirclesDiscovery() {
 
   const join = async (circleId: string) => {
     if (!user) { toast.error("Sign in to join"); return; }
-    const { error } = await supabase.from("circle_members").insert({ circle_id: circleId, user_id: user.id });
-    if (error) { toast.error(error.message); return; }
+    // Optimistic: bump joined + member_count immediately
     setJoined(prev => [...prev, circleId]);
+    setAllCircles(prev => prev.map(c => c.id === circleId ? { ...c, member_count: (c.member_count || 0) + 1 } : c));
+    const { error } = await supabase.from("circle_members").insert({ circle_id: circleId, user_id: user.id });
+    if (error) {
+      // Rollback
+      setJoined(prev => prev.filter(id => id !== circleId));
+      setAllCircles(prev => prev.map(c => c.id === circleId ? { ...c, member_count: Math.max(0, (c.member_count || 1) - 1) } : c));
+      toast.error(error.message);
+      return;
+    }
     toast.success("Joined");
   };
 
@@ -217,17 +225,53 @@ function CircleDetail({ slug }: { slug: string }) {
           .order(sort === "hot" ? "hot_score" : "created_at", { ascending: false }).limit(50),
         user ? supabase.from("circle_members").select("id").eq("circle_id", c.id).eq("user_id", user.id).maybeSingle() : Promise.resolve({ data: null }),
       ]);
-      setPosts(postsRes.data || []);
+      const fetchedPosts = postsRes.data || [];
+      let upvotedSet = new Set<string>();
+      if (user && fetchedPosts.length) {
+        const { data: ups } = await supabase
+          .from("circle_post_upvotes")
+          .select("post_id")
+          .eq("user_id", user.id)
+          .in("post_id", fetchedPosts.map((p: any) => p.id));
+        upvotedSet = new Set((ups || []).map((u: any) => u.post_id));
+      }
+      setPosts(fetchedPosts.map((p: any) => ({ ...p, viewer_upvoted: upvotedSet.has(p.id) })));
       setIsMember(!!memRes.data);
     })();
   }, [slug, sort, user]);
 
   const join = async () => {
     if (!user || !circle) return;
-    const { error } = await supabase.from("circle_members").insert({ circle_id: circle.id, user_id: user.id });
-    if (error) { toast.error(error.message); return; }
+    // Optimistic: flip membership and bump member count instantly
     setIsMember(true);
+    setCircle((prev: any) => prev ? { ...prev, member_count: (prev.member_count || 0) + 1 } : prev);
+    const { error } = await supabase.from("circle_members").insert({ circle_id: circle.id, user_id: user.id });
+    if (error) {
+      setIsMember(false);
+      setCircle((prev: any) => prev ? { ...prev, member_count: Math.max(0, (prev.member_count || 1) - 1) } : prev);
+      toast.error(error.message);
+      return;
+    }
     toast.success("Joined " + circle.name);
+  };
+
+  // Optimistic upvote toggle on a circle post
+  const toggleUpvote = async (postId: string, currentUpvoted: boolean) => {
+    if (!user) { toast.error("Sign in to upvote"); return; }
+    const delta = currentUpvoted ? -1 : 1;
+    setPosts(prev => prev.map(p => p.id === postId
+      ? { ...p, upvote_count: Math.max(0, (p.upvote_count || 0) + delta), viewer_upvoted: !currentUpvoted }
+      : p));
+    const op = currentUpvoted
+      ? supabase.from("circle_post_upvotes").delete().eq("post_id", postId).eq("user_id", user.id)
+      : supabase.from("circle_post_upvotes").insert({ post_id: postId, user_id: user.id });
+    const { error } = await op;
+    if (error) {
+      setPosts(prev => prev.map(p => p.id === postId
+        ? { ...p, upvote_count: Math.max(0, (p.upvote_count || 0) - delta), viewer_upvoted: currentUpvoted }
+        : p));
+      if (!currentUpvoted && error.code !== "23505") toast.error("Couldn't upvote — try again");
+    }
   };
 
   if (!circle) return <p style={{ textAlign: "center", color: "#6B7094", fontSize: 13, padding: 32 }}>Loading circle...</p>;
@@ -278,7 +322,7 @@ function CircleDetail({ slug }: { slug: string }) {
           <div className="glass-card" style={{ padding: 24, borderRadius: 12, background: "rgba(255,255,255,0.45)", border: "1px solid rgba(255,255,255,0.30)", textAlign: "center", fontSize: 13, color: "#6B7094" }}>
             No posts yet. {isMember ? "Be the first to post." : "Join to see the conversation."}
           </div>
-        ) : posts.map(p => <CirclePostCard key={p.id} post={p} />)}
+        ) : posts.map(p => <CirclePostCard key={p.id} post={p} onUpvote={() => toggleUpvote(p.id, !!p.viewer_upvoted)} />)}
       </div>
 
       {showComposer && isMember && (
@@ -288,11 +332,12 @@ function CircleDetail({ slug }: { slug: string }) {
   );
 }
 
-function CirclePostCard({ post }: { post: any }) {
+function CirclePostCard({ post, onUpvote }: { post: any; onUpvote?: () => void }) {
   const author = post.author;
   const showName = post.signtype === "full_profile";
   const label = (SIGNTYPE_CONFIG as any)[post.signtype]?.label || "User";
   const typeConf = (POST_TYPE_CONFIG as any)[post.post_type] || POST_TYPE_CONFIG.discussion;
+  const upvoted = !!post.viewer_upvoted;
 
   return (
     <article className="glass-card" style={{ padding: 14, borderRadius: 12, background: "rgba(255,255,255,0.55)", border: "1px solid rgba(255,255,255,0.30)" }}>
@@ -314,7 +359,10 @@ function CirclePostCard({ post }: { post: any }) {
       {post.title && <h3 style={{ fontSize: 14, fontWeight: 700, color: "#1A1A2E", marginBottom: 6 }}>{post.title}</h3>}
       <p style={{ fontSize: 13, color: "#374151", lineHeight: 1.55, whiteSpace: "pre-wrap" }}>{post.body || post.content}</p>
       <div className="flex items-center gap-4" style={{ marginTop: 10, fontSize: 12, color: "#6B7094" }}>
-        <span>▲ {post.upvote_count || 0}</span>
+        <button type="button" onClick={onUpvote} className="cursor-pointer transition-all active:scale-95"
+          style={{ background: "none", border: "none", padding: "2px 4px", borderRadius: 6, color: upvoted ? "#F97316" : "#6B7094", fontWeight: upvoted ? 700 : 500 }}>
+          ▲ {post.upvote_count || 0}
+        </button>
         <span>💬 {post.comment_count || post.reply_count || 0}</span>
       </div>
     </article>

@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import { Link2, Search, MessageCircle, Compass, MoreHorizontal, Clock, UserPlus, UserX, BellOff, Ban, Flag, ChevronDown, Eye } from "lucide-react";
 import { toast } from "sonner";
@@ -124,8 +124,10 @@ const Connections = () => {
     return { connected: accepted, pendingIncoming: incomingData, pendingSent: sentData, suggested: suggestedData || [] };
   }, [user]);
 
+  const qc = useQueryClient();
+  const queryKey = ["connections", user?.id];
   const { data: strandsData, isLoading: loading, refetch: fetchStrands } = useQuery({
-    queryKey: ["connections", user?.id],
+    queryKey,
     queryFn: fetchStrandsData,
     enabled: !!user,
     staleTime: 5 * 60 * 1000,
@@ -138,8 +140,21 @@ const Connections = () => {
 
   const getOther = (s: StrandRow) => s.requester_id === user?.id ? s.receiver : s.requester;
 
+  // Helper: mutate the cached query data without a network round-trip
+  const patchCache = (mutator: (d: NonNullable<typeof strandsData>) => typeof strandsData) => {
+    qc.setQueryData(queryKey, (old: any) => old ? mutator(old) : old);
+  };
+
   const handleAccept = async (s: StrandRow) => {
-    await supabase.from("strands").update({ status: "accepted" }).eq("id", s.id);
+    const prev = qc.getQueryData(queryKey);
+    // Optimistic: move from pendingIncoming → connected
+    patchCache((d) => ({
+      ...d,
+      pendingIncoming: d.pendingIncoming.filter((x: any) => x.id !== s.id),
+      connected: [{ ...s, status: "accepted" }, ...d.connected],
+    }));
+    const { error } = await supabase.from("strands").update({ status: "accepted" }).eq("id", s.id);
+    if (error) { qc.setQueryData(queryKey, prev); toast.error("Couldn't accept — try again"); return; }
     if (user) {
       try { await supabase.rpc("increment_score", { uid: user.id, amount: 3 }); } catch {}
       const otherId = s.requester_id === user.id ? s.receiver_id : s.requester_id;
@@ -151,29 +166,33 @@ const Connections = () => {
       });
     }
     toast.success("Connected!");
-    fetchStrands();
   };
 
   const handleDecline = async (s: StrandRow) => {
-    await supabase.from("strands").update({ status: "declined" }).eq("id", s.id);
+    const prev = qc.getQueryData(queryKey);
+    patchCache((d) => ({ ...d, pendingIncoming: d.pendingIncoming.filter((x: any) => x.id !== s.id) }));
+    const { error } = await supabase.from("strands").update({ status: "declined" }).eq("id", s.id);
+    if (error) { qc.setQueryData(queryKey, prev); toast.error("Couldn't decline — try again"); return; }
     toast.info("Declined");
-    fetchStrands();
   };
 
   const handleWithdraw = async (s: StrandRow) => {
-    await supabase.from("strands").delete().eq("id", s.id);
+    const prev = qc.getQueryData(queryKey);
+    patchCache((d) => ({ ...d, pendingSent: d.pendingSent.filter((x: any) => x.id !== s.id) }));
+    const { error } = await supabase.from("strands").delete().eq("id", s.id);
+    if (error) { qc.setQueryData(queryKey, prev); toast.error("Couldn't withdraw — try again"); return; }
     toast.info("Request withdrawn");
-    fetchStrands();
   };
 
   const handleDisconnect = async (s: StrandRow) => {
     const other = getOther(s);
     const confirmed = window.confirm(`Disconnect from ${other?.full_name || "this user"}? They won't be notified.`);
     if (!confirmed) return;
+    const prev = qc.getQueryData(queryKey);
+    patchCache((d) => ({ ...d, connected: d.connected.filter((x: any) => x.id !== s.id) }));
     const { error } = await supabase.from("strands").delete().eq("id", s.id);
-    if (error) { toast.error(error.message); return; }
+    if (error) { qc.setQueryData(queryKey, prev); toast.error(error.message); return; }
     toast.success("Disconnected from " + (other?.full_name || "user"));
-    fetchStrands();
   };
 
   const handleMute = async (otherId: string) => {
