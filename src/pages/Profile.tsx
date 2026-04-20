@@ -471,6 +471,7 @@ const Profile = () => {
 
   const [connectionStatus, setConnectionStatus] = useState<{ status: string | null; direction: string | null; id: string | null }>({ status: null, direction: null, id: null });
   const [connectLoading, setConnectLoading] = useState(false);
+  const [showScoreDetails, setShowScoreDetails] = useState(false);
 
   const targetUserId = isOwnProfile ? user?.id : urlUserId;
 
