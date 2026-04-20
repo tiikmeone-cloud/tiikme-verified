@@ -2877,6 +2877,7 @@ export type Database = {
           username: string | null
           verification_badge_text: string | null
           verification_type: string | null
+          verified_at: string | null
           verified_by: string | null
         }
         Insert: {
@@ -2927,6 +2928,7 @@ export type Database = {
           username?: string | null
           verification_badge_text?: string | null
           verification_type?: string | null
+          verified_at?: string | null
           verified_by?: string | null
         }
         Update: {
@@ -2977,6 +2979,7 @@ export type Database = {
           username?: string | null
           verification_badge_text?: string | null
           verification_type?: string | null
+          verified_at?: string | null
           verified_by?: string | null
         }
         Relationships: [
