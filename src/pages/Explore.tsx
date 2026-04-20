@@ -317,10 +317,10 @@ const Explore = () => {
             className="w-full outline-none"
             style={{
               height: 48, borderRadius: 16, paddingLeft: 48, paddingRight: 16, fontSize: 14, fontWeight: 400,
-              background: "var(--bg-card)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
-              border: focused ? "1px solid rgba(232,115,58,0.50)" : "1px solid var(--border-glass)",
+              background: "#FFFFFF",
+              border: focused ? "1px solid rgba(232,115,58,0.50)" : "1px solid #E5E7EB",
               boxShadow: focused ? "0 0 0 3px rgba(232,115,58,0.10)" : "none",
-              color: "var(--text-primary)", transition: "border-color 150ms, box-shadow 150ms",
+              color: "#1A1A2E", transition: "border-color 150ms, box-shadow 150ms",
             }} />
           {search && (
             <button type="button" onClick={() => setSearch("")} className="absolute" style={{ right: 16, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)" }} aria-label="Clear search">
@@ -331,7 +331,8 @@ const Explore = () => {
           {showSearchResults && searchResults.length > 0 && (
             <div className="absolute w-full overflow-y-auto" style={{
               marginTop: 4, maxHeight: 320, padding: 4, borderRadius: 12, zIndex: 30,
-              background: "var(--bg-card)", backdropFilter: "blur(20px)", border: "1px solid var(--border-glass)",
+              background: "#FFFFFF",
+              border: "1px solid #E5E7EB",
               boxShadow: "0 8px 32px rgba(26,26,78,0.12)",
             }}>
               {searchResults.map((r: any) => (
