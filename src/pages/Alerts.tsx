@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Bell, Briefcase, Link2, Shield, TrendingUp, Target, Check, X, UserCheck, Heart, MessageSquare, Repeat2, AtSign, Users } from "lucide-react";
 import { toast } from "sonner";
@@ -68,45 +69,39 @@ const Alerts = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("All");
-  const [alerts, setAlerts] = useState<any[]>([]);
-  const [actorProfiles, setActorProfiles] = useState<Record<string, any>>({});
-  const [loading, setLoading] = useState(true);
   const [showJoinModal, setShowJoinModal] = useState<any>(null);
+  const qc = useQueryClient();
 
-  const fetchAlerts = useCallback(async () => {
-    if (!user) return;
-    setLoading(true);
-    try {
-      // Query both alerts AND notifications tables, merge results
+  // Cached alerts + notifications merge (2 min stale) — instant on revisit
+  const { data: alertsData, isLoading: loading, refetch: fetchAlerts } = useQuery({
+    queryKey: ["alerts", user?.id],
+    queryFn: async () => {
+      if (!user) return { merged: [] as any[], actorProfiles: {} as Record<string, any> };
       const [alertsRes, notifsRes] = await Promise.allSettled([
         supabase.from("alerts").select("id, type, title, body, action_url, is_read, data, created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(50),
         supabase.from("notifications").select("id, type, title, body, action_url, is_read, data, created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(50),
       ]);
-      const alertsData = alertsRes.status === "fulfilled" ? ((alertsRes.value as any).data || []).map((a: any) => ({ ...a, _source: "alerts" })) : [];
-      const notifsData = notifsRes.status === "fulfilled" ? ((notifsRes.value as any).data || []).map((n: any) => ({ ...n, _source: "notifications" })) : [];
-      
-      // Merge and deduplicate by id, sort newest first
-      const merged = [...alertsData, ...notifsData].sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 80);
-      setAlerts(merged);
-      setLoading(false);
-
-      // Fetch actor profiles for avatars
-      const actorIds = [...new Set(merged.map((a: any) => a.data?.actor_id).filter(Boolean))] as string[];
+      const a = alertsRes.status === "fulfilled" ? ((alertsRes.value as any).data || []).map((x: any) => ({ ...x, _source: "alerts" })) : [];
+      const n = notifsRes.status === "fulfilled" ? ((notifsRes.value as any).data || []).map((x: any) => ({ ...x, _source: "notifications" })) : [];
+      const merged = [...a, ...n].sort((x: any, y: any) => new Date(y.created_at).getTime() - new Date(x.created_at).getTime()).slice(0, 80);
+      const actorIds = [...new Set(merged.map((x: any) => x.data?.actor_id).filter(Boolean))] as string[];
+      let actorProfiles: Record<string, any> = {};
       if (actorIds.length > 0) {
-        supabase.from("profiles").select("id, full_name, avatar_url, role").in("id", actorIds)
-          .then(({ data: profiles }) => {
-            const map: Record<string, any> = {};
-            for (const p of profiles || []) map[p.id] = p;
-            setActorProfiles(map);
-          });
+        const { data: profiles } = await supabase.from("profiles").select("id, full_name, avatar_url, role").in("id", actorIds);
+        for (const p of profiles || []) actorProfiles[p.id] = p;
       }
-    } catch {
-      setAlerts([]);
-      setLoading(false);
-    }
-  }, [user]);
+      return { merged, actorProfiles };
+    },
+    enabled: !!user,
+    staleTime: 2 * 60 * 1000,
+  });
 
-  useEffect(() => { fetchAlerts(); }, [fetchAlerts]);
+  const alerts = alertsData?.merged || [];
+  const actorProfiles = alertsData?.actorProfiles || {};
+
+  const setAlerts = (updater: (prev: any[]) => any[]) => {
+    qc.setQueryData(["alerts", user?.id], (prev: any) => prev ? { ...prev, merged: updater(prev.merged || []) } : prev);
+  };
 
   // Realtime: refetch when new alerts/notifications arrive
   useEffect(() => {
