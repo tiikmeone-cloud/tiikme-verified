@@ -3,12 +3,16 @@ import { toast } from "sonner";
 import type { InstitutionFormData } from "@/pages/JoinAsInstitution";
 
 const ROLES_BY_TYPE: Record<string, string[]> = {
-  company: ["Founder / CEO", "CTO", "CMO", "CXO", "HR Head", "Manager", "Admin", "Other"],
+  company:     ["Founder / CEO", "CTO", "CMO", "CXO", "HR Head", "Manager", "Admin", "Other"],
+  startup:     ["Founder / CEO", "Co-founder", "CTO", "Head of Product", "Head of Growth", "Operator", "Other"],
+  creator:     ["Owner / Creator", "Co-host", "Producer", "Editor", "Manager", "Other"],
+  community:   ["Organizer", "Co-organizer", "Moderator", "Volunteer", "Other"],
   educational: ["Principal", "Dean", "HOD", "Professor", "Admin", "Other"],
-  hospital: ["Director", "Chief Medical Officer", "Admin", "HOD", "Other"],
-  government: ["Department Head", "Director", "Officer", "Admin", "Other"],
-  ngo: ["Founder", "Director", "Trustee", "Manager", "Other"],
-  individual: ["Owner", "Founder", "Other"],
+  education:   ["Principal", "Dean", "HOD", "Professor", "Admin", "Other"],
+  hospital:    ["Director", "Chief Medical Officer", "Admin", "HOD", "Other"],
+  government:  ["Department Head", "Director", "Officer", "Admin", "Other"],
+  ngo:         ["Founder", "Director", "Trustee", "Manager", "Other"],
+  individual:  ["Owner", "Founder", "Other"],
 };
 
 const inputStyle: React.CSSProperties = {
