@@ -338,7 +338,15 @@ function CircleDetail({ slug }: { slug: string }) {
           <div className="glass-card" style={{ padding: 24, borderRadius: 12, background: "rgba(255,255,255,0.45)", border: "1px solid rgba(255,255,255,0.30)", textAlign: "center", fontSize: 13, color: "#6B7094" }}>
             No posts yet. {isMember ? "Be the first to post." : "Join to see the conversation."}
           </div>
-        ) : posts.map(p => <CirclePostCard key={p.id} post={p} onUpvote={() => toggleUpvote(p.id, !!p.viewer_upvoted)} />)}
+        ) : posts.map(p => (
+          <CirclePostCard
+            key={p.id}
+            post={p}
+            onUpvote={() => toggleUpvote(p.id, !!p.viewer_upvoted)}
+            onDeleted={(id) => setPosts(prev => prev.filter(x => x.id !== id))}
+            onEdited={(id, body) => setPosts(prev => prev.map(x => x.id === id ? { ...x, body, content: body } : x))}
+          />
+        ))}
       </div>
 
       {showComposer && isMember && (
