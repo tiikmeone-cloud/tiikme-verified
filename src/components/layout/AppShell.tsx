@@ -377,6 +377,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
                 key={item.path}
                 to={item.path}
                 className="flex flex-col items-center justify-center"
+                onTouchStart={() => prefetchOnHover(queryClient, item.path, user?.id)}
                 style={{
                   width: 54, height: 48, borderRadius: 24, gap: 2,
                   background: active ? "rgba(232,115,58,0.12)" : "transparent",
