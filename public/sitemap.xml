@@ -25,7 +25,7 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://tiikme.com/login</loc>
+    <loc>https://tiikme.com/signin</loc>
     <lastmod>2026-04-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
