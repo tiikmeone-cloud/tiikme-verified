@@ -71,7 +71,7 @@ const HeroSection = () => {
 
         {/* Honest note */}
         <p className="text-[13px]" style={{ color: "#6B7280" }}>
-          Built by Veenavarse Private Limited · tiikme.in
+          Built by Veenavarse Private Limited
         </p>
       </div>
     </section>
