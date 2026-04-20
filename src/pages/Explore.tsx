@@ -1,23 +1,35 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, X, Check } from "lucide-react";
+import { Search, X, AlertCircle } from "lucide-react";
 import { cleanUsername } from "@/lib/cleanUsername";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { sendNotification } from "@/lib/notify";
-import { PersonCard, OrgCard, TrendingPostCard } from "@/components/explore/ExploreCard";
+import { PersonCard, OrgCard, TrendingPostCard, TopicPill } from "@/components/explore/ExploreCard";
 import CircleCard from "@/components/explore/CircleCard";
-import TopicPillsBar from "@/components/explore/TopicPillsBar";
+import HorizontalCarousel from "@/components/explore/HorizontalCarousel";
 import AvatarSquare from "@/components/ui/AvatarSquare";
-import BottomSheet from "@/components/ui/BottomSheet";
 import { getOrgTypeConfig } from "@/lib/orgTypes";
-import { rankExploreCards, type MixedCard, type UserStrandsGraph } from "@/lib/exploreScore";
+import { sendConnectionRequest } from "@/hooks/useConnectionStatus";
 
-const FALLBACK_TOPICS = [
-  "Engineering", "Design", "Product", "Marketing", "Data", "AI",
-  "Startup", "Healthcare", "Education", "Finance", "Government", "NGO",
+/* ─────────── Helpers ─────────── */
+const HASHTAG_RE = /#([\p{L}0-9_]{2,40})/gu;
+const lower = (s?: string | null) => (s || "").toLowerCase();
+const overlap = (a: string[], b: string[]) => {
+  if (!a.length || !b.length) return false;
+  const A = new Set(a.map(lower));
+  return b.some(x => A.has(lower(x)));
+};
+
+type SectionKey = "people" | "circles" | "orgs" | "posts" | "hashtags";
+const SECTIONS: { key: SectionKey; label: string }[] = [
+  { key: "people", label: "People" },
+  { key: "circles", label: "Circles" },
+  { key: "orgs", label: "Organizations" },
+  { key: "posts", label: "Top Posts" },
+  { key: "hashtags", label: "Hashtags" },
 ];
 
 const Explore = () => {
@@ -33,31 +45,23 @@ const Explore = () => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
 
-  // Topic interests — derived from profile.interests + sector + skills fallback
-  const allUserTopics = useMemo(() => {
-    const set = new Set<string>();
-    ((profile as any)?.interests || []).forEach((i: string) => i && set.add(i));
-    if (profile?.sector) set.add(profile.sector);
-    ((profile as any)?.skills || []).slice(0, 6).forEach((s: string) => s && set.add(s));
-    if (set.size === 0) FALLBACK_TOPICS.slice(0, 8).forEach(t => set.add(t));
-    return Array.from(set);
-  }, [profile]);
-
-  const [activeTopics, setActiveTopics] = useState<Set<string>>(new Set());
-  useEffect(() => { setActiveTopics(new Set(allUserTopics)); }, [allUserTopics.join(",")]);
-  const [editOpen, setEditOpen] = useState(false);
-  const [editDraft, setEditDraft] = useState<Set<string>>(new Set());
+  const sectionRefs = useRef<Record<SectionKey, HTMLDivElement | null>>({
+    people: null, circles: null, orgs: null, posts: null, hashtags: null,
+  });
 
   useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
-  // Search (kept)
+  /* ─────────── Search (debounced) ─────────── */
   useEffect(() => {
     if (search.trim().length < 2) { setSearchResults([]); setShowSearchResults(false); return; }
     const t = setTimeout(async () => {
       const term = `%${search}%`;
       const [{ data: profiles }, { data: orgs }] = await Promise.all([
-        supabase.from("profiles").select("id, full_name, username, avatar_url, role").eq("is_public", true).neq("id", user?.id || "").or(`full_name.ilike.${term},username.ilike.${term}`).limit(5),
-        supabase.from("organizations").select("id, name, slug, type, subtype, logo_url").or(`name.ilike.${term}`).limit(5),
+        supabase.from("profiles").select("id, full_name, username, avatar_url, role")
+          .eq("is_public", true).neq("id", user?.id || "")
+          .or(`full_name.ilike.${term},username.ilike.${term}`).limit(5),
+        supabase.from("organizations").select("id, name, slug, type, subtype, logo_url")
+          .or(`name.ilike.${term}`).limit(5),
       ]);
       const results: any[] = [];
       (profiles || []).forEach(p => results.push({ ...p, kind: "person" }));
@@ -67,47 +71,42 @@ const Explore = () => {
     return () => clearTimeout(t);
   }, [search, user?.id]);
 
-  // Fetch unified data + build strand graph
+  /* ─────────── Profile signals ─────────── */
+  const viewerInterests = useMemo(() => {
+    const set = new Set<string>();
+    ((profile as any)?.interests || []).forEach((i: string) => i && set.add(lower(i)));
+    ((profile as any)?.skills || []).forEach((s: string) => s && set.add(lower(s)));
+    if (profile?.sector) set.add(lower(profile.sector));
+    return Array.from(set);
+  }, [profile]);
+
+  const profileIncomplete = !profile?.role && !profile?.location_city && viewerInterests.length === 0;
+
+  /* ─────────── Unified fetch ─────────── */
   const fetchAll = useCallback(async () => {
     if (!user) return null;
 
-    // Strands (1st-degree)
+    /* strands → exclusion + status map */
     const { data: strands } = await supabase
       .from("strands")
       .select("requester_id, receiver_id, status")
       .or(`requester_id.eq.${user.id},receiver_id.eq.${user.id}`);
 
     const sMap: Record<string, string> = {};
-    const firstDegree = new Set<string>();
-    const excluded = new Set<string>();
+    const excluded = new Set<string>([user.id]);
     (strands || []).forEach((s: any) => {
       const otherId = s.requester_id === user.id ? s.receiver_id : s.requester_id;
       if (!otherId) return;
       sMap[otherId] = s.status || "pending";
-      if (s.status === "accepted") firstDegree.add(otherId);
       if (s.status === "accepted" || s.status === "pending") excluded.add(otherId);
     });
+    const connectedIds = new Set<string>(
+      (strands || []).filter((s: any) => s.status === "accepted")
+        .map((s: any) => s.requester_id === user.id ? s.receiver_id : s.requester_id)
+        .filter(Boolean)
+    );
 
-    // 2nd-degree: friends-of-friends
-    let secondDegree = new Set<string>();
-    if (firstDegree.size > 0) {
-      const ids = Array.from(firstDegree);
-      const { data: fofStrands } = await supabase
-        .from("strands")
-        .select("requester_id, receiver_id, status")
-        .eq("status", "accepted")
-        .or(`requester_id.in.(${ids.join(",")}),receiver_id.in.(${ids.join(",")})`);
-      (fofStrands || []).forEach((s: any) => {
-        if (firstDegree.has(s.requester_id) && s.receiver_id !== user.id && !firstDegree.has(s.receiver_id)) {
-          secondDegree.add(s.receiver_id);
-        }
-        if (firstDegree.has(s.receiver_id) && s.requester_id !== user.id && !firstDegree.has(s.requester_id)) {
-          secondDegree.add(s.requester_id);
-        }
-      });
-    }
-
-    // Follows + circle membership
+    /* follows + circle membership */
     const [followsRes, myCirclesRes] = await Promise.all([
       supabase.from("org_followers").select("org_id").eq("user_id", user.id),
       supabase.from("circle_members").select("circle_id").eq("user_id", user.id),
@@ -115,47 +114,92 @@ const Explore = () => {
     const fMap: Record<string, boolean> = {};
     (followsRes.data || []).forEach((f: any) => { fMap[f.org_id] = true; });
     const mMap: Record<string, boolean> = {};
-    const myCircleIds = (myCirclesRes.data || []).map((m: any) => m.circle_id);
-    myCircleIds.forEach(id => { mMap[id] = true; });
+    (myCirclesRes.data || []).forEach((m: any) => { mMap[m.circle_id] = true; });
 
-    // 1) People (graph distance ≤ 3 → top 20 by activity)
+    /* ─── PEOPLE (relevance filtered, backfill with top activity) ─── */
     const { data: peopleRaw } = await supabase
       .from("profiles")
-      .select("id, full_name, username, avatar_url, role, headline, institution_name, location_city, is_verified, activity_score, privacy_settings, sector, skills, designation, role_metadata, account_type")
+      .select("id, full_name, username, avatar_url, role, role_subtype, headline, institution_name, location_city, is_verified, activity_score, privacy_settings, sector, skills, interests, designation, role_metadata, account_type")
       .eq("is_public", true)
       .not("full_name", "is", null)
       .neq("id", user.id)
-      .order("activity_score", { ascending: false })
-      .limit(60);
-    const people = (peopleRaw || []).filter((p: any) => {
+      .order("activity_score", { ascending: false, nullsFirst: false })
+      .limit(120);
+
+    const peopleSafe = (peopleRaw || []).filter((p: any) => {
       const ps = p.privacy_settings as any;
       if (ps && ps.show_in_search === false) return false;
-      if (excluded.has(p.id)) return false;
-      return true;
-    }).slice(0, 20);
+      return !excluded.has(p.id);
+    });
 
-    // 2) Orgs (10) — by interest match or popularity
+    const matchedPeople = peopleSafe.filter((p: any) => {
+      const sameRole = profile?.role && (p.role === profile.role || (p.role_subtype && p.role_subtype === profile.role_subtype));
+      const sameCity = profile?.location_city && lower(p.location_city) === lower(profile.location_city);
+      const tagMatch = overlap(viewerInterests, [...(p.skills || []), ...(p.interests || []), p.sector].filter(Boolean) as string[]);
+      const sameAccountType = !profile?.role && profile?.account_type && p.account_type === profile.account_type;
+      return sameRole || sameCity || tagMatch || sameAccountType;
+    });
+
+    /* backfill so the carousel never feels dead */
+    const peopleSet = new Set(matchedPeople.map((p: any) => p.id));
+    const backfill = peopleSafe.filter((p: any) => !peopleSet.has(p.id)).slice(0, Math.max(0, 20 - matchedPeople.length));
+    const people = [...matchedPeople, ...backfill].slice(0, 20);
+
+    /* ─── ORGS (top by followers, exclude already followed) ─── */
     const { data: orgsRaw } = await supabase
       .from("organizations")
       .select("id, name, slug, type, subtype, logo_url, city, state, followers_count, created_by, created_at, description")
-      .order("followers_count", { ascending: false })
+      .order("followers_count", { ascending: false, nullsFirst: false })
       .limit(40);
     const orgs = (orgsRaw || []).filter((o: any) => !fMap[o.id]).slice(0, 10);
 
-    // 3) Posts (30) — from circles user is in + connections
-    const ids = [...firstDegree];
+    /* ─── CIRCLES (relevance + popular) ─── */
+    const { data: circlesRaw } = await supabase
+      .from("circles")
+      .select("id, name, slug, description, icon_url, member_count, active_7d, type, created_by, created_at")
+      .eq("visibility", "public")
+      .order("member_count", { ascending: false, nullsFirst: false })
+      .order("active_7d", { ascending: false, nullsFirst: false })
+      .limit(40);
+
+    const notMember = (circlesRaw || []).filter((c: any) => !mMap[c.id]);
+    const circleMatched = notMember.filter((c: any) => {
+      const hay = `${c.name || ""} ${c.type || ""}`.toLowerCase();
+      if (profile?.sector && hay.includes(lower(profile.sector))) return true;
+      if (profile?.role && hay.includes(lower(profile.role))) return true;
+      if (profile?.location_city && hay.includes(lower(profile.location_city))) return true;
+      if (viewerInterests.some(t => hay.includes(t))) return true;
+      return false;
+    });
+    const circleSet = new Set(circleMatched.map((c: any) => c.id));
+    const circleBackfill = notMember.filter((c: any) => !circleSet.has(c.id)).slice(0, Math.max(0, 20 - circleMatched.length));
+    const circles = [...circleMatched, ...circleBackfill].slice(0, 20);
+
+    /* ─── TOP POSTS (interest-tag overlap or from connections, < 48h) ─── */
     const twoDaysAgo = new Date(Date.now() - 48 * 3600000).toISOString();
-    const postsQuery = supabase
+    const { data: postsRaw } = await supabase
       .from("posts")
       .select("id, content, author_id, reactions, comment_count, created_at, image_urls, hashtags")
       .gte("created_at", twoDaysAgo)
       .eq("visibility", "everyone")
-      .order("comment_count", { ascending: false })
-      .limit(30);
-    const { data: postsRaw } = ids.length > 0
-      ? await postsQuery.in("author_id", [...ids, user.id])
-      : await postsQuery;
-    const posts = postsRaw || [];
+      .order("created_at", { ascending: false })
+      .limit(80);
+
+    const scoredPosts = (postsRaw || [])
+      .map((p: any) => {
+        const r = (p.reactions || {}) as Record<string, number>;
+        const reactionCount = (r.useful || 0) + (r.inspiring || 0) + (r.insightful || 0) + (r.like || 0);
+        const interestMatch = overlap(viewerInterests, p.hashtags || []);
+        const fromConnection = connectedIds.has(p.author_id);
+        return { ...p, _engagement: reactionCount + (p.comment_count || 0), _relevant: interestMatch || fromConnection };
+      })
+      .filter((p: any) => p._relevant || p._engagement > 0);
+
+    scoredPosts.sort((a: any, b: any) => {
+      if (a._relevant !== b._relevant) return a._relevant ? -1 : 1;
+      return b._engagement - a._engagement;
+    });
+    const posts = scoredPosts.slice(0, 5);
 
     const authorIds = [...new Set(posts.map((p: any) => p.author_id).filter(Boolean))];
     const postAuthors: Record<string, any> = {};
@@ -164,24 +208,37 @@ const Explore = () => {
       (authors || []).forEach((a: any) => { postAuthors[a.id] = a; });
     }
 
-    // 4) Circles (5 — public, user is NOT in)
-    const { data: circlesRaw } = await supabase
-      .from("circles")
-      .select("id, name, slug, description, icon_url, member_count, active_7d, type, created_by, created_at")
-      .eq("visibility", "public")
-      .order("active_7d", { ascending: false })
-      .limit(20);
-    const circles = (circlesRaw || []).filter((c: any) => !mMap[c.id]).slice(0, 5);
+    /* ─── TRENDING HASHTAGS (last 7 days, posts + circle_posts) ─── */
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 3600000).toISOString();
+    const [{ data: feedTags }, { data: cpTags }] = await Promise.all([
+      supabase.from("posts").select("hashtags").gte("created_at", sevenDaysAgo).limit(500),
+      supabase.from("circle_posts").select("body").gte("created_at", sevenDaysAgo).limit(500),
+    ]);
+    const tagCount: Record<string, number> = {};
+    (feedTags || []).forEach((row: any) => {
+      (row.hashtags || []).forEach((h: string) => {
+        const k = lower(h).replace(/^#/, "");
+        if (k) tagCount[k] = (tagCount[k] || 0) + 1;
+      });
+    });
+    (cpTags || []).forEach((row: any) => {
+      const text = row.body || "";
+      const matches = text.matchAll(HASHTAG_RE);
+      for (const m of matches) {
+        const k = lower(m[1]);
+        if (k) tagCount[k] = (tagCount[k] || 0) + 1;
+      }
+    });
+    const hashtags = Object.entries(tagCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([tag, count]) => ({ tag, count }));
 
-    return {
-      sMap, fMap, mMap,
-      graph: { firstDegree, secondDegree } as UserStrandsGraph,
-      people, orgs, posts, postAuthors, circles,
-    };
-  }, [user?.id]);
+    return { sMap, fMap, mMap, people, orgs, circles, posts, postAuthors, hashtags };
+  }, [user?.id, profile?.role, profile?.role_subtype, profile?.location_city, profile?.sector, profile?.account_type, viewerInterests.join(",")]);
 
   const { data: exploreData, isLoading } = useQuery({
-    queryKey: ["explore-unified", user?.id],
+    queryKey: ["explore-sectioned", user?.id],
     queryFn: fetchAll,
     enabled: !!user,
     staleTime: 5 * 60 * 1000,
@@ -195,62 +252,9 @@ const Explore = () => {
     }
   }, [exploreData]);
 
-  // Build mixed card list + rank
-  const rankedCards = useMemo<MixedCard[]>(() => {
-    if (!exploreData || !user) return [];
-    const cards: MixedCard[] = [];
-    exploreData.people.forEach(p => cards.push({
-      id: `person-${p.id}`,
-      kind: "person",
-      authorId: p.id,
-      activityScore: p.activity_score || 0,
-      tags: [...(p.skills || []), p.sector].filter(Boolean) as string[],
-      createdAt: null,
-      payload: p,
-    }));
-    exploreData.orgs.forEach(o => cards.push({
-      id: `org-${o.id}`,
-      kind: "org",
-      authorId: o.created_by,
-      activityScore: Math.min((o.followers_count || 0) / 10, 100),
-      tags: [o.type, o.subtype, o.city].filter(Boolean) as string[],
-      createdAt: o.created_at,
-      payload: o,
-    }));
-    exploreData.posts.forEach(p => {
-      const r = (p.reactions || {}) as Record<string, number>;
-      const engagement = (r.useful || 0) + (r.inspiring || 0) + (r.insightful || 0) + (p.comment_count || 0);
-      cards.push({
-        id: `post-${p.id}`,
-        kind: "post",
-        authorId: p.author_id,
-        activityScore: Math.min(engagement * 2, 100),
-        tags: p.hashtags || [],
-        createdAt: p.created_at,
-        payload: p,
-      });
-    });
-    exploreData.circles.forEach(c => cards.push({
-      id: `circle-${c.id}`,
-      kind: "circle",
-      authorId: c.created_by,
-      activityScore: Math.min((c.active_7d || 0) * 5, 100),
-      tags: [c.type, c.name].filter(Boolean) as string[],
-      createdAt: c.created_at,
-      payload: c,
-    }));
-
-    return rankExploreCards(cards, {
-      userId: user.id,
-      interests: Array.from(activeTopics),
-      graph: exploreData.graph,
-    });
-  }, [exploreData, user, activeTopics]);
-
-  // Actions
+  /* ─────────── Actions ─────────── */
   const handleStrand = async (personId: string) => {
     if (!user) return;
-    const { sendConnectionRequest } = await import("@/hooks/useConnectionStatus");
     const result = await sendConnectionRequest(user.id, personId, profile?.full_name || "Someone");
     if (result === null) return;
     setStrandMap(prev => ({ ...prev, [personId]: result }));
@@ -283,36 +287,18 @@ const Explore = () => {
     toast.success("Joined circle");
   };
 
-  const toggleTopic = (t: string) => {
-    setActiveTopics(prev => {
-      const next = new Set(prev);
-      if (next.has(t)) next.delete(t); else next.add(t);
-      return next;
-    });
-  };
-
-  const openEdit = () => {
-    setEditDraft(new Set(allUserTopics));
-    setEditOpen(true);
-  };
-
-  const saveEdit = async () => {
-    if (!user) return;
-    const next = Array.from(editDraft);
-    const { error } = await supabase.from("profiles").update({ interests: next } as any).eq("id", user.id);
-    if (error) { toast.error("Couldn't save"); return; }
-    setActiveTopics(new Set(next));
-    toast.success("Interests updated");
-    setEditOpen(false);
+  const scrollToSection = (k: SectionKey) => {
+    sectionRefs.current[k]?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const getOrgNavigateTo = (org: any) => org.slug ? `/org/${org.slug}` : "#";
 
-  // Suggested topics for editor (current + popular fallbacks not yet picked)
-  const editorOptions = useMemo(() => {
-    const set = new Set<string>([...allUserTopics, ...FALLBACK_TOPICS, ...((profile as any)?.skills || [])]);
-    return Array.from(set);
-  }, [allUserTopics, profile]);
+  const showPeople = (exploreData?.people.length ?? 0) > 0;
+  const showCircles = (exploreData?.circles.length ?? 0) > 0;
+  const showOrgs = (exploreData?.orgs.length ?? 0) > 0;
+  const showPosts = (exploreData?.posts.length ?? 0) > 0;
+  const showHashtags = (exploreData?.hashtags.length ?? 0) > 0;
+  const anyContent = showPeople || showCircles || showOrgs || showPosts || showHashtags;
 
   return (
     <main style={{ maxWidth: 960, margin: "0 auto", padding: 16 }}>
@@ -335,7 +321,7 @@ const Explore = () => {
               color: "var(--text-primary)", transition: "border-color 150ms, box-shadow 150ms",
             }} />
           {search && (
-            <button type="button" onClick={() => setSearch("")} className="absolute" style={{ right: 16, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)" }}>
+            <button type="button" onClick={() => setSearch("")} className="absolute" style={{ right: 16, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)" }} aria-label="Clear search">
               <X style={{ width: 16, height: 16 }} />
             </button>
           )}
@@ -379,156 +365,149 @@ const Explore = () => {
           )}
         </div>
 
-        {/* Topic pills */}
-        <div style={{ marginTop: 12 }}>
-          <TopicPillsBar
-            topics={allUserTopics}
-            activeTopics={activeTopics}
-            onToggle={toggleTopic}
-            onEdit={openEdit}
-          />
+        {/* Section nav pills */}
+        <div className="flex overflow-x-auto" style={{ gap: 8, marginTop: 12, paddingBottom: 4, scrollbarWidth: "none" }}>
+          {SECTIONS.map(s => (
+            <button key={s.key} type="button" onClick={() => scrollToSection(s.key)}
+              style={{
+                flexShrink: 0, padding: "0 16px", height: 32, borderRadius: 999,
+                fontSize: 13, fontWeight: 600, cursor: "pointer",
+                background: "var(--bg-card)", border: "1px solid var(--border-glass)",
+                color: "var(--text-primary)", whiteSpace: "nowrap",
+              }}>
+              {s.label}
+            </button>
+          ))}
         </div>
       </div>
 
+      {/* Profile-incomplete banner */}
+      {profileIncomplete && !isLoading && (
+        <div className="flex items-center" style={{
+          gap: 12, padding: 14, marginTop: 16, borderRadius: 12,
+          background: "rgba(232,115,58,0.08)", border: "1px solid rgba(232,115,58,0.20)",
+        }}>
+          <AlertCircle style={{ width: 20, height: 20, color: "#E8733A", flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>Complete your profile for better picks</p>
+            <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-secondary)", margin: 0 }}>Add your role, city and interests to personalize Explore.</p>
+          </div>
+          <Link to="/app/profile" style={{
+            padding: "8px 14px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+            background: "#E8733A", color: "#fff", textDecoration: "none", whiteSpace: "nowrap",
+          }}>Edit profile</Link>
+        </div>
+      )}
+
       {/* Loading skeleton */}
       {isLoading && !exploreData && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12, marginTop: 16 }}>
-          {[1, 2, 3, 4, 5, 6].map(i => (
-            <div key={i} style={{ height: 180, borderRadius: 12, background: "var(--bg-card)" }} />
+        <div style={{ marginTop: 16 }}>
+          {[1, 2, 3].map(i => (
+            <div key={i} style={{ marginBottom: 24 }}>
+              <div style={{ height: 18, width: 160, borderRadius: 4, background: "var(--bg-card)", marginBottom: 12 }} />
+              <div className="flex" style={{ gap: 10 }}>
+                {[1, 2, 3, 4].map(j => (
+                  <div key={j} style={{ height: 110, width: 280, flexShrink: 0, borderRadius: 12, background: "var(--bg-card)" }} />
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       )}
 
-      {/* Unified mixed feed */}
-      {rankedCards.length > 0 && (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-            gap: 12,
-            marginTop: 16,
-            alignItems: "start",
-          }}
-        >
-          {rankedCards.map(card => {
-            if (card.kind === "person") {
-              return (
-                <div key={card.id} style={{ width: "100%" }}>
+      {/* Sections */}
+      <div style={{ marginTop: 16 }}>
+        {showPeople && (
+          <div ref={el => { sectionRefs.current.people = el; }}>
+            <HorizontalCarousel title="People you may know" count={exploreData!.people.length}>
+              {exploreData!.people.slice(0, 6).map(p => (
+                <div key={p.id} style={{ scrollSnapAlign: "start", flexShrink: 0 }}>
                   <PersonCard
-                    p={card.payload}
-                    strandStatus={strandMap[card.payload.id] || "none"}
-                    onStrand={() => handleStrand(card.payload.id)}
+                    p={p}
+                    strandStatus={strandMap[p.id] || "none"}
+                    onStrand={() => handleStrand(p.id)}
                     currentUserId={user?.id}
                   />
                 </div>
-              );
-            }
-            if (card.kind === "org") {
-              return (
-                <div key={card.id} style={{ width: "100%" }}>
+              ))}
+            </HorizontalCarousel>
+          </div>
+        )}
+
+        {showCircles && (
+          <div ref={el => { sectionRefs.current.circles = el; }}>
+            <HorizontalCarousel title="Circles for you" count={exploreData!.circles.length}>
+              {exploreData!.circles.slice(0, 5).map(c => (
+                <div key={c.id} style={{ scrollSnapAlign: "start", flexShrink: 0, width: 280 }}>
+                  <CircleCard
+                    circle={c}
+                    isMember={!!memberMap[c.id]}
+                    onJoin={(e) => { e.stopPropagation(); joinCircle(c.id); }}
+                  />
+                </div>
+              ))}
+            </HorizontalCarousel>
+          </div>
+        )}
+
+        {showOrgs && (
+          <div ref={el => { sectionRefs.current.orgs = el; }}>
+            <HorizontalCarousel title="Organizations to discover" count={exploreData!.orgs.length}>
+              {exploreData!.orgs.slice(0, 4).map(o => (
+                <div key={o.id} style={{ scrollSnapAlign: "start", flexShrink: 0 }}>
                   <OrgCard
-                    org={card.payload}
-                    following={!!followMap[card.payload.id]}
-                    onToggleFollow={() => toggleFollow(card.payload.id, card.payload.created_by)}
-                    navigateTo={getOrgNavigateTo(card.payload)}
+                    org={o}
+                    following={!!followMap[o.id]}
+                    onToggleFollow={() => toggleFollow(o.id, o.created_by)}
+                    navigateTo={getOrgNavigateTo(o)}
                   />
                 </div>
-              );
-            }
-            if (card.kind === "post") {
-              return (
-                <div key={card.id} style={{ width: "100%" }}>
-                  <TrendingPostCard
-                    post={card.payload}
-                    authorProfile={exploreData?.postAuthors[card.payload.author_id]}
-                  />
+              ))}
+            </HorizontalCarousel>
+          </div>
+        )}
+
+        {showPosts && (
+          <div ref={el => { sectionRefs.current.posts = el; }}>
+            <HorizontalCarousel title="Top posts" count={exploreData!.posts.length}>
+              {exploreData!.posts.map(p => (
+                <div key={p.id} style={{ scrollSnapAlign: "start", flexShrink: 0 }}>
+                  <TrendingPostCard post={p} authorProfile={exploreData!.postAuthors[p.author_id]} />
                 </div>
-              );
-            }
-            return (
-              <CircleCard
-                key={card.id}
-                circle={card.payload}
-                isMember={!!memberMap[card.payload.id]}
-                onJoin={(e) => { e.stopPropagation(); joinCircle(card.payload.id); }}
-              />
-            );
-          })}
-        </div>
-      )}
+              ))}
+            </HorizontalCarousel>
+          </div>
+        )}
+
+        {showHashtags && (
+          <div ref={el => { sectionRefs.current.hashtags = el; }} style={{ marginBottom: 24 }}>
+            <div className="flex items-center" style={{ marginBottom: 10 }}>
+              <div style={{ width: 3, height: 18, borderRadius: 2, background: "#E8733A", marginRight: 8, flexShrink: 0 }} />
+              <h2 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)", flex: 1, margin: 0 }}>Trending hashtags</h2>
+              <span style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)", marginLeft: 8 }}>{exploreData!.hashtags.length}</span>
+            </div>
+            <div className="flex overflow-x-auto" style={{ gap: 8, paddingBottom: 4, scrollbarWidth: "none" }}>
+              {exploreData!.hashtags.map(h => (
+                <TopicPill
+                  key={h.tag}
+                  tag={h.tag}
+                  count={h.count}
+                  onClick={() => navigate(`/app/feed?hashtag=${encodeURIComponent(h.tag)}`)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Empty state */}
-      {!isLoading && rankedCards.length === 0 && (
+      {!isLoading && !anyContent && (
         <div style={{ textAlign: "center", padding: "64px 0" }}>
           <Search style={{ width: 48, height: 48, margin: "0 auto 12px", color: "var(--text-muted)" }} />
           <p style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)", marginBottom: 8 }}>Nothing to show yet</p>
           <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>Add interests or grow your network to see more.</p>
         </div>
       )}
-
-      {/* Edit interests bottom sheet */}
-      <BottomSheet
-        open={editOpen}
-        onClose={() => setEditOpen(false)}
-        title="Your interests"
-        description="These shape what shows up in Explore."
-        footer={
-          <>
-            <button
-              type="button"
-              onClick={() => setEditOpen(false)}
-              className="cursor-pointer"
-              style={{
-                flex: 1, height: 44, borderRadius: 10, border: "1px solid var(--border-glass)",
-                background: "transparent", color: "var(--text-primary)", fontWeight: 600, fontSize: 14,
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={saveEdit}
-              className="cursor-pointer"
-              style={{
-                flex: 1, height: 44, borderRadius: 10, border: "none",
-                background: "linear-gradient(135deg, #E8733A, #FF6B9D)",
-                color: "#fff", fontWeight: 600, fontSize: 14,
-              }}
-            >
-              Save
-            </button>
-          </>
-        }
-      >
-        <div className="flex flex-wrap" style={{ gap: 8 }}>
-          {editorOptions.map(t => {
-            const isOn = editDraft.has(t);
-            return (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setEditDraft(prev => {
-                  const next = new Set(prev);
-                  if (next.has(t)) next.delete(t); else next.add(t);
-                  return next;
-                })}
-                className="cursor-pointer flex items-center"
-                style={{
-                  gap: 4, padding: "0 12px", height: 32, borderRadius: 10,
-                  fontSize: 13, fontWeight: isOn ? 600 : 500, border: "none",
-                  ...(isOn
-                    ? { background: "rgba(232,115,58,0.12)", color: "#E8733A" }
-                    : { background: "var(--bg-card)", border: "1px solid var(--border-glass)", color: "var(--text-primary)" }
-                  ),
-                }}
-              >
-                {isOn && <Check style={{ width: 12, height: 12 }} />}
-                {t}
-              </button>
-            );
-          })}
-        </div>
-      </BottomSheet>
     </main>
   );
 };
