@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
+import { ensurePublishedKey } from "@/lib/messageEncryption";
 
 export interface UserProfile {
   id: string;
@@ -24,6 +25,8 @@ export interface UserProfile {
   languages: string[] | null;
   department: string | null;
   is_verified: boolean | null;
+  public_key: string | null;
+  key_created_at: string | null;
   role_metadata: Record<string, any> | null;
   about_qa: Record<string, any> | null;
   verification_badge_text: string | null;
