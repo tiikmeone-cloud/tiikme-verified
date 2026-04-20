@@ -117,7 +117,7 @@ const SignIn = () => {
         </h1>
         <p style={{ fontSize: 13, color: "rgba(255,255,255,0.55)", marginBottom: 24 }}>
           New here?{" "}
-          <Link to="/signup" style={{ color: "rgba(232,115,58,0.90)", cursor: "pointer" }}
+          <Link to={safeRedirect ? `/signup?redirect=${encodeURIComponent(safeRedirect)}` : "/signup"} style={{ color: "rgba(232,115,58,0.90)", cursor: "pointer" }}
             onMouseEnter={e => (e.currentTarget.style.textDecoration = "underline")}
             onMouseLeave={e => (e.currentTarget.style.textDecoration = "none")}>
             Create your profile
