@@ -322,7 +322,7 @@ const AboutSection = ({ about, isOwnProfile, userId }: { about: string; isOwnPro
   const showFull = expanded || !needsTruncate;
 
   return (
-    <div className="glass-card" style={{ padding: 16, borderRadius: 16, marginTop: 12 }}>
+    <div className="glass-card p-3 md:p-4 mt-2 md:mt-3" style={{ borderRadius: 16 }}>
       <div className="flex items-center" style={{ gap: 8 }}>
         <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", flex: 1 }}>About</span>
         {isOwnProfile && !editing && (
