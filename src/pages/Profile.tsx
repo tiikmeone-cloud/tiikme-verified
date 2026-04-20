@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { detectPlatform } from "@/lib/platformDetect";
 import GlassModal, { glassInputDarkStyle as gInputStyle, glassSelectDarkStyle as gSelectStyle, glassTextareaDarkStyle as gTextareaStyle, labelStyle } from "@/components/ui/GlassModal";
+import ActivityScoreCard from "@/components/profile/ActivityScoreCard";
+import { shouldShowPublicScore } from "@/lib/activityTiers";
 import GetTiikedModal from "@/components/profile/GetTiikedModal";
 import { ExperienceSection, EducationSection, ProjectsSection, AchievementsSection, SkillsSection, PostsSection, RolesSection } from "@/components/profile/ProfileSections";
 import { Button } from "@/components/ui/button";
@@ -1057,6 +1059,21 @@ const Profile = () => {
                 )}
               </div>
             </div>
+
+            {/* Activity Score Card — right side on desktop, full-width below on mobile */}
+            {(() => {
+              const score = (profileData as any).activity_score ?? 0;
+              const visible = shouldShowPublicScore(
+                { id: profileData.id, activity_score: score },
+                authProfile ? { id: authProfile.id } : undefined,
+              );
+              if (!visible) return null;
+              return (
+                <div className="profile-score-wrap shrink-0" style={{ alignSelf: "flex-start" }}>
+                  <ActivityScoreCard score={score} isOwn={isOwnProfile} />
+                </div>
+              );
+            })()}
           </div>
             );
           })()}
