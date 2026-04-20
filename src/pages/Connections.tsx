@@ -13,6 +13,7 @@ import PrimaryTabs from "@/components/filters/PrimaryTabs";
 import FilterBar, { useScrollPastThreshold } from "@/components/filters/FilterBar";
 import BottomSheet from "@/components/ui/BottomSheet";
 import { useFilterFlag, useFilterParam } from "@/lib/useFilterParam";
+import { getDisplayFlags, safeDisplayName } from "@/utils/displayProfile";
 
 const ROLE_COLORS: Record<string, string> = {
   student: "#4F46E5", professional: "#0369A1", government: "#166534",
@@ -24,6 +25,10 @@ interface ProfileLite {
   id: string; full_name: string | null; avatar_url: string | null; role: string | null;
   role_subtype?: string | null; institution_name: string | null; is_verified?: boolean | null;
   last_active?: string | null; updated_at?: string | null;
+  display_preference?: string | null;
+  currently_working_at?: string | null;
+  designation?: string | null;
+  headline?: string | null;
 }
 interface StrandRow {
   id: string; requester_id: string; receiver_id: string; status: string; created_at: string;
