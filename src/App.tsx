@@ -5,6 +5,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { useIdleLogout } from "@/lib/idleLogout";
 import { ProtectedRoute, PublicOnlyRoute } from "@/components/RouteGuard";
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
 import PageLoader from "@/components/PageLoader";
