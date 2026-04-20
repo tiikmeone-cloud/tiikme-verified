@@ -60,8 +60,8 @@ function ToastContainer() {
 
   return (
     <div style={{
-      position: "fixed", bottom: 24, right: 24, zIndex: 9999,
-      display: "flex", flexDirection: "column-reverse", gap: 10,
+      position: "fixed", top: 24, right: 24, zIndex: 9999,
+      display: "flex", flexDirection: "column", gap: 10,
       pointerEvents: "none",
     }}>
       {toasts.map(t => (
@@ -105,12 +105,12 @@ if (typeof document !== "undefined" && !document.getElementById("tiik-toast-styl
   style.id = "tiik-toast-styles";
   style.textContent = `
     @keyframes tiikToastIn {
-      from { opacity: 0; transform: translateX(100%); }
-      to { opacity: 1; transform: translateX(0); }
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     @keyframes tiikToastOut {
-      from { opacity: 1; transform: translateX(0); }
-      to { opacity: 0; transform: translateX(100%); }
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-20px); }
     }
   `;
   document.head.appendChild(style);
