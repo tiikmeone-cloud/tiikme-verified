@@ -29,6 +29,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import MentionText from "@/components/feed/MentionText";
+import EditPostModal from "@/components/feed/EditPostModal";
+import DeletePostDialog from "@/components/feed/DeletePostDialog";
 import { sendNotification } from "@/lib/notify";
 import VerificationRequest from "@/components/profile/VerificationRequest";
 import VerificationStatusCard from "@/components/verification/VerificationStatusCard";
@@ -455,6 +457,8 @@ const Profile = () => {
   const [dataLoading, setDataLoading] = useState(true);
   const [showGetTiiked, setShowGetTiiked] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [editingPost, setEditingPost] = useState<any | null>(null);
+  const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
 
   const [modalSection, setModalSection] = useState<string | null>(null);
   const [showAddLink, setShowAddLink] = useState(false);
@@ -1392,7 +1396,14 @@ const Profile = () => {
             <ProjectsSection items={projects} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("project")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
             <AchievementsSection items={achievements} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("achievement")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} />
             <SkillsSection skills={skills} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("skills")} onRemoveSkill={removeSkill} />
-            <PostsSection posts={userPosts} stats={stats} />
+            <PostsSection
+              posts={userPosts}
+              stats={stats}
+              isOwnProfile={isOwnProfile}
+              currentUserId={user?.id ?? null}
+              onEdit={(p) => setEditingPost(p)}
+              onDelete={(id) => setDeletingPostId(id)}
+            />
           </div>
         </div>
       </div>
@@ -1511,6 +1522,27 @@ const Profile = () => {
       </GlassModal>
 
       {user && <GetTiikedModal open={showGetTiiked} onClose={() => setShowGetTiiked(false)} userId={user.id} userRole={role} onVerified={loadProfile} />}
+
+      {editingPost && (
+        <EditPostModal
+          post={editingPost}
+          onClose={() => setEditingPost(null)}
+          onSaved={(updated) => {
+            setUserPosts(prev => prev.map(p => p.id === updated.id ? { ...p, ...updated } : p));
+          }}
+        />
+      )}
+      {deletingPostId && (
+        <DeletePostDialog
+          postId={deletingPostId}
+          onClose={() => setDeletingPostId(null)}
+          onDeleted={(id) => {
+            setUserPosts(prev => prev.filter(p => p.id !== id));
+            setStats(prev => ({ ...prev, posts: Math.max(0, prev.posts - 1) }));
+            setDeletingPostId(null);
+          }}
+        />
+      )}
     </div>
   );
 };
