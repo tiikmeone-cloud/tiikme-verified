@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Plus, Search, TrendingUp, Clock, Award, MessageCircle, MoreHorizontal,
   Pencil, Trash2, Loader2, ArrowLeft, ChevronRight, X as XIcon,
@@ -24,35 +25,49 @@ function CirclesDiscovery() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const [search, setSearch] = useState("");
-  const [joined, setJoined] = useState<string[]>([]);
-  const [allCircles, setAllCircles] = useState<CircleRecord[]>([]);
-  const [loading, setLoading] = useState(true);
   const [seeAllSection, setSeeAllSection] = useState<null | { title: string; items: CircleRecord[] }>(null);
+  const qc = useQueryClient();
 
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const [circlesRes, memRes] = await Promise.all([
-        supabase.from("circles").select("*").eq("visibility", "public")
-          .order("active_7d", { ascending: false })
-          .order("member_count", { ascending: false })
-          .limit(200),
-        user ? supabase.from("circle_members").select("circle_id").eq("user_id", user.id) : Promise.resolve({ data: [] as any[] }),
-      ]);
-      setAllCircles(circlesRes.data || []);
-      setJoined((memRes.data || []).map((m: any) => m.circle_id));
-      setLoading(false);
-    })();
-  }, [user]);
+  // Cached circles (10 min stale) — instant on revisit
+  const { data: allCircles = [], isLoading: loadingCircles } = useQuery({
+    queryKey: ["circles", "all-public"],
+    queryFn: async () => {
+      const { data } = await supabase.from("circles").select("*").eq("visibility", "public")
+        .order("active_7d", { ascending: false })
+        .order("member_count", { ascending: false })
+        .limit(200);
+      return (data || []) as CircleRecord[];
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+
+  // Cached membership
+  const { data: joined = [] as string[] } = useQuery({
+    queryKey: ["circles", "joined", user?.id],
+    queryFn: async () => {
+      if (!user) return [] as string[];
+      const { data } = await supabase.from("circle_members").select("circle_id").eq("user_id", user.id);
+      return (data || []).map((m: any) => m.circle_id);
+    },
+    enabled: !!user,
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const loading = loadingCircles;
 
   const join = async (circleId: string) => {
     if (!user) { toast.error("Sign in to join"); return; }
-    setJoined(prev => [...prev, circleId]);
-    setAllCircles(prev => prev.map(c => c.id === circleId ? { ...c, member_count: (c.member_count || 0) + 1 } : c));
+    // Optimistic cache updates
+    qc.setQueryData(["circles", "joined", user.id], (prev: string[] = []) => [...prev, circleId]);
+    qc.setQueryData(["circles", "all-public"], (prev: CircleRecord[] = []) =>
+      prev.map(c => c.id === circleId ? { ...c, member_count: (c.member_count || 0) + 1 } : c)
+    );
     const { error } = await supabase.from("circle_members").insert({ circle_id: circleId, user_id: user.id });
     if (error) {
-      setJoined(prev => prev.filter(id => id !== circleId));
-      setAllCircles(prev => prev.map(c => c.id === circleId ? { ...c, member_count: Math.max(0, (c.member_count || 1) - 1) } : c));
+      qc.setQueryData(["circles", "joined", user.id], (prev: string[] = []) => prev.filter(id => id !== circleId));
+      qc.setQueryData(["circles", "all-public"], (prev: CircleRecord[] = []) =>
+        prev.map(c => c.id === circleId ? { ...c, member_count: Math.max(0, (c.member_count || 1) - 1) } : c)
+      );
       toast.error(error.message);
       return;
     }
