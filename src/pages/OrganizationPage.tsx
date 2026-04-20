@@ -542,8 +542,8 @@ export default function OrganizationPage() {
 }
 
 /* ── Reusable Section Box (matches user profile style) ── */
-const SectionBox = ({ title, icon: Icon, iconColor, borderColor, count, children }: {
-  title: string; icon: any; iconColor: string; borderColor: string; count?: number; children: React.ReactNode;
+const SectionBox = ({ title, icon: Icon, iconColor, borderColor, count, action, children }: {
+  title: string; icon: any; iconColor: string; borderColor: string; count?: number; action?: React.ReactNode; children: React.ReactNode;
 }) => (
   <div className="glass-card" style={{
     padding: 16, borderRadius: 16,
@@ -557,6 +557,7 @@ const SectionBox = ({ title, icon: Icon, iconColor, borderColor, count, children
       <Icon style={{ width: 16, height: 16, color: iconColor }} />
       <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", flex: 1 }}>{title}</span>
       {count !== undefined && <span style={{ fontSize: 12, fontWeight: 500, color: "#9CA3C0" }}>{count}</span>}
+      {action}
     </div>
     {children}
   </div>
