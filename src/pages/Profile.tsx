@@ -1282,7 +1282,7 @@ const Profile = () => {
               { label: "Circles", icon: Layers, path: "/app/circles" },
               { label: "Connections", icon: Link2, path: "/app/connections" },
               { label: "Settings", icon: Settings, path: "/app/settings" },
-              { label: "Help & Support", icon: LifeBuoy, path: "/grievance" },
+              { label: "Settings", icon: Settings, path: "/app/settings" },
             ].map((item, i, arr) => (
               <Link
                 key={item.path}
