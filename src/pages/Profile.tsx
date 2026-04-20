@@ -3,6 +3,7 @@ import AvatarSquare from "@/components/ui/AvatarSquare";
 import { fixStorageUrl } from "@/components/ui/AvatarSquare";
 import { cleanUsername } from "@/lib/cleanUsername";
 import { SUBTYPE_OPTIONS, hasSubtypes } from "@/lib/roleSubtypes";
+import { getDisplayFlags, safeDisplayName } from "@/utils/displayProfile";
 import { PageSEO, profileSEO } from "@/hooks/usePageSEO";
 import {
   MapPin, Copy, Shield, X, MessageCircle, CheckCircle, Building2, Link2, Plus,
@@ -482,7 +483,7 @@ const Profile = () => {
     if (!targetUserId) { setDataLoading(false); return; }
     setDataLoading(true);
     const [profileRes, itemsRes, strandCountRes, postsRes, achvsRes, certsRes, connAvatarsRes] = await Promise.allSettled([
-      isOwnProfile ? Promise.resolve({ data: authProfile }) : supabase.from("profiles").select("id, full_name, username, role, role_subtype, headline, bio, avatar_url, institution_name, location_city, location_state, activity_score, is_public, custom_links, open_to_work, otw_visibility, designation, sector, languages, department, is_verified, role_metadata, about_qa, verification_badge_text, verification_type, created_at, account_type, org_id, skills").eq("id", targetUserId).maybeSingle(),
+      isOwnProfile ? Promise.resolve({ data: authProfile }) : supabase.from("profiles").select("id, full_name, username, role, role_subtype, headline, bio, avatar_url, institution_name, location_city, location_state, activity_score, is_public, custom_links, open_to_work, otw_visibility, designation, sector, languages, department, is_verified, role_metadata, about_qa, verification_badge_text, verification_type, created_at, account_type, org_id, skills, display_preference, profession_type, currently_working_at").eq("id", targetUserId).maybeSingle(),
       supabase.from("work_items").select("id, title, job_title, description, company_name, institution_name, item_type, employment_type, work_location, start_date, end_date, start_month, start_year, end_month, end_year, is_current, status, visibility, verification_status, verified_by_user, verified_at, is_tiik_approved, created_at, owner_id").eq("owner_id", targetUserId).order("is_current", { ascending: false }).order("created_at", { ascending: false }),
       supabase.from("strands").select("id", { count: "exact", head: true }).or(`requester_id.eq.${targetUserId},receiver_id.eq.${targetUserId}`).eq("status", "accepted"),
       supabase.from("posts").select("id, content, created_at, image_urls, repost_count, post_reactions(count), post_comments(count)").eq("author_id", targetUserId).order("created_at", { ascending: false }).limit(5),
@@ -561,7 +562,8 @@ const Profile = () => {
   const isConnectionsOnly = !isOwnProfile && profileVisibility === "connections_only" && !isConnected;
 
   if (isPrivateView || isConnectionsOnly) {
-    const limitedName = profileData.full_name || "User";
+    const limitedFlags = getDisplayFlags(profileData);
+    const limitedName = limitedFlags.showName ? (profileData.full_name || "User") : "Tiikme member";
     const limitedInitials = limitedName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
     return (
       <div className="min-h-screen" style={{ padding: 16, maxWidth: 960, margin: "0 auto" }}>
@@ -580,7 +582,11 @@ const Profile = () => {
     );
   }
 
-  const displayName = profileData.full_name || authDisplayName || "";
+  const dpFlags = isOwnProfile
+    ? { showName: true, showRole: true, showCompany: true }
+    : getDisplayFlags(profileData);
+  const realName = profileData.full_name || authDisplayName || "";
+  const displayName = dpFlags.showName ? realName : safeDisplayName(profileData, "Tiikme member");
   const username = cleanUsername(profileData.username || "");
   const headline = profileData.headline || "";
   const city = showLocation || isOwnProfile ? (profileData.location_city || "") : "";
@@ -991,14 +997,16 @@ const Profile = () => {
               </div>
 
               {/* ROW 1b: Role · Subtype */}
-              <p style={{ fontSize: 12, fontWeight: 600, color: roleColor }}>
-                {profileData.role_subtype
-                  ? `${roleLabel} · ${profileData.role_subtype}`
-                  : roleLabel}
-              </p>
+              {dpFlags.showRole && (
+                <p style={{ fontSize: 12, fontWeight: 600, color: roleColor }}>
+                  {profileData.role_subtype
+                    ? `${roleLabel} · ${profileData.role_subtype}`
+                    : roleLabel}
+                </p>
+              )}
 
               {/* ROW 1c: Role-metadata-derived inline summary (BITS Pilani · 3rd Year, etc.) */}
-              {(() => {
+              {dpFlags.showCompany && (() => {
                 const m = (profileData as any).role_metadata as Record<string, any> | null;
                 if (!m || typeof m !== "object") return null;
                 const r = profileData.role;
@@ -1007,7 +1015,14 @@ const Profile = () => {
                 else if (r === "professional") parts = [m.company, m.years_experience ? `${m.years_experience} yrs` : ""].filter(Boolean);
                 else if (r === "doctor") parts = [m.hospital, m.specialty === "Other" ? m.specialty_other : m.specialty].filter(Boolean);
                 else if (r === "faculty") parts = [m.institution, m.department].filter(Boolean);
-                if (parts.length === 0) return null;
+                if (parts.length === 0) {
+                  // Fallback to currently_working_at / institution_name
+                  const fallback = (profileData as any).currently_working_at || profileData.institution_name;
+                  if (!fallback) return null;
+                  return (
+                    <p style={{ fontSize: 12, fontWeight: 500, color: "#6B7094" }}>{fallback}</p>
+                  );
+                }
                 return (
                   <p style={{ fontSize: 12, fontWeight: 500, color: "#6B7094" }}>
                     {parts.join(" · ")}
@@ -1016,7 +1031,7 @@ const Profile = () => {
               })()}
 
               {/* ROW 2: Current position / headline */}
-              {(currentExp || headline) && (
+              {dpFlags.showRole && (currentExp || headline) && (
               <p style={{ fontSize: 13, fontWeight: 400, color: "#6B7094" }}>
                 {currentExp ? `${currentExp.job_title || currentExp.title} at ${currentExp.company_name || ""}` : headline}
               </p>

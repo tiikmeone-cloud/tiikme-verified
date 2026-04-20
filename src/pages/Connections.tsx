@@ -13,6 +13,7 @@ import PrimaryTabs from "@/components/filters/PrimaryTabs";
 import FilterBar, { useScrollPastThreshold } from "@/components/filters/FilterBar";
 import BottomSheet from "@/components/ui/BottomSheet";
 import { useFilterFlag, useFilterParam } from "@/lib/useFilterParam";
+import { getDisplayFlags, safeDisplayName } from "@/utils/displayProfile";
 
 const ROLE_COLORS: Record<string, string> = {
   student: "#4F46E5", professional: "#0369A1", government: "#166534",
@@ -24,6 +25,10 @@ interface ProfileLite {
   id: string; full_name: string | null; avatar_url: string | null; role: string | null;
   role_subtype?: string | null; institution_name: string | null; is_verified?: boolean | null;
   last_active?: string | null; updated_at?: string | null;
+  display_preference?: string | null;
+  currently_working_at?: string | null;
+  designation?: string | null;
+  headline?: string | null;
 }
 interface StrandRow {
   id: string; requester_id: string; receiver_id: string; status: string; created_at: string;
@@ -96,13 +101,13 @@ const Connections = () => {
     if (!user) return { connected: [], pendingIncoming: [], pendingSent: [], suggested: [] };
     const [acceptedRes, incomingRes, sentRes] = await Promise.allSettled([
       supabase.from("strands")
-        .select("id, requester_id, receiver_id, status, created_at, requester:profiles!strands_requester_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified, last_active, updated_at), receiver:profiles!strands_receiver_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified, last_active, updated_at)")
+        .select("id, requester_id, receiver_id, status, created_at, requester:profiles!strands_requester_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified, last_active, updated_at, display_preference, currently_working_at, designation, headline), receiver:profiles!strands_receiver_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified, last_active, updated_at, display_preference, currently_working_at, designation, headline)")
         .or(`requester_id.eq.${user.id},receiver_id.eq.${user.id}`).eq("status", "accepted"),
       supabase.from("strands")
-        .select("id, requester_id, receiver_id, status, created_at, requester:profiles!strands_requester_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified)")
+        .select("id, requester_id, receiver_id, status, created_at, requester:profiles!strands_requester_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified, display_preference, currently_working_at, designation, headline)")
         .eq("receiver_id", user.id).eq("status", "pending"),
       supabase.from("strands")
-        .select("id, requester_id, receiver_id, status, created_at, receiver:profiles!strands_receiver_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified)")
+        .select("id, requester_id, receiver_id, status, created_at, receiver:profiles!strands_receiver_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified, display_preference, currently_working_at, designation, headline)")
         .eq("requester_id", user.id).eq("status", "pending"),
     ]);
     const accepted = acceptedRes.status === "fulfilled" ? (acceptedRes.value as any).data || [] : [];
@@ -116,7 +121,7 @@ const Connections = () => {
     connectedIds.add(user.id);
 
     const { data: suggestedData } = await supabase.from("profiles")
-      .select("id, full_name, avatar_url, role, institution_name, location_city")
+      .select("id, full_name, avatar_url, role, institution_name, location_city, display_preference, role_subtype, currently_working_at, designation, headline")
       .eq("is_public", true)
       .not("id", "in", `(${Array.from(connectedIds).join(",")})`)
       .order("activity_score", { ascending: false }).limit(12);
@@ -405,22 +410,27 @@ const Connections = () => {
               {filteredConnected.map(s => {
                 const other = getOther(s);
                 const lastActiveSrc = other?.last_active || other?.updated_at;
+                const flags = getDisplayFlags(other);
+                const cardName = flags.showName ? (other?.full_name || "User") : "Tiikme member";
                 const subtype = other?.role_subtype;
+                const company = other?.currently_working_at || other?.institution_name;
                 return (
                   <div key={s.id} className="glass-card flex items-center gap-3 cursor-pointer transition-all duration-200 hover:shadow-sm"
                     style={{ padding: 12, borderRadius: 12, minHeight: 72 }}
                     onClick={() => navigate(`/app/profile/${other?.id}`)}>
-                    <AvatarSquare src={other?.avatar_url} name={other?.full_name || "U"} size={44} bgColor={ROLE_COLORS[other?.role || ""] || "#6B7280"} />
+                    <AvatarSquare src={other?.avatar_url} name={cardName} size={44} bgColor={ROLE_COLORS[other?.role || ""] || "#6B7280"} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{other?.full_name || "User"}</p>
+                        <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{cardName}</p>
                         {other?.is_verified && <VerifiedBadge size={14} />}
                       </div>
-                      <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>
-                        {roleLabel(other?.role || "")}
-                        {subtype && <span style={{ opacity: 0.75 }}> · {subtype}</span>}
-                        {other?.institution_name && <span> · {other.institution_name}</span>}
-                      </p>
+                      {flags.showRole && (
+                        <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>
+                          {roleLabel(other?.role || "")}
+                          {subtype && <span style={{ opacity: 0.75 }}> · {subtype}</span>}
+                          {flags.showCompany && company && <span> · {company}</span>}
+                        </p>
+                      )}
                       {lastActiveSrc && (
                         <p className="truncate" style={{ fontSize: 11, color: "#9CA3C0", marginTop: 2 }}>
                           Last active {getTimeAgo(lastActiveSrc)}
@@ -515,21 +525,28 @@ const Connections = () => {
             <div className="mt-6">
               <h2 style={{ fontSize: 14, fontWeight: 700, color: "#1A1A2E", marginBottom: 10 }}>People you may know</h2>
               <div className="space-y-2">
-                {suggested.slice(0, 4).map((person: any) => (
-                  <div key={person.id} className="glass-card flex items-center gap-3 cursor-pointer transition-all hover:shadow-sm"
-                    style={{ padding: 12, borderRadius: 12 }}
-                    onClick={() => navigate(`/app/profile/${person.id}`)}>
-                    <AvatarSquare src={person.avatar_url} name={person.full_name || "U"} size={44} bgColor={ROLE_COLORS[person.role || ""] || "#6B7280"} />
-                    <div className="flex-1 min-w-0">
-                      <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{person.full_name || "User"}</p>
-                      <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>
-                        {roleLabel(person.role || "")}
-                        {person.location_city && ` · ${person.location_city}`}
-                        {person.institution_name && ` · ${person.institution_name}`}
-                      </p>
+                {suggested.slice(0, 4).map((person: any) => {
+                  const flags = getDisplayFlags(person);
+                  const cardName = flags.showName ? (person.full_name || "User") : "Tiikme member";
+                  const company = person.currently_working_at || person.institution_name;
+                  return (
+                    <div key={person.id} className="glass-card flex items-center gap-3 cursor-pointer transition-all hover:shadow-sm"
+                      style={{ padding: 12, borderRadius: 12 }}
+                      onClick={() => navigate(`/app/profile/${person.id}`)}>
+                      <AvatarSquare src={person.avatar_url} name={cardName} size={44} bgColor={ROLE_COLORS[person.role || ""] || "#6B7280"} />
+                      <div className="flex-1 min-w-0">
+                        <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{cardName}</p>
+                        {flags.showRole && (
+                          <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>
+                            {roleLabel(person.role || "")}
+                            {person.location_city && ` · ${person.location_city}`}
+                            {flags.showCompany && company && ` · ${company}`}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -559,34 +576,41 @@ const Connections = () => {
               </div>
             ) : (
               <div className="space-y-2">
-                {pendingIncoming.map(s => (
-                  <div key={s.id} className="glass-card flex items-center gap-3" style={{ padding: 12, borderRadius: 12, minHeight: 72 }}>
-                    <AvatarSquare src={s.requester?.avatar_url} name={s.requester?.full_name || "U"} size={44} bgColor={ROLE_COLORS[s.requester?.role || ""] || "#6B7280"} />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{s.requester?.full_name || "User"}</p>
-                        {s.requester?.is_verified && <VerifiedBadge size={14} />}
+                {pendingIncoming.map(s => {
+                  const flags = getDisplayFlags(s.requester);
+                  const cardName = flags.showName ? (s.requester?.full_name || "User") : "Tiikme member";
+                  const company = s.requester?.currently_working_at || s.requester?.institution_name;
+                  return (
+                    <div key={s.id} className="glass-card flex items-center gap-3" style={{ padding: 12, borderRadius: 12, minHeight: 72 }}>
+                      <AvatarSquare src={s.requester?.avatar_url} name={cardName} size={44} bgColor={ROLE_COLORS[s.requester?.role || ""] || "#6B7280"} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{cardName}</p>
+                          {s.requester?.is_verified && <VerifiedBadge size={14} />}
+                        </div>
+                        {flags.showRole && (
+                          <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>
+                            {roleLabel(s.requester?.role || "")}
+                            {s.requester?.role_subtype && <span style={{ opacity: 0.75 }}> · {s.requester.role_subtype}</span>}
+                            {flags.showCompany && company && <span> · {company}</span>}
+                          </p>
+                        )}
+                        <p style={{ fontSize: 11, color: "#9CA3C0", marginTop: 2 }}>{getTimeAgo(s.created_at)}</p>
                       </div>
-                      <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>
-                        {roleLabel(s.requester?.role || "")}
-                        {s.requester?.role_subtype && <span style={{ opacity: 0.75 }}> · {s.requester.role_subtype}</span>}
-                        {s.requester?.institution_name && <span> · {s.requester.institution_name}</span>}
-                      </p>
-                      <p style={{ fontSize: 11, color: "#9CA3C0", marginTop: 2 }}>{getTimeAgo(s.created_at)}</p>
+                      <div className="flex gap-1.5 shrink-0">
+                        <button type="button" onClick={() => handleAccept(s)} className="cursor-pointer transition-all"
+                          style={{ height: 34, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 700, ...connectionButtonStyle("pending_received") }}>
+                          Accept
+                        </button>
+                        <button type="button" onClick={() => handleDecline(s)} className="cursor-pointer transition-all"
+                          style={{ height: 34, padding: "0 12px", borderRadius: 8, fontSize: 12, fontWeight: 700,
+                            background: "transparent", color: "#EF4444", border: "1px solid rgba(239,68,68,0.25)" }}>
+                          Decline
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex gap-1.5 shrink-0">
-                      <button type="button" onClick={() => handleAccept(s)} className="cursor-pointer transition-all"
-                        style={{ height: 34, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 700, ...connectionButtonStyle("pending_received") }}>
-                        Accept
-                      </button>
-                      <button type="button" onClick={() => handleDecline(s)} className="cursor-pointer transition-all"
-                        style={{ height: 34, padding: "0 12px", borderRadius: 8, fontSize: 12, fontWeight: 700,
-                          background: "transparent", color: "#EF4444", border: "1px solid rgba(239,68,68,0.25)" }}>
-                        Decline
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </section>
@@ -605,27 +629,34 @@ const Connections = () => {
               </div>
             ) : (
               <div className="space-y-2">
-                {pendingSent.map(s => (
-                  <div key={s.id} className="glass-card flex items-center gap-3" style={{ padding: 12, borderRadius: 12, minHeight: 72 }}>
-                    <AvatarSquare src={s.receiver?.avatar_url} name={s.receiver?.full_name || "U"} size={44} bgColor={ROLE_COLORS[s.receiver?.role || ""] || "#6B7280"} />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{s.receiver?.full_name || "User"}</p>
-                        {s.receiver?.is_verified && <VerifiedBadge size={14} />}
+                {pendingSent.map(s => {
+                  const flags = getDisplayFlags(s.receiver);
+                  const cardName = flags.showName ? (s.receiver?.full_name || "User") : "Tiikme member";
+                  const company = s.receiver?.currently_working_at || s.receiver?.institution_name;
+                  return (
+                    <div key={s.id} className="glass-card flex items-center gap-3" style={{ padding: 12, borderRadius: 12, minHeight: 72 }}>
+                      <AvatarSquare src={s.receiver?.avatar_url} name={cardName} size={44} bgColor={ROLE_COLORS[s.receiver?.role || ""] || "#6B7280"} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{cardName}</p>
+                          {s.receiver?.is_verified && <VerifiedBadge size={14} />}
+                        </div>
+                        {flags.showRole && (
+                          <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>
+                            {roleLabel(s.receiver?.role || "")}
+                            {s.receiver?.role_subtype && <span style={{ opacity: 0.75 }}> · {s.receiver.role_subtype}</span>}
+                            {flags.showCompany && company && <span> · {company}</span>}
+                          </p>
+                        )}
+                        <p style={{ fontSize: 11, color: "#9CA3C0", marginTop: 2 }}>Sent {getTimeAgo(s.created_at)}</p>
                       </div>
-                      <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>
-                        {roleLabel(s.receiver?.role || "")}
-                        {s.receiver?.role_subtype && <span style={{ opacity: 0.75 }}> · {s.receiver.role_subtype}</span>}
-                        {s.receiver?.institution_name && <span> · {s.receiver.institution_name}</span>}
-                      </p>
-                      <p style={{ fontSize: 11, color: "#9CA3C0", marginTop: 2 }}>Sent {getTimeAgo(s.created_at)}</p>
+                      <button type="button" onClick={() => handleWithdraw(s)} className="cursor-pointer transition-all shrink-0"
+                        style={{ height: 34, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 600, ...connectionButtonStyle("pending_sent") }}>
+                        Withdraw
+                      </button>
                     </div>
-                    <button type="button" onClick={() => handleWithdraw(s)} className="cursor-pointer transition-all shrink-0"
-                      style={{ height: 34, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 600, ...connectionButtonStyle("pending_sent") }}>
-                      Withdraw
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </section>
