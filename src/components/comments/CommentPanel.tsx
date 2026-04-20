@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import MentionText from "@/components/feed/MentionText";
 import { sendNotification } from "@/lib/notify";
+import { safeDisplayName } from "@/utils/displayProfile";
 
 /**
  * Shared scrollable comment panel for both feed posts (post_comments)
@@ -21,6 +22,7 @@ interface Author {
   full_name: string | null;
   avatar_url: string | null;
   role: string | null;
+  display_preference?: string | null;
 }
 
 interface CommentRow {
@@ -61,7 +63,7 @@ async function attachAuthors(rows: CommentRow[]): Promise<CommentRow[]> {
   if (!rows.length) return rows;
   const ids = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
   if (!ids.length) return rows;
-  const { data } = await supabase.from("profiles").select("id, full_name, avatar_url, role").in("id", ids);
+  const { data } = await supabase.from("profiles").select("id, full_name, avatar_url, role, display_preference").in("id", ids);
   const map: Record<string, Author> = {};
   for (const p of data || []) map[p.id] = p as Author;
   return rows.map(r => ({ ...r, author: map[r.user_id] || null }));
