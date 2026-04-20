@@ -67,7 +67,7 @@ export default function Privacy() {
         ogImage="https://tiikme.com/og-image.png"
         twitterCard="summary_large_image"
         canonical="https://tiikme.com/privacy"
-      >
+      />
       <Callout>
         Your privacy is not a feature. It is a foundation. This policy explains exactly what data we collect, why we collect it, what we will never do with it, and how you control it. We have written it in plain English because you deserve to understand it — not just agree to it.
       </Callout>

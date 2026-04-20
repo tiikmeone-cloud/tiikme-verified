@@ -51,7 +51,7 @@ export default function Terms() {
         ogImage="https://tiikme.com/og-image.png"
         twitterCard="summary_large_image"
         canonical="https://tiikme.com/terms"
-      >
+      />
       <Callout>
         These Terms of Service ("Terms") govern your use of Tiikme, a professional social networking platform operated from India. By signing up or continuing to use Tiikme, you enter into a binding legal agreement with us under the Indian Contract Act, 1872. Please read every section carefully. If you disagree with any part, do not use the Platform.
       </Callout>
