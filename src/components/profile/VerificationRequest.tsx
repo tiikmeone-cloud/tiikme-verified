@@ -101,35 +101,63 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
     })();
   }, [selectedOrg, item.department]);
 
-  const handleSubmit = async (verifierId: string, verifierName: string) => {
-    if (!user) return;
+  const handleSubmit = async (verifierId: string | null, verifierName: string) => {
+    // Always pull live auth user — RLS check uses auth.uid()
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    if (!authUser) { toast.error("Please log in"); return; }
     setSubmitting(true);
-    const { error } = await supabase.from("item_verification_requests").insert({
-      requester_id: user.id,
-      work_item_id: item.id,
-      verifier_id: verifierId,
+
+    const payload: any = {
+      requester_id: authUser.id,
+      item_type: item.item_type || itemType || "experience",
+      item_id: item.id,
+      submitted_id: item.id,                    // has DB default, set explicitly to be safe
       org_id: selectedOrg?.id || null,
-      message: message.trim() || null,
-    });
-    if (error) { toast.error(error.message); setSubmitting(false); return; }
+      entity_type: "work_item",
+      entity_id: item.id,
+      assigned_to: verifierId || null,          // null when org has no admin
+      requested_role: item.job_title || item.title || null,
+      role_category: item.domain || null,
+      context_note: message.trim() || null,
+      status: "pending",
+    };
 
-    // Send notification via helper (writes to notifications table)
-    const { sendNotification } = await import("@/lib/notify");
-    sendNotification({
-      userId: verifierId,
-      actorId: user.id,
-      type: "verification_request",
-      title: "Verification Request",
-      body: `${profile?.full_name || "Someone"} wants you to verify their ${itemType} at ${companyName}`,
-      actionUrl: `/app/profile/${user.id}`,
-      data: { item_id: item.id, item_type: itemType, org_id: selectedOrg?.id },
-    });
+    const { error } = await supabase.from("verification_requests").insert(payload);
 
+    if (error) {
+      console.error("[verify] error:", error);
+      toast.error("Could not submit verification. Please try again.");
+      setSubmitting(false);
+      return;
+    }
+
+    // Notify the assigned verifier (if any)
+    if (verifierId) {
+      try {
+        const { sendNotification } = await import("@/lib/notify");
+        sendNotification({
+          userId: verifierId,
+          actorId: authUser.id,
+          type: "verification_request",
+          title: "Verification Request",
+          body: `${profile?.full_name || "Someone"} wants you to verify their ${itemType} at ${companyName}`,
+          actionUrl: `/app/profile/${authUser.id}`,
+          data: { item_id: item.id, item_type: itemType, org_id: selectedOrg?.id },
+        });
+      } catch (e) { console.warn("notify failed", e); }
+    }
+
+    // Mark the item as pending (scoped to owner — RLS-safe)
     const table = itemType === "achievement" ? "achievements" : "work_items";
-    await supabase.from(table).update({ verification_status: "pending" } as any).eq("id", item.id);
+    const ownerColumn = itemType === "achievement" ? "user_id" : "owner_id";
+    await supabase.from(table).update({ verification_status: "pending" } as any)
+      .eq("id", item.id)
+      .eq(ownerColumn, authUser.id);
 
     onStatusChange(item.id, "pending");
-    toast.success("Verification request sent");
+    toast.success(verifierId
+      ? "Verification request sent"
+      : "Submitted — the Tiikme team will review it soon.");
     setStep("sent");
     setSubmitting(false);
   };
