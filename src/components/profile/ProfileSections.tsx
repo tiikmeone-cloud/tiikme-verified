@@ -3,7 +3,7 @@ import { fixStorageUrl } from "@/components/ui/AvatarSquare";
 import {
   Briefcase, GraduationCap, Rocket, Award, Code2, MessageCircle,
   MapPin, CheckCircle, Clock, Eye, EyeOff, Trash2, Plus, ExternalLink,
-  Star, X, Heart, Repeat2, Share2,
+  Star, X, Heart, Repeat2, Share2, MoreHorizontal, Pencil,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import VerificationRequest from "@/components/profile/VerificationRequest";
@@ -413,13 +413,22 @@ export const SkillsSection = ({ skills, isOwnProfile, onAdd, onRemoveSkill }: {
 };
 
 /* ═══ POSTS ═══ */
-export const PostsSection = ({ posts, stats }: { posts: any[]; stats: { posts: number } }) => {
+export const PostsSection = ({
+  posts, stats, isOwnProfile = false, currentUserId = null, onEdit, onDelete,
+}: {
+  posts: any[];
+  stats: { posts: number };
+  isOwnProfile?: boolean;
+  currentUserId?: string | null;
+  onEdit?: (post: any) => void;
+  onDelete?: (postId: string) => void;
+}) => {
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
   const getLikeCount = (p: any) => {
-    // Use aggregated count from post_reactions relation
     if (Array.isArray(p.post_reactions) && p.post_reactions.length > 0) {
       return p.post_reactions[0]?.count || 0;
     }
-    // Fallback to reactions object
     const r = p.reactions;
     if (!r || typeof r !== "object") return 0;
     return (r.useful || 0) + (r.inspiring || 0) + (r.insightful || 0);
@@ -438,35 +447,78 @@ export const PostsSection = ({ posts, stats }: { posts: any[]; stats: { posts: n
         <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "4px 0" }}>No posts yet</p>
       ) : (
         <>
-          {posts.slice(0, 3).map((p: any, idx: number) => (
-            <Link key={p.id} to={`/app/post/${p.id}`} className="block" style={{ padding: "10px 0", borderBottom: idx < Math.min(posts.length, 3) - 1 ? "1px solid var(--border-subtle)" : "none" }}>
-              <p style={{ fontSize: 13, fontWeight: 400, color: "var(--text-primary)", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: "18px" }}>{p.content}</p>
-              {/* Post images — same renderer as Feed */}
-              {p.image_urls && p.image_urls.length > 0 && (
-                <div style={{ marginTop: 8 }} onClick={e => e.preventDefault()}>
-                  <ImageGrid images={p.image_urls} />
-                </div>
-              )}
-              {/* Engagement row — matches Feed icons */}
-              <div className="flex items-center" style={{ gap: 16, marginTop: 8 }}>
-                <span className="flex items-center" style={{ gap: 4, fontSize: 12, color: "var(--text-muted)" }}>
-                  <Heart style={{ width: 13, height: 13 }} /> {getLikeCount(p)}
-                </span>
-                <span className="flex items-center" style={{ gap: 4, fontSize: 12, color: "var(--text-muted)" }}>
-                  <MessageCircle style={{ width: 13, height: 13 }} /> {getCommentCount(p)}
-                </span>
-                <span className="flex items-center" style={{ gap: 4, fontSize: 12, color: "var(--text-muted)" }}>
-                  <Repeat2 style={{ width: 13, height: 13 }} /> {p.repost_count || 0}
-                </span>
-                <span className="flex items-center" style={{ gap: 4, fontSize: 12, color: "var(--text-muted)" }}>
-                  <Share2 style={{ width: 13, height: 13 }} />
-                </span>
-                <span style={{ fontSize: 11, color: "var(--text-muted)", marginLeft: "auto" }}>
-                  {p.created_at ? getTimeAgo(new Date(p.created_at)) : ""}
-                </span>
+          {posts.slice(0, 3).map((p: any, idx: number) => {
+            const isOwner = isOwnProfile && currentUserId && p.author_id === currentUserId;
+            const isRepost = !!p.repost_of;
+            return (
+              <div key={p.id} className="relative" style={{ padding: "10px 0", borderBottom: idx < Math.min(posts.length, 3) - 1 ? "1px solid var(--border-subtle)" : "none" }}>
+                <Link to={`/app/post/${p.id}`} className="block">
+                  <p style={{ fontSize: 13, fontWeight: 400, color: "var(--text-primary)", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: "18px", paddingRight: isOwner ? 32 : 0 }}>{p.content}</p>
+                  {p.image_urls && p.image_urls.length > 0 && (
+                    <div style={{ marginTop: 8 }} onClick={e => e.preventDefault()}>
+                      <ImageGrid images={p.image_urls} />
+                    </div>
+                  )}
+                  <div className="flex items-center" style={{ gap: 16, marginTop: 8 }}>
+                    <span className="flex items-center" style={{ gap: 4, fontSize: 12, color: "var(--text-muted)" }}>
+                      <Heart style={{ width: 13, height: 13 }} /> {getLikeCount(p)}
+                    </span>
+                    <span className="flex items-center" style={{ gap: 4, fontSize: 12, color: "var(--text-muted)" }}>
+                      <MessageCircle style={{ width: 13, height: 13 }} /> {getCommentCount(p)}
+                    </span>
+                    <span className="flex items-center" style={{ gap: 4, fontSize: 12, color: "var(--text-muted)" }}>
+                      <Repeat2 style={{ width: 13, height: 13 }} /> {p.repost_count || 0}
+                    </span>
+                    <span className="flex items-center" style={{ gap: 4, fontSize: 12, color: "var(--text-muted)" }}>
+                      <Share2 style={{ width: 13, height: 13 }} />
+                    </span>
+                    <span style={{ fontSize: 11, color: "var(--text-muted)", marginLeft: "auto" }}>
+                      {p.is_edited ? "(edited)" : ""}
+                    </span>
+                  </div>
+                </Link>
+
+                {isOwner && (
+                  <div className="absolute" style={{ top: 8, right: 0 }}>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpenMenuId(openMenuId === p.id ? null : p.id); }}
+                      className="flex items-center justify-center cursor-pointer"
+                      style={{ width: 28, height: 28, borderRadius: 6, background: "transparent", border: "none", color: "#9CA3C0" }}
+                      aria-label="Post options"
+                    >
+                      <MoreHorizontal style={{ width: 16, height: 16 }} />
+                    </button>
+                    {openMenuId === p.id && (
+                      <>
+                        <div className="fixed inset-0 z-[90]" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpenMenuId(null); }} />
+                        <div className="absolute right-0 z-[100]" style={{ top: 30, width: 170, borderRadius: 12, padding: "6px 0", background: "#FFFFFF", border: "1px solid #E5E7EB", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
+                          {!isRepost && (
+                            <button
+                              type="button"
+                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpenMenuId(null); onEdit?.(p); }}
+                              className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]"
+                              style={{ padding: "10px 14px", fontSize: 13, color: "#1A1A2E", background: "transparent", border: "none" }}
+                            >
+                              <Pencil style={{ width: 14, height: 14 }} /> Edit Post
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpenMenuId(null); onDelete?.(p.id); }}
+                            className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]"
+                            style={{ padding: "10px 14px", fontSize: 13, color: "#EF4444", background: "transparent", border: "none" }}
+                          >
+                            <Trash2 style={{ width: 14, height: 14 }} /> {isRepost ? "Remove Repost" : "Delete Post"}
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
-            </Link>
-          ))}
+            );
+          })}
           {posts.length > 3 && (
             <Link to="/app/feed" style={{ fontSize: 12, color: "#E8733A", marginTop: 4, display: "block" }}>See all posts →</Link>
           )}

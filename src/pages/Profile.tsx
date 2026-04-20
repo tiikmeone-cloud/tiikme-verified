@@ -29,6 +29,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import MentionText from "@/components/feed/MentionText";
+import EditPostModal from "@/components/feed/EditPostModal";
+import DeletePostDialog from "@/components/feed/DeletePostDialog";
 import { sendNotification } from "@/lib/notify";
 import VerificationRequest from "@/components/profile/VerificationRequest";
 import VerificationStatusCard from "@/components/verification/VerificationStatusCard";
@@ -455,6 +457,8 @@ const Profile = () => {
   const [dataLoading, setDataLoading] = useState(true);
   const [showGetTiiked, setShowGetTiiked] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [editingPost, setEditingPost] = useState<any | null>(null);
+  const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
 
   const [modalSection, setModalSection] = useState<string | null>(null);
   const [showAddLink, setShowAddLink] = useState(false);
@@ -492,7 +496,7 @@ const Profile = () => {
       isOwnProfile ? Promise.resolve({ data: authProfile }) : supabase.from("profiles").select("id, full_name, username, role, role_subtype, headline, bio, avatar_url, institution_name, location_city, location_state, activity_score, is_public, custom_links, open_to_work, otw_visibility, designation, sector, languages, department, is_verified, role_metadata, about_qa, verification_badge_text, verification_type, created_at, account_type, org_id, skills, display_preference, profession_type, currently_working_at").eq("id", targetUserId).maybeSingle(),
       supabase.from("work_items").select("id, title, job_title, description, company_name, institution_name, item_type, employment_type, work_location, start_date, end_date, start_month, start_year, end_month, end_year, is_current, status, visibility, verification_status, verified_by_user, verified_at, is_tiik_approved, created_at, owner_id").eq("owner_id", targetUserId).order("is_current", { ascending: false }).order("created_at", { ascending: false }),
       supabase.from("strands").select("id", { count: "exact", head: true }).or(`requester_id.eq.${targetUserId},receiver_id.eq.${targetUserId}`).eq("status", "accepted"),
-      supabase.from("posts").select("id, content, created_at, image_urls, repost_count, post_reactions(count), post_comments(count)").eq("author_id", targetUserId).order("created_at", { ascending: false }).limit(5),
+      supabase.from("posts").select("id, author_id, posted_by_user_id, posted_by_org, content, type, image_urls, comment_count, repost_count, reactions, is_edited, repost_of, created_at, updated_at, post_reactions(count), post_comments(count)").eq("author_id", targetUserId).order("created_at", { ascending: false }).limit(5),
       supabase.from("achievements").select("id, title, type, description, icon_emoji, achievement_date, issued_by, certificate_url, certificate_file_url, source_type, source_workspace_name, visibility, created_at, user_id").eq("user_id", targetUserId).order("created_at", { ascending: false }),
       supabase.from("certificates").select("id, title, description, issued_date, expiry_date, certificate_url, is_verified, issued_by, issued_to, org_id, created_at, org:organizations(name, logo_url)").eq("issued_to", targetUserId).order("created_at", { ascending: false }),
       supabase.from("strands").select("requester_id, receiver_id").or(`requester_id.eq.${targetUserId},receiver_id.eq.${targetUserId}`).eq("status", "accepted").limit(6),
@@ -1392,7 +1396,14 @@ const Profile = () => {
             <ProjectsSection items={projects} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("project")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
             <AchievementsSection items={achievements} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("achievement")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} />
             <SkillsSection skills={skills} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("skills")} onRemoveSkill={removeSkill} />
-            <PostsSection posts={userPosts} stats={stats} />
+            <PostsSection
+              posts={userPosts}
+              stats={stats}
+              isOwnProfile={isOwnProfile}
+              currentUserId={user?.id ?? null}
+              onEdit={(p) => setEditingPost(p)}
+              onDelete={(id) => setDeletingPostId(id)}
+            />
           </div>
         </div>
       </div>
@@ -1511,6 +1522,27 @@ const Profile = () => {
       </GlassModal>
 
       {user && <GetTiikedModal open={showGetTiiked} onClose={() => setShowGetTiiked(false)} userId={user.id} userRole={role} onVerified={loadProfile} />}
+
+      {editingPost && (
+        <EditPostModal
+          post={editingPost}
+          onClose={() => setEditingPost(null)}
+          onSaved={(updated) => {
+            setUserPosts(prev => prev.map(p => p.id === updated.id ? { ...p, ...updated } : p));
+          }}
+        />
+      )}
+      {deletingPostId && (
+        <DeletePostDialog
+          postId={deletingPostId}
+          onClose={() => setDeletingPostId(null)}
+          onDeleted={(id) => {
+            setUserPosts(prev => prev.filter(p => p.id !== id));
+            setStats(prev => ({ ...prev, posts: Math.max(0, prev.posts - 1) }));
+            setDeletingPostId(null);
+          }}
+        />
+      )}
     </div>
   );
 };

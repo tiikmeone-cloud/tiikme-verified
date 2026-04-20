@@ -306,7 +306,9 @@ const PostCard = ({
   const companyName = !isOrgPost && companyLine && post.show_company_badge !== false ? companyLine : null;
   const roleLine = !isOrgPost && authorFlags.showRole ? formatRoleLine(author) : null;
   const timeAgo = post.created_at ? getTimeAgo(new Date(post.created_at)) : "";
-  const isOwn = !!user?.id && (user.id === post.author_id || user.id === post.posted_by_user_id);
+  // Owner check uses author_id only (matches RLS policy auth.uid() = author_id)
+  const isOwn = !!user?.id && user.id === post.author_id;
+  const isRepost = !!post.repost_of;
   const isEdited = post.is_edited;
   const isConnected = !isOrgPost && author?.id && connectionIds.has(author.id);
   const showFollow = !isOrgPost && !isOwn && !isConnected && author?.id;
@@ -467,13 +469,15 @@ const PostCard = ({
                 </button>
                 {isOwn ? (
                   <>
-                    <button type="button" onClick={() => { onEdit(post); setShowMenu(false); }}
-                      className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "10px 16px", fontSize: 14, color: "#1A1A2E" }}>
-                      <Pencil style={{ width: 14, height: 14 }} /> Edit Post
-                    </button>
+                    {!isRepost && (
+                      <button type="button" onClick={() => { onEdit(post); setShowMenu(false); }}
+                        className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "10px 16px", fontSize: 14, color: "#1A1A2E" }}>
+                        <Pencil style={{ width: 14, height: 14 }} /> Edit Post
+                      </button>
+                    )}
                     <button type="button" onClick={() => { onDelete(post.id); setShowMenu(false); }}
                       className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "10px 16px", fontSize: 14, color: "#EF4444" }}>
-                      <Trash2 style={{ width: 14, height: 14 }} /> Delete Post
+                      <Trash2 style={{ width: 14, height: 14 }} /> {isRepost ? "Remove Repost" : "Delete Post"}
                     </button>
                   </>
                 ) : (
