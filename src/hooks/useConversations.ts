@@ -17,6 +17,7 @@ interface ConversationWithProfile {
     role: string | null;
     institution_name: string | null;
     is_verified: boolean | null;
+    public_key?: string | null;
   };
   last_message?: string;
   last_message_type?: string | null;
@@ -37,6 +38,10 @@ interface Message {
   attachment_name?: string | null;
   attachment_size?: number | null;
   status?: "sending" | "delivered" | "read";
+  is_encrypted?: boolean | null;
+  encrypted_body?: string | null;
+  nonce?: string | null;
+  decryption_failed?: boolean;
 }
 
 export function useConversations(userId: string | undefined) {
@@ -79,7 +84,7 @@ export function useConversations(userId: string | undefined) {
 
     // Correct unread count — only messages FROM the other person that I haven't read, excluding deleted
     const [profilesRes, unreadRes, lastMsgsRes] = await Promise.allSettled([
-      supabase.from("profiles").select("id, full_name, username, avatar_url, role, institution_name, is_verified").in("id", uniqueIds),
+      supabase.from("profiles").select("id, full_name, username, avatar_url, role, institution_name, is_verified, public_key").in("id", uniqueIds),
       supabase.from("pings").select("conversation_id").in("conversation_id", convoIds).eq("is_read", false).neq("sender_id", userId).or("is_deleted.is.null,is_deleted.eq.false"),
       supabase.from("pings").select("conversation_id, content, created_at, attachment_type, is_deleted").in("conversation_id", convoIds).order("created_at", { ascending: false }).limit(200),
     ]);
