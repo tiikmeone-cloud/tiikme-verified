@@ -79,10 +79,25 @@ export default function StepOrgType({ form, update, onNext }: Props) {
           }}
         >
           <option value="">Select category…</option>
-          {ORG_CATEGORIES.map(c => (
-            <option key={c.value} value={c.value}>{c.label}</option>
-          ))}
+          {GROUP_ORDER.map(group => {
+            const items = ORG_CATEGORIES.filter(c => c.group === group);
+            if (!items.length) return null;
+            return (
+              <optgroup key={group} label={group}>
+                {items.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+              </optgroup>
+            );
+          })}
         </select>
+        <p className="text-[11px] mt-2" style={{ color: "var(--text-3)" }}>
+          Used to surface your page in the right discovery sections.
+        </p>
+      </div>
+
+      <Button onClick={handleNext} size="xl" className="w-full">Continue →</Button>
+    </div>
+  );
+}
         <p className="text-[11px] mt-2" style={{ color: "var(--text-3)" }}>
           Used to surface your page in the right discovery sections.
         </p>
