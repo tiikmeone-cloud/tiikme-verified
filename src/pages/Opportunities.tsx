@@ -92,9 +92,13 @@ const Opportunities = () => {
       .eq("is_expired", false)
       .not("expires_at", "is", null);
 
+    const today = new Date().toISOString().slice(0, 10);
     let query = supabase.from("opportunities")
       .select("*, org:organizations!opportunities_org_id_fkey(id, name, logo_url, type, slug, is_verified)")
-      .eq("is_open", true).eq("status", "active").order("created_at", { ascending: false }).limit(50);
+      .eq("is_open", true).eq("status", "active")
+      .or("is_expired.is.null,is_expired.eq.false")
+      .or(`deadline.is.null,deadline.gte.${today}`)
+      .order("created_at", { ascending: false }).limit(50);
     if (debouncedSearch.trim()) query = query.or(`title.ilike.%${debouncedSearch}%,description.ilike.%${debouncedSearch}%`);
     if (activeType !== "All" && filterMap[activeType]) query = filterMap[activeType](query);
     const { data } = await query;
@@ -192,6 +196,12 @@ const Opportunities = () => {
       {/* USER: JOBS TAB */}
       {!isInstitution && userTab === "jobs" && (
         <>
+          {(() => {
+            // Hide opportunities the user already applied to
+            const visibleOpps = opps.filter(o => !appliedIds.has(o.id));
+            const visibleRecommended = recommended.filter(o => !appliedIds.has(o.id));
+            return null;
+          })()}
           <div className="relative mb-4 mt-3">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-3)" }} />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search roles, companies..."
@@ -229,13 +239,7 @@ const Opportunities = () => {
         </>
       )}
 
-      {!isInstitution && userTab === "find" && (
-        <div className="text-center py-16 px-6">
-          <UsersIcon className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
-          <p className="text-[16px] font-bold" style={{ color: "var(--text-1)" }}>Find is for recruiters and institutions</p>
-          <p className="text-[13px] mt-2" style={{ color: "var(--text-3)" }}>If you're hiring, switch to an institution account.</p>
-        </div>
-      )}
+      {!isInstitution && userTab === "find" && <FindTab />}
       {!isInstitution && userTab === "referrals" && <ReferralsTab />}
       {!isInstitution && userTab === "applications" && <MyApplicationsTab userId={user?.id} />}
 
