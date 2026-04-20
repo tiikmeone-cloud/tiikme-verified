@@ -158,7 +158,7 @@ const App = () => (
     <AuthProvider>
       <TooltipProvider>
         <Toaster />
-        <Sonner position="bottom-right" />
+        <Sonner position="top-right" />
         {CachePerfOverlay && <Suspense fallback={null}><CachePerfOverlay /></Suspense>}
         <AppRoutes />
       </TooltipProvider>
