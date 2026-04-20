@@ -164,7 +164,7 @@ const Opportunities = () => {
       <PageSEO
         title="Opportunities | Tiikme"
         description="Browse verified jobs, internships, hackathons, and freelance opportunities across India. Apply on Tiikme."
-        canonical="https://tiikme.in/app/opportunities"
+        canonical="https://tiikme.com/app/opportunities"
       />
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
