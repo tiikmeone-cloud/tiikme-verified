@@ -13,6 +13,7 @@ import { sendNotification } from "@/lib/notify";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import OrgVerificationRouting from "@/components/verification/OrgVerificationRouting";
+import { isCreatorOrg } from "@/lib/orgTypes";
 
 const AVATAR_COLORS = ["#E8733A", "#4A90D9", "#34C759", "#FF6B9D", "#8B5CF6", "#FFB800"];
 const hashColor = (s: string) => AVATAR_COLORS[Math.abs([...s].reduce((a, c) => a + c.charCodeAt(0), 0)) % AVATAR_COLORS.length];
@@ -43,6 +44,7 @@ export default function OrganizationPage() {
   const [members, setMembers] = useState<any[]>([]);
   const [opps, setOpps] = useState<any[]>([]);
   const [posts, setPosts] = useState<any[]>([]);
+  const [communityCircles, setCommunityCircles] = useState<any[]>([]);
   const [showUnfollow, setShowUnfollow] = useState(false);
 
   useEffect(() => {
@@ -53,18 +55,21 @@ export default function OrganizationPage() {
       setOrg(data);
       setFollowerCount(data.followers_count || 0);
 
-      const [membersRes, oppsRes, postsRes] = await Promise.allSettled([
+      const [membersRes, oppsRes, postsRes, circlesRes] = await Promise.allSettled([
         supabase.from("org_members")
           .select("*, profile:profiles!org_members_user_id_fkey(id, full_name, avatar_url, headline, role)")
           .eq("org_id", data.id).eq("is_current", true).order("joined_at", { ascending: true }),
         supabase.from("opportunities").select("*").eq("org_id", data.id).order("created_at", { ascending: false }).limit(50),
         supabase.from("posts").select("*, author:profiles!posts_author_id_fkey(full_name, avatar_url), post_reactions(count), post_comments(count)")
           .eq("posted_by_org", data.id).order("created_at", { ascending: false }).limit(20),
+        supabase.from("circles").select("id, name, slug, icon_url, description, member_count, active_7d, visibility")
+          .eq("linked_org_id", data.id).order("member_count", { ascending: false }),
       ]);
 
       if (membersRes.status === "fulfilled") setMembers((membersRes.value as any).data || []);
       if (oppsRes.status === "fulfilled") setOpps((oppsRes.value as any).data || []);
       if (postsRes.status === "fulfilled") setPosts((postsRes.value as any).data || []);
+      if (circlesRes.status === "fulfilled") setCommunityCircles((circlesRes.value as any).data || []);
 
       if (user) {
         const [adminRes, folRes] = await Promise.allSettled([
