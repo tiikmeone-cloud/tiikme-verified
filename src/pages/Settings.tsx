@@ -745,6 +745,7 @@ const SettingsPage = () => {
 };
 
 const LegalSection = () => {
+  const { user } = useAuth();
   const [showDelete, setShowDelete] = useState(false);
   const items = [
     { icon: FileText, label: "Terms of Service", desc: "Read our terms", href: "/terms", external: true },
