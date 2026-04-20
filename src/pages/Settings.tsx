@@ -3,7 +3,7 @@ import { storageImageUrl } from "@/lib/imageTransform";
 import { cleanUsername } from "@/lib/cleanUsername";
 import { useState, useEffect, useRef } from "react";
 import { Check, Camera, User, Eye, Lock, LogOut, Users, Copy, Share2, HelpCircle, MessageSquare, Send, CreditCard, Sparkles, FileText, Shield, Trash2, Mail } from "lucide-react";
-import { DeleteAccountModal } from "@/components/legal/DeleteAccountModal";
+import DeleteAccountModal from "@/components/legal/DeleteAccountModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { tiikToast } from "@/components/ui/tiik-toast";
