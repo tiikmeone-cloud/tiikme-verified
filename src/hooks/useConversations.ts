@@ -135,21 +135,66 @@ export function useConversations(userId: string | undefined) {
     setMessagesLoading(true);
     const { data } = await supabase
       .from("pings")
-      .select("id, content, sender_id, conversation_id, created_at, is_deleted, is_read, attachment_url, attachment_name, attachment_type, attachment_size, pdf_url, work_item_id, is_opener")
+      .select("id, content, sender_id, conversation_id, created_at, is_deleted, is_read, attachment_url, attachment_name, attachment_type, attachment_size, pdf_url, work_item_id, is_opener, is_encrypted, encrypted_body, nonce")
       .eq("conversation_id", convoId)
       .order("created_at", { ascending: true })
       .limit(100);
 
     if (!mountedRef.current) return;
-    setMessages((data || []).map(m => ({
-      ...m,
-      is_deleted: (m as any).is_deleted || false,
-      attachment_url: (m as any).attachment_url || null,
-      attachment_type: (m as any).attachment_type || null,
-      attachment_name: (m as any).attachment_name || null,
-      attachment_size: (m as any).attachment_size || null,
-      status: m.is_read ? "read" as const : "delivered" as const,
-    })));
+
+    // Resolve the other participant's public key once for decryption
+    const convo = conversations.find(c => c.id === convoId);
+    let otherPubKey: string | null = convo?.other_user?.public_key || null;
+    let myPubKey: string | null = null;
+    if (userId && (data || []).some((m: any) => m.is_encrypted)) {
+      // Fetch other party's pub key if missing
+      if (!otherPubKey && convo) {
+        const otherId = convo.participant_1 === userId ? convo.participant_2 : convo.participant_1;
+        if (otherId) {
+          const { data: p } = await supabase.from("profiles").select("public_key").eq("id", otherId).maybeSingle();
+          otherPubKey = (p as any)?.public_key || null;
+        }
+      }
+      // For my own outgoing encrypted msgs we need MY public key (sender pub) to decrypt
+      const { data: me } = await supabase.from("profiles").select("public_key").eq("id", userId).maybeSingle();
+      myPubKey = (me as any)?.public_key || null;
+    }
+
+    const kp = userId ? await getOrCreateKeypair(userId).catch(() => null) : null;
+
+    const decrypted = await Promise.all((data || []).map(async (m: any) => {
+      let content = m.content;
+      let decryption_failed = false;
+      if (m.is_encrypted && m.encrypted_body && m.nonce && kp) {
+        // If I sent the message, sender pub = mine; else sender pub = other user's
+        const senderPub = m.sender_id === userId ? myPubKey : otherPubKey;
+        if (senderPub) {
+          try {
+            content = await decryptMessage(m.encrypted_body, m.nonce, senderPub, kp.secretKey);
+          } catch {
+            content = "[Cannot decrypt — keys may have changed or this device wasn't used to send/receive this message]";
+            decryption_failed = true;
+          }
+        } else {
+          content = "[Cannot decrypt — missing key]";
+          decryption_failed = true;
+        }
+      }
+      return {
+        ...m,
+        content,
+        is_deleted: m.is_deleted || false,
+        attachment_url: m.attachment_url || null,
+        attachment_type: m.attachment_type || null,
+        attachment_name: m.attachment_name || null,
+        attachment_size: m.attachment_size || null,
+        is_encrypted: !!m.is_encrypted,
+        decryption_failed,
+        status: m.is_read ? "read" as const : "delivered" as const,
+      };
+    }));
+
+    setMessages(decrypted);
     setMessagesLoading(false);
 
     // Mark unread messages from others as read
@@ -162,16 +207,41 @@ export function useConversations(userId: string | undefined) {
         .eq("conversation_id", convoId)
         .neq("sender_id", userId)
         .eq("is_read", false);
-      // Notify sidebar to refresh unread count AFTER the DB update completes
       window.dispatchEvent(new Event("pings-read"));
     }
-  }, [userId]);
+  }, [userId, conversations]);
 
   const sendMessage = useCallback(async (content: string, attachment?: { url: string; type: string; name: string; size: number }) => {
     if (!activeConvoId || !userId || (!content.trim() && !attachment)) return;
+
+    const convo = conversations.find(c => c.id === activeConvoId);
+    const otherId = convo ? (convo.participant_1 === userId ? convo.participant_2 : convo.participant_1) : null;
+
+    // Determine if we can encrypt: recipient must have a published public key, and we need our keypair.
+    let recipientPubKey: string | null = convo?.other_user?.public_key || null;
+    if (!recipientPubKey && otherId) {
+      const { data: p } = await supabase.from("profiles").select("public_key").eq("id", otherId).maybeSingle();
+      recipientPubKey = (p as any)?.public_key || null;
+    }
+    const kp = await getOrCreateKeypair(userId).catch(() => null);
+
+    // Only the text body is encrypted. Attachments stay as-is (already in storage with their own access controls).
+    const plaintext = content || (attachment?.name || "");
+    let encryptedFields: { encrypted_body: string; nonce: string; is_encrypted: true } | null = null;
+    let canEncrypt = false;
+    if (recipientPubKey && kp && content.trim()) {
+      try {
+        const enc = await encryptMessage(content.trim(), recipientPubKey, kp.secretKey);
+        encryptedFields = { encrypted_body: enc.cipher, nonce: enc.nonce, is_encrypted: true };
+        canEncrypt = true;
+      } catch (e) {
+        console.warn("[E2EE] encrypt failed, falling back to plaintext:", e);
+      }
+    }
+
     const optimistic: Message = {
       id: crypto.randomUUID(),
-      content: content || (attachment?.name || ""),
+      content: plaintext,
       sender_id: userId,
       conversation_id: activeConvoId,
       created_at: new Date().toISOString(),
@@ -183,10 +253,20 @@ export function useConversations(userId: string | undefined) {
       attachment_name: attachment?.name || null,
       attachment_size: attachment?.size || null,
       status: "sending",
+      is_encrypted: canEncrypt,
     };
     setMessages(prev => [...prev, optimistic]);
 
-    const insertData: any = { conversation_id: activeConvoId, sender_id: userId, content: content || attachment?.name || "" };
+    const insertData: any = {
+      conversation_id: activeConvoId,
+      sender_id: userId,
+      content: canEncrypt ? "" : (content || attachment?.name || ""),
+    };
+    if (encryptedFields) {
+      insertData.encrypted_body = encryptedFields.encrypted_body;
+      insertData.nonce = encryptedFields.nonce;
+      insertData.is_encrypted = true;
+    }
     if (attachment) {
       insertData.attachment_url = attachment.url;
       insertData.attachment_type = attachment.type;
@@ -200,30 +280,29 @@ export function useConversations(userId: string | undefined) {
       setMessages(prev => prev.map(m => m.id === optimistic.id ? { ...m, status: "sending" as const } : m));
     } else if (data) {
       setMessages(prev => prev.map(m => m.id === optimistic.id ? {
-        ...data,
+        ...(data as any),
+        // Keep the local plaintext for display — server stored ciphertext
+        content: plaintext,
         is_deleted: false,
         attachment_url: (data as any).attachment_url || null,
         attachment_type: (data as any).attachment_type || null,
         attachment_name: (data as any).attachment_name || null,
         attachment_size: (data as any).attachment_size || null,
+        is_encrypted: !!(data as any).is_encrypted,
         status: "delivered" as const,
       } : m));
       supabase.from("conversations").update({ last_message_at: new Date().toISOString() }).eq("id", activeConvoId).then(() => {});
 
-      // Notify the other participant
-      const convo = conversations.find(c => c.id === activeConvoId);
-      if (convo) {
-        const otherId = convo.participant_1 === userId ? convo.participant_2 : convo.participant_1;
-        if (otherId) {
-          sendNotification({
-            userId: otherId,
-            actorId: userId,
-            type: "message",
-            title: `New message from ${convo.other_user?.full_name || "someone"}`,
-            body: (content || attachment?.name || "").slice(0, 80),
-            actionUrl: "/app/pings",
-          });
-        }
+      if (otherId) {
+        sendNotification({
+          userId: otherId,
+          actorId: userId,
+          type: "message",
+          title: `New message from ${convo?.other_user?.full_name || "someone"}`,
+          // Never include encrypted body in notification; for plaintext sends keep a short preview
+          body: canEncrypt ? "Sent you an encrypted message" : plaintext.slice(0, 80),
+          actionUrl: "/app/pings",
+        });
       }
     }
   }, [activeConvoId, userId, conversations]);
