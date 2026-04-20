@@ -1,7 +1,7 @@
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import React from "react";
 import { useState, useRef, useEffect } from "react";
-import { MessageCircle, Search, Send, Paperclip, PenSquare, X, Shield, ArrowLeft, FileText, Briefcase, Download, Trash2, ArrowUp, Image as ImageIcon } from "lucide-react";
+import { MessageCircle, Search, Send, Paperclip, PenSquare, X, Shield, ArrowLeft, FileText, Briefcase, Download, Trash2, ArrowUp, Image as ImageIcon, Lock, Key } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useConversations } from "@/hooks/useConversations";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
+import EncryptionKeyManager from "@/components/pings/EncryptionKeyManager";
 
 import { validateUpload } from "@/lib/uploadValidation";
 
@@ -78,6 +79,7 @@ const Pings = () => {
   const [newMsg, setNewMsg] = useState("");
   const [showMobileList, setShowMobileList] = useState(true);
   const [dismissedBanner, setDismissedBanner] = useState(false);
+  const [showKeyManager, setShowKeyManager] = useState(false);
   const [showNewPing, setShowNewPing] = useState(false);
   const [newPingSearch, setNewPingSearch] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -130,6 +132,10 @@ const Pings = () => {
   const handleSend = async () => {
     const hasContent = newMsg.trim() || pendingAttachment;
     if (!hasContent) return;
+    // Warn if recipient hasn't published an encryption key
+    if (newMsg.trim() && activeConvo?.other_user && !(activeConvo.other_user as any).public_key) {
+      toast.warning("Not encrypted yet — recipient hasn't enabled secure messaging on a device.");
+    }
     await sendMessage(newMsg.trim(), pendingAttachment || undefined);
     setNewMsg("");
     setPendingAttachment(null);
@@ -310,6 +316,24 @@ const Pings = () => {
                   </div>
                 </Link>
               )}
+              <button
+                type="button"
+                onClick={() => setShowKeyManager(true)}
+                className="ml-auto p-2 rounded-lg cursor-pointer active:scale-95 shrink-0"
+                title="Encryption keys"
+                style={{ color: "var(--text-2)", background: "var(--surface-2)" }}>
+                <Key className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* E2EE indicator banner */}
+            <div className="px-5 py-1.5 flex items-center gap-1.5" style={{ background: "rgba(16,185,129,0.06)", borderBottom: "1px solid rgba(16,185,129,0.15)" }}>
+              <Lock className="w-3 h-3" style={{ color: "#10B981" }} />
+              <p className="text-[11px]" style={{ color: "var(--text-2)" }}>
+                {activeConvo?.other_user && (activeConvo.other_user as any).public_key
+                  ? "Messages in this chat are end-to-end encrypted. Tiikme cannot read them."
+                  : "Recipient hasn't enabled secure messaging yet — your messages will go as plaintext until they sign in."}
+              </p>
             </div>
 
             {!dismissedBanner && activeConvo?.other_user?.is_verified && (
@@ -416,6 +440,9 @@ const Pings = () => {
                         {/* Time + status */}
                         {showTime && (
                           <div className="flex items-center justify-end gap-1 mt-1">
+                            {(msg as any).is_encrypted && !isDeleted && (
+                              <Lock className="w-2.5 h-2.5" style={{ color: isMe ? "rgba(255,255,255,0.7)" : "#10B981" }} />
+                            )}
                             <p className="text-[10px] opacity-60" style={{ color: isDeleted ? "var(--text-3)" : isMe ? "rgba(255,255,255,0.7)" : "var(--text-3)" }}>{time}</p>
                             {isMe && !isDeleted && <span className="text-[9px]" style={{ color: "rgba(255,255,255,0.5)" }}>
                               {msg.status === "sending" ? "Sending…" : msg.status === "read" ? "✓✓ Seen" : "✓ Delivered"}
@@ -521,6 +548,10 @@ const Pings = () => {
             )}
           </div>
         </div>
+      )}
+
+      {showKeyManager && user && (
+        <EncryptionKeyManager userId={user.id} onClose={() => setShowKeyManager(false)} />
       )}
     </div>
   );

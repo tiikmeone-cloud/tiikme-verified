@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
+import { ensurePublishedKey } from "@/lib/messageEncryption";
 
 export interface UserProfile {
   id: string;
@@ -24,6 +25,8 @@ export interface UserProfile {
   languages: string[] | null;
   department: string | null;
   is_verified: boolean | null;
+  public_key: string | null;
+  key_created_at: string | null;
   role_metadata: Record<string, any> | null;
   about_qa: Record<string, any> | null;
   verification_badge_text: string | null;
@@ -149,6 +152,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const refreshProfile = useCallback(async () => {
     if (user?.id) await fetchProfile(user.id);
   }, [user?.id, fetchProfile]);
+
+  // Ensure the user has an E2EE keypair generated (in IndexedDB) and published (on profile).
+  // Runs once profile is loaded; safe to re-run because publish is no-op if keys already match.
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        await ensurePublishedKey(user.id, profile?.public_key ?? null);
+        if (!cancelled && !profile?.public_key) {
+          // Refresh profile so consumers see the new public_key without a reload
+          fetchProfile(user.id);
+        }
+      } catch (e) {
+        console.warn("[E2EE] keypair init failed:", e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id, profile?.public_key, fetchProfile]);
 
   const displayName = profile?.full_name || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "";
   const initials = displayName
