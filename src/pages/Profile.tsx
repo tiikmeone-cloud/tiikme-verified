@@ -322,7 +322,7 @@ const AboutSection = ({ about, isOwnProfile, userId }: { about: string; isOwnPro
   const showFull = expanded || !needsTruncate;
 
   return (
-    <div className="glass-card" style={{ padding: 16, borderRadius: 16, marginTop: 12 }}>
+    <div className="glass-card p-3 md:p-4 mt-2 md:mt-3" style={{ borderRadius: 16 }}>
       <div className="flex items-center" style={{ gap: 8 }}>
         <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", flex: 1 }}>About</span>
         {isOwnProfile && !editing && (
@@ -1076,13 +1076,13 @@ const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen pb-8">
+    <div className="min-h-screen pb-6 md:pb-8">
       <PageSEO {...seoProps} />
 
-      <div style={{ maxWidth: 960, margin: "0 auto", padding: 16 }}>
+      <div className="mx-auto p-3 md:p-4" style={{ maxWidth: 960 }}>
         {/* ── PROFILE INFO CARD (no cover) ── */}
-        <div className="glass-card relative" style={{
-          padding: 20, borderRadius: 16,
+        <div className="glass-card relative p-3 md:p-5" style={{
+          borderRadius: 16,
           background: "rgba(255,255,255,0.25)", backdropFilter: "blur(20px)",
           border: "1px solid rgba(255,255,255,0.40)",
           boxShadow: "0 8px 32px rgba(26,26,78,0.08), inset 0 1px 0 rgba(255,255,255,0.60)",
@@ -1291,7 +1291,7 @@ const Profile = () => {
 
         {/* ── MOBILE-ONLY QUICK NAV (own profile) ── */}
         {isOwnProfile && (
-          <div className="md:hidden glass-card" style={{ marginTop: 12, padding: 4, borderRadius: 16, overflow: "hidden" }}>
+          <div className="md:hidden glass-card mt-2" style={{ padding: 4, borderRadius: 16, overflow: "hidden" }}>
             {[
               { label: "Circles", icon: Layers, path: "/app/circles" },
               { label: "Connections", icon: Link2, path: "/app/connections" },
@@ -1325,9 +1325,9 @@ const Profile = () => {
 
 
         {/* ── SECTION GRID ── */}
-        <div className="grid grid-cols-1 md:grid-cols-[280px_1fr]" style={{ marginTop: 12, gap: 12 }}>
+        <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-2 md:gap-3 mt-2 md:mt-3">
           {/* ═══ LEFT COLUMN ═══ */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div className="flex flex-col gap-2">
             {/* Verification status (own profile only, hidden if already verified) */}
             {isOwnProfile && <VerificationStatusCard />}
             {/* L1: Connections preview */}
