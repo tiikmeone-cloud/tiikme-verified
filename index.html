@@ -40,7 +40,24 @@
 </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Critical above-the-fold hero pre-render to improve LCP. Replaced by React on hydration. -->
+      <style>
+        #ssr-hero{background:#FFF8F2;padding:64px 20px;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;text-align:center}
+        #ssr-hero .wrap{max-width:1200px;margin:0 auto}
+        #ssr-hero .eyebrow{font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#E8580A;margin:0 0 32px}
+        #ssr-hero h1{font-weight:800;line-height:1.05;margin:0 0 24px;font-size:40px}
+        #ssr-hero h1 .l1{display:block;color:#04061A}
+        #ssr-hero h1 .l2{display:block;color:#E8580A}
+        @media(min-width:768px){#ssr-hero{padding:100px 32px}#ssr-hero h1{font-size:72px}#ssr-hero .eyebrow{font-size:12px;margin-bottom:40px}}
+      </style>
+      <section id="ssr-hero">
+        <div class="wrap">
+          <p class="eyebrow">India's first verified professional identity platform</p>
+          <h1><span class="l1">Nobody Verified You.</span><span class="l2">We Will.</span></h1>
+        </div>
+      </section>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
