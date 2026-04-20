@@ -218,7 +218,8 @@ const Explore = () => {
       payload: o,
     }));
     exploreData.posts.forEach(p => {
-      const engagement = (p.reactions?.useful || 0) + (p.reactions?.inspiring || 0) + (p.reactions?.insightful || 0) + (p.comment_count || 0);
+      const r = (p.reactions || {}) as Record<string, number>;
+      const engagement = (r.useful || 0) + (r.inspiring || 0) + (r.insightful || 0) + (p.comment_count || 0);
       cards.push({
         id: `post-${p.id}`,
         kind: "post",
