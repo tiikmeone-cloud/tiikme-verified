@@ -116,6 +116,20 @@ export default function StepPageSetup({ form, update, onComplete }: Props) {
         discount_months_remaining: 3,
       });
 
+      // Auto-trigger self-verification request for the new org
+      await supabase.from("verification_requests").insert({
+        requester_id: user.id,
+        org_id: org.id,
+        entity_type: "organization",
+        entity_id: org.id,
+        item_type: "organization",
+        item_id: org.id,
+        submitted_id: org.name,
+        status: "pending",
+        auto_triggered: true,
+        role_category: "default",
+      });
+
       toast.success("Organisation created!");
       onComplete(slug);
     } catch (e: any) {

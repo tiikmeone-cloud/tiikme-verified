@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { sendNotification } from "@/lib/notify";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import OrgVerificationRouting from "@/components/verification/OrgVerificationRouting";
 
 const AVATAR_COLORS = ["#E8733A", "#4A90D9", "#34C759", "#FF6B9D", "#8B5CF6", "#FFB800"];
 const hashColor = (s: string) => AVATAR_COLORS[Math.abs([...s].reduce((a, c) => a + c.charCodeAt(0), 0)) % AVATAR_COLORS.length];
@@ -276,6 +277,25 @@ export default function OrganizationPage() {
                 <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{card.value}</p>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* ── ADMIN: VERIFICATION ROUTING ── */}
+        {isAdmin && (
+          <div className="glass-card" style={{
+            padding: 16, borderRadius: 16, marginTop: 12,
+            background: "rgba(255,255,255,0.25)", backdropFilter: "blur(20px)",
+            border: "1px solid rgba(255,255,255,0.40)",
+            boxShadow: "0 4px 16px rgba(26,26,78,0.05), inset 0 1px 0 rgba(255,255,255,0.60)",
+          }}>
+            <div className="flex items-center justify-between mb-1">
+              <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>Verification Routing</p>
+              <button type="button" onClick={() => navigate("/app/verification-inbox")} className="cursor-pointer text-[12px] font-semibold" style={{ color: "#E8733A" }}>
+                Open inbox →
+              </button>
+            </div>
+            <p style={{ fontSize: 12, color: "#6B7094", marginBottom: 10 }}>Choose which admin handles verification requests for each department.</p>
+            <OrgVerificationRouting orgId={org.id} />
           </div>
         )}
 
