@@ -562,7 +562,8 @@ const Profile = () => {
   const isConnectionsOnly = !isOwnProfile && profileVisibility === "connections_only" && !isConnected;
 
   if (isPrivateView || isConnectionsOnly) {
-    const limitedName = profileData.full_name || "User";
+    const limitedFlags = getDisplayFlags(profileData);
+    const limitedName = limitedFlags.showName ? (profileData.full_name || "User") : "Tiikme member";
     const limitedInitials = limitedName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
     return (
       <div className="min-h-screen" style={{ padding: 16, maxWidth: 960, margin: "0 auto" }}>
