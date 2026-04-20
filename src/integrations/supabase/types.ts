@@ -2972,6 +2972,7 @@ export type Database = {
           currently_working_at: string | null
           custom_links: Json | null
           days_active: number | null
+          deletion_requested_at: string | null
           department: string | null
           designation: string | null
           display_preference: string | null
@@ -2995,6 +2996,7 @@ export type Database = {
           open_to_work_preferences: Json | null
           org_id: string | null
           otw_visibility: string | null
+          pending_deletion: boolean
           phone: string | null
           phone_hash: string | null
           privacy_settings: Json | null
@@ -3010,6 +3012,8 @@ export type Database = {
           skills: string[] | null
           spam_flag_count: number | null
           status: string | null
+          terms_accepted_at: string | null
+          terms_version: string | null
           theme_preference: string | null
           updated_at: string | null
           username: string | null
@@ -3032,6 +3036,7 @@ export type Database = {
           currently_working_at?: string | null
           custom_links?: Json | null
           days_active?: number | null
+          deletion_requested_at?: string | null
           department?: string | null
           designation?: string | null
           display_preference?: string | null
@@ -3055,6 +3060,7 @@ export type Database = {
           open_to_work_preferences?: Json | null
           org_id?: string | null
           otw_visibility?: string | null
+          pending_deletion?: boolean
           phone?: string | null
           phone_hash?: string | null
           privacy_settings?: Json | null
@@ -3070,6 +3076,8 @@ export type Database = {
           skills?: string[] | null
           spam_flag_count?: number | null
           status?: string | null
+          terms_accepted_at?: string | null
+          terms_version?: string | null
           theme_preference?: string | null
           updated_at?: string | null
           username?: string | null
@@ -3092,6 +3100,7 @@ export type Database = {
           currently_working_at?: string | null
           custom_links?: Json | null
           days_active?: number | null
+          deletion_requested_at?: string | null
           department?: string | null
           designation?: string | null
           display_preference?: string | null
@@ -3115,6 +3124,7 @@ export type Database = {
           open_to_work_preferences?: Json | null
           org_id?: string | null
           otw_visibility?: string | null
+          pending_deletion?: boolean
           phone?: string | null
           phone_hash?: string | null
           privacy_settings?: Json | null
@@ -3130,6 +3140,8 @@ export type Database = {
           skills?: string[] | null
           spam_flag_count?: number | null
           status?: string | null
+          terms_accepted_at?: string | null
+          terms_version?: string | null
           theme_preference?: string | null
           updated_at?: string | null
           username?: string | null

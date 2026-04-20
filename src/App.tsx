@@ -43,7 +43,7 @@ const PageProfile = lazyWithRetry(() => import("./pages/PageProfile.tsx"), "Page
 const VerifyInvite = lazyWithRetry(() => import("./pages/VerifyInvite.tsx"), "VerifyInvite");
 const Privacy = lazyWithRetry(() => import("./pages/Privacy.tsx"), "Privacy");
 const Terms = lazyWithRetry(() => import("./pages/Terms.tsx"), "Terms");
-const Grievance = lazyWithRetry(() => import("./pages/Grievance.tsx"), "Grievance");
+
 const PostCreate = lazyWithRetry(() => import("./pages/PostCreate.tsx"), "PostCreate");
 const CertificatePage = lazyWithRetry(() => import("./pages/CertificatePage.tsx"), "CertificatePage");
 const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword.tsx"), "ResetPassword");
@@ -97,7 +97,7 @@ const AppRoutes = () => {
             <Route path="/verify-invite" element={<PageErrorBoundary><VerifyInvite /></PageErrorBoundary>} />
             <Route path="/privacy" element={<PageErrorBoundary><Privacy /></PageErrorBoundary>} />
             <Route path="/terms" element={<PageErrorBoundary><Terms /></PageErrorBoundary>} />
-            <Route path="/grievance" element={<PageErrorBoundary><Grievance /></PageErrorBoundary>} />
+            
             <Route path="/reset-password" element={<PageErrorBoundary><ResetPassword /></PageErrorBoundary>} />
             <Route path="/join-as-institution" element={<PageErrorBoundary><JoinAsInstitution /></PageErrorBoundary>} />
 
