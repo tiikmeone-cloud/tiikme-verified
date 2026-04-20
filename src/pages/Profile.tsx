@@ -1109,82 +1109,172 @@ const Profile = () => {
               <div className="flex items-center flex-wrap" style={{ gap: 8 }}>
                 {username && <span style={{ fontSize: 12, fontWeight: 400, color: "#9CA3C0" }}>@{username}</span>}
                 {username && (city || state) && <span style={{ width: 3, height: 3, borderRadius: "50%", background: "#9CA3C0", flexShrink: 0 }} />}
+          <div className="flex profile-info-flex" style={{ gap: 16, alignItems: "flex-start" }}>
+            {/* LEFT COLUMN: Avatar + OTW switch (own) / badge (other) */}
+            <div className="shrink-0 flex flex-col items-center" style={{ width: 110, gap: 10 }}>
+              <div style={showOTW ? { padding: 3, borderRadius: 14, background: "#10B981" } : undefined}>
+                <AvatarSquare src={profileData.avatar_url} name={displayName || "U"} size="profile" bgColor={roleColor} className="shadow-md" />
+              </div>
+
+              {/* OTW switch — own profile */}
+              {isOwnProfile && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!profileData?.id) return;
+                    const next = !profileData.open_to_work;
+                    setViewedProfile({ ...profileData, open_to_work: next });
+                    const { error } = await supabase.from("profiles").update({ open_to_work: next } as any).eq("id", profileData.id);
+                    if (error) {
+                      setViewedProfile({ ...profileData, open_to_work: !next });
+                      toast.error("Could not update");
+                    } else {
+                      toast.success(next ? "Open to Work enabled" : "Open to Work disabled");
+                      refreshProfile?.();
+                    }
+                  }}
+                  className="cursor-pointer flex items-center gap-1.5"
+                  style={{
+                    height: 26, padding: "0 9px", borderRadius: 999, fontSize: 11, fontWeight: 600,
+                    background: profileData.open_to_work ? "rgba(16,185,129,0.12)" : "rgba(0,0,0,0.05)",
+                    color: profileData.open_to_work ? "#10B981" : "#6B7094",
+                    border: profileData.open_to_work ? "1px solid rgba(16,185,129,0.30)" : "1px solid rgba(0,0,0,0.08)",
+                  }}
+                  aria-label="Toggle Open to Work"
+                >
+                  <span style={{ width: 22, height: 12, borderRadius: 999, background: profileData.open_to_work ? "#10B981" : "rgba(0,0,0,0.18)", display: "inline-flex", alignItems: "center", padding: 1.5, transition: "background 0.2s" }}>
+                    <span style={{ width: 9, height: 9, borderRadius: "50%", background: "#fff", transform: profileData.open_to_work ? "translateX(10px)" : "translateX(0)", transition: "transform 0.2s" }} />
+                  </span>
+                  OTW
+                </button>
+              )}
+
+              {/* OTW badge — other profile */}
+              {!isOwnProfile && showOTW && (
+                <span style={{ fontSize: 10, fontWeight: 700, height: 20, padding: "0 8px", borderRadius: 6, background: "#10B981", color: "#fff", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                  Open to Work
+                </span>
+              )}
+            </div>
+
+            {/* RIGHT COLUMN: Info */}
+            <div className="profile-info-body" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
+              {/* ROW 1: Name */}
+              <div className="flex items-center" style={{ justifyContent: "space-between" }}>
+                <p style={{ fontSize: 20, fontWeight: 700, lineHeight: "28px", color: "#1A1A2E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</p>
+              </div>
+
+              {/* ROW 1b: Role · Subtype */}
+              {dpFlags.showRole && (
+                <p style={{ fontSize: 12, fontWeight: 600, color: roleColor }}>
+                  {profileData.role_subtype ? `${roleLabel} · ${profileData.role_subtype}` : roleLabel}
+                </p>
+              )}
+
+              {/* ROW 1c: Currently working at / institution */}
+              {dpFlags.showCompany && (() => {
+                const m = (profileData as any).role_metadata as Record<string, any> | null;
+                let parts: string[] = [];
+                if (m && typeof m === "object") {
+                  const r = profileData.role;
+                  if (r === "student") parts = [m.institution, m.current_year].filter(Boolean);
+                  else if (r === "professional") parts = [m.company, m.years_experience ? `${m.years_experience} yrs` : ""].filter(Boolean);
+                  else if (r === "doctor") parts = [m.hospital, m.specialty === "Other" ? m.specialty_other : m.specialty].filter(Boolean);
+                  else if (r === "faculty") parts = [m.institution, m.department].filter(Boolean);
+                }
+                if (parts.length === 0) {
+                  const fallback = (profileData as any).currently_working_at || profileData.institution_name;
+                  if (!fallback) return null;
+                  return <p style={{ fontSize: 13, fontWeight: 500, color: "#6B7094" }}>{fallback}</p>;
+                }
+                return <p style={{ fontSize: 13, fontWeight: 500, color: "#6B7094" }}>{parts.join(" · ")}</p>;
+              })()}
+
+              {/* ROW 2: Headline */}
+              {dpFlags.showRole && (currentExp || headline) && (
+                <p style={{ fontSize: 13, fontWeight: 400, color: "#6B7094" }}>
+                  {currentExp ? `${currentExp.job_title || currentExp.title} at ${currentExp.company_name || ""}` : headline}
+                </p>
+              )}
+
+              {/* ROW 3: @username + location */}
+              <div className="flex items-center flex-wrap" style={{ gap: 8 }}>
+                {username && <span style={{ fontSize: 12, fontWeight: 400, color: "#9CA3C0" }}>@{username}</span>}
+                {username && (city || state) && <span style={{ width: 3, height: 3, borderRadius: "50%", background: "#9CA3C0", flexShrink: 0 }} />}
                 {(city || state) && (
                   <span className="flex items-center" style={{ gap: 2, fontSize: 12, color: "#9CA3C0" }}>
                     <MapPin style={{ width: 12, height: 12 }} />{[city, state].filter(Boolean).join(", ")}
                   </span>
                 )}
-                {((city || state) || username) && (
-                  <span style={{ width: 3, height: 3, borderRadius: "50%", background: "#9CA3C0", flexShrink: 0 }} />
-                )}
-                {showOTW ? (
-                  <span style={{ fontSize: 11, fontWeight: 700, height: 20, padding: "0 8px", borderRadius: 999, background: "rgba(16,185,129,0.12)", color: "#10B981", display: "inline-flex", alignItems: "center", gap: 4 }}>
-                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981" }} />
-                    Open to Work
-                  </span>
-                ) : null}
               </div>
 
-              {/* ROW 4: Stats */}
-              <div className="flex items-center" style={{ gap: 16, marginTop: 4 }}>
-                <Link to="/app/connections" className="cursor-pointer hover:opacity-80">
-                  <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{stats.connections}</span>
-                  <span style={{ fontSize: 12, fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Connections</span>
-                </Link>
-                <div>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{stats.posts}</span>
-                  <span style={{ fontSize: 12, fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Posts</span>
+              {/* ROW 4: Compact stats row — Posts · Connections · Score pill */}
+              <div className="flex items-center flex-wrap" style={{ gap: 12, marginTop: 6 }}>
+                <div style={{ fontSize: 13 }}>
+                  <span style={{ fontWeight: 700, color: "#1A1A2E" }}>{stats.posts}</span>
+                  <span style={{ fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Posts</span>
                 </div>
+                <Link to="/app/connections" className="cursor-pointer hover:opacity-80" style={{ fontSize: 13 }}>
+                  <span style={{ fontWeight: 700, color: "#1A1A2E" }}>{stats.connections}</span>
+                  <span style={{ fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Connections</span>
+                </Link>
+                {(() => {
+                  const score = (profileData as any).activity_score ?? 0;
+                  const visible = shouldShowPublicScore({ id: profileData.id, activity_score: score }, authProfile ? { id: authProfile.id } : undefined);
+                  if (!visible) return null;
+                  return (
+                    <TooltipProvider delayDuration={150}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            onClick={() => setShowScoreDetails(v => !v)}
+                            className="cursor-pointer hover:opacity-90"
+                            style={{
+                              display: "inline-flex", alignItems: "center", gap: 4,
+                              height: 24, padding: "0 9px", borderRadius: 999, fontSize: 12, fontWeight: 700,
+                              background: `${tier.color}1A`, color: tier.color, border: `1px solid ${tier.color}33`,
+                            }}
+                          >
+                            <Zap style={{ width: 11, height: 11 }} fill="currentColor" />
+                            {activityScore} pts · {tier.name || (tier as any).label}
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="bg-white text-[#1A1A2E] border border-[#E5E7EB]">
+                          <div style={{ fontSize: 12, lineHeight: "16px" }}>
+                            <div style={{ fontWeight: 700, marginBottom: 4 }}>Score breakdown</div>
+                            <div>Posts & content activity</div>
+                            <div>Connections & strands</div>
+                            <div>Engagement (likes, replies)</div>
+                            <div style={{ marginTop: 4, color: "#6B7094" }}>Click for full details</div>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  );
+                })()}
               </div>
 
               {/* ROW 5: Action buttons */}
-              <div className="flex items-center flex-wrap" style={{ gap: 8, marginTop: 8 }}>
+              <div className="flex items-center flex-wrap" style={{ gap: 8, marginTop: 10 }}>
                 {isOwnProfile ? (
                   <button
                     type="button"
-                    onClick={async () => {
-                      if (!profileData?.id) return;
-                      const next = !profileData.open_to_work;
-                      // Optimistic update
-                      setViewedProfile({ ...profileData, open_to_work: next });
-                      const { error } = await supabase
-                        .from("profiles")
-                        .update({ open_to_work: next } as any)
-                        .eq("id", profileData.id);
-                      if (error) {
-                        setViewedProfile({ ...profileData, open_to_work: !next });
-                        toast.error("Could not update");
-                      } else {
-                        toast.success(next ? "Open to Work enabled" : "Open to Work disabled");
-                        refreshProfile?.();
-                      }
-                    }}
-                    className="cursor-pointer flex items-center gap-2"
+                    onClick={() => setEditOpen(true)}
+                    className="cursor-pointer"
                     style={{
-                      height: 32, padding: "0 12px", borderRadius: 999, fontSize: 12, fontWeight: 600,
-                      background: profileData.open_to_work ? "rgba(16,185,129,0.12)" : "rgba(0,0,0,0.05)",
-                      color: profileData.open_to_work ? "#10B981" : "#6B7094",
-                      border: profileData.open_to_work ? "1px solid rgba(16,185,129,0.30)" : "1px solid rgba(0,0,0,0.08)",
+                      height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 700,
+                      background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none",
+                      boxShadow: "0 2px 12px rgba(232,115,58,0.25)",
                     }}
-                    aria-label="Toggle Open to Work"
                   >
-                    <span style={{
-                      width: 26, height: 14, borderRadius: 999,
-                      background: profileData.open_to_work ? "#10B981" : "rgba(0,0,0,0.18)",
-                      display: "inline-flex", alignItems: "center", padding: 1.5, transition: "background 0.2s",
-                    }}>
-                      <span style={{
-                        width: 11, height: 11, borderRadius: "50%", background: "#fff",
-                        transform: profileData.open_to_work ? "translateX(12px)" : "translateX(0)", transition: "transform 0.2s",
-                      }} />
-                    </span>
-                    Open to Work
+                    <Pencil className="w-3 h-3 inline mr-1" /> Edit Profile
                   </button>
                 ) : (
                   <>
                     {renderConnectButton()}
                     <button type="button" onClick={() => navigate(`/app/pings?to=${targetUserId}`)} className="cursor-pointer" style={{
-                      height: 32, padding: "0 16px", borderRadius: 8, fontSize: 12, fontWeight: 500,
+                      height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 500,
                       background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.40)",
                       color: "#1A1A2E", display: "inline-flex", alignItems: "center", gap: 4,
                     }}>
@@ -1194,22 +1284,19 @@ const Profile = () => {
                 )}
               </div>
             </div>
-
-            {/* Activity Score Card — right side on desktop, full-width below on mobile */}
-            {(() => {
-              const score = (profileData as any).activity_score ?? 0;
-              const visible = shouldShowPublicScore(
-                { id: profileData.id, activity_score: score },
-                authProfile ? { id: authProfile.id } : undefined,
-              );
-              if (!visible) return null;
-              return (
-                <div className="profile-score-wrap shrink-0" style={{ alignSelf: "flex-start" }}>
-                  <ActivityScoreCard score={score} isOwn={isOwnProfile} />
-                </div>
-              );
-            })()}
           </div>
+            );
+          })()}
+
+          {/* Collapsible Activity Score details — below header, full width */}
+          {(() => {
+            const score = (profileData as any).activity_score ?? 0;
+            const visible = shouldShowPublicScore({ id: profileData.id, activity_score: score }, authProfile ? { id: authProfile.id } : undefined);
+            if (!visible || !showScoreDetails) return null;
+            return (
+              <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+                <ActivityScoreCard score={score} isOwn={isOwnProfile} />
+              </div>
             );
           })()}
         </div>
