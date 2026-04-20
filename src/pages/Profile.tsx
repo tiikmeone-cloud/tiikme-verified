@@ -1052,7 +1052,7 @@ const Profile = () => {
                 {showOTW ? (
                   <span style={{ fontSize: 11, fontWeight: 700, height: 20, padding: "0 8px", borderRadius: 999, background: "rgba(16,185,129,0.12)", color: "#10B981", display: "inline-flex", alignItems: "center", gap: 4 }}>
                     <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981" }} />
-                    Open to Work · Contact for roles
+                    Open to Work
                   </span>
                 ) : null}
               </div>
