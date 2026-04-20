@@ -49,7 +49,7 @@ interface FeedPost {
   _score?: number;
 }
 
-const FEED_SELECT = `*, author:profiles!posts_author_id_fkey(id, username, full_name, role, role_subtype, headline, designation, avatar_url, institution_name, currently_working_at, display_preference, activity_score, sector, is_verified), org:organizations!posts_posted_by_org_fkey(id, name, logo_url, type, slug), poster_profile:profiles!posts_posted_by_user_id_fkey(id, full_name, display_preference)`;
+const FEED_SELECT = `*, repost_of, author:profiles!posts_author_id_fkey(id, username, full_name, role, role_subtype, headline, designation, avatar_url, institution_name, currently_working_at, display_preference, activity_score, sector, is_verified), org:organizations!posts_posted_by_org_fkey(id, name, logo_url, type, slug), poster_profile:profiles!posts_posted_by_user_id_fkey(id, full_name, display_preference)`;
 
 async function fetchFeedPage(pageParam: number, sector: string | null, connectionIds: Set<string>, followedOrgIds: Set<string>) {
   const { data, error } = await supabase
