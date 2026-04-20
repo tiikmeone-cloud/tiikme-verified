@@ -661,6 +661,21 @@ const Profile = () => {
     setConnectionStatus({ status: null, direction: null, id: null });
   };
 
+  /* Map UI employment_type → DB type CHECK constraint values
+     Allowed: experience, education, full_time, freelance, internship, job_role,
+              part_time, research, project, volunteer, certification, achievement, other */
+  const mapEmploymentToType = (employmentType: string): string => {
+    switch (employmentType) {
+      case "Full-time": return "job_role";
+      case "Part-time": return "part_time";
+      case "Internship": return "internship";
+      case "Freelance": return "freelance";
+      case "Contract": return "job_role";
+      case "Volunteer": return "volunteer";
+      default: return "experience";
+    }
+  };
+
   /* Save functions */
   const saveExperience = async () => {
     if (!expForm.company.trim()) { toast.error("Company name is required"); return; }
@@ -681,7 +696,7 @@ const Profile = () => {
         title: expForm.title.trim() || expForm.company.trim() || "Untitled",
         job_title: expForm.title.trim(),
         description: expForm.description.trim(), company_name: expForm.company.trim(), institution_name: expForm.company.trim(),
-        employment_type: expForm.type, type: expForm.type || "experience", item_type: "experience",
+        employment_type: expForm.type, type: mapEmploymentToType(expForm.type), item_type: "experience",
         work_location: expForm.city.trim() || null,
         start_month: expForm.startMonth || null, start_year: expForm.startYear ? Number(expForm.startYear) : null,
         end_month: !expForm.isCurrent ? (expForm.endMonth || null) : null, end_year: !expForm.isCurrent && expForm.endYear ? Number(expForm.endYear) : null,
