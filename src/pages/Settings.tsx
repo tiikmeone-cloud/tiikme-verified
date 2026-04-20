@@ -674,9 +674,9 @@ const SettingsPage = () => {
             </div>
           )}
 
-          {/* Additional Roles */}
-          {activeTab === "roles" && userId && (
-            <AdditionalRolesSection userId={userId} />
+          {/* Profile Display preference */}
+          {activeTab === "display" && userId && (
+            <DisplaySection userId={userId} />
           )}
 
           {/* Privacy */}

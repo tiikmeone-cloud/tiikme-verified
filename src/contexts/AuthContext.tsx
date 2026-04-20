@@ -37,6 +37,9 @@ export interface UserProfile {
   account_type: string | null;
   org_id: string | null;
   skills: string[] | null;
+  display_preference: string | null;
+  profession_type: string | null;
+  currently_working_at: string | null;
 }
 
 interface AuthContextValue {
