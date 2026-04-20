@@ -77,14 +77,11 @@ const Shell = ({ children }: { children: React.ReactNode }) => (
   <ProtectedRoute><LayoutErrorBoundary><AppShell><PageErrorBoundary>{children}</PageErrorBoundary></AppShell></LayoutErrorBoundary></ProtectedRoute>
 );
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner position="bottom-right" />
-      {CachePerfOverlay && <Suspense fallback={null}><CachePerfOverlay /></Suspense>}
-      <BrowserRouter>
+/** Inner component runs hooks that need AuthProvider in scope (e.g. idle logout). */
+const AppRoutes = () => {
+  useIdleLogout();
+  return (
+    <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
           <Routes>
             {/* Public */}
@@ -151,7 +148,18 @@ const App = () => (
           </Routes>
         </Suspense>
       </BrowserRouter>
-    </TooltipProvider>
+  );
+};
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner position="bottom-right" />
+        {CachePerfOverlay && <Suspense fallback={null}><CachePerfOverlay /></Suspense>}
+        <AppRoutes />
+      </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
