@@ -172,6 +172,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => { cancelled = true; };
   }, [user?.id, profile?.public_key, fetchProfile]);
 
+  // Activity Score V2: bump days_active once per session per calendar day.
+  // The DB function is idempotent on the same calendar date, but we also
+  // session-dedupe to avoid extra round-trips during a single tab lifetime.
+  useEffect(() => {
+    if (!user?.id) return;
+    const key = `tiikme:days-active:${user.id}:${new Date().toISOString().slice(0, 10)}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+    supabase.rpc("increment_days_active", { uid: user.id }).then(({ error }) => {
+      if (error) console.warn("[ActivityScore] increment_days_active failed:", error.message);
+    });
+  }, [user?.id]);
+
   const displayName = profile?.full_name || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "";
   const initials = displayName
     .split(" ")

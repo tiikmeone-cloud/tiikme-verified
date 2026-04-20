@@ -43,6 +43,8 @@ export default function FindTab() {
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [myOpps, setMyOpps] = useState<any[]>([]);
   const [_pickingOppFor, setPickingOppFor] = useState<{ id: string; full_name: string | null } | null>(null);
+  // Activity Score V2: recruiters can hide low-score candidates (default 20 = no Newcomers)
+  const [minScore, setMinScore] = useState<number>(isInstitution ? 20 : 0);
 
   useEffect(() => {
     (async () => {
@@ -112,8 +114,11 @@ export default function FindTab() {
     setReferralTarget(target);
   };
 
+  const scoreFiltered = minScore > 0
+    ? profiles.filter(p => (p.profile?.activity_score ?? 0) >= minScore)
+    : profiles;
   const filtered = search.trim()
-    ? profiles.filter(p => {
+    ? scoreFiltered.filter(p => {
         const q = search.toLowerCase();
         return (
           (p.profile?.full_name || "").toLowerCase().includes(q) ||
@@ -121,7 +126,7 @@ export default function FindTab() {
           (p.role_types || []).some(r => r.toLowerCase().includes(q))
         );
       })
-    : profiles;
+    : scoreFiltered;
 
   if (loading) {
     return (
