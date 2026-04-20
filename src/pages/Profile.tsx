@@ -984,6 +984,24 @@ const Profile = () => {
                   : roleLabel}
               </p>
 
+              {/* ROW 1c: Role-metadata-derived inline summary (BITS Pilani · 3rd Year, etc.) */}
+              {(() => {
+                const m = (profileData as any).role_metadata as Record<string, any> | null;
+                if (!m || typeof m !== "object") return null;
+                const r = profileData.role;
+                let parts: string[] = [];
+                if (r === "student") parts = [m.institution, m.current_year].filter(Boolean);
+                else if (r === "professional") parts = [m.company, m.years_experience ? `${m.years_experience} yrs` : ""].filter(Boolean);
+                else if (r === "doctor") parts = [m.hospital, m.specialty === "Other" ? m.specialty_other : m.specialty].filter(Boolean);
+                else if (r === "faculty") parts = [m.institution, m.department].filter(Boolean);
+                if (parts.length === 0) return null;
+                return (
+                  <p style={{ fontSize: 12, fontWeight: 500, color: "#6B7094" }}>
+                    {parts.join(" · ")}
+                  </p>
+                );
+              })()}
+
               {/* ROW 2: Current position / headline */}
               {(currentExp || headline) && (
               <p style={{ fontSize: 13, fontWeight: 400, color: "#6B7094" }}>
