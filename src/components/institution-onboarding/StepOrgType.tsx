@@ -4,20 +4,33 @@ import { toast } from "sonner";
 import type { InstitutionFormData } from "@/pages/JoinAsInstitution";
 
 // Flat category list — the value is what's stored in organizations.subtype.
-// `type` is the underlying organizations.type bucket.
-const ORG_CATEGORIES: { value: string; type: string; label: string }[] = [
-  { value: "Product Company", type: "company", label: "Product Company" },
-  { value: "SaaS", type: "company", label: "SaaS" },
-  { value: "Service Company", type: "company", label: "Service Company" },
-  { value: "Ad Agency", type: "company", label: "Ad Agency" },
-  { value: "E-commerce", type: "company", label: "E-commerce" },
-  { value: "YouTube Channel", type: "company", label: "YouTube Channel" },
-  { value: "Educational Institution", type: "education", label: "Educational Institution" },
-  { value: "Hospital/Healthcare", type: "hospital", label: "Hospital / Healthcare" },
-  { value: "Government", type: "government", label: "Government" },
-  { value: "Non-Profit/NGO", type: "ngo", label: "Non-Profit / NGO" },
-  { value: "Other", type: "company", label: "Other" },
+// `type` is the underlying organizations.type bucket. Grouped by section.
+const ORG_CATEGORIES: { value: string; type: string; label: string; group: string }[] = [
+  // Companies
+  { group: "Companies",       value: "Product Company",          type: "company",    label: "Product Company" },
+  { group: "Companies",       value: "SaaS",                     type: "company",    label: "SaaS" },
+  { group: "Companies",       value: "Service Company",          type: "company",    label: "Service Company" },
+  { group: "Companies",       value: "Ad Agency",                type: "company",    label: "Ad Agency" },
+  { group: "Companies",       value: "E-commerce",               type: "company",    label: "E-commerce" },
+  // Startups
+  { group: "Startups",        value: "Startup",                  type: "startup",    label: "Startup" },
+  // Creators
+  { group: "Creators",        value: "YouTube Channel",          type: "creator",    label: "YouTube Channel" },
+  { group: "Creators",        value: "Podcast",                  type: "creator",    label: "Podcast" },
+  { group: "Creators",        value: "Newsletter",               type: "creator",    label: "Newsletter" },
+  { group: "Creators",        value: "Other Creator",            type: "creator",    label: "Other Creator" },
+  // Communities (informal, user-run)
+  { group: "Communities",     value: "Community",                type: "community",  label: "Community / User Group" },
+  // Education / Healthcare / Public sector
+  { group: "Institutions",    value: "Educational Institution",  type: "education",  label: "Educational Institution" },
+  { group: "Institutions",    value: "Hospital/Healthcare",      type: "hospital",   label: "Hospital / Healthcare" },
+  { group: "Institutions",    value: "Government",               type: "government", label: "Government Body" },
+  { group: "Institutions",    value: "Non-Profit/NGO",           type: "ngo",        label: "Non-Profit / NGO" },
+  // Fallback
+  { group: "Other",           value: "Other",                    type: "company",    label: "Other" },
 ];
+
+const GROUP_ORDER = ["Companies", "Startups", "Creators", "Communities", "Institutions", "Other"];
 
 interface Props {
   form: InstitutionFormData;
