@@ -346,7 +346,7 @@ export default function OrganizationPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {/* Followers card */}
             <div className="glass-card" style={{ padding: 12, borderRadius: 16 }}>
-              <p style={{ fontSize: 11, fontWeight: 600, color: "#9CA3C0", textTransform: "uppercase", letterSpacing: "0.02em" }}>FOLLOWERS</p>
+              <p style={{ fontSize: 11, fontWeight: 600, color: "#9CA3C0", textTransform: "uppercase", letterSpacing: "0.02em" }}>{followerLabel}</p>
               <p style={{ fontSize: 28, fontWeight: 700, color: "#1A1A2E", margin: "4px 0", lineHeight: "36px", letterSpacing: "-0.02em" }}>{followerCount}</p>
             </div>
 
@@ -475,6 +475,63 @@ export default function OrganizationPage() {
                     <Link to="/app/feed" style={{ fontSize: 12, color: "#E8733A", marginTop: 4, display: "block" }}>See all posts →</Link>
                   )}
                 </>
+              )}
+            </SectionBox>
+
+            {/* Community circles section */}
+            <SectionBox
+              title="Community"
+              icon={Users}
+              iconColor="#0E7490"
+              borderColor="#0E7490"
+              count={communityCircles.length}
+              action={isAdmin ? (
+                <button
+                  type="button"
+                  onClick={() => navigate(`/app/circles/create?org=${org.id}`)}
+                  className="cursor-pointer"
+                  style={{
+                    height: 26, padding: "0 10px", borderRadius: 6, fontSize: 11, fontWeight: 600,
+                    background: "rgba(14,116,144,0.10)", color: "#0E7490", border: "1px solid rgba(14,116,144,0.20)",
+                    display: "inline-flex", alignItems: "center", gap: 4,
+                  }}
+                >
+                  <Plus style={{ width: 11, height: 11 }} /> New Community Circle
+                </button>
+              ) : null}
+            >
+              {communityCircles.length === 0 ? (
+                <p style={{ fontSize: 13, color: "#9CA3C0", padding: "4px 0" }}>
+                  {isAdmin ? "Create a circle so your followers can talk to each other." : "No community circles yet."}
+                </p>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {communityCircles.map((c, idx) => (
+                    <Link
+                      key={c.id}
+                      to={`/app/circles/${c.slug}`}
+                      className="flex items-center"
+                      style={{
+                        gap: 10, padding: "8px 0",
+                        borderBottom: idx < communityCircles.length - 1 ? "1px solid rgba(0,0,0,0.04)" : "none",
+                      }}
+                    >
+                      <div className="flex items-center justify-center shrink-0" style={{
+                        width: 36, height: 36, borderRadius: 10,
+                        background: "rgba(14,116,144,0.10)", fontSize: 18,
+                      }}>
+                        {c.icon_url || "💬"}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</p>
+                        <p style={{ fontSize: 11, color: "#9CA3C0" }}>
+                          {c.member_count || 0} member{(c.member_count || 0) === 1 ? "" : "s"}
+                          {c.active_7d ? ` · ${c.active_7d} active this week` : ""}
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
               )}
             </SectionBox>
           </div>
