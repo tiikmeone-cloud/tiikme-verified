@@ -1,7 +1,7 @@
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import React from "react";
 import { useState, useRef, useEffect } from "react";
-import { MessageCircle, Search, Send, Paperclip, PenSquare, X, Shield, ArrowLeft, FileText, Briefcase, Download, Trash2, ArrowUp, Image as ImageIcon } from "lucide-react";
+import { MessageCircle, Search, Send, Paperclip, PenSquare, X, Shield, ArrowLeft, FileText, Briefcase, Download, Trash2, ArrowUp, Image as ImageIcon, Lock, Key } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useConversations } from "@/hooks/useConversations";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
+import EncryptionKeyManager from "@/components/pings/EncryptionKeyManager";
 
 import { validateUpload } from "@/lib/uploadValidation";
 
@@ -78,6 +79,7 @@ const Pings = () => {
   const [newMsg, setNewMsg] = useState("");
   const [showMobileList, setShowMobileList] = useState(true);
   const [dismissedBanner, setDismissedBanner] = useState(false);
+  const [showKeyManager, setShowKeyManager] = useState(false);
   const [showNewPing, setShowNewPing] = useState(false);
   const [newPingSearch, setNewPingSearch] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -130,6 +132,10 @@ const Pings = () => {
   const handleSend = async () => {
     const hasContent = newMsg.trim() || pendingAttachment;
     if (!hasContent) return;
+    // Warn if recipient hasn't published an encryption key
+    if (newMsg.trim() && activeConvo?.other_user && !(activeConvo.other_user as any).public_key) {
+      toast.warning("Not encrypted yet — recipient hasn't enabled secure messaging on a device.");
+    }
     await sendMessage(newMsg.trim(), pendingAttachment || undefined);
     setNewMsg("");
     setPendingAttachment(null);
