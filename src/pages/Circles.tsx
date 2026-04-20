@@ -232,10 +232,36 @@ function CircleDetail({ slug }: { slug: string }) {
 
   const join = async () => {
     if (!user || !circle) return;
-    const { error } = await supabase.from("circle_members").insert({ circle_id: circle.id, user_id: user.id });
-    if (error) { toast.error(error.message); return; }
+    // Optimistic: flip membership and bump member count instantly
     setIsMember(true);
+    setCircle((prev: any) => prev ? { ...prev, member_count: (prev.member_count || 0) + 1 } : prev);
+    const { error } = await supabase.from("circle_members").insert({ circle_id: circle.id, user_id: user.id });
+    if (error) {
+      setIsMember(false);
+      setCircle((prev: any) => prev ? { ...prev, member_count: Math.max(0, (prev.member_count || 1) - 1) } : prev);
+      toast.error(error.message);
+      return;
+    }
     toast.success("Joined " + circle.name);
+  };
+
+  // Optimistic upvote toggle on a circle post
+  const toggleUpvote = async (postId: string, currentUpvoted: boolean) => {
+    if (!user) { toast.error("Sign in to upvote"); return; }
+    const delta = currentUpvoted ? -1 : 1;
+    setPosts(prev => prev.map(p => p.id === postId
+      ? { ...p, upvote_count: Math.max(0, (p.upvote_count || 0) + delta), viewer_upvoted: !currentUpvoted }
+      : p));
+    const op = currentUpvoted
+      ? supabase.from("circle_post_upvotes").delete().eq("post_id", postId).eq("user_id", user.id)
+      : supabase.from("circle_post_upvotes").insert({ post_id: postId, user_id: user.id });
+    const { error } = await op;
+    if (error) {
+      setPosts(prev => prev.map(p => p.id === postId
+        ? { ...p, upvote_count: Math.max(0, (p.upvote_count || 0) - delta), viewer_upvoted: currentUpvoted }
+        : p));
+      if (!currentUpvoted && error.code !== "23505") toast.error("Couldn't upvote — try again");
+    }
   };
 
   if (!circle) return <p style={{ textAlign: "center", color: "#6B7094", fontSize: 13, padding: 32 }}>Loading circle...</p>;
