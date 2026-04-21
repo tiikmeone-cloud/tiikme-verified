@@ -94,26 +94,30 @@ const BRAND_RING = "rgba(250,144,62,0.45)";
 
 export default function Onboarding() {
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const [state, setState] = useState<WizardState>(EMPTY);
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Hydrate from localStorage once we have a user
+  // Hydrate from localStorage + DB once we have a user. Resume from the
+  // furthest step the server knows about — this is the canonical fix for
+  // the "loops back to step 1 on refresh" bug.
   useEffect(() => {
     if (!user) return;
+    let initial: Partial<WizardState> = {};
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      try {
-        const parsed = JSON.parse(raw) as Partial<WizardState>;
-        setState(s => ({ ...s, ...parsed }));
-      } catch { /* ignore */ }
+      try { initial = JSON.parse(raw) as Partial<WizardState>; } catch { /* ignore */ }
     }
-    // Pre-fill name from auth metadata or existing profile
+    // Server-side resume — beats stale localStorage from a previous device
+    const dbStep = (profile as any)?.last_onboarding_step as number | undefined;
+    const resumeStep = Math.max(initial.step ?? 1, dbStep ?? 1);
     setState(s => ({
       ...s,
-      full_name: s.full_name || profile?.full_name || (user.user_metadata as any)?.full_name || "",
-      username: s.username || profile?.username || "",
+      ...initial,
+      step: Math.min(TOTAL, Math.max(1, resumeStep)),
+      full_name: initial.full_name || profile?.full_name || (user.user_metadata as any)?.full_name || "",
+      username: initial.username || profile?.username || "",
     }));
     setLoaded(true);
   }, [user, profile]);
@@ -136,7 +140,20 @@ export default function Onboarding() {
   const set = <K extends keyof WizardState>(k: K, v: WizardState[K]) =>
     setState(s => ({ ...s, [k]: v }));
 
-  const goto = (n: number) => setState(s => ({ ...s, step: Math.max(1, Math.min(TOTAL, n)) }));
+  /** Move to step N and persist the highest-reached step to the DB so we
+   *  can resume from the correct place after refresh / re-login. */
+  const goto = (n: number) => {
+    const next = Math.max(1, Math.min(TOTAL, n));
+    setState(s => ({ ...s, step: next }));
+    if (user) {
+      // Fire-and-forget — we never want navigation to wait on this
+      supabase
+        .from("profiles")
+        .update({ last_onboarding_step: next } as never)
+        .eq("id", user.id)
+        .then(() => {});
+    }
+  };
 
   /** Persist a partial profile patch. Omits empty strings. */
   const savePatch = async (patch: Record<string, unknown>) => {
@@ -159,9 +176,14 @@ export default function Onboarding() {
     const ok = await savePatch({
       onboarding_complete: true,
       display_preference: state.display_preference,
+      last_onboarding_step: TOTAL,
     });
+    if (!ok) { setSaving(false); return; }
+    // CRITICAL: refresh the profile in AuthContext BEFORE navigating, so the
+    // ProtectedRoute guard sees onboarding_complete=true and doesn't bounce
+    // the user right back here.
+    await refreshProfile();
     setSaving(false);
-    if (!ok) return;
     localStorage.removeItem(STORAGE_KEY);
     const dest = sessionStorage.getItem("post_auth_redirect") || "/app/feed";
     sessionStorage.removeItem("post_auth_redirect");
