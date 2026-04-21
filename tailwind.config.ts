@@ -7,42 +7,69 @@ export default {
     container: { center: true, padding: "2rem", screens: { "2xl": "1400px" } },
     extend: {
       fontFamily: {
-        sans: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        sans: ['"Inter Tight"', '"Inter"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
       },
       colors: {
+        // Tailwind semantic
         border: "var(--border)",
         "border-2": "var(--border-2)",
         input: "var(--border-2)",
         ring: "var(--brand)",
         background: "var(--bg)",
         foreground: "var(--text-1)",
+
+        // OFFICIAL TIIKME BRAND
         brand: {
-          DEFAULT: "var(--brand)",
-          "2": "var(--brand-2)",
-          dim: "var(--brand-dim)",
-          glow: "var(--brand-glow)",
+          DEFAULT: "#FA903E",
+          hover: "#F37F26",
+          press: "#E46E14",
+          50: "#FEF3E8",
+          900: "#7A3D0E",
+          // legacy compat
+          "2": "#F37F26",
+          dim: "rgba(250, 144, 62, 0.12)",
+          glow: "rgba(250, 144, 62, 0.20)",
         },
+        midnight: {
+          DEFAULT: "#21205A",
+          800: "#1A194A",
+          700: "#2B2A6B",
+        },
+        paper: "#FAFAF7",
+        ink: {
+          DEFAULT: "#0A0A0B",
+          "2": "#3A3A3A",
+        },
+        line: "#ECECEA",
+
+        // Surfaces (paper)
         surface: {
           DEFAULT: "var(--surface)",
           "2": "var(--surface-2)",
           "3": "var(--surface-3)",
-          primary: "#F0F2F7",
-          card: "#E8ECF4",
+          primary: "#FFFFFF",
+          card: "#FFFFFF",
         },
+
+        // Text
         "t1": "var(--text-1)",
         "t2": "var(--text-2)",
         "t3": "var(--text-3)",
-        "accent-orange": "#E8733A",
-        "accent-pink": "#FF6B9D",
-        "text-primary": "#1A1A2E",
-        "text-secondary": "#6B7094",
-        "text-on-dark": "#F0F2F7",
-        primary: { DEFAULT: "var(--brand)", foreground: "#FFFFFF" },
+
+        // Legacy
+        "accent-orange": "#FA903E",
+        "accent-pink": "#FA903E",
+        "text-primary": "#0A0A0B",
+        "text-secondary": "#3A3A3A",
+        "text-on-dark": "#FAFAF7",
+
+        // shadcn semantic
+        primary: { DEFAULT: "#FA903E", foreground: "#FFFFFF" },
         secondary: { DEFAULT: "var(--surface-2)", foreground: "var(--text-1)" },
         destructive: { DEFAULT: "var(--danger)", foreground: "#FFFFFF" },
-        muted: { DEFAULT: "var(--surface)", foreground: "var(--text-2)" },
+        muted: { DEFAULT: "var(--surface-2)", foreground: "var(--text-2)" },
         accent: { DEFAULT: "var(--brand-dim)", foreground: "var(--text-1)" },
-        popover: { DEFAULT: "var(--surface-2)", foreground: "var(--text-1)" },
+        popover: { DEFAULT: "var(--surface)", foreground: "var(--text-1)" },
         card: { DEFAULT: "var(--surface)", foreground: "var(--text-1)" },
         sidebar: {
           DEFAULT: "var(--sidebar-background)",
