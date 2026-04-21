@@ -16,8 +16,7 @@ const AuthCallback = () => {
         if (error) throw error;
 
         if (!session?.user) {
-          toast.error("Sign-in did not complete. Please try again.");
-          navigate("/signin", { replace: true });
+          navigate("/signin?error=oauth_failed", { replace: true });
           return;
         }
 
@@ -40,7 +39,7 @@ const AuthCallback = () => {
           .maybeSingle();
 
         if (!prof?.onboarding_complete) {
-          navigate("/onboarding", { replace: true });
+          navigate("/onboarding/1", { replace: true });
         } else if (prof.account_type === "institution") {
           navigate("/app/workspace", { replace: true });
         } else {
