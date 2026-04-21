@@ -127,7 +127,7 @@ export default function DeleteAccountModal({ open, onClose, userId }: DeleteAcco
               <button
                 type="button"
                 onClick={() => tiikToast("Data export coming soon. Email contact@tiikme.com for now.")}
-                className="text-[13px] font-semibold text-orange-600 hover:underline mb-1"
+                className="text-[13px] font-semibold text-brand-hover hover:underline mb-1"
               >
                 Download my data first
               </button>

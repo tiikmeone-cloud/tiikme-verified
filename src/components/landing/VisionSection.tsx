@@ -1,5 +1,5 @@
 const VisionSection = () => (
-  <section className="px-5 md:px-8 py-16 md:py-[100px]" style={{ backgroundColor: "#FFF8F2" }}>
+  <section className="px-5 md:px-8 py-16 md:py-[100px]" style={{ backgroundColor: "#FEF3E8" }}>
     <div className="max-w-[700px] mx-auto text-center">
       <h2
         className="font-extrabold text-[28px] md:text-[48px] mb-8 md:mb-10"
@@ -27,7 +27,7 @@ const VisionSection = () => (
           But we are building. And we want you to be part of it.
         </p>
       </div>
-      <p className="text-[20px] md:text-[24px] font-bold" style={{ color: "#E8580A" }}>
+      <p className="text-[20px] md:text-[24px] font-bold" style={{ color: "#FA903E" }}>
         We are early. This matters. Join us.
       </p>
     </div>

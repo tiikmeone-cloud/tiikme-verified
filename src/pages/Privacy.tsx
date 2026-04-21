@@ -23,7 +23,7 @@ const Sub = ({ children }: { children: React.ReactNode }) => (
   <h3 className="text-[15.5px] font-semibold text-gray-900 mt-5 mb-2">{children}</h3>
 );
 const List = ({ items }: { items: string[] }) => (
-  <ul className="list-disc pl-6 space-y-1.5 text-gray-700 text-[15px] leading-relaxed marker:text-orange-500">
+  <ul className="list-disc pl-6 space-y-1.5 text-gray-700 text-[15px] leading-relaxed marker:text-brand">
     {items.map((it, i) => <li key={i}>{it}</li>)}
   </ul>
 );
@@ -75,7 +75,7 @@ export default function Privacy() {
       <LegalSection id="section-1" num="1" title="Who Is Responsible for Your Data">
         <P>Tiikme acts as the Data Fiduciary for all personal data collected through the Platform, as defined under the Digital Personal Data Protection Act, 2023 (DPDP Act). This means we decide how and why your data is processed.</P>
         <P><strong>Contact for privacy matters:</strong></P>
-        <P>Email: <a href="mailto:contact@tiikme.com" className="text-orange-600 underline">contact@tiikme.com</a> | <a href="mailto:contact@veenavarse.com" className="text-orange-600 underline">contact@veenavarse.com</a></P>
+        <P>Email: <a href="mailto:contact@tiikme.com" className="text-brand-hover underline">contact@tiikme.com</a> | <a href="mailto:contact@veenavarse.com" className="text-brand-hover underline">contact@veenavarse.com</a></P>
         <P>Response: Within 30 days for formal requests, 3 business days for general queries</P>
       </LegalSection>
 
@@ -164,7 +164,7 @@ export default function Privacy() {
         <P><strong>Right to Grievance Redressal:</strong> If you believe your data rights have been violated, you may raise a complaint. We will respond within 30 days. If unresolved, you may approach India's Data Protection Board once it is established.</P>
         <P><strong>Right to Nominate:</strong> Under the DPDP Act, you may nominate another person to exercise your data rights on your behalf in the event of your incapacity or death. Email contact@tiikme.com to register a nominee.</P>
         <Sub>How to Exercise Your Rights</Sub>
-        <P>Email <a href="mailto:contact@tiikme.com" className="text-orange-600 underline">contact@tiikme.com</a> with subject: "Data Rights Request — [Your Username]"</P>
+        <P>Email <a href="mailto:contact@tiikme.com" className="text-brand-hover underline">contact@tiikme.com</a> with subject: "Data Rights Request — [Your Username]"</P>
         <P>We will verify your identity before processing the request and respond within 30 days.</P>
       </LegalSection>
 
@@ -223,8 +223,8 @@ export default function Privacy() {
 
       <LegalSection id="section-12" num="12" title="Contact">
         <P>All privacy-related queries, requests, and complaints:</P>
-        <P>Email: <a href="mailto:contact@tiikme.com" className="text-orange-600 underline">contact@tiikme.com</a></P>
-        <P>Alternate: <a href="mailto:contact@veenavarse.com" className="text-orange-600 underline">contact@veenavarse.com</a></P>
+        <P>Email: <a href="mailto:contact@tiikme.com" className="text-brand-hover underline">contact@tiikme.com</a></P>
+        <P>Alternate: <a href="mailto:contact@veenavarse.com" className="text-brand-hover underline">contact@veenavarse.com</a></P>
         <P>Subject line for data requests: "Data Rights Request — [Your Username]"</P>
         <P>We aim to resolve all privacy concerns promptly and transparently. If you are not satisfied with our response, you may approach India's Data Protection Board once it is constituted under the DPDP Act, 2023.</P>
       </LegalSection>

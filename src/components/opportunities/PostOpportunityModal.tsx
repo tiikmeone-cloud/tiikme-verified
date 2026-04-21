@@ -122,9 +122,9 @@ export default function PostOpportunityModal({ open, onClose, onCreated }: Props
   if (!open) return null;
 
   const pillStyle = (active: boolean): React.CSSProperties => ({
-    background: active ? "#E8580A" : "#FFFFFF",
+    background: active ? "#FA903E" : "#FFFFFF",
     color: active ? "#FFFFFF" : "#1A1A1A",
-    border: active ? "1.5px solid #E8580A" : "1.5px solid #F0E8E0",
+    border: active ? "1.5px solid #FA903E" : "1.5px solid #ECECEA",
     borderRadius: 999, padding: "6px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer",
   });
 
@@ -262,7 +262,7 @@ export default function PostOpportunityModal({ open, onClose, onCreated }: Props
               Qualification criteria
             </button>
             {showQualification && (
-              <div className="mt-3 space-y-3 rounded-xl p-4" style={{ background: "#F9FAFB", border: "1px solid #F0E8E0" }}>
+              <div className="mt-3 space-y-3 rounded-xl p-4" style={{ background: "#F9FAFB", border: "1px solid #ECECEA" }}>
                 <div>
                   <label className="text-[12px] font-semibold block mb-1" style={{ color: "#6B6B6B" }}>Minimum education</label>
                   <div className="flex gap-1.5 flex-wrap">
@@ -308,7 +308,7 @@ export default function PostOpportunityModal({ open, onClose, onCreated }: Props
                   </div>
                 ))}
                 {questions.length < 5 && (
-                  <button type="button" onClick={addQuestion} className="flex items-center gap-1 text-[12px] font-semibold cursor-pointer" style={{ color: "#E8580A" }}>
+                  <button type="button" onClick={addQuestion} className="flex items-center gap-1 text-[12px] font-semibold cursor-pointer" style={{ color: "#FA903E" }}>
                     <Plus className="w-3.5 h-3.5" /> Add question
                   </button>
                 )}
@@ -321,7 +321,7 @@ export default function PostOpportunityModal({ open, onClose, onCreated }: Props
             <label className="text-[13px] font-semibold block mb-2" style={{ color: "#1A1A1A" }}>Who can see this?</label>
             <div className="space-y-1.5">
               {VIS_OPTIONS.map(v => (
-                <label key={v.value} className="flex items-center gap-2 text-[13px] cursor-pointer p-2 rounded-lg" style={{ background: visibility === v.value ? "#FFF3EC" : "transparent", color: "#1A1A1A" }}>
+                <label key={v.value} className="flex items-center gap-2 text-[13px] cursor-pointer p-2 rounded-lg" style={{ background: visibility === v.value ? "#FEF3E8" : "transparent", color: "#1A1A1A" }}>
                   <input type="radio" name="vis" checked={visibility === v.value} onChange={() => setVisibility(v.value)} />
                   {v.label}
                 </label>
@@ -331,9 +331,9 @@ export default function PostOpportunityModal({ open, onClose, onCreated }: Props
 
 
           <div className="flex gap-3 pt-2">
-            <Button type="button" variant="outline" className="flex-1" onClick={onClose} style={{ height: 40, borderRadius: 12, borderColor: "#F0E8E0" }}>Save as Draft</Button>
+            <Button type="button" variant="outline" className="flex-1" onClick={onClose} style={{ height: 40, borderRadius: 12, borderColor: "#ECECEA" }}>Save as Draft</Button>
             <Button type="submit" className="flex-1" disabled={!title.trim() || submitting}
-              style={{ height: 52, borderRadius: 12, background: "#E8580A", color: "#FFFFFF" }}>
+              style={{ height: 52, borderRadius: 12, background: "#FA903E", color: "#FFFFFF" }}>
               {submitting ? "Posting..." : "Post Opportunity →"}
             </Button>
           </div>

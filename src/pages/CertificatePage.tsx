@@ -24,13 +24,13 @@ export default function CertificatePage() {
 
   if (loading) return <PageLoader />;
   if (!cert) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: "#FFF8F2" }}>
+    <div className="min-h-screen flex items-center justify-center" style={{ background: "#FEF3E8" }}>
       <p className="text-[16px] font-bold" style={{ color: "var(--text-1)" }}>Certificate not found</p>
     </div>
   );
 
   return (
-    <div className="min-h-screen" style={{ background: "#FFF8F2" }} data-theme="light">
+    <div className="min-h-screen" style={{ background: "#FEF3E8" }} data-theme="light">
       <div className="max-w-2xl mx-auto px-4 py-12">
         <div className="rounded-2xl overflow-hidden" style={{ background: "white", border: "2px solid var(--border)", boxShadow: "0 8px 32px rgba(0,0,0,0.08)" }}>
           {/* Header */}

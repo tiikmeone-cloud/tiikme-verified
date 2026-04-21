@@ -87,7 +87,7 @@ const inputStyle: React.CSSProperties = {
 const labelCls = "block text-[13px] font-semibold mb-1.5";
 const labelStyle: React.CSSProperties = { color: "rgba(250,250,247,0.85)" };
 
-// Tiikme brand orange used everywhere instead of legacy #E8580A
+// Tiikme brand orange used everywhere instead of legacy #FA903E
 const BRAND = "#FA903E";
 const BRAND_DIM = "rgba(250,144,62,0.14)";
 const BRAND_RING = "rgba(250,144,62,0.45)";
@@ -321,7 +321,7 @@ function StepRole({ state, set, onNext }: { state: WizardState; set: any; onNext
             <button key={r.id} type="button" onClick={() => set("role", r.id)}
               className="text-left p-4 rounded-2xl cursor-pointer transition-all duration-200 hover:shadow-md"
               style={{
-                border: selected ? "2px solid #E8580A" : "2px solid #E5E7EB",
+                border: selected ? "2px solid #FA903E" : "2px solid #E5E7EB",
                 background: selected ? BRAND_DIM : "#fff",
                 minHeight: 120,
               }}>
@@ -457,7 +457,7 @@ function StepSubtype({ state, set, onNext, onSkip }: {
             <button key={opt} type="button" onClick={() => set("role_subtype", opt)}
               className="w-full text-left p-3.5 rounded-xl cursor-pointer transition-all flex items-center justify-between"
               style={{
-                border: selected ? "2px solid #E8580A" : "1.5px solid #E5E7EB",
+                border: selected ? "2px solid #FA903E" : "1.5px solid #E5E7EB",
                 background: selected ? BRAND_DIM : "#fff",
               }}>
               <span className="text-[14px] font-semibold" style={{ color: "#FAFAF7" }}>{opt}</span>
@@ -522,7 +522,7 @@ function StepRoleDetails({ state, set, onNext, onSkip }: {
                   <button key={b} type="button" onClick={() => set("years_exp", b)}
                     className="h-11 rounded-xl text-[13px] font-semibold cursor-pointer transition-all"
                     style={{
-                      border: selected ? "2px solid #E8580A" : "1.5px solid #E5E7EB",
+                      border: selected ? "2px solid #FA903E" : "1.5px solid #E5E7EB",
                       background: selected ? BRAND_DIM : "#fff",
                       color: selected ? BRAND : "rgba(250,250,247,0.85)",
                     }}>
@@ -592,7 +592,7 @@ function StepInterests({ state, set, onNext, onSkip }: {
             <button key={tag} type="button" onClick={() => toggle(tag)}
               className="px-3.5 h-9 rounded-full text-[13px] font-semibold cursor-pointer transition-all"
               style={{
-                border: selected ? "1.5px solid #E8580A" : "1.5px solid #E5E7EB",
+                border: selected ? "1.5px solid #FA903E" : "1.5px solid #E5E7EB",
                 background: selected ? BRAND_DIM : "#fff",
                 color: selected ? BRAND : "rgba(250,250,247,0.85)",
               }}>
@@ -635,7 +635,7 @@ function StepDisplayPref({ state, set, onFinish, saving }: {
             <button key={opt.value} type="button" onClick={() => set("display_preference", opt.value)}
               className="w-full text-left p-4 rounded-2xl cursor-pointer transition-all flex items-start justify-between gap-3"
               style={{
-                border: selected ? "2px solid #E8580A" : "1.5px solid #E5E7EB",
+                border: selected ? "2px solid #FA903E" : "1.5px solid #E5E7EB",
                 background: selected ? BRAND_DIM : "#fff",
               }}>
               <div>

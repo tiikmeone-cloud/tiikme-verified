@@ -266,7 +266,7 @@ export default function ApplicationsDashboard() {
                   {selectedApp.resume_url && (
                     <a href={selectedApp.resume_url} target="_blank" rel="noopener noreferrer"
                       className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-bold"
-                      style={{ background: "#FFF3EC", color: "#E8580A", border: "1px solid #E8580A" }}>
+                      style={{ background: "#FEF3E8", color: "#FA903E", border: "1px solid #FA903E" }}>
                       <FileText className="w-3.5 h-3.5" /> Resume
                     </a>
                   )}
@@ -297,14 +297,14 @@ export default function ApplicationsDashboard() {
                   <p className="text-[12px] font-bold mb-1" style={{ color: "#9CA3AF" }}>Private Notes</p>
                   <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} placeholder="Add private notes..."
                     className="w-full rounded-xl p-3 text-[13px] outline-none resize-none"
-                    style={{ background: "rgba(255,255,255,0.5)", border: "1px solid #F0E8E0", color: "#1A1A1A" }} />
+                    style={{ background: "rgba(255,255,255,0.5)", border: "1px solid #ECECEA", color: "#1A1A1A" }} />
                   <Button variant="secondary" size="sm" onClick={saveNotes} disabled={savingNotes} className="mt-1">
                     {savingNotes ? "Saving..." : "Save Notes"}
                   </Button>
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-2 pt-3" style={{ borderTop: "1px solid #F0E8E0" }}>
+                <div className="flex items-center gap-2 pt-3" style={{ borderTop: "1px solid #ECECEA" }}>
                   <Button variant="secondary" size="sm" onClick={() => contactViaPings(selectedApp.applicant_id)}>
                     <MessageCircle className="w-3.5 h-3.5 mr-1" /> Ping
                   </Button>

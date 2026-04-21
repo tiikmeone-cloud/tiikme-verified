@@ -42,7 +42,7 @@ const ProblemSection = () => (
             className="rounded-2xl p-6 md:p-8"
             style={{ border: "1px solid #E5E7EB", backgroundColor: "#FFFFFF" }}
           >
-            <c.icon className="w-8 h-8 mb-5" style={{ color: "#E8580A" }} strokeWidth={1.5} />
+            <c.icon className="w-8 h-8 mb-5" style={{ color: "#FA903E" }} strokeWidth={1.5} />
             <h3 className="text-[18px] md:text-[20px] font-bold mb-3" style={{ color: "#04061A" }}>
               {c.title}
             </h3>

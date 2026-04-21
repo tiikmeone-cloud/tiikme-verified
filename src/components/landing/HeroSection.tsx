@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 const HeroSection = () => {
   return (
-    <section className="px-5 md:px-8" style={{ backgroundColor: "#FFF8F2" }}>
+    <section className="px-5 md:px-8" style={{ backgroundColor: "#FEF3E8" }}>
       <div className="max-w-[1200px] mx-auto text-center py-16 md:py-[100px]">
         {/* Eyebrow */}
         <p
@@ -17,13 +17,13 @@ const HeroSection = () => {
           <span className="block text-[40px] md:text-[72px]" style={{ color: "#04061A" }}>
             Nobody Verified You.
           </span>
-          <span className="block text-[40px] md:text-[72px]" style={{ color: "#E8580A" }}>
+          <span className="block text-[40px] md:text-[72px]" style={{ color: "#FA903E" }}>
             We Will.
           </span>
         </h1>
 
         {/* Orange rule */}
-        <div className="mx-auto mb-8" style={{ width: 80, height: 3, backgroundColor: "#E8580A", borderRadius: 2 }} />
+        <div className="mx-auto mb-8" style={{ width: 80, height: 3, backgroundColor: "#FA903E", borderRadius: 2 }} />
 
         {/* Subheadline */}
         <p
