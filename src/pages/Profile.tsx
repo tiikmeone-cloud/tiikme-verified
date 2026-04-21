@@ -62,7 +62,7 @@ const formatDuration = (start: string | null, end: string | null, isCurrent: boo
   return `${fmt(start)} – ${isCurrent ? "Present" : end ? fmt(end) : ""} · ${parts.join(" ") || "< 1 mo"}`;
 };
 
-/* ── Edit Profile Drawer ── */
+/* Edit Profile drawer removed — editing happens inline (per-section pencils) and via /app/settings/profile. */
 const OTW_ROLE_TAGS = ["Frontend", "Backend", "Full-stack", "Product", "Design", "Data", "Marketing", "Sales", "Operations", "Research"];
 
 const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose: () => void; onSaved: () => void }) => {
