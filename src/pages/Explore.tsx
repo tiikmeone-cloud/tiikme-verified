@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Search, X, AlertCircle } from "lucide-react";
 import { cleanUsername } from "@/lib/cleanUsername";
 import { Link, useNavigate } from "react-router-dom";
@@ -34,6 +34,7 @@ const SECTIONS: { key: SectionKey; label: string }[] = [
 
 const Explore = () => {
   const { user, profile } = useAuth();
+  const qc = useQueryClient();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [focused, setFocused] = useState(false);
