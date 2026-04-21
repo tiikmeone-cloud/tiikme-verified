@@ -21,6 +21,7 @@ import NotFound from "./pages/NotFound.tsx";
 import SignupPage from "./pages/SignupPage.tsx";
 import VerifyEmailPage from "./pages/VerifyEmailPage.tsx";
 import Onboarding from "./pages/Onboarding.tsx";
+import AuthCallback from "./pages/AuthCallback.tsx";
 
 // Lazy load everything else
 const Welcome = lazyWithRetry(() => import("./pages/Welcome.tsx"), "Welcome");
