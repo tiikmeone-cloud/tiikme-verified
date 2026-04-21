@@ -1111,58 +1111,30 @@ const Profile = () => {
             );
             return (
           <div className="flex profile-info-flex" style={{ gap: 16, alignItems: "flex-start" }}>
-            {/* LEFT COLUMN: Avatar + OTW switch (own) / badge (other) */}
-            <div className="shrink-0 flex flex-col items-center" style={{ width: 110, gap: 10 }}>
-              <div style={showOTW ? { padding: 3, borderRadius: 14, background: "#10B981" } : undefined}>
-                <AvatarSquare src={profileData.avatar_url} name={displayName || "U"} size="profile" bgColor={roleColor} className="shadow-md" />
-              </div>
-
-              {/* OTW switch — own profile */}
-              {isOwnProfile && (
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (!profileData?.id) return;
-                    const next = !profileData.open_to_work;
-                    setViewedProfile({ ...profileData, open_to_work: next });
-                    const { error } = await supabase.from("profiles").update({ open_to_work: next } as any).eq("id", profileData.id);
-                    if (error) {
-                      setViewedProfile({ ...profileData, open_to_work: !next });
-                      toast.error("Could not update");
-                    } else {
-                      toast.success(next ? "Open to Work enabled" : "Open to Work disabled");
-                      refreshProfile?.();
-                    }
-                  }}
-                  className="cursor-pointer flex items-center gap-1.5"
-                  style={{
-                    height: 26, padding: "0 9px", borderRadius: 999, fontSize: 11, fontWeight: 600,
-                    background: profileData.open_to_work ? "rgba(16,185,129,0.12)" : "rgba(0,0,0,0.05)",
-                    color: profileData.open_to_work ? "#10B981" : "#6B7094",
-                    border: profileData.open_to_work ? "1px solid rgba(16,185,129,0.30)" : "1px solid rgba(0,0,0,0.08)",
-                  }}
-                  aria-label="Toggle Open to Work"
-                >
-                  <span style={{ width: 22, height: 12, borderRadius: 999, background: profileData.open_to_work ? "#10B981" : "rgba(0,0,0,0.18)", display: "inline-flex", alignItems: "center", padding: 1.5, transition: "background 0.2s" }}>
-                    <span style={{ width: 9, height: 9, borderRadius: "50%", background: "#fff", transform: profileData.open_to_work ? "translateX(10px)" : "translateX(0)", transition: "transform 0.2s" }} />
-                  </span>
-                  Open to Work
-                </button>
-              )}
-
-              {/* OTW badge — other profile */}
-              {!isOwnProfile && showOTW && (
-                <span style={{ fontSize: 10, fontWeight: 700, height: 20, padding: "0 8px", borderRadius: 6, background: "#10B981", color: "#fff", display: "inline-flex", alignItems: "center", gap: 4 }}>
-                  Open to Work
-                </span>
-              )}
+            {/* LEFT COLUMN: Avatar only */}
+            <div className="shrink-0" style={{ width: 96 }}>
+              <AvatarSquare src={profileData.avatar_url} name={displayName || "U"} size="profile" bgColor={roleColor} className="shadow-md" />
             </div>
 
             {/* RIGHT COLUMN: Info */}
             <div className="profile-info-body" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
-              {/* ROW 1: Name */}
-              <div className="flex items-center" style={{ justifyContent: "space-between" }}>
+              {/* ROW 1: Name + optional Open to work pill */}
+              <div className="flex items-center flex-wrap" style={{ gap: 8 }}>
                 <p style={{ fontSize: 20, fontWeight: 700, lineHeight: "28px", color: "#1A1A2E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</p>
+                {showOTW && (
+                  <span
+                    style={{
+                      display: "inline-flex", alignItems: "center", gap: 4,
+                      height: 22, padding: "0 8px", borderRadius: 999,
+                      fontSize: 11, fontWeight: 700,
+                      background: "rgba(16,185,129,0.12)", color: "#059669",
+                      border: "1px solid rgba(16,185,129,0.30)",
+                    }}
+                  >
+                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981" }} />
+                    Open to work
+                  </span>
+                )}
               </div>
 
               {/* ROW 1b: Role · Subtype */}
