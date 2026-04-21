@@ -2990,6 +2990,7 @@ export type Database = {
           languages: string[] | null
           last_active_date: string | null
           location_city: string | null
+          location_district: string | null
           location_state: string | null
           onboarding_complete: boolean | null
           open_to_work: boolean | null
@@ -3054,6 +3055,7 @@ export type Database = {
           languages?: string[] | null
           last_active_date?: string | null
           location_city?: string | null
+          location_district?: string | null
           location_state?: string | null
           onboarding_complete?: boolean | null
           open_to_work?: boolean | null
@@ -3118,6 +3120,7 @@ export type Database = {
           languages?: string[] | null
           last_active_date?: string | null
           location_city?: string | null
+          location_district?: string | null
           location_state?: string | null
           onboarding_complete?: boolean | null
           open_to_work?: boolean | null
