@@ -2967,6 +2967,7 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           contact_email_visible: boolean | null
+          country: string | null
           cover_url: string | null
           created_at: string | null
           currently_working_at: string | null
@@ -3022,6 +3023,7 @@ export type Database = {
           verification_type: string | null
           verified_at: string | null
           verified_by: string | null
+          years_exp: string | null
         }
         Insert: {
           about?: string | null
@@ -3032,6 +3034,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           contact_email_visible?: boolean | null
+          country?: string | null
           cover_url?: string | null
           created_at?: string | null
           currently_working_at?: string | null
@@ -3087,6 +3090,7 @@ export type Database = {
           verification_type?: string | null
           verified_at?: string | null
           verified_by?: string | null
+          years_exp?: string | null
         }
         Update: {
           about?: string | null
@@ -3097,6 +3101,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           contact_email_visible?: boolean | null
+          country?: string | null
           cover_url?: string | null
           created_at?: string | null
           currently_working_at?: string | null
@@ -3152,6 +3157,7 @@ export type Database = {
           verification_type?: string | null
           verified_at?: string | null
           verified_by?: string | null
+          years_exp?: string | null
         }
         Relationships: [
           {
