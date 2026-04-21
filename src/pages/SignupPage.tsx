@@ -92,17 +92,27 @@ export default function SignupPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/onboarding`,
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
         data: { account_type: "user" },
       },
     });
     setSubmitting(false);
 
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      const msg = error.message || "";
+      if (/already.*registered|already.*exists|user.*exists/i.test(msg)) {
+        toast.error("This email is already in use. Sign in instead.");
+        setTimeout(() => navigate(`/signin?email=${encodeURIComponent(email)}`), 1200);
+        return;
+      }
+      toast.error(msg);
+      return;
+    }
 
     // Supabase returns identities=[] for already-registered emails
     if (data.user && data.user.identities && data.user.identities.length === 0) {
-      setErrors({ email: "This email is already registered. Please sign in instead." });
+      toast.error("This email is already in use. Sign in instead.");
+      setTimeout(() => navigate(`/signin?email=${encodeURIComponent(email)}`), 1200);
       return;
     }
 
