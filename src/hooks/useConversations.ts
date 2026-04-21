@@ -412,25 +412,10 @@ export function useConversations(userId: string | undefined) {
   const findOrCreateConversation = useCallback(async (otherUserId: string) => {
     if (!userId) return null;
 
-    // Check who_can_message privacy setting
-    const { data: otherProfile } = await supabase
-      .from("profiles")
-      .select("privacy_settings")
-      .eq("id", otherUserId)
-      .maybeSingle();
-    if (otherProfile?.privacy_settings) {
-      const ps = otherProfile.privacy_settings as any;
-      if (ps.who_can_message === "no_one") return "blocked";
-      if (ps.who_can_message === "connections_only") {
-        const { data: strand } = await supabase
-          .from("strands")
-          .select("id")
-          .or(`and(requester_id.eq.${userId},receiver_id.eq.${otherUserId}),and(requester_id.eq.${otherUserId},receiver_id.eq.${userId})`)
-          .eq("status", "accepted")
-          .maybeSingle();
-        if (!strand) return "connections_only";
-      }
-    }
+    // Server-side check honours the canonical `privacy.who_can_message` rule
+    // (everyone | connections | verified_only | no_one) — see SQL `can_message_user`.
+    const { data: allowed, error: allowErr } = await supabase.rpc("can_message_user" as any, { _target: otherUserId });
+    if (!allowErr && allowed === false) return "blocked";
 
     const { data: existing } = await supabase
       .from("conversations")

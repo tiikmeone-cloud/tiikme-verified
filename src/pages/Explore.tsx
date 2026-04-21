@@ -128,6 +128,10 @@ const Explore = () => {
       .limit(120);
 
     const peopleSafe = (peopleRaw || []).filter((p: any) => {
+      // New canonical column `privacy.show_in_explore` (defaults true)
+      const newP = (p as any).privacy as any;
+      if (newP && newP.show_in_explore === false) return false;
+      // Legacy fallback
       const ps = p.privacy_settings as any;
       if (ps && ps.show_in_search === false) return false;
       return !excluded.has(p.id);
