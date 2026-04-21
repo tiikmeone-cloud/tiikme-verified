@@ -3002,6 +3002,7 @@ export type Database = {
           pending_deletion: boolean
           phone: string | null
           phone_hash: string | null
+          privacy: Json
           privacy_settings: Json | null
           profession_type: string | null
           public_key: string | null
@@ -3070,6 +3071,7 @@ export type Database = {
           pending_deletion?: boolean
           phone?: string | null
           phone_hash?: string | null
+          privacy?: Json
           privacy_settings?: Json | null
           profession_type?: string | null
           public_key?: string | null
@@ -3138,6 +3140,7 @@ export type Database = {
           pending_deletion?: boolean
           phone?: string | null
           phone_hash?: string | null
+          privacy?: Json
           privacy_settings?: Json | null
           profession_type?: string | null
           public_key?: string | null
@@ -4202,6 +4205,10 @@ export type Database = {
       }
     }
     Functions: {
+      are_users_connected: {
+        Args: { _a: string; _b: string }
+        Returns: boolean
+      }
       award_power: {
         Args: {
           p_amount: number
@@ -4218,6 +4225,7 @@ export type Database = {
         Args: { p_id: string }
         Returns: number
       }
+      can_message_user: { Args: { _target: string }; Returns: boolean }
       generate_clean_username: {
         Args: { p_full_name: string; p_user_id: string }
         Returns: string
