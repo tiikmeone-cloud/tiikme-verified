@@ -1079,9 +1079,9 @@ const Profile = () => {
     <div className="min-h-screen pb-6 md:pb-8">
       <PageSEO {...seoProps} />
 
-      <div className="mx-auto p-3 md:p-4" style={{ maxWidth: 960 }}>
+      <div className="mx-auto p-3 md:p-4 space-y-3 md:space-y-5" style={{ maxWidth: 960 }}>
         {/* ── PROFILE INFO CARD (no cover) ── */}
-        <div className="glass-card relative p-3 md:p-5" style={{
+        <div className="glass-card relative p-5 md:p-6" style={{
           borderRadius: 16,
           background: "rgba(255,255,255,0.25)", backdropFilter: "blur(20px)",
           border: "1px solid rgba(255,255,255,0.40)",
