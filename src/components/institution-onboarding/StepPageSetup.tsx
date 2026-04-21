@@ -148,7 +148,7 @@ export default function StepPageSetup({ form, update, onComplete }: Props) {
         <div className="flex items-center gap-4">
           <button type="button" onClick={() => fileRef.current?.click()}
             className="w-20 h-20 rounded-2xl flex items-center justify-center overflow-hidden cursor-pointer shrink-0"
-            style={{ background: form.logoPreview ? "transparent" : "#FFF3EC", border: "2px dashed #E5E7EB" }}>
+            style={{ background: form.logoPreview ? "transparent" : "rgba(250,144,62,0.14)", border: "2px dashed rgba(255,255,255,0.20)" }}>
             {form.logoPreview ? (
               <img src={form.logoPreview} alt="" className="w-full h-full object-cover" />
             ) : (

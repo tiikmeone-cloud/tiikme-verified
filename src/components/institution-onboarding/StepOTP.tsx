@@ -98,9 +98,9 @@ export default function StepOTP({ form, onNext }: Props) {
             className="text-center font-bold text-[22px]"
             style={{
               width: 52, height: 56, borderRadius: 12,
-              border: d ? "2px solid var(--brand)" : "1.5px solid #E5E7EB",
-              background: "#fff", color: "var(--text-1)", outline: "none",
-              fontFamily: "'Press Start 2P', monospace", fontSize: 18,
+              border: d ? "2px solid var(--brand)" : "1.5px solid rgba(255,255,255,0.15)",
+              background: "rgba(255,255,255,0.04)", color: "#FAFAF7", outline: "none",
+              fontFamily: "'Inter Tight', sans-serif", fontSize: 22, fontWeight: 700,
             }}
           />
         ))}

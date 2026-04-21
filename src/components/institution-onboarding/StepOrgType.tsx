@@ -68,11 +68,11 @@ export default function StepOrgType({ form, update, onNext }: Props) {
           value={form.orgSubtype}
           onChange={e => handleSelect(e.target.value)}
           style={{
-            background: "#fff", border: "1.5px solid #E5E7EB", borderRadius: 14,
-            color: "#111827", height: 48, width: "100%", padding: "0 14px", fontSize: 14,
-            outline: "none", fontFamily: "'Plus Jakarta Sans', sans-serif",
+            background: "rgba(255,255,255,0.04)", border: "1.5px solid rgba(255,255,255,0.15)", borderRadius: 14,
+            color: "#FAFAF7", height: 48, width: "100%", padding: "0 14px", fontSize: 14,
+            outline: "none",
             appearance: "none",
-            backgroundImage: "url(\"data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3e%3cpath d='M1 1.5L6 6.5L11 1.5' stroke='%236B7094' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e\")",
+            backgroundImage: "url(\"data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3e%3cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23FAFAF7' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e\")",
             backgroundRepeat: "no-repeat",
             backgroundPosition: "right 14px center",
             cursor: "pointer",
