@@ -3,6 +3,11 @@ import type { Config } from "tailwindcss";
 export default {
   content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
   prefix: "",
+  future: {
+    // Drops :hover variants on touch devices — reduces unused CSS on mobile
+    // without any visual change on desktop.
+    hoverOnlyWhenSupported: true,
+  },
   theme: {
     container: { center: true, padding: "2rem", screens: { "2xl": "1400px" } },
     extend: {
