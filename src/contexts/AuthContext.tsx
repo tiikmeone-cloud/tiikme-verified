@@ -1,7 +1,8 @@
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
-import { ensurePublishedKey } from "@/lib/messageEncryption";
+// NOTE: messageEncryption (libsodium ~50KB) is dynamically imported inside the
+// effect below so anonymous landing-page visitors never pay for it.
 
 export interface UserProfile {
   id: string;
@@ -163,6 +164,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     let cancelled = false;
     (async () => {
       try {
+        const { ensurePublishedKey } = await import("@/lib/messageEncryption");
         await ensurePublishedKey(user.id, profile?.public_key ?? null);
         if (!cancelled && !profile?.public_key) {
           // Refresh profile so consumers see the new public_key without a reload
