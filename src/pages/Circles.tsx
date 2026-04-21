@@ -2,8 +2,8 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Plus, Search, TrendingUp, Clock, Award, MessageCircle, MoreHorizontal,
-  Pencil, Trash2, Loader2, ArrowLeft, ChevronRight, X as XIcon,
+  Search, TrendingUp, Clock, Award, MessageCircle, MoreHorizontal,
+  Pencil, Trash2, Loader2, ArrowLeft, MapPin, Users, Briefcase, Hash,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,20 +15,21 @@ import SoftWarnModal from "@/components/moderation/SoftWarnModal";
 import ReportButton from "@/components/moderation/ReportButton";
 import CircleCreatePage from "@/pages/CircleCreate";
 import CommentPanel from "@/components/comments/CommentPanel";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CircleGrid } from "@/components/circles/CircleGridCard";
+import { CreateCircleButton } from "@/components/circles/CreateCircleButton";
 
 type CircleRecord = any;
 
 // =================================================================
-// DISCOVERY — carousel layout
+// DISCOVERY — tabbed grid layout
 // =================================================================
 function CirclesDiscovery() {
-  const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
-  const [seeAllSection, setSeeAllSection] = useState<null | { title: string; items: CircleRecord[] }>(null);
+  const [typeFilter, setTypeFilter] = useState<string>("all");
   const qc = useQueryClient();
 
-  // Cached circles (10 min stale) — instant on revisit
   const { data: allCircles = [], isLoading: loadingCircles } = useQuery({
     queryKey: ["circles", "all-public"],
     queryFn: async () => {
@@ -41,7 +42,6 @@ function CirclesDiscovery() {
     staleTime: 10 * 60 * 1000,
   });
 
-  // Cached membership
   const { data: joined = [] as string[] } = useQuery({
     queryKey: ["circles", "joined", user?.id],
     queryFn: async () => {
@@ -53,11 +53,8 @@ function CirclesDiscovery() {
     staleTime: 10 * 60 * 1000,
   });
 
-  const loading = loadingCircles;
-
   const join = async (circleId: string) => {
     if (!user) { toast.error("Sign in to join"); return; }
-    // Optimistic cache updates
     qc.setQueryData(["circles", "joined", user.id], (prev: string[] = []) => [...prev, circleId]);
     qc.setQueryData(["circles", "all-public"], (prev: CircleRecord[] = []) =>
       prev.map(c => c.id === circleId ? { ...c, member_count: (c.member_count || 0) + 1 } : c)
@@ -74,293 +71,141 @@ function CirclesDiscovery() {
     toast.success("Joined");
   };
 
-  // Build deduplicated, prioritized sections
-  const sections = useMemo(() => {
+  const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const matchesQuery = (c: CircleRecord) => !q || c.name?.toLowerCase().includes(q) || c.description?.toLowerCase().includes(q);
+    return allCircles.filter(c => {
+      if (q && !(c.name?.toLowerCase().includes(q) || c.description?.toLowerCase().includes(q))) return false;
+      if (typeFilter !== "all" && c.type !== typeFilter) return false;
+      return true;
+    });
+  }, [allCircles, search, typeFilter]);
 
-    const taken = new Set<string>();
-    const claim = (c: CircleRecord) => { taken.add(c.id); return c; };
+  const yourCircles = useMemo(
+    () => filtered.filter(c => joined.includes(c.id)),
+    [filtered, joined]
+  );
+  const discover = useMemo(
+    () => filtered.filter(c => !joined.includes(c.id)),
+    [filtered, joined]
+  );
+  const trending = useMemo(
+    () => [...filtered].sort((a, b) => (b.active_7d || 0) - (a.active_7d || 0) || (b.member_count || 0) - (a.member_count || 0)),
+    [filtered]
+  );
 
-    const userCity = (profile as any)?.location_city?.toString().toLowerCase().trim();
-    const userRole = (profile as any)?.role?.toString().toLowerCase().trim();
-    const userSubtype = (profile as any)?.role_subtype?.toString().toLowerCase().trim();
-
-    // 1. Your circles (always first if present)
-    const yours = allCircles.filter(c => joined.includes(c.id) && matchesQuery(c)).map(claim);
-
-    // 2. City circles — match by type='city' or city keyword in name
-    const cityCircles = allCircles.filter(c => {
-      if (taken.has(c.id) || !matchesQuery(c)) return false;
-      if (c.type === "city") {
-        if (userCity && c.name?.toLowerCase().includes(userCity)) return true;
-        return true;
-      }
-      return false;
-    }).map(claim);
-
-    // 3. Role & Career — strictly type='role'
-    const roleCircles = allCircles
-      .filter(c => !taken.has(c.id) && matchesQuery(c) && c.type === "role")
-      .sort((a, b) => {
-        const aMatch = userRole && (a.name?.toLowerCase().includes(userRole) || a.name?.toLowerCase().includes(userSubtype || "")) ? 1 : 0;
-        const bMatch = userRole && (b.name?.toLowerCase().includes(userRole) || b.name?.toLowerCase().includes(userSubtype || "")) ? 1 : 0;
-        return bMatch - aMatch;
-      })
-      .map(claim);
-
-    // 3b. By Sector — strictly type='sector'
-    const sectorCircles = allCircles
-      .filter(c => !taken.has(c.id) && matchesQuery(c) && c.type === "sector")
-      .sort((a, b) => (b.member_count || 0) - (a.member_count || 0))
-      .map(claim);
-
-    // 4. Trending — by active_7d DESC, member_count DESC
-    const trending = allCircles
-      .filter(c => !taken.has(c.id) && matchesQuery(c))
-      .sort((a, b) => (b.active_7d || 0) - (a.active_7d || 0) || (b.member_count || 0) - (a.member_count || 0))
-      .slice(0, 24)
-      .map(claim);
-
-    return [
-      { key: "yours", title: "Your circles", items: yours },
-      { key: "city", title: "City Circles", items: cityCircles },
-      { key: "role", title: "Role & Career", items: roleCircles },
-      { key: "sector", title: "By Sector", items: sectorCircles },
-      { key: "trending", title: "Trending", items: trending },
-    ].filter(s => s.items.length > 0);
-  }, [allCircles, joined, profile, search]);
+  const TYPE_CHIPS = [
+    { key: "all", label: "All", icon: null as any },
+    { key: "city", label: "City", icon: MapPin },
+    { key: "role", label: "Role", icon: Users },
+    { key: "sector", label: "Sector", icon: Briefcase },
+    { key: "topic", label: "Topic", icon: Hash },
+  ];
 
   return (
-    <div style={{ maxWidth: 1100, margin: "0 auto" }} className="px-4 sm:px-6 py-4 sm:py-6">
+    <div className="mx-auto max-w-6xl px-4 md:px-6 pt-6 pb-24 md:pb-12 space-y-6 md:space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between" style={{ marginBottom: 14 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: "#1A1A2E" }}>Circles</h1>
-        <button
-          type="button"
-          onClick={() => navigate("/app/circles/create")}
-          className="flex items-center gap-1.5 cursor-pointer active:scale-95"
-          style={{ height: 36, padding: "0 14px", borderRadius: 10, fontSize: 13, fontWeight: 700, background: "#FA903E", color: "#fff", border: "none" }}
-        >
-          <Plus style={{ width: 14, height: 14 }} /> Create
-        </button>
-      </div>
+      <header className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight" style={{ color: "#1A1A2E" }}>
+            Circles
+          </h1>
+          <p className="text-neutral-600 mt-1 text-[14px]">
+            Focused communities around a topic, role, sector, or city.
+          </p>
+        </div>
+        <CreateCircleButton />
+      </header>
 
       {/* Search */}
-      <div className="relative" style={{ marginBottom: 18 }}>
-        <Search style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, color: "#6B7094" }} />
+      <div className="relative">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Search circles..."
-          className="w-full outline-none"
-          style={{
-            height: 40, borderRadius: 12, paddingLeft: 36, paddingRight: 12, fontSize: 13,
-            background: "rgba(255,255,255,0.20)", backdropFilter: "blur(20px)",
-            border: "1px solid rgba(255,255,255,0.30)",
-          }}
+          className="w-full rounded-2xl border border-neutral-200 bg-white pl-11 pr-4 py-3 text-[14px] placeholder:text-neutral-400 focus:border-[#FA903E] focus:ring-2 focus:ring-[#FA903E]/20 outline-none"
         />
       </div>
 
-      {loading && <p style={{ textAlign: "center", color: "#6B7094", fontSize: 13, padding: 24 }}>Loading...</p>}
+      {/* Tabs */}
+      <Tabs defaultValue="joined" className="w-full">
+        <TabsList className="bg-neutral-100 p-1 rounded-xl">
+          <TabsTrigger value="joined" className="data-[state=active]:bg-white data-[state=active]:text-[#1A1A2E] rounded-lg text-[13px] font-semibold">
+            Your circles
+          </TabsTrigger>
+          <TabsTrigger value="discover" className="data-[state=active]:bg-white data-[state=active]:text-[#1A1A2E] rounded-lg text-[13px] font-semibold">
+            Discover
+          </TabsTrigger>
+          <TabsTrigger value="trending" className="data-[state=active]:bg-white data-[state=active]:text-[#1A1A2E] rounded-lg text-[13px] font-semibold">
+            Trending
+          </TabsTrigger>
+        </TabsList>
 
-      {!loading && sections.length === 0 && (
-        <div className="glass-card" style={{ padding: 32, borderRadius: 16, textAlign: "center", color: "#6B7094", fontSize: 13 }}>
-          No circles found{search ? ` for "${search}"` : ""}. Try creating one.
-        </div>
-      )}
-
-      {sections.map(section => (
-        <CarouselSection
-          key={section.key}
-          title={section.title}
-          items={section.items}
-          joined={joined}
-          onOpen={(slug) => navigate(`/app/circles/${slug}`)}
-          onJoin={join}
-          onSeeAll={() => setSeeAllSection({ title: section.title, items: section.items })}
-        />
-      ))}
-
-      {/* See-all sheet */}
-      {seeAllSection && (
-        <SeeAllSheet
-          title={seeAllSection.title}
-          items={seeAllSection.items}
-          joined={joined}
-          onOpen={(slug) => { setSeeAllSection(null); navigate(`/app/circles/${slug}`); }}
-          onJoin={join}
-          onClose={() => setSeeAllSection(null)}
-        />
-      )}
-    </div>
-  );
-}
-
-function CarouselSection({
-  title, items, joined, onOpen, onJoin, onSeeAll,
-}: {
-  title: string;
-  items: CircleRecord[];
-  joined: string[];
-  onOpen: (slug: string) => void;
-  onJoin: (id: string) => void;
-  onSeeAll: () => void;
-}) {
-  return (
-    <section style={{ marginBottom: 26 }}>
-      <div className="flex items-center justify-between" style={{ marginBottom: 10 }}>
-        <h2 style={{ fontSize: 15, fontWeight: 800, color: "#1A1A2E" }}>{title}</h2>
-        {items.length > 6 && (
-          <button
-            type="button"
-            onClick={onSeeAll}
-            className="flex items-center gap-1 cursor-pointer"
-            style={{ background: "none", border: "none", fontSize: 12, fontWeight: 600, color: "#FA903E" }}
-          >
-            See all <ChevronRight style={{ width: 14, height: 14 }} />
-          </button>
-        )}
-      </div>
-      <div
-        className="flex gap-3 overflow-x-auto pb-2"
-        style={{
-          scrollSnapType: "x mandatory",
-          scrollbarWidth: "none",
-          msOverflowStyle: "none",
-        }}
-      >
-        <style>{`section .flex.overflow-x-auto::-webkit-scrollbar { display: none; }`}</style>
-        {items.map(c => (
-          <CircleCardCompact
-            key={c.id}
-            c={c}
-            joined={joined.includes(c.id)}
-            onOpen={() => onOpen(c.slug)}
-            onJoin={() => onJoin(c.id)}
-          />
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function CircleCardCompact({ c, joined, onOpen, onJoin }: {
-  c: CircleRecord; joined: boolean; onOpen: () => void; onJoin: () => void;
-}) {
-  const conf = (CIRCLE_TYPE_CONFIG as any)[c.type] || CIRCLE_TYPE_CONFIG.topic;
-  const Icon = conf.icon;
-  const customIcon = c.icon_url && c.icon_url.length <= 4; // emoji
-  return (
-    <div
-      onClick={onOpen}
-      className="glass-card cursor-pointer active:scale-[0.98] flex-shrink-0"
-      style={{
-        width: 160, padding: 14, borderRadius: 14,
-        background: "rgba(255,255,255,0.65)",
-        border: "1px solid rgba(255,255,255,0.40)",
-        scrollSnapAlign: "start",
-        display: "flex", flexDirection: "column", gap: 8,
-      }}
-    >
-      <div
-        style={{
-          width: 44, height: 44, borderRadius: 12, background: conf.bg,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 22,
-        }}
-      >
-        {customIcon ? (
-          <span>{c.icon_url}</span>
-        ) : (
-          <Icon style={{ width: 22, height: 22, color: conf.color }} />
-        )}
-      </div>
-      <div style={{ minHeight: 36 }}>
-        <p
-          style={{
-            fontSize: 13, fontWeight: 700, color: "#1A1A2E",
-            display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as any,
-            overflow: "hidden", lineHeight: 1.3,
-          }}
-        >
-          {c.name}
-        </p>
-        <p style={{ fontSize: 11, color: "#6B7094", marginTop: 4 }}>{c.member_count || 0} members</p>
-      </div>
-      <button
-        type="button"
-        onClick={e => { e.stopPropagation(); if (!joined) onJoin(); else onOpen(); }}
-        className="cursor-pointer active:scale-95"
-        style={{
-          height: 30, borderRadius: 8, fontSize: 12, fontWeight: 700,
-          background: joined ? "rgba(107,112,148,0.15)" : "#FA903E",
-          color: joined ? "#1A1A2E" : "#fff",
-          border: "none",
-        }}
-      >
-        {joined ? "Open" : "Join"}
-      </button>
-    </div>
-  );
-}
-
-function SeeAllSheet({
-  title, items, joined, onOpen, onJoin, onClose,
-}: {
-  title: string;
-  items: CircleRecord[];
-  joined: string[];
-  onOpen: (slug: string) => void;
-  onJoin: (id: string) => void;
-  onClose: () => void;
-}) {
-  return (
-    <div
-      onClick={onClose}
-      className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center"
-      style={{ background: "rgba(0,0,0,0.45)", animation: "fade-in 200ms ease" }}
-    >
-      <div
-        onClick={e => e.stopPropagation()}
-        className="bg-white w-full sm:max-w-2xl"
-        style={{
-          borderRadius: "20px 20px 0 0",
-          maxHeight: "85vh",
-          overflow: "auto",
-          boxShadow: "0 -8px 32px rgba(0,0,0,0.20)",
-        }}
-      >
-        <div
-          className="sticky top-0 z-10 flex items-center justify-between px-4 sm:px-6 py-4"
-          style={{ background: "#fff", borderBottom: "1px solid #E5E7EB" }}
-        >
-          <h2 style={{ fontSize: 17, fontWeight: 800, color: "#1A1A2E" }}>{title}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="cursor-pointer"
-            style={{ background: "none", border: "none", padding: 4 }}
-          >
-            <XIcon style={{ width: 22, height: 22, color: "#6B7094" }} />
-          </button>
-        </div>
-        <div
-          className="px-4 sm:px-6 py-4"
-          style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 12 }}
-        >
-          {items.map(c => (
-            <CircleCardCompact
-              key={c.id}
-              c={c}
-              joined={joined.includes(c.id)}
-              onOpen={() => onOpen(c.slug)}
-              onJoin={() => onJoin(c.id)}
+        <TabsContent value="joined" className="mt-5">
+          {loadingCircles ? (
+            <p className="text-center text-neutral-500 text-[13px] py-10">Loading...</p>
+          ) : yourCircles.length === 0 ? (
+            <CirclesEmptyState
+              title="You haven't joined any circles yet"
+              hint="Browse Discover to find your people."
             />
-          ))}
-        </div>
-      </div>
+          ) : (
+            <CircleGrid circles={yourCircles} joined={joined} onJoin={join} />
+          )}
+        </TabsContent>
+
+        <TabsContent value="discover" className="mt-5 space-y-4">
+          {/* Filter chips */}
+          <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
+            {TYPE_CHIPS.map(chip => {
+              const Icon = chip.icon;
+              const active = typeFilter === chip.key;
+              return (
+                <button
+                  key={chip.key}
+                  type="button"
+                  onClick={() => setTypeFilter(chip.key)}
+                  className="inline-flex items-center gap-1.5 px-3 h-8 rounded-full text-[12px] font-semibold whitespace-nowrap transition active:scale-95"
+                  style={{
+                    background: active ? "#1A1A2E" : "#fff",
+                    color: active ? "#fff" : "#1A1A2E",
+                    border: `1px solid ${active ? "#1A1A2E" : "#E5E7EB"}`,
+                  }}
+                >
+                  {Icon && <Icon className="w-3.5 h-3.5" />}
+                  {chip.label}
+                </button>
+              );
+            })}
+          </div>
+          {loadingCircles ? (
+            <p className="text-center text-neutral-500 text-[13px] py-10">Loading...</p>
+          ) : discover.length === 0 ? (
+            <CirclesEmptyState title="No circles match" hint="Try a different filter or search term." />
+          ) : (
+            <CircleGrid circles={discover} joined={joined} onJoin={join} />
+          )}
+        </TabsContent>
+
+        <TabsContent value="trending" className="mt-5">
+          {loadingCircles ? (
+            <p className="text-center text-neutral-500 text-[13px] py-10">Loading...</p>
+          ) : trending.length === 0 ? (
+            <CirclesEmptyState title="Nothing trending right now" hint="Check back later." />
+          ) : (
+            <CircleGrid circles={trending} joined={joined} onJoin={join} />
+          )}
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+function CirclesEmptyState({ title, hint }: { title: string; hint: string }) {
+  return (
+    <div className="rounded-2xl border border-dashed border-neutral-300 bg-white py-12 px-6 text-center">
+      <p className="text-[14px] font-semibold text-[#1A1A2E]">{title}</p>
+      <p className="text-[12px] text-neutral-500 mt-1">{hint}</p>
     </div>
   );
 }

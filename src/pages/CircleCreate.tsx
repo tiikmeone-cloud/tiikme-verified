@@ -1,15 +1,13 @@
 /**
- * Circle creation flow.
+ * Circle creation flow — sectioned layout with sticky footer CTA.
  * GUARDRAILS:
  *  - activity_score >= 50
  *  - is_verified = true
  *  - max 3 circles per user per 30 days
- *  - only city / role / sector / topic types are user-creatable
- *    (company / college require page ownership)
  */
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Hash, MapPin, Users, Briefcase, Loader2, Check } from "lucide-react";
+import { ArrowLeft, Hash, MapPin, Users, Briefcase, Loader2, Check, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -34,12 +32,23 @@ const RULES_TEMPLATE = `1. Be respectful — disagree with ideas, not people.
 const MIN_SCORE = 50;
 const MAX_PER_30D = 3;
 
+function SectionCard({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <section className="rounded-2xl border border-neutral-200 bg-white p-5 md:p-6 space-y-4">
+      <header>
+        <h2 className="text-[15px] font-semibold text-[#1A1A2E]">{title}</h2>
+        {hint && <p className="text-[12px] text-neutral-500 mt-0.5">{hint}</p>}
+      </header>
+      {children}
+    </section>
+  );
+}
+
 export default function CircleCreate() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, profile, loading } = useAuth();
 
-  // If invoked with ?org=<orgId>, pre-link this circle to that organization
   const linkedOrgId = searchParams.get("org");
   const [linkedOrgName, setLinkedOrgName] = useState<string | null>(null);
 
@@ -64,7 +73,6 @@ export default function CircleCreate() {
 
   const slug = useMemo(() => generateSlug(name), [name]);
 
-  // Check 30d quota
   useEffect(() => {
     if (!user) return;
     (async () => {
@@ -81,7 +89,7 @@ export default function CircleCreate() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--brand)" }} />
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#FA903E" }} />
       </div>
     );
   }
@@ -97,15 +105,15 @@ export default function CircleCreate() {
   }
   const blocked = blockedReasons.length > 0;
 
+  const formValid = name.trim().length >= 3 && description.trim().length >= 20;
+  const canSubmit = !blocked && formValid && !submitting;
+
   const proceedSubmit = async () => {
     if (!user) return;
     setSubmitting(true);
 
     const { data: existing } = await supabase
-      .from("circles")
-      .select("id")
-      .eq("slug", slug)
-      .maybeSingle();
+      .from("circles").select("id").eq("slug", slug).maybeSingle();
     if (existing) {
       setSubmitting(false);
       toast.error("That name is taken — try a different one");
@@ -115,20 +123,14 @@ export default function CircleCreate() {
     const { data, error } = await supabase
       .from("circles")
       .insert({
-        type,
-        name: name.trim(),
-        slug,
+        type, name: name.trim(), slug,
         description: description.trim(),
-        icon_url: icon,
-        rules,
-        visibility,
-        who_can_post: whoCanPost,
-        who_can_join: whoCanJoin,
+        icon_url: icon, rules, visibility,
+        who_can_post: whoCanPost, who_can_join: whoCanJoin,
         created_by: user.id,
         ...(linkedOrgId ? { linked_org_id: linkedOrgId } : {}),
       } as any)
-      .select()
-      .single();
+      .select().single();
 
     if (error || !data) {
       setSubmitting(false);
@@ -136,7 +138,6 @@ export default function CircleCreate() {
       return;
     }
 
-    // Auto-join the creator
     await supabase.from("circle_members").insert({ circle_id: data.id, user_id: user.id });
 
     setSubmitting(false);
@@ -145,12 +146,12 @@ export default function CircleCreate() {
   };
 
   const handleSubmit = async () => {
-    if (blocked) return;
-    if (name.trim().length < 2 || name.trim().length > 40) {
-      toast.error("Name must be 2-40 characters");
+    if (!canSubmit) return;
+    if (name.trim().length > 40) {
+      toast.error("Name must be 3-40 characters");
       return;
     }
-    if (description.trim().length < 20 || description.trim().length > 300) {
+    if (description.trim().length > 300) {
       toast.error("Description must be 20-300 characters");
       return;
     }
@@ -176,41 +177,47 @@ export default function CircleCreate() {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: "var(--bg)" }}>
-      <div className="max-w-[640px] mx-auto px-4 py-6">
+    <div className="min-h-screen pb-28" style={{ background: "var(--bg)" }}>
+      <div className="max-w-[720px] mx-auto px-4 md:px-6 py-6 space-y-4">
         <button
           type="button"
           onClick={() => navigate("/app/circles")}
-          className="flex items-center gap-2 mb-4 cursor-pointer"
-          style={{ background: "none", border: "none", color: "var(--text-2)", fontSize: 13 }}
+          className="inline-flex items-center gap-2 cursor-pointer text-[13px] text-neutral-500 hover:text-neutral-800"
+          style={{ background: "none", border: "none" }}
         >
           <ArrowLeft className="w-4 h-4" /> Back to circles
         </button>
 
-        <h1 className="text-[22px] font-bold mb-1" style={{ color: "var(--text-1)" }}>
-          Create a circle
-        </h1>
-        <p className="text-[13px] mb-5" style={{ color: "var(--text-3)" }}>
-          A circle is a focused community around a topic, role, sector, or city.
-        </p>
+        <div>
+          <h1 className="text-[24px] md:text-[28px] font-semibold tracking-tight" style={{ color: "#1A1A2E" }}>
+            Create a circle
+          </h1>
+          <p className="text-[13px] text-neutral-600 mt-1">
+            A focused community around a topic, role, sector, or city.
+          </p>
+        </div>
 
+        {/* Eligibility banner — at the top */}
         {blocked && (
           <div
-            className="p-3 rounded-xl mb-4"
+            className="rounded-2xl p-4 flex gap-3 items-start"
             style={{ background: "rgba(245,158,11,0.10)", border: "1px solid rgba(245,158,11,0.40)" }}
           >
-            <p className="text-[13px] font-bold mb-1" style={{ color: "#92400E" }}>
-              You can't create a circle yet
-            </p>
-            <ul className="text-[12px] list-disc pl-4" style={{ color: "#92400E" }}>
-              {blockedReasons.map((r) => <li key={r}>{r}</li>)}
-            </ul>
+            <Lock className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "#92400E" }} />
+            <div>
+              <p className="text-[13px] font-bold mb-1" style={{ color: "#92400E" }}>
+                You can't create a circle yet
+              </p>
+              <ul className="text-[12px] list-disc pl-4 space-y-0.5" style={{ color: "#92400E" }}>
+                {blockedReasons.map((r) => <li key={r}>{r}</li>)}
+              </ul>
+            </div>
           </div>
         )}
 
         {linkedOrgId && (
           <div
-            className="p-3 rounded-xl mb-4 flex items-center gap-2"
+            className="rounded-2xl p-3 flex items-center gap-2"
             style={{ background: "rgba(232,115,58,0.08)", border: "1px solid rgba(232,115,58,0.30)" }}
           >
             <Users className="w-4 h-4" style={{ color: "#9A4C1F" }} />
@@ -220,106 +227,104 @@ export default function CircleCreate() {
           </div>
         )}
 
-        {/* Type */}
-        <p className="text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: "var(--text-3)" }}>Type</p>
-        <div className="grid grid-cols-2 gap-2 mb-4">
-          {TYPE_OPTIONS.map((opt) => {
-            const Icon = opt.icon;
-            const active = type === opt.value;
-            return (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => setType(opt.value)}
-                className="text-left p-3 rounded-xl cursor-pointer"
-                style={{
-                  background: active ? "var(--brand-dim)" : "var(--surface)",
-                  border: `1px solid ${active ? "var(--brand)" : "var(--border)"}`,
-                }}
-              >
-                <Icon className="w-4 h-4 mb-1" style={{ color: active ? "var(--brand)" : "var(--text-2)" }} />
-                <p className="text-[13px] font-bold" style={{ color: "var(--text-1)" }}>{opt.label}</p>
-                <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{opt.hint}</p>
-              </button>
-            );
-          })}
-        </div>
+        {/* SECTION 1: Type */}
+        <SectionCard title="Type" hint="Pick what kind of community this is.">
+          <div className="grid grid-cols-2 gap-2">
+            {TYPE_OPTIONS.map((opt) => {
+              const Icon = opt.icon;
+              const active = type === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setType(opt.value)}
+                  className="text-left p-3 rounded-xl cursor-pointer transition"
+                  style={{
+                    background: active ? "rgba(250,144,62,0.08)" : "#fff",
+                    border: `1px solid ${active ? "#FA903E" : "#E5E7EB"}`,
+                  }}
+                >
+                  <Icon className="w-4 h-4 mb-1" style={{ color: active ? "#FA903E" : "#6B7094" }} />
+                  <p className="text-[13px] font-bold" style={{ color: "#1A1A2E" }}>{opt.label}</p>
+                  <p className="text-[11px] text-neutral-500">{opt.hint}</p>
+                </button>
+              );
+            })}
+          </div>
+        </SectionCard>
 
-        {/* Name */}
-        <div className="mb-4">
-          <label className="text-[11px] font-bold uppercase tracking-wider mb-1 block" style={{ color: "var(--text-3)" }}>
-            Name
-          </label>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value.slice(0, 40))}
-            placeholder="e.g. Bangalore Designers"
-            className="w-full h-11 px-3.5 rounded-xl outline-none text-[14px]"
-            style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-1)" }}
-          />
-          <div className="flex justify-between mt-1">
-            <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
-              URL: /app/circles/<span style={{ color: "var(--text-2)", fontWeight: 600 }}>{slug || "your-circle"}</span>
+        {/* SECTION 2: Identity */}
+        <SectionCard title="Identity" hint="Name, link, description and icon.">
+          <div>
+            <label className="text-[11px] font-bold uppercase tracking-wider mb-1 block text-neutral-500">
+              Name
+            </label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value.slice(0, 40))}
+              placeholder="e.g. Bangalore Designers"
+              className="w-full h-11 px-3.5 rounded-xl outline-none text-[14px] bg-white"
+              style={{ border: "1px solid #E5E7EB", color: "#1A1A2E" }}
+            />
+            <div className="flex justify-between mt-1">
+              <p className="text-[11px] text-neutral-500">
+                URL: /app/circles/<span className="text-neutral-700 font-semibold">{slug || "your-circle"}</span>
+              </p>
+              <p className="text-[11px]" style={{ color: name.length > 40 ? "#EF4444" : "#9CA3AF" }}>{name.length}/40</p>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-[11px] font-bold uppercase tracking-wider mb-1 block text-neutral-500">
+              Description (20-300 chars)
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value.slice(0, 300))}
+              placeholder="What's this circle about? Who should join?"
+              className="w-full min-h-[80px] px-3.5 py-2.5 rounded-xl outline-none text-[14px] resize-none bg-white"
+              style={{ border: "1px solid #E5E7EB", color: "#1A1A2E" }}
+            />
+            <p className="text-[11px] text-right mt-1" style={{ color: description.length > 300 ? "#EF4444" : "#9CA3AF" }}>
+              {description.length}/300
             </p>
-            <p className="text-[11px]" style={{ color: name.length > 40 ? "#EF4444" : "var(--text-3)" }}>{name.length}/40</p>
           </div>
-        </div>
 
-        {/* Description */}
-        <div className="mb-4">
-          <label className="text-[11px] font-bold uppercase tracking-wider mb-1 block" style={{ color: "var(--text-3)" }}>
-            Description (20-300 chars)
-          </label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value.slice(0, 300))}
-            placeholder="What's this circle about? Who should join?"
-            className="w-full min-h-[80px] px-3.5 py-2.5 rounded-xl outline-none text-[14px] resize-none"
-            style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-1)" }}
-          />
-          <p className="text-[11px] text-right mt-1" style={{ color: description.length > 300 ? "#EF4444" : "var(--text-3)" }}>
-            {description.length}/300
-          </p>
-        </div>
-
-        {/* Icon */}
-        <div className="mb-4">
-          <label className="text-[11px] font-bold uppercase tracking-wider mb-1 block" style={{ color: "var(--text-3)" }}>
-            Icon
-          </label>
-          <div className="flex gap-2 flex-wrap">
-            {["✨", "🎯", "💡", "🚀", "🔥", "🌱", "📚", "🎨", "💻", "🏙️", "🤝", "⚡"].map((e) => (
-              <button
-                key={e}
-                type="button"
-                onClick={() => setIcon(e)}
-                className="w-10 h-10 rounded-xl text-[18px] cursor-pointer flex items-center justify-center"
-                style={{
-                  background: icon === e ? "var(--brand-dim)" : "var(--surface)",
-                  border: `1px solid ${icon === e ? "var(--brand)" : "var(--border)"}`,
-                }}
-              >
-                {e}
-              </button>
-            ))}
+          <div>
+            <label className="text-[11px] font-bold uppercase tracking-wider mb-1 block text-neutral-500">
+              Icon
+            </label>
+            <div className="flex gap-2 flex-wrap">
+              {["✨", "🎯", "💡", "🚀", "🔥", "🌱", "📚", "🎨", "💻", "🏙️", "🤝", "⚡"].map((e) => (
+                <button
+                  key={e}
+                  type="button"
+                  onClick={() => setIcon(e)}
+                  className="w-10 h-10 rounded-xl text-[18px] cursor-pointer flex items-center justify-center transition"
+                  style={{
+                    background: icon === e ? "rgba(250,144,62,0.10)" : "#fff",
+                    border: `1px solid ${icon === e ? "#FA903E" : "#E5E7EB"}`,
+                  }}
+                >
+                  {e}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        </SectionCard>
 
-        {/* Rules */}
-        <div className="mb-4">
-          <label className="text-[11px] font-bold uppercase tracking-wider mb-1 block" style={{ color: "var(--text-3)" }}>
-            Community rules (editable)
-          </label>
+        {/* SECTION 3: Rules */}
+        <SectionCard title="Community rules" hint="Editable — these appear on your circle's About panel.">
           <textarea
             value={rules}
             onChange={(e) => setRules(e.target.value)}
-            className="w-full min-h-[120px] px-3.5 py-2.5 rounded-xl outline-none text-[13px] resize-none"
-            style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-1)" }}
+            className="w-full min-h-[140px] px-3.5 py-2.5 rounded-xl outline-none text-[13px] resize-none bg-white"
+            style={{ border: "1px solid #E5E7EB", color: "#1A1A2E" }}
           />
-        </div>
+        </SectionCard>
 
-        {/* Visibility / permissions */}
-        <div className="grid grid-cols-1 gap-3 mb-5">
+        {/* SECTION 4: Access */}
+        <SectionCard title="Access" hint="Who can see, post, and join.">
           <Selector
             label="Visibility"
             value={visibility}
@@ -349,21 +354,39 @@ export default function CircleCreate() {
               { value: "invite", label: "Invite only", hint: "Mods invite people" },
             ]}
           />
-        </div>
+        </SectionCard>
+      </div>
 
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={submitting || blocked}
-          className="w-full h-12 rounded-xl text-[14px] font-bold cursor-pointer disabled:opacity-50"
-          style={{
-            background: "linear-gradient(135deg, #E8733A, #FF6B9D)",
-            color: "#fff",
-            border: "none",
-          }}
-        >
-          {submitting ? <Loader2 className="w-4 h-4 animate-spin inline" /> : "Create circle"}
-        </button>
+      {/* Sticky footer CTA */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-30 backdrop-blur-md"
+        style={{
+          background: "rgba(255,255,255,0.95)",
+          borderTop: "1px solid #E5E7EB",
+        }}
+      >
+        <div className="max-w-[720px] mx-auto px-4 md:px-6 py-3 flex items-center justify-between gap-3">
+          <p className="text-[12px] text-neutral-500 hidden sm:block">
+            {!formValid
+              ? "Add a name (3+ chars) and description (20+ chars) to continue."
+              : blocked
+                ? "Eligibility required — see the banner above."
+                : "Ready to create."}
+          </p>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={!canSubmit}
+            className="ml-auto h-11 px-6 rounded-xl text-[14px] font-bold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition active:scale-95"
+            style={{
+              background: canSubmit ? "linear-gradient(135deg, #E8733A, #FF6B9D)" : "#9CA3AF",
+              color: "#fff",
+              border: "none",
+            }}
+          >
+            {submitting ? <Loader2 className="w-4 h-4 animate-spin inline" /> : "Create circle"}
+          </button>
+        </div>
       </div>
 
       <SoftWarnModal
@@ -385,7 +408,7 @@ function Selector({ label, value, onChange, options }: {
 }) {
   return (
     <div>
-      <p className="text-[11px] font-bold uppercase tracking-wider mb-1.5" style={{ color: "var(--text-3)" }}>{label}</p>
+      <p className="text-[11px] font-bold uppercase tracking-wider mb-1.5 text-neutral-500">{label}</p>
       <div className="grid grid-cols-3 gap-2">
         {options.map((o) => {
           const active = value === o.value;
@@ -394,15 +417,15 @@ function Selector({ label, value, onChange, options }: {
               key={o.value}
               type="button"
               onClick={() => onChange(o.value)}
-              className="text-left p-2.5 rounded-xl cursor-pointer relative"
+              className="text-left p-2.5 rounded-xl cursor-pointer relative transition"
               style={{
-                background: active ? "var(--brand-dim)" : "var(--surface)",
-                border: `1px solid ${active ? "var(--brand)" : "var(--border)"}`,
+                background: active ? "rgba(250,144,62,0.08)" : "#fff",
+                border: `1px solid ${active ? "#FA903E" : "#E5E7EB"}`,
               }}
             >
-              {active && <Check className="w-3 h-3 absolute top-2 right-2" style={{ color: "var(--brand)" }} />}
-              <p className="text-[12px] font-bold" style={{ color: "var(--text-1)" }}>{o.label}</p>
-              <p className="text-[10px] mt-0.5" style={{ color: "var(--text-3)" }}>{o.hint}</p>
+              {active && <Check className="w-3 h-3 absolute top-2 right-2" style={{ color: "#FA903E" }} />}
+              <p className="text-[12px] font-bold" style={{ color: "#1A1A2E" }}>{o.label}</p>
+              <p className="text-[10px] mt-0.5 text-neutral-500">{o.hint}</p>
             </button>
           );
         })}
