@@ -1238,33 +1238,6 @@ const Profile = () => {
                   </button>
                 </div>
               )}
-              <div className="flex items-center flex-wrap" style={{ gap: 8, marginTop: 10 }}>
-                {isOwnProfile ? (
-                  <button
-                    type="button"
-                    onClick={() => setEditOpen(true)}
-                    className="cursor-pointer"
-                    style={{
-                      height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 700,
-                      background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none",
-                      boxShadow: "0 2px 12px rgba(232,115,58,0.25)",
-                    }}
-                  >
-                    <Pencil className="w-3 h-3 inline mr-1" /> Edit Profile
-                  </button>
-                ) : (
-                  <>
-                    {renderConnectButton()}
-                    <button type="button" onClick={() => navigate(`/app/pings?to=${targetUserId}`)} className="cursor-pointer" style={{
-                      height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 500,
-                      background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.40)",
-                      color: "#1A1A2E", display: "inline-flex", alignItems: "center", gap: 4,
-                    }}>
-                      <MessageCircle style={{ width: 13, height: 13 }} /> Message
-                    </button>
-                  </>
-                )}
-              </div>
             </div>
           </div>
             );
