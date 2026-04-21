@@ -2,8 +2,8 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Plus, Search, TrendingUp, Clock, Award, MessageCircle, MoreHorizontal,
-  Pencil, Trash2, Loader2, ArrowLeft, ChevronRight, X as XIcon,
+  Search, TrendingUp, Clock, Award, MessageCircle, MoreHorizontal,
+  Pencil, Trash2, Loader2, ArrowLeft, MapPin, Users, Briefcase, Hash,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,6 +15,9 @@ import SoftWarnModal from "@/components/moderation/SoftWarnModal";
 import ReportButton from "@/components/moderation/ReportButton";
 import CircleCreatePage from "@/pages/CircleCreate";
 import CommentPanel from "@/components/comments/CommentPanel";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CircleGrid } from "@/components/circles/CircleGridCard";
+import { CreateCircleButton } from "@/components/circles/CreateCircleButton";
 
 type CircleRecord = any;
 
