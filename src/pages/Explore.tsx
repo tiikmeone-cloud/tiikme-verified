@@ -32,6 +32,37 @@ const SECTIONS: { key: SectionKey; label: string }[] = [
   { key: "hashtags", label: "Hashtags" },
 ];
 
+/* ─────────── Section helpers (responsive grid w/ section header) ─────────── */
+const SectionGrid = ({
+  sectionRef, title, count, cols, children,
+}: {
+  sectionRef: (el: HTMLDivElement | null) => void;
+  title: string;
+  count: number;
+  cols: string;
+  children: React.ReactNode;
+}) => (
+  <section ref={sectionRef} style={{ marginBottom: 28 }}>
+    <div className="flex items-center" style={{ marginBottom: 12 }}>
+      <div style={{ width: 3, height: 18, borderRadius: 2, background: "#E8733A", marginRight: 8, flexShrink: 0 }} />
+      <h2 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)", flex: 1, margin: 0 }}>{title}</h2>
+      <span className="num" style={{ fontSize: 12, color: "var(--text-muted)", marginLeft: 8 }}>{count}</span>
+    </div>
+    <div className={`grid gap-3 md:gap-4 ${cols}`}>
+      {children}
+    </div>
+  </section>
+);
+
+/* GridCell breaks the 280px hardcoded width on the inner card so it
+ * fills the grid track instead of overflowing. */
+const GridCell = ({ children }: { children: React.ReactNode }) => (
+  <div className="min-w-0 [&>article]:!w-full [&>article]:!min-w-0">
+    {children}
+  </div>
+);
+
+
 const Explore = () => {
   const { user, profile } = useAuth();
   const qc = useQueryClient();
