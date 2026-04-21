@@ -1470,7 +1470,7 @@ const Profile = () => {
           </div>
 
           {/* ═══ RIGHT COLUMN ═══ */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <ExperienceSection items={experiences} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("experience")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
             <EducationSection items={education} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("education")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
             <RolesSection items={profileRoles} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("role")} onDelete={deleteRole} />
