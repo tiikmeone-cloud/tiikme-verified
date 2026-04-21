@@ -70,14 +70,27 @@ const EMPTY: WizardState = {
   display_preference: DEFAULT_DISPLAY_PREFERENCE,
 };
 
+// Glass-on-midnight input/select styling. Translucent fill, white text,
+// brand-orange focus ring. Used by every step on the dark AuthLayout.
 const inputStyle: React.CSSProperties = {
-  background: "#fff", border: "1.5px solid #E5E7EB", borderRadius: 14,
-  color: "#111827", height: 48, width: "100%", padding: "0 14px", fontSize: 14,
+  background: "rgba(255,255,255,0.04)",
+  border: "1.5px solid rgba(255,255,255,0.15)",
+  borderRadius: 14,
+  color: "#FAFAF7",
+  height: 48,
+  width: "100%",
+  padding: "0 14px",
+  fontSize: 14,
   outline: "none",
 };
 
 const labelCls = "block text-[13px] font-semibold mb-1.5";
-const labelStyle: React.CSSProperties = { color: "#374151" };
+const labelStyle: React.CSSProperties = { color: "rgba(250,250,247,0.85)" };
+
+// Tiikme brand orange used everywhere instead of legacy #E8580A
+const BRAND = "#FA903E";
+const BRAND_DIM = "rgba(250,144,62,0.14)";
+const BRAND_RING = "rgba(250,144,62,0.45)";
 
 export default function Onboarding() {
   const navigate = useNavigate();
