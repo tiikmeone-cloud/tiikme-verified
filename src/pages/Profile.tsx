@@ -1370,6 +1370,103 @@ const Profile = () => {
                 </div>
               )}
             </div>
+
+            {/* L4: Availability (Open to work) */}
+            {(() => {
+              const otwOn = !!profileData.open_to_work;
+              if (isOwnProfile) {
+                return (
+                  <div className="glass-card" style={{ padding: 12, borderRadius: 16 }}>
+                    <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>Availability</p>
+                    <p style={{ fontSize: 12, color: "#6B7094", marginTop: 2 }}>
+                      Let others know you're open to new opportunities.
+                    </p>
+                    <div className="flex items-center justify-between" style={{ marginTop: 10 }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>Open to work</span>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!profileData?.id) return;
+                          const next = !profileData.open_to_work;
+                          setViewedProfile({ ...profileData, open_to_work: next });
+                          const { error } = await supabase.from("profiles").update({ open_to_work: next } as any).eq("id", profileData.id);
+                          if (error) {
+                            setViewedProfile({ ...profileData, open_to_work: !next });
+                            toast.error("Could not update");
+                          } else {
+                            toast.success(next ? "Open to work enabled" : "Open to work disabled");
+                            refreshProfile?.();
+                          }
+                        }}
+                        aria-label="Toggle Open to work"
+                        style={{
+                          width: 44, height: 24, borderRadius: 12, padding: 2, border: "none",
+                          background: otwOn ? "#10B981" : "rgba(0,0,0,0.18)",
+                          display: "inline-flex", alignItems: "center", cursor: "pointer", transition: "background 0.2s",
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: 20, height: 20, borderRadius: "50%", background: "#fff",
+                            transform: otwOn ? "translateX(20px)" : "translateX(0)",
+                            transition: "transform 0.2s",
+                            boxShadow: "0 1px 2px rgba(0,0,0,0.15)",
+                          }}
+                        />
+                      </button>
+                    </div>
+                    <ul style={{ marginTop: 10, fontSize: 11, color: "#6B7094", lineHeight: 1.6, paddingLeft: 14, listStyle: "disc" }}>
+                      <li>Shown on your profile as a badge</li>
+                      <li>Shown in Find / Explore results</li>
+                      <li>You can turn this off any time</li>
+                    </ul>
+                  </div>
+                );
+              }
+              if (otwOn) {
+                return (
+                  <div className="glass-card" style={{ padding: 12, borderRadius: 16, border: "1px solid rgba(16,185,129,0.30)" }}>
+                    <div className="flex items-center" style={{ gap: 6 }}>
+                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#10B981" }} />
+                      <p style={{ fontSize: 14, fontWeight: 700, color: "#059669" }}>Open to work</p>
+                    </div>
+                    <p style={{ fontSize: 12, color: "#6B7094", marginTop: 4 }}>
+                      {displayName} is open to new roles.
+                    </p>
+                    <div className="flex items-center" style={{ gap: 6, marginTop: 10 }}>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/app/pings?to=${targetUserId}`)}
+                        className="cursor-pointer"
+                        style={{
+                          height: 30, padding: "0 12px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+                          background: "#10B981", color: "#fff", border: "none",
+                        }}
+                      >
+                        Message
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const url = `${window.location.origin}/${username || targetUserId}`;
+                          navigator.clipboard?.writeText(url);
+                          toast.success("Profile link copied");
+                        }}
+                        className="cursor-pointer"
+                        style={{
+                          height: 30, padding: "0 12px", borderRadius: 8, fontSize: 12, fontWeight: 500,
+                          background: "rgba(255,255,255,0.25)", border: "1px solid rgba(0,0,0,0.10)",
+                          color: "#1A1A2E",
+                        }}
+                      >
+                        Share profile
+                      </button>
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
           </div>
 
           {/* ═══ RIGHT COLUMN ═══ */}
