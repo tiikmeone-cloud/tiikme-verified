@@ -89,9 +89,10 @@ const AppRoutes = () => {
             <Route path="/signin" element={<PublicOnlyRoute><PageErrorBoundary><SignIn /></PageErrorBoundary></PublicOnlyRoute>} />
             <Route path="/signup" element={<PageErrorBoundary><SignupPage /></PageErrorBoundary>} />
             <Route path="/verify-email" element={<PageErrorBoundary><VerifyEmailPage /></PageErrorBoundary>} />
-            <Route path="/onboarding/role" element={<PageErrorBoundary><OnboardingRole /></PageErrorBoundary>} />
-            <Route path="/onboarding/details" element={<PageErrorBoundary><OnboardingDetails /></PageErrorBoundary>} />
-            <Route path="/onboarding/welcome" element={<PageErrorBoundary><OnboardingWelcome /></PageErrorBoundary>} />
+            <Route path="/onboarding" element={<PageErrorBoundary><Onboarding /></PageErrorBoundary>} />
+            <Route path="/onboarding/role" element={<Navigate to="/onboarding" replace />} />
+            <Route path="/onboarding/details" element={<Navigate to="/onboarding" replace />} />
+            <Route path="/onboarding/welcome" element={<Navigate to="/onboarding" replace />} />
             <Route path="/welcome" element={<PageErrorBoundary><Welcome /></PageErrorBoundary>} />
             <Route path="/verify-invite" element={<PageErrorBoundary><VerifyInvite /></PageErrorBoundary>} />
             <Route path="/privacy" element={<PageErrorBoundary><Privacy /></PageErrorBoundary>} />

@@ -18,7 +18,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const needsOnboarding = profile && !profile.onboarding_complete && isNewAccount && profile.account_type !== 'institution';
 
   if (needsOnboarding && !location.pathname.startsWith("/onboarding")) {
-    return <Navigate to="/onboarding/role" replace />;
+    return <Navigate to="/onboarding" replace />;
   }
 
   return <>{children}</>;
