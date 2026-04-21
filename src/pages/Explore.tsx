@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Search, X, AlertCircle } from "lucide-react";
 import { cleanUsername } from "@/lib/cleanUsername";
 import { Link, useNavigate } from "react-router-dom";
@@ -32,8 +32,40 @@ const SECTIONS: { key: SectionKey; label: string }[] = [
   { key: "hashtags", label: "Hashtags" },
 ];
 
+/* ─────────── Section helpers (responsive grid w/ section header) ─────────── */
+const SectionGrid = ({
+  sectionRef, title, count, cols, children,
+}: {
+  sectionRef: (el: HTMLDivElement | null) => void;
+  title: string;
+  count: number;
+  cols: string;
+  children: React.ReactNode;
+}) => (
+  <section ref={sectionRef} style={{ marginBottom: 28 }}>
+    <div className="flex items-center" style={{ marginBottom: 12 }}>
+      <div style={{ width: 3, height: 18, borderRadius: 2, background: "#E8733A", marginRight: 8, flexShrink: 0 }} />
+      <h2 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)", flex: 1, margin: 0 }}>{title}</h2>
+      <span className="num" style={{ fontSize: 12, color: "var(--text-muted)", marginLeft: 8 }}>{count}</span>
+    </div>
+    <div className={`grid gap-3 md:gap-4 ${cols}`}>
+      {children}
+    </div>
+  </section>
+);
+
+/* GridCell breaks the 280px hardcoded width on the inner card so it
+ * fills the grid track instead of overflowing. */
+const GridCell = ({ children }: { children: React.ReactNode }) => (
+  <div className="min-w-0 [&>article]:!w-full [&>article]:!min-w-0">
+    {children}
+  </div>
+);
+
+
 const Explore = () => {
   const { user, profile } = useAuth();
+  const qc = useQueryClient();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [focused, setFocused] = useState(false);
@@ -52,7 +84,8 @@ const Explore = () => {
 
   useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
-  /* ─────────── Search (debounced) ─────────── */
+  /* ─────────── Search (debounced) — also dedupes people the viewer
+   *  has already requested or connected with, using the live strandMap. */
   useEffect(() => {
     if (search.trim().length < 2) { setSearchResults([]); setShowSearchResults(false); return; }
     const t = setTimeout(async () => {
@@ -60,17 +93,21 @@ const Explore = () => {
       const [{ data: profiles }, { data: orgs }] = await Promise.all([
         supabase.from("profiles").select("id, full_name, username, avatar_url, role")
           .eq("is_public", true).neq("id", user?.id || "")
-          .or(`full_name.ilike.${term},username.ilike.${term}`).limit(5),
+          .or(`full_name.ilike.${term},username.ilike.${term}`).limit(8),
         supabase.from("organizations").select("id, name, slug, type, subtype, logo_url")
           .or(`name.ilike.${term}`).limit(5),
       ]);
       const results: any[] = [];
-      (profiles || []).forEach(p => results.push({ ...p, kind: "person" }));
+      (profiles || []).forEach(p => {
+        const st = strandMap[p.id];
+        if (st === "accepted" || st === "pending") return;   // dedupe
+        results.push({ ...p, kind: "person" });
+      });
       (orgs || []).forEach(o => results.push({ ...o, kind: "org" }));
-      if (mountedRef.current) { setSearchResults(results); setShowSearchResults(true); }
+      if (mountedRef.current) { setSearchResults(results.slice(0, 8)); setShowSearchResults(true); }
     }, 300);
     return () => clearTimeout(t);
-  }, [search, user?.id]);
+  }, [search, user?.id, strandMap]);
 
   /* ─────────── Profile signals ─────────── */
   const viewerInterests = useMemo(() => {
@@ -260,8 +297,17 @@ const Explore = () => {
   /* ─────────── Actions ─────────── */
   const handleStrand = async (personId: string) => {
     if (!user) return;
+    // Optimistic: drop the card from People you may know immediately so
+    // the list never re-shows someone we just requested.
+    qc.setQueryData(["explore-sectioned", user.id], (old: any) =>
+      old ? { ...old, people: (old.people || []).filter((p: any) => p.id !== personId) } : old
+    );
+    setStrandMap(prev => ({ ...prev, [personId]: "pending" }));
     const result = await sendConnectionRequest(user.id, personId, profile?.full_name || "Someone");
-    if (result === null) return;
+    if (result === null) {
+      // request already existed — keep the card hidden, don't roll back
+      return;
+    }
     setStrandMap(prev => ({ ...prev, [personId]: result }));
     toast.success(result === "accepted" ? "Connected!" : "Request sent");
   };
@@ -307,7 +353,7 @@ const Explore = () => {
   const anyContent = showPeople || showCircles || showOrgs || showPosts || showHashtags;
 
   return (
-    <main style={{ maxWidth: 960, margin: "0 auto", padding: 16 }}>
+    <main className="mx-auto max-w-6xl px-4 md:px-6 pt-4 pb-24 md:pb-12">
       {/* Sticky top bar */}
       <div style={{ position: "sticky", top: 0, zIndex: 20, background: "var(--bg-base)", paddingBottom: 12 }}>
         {/* Search */}
@@ -435,53 +481,62 @@ const Explore = () => {
       {/* Sections */}
       <div style={{ marginTop: 16 }}>
         {showPeople && (
-          <div ref={el => { sectionRefs.current.people = el; }}>
-            <HorizontalCarousel title="People you may know" count={exploreData!.people.length}>
-              {exploreData!.people.slice(0, 6).map(p => (
-                <div key={p.id} style={{ scrollSnapAlign: "start", flexShrink: 0 }}>
-                  <PersonCard
-                    p={p}
-                    strandStatus={strandMap[p.id] || "none"}
-                    onStrand={() => handleStrand(p.id)}
-                    currentUserId={user?.id}
-                  />
-                </div>
-              ))}
-            </HorizontalCarousel>
-          </div>
+          <SectionGrid
+            sectionRef={el => { sectionRefs.current.people = el; }}
+            title="People you may know"
+            count={exploreData!.people.length}
+            cols="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+          >
+            {exploreData!.people.slice(0, 12).map(p => (
+              <GridCell key={p.id}>
+                <PersonCard
+                  p={p}
+                  strandStatus={strandMap[p.id] || "none"}
+                  onStrand={() => handleStrand(p.id)}
+                  currentUserId={user?.id}
+                />
+              </GridCell>
+            ))}
+          </SectionGrid>
         )}
 
         {showCircles && (
-          <div ref={el => { sectionRefs.current.circles = el; }}>
-            <HorizontalCarousel title="Circles for you" count={exploreData!.circles.length}>
-              {exploreData!.circles.slice(0, 5).map(c => (
-                <div key={c.id} style={{ scrollSnapAlign: "start", flexShrink: 0, width: 280 }}>
-                  <CircleCard
-                    circle={c}
-                    isMember={!!memberMap[c.id]}
-                    onJoin={(e) => { e.stopPropagation(); joinCircle(c.id); }}
-                  />
-                </div>
-              ))}
-            </HorizontalCarousel>
-          </div>
+          <SectionGrid
+            sectionRef={el => { sectionRefs.current.circles = el; }}
+            title="Circles for you"
+            count={exploreData!.circles.length}
+            cols="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            {exploreData!.circles.slice(0, 9).map(c => (
+              <GridCell key={c.id}>
+                <CircleCard
+                  circle={c}
+                  isMember={!!memberMap[c.id]}
+                  onJoin={(e) => { e.stopPropagation(); joinCircle(c.id); }}
+                />
+              </GridCell>
+            ))}
+          </SectionGrid>
         )}
 
         {showOrgs && (
-          <div ref={el => { sectionRefs.current.orgs = el; }}>
-            <HorizontalCarousel title="Organizations to discover" count={exploreData!.orgs.length}>
-              {exploreData!.orgs.slice(0, 4).map(o => (
-                <div key={o.id} style={{ scrollSnapAlign: "start", flexShrink: 0 }}>
-                  <OrgCard
-                    org={o}
-                    following={!!followMap[o.id]}
-                    onToggleFollow={() => toggleFollow(o.id, o.created_by)}
-                    navigateTo={getOrgNavigateTo(o)}
-                  />
-                </div>
-              ))}
-            </HorizontalCarousel>
-          </div>
+          <SectionGrid
+            sectionRef={el => { sectionRefs.current.orgs = el; }}
+            title="Organizations to discover"
+            count={exploreData!.orgs.length}
+            cols="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            {exploreData!.orgs.slice(0, 9).map(o => (
+              <GridCell key={o.id}>
+                <OrgCard
+                  org={o}
+                  following={!!followMap[o.id]}
+                  onToggleFollow={() => toggleFollow(o.id, o.created_by)}
+                  navigateTo={getOrgNavigateTo(o)}
+                />
+              </GridCell>
+            ))}
+          </SectionGrid>
         )}
 
         {showPosts && (
