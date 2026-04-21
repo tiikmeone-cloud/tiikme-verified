@@ -1282,9 +1282,9 @@ const Profile = () => {
 
 
         {/* ── SECTION GRID ── */}
-        <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-2 md:gap-3 mt-2 md:mt-3">
+        <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-3 md:gap-5 mt-3 md:mt-5">
           {/* ═══ LEFT COLUMN ═══ */}
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
             {/* Verification status (own profile only, hidden if already verified) */}
             {isOwnProfile && <VerificationStatusCard />}
             {/* L1: Connections preview */}
