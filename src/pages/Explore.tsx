@@ -322,7 +322,7 @@ const Explore = () => {
   const anyContent = showPeople || showCircles || showOrgs || showPosts || showHashtags;
 
   return (
-    <main style={{ maxWidth: 960, margin: "0 auto", padding: 16 }}>
+    <main className="mx-auto max-w-6xl px-4 md:px-6 pt-4 pb-24 md:pb-12">
       {/* Sticky top bar */}
       <div style={{ position: "sticky", top: 0, zIndex: 20, background: "var(--bg-base)", paddingBottom: 12 }}>
         {/* Search */}
@@ -450,53 +450,62 @@ const Explore = () => {
       {/* Sections */}
       <div style={{ marginTop: 16 }}>
         {showPeople && (
-          <div ref={el => { sectionRefs.current.people = el; }}>
-            <HorizontalCarousel title="People you may know" count={exploreData!.people.length}>
-              {exploreData!.people.slice(0, 6).map(p => (
-                <div key={p.id} style={{ scrollSnapAlign: "start", flexShrink: 0 }}>
-                  <PersonCard
-                    p={p}
-                    strandStatus={strandMap[p.id] || "none"}
-                    onStrand={() => handleStrand(p.id)}
-                    currentUserId={user?.id}
-                  />
-                </div>
-              ))}
-            </HorizontalCarousel>
-          </div>
+          <SectionGrid
+            sectionRef={el => { sectionRefs.current.people = el; }}
+            title="People you may know"
+            count={exploreData!.people.length}
+            cols="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+          >
+            {exploreData!.people.slice(0, 12).map(p => (
+              <GridCell key={p.id}>
+                <PersonCard
+                  p={p}
+                  strandStatus={strandMap[p.id] || "none"}
+                  onStrand={() => handleStrand(p.id)}
+                  currentUserId={user?.id}
+                />
+              </GridCell>
+            ))}
+          </SectionGrid>
         )}
 
         {showCircles && (
-          <div ref={el => { sectionRefs.current.circles = el; }}>
-            <HorizontalCarousel title="Circles for you" count={exploreData!.circles.length}>
-              {exploreData!.circles.slice(0, 5).map(c => (
-                <div key={c.id} style={{ scrollSnapAlign: "start", flexShrink: 0, width: 280 }}>
-                  <CircleCard
-                    circle={c}
-                    isMember={!!memberMap[c.id]}
-                    onJoin={(e) => { e.stopPropagation(); joinCircle(c.id); }}
-                  />
-                </div>
-              ))}
-            </HorizontalCarousel>
-          </div>
+          <SectionGrid
+            sectionRef={el => { sectionRefs.current.circles = el; }}
+            title="Circles for you"
+            count={exploreData!.circles.length}
+            cols="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            {exploreData!.circles.slice(0, 9).map(c => (
+              <GridCell key={c.id}>
+                <CircleCard
+                  circle={c}
+                  isMember={!!memberMap[c.id]}
+                  onJoin={(e) => { e.stopPropagation(); joinCircle(c.id); }}
+                />
+              </GridCell>
+            ))}
+          </SectionGrid>
         )}
 
         {showOrgs && (
-          <div ref={el => { sectionRefs.current.orgs = el; }}>
-            <HorizontalCarousel title="Organizations to discover" count={exploreData!.orgs.length}>
-              {exploreData!.orgs.slice(0, 4).map(o => (
-                <div key={o.id} style={{ scrollSnapAlign: "start", flexShrink: 0 }}>
-                  <OrgCard
-                    org={o}
-                    following={!!followMap[o.id]}
-                    onToggleFollow={() => toggleFollow(o.id, o.created_by)}
-                    navigateTo={getOrgNavigateTo(o)}
-                  />
-                </div>
-              ))}
-            </HorizontalCarousel>
-          </div>
+          <SectionGrid
+            sectionRef={el => { sectionRefs.current.orgs = el; }}
+            title="Organizations to discover"
+            count={exploreData!.orgs.length}
+            cols="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            {exploreData!.orgs.slice(0, 9).map(o => (
+              <GridCell key={o.id}>
+                <OrgCard
+                  org={o}
+                  following={!!followMap[o.id]}
+                  onToggleFollow={() => toggleFollow(o.id, o.created_by)}
+                  navigateTo={getOrgNavigateTo(o)}
+                />
+              </GridCell>
+            ))}
+          </SectionGrid>
         )}
 
         {showPosts && (
