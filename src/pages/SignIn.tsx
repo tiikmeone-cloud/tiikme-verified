@@ -20,6 +20,13 @@ const SignIn = () => {
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotLoading, setForgotLoading] = useState(false);
 
+  // Surface OAuth callback failures
+  useEffect(() => {
+    if (searchParams.get("error") === "oauth_failed") {
+      toast.error("Google sign-in failed. Please try again.");
+    }
+  }, [searchParams]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) { toast.info("Please fill in all fields"); return; }
