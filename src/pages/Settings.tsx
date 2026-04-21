@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrgSubscription } from "@/hooks/useOrgSubscription";
 import { DISPLAY_PREFERENCE_OPTIONS, DEFAULT_DISPLAY_PREFERENCE, type DisplayPreference } from "@/utils/displayProfile";
+import LinkedAccounts from "@/components/settings/LinkedAccounts";
 
 const baseNavItems = [
   { id: "profile", label: "Profile", icon: User },
@@ -641,6 +642,8 @@ const SettingsPage = () => {
                   <Input value={user?.email || ""} disabled className="opacity-60" />
                 </div>
               </div>
+
+              <LinkedAccounts />
 
               <div className="rounded-2xl p-5" style={{ background: "rgba(220,38,38,0.04)", border: "1px solid rgba(220,38,38,0.12)" }}>
                 <h3 className="text-[16px] font-bold mb-1" style={{ color: "#DC2626" }}>Deactivate Account</h3>
