@@ -265,8 +265,17 @@ const Explore = () => {
   /* ─────────── Actions ─────────── */
   const handleStrand = async (personId: string) => {
     if (!user) return;
+    // Optimistic: drop the card from People you may know immediately so
+    // the list never re-shows someone we just requested.
+    qc.setQueryData(["explore-sectioned", user.id], (old: any) =>
+      old ? { ...old, people: (old.people || []).filter((p: any) => p.id !== personId) } : old
+    );
+    setStrandMap(prev => ({ ...prev, [personId]: "pending" }));
     const result = await sendConnectionRequest(user.id, personId, profile?.full_name || "Someone");
-    if (result === null) return;
+    if (result === null) {
+      // request already existed — keep the card hidden, don't roll back
+      return;
+    }
     setStrandMap(prev => ({ ...prev, [personId]: result }));
     toast.success(result === "accepted" ? "Connected!" : "Request sent");
   };
