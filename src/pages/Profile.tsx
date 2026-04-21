@@ -40,6 +40,7 @@ import { getActivityTier } from "@/lib/algorithms";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle
 } from "@/components/ui/sheet";
+import { applyPrivacyToProfile } from "@/lib/applyPrivacy";
 
 /* ── Constants ── */
 const ROLE_COLOR_MAP: Record<string, string> = { student: "#4F46E5", professional: "#0369A1", doctor: "#0E7490", government: "#166534", skilled_trade: "#C2410C", hr: "#6B21A8", faculty: "#92400E", builder: "#7C3AED", aspirant: "#374151" };
@@ -258,7 +259,7 @@ const Profile = () => {
     if (!targetUserId) { setDataLoading(false); return; }
     setDataLoading(true);
     const [profileRes, itemsRes, strandCountRes, postsRes, achvsRes, certsRes, connAvatarsRes] = await Promise.allSettled([
-      isOwnProfile ? Promise.resolve({ data: authProfile }) : supabase.from("profiles").select("id, full_name, username, role, role_subtype, headline, bio, avatar_url, institution_name, location_city, location_state, activity_score, is_public, custom_links, open_to_work, otw_visibility, designation, sector, languages, department, is_verified, role_metadata, about_qa, verification_badge_text, verification_type, created_at, account_type, org_id, skills, display_preference, profession_type, currently_working_at").eq("id", targetUserId).maybeSingle(),
+      isOwnProfile ? Promise.resolve({ data: authProfile }) : supabase.from("profiles").select("id, full_name, username, role, role_subtype, headline, bio, avatar_url, institution_name, location_city, location_state, activity_score, is_public, custom_links, open_to_work, otw_visibility, designation, sector, languages, department, is_verified, role_metadata, about_qa, verification_badge_text, verification_type, created_at, account_type, org_id, skills, display_preference, profession_type, currently_working_at, privacy, privacy_settings, email").eq("id", targetUserId).maybeSingle(),
       supabase.from("work_items").select("id, title, job_title, description, company_name, institution_name, item_type, employment_type, work_location, start_date, end_date, start_month, start_year, end_month, end_year, is_current, status, visibility, verification_status, verified_by_user, verified_at, is_tiik_approved, created_at, owner_id").eq("owner_id", targetUserId).order("is_current", { ascending: false }).order("created_at", { ascending: false }),
       supabase.from("strands").select("id", { count: "exact", head: true }).or(`requester_id.eq.${targetUserId},receiver_id.eq.${targetUserId}`).eq("status", "accepted"),
       supabase.from("posts").select("id, author_id, posted_by_user_id, posted_by_org, content, type, image_urls, comment_count, repost_count, reactions, is_edited, repost_of, created_at, updated_at, post_reactions(count), post_comments(count)").eq("author_id", targetUserId).order("created_at", { ascending: false }).limit(5),
@@ -320,19 +321,25 @@ const Profile = () => {
   );
   if (!user && isOwnProfile) return null;
 
-  const profileData = viewedProfile || authProfile;
-  if (!profileData) return (
+  const rawProfileData = viewedProfile || authProfile;
+  if (!rawProfileData) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
       <p style={{ fontSize: 16, fontWeight: 700, color: "#1A1A2E" }}>Profile not found</p>
       <button type="button" onClick={() => navigate("/app/explore")} className="cursor-pointer" style={{ fontSize: 13, marginTop: 8, color: "#E8733A", background: "none", border: "none" }}>Back to Explore</button>
     </div>
   );
 
-  // Privacy
-  const privacySettings = profileData.privacy_settings as any || {};
-  const profileVisibility = privacySettings.profile_visibility || "public";
-  const showLocation = privacySettings.show_location !== false;
+  // Privacy — apply field-level visibility for non-owners.
   const isConnected = connectionStatus.status === "accepted";
+  const profileData: any = applyPrivacyToProfile(rawProfileData, {
+    id: user?.id ?? null,
+    isConnection: isConnected,
+    isVerified: !!authProfile?.is_verified,
+  });
+
+  const privacySettings = (rawProfileData as any).privacy_settings as any || {};
+  const profileVisibility = privacySettings.profile_visibility || "public";
+  const showLocation = profileData.location_city != null || profileData.location_state != null;
   const isPrivateView = !isOwnProfile && profileVisibility === "private";
   const isConnectionsOnly = !isOwnProfile && profileVisibility === "connections_only" && !isConnected;
 

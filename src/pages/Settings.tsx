@@ -79,91 +79,169 @@ const CONNECTIONS_VIS_OPTIONS = [
   { value: "only_me", label: "Only Me" },
 ];
 
+const SEGMENTED_CONN = [
+  { value: "everyone", label: "Everyone" },
+  { value: "connections", label: "Connections" },
+  { value: "only_me", label: "Only me" },
+] as const;
+const SEGMENTED_MSG = [
+  { value: "everyone", label: "Everyone" },
+  { value: "connections", label: "Connections" },
+  { value: "verified_only", label: "Verified" },
+  { value: "no_one", label: "No one" },
+] as const;
+const SEGMENTED_POSTS = [
+  { value: "everyone", label: "Everyone" },
+  { value: "connections", label: "Connections" },
+  { value: "only_me", label: "Only me" },
+] as const;
+
+const Segmented = ({ value, options, onChange }: {
+  value: string;
+  options: ReadonlyArray<{ value: string; label: string }>;
+  onChange: (v: string) => void;
+}) => (
+  <div className="inline-flex flex-wrap gap-1 p-1 rounded-xl" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
+    {options.map(opt => {
+      const active = value === opt.value;
+      return (
+        <button
+          key={opt.value}
+          type="button"
+          onClick={() => onChange(opt.value)}
+          className="px-3 h-8 rounded-lg text-[12.5px] font-semibold cursor-pointer transition-all"
+          style={{
+            background: active ? "#E8733A" : "transparent",
+            color: active ? "#fff" : "#6B7094",
+          }}
+        >
+          {opt.label}
+        </button>
+      );
+    })}
+  </div>
+);
+
+const PrivacyRow = ({ label, desc, control }: { label: string; desc?: string; control: React.ReactNode }) => (
+  <div className="flex items-start justify-between gap-4 py-3.5" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+    <div className="min-w-0">
+      <span className="text-[14px] font-medium" style={{ color: "#1A1A2E" }}>{label}</span>
+      {desc && <p className="text-[12px] mt-0.5" style={{ color: "#6B7094" }}>{desc}</p>}
+    </div>
+    <div className="shrink-0">{control}</div>
+  </div>
+);
+
+import { DEFAULT_PRIVACY, normalizePrivacy, type PrivacySettings } from "@/lib/applyPrivacy";
+
 const PrivacySection = ({ userId }: { userId: string | null }) => {
-  const [privacy, setPrivacy] = useState({
-    profile_visibility: "public",
-    show_in_search: true,
-    show_current_company: true,
-    show_location: true,
-    who_can_message: "everyone",
-    who_can_see_connections: "everyone",
-    contact_email_visible: false,
-    profile_view_notifications: true,
-  });
+  const [privacy, setPrivacy] = useState<PrivacySettings>(DEFAULT_PRIVACY);
   const [loaded, setLoaded] = useState(false);
+  const [savedKey, setSavedKey] = useState<string | null>(null);
 
   useEffect(() => {
     if (!userId) return;
-    supabase.from("profiles").select("privacy_settings").eq("id", userId).maybeSingle().then(({ data }) => {
-      if (data?.privacy_settings) {
-        const s = data.privacy_settings as any;
-        setPrivacy({
-          profile_visibility: s.profile_visibility || "public",
-          show_in_search: s.show_in_search !== false,
-          show_current_company: s.show_current_company !== false,
-          show_location: s.show_location !== false,
-          who_can_message: s.who_can_message || "everyone",
-          who_can_see_connections: s.who_can_see_connections || "everyone",
-          contact_email_visible: !!s.contact_email_visible,
-          profile_view_notifications: s.profile_view_notifications !== false,
-        });
-      }
+    supabase.from("profiles").select("privacy, privacy_settings").eq("id", userId).maybeSingle().then(({ data }) => {
+      const merged = { ...(data?.privacy_settings as any || {}), ...(data?.privacy as any || {}) };
+      setPrivacy(normalizePrivacy(merged));
       setLoaded(true);
     });
   }, [userId]);
 
-  const save = async (patch: Partial<typeof privacy>) => {
+  const save = async (patch: Partial<PrivacySettings>) => {
     const updated = { ...privacy, ...patch };
     setPrivacy(updated);
     if (!userId) return;
-    await supabase.from("profiles").update({ privacy_settings: updated as any }).eq("id", userId);
-    tiikToast.success("Privacy updated");
+    const key = Object.keys(patch)[0];
+    await supabase.from("profiles").update({ privacy: updated as any }).eq("id", userId);
+    setSavedKey(key);
+    setTimeout(() => setSavedKey(prev => (prev === key ? null : prev)), 1400);
   };
+
+  const Saved = ({ k }: { k: string }) =>
+    savedKey === k ? (
+      <span className="ml-2 inline-flex items-center gap-1 text-[11px] font-semibold" style={{ color: "#16A34A" }}>
+        <Check className="w-3 h-3" /> Saved
+      </span>
+    ) : null;
+
+  const ToggleCtl = ({ k, value }: { k: keyof PrivacySettings; value: boolean }) => (
+    <div className="flex items-center">
+      <Saved k={k} />
+      <button
+        type="button"
+        onClick={() => save({ [k]: !value } as any)}
+        className="ml-2 w-11 h-6 rounded-full flex items-center px-0.5 cursor-pointer active:scale-95"
+        style={{ background: value ? "#E8733A" : "rgba(0,0,0,0.12)", transition: "all 0.2s" }}
+      >
+        <div className="w-5 h-5 rounded-full bg-white" style={{ transition: "transform 0.2s", transform: value ? "translateX(20px)" : "translateX(0)" }} />
+      </button>
+    </div>
+  );
 
   if (!loaded) return <div className="glass-light animate-pulse h-48" style={{ borderRadius: 20 }} />;
 
   return (
     <div className="space-y-5">
       <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
-        <h3 className="text-[16px] font-semibold mb-4" style={{ color: "#1A1A2E" }}>Contact & Display</h3>
-        <Toggle label="Show email on profile" desc="Display your contact email publicly" value={privacy.contact_email_visible} onChange={v => save({ contact_email_visible: v })} />
-        <Toggle label="Show in Explore & Search" value={privacy.show_in_search} onChange={v => save({ show_in_search: v })} />
-        <Toggle label="Show Current Company" value={privacy.show_current_company} onChange={v => save({ show_current_company: v })} />
-        <Toggle label="Show Location" value={privacy.show_location} onChange={v => save({ show_location: v })} />
+        <h3 className="text-[13px] font-bold uppercase tracking-wider mb-2" style={{ color: "#6B7094" }}>Profile Visibility</h3>
+        <PrivacyRow label="Show my location" control={<ToggleCtl k="show_location" value={privacy.show_location} />} />
+        <PrivacyRow label="Show current company" control={<ToggleCtl k="show_company" value={privacy.show_company} />} />
+        <PrivacyRow label="Show my education" control={<ToggleCtl k="show_education" value={privacy.show_education} />} />
+        <PrivacyRow label="Show my experience" control={<ToggleCtl k="show_experience" value={privacy.show_experience} />} />
+        <PrivacyRow label="Show my email on profile" control={<ToggleCtl k="show_email" value={privacy.show_email} />} />
+        <PrivacyRow label="Show my phone on profile" control={<ToggleCtl k="show_phone" value={privacy.show_phone} />} />
       </div>
 
       <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
-        <h3 className="text-[16px] font-semibold mb-1" style={{ color: "#1A1A2E" }}>Who Can Message Me</h3>
-        <p className="text-[12px] mb-4" style={{ color: "#6B7094" }}>Control who can start a conversation</p>
-        <div className="space-y-2">
-          {MESSAGE_OPTIONS.map(opt => (
-            <button key={opt.value} type="button" onClick={() => save({ who_can_message: opt.value })}
-              className="w-full text-left px-4 py-3 rounded-xl cursor-pointer transition-all"
-              style={{
-                background: privacy.who_can_message === opt.value ? "rgba(232,115,58,0.10)" : "var(--surface-2)",
-                border: privacy.who_can_message === opt.value ? "1.5px solid rgba(232,115,58,0.40)" : "1.5px solid var(--border)",
-              }}>
-              <span className="text-[14px] font-medium" style={{ color: privacy.who_can_message === opt.value ? "#E8733A" : "#1A1A2E" }}>{opt.label}</span>
-            </button>
-          ))}
-        </div>
+        <h3 className="text-[13px] font-bold uppercase tracking-wider mb-2" style={{ color: "#6B7094" }}>Discovery</h3>
+        <PrivacyRow
+          label="Show me in Explore and Search"
+          desc="Turn off to hide from discovery feeds"
+          control={<ToggleCtl k="show_in_explore" value={privacy.show_in_explore} />}
+        />
+        <PrivacyRow
+          label="Let people find me by email"
+          desc="Allow searching for your profile via your email"
+          control={<ToggleCtl k="searchable_by_email" value={privacy.searchable_by_email} />}
+        />
       </div>
 
       <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
-        <h3 className="text-[16px] font-semibold mb-1" style={{ color: "#1A1A2E" }}>Who Can See My Connections</h3>
-        <p className="text-[12px] mb-4" style={{ color: "#6B7094" }}>Control connection list visibility</p>
-        <div className="space-y-2">
-          {CONNECTIONS_VIS_OPTIONS.map(opt => (
-            <button key={opt.value} type="button" onClick={() => save({ who_can_see_connections: opt.value })}
-              className="w-full text-left px-4 py-3 rounded-xl cursor-pointer transition-all"
-              style={{
-                background: privacy.who_can_see_connections === opt.value ? "rgba(232,115,58,0.10)" : "var(--surface-2)",
-                border: privacy.who_can_see_connections === opt.value ? "1.5px solid rgba(232,115,58,0.40)" : "1.5px solid var(--border)",
-              }}>
-              <span className="text-[14px] font-medium" style={{ color: privacy.who_can_see_connections === opt.value ? "#E8733A" : "#1A1A2E" }}>{opt.label}</span>
-            </button>
-          ))}
-        </div>
+        <h3 className="text-[13px] font-bold uppercase tracking-wider mb-2" style={{ color: "#6B7094" }}>Connections</h3>
+        <PrivacyRow
+          label="Who can see my connections"
+          control={
+            <div className="flex items-center">
+              <Saved k="show_connections" />
+              <span className="ml-2"><Segmented value={privacy.show_connections} options={SEGMENTED_CONN} onChange={v => save({ show_connections: v as any })} /></span>
+            </div>
+          }
+        />
+        <PrivacyRow
+          label="Who can send me Pings"
+          control={
+            <div className="flex items-center">
+              <Saved k="who_can_message" />
+              <span className="ml-2"><Segmented value={privacy.who_can_message} options={SEGMENTED_MSG} onChange={v => save({ who_can_message: v as any })} /></span>
+            </div>
+          }
+        />
+        <PrivacyRow
+          label="Who can see my posts"
+          control={
+            <div className="flex items-center">
+              <Saved k="who_can_see_posts" />
+              <span className="ml-2"><Segmented value={privacy.who_can_see_posts} options={SEGMENTED_POSTS} onChange={v => save({ who_can_see_posts: v as any })} /></span>
+            </div>
+          }
+        />
+      </div>
+
+      <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
+        <h3 className="text-[13px] font-bold uppercase tracking-wider mb-2" style={{ color: "#6B7094" }}>Activity</h3>
+        <PrivacyRow label="Show when I'm online" control={<ToggleCtl k="show_online_status" value={privacy.show_online_status} />} />
+        <PrivacyRow label="Show my recent activity" control={<ToggleCtl k="show_activity" value={privacy.show_activity} />} />
       </div>
     </div>
   );

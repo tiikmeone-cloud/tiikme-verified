@@ -120,7 +120,7 @@ const Explore = () => {
     /* ─── PEOPLE (relevance filtered, backfill with top activity) ─── */
     const { data: peopleRaw } = await supabase
       .from("profiles")
-      .select("id, full_name, username, avatar_url, role, role_subtype, headline, designation, institution_name, currently_working_at, display_preference, location_city, is_verified, activity_score, privacy_settings, sector, skills, interests, role_metadata, account_type")
+      .select("id, full_name, username, avatar_url, role, role_subtype, headline, designation, institution_name, currently_working_at, display_preference, location_city, is_verified, activity_score, privacy_settings, privacy, sector, skills, interests, role_metadata, account_type")
       .eq("is_public", true)
       .not("full_name", "is", null)
       .neq("id", user.id)
@@ -128,6 +128,10 @@ const Explore = () => {
       .limit(120);
 
     const peopleSafe = (peopleRaw || []).filter((p: any) => {
+      // New canonical column `privacy.show_in_explore` (defaults true)
+      const newP = (p as any).privacy as any;
+      if (newP && newP.show_in_explore === false) return false;
+      // Legacy fallback
       const ps = p.privacy_settings as any;
       if (ps && ps.show_in_search === false) return false;
       return !excluded.has(p.id);
