@@ -135,7 +135,7 @@ export default function Onboarding() {
       clean[k] = v;
     }
     if (Object.keys(clean).length === 0) return true;
-    const { error } = await supabase.from("profiles").update(clean).eq("id", user.id);
+    const { error } = await supabase.from("profiles").update(clean as never).eq("id", user.id);
     if (error) { toast.error("Could not save. Try again."); return false; }
     return true;
   };
