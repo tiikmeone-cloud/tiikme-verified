@@ -49,12 +49,12 @@ const SignIn = () => {
   };
 
   const handleGoogleAuth = async () => {
-    const oauthRedirect = safeRedirect
-      ? `${window.location.origin}/signin?redirect=${encodeURIComponent(safeRedirect)}`
-      : `${window.location.origin}/app/feed`;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: oauthRedirect },
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: { access_type: "offline", prompt: "consent" },
+      },
     });
     if (error) toast.error(error.message);
   };
