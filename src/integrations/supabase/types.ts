@@ -2990,6 +2990,7 @@ export type Database = {
           key_created_at: string | null
           languages: string[] | null
           last_active_date: string | null
+          last_onboarding_step: number | null
           location_city: string | null
           location_district: string | null
           location_state: string | null
@@ -3057,6 +3058,7 @@ export type Database = {
           key_created_at?: string | null
           languages?: string[] | null
           last_active_date?: string | null
+          last_onboarding_step?: number | null
           location_city?: string | null
           location_district?: string | null
           location_state?: string | null
@@ -3124,6 +3126,7 @@ export type Database = {
           key_created_at?: string | null
           languages?: string[] | null
           last_active_date?: string | null
+          last_onboarding_step?: number | null
           location_city?: string | null
           location_district?: string | null
           location_state?: string | null
