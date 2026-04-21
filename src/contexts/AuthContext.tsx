@@ -164,6 +164,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     let cancelled = false;
     (async () => {
       try {
+        const { ensurePublishedKey } = await import("@/lib/messageEncryption");
         await ensurePublishedKey(user.id, profile?.public_key ?? null);
         if (!cancelled && !profile?.public_key) {
           // Refresh profile so consumers see the new public_key without a reload
