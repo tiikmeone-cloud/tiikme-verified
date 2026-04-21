@@ -1,36 +1,57 @@
-/* Inter font is loaded via index.html <link> to avoid chained CSS->CSS requests */
+/* Inter Tight is loaded via index.html <link> to avoid chained CSS->CSS requests */
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* ════════════════════════════════════════════════════
-   GLASS LIQUID UI — DESIGN SYSTEM (LIGHT MODE ONLY)
+   TIIKME UNIFIED DESIGN SYSTEM
+   • Auth/Onboarding → Glass on Midnight (handled by AuthLayout)
+   • App pages       → Paper (handled by AppShell)
    ════════════════════════════════════════════════════ */
 
 @layer base {
   :root {
+    /* ── OFFICIAL TIIKME BRAND TOKENS ── */
+    --tiikme-orange: #FA903E;
+    --tiikme-orange-hover: #F37F26;
+    --tiikme-orange-press: #E46E14;
+    --tiikme-orange-50: #FEF3E8;
+    --tiikme-orange-900: #7A3D0E;
+
+    --tiikme-midnight: #21205A;
+    --tiikme-midnight-800: #1A194A;
+    --tiikme-midnight-700: #2B2A6B;
+
+    --paper: #FAFAF7;
+    --ink: #0A0A0B;
+    --ink-2: #3A3A3A;
+    --line: #ECECEA;
+
+    --glossy-white: rgba(255, 255, 255, 0.06);
+    --glossy-white-stroke: rgba(255, 255, 255, 0.14);
+
     /* ── Page backgrounds ── */
-    --bg-page: #F0F2F7;
-    --bg-card: rgba(255, 255, 255, 0.25);
-    --bg-card-hover: rgba(255, 255, 255, 0.40);
-    --bg-input: rgba(255, 255, 255, 0.15);
-    --bg-elevated: rgba(255, 255, 255, 0.35);
+    --bg-page: #FAFAF7;
+    --bg-card: #FFFFFF;
+    --bg-card-hover: #F4F4F0;
+    --bg-input: #FFFFFF;
+    --bg-elevated: #FFFFFF;
 
     /* ── Borders ── */
-    --border-glass: rgba(255, 255, 255, 0.40);
-    --border-subtle: rgba(255, 255, 255, 0.20);
+    --border-glass: #ECECEA;
+    --border-subtle: #ECECEA;
 
     /* ── Text ── */
-    --text-primary: #1A1A2E;
-    --text-secondary: #6B7094;
-    --text-muted: #9CA3C0;
+    --text-primary: #0A0A0B;
+    --text-secondary: #3A3A3A;
+    --text-muted: #6B6B6B;
 
-    /* ── Accent ── */
-    --accent: #E8733A;
-    --accent-hover: #D4642E;
-    --accent-glow: rgba(232, 115, 58, 0.15);
-    --accent-pink: #FF6B9D;
+    /* ── Accent (orange brand) ── */
+    --accent: #FA903E;
+    --accent-hover: #F37F26;
+    --accent-glow: rgba(250, 144, 62, 0.15);
+    --accent-pink: #FA903E;
 
     /* ── Semantic ── */
     --success: #34C759;
@@ -39,61 +60,62 @@
     --blue: #4A90D9;
     --purple: #8B5CF6;
 
-    /* ── Glass tokens ── */
-    --glass-bg: rgba(255, 255, 255, 0.25);
-    --glass-bg-medium: rgba(255, 255, 255, 0.15);
-    --glass-border: rgba(255, 255, 255, 0.40);
-    --glass-border-subtle: rgba(255, 255, 255, 0.25);
-    --glass-highlight: rgba(255, 255, 255, 0.60);
-    --glass-shadow: rgba(26, 26, 78, 0.08);
-    --glass-shadow-hover: rgba(26, 26, 78, 0.14);
+    /* ── Glass tokens (Paper context) ── */
+    --glass-bg: #FFFFFF;
+    --glass-bg-medium: #FFFFFF;
+    --glass-border: #ECECEA;
+    --glass-border-subtle: #ECECEA;
+    --glass-highlight: rgba(255, 255, 255, 0.95);
+    --glass-shadow: rgba(10, 10, 11, 0.04);
+    --glass-shadow-hover: rgba(10, 10, 11, 0.08);
 
-    /* ── Mesh blobs ── */
-    --mesh-blob-1: rgba(232, 115, 58, 0.06);
-    --mesh-blob-2: rgba(139, 92, 246, 0.05);
-    --mesh-blob-3: rgba(74, 144, 217, 0.04);
+    /* ── Mesh blobs (subtle on paper) ── */
+    --mesh-blob-1: rgba(250, 144, 62, 0.04);
+    --mesh-blob-2: rgba(33, 32, 90, 0.03);
+    --mesh-blob-3: rgba(74, 144, 217, 0.02);
 
-    /* ── Legacy compat tokens ── */
-    --bg: #F0F2F7;
-    --bg-2: #E8ECF4;
-    --surface: rgba(255, 255, 255, 0.25);
-    --surface-2: rgba(255, 255, 255, 0.15);
-    --surface-3: rgba(255, 255, 255, 0.10);
-    --border: rgba(255, 255, 255, 0.20);
-    --border-2: rgba(255, 255, 255, 0.30);
-    --brand: #E8733A;
-    --brand-2: #FF6B9D;
-    --brand-dim: rgba(232, 115, 58, 0.15);
-    --brand-glow: rgba(232, 115, 58, 0.15);
-    --brand-hover: #D4642E;
-    --text-1: #1A1A2E;
-    --text-2: #6B7094;
-    --text-3: #9CA3C0;
+    /* ── Mapped legacy tokens (reused names, new values) ── */
+    --bg: #FAFAF7;
+    --bg-2: #F4F4F0;
+    --surface: #FFFFFF;
+    --surface-2: #F4F4F0;
+    --surface-3: #FFFFFF;
+    --border: #ECECEA;
+    --border-2: #ECECEA;
+    --brand: #FA903E;
+    --brand-2: #F37F26;
+    --brand-dim: rgba(250, 144, 62, 0.12);
+    --brand-glow: rgba(250, 144, 62, 0.20);
+    --brand-hover: #F37F26;
+    --brand-press: #E46E14;
+    --text-1: #0A0A0B;
+    --text-2: #3A3A3A;
+    --text-3: #6B6B6B;
     --tiik-gold: #FFB800;
-    --tiik-grey: #6B7094;
+    --tiik-grey: #6B6B6B;
     --open-green: #34C759;
     --danger: #EF4444;
-    --radius: 0.625rem;
+    --radius: 0.875rem;
 
-    /* Legacy shadows */
-    --shadow-sm: 0 1px 2px rgba(0,0,0,0.04), 0 4px 8px rgba(0,0,0,0.06);
-    --shadow-md: 0 8px 32px rgba(26,26,78,0.08), inset 0 1px 0 rgba(255,255,255,0.60);
-    --shadow-lg: 0 12px 40px rgba(26,26,78,0.12);
+    /* Shadows — Paper context */
+    --shadow-sm: 0 1px 2px rgba(10,10,11,0.04), 0 4px 16px rgba(10,10,11,0.04);
+    --shadow-md: 0 1px 2px rgba(10,10,11,0.04), 0 4px 16px rgba(10,10,11,0.06);
+    --shadow-lg: 0 8px 24px rgba(10,10,11,0.08);
     --shadow-glow: 0 0 20px var(--accent-glow);
     --card-shadow: var(--shadow-md);
 
-    /* Legacy glass */
-    --glass-border-t: rgba(255, 255, 255, 0.60);
-    --glass-blur: blur(20px) saturate(180%) brightness(1.02);
+    /* Glass */
+    --glass-border-t: #ECECEA;
+    --glass-blur: blur(0px);
     --glass-radius: 16px;
-    --glass-shadow-legacy: 0 8px 32px rgba(26,26,78,0.08), inset 0 1px 0 rgba(255,255,255,0.60);
+    --glass-shadow-legacy: 0 1px 2px rgba(10,10,11,0.04), 0 4px 16px rgba(10,10,11,0.06);
 
-    /* Sidebar */
-    --sidebar-bg: rgba(255, 255, 255, 0.12);
-    --sidebar-border: rgba(255, 255, 255, 0.15);
-    --sidebar-item-hover: rgba(255, 255, 255, 0.20);
-    --sidebar-item-active: rgba(255, 255, 255, 0.30);
-    --sidebar-background: rgba(255, 255, 255, 0.12);
+    /* Sidebar (Paper) */
+    --sidebar-bg: #FFFFFF;
+    --sidebar-border: #ECECEA;
+    --sidebar-item-hover: #F4F4F0;
+    --sidebar-item-active: rgba(250, 144, 62, 0.12);
+    --sidebar-background: #FFFFFF;
     --sidebar-foreground: var(--text-1);
     --sidebar-primary: var(--brand);
     --sidebar-primary-foreground: #fff;
@@ -102,33 +124,33 @@
     --sidebar-ring: var(--brand);
 
     /* Inputs */
-    --input-bg: rgba(255, 255, 255, 0.15);
-    --input-border: rgba(255, 255, 255, 0.20);
-    --input-focus-border: rgba(232, 115, 58, 0.50);
-    --input-focus-glow: rgba(232, 115, 58, 0.10);
+    --input-bg: #FFFFFF;
+    --input-border: #ECECEA;
+    --input-focus-border: #FA903E;
+    --input-focus-glow: rgba(250, 144, 62, 0.20);
 
-    /* Glass v2 compat */
-    --glass-bg-light: rgba(255, 255, 255, 0.25);
-    --glass-bg-dark: rgba(26, 26, 78, 0.85);
-    --glass-border-light-v2: rgba(255, 255, 255, 0.40);
-    --glass-border-dark-v2: rgba(255, 255, 255, 0.12);
-    --glass-glow-orange: rgba(232, 115, 58, 0.15);
-    --glass-glow-pink: rgba(255, 107, 157, 0.10);
+    /* Glass v2 compat (auth/dark contexts use these) */
+    --glass-bg-light: #FFFFFF;
+    --glass-bg-dark: rgba(33, 32, 90, 0.85);
+    --glass-border-light-v2: #ECECEA;
+    --glass-border-dark-v2: rgba(255, 255, 255, 0.14);
+    --glass-glow-orange: rgba(250, 144, 62, 0.20);
+    --glass-glow-pink: rgba(250, 144, 62, 0.10);
 
     /* Compat aliases */
-    --color-bg: #F0F2F7;
-    --color-bg-secondary: #E8ECF4;
-    --color-surface: rgba(255, 255, 255, 0.25);
-    --color-surface-hover: rgba(255, 255, 255, 0.40);
-    --color-surface-elevated: rgba(255, 255, 255, 0.35);
-    --color-text: #1A1A2E;
-    --color-text-secondary: #6B7094;
-    --color-text-muted: #9CA3C0;
-    --color-accent: #E8733A;
-    --color-accent-glow: rgba(232, 115, 58, 0.15);
-    --color-accent-hover: rgba(232, 115, 58, 0.25);
-    --color-accent-pink: #FF6B9D;
-    --color-accent-pink-glow: rgba(255, 107, 157, 0.10);
+    --color-bg: #FAFAF7;
+    --color-bg-secondary: #F4F4F0;
+    --color-surface: #FFFFFF;
+    --color-surface-hover: #F4F4F0;
+    --color-surface-elevated: #FFFFFF;
+    --color-text: #0A0A0B;
+    --color-text-secondary: #3A3A3A;
+    --color-text-muted: #6B6B6B;
+    --color-accent: #FA903E;
+    --color-accent-glow: rgba(250, 144, 62, 0.15);
+    --color-accent-hover: rgba(250, 144, 62, 0.25);
+    --color-accent-pink: #FA903E;
+    --color-accent-pink-glow: rgba(250, 144, 62, 0.10);
   }
 
   * {
@@ -136,15 +158,19 @@
   }
 
   body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Inter Tight', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
     min-height: 100vh;
-    background: #F0F2F7;
-    background-image:
-      radial-gradient(ellipse at 20% 50%, rgba(232,115,58,0.06) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 20%, rgba(139,92,246,0.05) 0%, transparent 50%),
-      radial-gradient(ellipse at 60% 80%, rgba(74,144,217,0.04) 0%, transparent 50%);
+    background: #FAFAF7;
+  }
+
+  /* Numeric tabular utility — apply to every number/metric in the product */
+  .num {
+    font-family: 'Inter Tight', 'Inter', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
   }
 }
 
@@ -187,24 +213,24 @@
     color: var(--text-primary);
   }
 
-  /* Dark glass modal — always dark indigo */
+  /* Dark glass modal — Tiikme midnight */
   .glass-dark {
-    background: linear-gradient(145deg, rgba(26,26,78,0.88), rgba(45,45,122,0.78));
-    backdrop-filter: blur(40px);
-    -webkit-backdrop-filter: blur(40px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 20px;
-    box-shadow: 0 25px 80px rgba(26, 26, 78, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-    color: #F0F2F7;
+    background: linear-gradient(145deg, rgba(33,32,90,0.92), rgba(43,42,107,0.82));
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 24px;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255, 255, 255, 0.10);
+    color: #FAFAF7;
   }
 
   .glass-glow {
-    background: linear-gradient(145deg, rgba(232,115,58,0.15), rgba(255,107,157,0.10));
+    background: linear-gradient(145deg, rgba(250,144,62,0.12), rgba(250,144,62,0.06));
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(232, 115, 58, 0.25);
+    border: 1px solid rgba(250, 144, 62, 0.25);
     border-radius: 16px;
-    box-shadow: 0 12px 40px rgba(232,115,58,0.15);
+    box-shadow: 0 12px 40px rgba(250,144,62,0.15);
     color: var(--text-primary);
   }
 
@@ -215,60 +241,53 @@
     box-shadow: 0 12px 40px rgba(26,26,78,0.14), inset 0 1px 0 rgba(255,255,255,0.80);
   }
 
-  /* ═══ LIQUID BUTTONS ═══ */
+  /* ═══ TIIKME PRIMARY BUTTONS (solid orange) ═══ */
   .btn-liquid-primary {
-    background: linear-gradient(135deg, #E8733A, #FF6B9D);
+    background: var(--brand);
     color: white;
     font-weight: 600;
     font-size: 14px;
     border-radius: 12px;
-    height: 44px;
+    height: 48px;
     padding: 0 24px;
-    border: 1px solid var(--border-glass);
-    box-shadow: 0 4px 20px rgba(232,115,58,0.35);
+    border: none;
+    box-shadow: 0 4px 14px rgba(250,144,62,0.30);
     cursor: pointer;
-    transition: all 200ms ease;
+    transition: background 150ms ease, transform 150ms ease, box-shadow 150ms ease;
   }
-  .btn-liquid-primary:hover {
-    box-shadow: 0 6px 26px rgba(232,115,58,0.45);
-    transform: translateY(-1px);
-  }
-  .btn-liquid-primary:active {
-    transform: translateY(0);
-    opacity: 0.9;
-  }
+  .btn-liquid-primary:hover { background: var(--brand-hover); }
+  .btn-liquid-primary:active { background: var(--brand-press); transform: translateY(0); }
 
   .btn-liquid-md {
-    background: linear-gradient(135deg, #E8733A, #FF6B9D);
+    background: var(--brand);
     color: white;
     font-weight: 600;
     font-size: 13px;
     border-radius: 10px;
     height: 36px;
     padding: 0 20px;
-    border: 1px solid var(--border-glass);
-    box-shadow: 0 4px 16px rgba(232,115,58,0.30);
+    border: none;
+    box-shadow: 0 2px 8px rgba(250,144,62,0.20);
     cursor: pointer;
-    transition: all 200ms ease;
+    transition: background 150ms ease;
   }
-  .btn-liquid-md:hover { box-shadow: 0 6px 21px rgba(232,115,58,0.39); transform: translateY(-1px); }
-  .btn-liquid-md:active { transform: translateY(0); opacity: 0.9; }
+  .btn-liquid-md:hover { background: var(--brand-hover); }
+  .btn-liquid-md:active { background: var(--brand-press); }
 
   .btn-liquid-sm {
-    background: linear-gradient(135deg, #E8733A, #FF6B9D);
+    background: var(--brand);
     color: white;
     font-weight: 600;
     font-size: 11px;
     border-radius: 8px;
     height: 28px;
     padding: 0 12px;
-    border: 1px solid var(--border-glass);
-    box-shadow: 0 2px 12px rgba(232,115,58,0.25);
+    border: none;
     cursor: pointer;
-    transition: all 200ms ease;
+    transition: background 150ms ease;
   }
-  .btn-liquid-sm:hover { box-shadow: 0 3px 16px rgba(232,115,58,0.33); transform: translateY(-1px); }
-  .btn-liquid-sm:active { transform: translateY(0); opacity: 0.9; }
+  .btn-liquid-sm:hover { background: var(--brand-hover); }
+  .btn-liquid-sm:active { background: var(--brand-press); }
 
   .btn-glass-pill {
     background: var(--bg-card);
@@ -350,20 +369,20 @@
     outline: none;
   }
 
-  /* Dark glass input — always dark context */
+  /* Dark glass input — Tiikme midnight context (auth screens) */
   .glass-input-dark {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 10px;
-    color: #F0F2F7;
-    height: 40px;
-    padding: 0 12px;
+    border-radius: 12px;
+    color: #FAFAF7;
+    height: 48px;
+    padding: 0 16px;
     font-size: 14px;
   }
-  .glass-input-dark::placeholder { color: rgba(255, 255, 255, 0.50); }
+  .glass-input-dark::placeholder { color: rgba(250, 250, 247, 0.40); }
   .glass-input-dark:focus {
-    border-color: rgba(232, 115, 58, 0.50);
-    box-shadow: 0 0 0 3px rgba(232, 115, 58, 0.10);
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px rgba(250, 144, 62, 0.40);
     outline: none;
   }
 
@@ -693,9 +712,9 @@
   50% { transform: translate(40px,-50px) scale(1.1); }
 }
 @keyframes pulseDot {
-  0% { box-shadow: 0 0 0 0 rgba(232,115,58,0.5); }
-  70% { box-shadow: 0 0 0 10px rgba(232,115,58,0); }
-  100% { box-shadow: 0 0 0 0 rgba(232,115,58,0); }
+  0% { box-shadow: 0 0 0 0 rgba(250,144,62,0.5); }
+  70% { box-shadow: 0 0 0 10px rgba(250,144,62,0); }
+  100% { box-shadow: 0 0 0 0 rgba(250,144,62,0); }
 }
 @keyframes tiikPulse {
   0% { box-shadow: 0 0 0 0 rgba(52,199,89,0.4); }

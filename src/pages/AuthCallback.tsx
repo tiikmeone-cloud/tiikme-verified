@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import PageLoader from "@/components/PageLoader";
+import AuthLayout from "@/components/layouts/AuthLayout";
 
 const AuthCallback = () => {
   const navigate = useNavigate();
@@ -10,7 +10,6 @@ const AuthCallback = () => {
   useEffect(() => {
     (async () => {
       try {
-        // Supabase parses the OAuth code/hash automatically (detectSessionInUrl: true)
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error || !session) {
           navigate("/signin?error=oauth_failed", { replace: true });
@@ -20,7 +19,6 @@ const AuthCallback = () => {
         const { markRecentAuth } = await import("@/lib/idleLogout");
         markRecentAuth();
 
-        // Honor pending deep-link redirect if present
         const stored = sessionStorage.getItem("post_auth_redirect");
         if (stored && stored.startsWith("/")) {
           sessionStorage.removeItem("post_auth_redirect");
@@ -28,7 +26,6 @@ const AuthCallback = () => {
           return;
         }
 
-        // Decide onboarding vs feed based on profile.onboarding_complete
         const { data: profile } = await supabase
           .from("profiles")
           .select("id, onboarding_complete, account_type")
@@ -50,7 +47,14 @@ const AuthCallback = () => {
     })();
   }, [navigate]);
 
-  return <PageLoader />;
+  return (
+    <AuthLayout hideLogo maxWidth={360}>
+      <div className="flex flex-col items-center gap-3 py-2 text-center">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+        <p className="text-[14px] text-paper/70">Signing you in…</p>
+      </div>
+    </AuthLayout>
+  );
 };
 
 export default AuthCallback;

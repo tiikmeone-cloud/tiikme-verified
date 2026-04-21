@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Mail } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import OnboardingShell from "@/components/onboarding/OnboardingShell";
+import AuthLayout from "@/components/layouts/AuthLayout";
+import { AuthButton } from "@/components/layouts/AuthPrimitives";
 
 export default function VerifyEmailPage() {
   const navigate = useNavigate();
@@ -18,11 +19,12 @@ export default function VerifyEmailPage() {
   useEffect(() => {
     if (!email) { navigate("/signup", { replace: true }); return; }
     refs.current[0]?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (cooldown <= 0) return;
-    const t = setTimeout(() => setCooldown(c => c - 1), 1000);
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
     return () => clearTimeout(t);
   }, [cooldown]);
 
@@ -51,7 +53,7 @@ export default function VerifyEmailPage() {
     }
   };
 
-  const allFilled = digits.every(d => d !== "");
+  const allFilled = digits.every((d) => d !== "");
 
   const handleVerify = async () => {
     if (!allFilled) return;
@@ -79,58 +81,52 @@ export default function VerifyEmailPage() {
   };
 
   return (
-    <OnboardingShell step={2} showBack backTo="/signup">
-      <div className="rounded-3xl p-8 sm:p-10 text-center" style={{ background: "#fff", border: "1px solid #F3F4F6", boxShadow: "0 4px 24px rgba(0,0,0,0.06)" }}>
-        <div className="w-16 h-16 rounded-full mx-auto mb-5 flex items-center justify-center" style={{ background: "rgba(232,88,10,0.1)" }}>
-          <Mail className="w-8 h-8" style={{ color: "#E8580A" }} strokeWidth={1.8} />
+    <AuthLayout step={2} totalSteps={5} showBack backTo="/signup">
+      <div className="text-center">
+        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-brand/15">
+          <Mail className="h-8 w-8 text-brand" strokeWidth={1.8} />
         </div>
 
-        <h1 className="text-[28px] font-extrabold mb-1" style={{ color: "#111827" }}>Check your inbox</h1>
-        <p className="text-[14px] mb-1" style={{ color: "#6B7280" }}>We sent a 6-digit code to</p>
-        <p className="text-[14px] font-bold mb-7" style={{ color: "#E8580A" }}>{email}</p>
+        <h1 className="mb-1 text-[26px] font-bold text-paper">Check your inbox</h1>
+        <p className="text-[14px] text-paper/60">We sent a 6-digit code to</p>
+        <p className="mb-6 text-[14px] font-semibold text-brand">{email}</p>
 
-        {/* OTP boxes */}
-        <div
-          className={`flex justify-center gap-3 mb-4 ${shake ? "animate-shake" : ""}`}
-          onPaste={handlePaste}
-        >
+        <div className={`mb-4 flex justify-center gap-2.5 ${shake ? "animate-shake" : ""}`} onPaste={handlePaste}>
           {digits.map((d, i) => (
             <input
               key={i}
-              ref={el => { refs.current[i] = el; }}
+              ref={(el) => { refs.current[i] = el; }}
               type="text" inputMode="numeric" maxLength={1}
               value={d}
-              onChange={e => setDigit(i, e.target.value)}
-              onKeyDown={e => handleKeyDown(i, e)}
-              className="text-center outline-none transition-all duration-200"
+              onChange={(e) => setDigit(i, e.target.value)}
+              onKeyDown={(e) => handleKeyDown(i, e)}
+              className="num h-14 w-12 rounded-xl border-2 bg-white/[0.04] text-center text-[22px] text-brand outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/40"
               style={{
-                width: 52, height: 64, borderRadius: 14, fontSize: 22,
-                fontFamily: "'Press Start 2P', cursive",
-                border: `2px solid ${d ? "#E8580A" : error ? "#DC2626" : "#E5E7EB"}`,
-                background: d ? "#FFF8F2" : "#fff",
-                color: "#E8580A",
+                borderColor: d ? "#FA903E" : error ? "#EF4444" : "rgba(255,255,255,0.15)",
+                background: d ? "rgba(250,144,62,0.10)" : "rgba(255,255,255,0.04)",
               }}
             />
           ))}
         </div>
 
-        {error && <p className="text-[13px] font-medium mb-4" style={{ color: "#DC2626" }}>{error}</p>}
+        {error && <p className="mb-3 text-[13px] font-medium text-destructive">{error}</p>}
 
-        <button
-          onClick={handleVerify} disabled={!allFilled || submitting}
-          className="w-full h-12 rounded-2xl text-[15px] font-bold text-white cursor-pointer transition-all hover:opacity-90 disabled:opacity-50 mb-5"
-          style={{ background: "#E8580A" }}
-        >
-          {submitting ? "Verifying..." : "Verify email →"}
-        </button>
+        <AuthButton onClick={handleVerify} disabled={!allFilled} loading={submitting} className="mb-4">
+          Verify email →
+        </AuthButton>
 
-        <p className="text-[13px]" style={{ color: "#9CA3AF" }}>
-          {cooldown > 0 ? `Resend code in ${cooldown}s...` : (
-            <button type="button" onClick={handleResend} className="font-semibold cursor-pointer hover:underline" style={{ color: "#E8580A" }}>Resend code →</button>
+        <p className="text-[13px] text-paper/45">
+          {cooldown > 0 ? `Resend code in ${cooldown}s…` : (
+            <button type="button" onClick={handleResend} className="font-semibold text-brand hover:underline cursor-pointer">
+              Resend code →
+            </button>
           )}
         </p>
 
-        <button type="button" onClick={() => navigate("/signup")} className="text-[13px] mt-3 cursor-pointer hover:underline" style={{ color: "#6B7280" }}>
+        <button
+          type="button" onClick={() => navigate("/signup")}
+          className="mt-3 text-[13px] text-paper/55 hover:text-paper transition cursor-pointer"
+        >
           Wrong email? ← Change it
         </button>
       </div>
@@ -143,6 +139,6 @@ export default function VerifyEmailPage() {
         }
         .animate-shake { animation: shake 0.4s ease-in-out; }
       `}</style>
-    </OnboardingShell>
+    </AuthLayout>
   );
 }
