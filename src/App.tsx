@@ -20,11 +20,9 @@ import NotFound from "./pages/NotFound.tsx";
 // New onboarding pages (eager — critical path)
 import SignupPage from "./pages/SignupPage.tsx";
 import VerifyEmailPage from "./pages/VerifyEmailPage.tsx";
-import OnboardingRole from "./pages/OnboardingRole.tsx";
+import Onboarding from "./pages/Onboarding.tsx";
 
 // Lazy load everything else
-const OnboardingDetails = lazyWithRetry(() => import("./pages/OnboardingDetails.tsx"), "OnboardingDetails");
-const OnboardingWelcome = lazyWithRetry(() => import("./pages/OnboardingWelcome.tsx"), "OnboardingWelcome");
 const Welcome = lazyWithRetry(() => import("./pages/Welcome.tsx"), "Welcome");
 const Feed = lazyWithRetry(() => import("./pages/Feed.tsx"), "Feed");
 const Profile = lazyWithRetry(() => import("./pages/Profile.tsx"), "Profile");
@@ -50,6 +48,7 @@ const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword.tsx"), "
 const PostDetail = lazyWithRetry(() => import("./pages/PostDetail.tsx"), "PostDetail");
 const OrganizationPage = lazyWithRetry(() => import("./pages/OrganizationPage.tsx"), "OrganizationPage");
 const JoinAsInstitution = lazyWithRetry(() => import("./pages/JoinAsInstitution.tsx"), "JoinAsInstitution");
+const OrganizationCreate = lazyWithRetry(() => import("./pages/OrganizationCreate.tsx"), "OrganizationCreate");
 const ApplicationsDashboard = lazyWithRetry(() => import("./pages/ApplicationsDashboard.tsx"), "ApplicationsDashboard");
 const OpportunityCreate = lazyWithRetry(() => import("./pages/OpportunityCreate.tsx"), "OpportunityCreate");
 const WorkspacePage = lazyWithRetry(() => import("./pages/Workspace.tsx"), "WorkspacePage");
@@ -90,9 +89,10 @@ const AppRoutes = () => {
             <Route path="/signin" element={<PublicOnlyRoute><PageErrorBoundary><SignIn /></PageErrorBoundary></PublicOnlyRoute>} />
             <Route path="/signup" element={<PageErrorBoundary><SignupPage /></PageErrorBoundary>} />
             <Route path="/verify-email" element={<PageErrorBoundary><VerifyEmailPage /></PageErrorBoundary>} />
-            <Route path="/onboarding/role" element={<PageErrorBoundary><OnboardingRole /></PageErrorBoundary>} />
-            <Route path="/onboarding/details" element={<PageErrorBoundary><OnboardingDetails /></PageErrorBoundary>} />
-            <Route path="/onboarding/welcome" element={<PageErrorBoundary><OnboardingWelcome /></PageErrorBoundary>} />
+            <Route path="/onboarding" element={<PageErrorBoundary><Onboarding /></PageErrorBoundary>} />
+            <Route path="/onboarding/role" element={<Navigate to="/onboarding" replace />} />
+            <Route path="/onboarding/details" element={<Navigate to="/onboarding" replace />} />
+            <Route path="/onboarding/welcome" element={<Navigate to="/onboarding" replace />} />
             <Route path="/welcome" element={<PageErrorBoundary><Welcome /></PageErrorBoundary>} />
             <Route path="/verify-invite" element={<PageErrorBoundary><VerifyInvite /></PageErrorBoundary>} />
             <Route path="/privacy" element={<PageErrorBoundary><Privacy /></PageErrorBoundary>} />
@@ -128,6 +128,8 @@ const AppRoutes = () => {
             <Route path="/app/alerts" element={<Shell><Alerts /></Shell>} />
             <Route path="/app/verification-inbox" element={<Shell><VerificationInbox /></Shell>} />
             <Route path="/app/settings" element={<Shell><SettingsPage /></Shell>} />
+            <Route path="/app/organizations/create" element={<Shell><OrganizationCreate /></Shell>} />
+
 
             {/* Organization profiles */}
             <Route path="/org/:slug" element={<Shell><OrganizationPage /></Shell>} />

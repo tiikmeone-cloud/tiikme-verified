@@ -46,7 +46,7 @@ export default function SignupPage() {
 
   useEffect(() => {
     if (user) {
-      navigate("/onboarding/role", { replace: true });
+      navigate("/onboarding", { replace: true });
     }
   }, [user]);
 
@@ -61,7 +61,7 @@ export default function SignupPage() {
   const handleGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: window.location.origin + "/onboarding/role" },
+      options: { redirectTo: window.location.origin + "/onboarding" },
     });
     if (error) toast.error(error.message);
   };
@@ -89,7 +89,7 @@ export default function SignupPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/onboarding/role`,
+        emailRedirectTo: `${window.location.origin}/onboarding`,
         data: { account_type: "user" },
       },
     });

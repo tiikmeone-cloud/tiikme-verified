@@ -67,7 +67,7 @@ export default function VerifyEmailPage() {
       return;
     }
     toast.success("Email verified!");
-    navigate("/onboarding/role");
+    navigate("/onboarding");
   };
 
   const handleResend = async () => {
