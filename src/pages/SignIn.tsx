@@ -12,18 +12,22 @@ const SignIn = () => {
   const [searchParams] = useSearchParams();
   const redirectTo = searchParams.get("redirect");
   const safeRedirect = redirectTo && redirectTo.startsWith("/") ? redirectTo : null;
+  const prefillEmail = searchParams.get("email") || "";
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(prefillEmail);
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showForgot, setShowForgot] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotLoading, setForgotLoading] = useState(false);
 
-  // Surface OAuth callback failures
+  // Surface OAuth callback failures and link-prompts
   useEffect(() => {
     if (searchParams.get("error") === "oauth_failed") {
       toast.error("Google sign-in failed. Please try again.");
+    }
+    if (searchParams.get("link") === "google") {
+      toast.info("This email already has a password account. Sign in with your password to link Google.");
     }
   }, [searchParams]);
 
@@ -63,7 +67,15 @@ const SignIn = () => {
         queryParams: { access_type: "offline", prompt: "select_account" },
       },
     });
-    if (error) toast.error(error.message);
+    if (error) {
+      const msg = error.message || "";
+      if (/different.*provider|already.*exists/i.test(msg)) {
+        toast.error("This email already has a password account. Sign in with your password to link Google.");
+        if (email) navigate(`/signin?email=${encodeURIComponent(email)}&link=google`);
+        return;
+      }
+      toast.error(msg);
+    }
   };
 
   const handleForgotPassword = async () => {
