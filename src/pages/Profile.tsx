@@ -62,242 +62,7 @@ const formatDuration = (start: string | null, end: string | null, isCurrent: boo
   return `${fmt(start)} – ${isCurrent ? "Present" : end ? fmt(end) : ""} · ${parts.join(" ") || "< 1 mo"}`;
 };
 
-/* ── Edit Profile Drawer ── */
-const OTW_ROLE_TAGS = ["Frontend", "Backend", "Full-stack", "Product", "Design", "Data", "Marketing", "Sales", "Operations", "Research"];
-
-const EditProfileDrawer = ({ open, onClose, onSaved }: { open: boolean; onClose: () => void; onSaved: () => void }) => {
-  const { refreshProfile } = useAuth();
-  const [form, setForm] = useState({ name: "", headline: "", bio: "", city: "", state: "", username: "", open_to_work: false, otw_visibility: "recruiters", avatar_url: "", about: "", role: "", role_subtype: "" });
-  const [otwRoleTypes, setOtwRoleTypes] = useState<string[]>([]);
-  const [otwLocation, setOtwLocation] = useState("");
-  const [otwLocationType, setOtwLocationType] = useState("onsite");
-  const [otwPitch, setOtwPitch] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [customLinks, setCustomLinks] = useState<{ url: string; label: string }[]>([]);
-  const [userId, setUserId] = useState<string | null>(null);
-  const avatarRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      setUserId(user.id);
-      const { data } = await supabase.from("profiles").select("full_name, headline, bio, location_city, location_state, username, open_to_work, otw_visibility, avatar_url, custom_links, role, role_subtype").eq("id", user.id).maybeSingle();
-      if (data) {
-        setForm({ name: data.full_name || "", headline: data.headline || "", bio: data.bio || "", city: data.location_city || "", state: data.location_state || "", username: data.username || "", open_to_work: data.open_to_work || false, otw_visibility: (data as any).otw_visibility || "recruiters", avatar_url: data.avatar_url || "", about: (data as any).about || "", role: (data as any).role || "", role_subtype: (data as any).role_subtype || "" });
-        setCustomLinks(Array.isArray(data.custom_links) ? (data.custom_links as any[]).map(l => ({ url: l.url || "", label: l.label || "" })) : []);
-      }
-      // Load OTW preferences
-      const { data: otw } = await supabase.from("open_to_work_profiles").select("role_types, preferred_location, location_type, pitch").eq("user_id", user.id).maybeSingle();
-      if (otw) {
-        setOtwRoleTypes(otw.role_types || []);
-        setOtwLocation(otw.preferred_location || "");
-        setOtwLocationType(otw.location_type || "onsite");
-        setOtwPitch(otw.pitch || "");
-      }
-    })();
-  }, [open]);
-
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !userId) return;
-    const { validateUpload } = await import("@/lib/uploadValidation");
-    const err = validateUpload(file, { maxBytes: 2 * 1024 * 1024, allowImages: true });
-    if (err) { toast.error(err); return; }
-    const canvas = document.createElement("canvas");
-    canvas.width = 400; canvas.height = 400;
-    const ctx = canvas.getContext("2d")!;
-    const img = new Image();
-    img.src = URL.createObjectURL(file);
-    await new Promise(r => img.onload = r);
-    const size = Math.min(img.width, img.height);
-    ctx.drawImage(img, (img.width - size) / 2, (img.height - size) / 2, size, size, 0, 0, 400, 400);
-    const blob = await new Promise<Blob | null>(r => canvas.toBlob(r, "image/webp", 0.85));
-    if (!blob) return;
-    const path = `${userId}/avatar.webp`;
-    await supabase.storage.from("avatars").upload(path, blob, { upsert: true, contentType: "image/webp" });
-    const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
-    const avatarUrl = urlData.publicUrl + "?t=" + Date.now();
-    await supabase.from("profiles").update({ avatar_url: avatarUrl }).eq("id", userId);
-    setForm(p => ({ ...p, avatar_url: avatarUrl }));
-    toast.success("Avatar updated");
-  };
-
-  const handleSave = async () => {
-    if (!userId) return;
-    setSaving(true);
-    const subtypeAllowed = hasSubtypes(form.role);
-    await supabase.from("profiles").update({
-      full_name: form.name, headline: form.headline.slice(0, 80), bio: form.bio.slice(0, 300),
-      username: form.username.toLowerCase().replace(/[^a-z0-9._-]/g, ""),
-      location_city: form.city, location_state: form.state,
-      open_to_work: form.open_to_work,
-      otw_visibility: form.otw_visibility,
-      role_subtype: subtypeAllowed ? (form.role_subtype || null) : null,
-      custom_links: customLinks.filter(l => l.url) as any,
-    } as any).eq("id", userId);
-
-    // Upsert OTW preferences when open_to_work is on
-    if (form.open_to_work) {
-      const otwPayload = {
-        user_id: userId,
-        role_types: otwRoleTypes,
-        preferred_location: otwLocation || null,
-        location_type: otwLocationType,
-        pitch: otwPitch.slice(0, 200),
-        is_active: true,
-        updated_at: new Date().toISOString(),
-      };
-      const { error: otwErr } = await supabase.from("open_to_work_profiles").upsert(otwPayload as any, { onConflict: "user_id" });
-      if (otwErr) console.warn("[otw upsert]", otwErr.message);
-    } else {
-      await supabase.from("open_to_work_profiles").update({ is_active: false } as any).eq("user_id", userId);
-    }
-
-    setSaving(false);
-    toast.success("Profile updated");
-    await refreshProfile();
-    onSaved(); onClose();
-  };
-
-  return (
-    <Sheet open={open} onOpenChange={v => !v && onClose()}>
-      <SheetContent side="right" className="w-[360px] sm:w-[400px] overflow-y-auto" style={{ background: "#fff" }}>
-        <SheetHeader><SheetTitle style={{ fontSize: 18, fontWeight: 700, color: "#1A1A2E" }}>Edit Profile</SheetTitle></SheetHeader>
-        <div className="space-y-4 mt-4">
-          <div className="flex items-center gap-4 cursor-pointer" onClick={() => avatarRef.current?.click()}>
-            <AvatarSquare src={form.avatar_url} name={form.name || "U"} size="xl" />
-            <p style={{ fontSize: 12, color: "#9CA3C0" }}>Click to change avatar</p>
-            <p style={{ fontSize: 12, color: "#9CA3C0" }}>Click to change avatar</p>
-            <input ref={avatarRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
-          </div>
-          <div><label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.05em", display: "block", marginBottom: 4, color: "#9CA3C0" }}>Display name</label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
-          <div><label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.05em", display: "block", marginBottom: 4, color: "#9CA3C0" }}>Headline</label><Input value={form.headline} onChange={e => setForm({ ...form, headline: e.target.value.slice(0, 80) })} maxLength={80} /></div>
-          <div><label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.05em", display: "block", marginBottom: 4, color: "#9CA3C0" }}>Bio</label>
-            <textarea value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value.slice(0, 300) })} rows={3} maxLength={300}
-              className="w-full outline-none resize-none" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(0,0,0,0.10)", borderRadius: 10, padding: 12, fontSize: 14, color: "#1A1A2E" }} />
-          </div>
-          <div className="flex items-center gap-2"><span style={{ fontSize: 13, color: "#9CA3C0" }}>@</span><Input value={form.username} onChange={e => setForm({ ...form, username: e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, "") })} className="flex-1" /></div>
-          <div className="grid grid-cols-2 gap-3">
-            <div><label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.05em", display: "block", marginBottom: 4, color: "#9CA3C0" }}>City</label><Input value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} /></div>
-            <div><label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.05em", display: "block", marginBottom: 4, color: "#9CA3C0" }}>State</label>
-              <select value={form.state} onChange={e => setForm({ ...form, state: e.target.value })} className="w-full outline-none cursor-pointer" style={{ height: 40, borderRadius: 10, padding: "0 12px", fontSize: 14, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(0,0,0,0.10)", color: "#1A1A2E" }}>
-                <option value="">Select</option>{allIndianStates.map(s => <option key={s}>{s}</option>)}
-              </select>
-            </div>
-          </div>
-          {hasSubtypes(form.role) && (
-            <div>
-              <label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.05em", display: "block", marginBottom: 4, color: "#9CA3C0" }}>
-                Role subtype
-              </label>
-              <select
-                value={form.role_subtype}
-                onChange={e => setForm({ ...form, role_subtype: e.target.value })}
-                className="w-full outline-none cursor-pointer"
-                style={{ height: 40, borderRadius: 10, padding: "0 12px", fontSize: 14, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(0,0,0,0.10)", color: "#1A1A2E" }}
-              >
-                <option value="">Select…</option>
-                {SUBTYPE_OPTIONS[form.role].map(opt => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
-            </div>
-          )}
-          {/* OPEN TO WORK CARD */}
-          <div className="rounded-xl p-4 space-y-3" style={{ background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.20)" }}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p style={{ fontSize: 14, fontWeight: 700, color: "#1A1A2E" }}>Open to Work</p>
-                <p style={{ fontSize: 11, color: "#6B7094", marginTop: 2 }}>Let recruiters know you're available</p>
-              </div>
-              <button type="button" onClick={() => setForm({ ...form, open_to_work: !form.open_to_work })} className="cursor-pointer" style={{ width: 44, height: 24, borderRadius: 12, background: form.open_to_work ? "#10B981" : "#ddd", display: "flex", alignItems: "center", padding: 2, border: "none" }}>
-                <div style={{ width: 20, height: 20, borderRadius: 10, background: "#fff", transform: form.open_to_work ? "translateX(20px)" : "translateX(0)", transition: "transform 0.2s" }} />
-              </button>
-            </div>
-
-            {form.open_to_work && (
-              <>
-                <div>
-                  <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#6B7094", marginBottom: 6 }}>Visibility</p>
-                  <div className="space-y-1.5">
-                    {[
-                      { v: "all", label: "Everyone can see", desc: "Show the green badge on your profile to anyone" },
-                      { v: "recruiters", label: "Only recruiters", desc: "Visible only to institution accounts" },
-                      { v: "hidden", label: "Hidden for now", desc: "Save preferences but don't display" },
-                    ].map(opt => (
-                      <label key={opt.v} className="flex items-start gap-2 cursor-pointer p-2 rounded-lg" style={{ background: form.otw_visibility === opt.v ? "rgba(16,185,129,0.08)" : "transparent" }}>
-                        <input type="radio" name="otw_vis" checked={form.otw_visibility === opt.v} onChange={() => setForm({ ...form, otw_visibility: opt.v })} style={{ marginTop: 3, accentColor: "#10B981" }} />
-                        <div>
-                          <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>{opt.label}</p>
-                          <p style={{ fontSize: 11, color: "#6B7094" }}>{opt.desc}</p>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#6B7094", marginBottom: 6 }}>Roles open to</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {OTW_ROLE_TAGS.map(r => {
-                      const on = otwRoleTypes.includes(r);
-                      return (
-                        <button key={r} type="button" onClick={() => setOtwRoleTypes(p => on ? p.filter(x => x !== r) : [...p, r])}
-                          className="cursor-pointer" style={{ fontSize: 12, fontWeight: 600, padding: "6px 10px", borderRadius: 999, background: on ? "#10B981" : "#fff", color: on ? "#fff" : "#1A1A2E", border: on ? "1px solid #10B981" : "1px solid rgba(0,0,0,0.10)" }}>
-                          {r}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#6B7094", marginBottom: 4 }}>City</p>
-                    <Input value={otwLocation} onChange={e => setOtwLocation(e.target.value)} placeholder="e.g. Mumbai" />
-                  </div>
-                  <div>
-                    <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#6B7094", marginBottom: 4 }}>Mode</p>
-                    <select value={otwLocationType} onChange={e => setOtwLocationType(e.target.value)} className="w-full outline-none cursor-pointer" style={{ height: 40, borderRadius: 10, padding: "0 12px", fontSize: 14, background: "#fff", border: "1px solid rgba(0,0,0,0.10)", color: "#1A1A2E" }}>
-                      <option value="onsite">Onsite</option>
-                      <option value="remote">Remote</option>
-                      <option value="hybrid">Hybrid</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#6B7094", marginBottom: 4 }}>Short pitch</p>
-                  <textarea value={otwPitch} onChange={e => setOtwPitch(e.target.value.slice(0, 200))} rows={2} maxLength={200}
-                    placeholder="Why should recruiters pick you?"
-                    className="w-full outline-none resize-none" style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.10)", borderRadius: 10, padding: 10, fontSize: 13, color: "#1A1A2E" }} />
-                  <p className="text-right" style={{ fontSize: 10, color: otwPitch.length >= 190 ? "#EF4444" : "#9CA3C0" }}>{otwPitch.length}/200</p>
-                </div>
-              </>
-            )}
-          </div>
-          <div>
-            <label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.05em", display: "block", marginBottom: 4, color: "#9CA3C0" }}>Custom Links</label>
-            {customLinks.map((link, i) => (
-              <div key={i} className="flex gap-2 items-center mb-2">
-                <Input placeholder="URL" value={link.url} onChange={e => { const u = [...customLinks]; u[i] = { ...u[i], url: e.target.value }; setCustomLinks(u); }} className="flex-1" />
-                <Input placeholder="Label" value={link.label} onChange={e => { const u = [...customLinks]; u[i] = { ...u[i], label: e.target.value }; setCustomLinks(u); }} className="flex-1" />
-                <button type="button" onClick={() => setCustomLinks(customLinks.filter((_, idx) => idx !== i))} className="p-1 cursor-pointer" style={{ color: "#9CA3C0" }}><X className="w-4 h-4" /></button>
-              </div>
-            ))}
-            {customLinks.length < 5 && <button type="button" onClick={() => setCustomLinks([...customLinks, { url: "", label: "" }])} className="cursor-pointer" style={{ fontSize: 12, fontWeight: 600, color: "#E8733A", background: "none", border: "none", padding: 0 }}>+ Add link</button>}
-          </div>
-          <div className="flex gap-3 pt-2">
-            <Button variant="ghost" className="flex-1" onClick={onClose}>Cancel</Button>
-            <Button className="flex-1" onClick={handleSave} disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
-          </div>
-        </div>
-      </SheetContent>
-    </Sheet>
-  );
-};
+/* Edit Profile drawer removed — editing happens inline (per-section pencils) and via /app/settings/profile. */
 
 /* ═══════════ ABOUT SECTION ═══════════ */
 const AboutSection = ({ about, isOwnProfile, userId }: { about: string; isOwnProfile: boolean; userId: string }) => {
@@ -446,7 +211,7 @@ const Profile = () => {
     }
   }, [isOwnProfile, authProfile?.account_type, authProfile?.org_id, navigate]);
 
-  const [editOpen, setEditOpen] = useState(false);
+  
   const [viewedProfile, setViewedProfile] = useState<any>(null);
   const [workItems, setWorkItems] = useState<any[]>([]);
   const [userPosts, setUserPosts] = useState<any[]>([]);
@@ -1079,9 +844,9 @@ const Profile = () => {
     <div className="min-h-screen pb-6 md:pb-8">
       <PageSEO {...seoProps} />
 
-      <div className="mx-auto p-3 md:p-4" style={{ maxWidth: 960 }}>
+      <div className="mx-auto p-3 md:p-4 space-y-3 md:space-y-5" style={{ maxWidth: 960 }}>
         {/* ── PROFILE INFO CARD (no cover) ── */}
-        <div className="glass-card relative p-3 md:p-5" style={{
+        <div className="glass-card relative p-5 md:p-6" style={{
           borderRadius: 16,
           background: "rgba(255,255,255,0.25)", backdropFilter: "blur(20px)",
           border: "1px solid rgba(255,255,255,0.40)",
@@ -1111,58 +876,30 @@ const Profile = () => {
             );
             return (
           <div className="flex profile-info-flex" style={{ gap: 16, alignItems: "flex-start" }}>
-            {/* LEFT COLUMN: Avatar + OTW switch (own) / badge (other) */}
-            <div className="shrink-0 flex flex-col items-center" style={{ width: 110, gap: 10 }}>
-              <div style={showOTW ? { padding: 3, borderRadius: 14, background: "#10B981" } : undefined}>
-                <AvatarSquare src={profileData.avatar_url} name={displayName || "U"} size="profile" bgColor={roleColor} className="shadow-md" />
-              </div>
-
-              {/* OTW switch — own profile */}
-              {isOwnProfile && (
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (!profileData?.id) return;
-                    const next = !profileData.open_to_work;
-                    setViewedProfile({ ...profileData, open_to_work: next });
-                    const { error } = await supabase.from("profiles").update({ open_to_work: next } as any).eq("id", profileData.id);
-                    if (error) {
-                      setViewedProfile({ ...profileData, open_to_work: !next });
-                      toast.error("Could not update");
-                    } else {
-                      toast.success(next ? "Open to Work enabled" : "Open to Work disabled");
-                      refreshProfile?.();
-                    }
-                  }}
-                  className="cursor-pointer flex items-center gap-1.5"
-                  style={{
-                    height: 26, padding: "0 9px", borderRadius: 999, fontSize: 11, fontWeight: 600,
-                    background: profileData.open_to_work ? "rgba(16,185,129,0.12)" : "rgba(0,0,0,0.05)",
-                    color: profileData.open_to_work ? "#10B981" : "#6B7094",
-                    border: profileData.open_to_work ? "1px solid rgba(16,185,129,0.30)" : "1px solid rgba(0,0,0,0.08)",
-                  }}
-                  aria-label="Toggle Open to Work"
-                >
-                  <span style={{ width: 22, height: 12, borderRadius: 999, background: profileData.open_to_work ? "#10B981" : "rgba(0,0,0,0.18)", display: "inline-flex", alignItems: "center", padding: 1.5, transition: "background 0.2s" }}>
-                    <span style={{ width: 9, height: 9, borderRadius: "50%", background: "#fff", transform: profileData.open_to_work ? "translateX(10px)" : "translateX(0)", transition: "transform 0.2s" }} />
-                  </span>
-                  Open to Work
-                </button>
-              )}
-
-              {/* OTW badge — other profile */}
-              {!isOwnProfile && showOTW && (
-                <span style={{ fontSize: 10, fontWeight: 700, height: 20, padding: "0 8px", borderRadius: 6, background: "#10B981", color: "#fff", display: "inline-flex", alignItems: "center", gap: 4 }}>
-                  Open to Work
-                </span>
-              )}
+            {/* LEFT COLUMN: Avatar only */}
+            <div className="shrink-0" style={{ width: 96 }}>
+              <AvatarSquare src={profileData.avatar_url} name={displayName || "U"} size="profile" bgColor={roleColor} className="shadow-md" />
             </div>
 
             {/* RIGHT COLUMN: Info */}
             <div className="profile-info-body" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
-              {/* ROW 1: Name */}
-              <div className="flex items-center" style={{ justifyContent: "space-between" }}>
+              {/* ROW 1: Name + optional Open to work pill */}
+              <div className="flex items-center flex-wrap" style={{ gap: 8 }}>
                 <p style={{ fontSize: 20, fontWeight: 700, lineHeight: "28px", color: "#1A1A2E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</p>
+                {showOTW && (
+                  <span
+                    style={{
+                      display: "inline-flex", alignItems: "center", gap: 4,
+                      height: 22, padding: "0 8px", borderRadius: 999,
+                      fontSize: 11, fontWeight: 700,
+                      background: "rgba(16,185,129,0.12)", color: "#059669",
+                      border: "1px solid rgba(16,185,129,0.30)",
+                    }}
+                  >
+                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981" }} />
+                    Open to work
+                  </span>
+                )}
               </div>
 
               {/* ROW 1b: Role · Subtype */}
@@ -1253,34 +990,19 @@ const Profile = () => {
                 })()}
               </div>
 
-              {/* ROW 5: Action buttons */}
-              <div className="flex items-center flex-wrap" style={{ gap: 8, marginTop: 10 }}>
-                {isOwnProfile ? (
-                  <button
-                    type="button"
-                    onClick={() => setEditOpen(true)}
-                    className="cursor-pointer"
-                    style={{
-                      height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 700,
-                      background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none",
-                      boxShadow: "0 2px 12px rgba(232,115,58,0.25)",
-                    }}
-                  >
-                    <Pencil className="w-3 h-3 inline mr-1" /> Edit Profile
+              {/* ROW 5: Action buttons (own profile shows nothing — edit happens inline / via Settings) */}
+              {!isOwnProfile && (
+                <div className="flex items-center flex-wrap" style={{ gap: 8, marginTop: 10 }}>
+                  {renderConnectButton()}
+                  <button type="button" onClick={() => navigate(`/app/pings?to=${targetUserId}`)} className="cursor-pointer" style={{
+                    height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 500,
+                    background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.40)",
+                    color: "#1A1A2E", display: "inline-flex", alignItems: "center", gap: 4,
+                  }}>
+                    <MessageCircle style={{ width: 13, height: 13 }} /> Message
                   </button>
-                ) : (
-                  <>
-                    {renderConnectButton()}
-                    <button type="button" onClick={() => navigate(`/app/pings?to=${targetUserId}`)} className="cursor-pointer" style={{
-                      height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 500,
-                      background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.40)",
-                      color: "#1A1A2E", display: "inline-flex", alignItems: "center", gap: 4,
-                    }}>
-                      <MessageCircle style={{ width: 13, height: 13 }} /> Message
-                    </button>
-                  </>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
             );
@@ -1325,9 +1047,9 @@ const Profile = () => {
 
 
         {/* ── SECTION GRID ── */}
-        <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-2 md:gap-3 mt-2 md:mt-3">
+        <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-3 md:gap-5 mt-3 md:mt-5">
           {/* ═══ LEFT COLUMN ═══ */}
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
             {/* Verification status (own profile only, hidden if already verified) */}
             {isOwnProfile && <VerificationStatusCard />}
             {/* L1: Connections preview */}
@@ -1413,10 +1135,107 @@ const Profile = () => {
                 </div>
               )}
             </div>
+
+            {/* L4: Availability (Open to work) */}
+            {(() => {
+              const otwOn = !!profileData.open_to_work;
+              if (isOwnProfile) {
+                return (
+                  <div className="glass-card" style={{ padding: 12, borderRadius: 16 }}>
+                    <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>Availability</p>
+                    <p style={{ fontSize: 12, color: "#6B7094", marginTop: 2 }}>
+                      Let others know you're open to new opportunities.
+                    </p>
+                    <div className="flex items-center justify-between" style={{ marginTop: 10 }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>Open to work</span>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!profileData?.id) return;
+                          const next = !profileData.open_to_work;
+                          setViewedProfile({ ...profileData, open_to_work: next });
+                          const { error } = await supabase.from("profiles").update({ open_to_work: next } as any).eq("id", profileData.id);
+                          if (error) {
+                            setViewedProfile({ ...profileData, open_to_work: !next });
+                            toast.error("Could not update");
+                          } else {
+                            toast.success(next ? "Open to work enabled" : "Open to work disabled");
+                            refreshProfile?.();
+                          }
+                        }}
+                        aria-label="Toggle Open to work"
+                        style={{
+                          width: 44, height: 24, borderRadius: 12, padding: 2, border: "none",
+                          background: otwOn ? "#10B981" : "rgba(0,0,0,0.18)",
+                          display: "inline-flex", alignItems: "center", cursor: "pointer", transition: "background 0.2s",
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: 20, height: 20, borderRadius: "50%", background: "#fff",
+                            transform: otwOn ? "translateX(20px)" : "translateX(0)",
+                            transition: "transform 0.2s",
+                            boxShadow: "0 1px 2px rgba(0,0,0,0.15)",
+                          }}
+                        />
+                      </button>
+                    </div>
+                    <ul style={{ marginTop: 10, fontSize: 11, color: "#6B7094", lineHeight: 1.6, paddingLeft: 14, listStyle: "disc" }}>
+                      <li>Shown on your profile as a badge</li>
+                      <li>Shown in Find / Explore results</li>
+                      <li>You can turn this off any time</li>
+                    </ul>
+                  </div>
+                );
+              }
+              if (otwOn) {
+                return (
+                  <div className="glass-card" style={{ padding: 12, borderRadius: 16, border: "1px solid rgba(16,185,129,0.30)" }}>
+                    <div className="flex items-center" style={{ gap: 6 }}>
+                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#10B981" }} />
+                      <p style={{ fontSize: 14, fontWeight: 700, color: "#059669" }}>Open to work</p>
+                    </div>
+                    <p style={{ fontSize: 12, color: "#6B7094", marginTop: 4 }}>
+                      {displayName} is open to new roles.
+                    </p>
+                    <div className="flex items-center" style={{ gap: 6, marginTop: 10 }}>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/app/pings?to=${targetUserId}`)}
+                        className="cursor-pointer"
+                        style={{
+                          height: 30, padding: "0 12px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+                          background: "#10B981", color: "#fff", border: "none",
+                        }}
+                      >
+                        Message
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const url = `${window.location.origin}/${username || targetUserId}`;
+                          navigator.clipboard?.writeText(url);
+                          toast.success("Profile link copied");
+                        }}
+                        className="cursor-pointer"
+                        style={{
+                          height: 30, padding: "0 12px", borderRadius: 8, fontSize: 12, fontWeight: 500,
+                          background: "rgba(255,255,255,0.25)", border: "1px solid rgba(0,0,0,0.10)",
+                          color: "#1A1A2E",
+                        }}
+                      >
+                        Share profile
+                      </button>
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
           </div>
 
           {/* ═══ RIGHT COLUMN ═══ */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <ExperienceSection items={experiences} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("experience")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
             <EducationSection items={education} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("education")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
             <RolesSection items={profileRoles} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("role")} onDelete={deleteRole} />
