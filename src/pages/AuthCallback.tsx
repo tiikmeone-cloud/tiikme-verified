@@ -10,12 +10,9 @@ const AuthCallback = () => {
   useEffect(() => {
     (async () => {
       try {
-        // Supabase auto-parses the OAuth hash/code on load via detectSessionInUrl.
-        // We just need to read the resulting session and route accordingly.
+        // Supabase parses the OAuth code/hash automatically (detectSessionInUrl: true)
         const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) throw error;
-
-        if (!session?.user) {
+        if (error || !session) {
           navigate("/signin?error=oauth_failed", { replace: true });
           return;
         }
@@ -31,16 +28,16 @@ const AuthCallback = () => {
           return;
         }
 
-        // Route by onboarding completion + account type
-        const { data: prof } = await supabase
+        // Decide onboarding vs feed based on profile.onboarding_complete
+        const { data: profile } = await supabase
           .from("profiles")
-          .select("account_type, onboarding_complete")
+          .select("id, onboarding_complete, account_type")
           .eq("id", session.user.id)
           .maybeSingle();
 
-        if (!prof?.onboarding_complete) {
+        if (!profile || profile.onboarding_complete === false) {
           navigate("/onboarding/1", { replace: true });
-        } else if (prof.account_type === "institution") {
+        } else if (profile.account_type === "institution") {
           navigate("/app/workspace", { replace: true });
         } else {
           navigate("/app/feed", { replace: true });
@@ -48,8 +45,7 @@ const AuthCallback = () => {
         toast.success("Welcome!");
       } catch (e: any) {
         console.error("[AuthCallback]", e);
-        toast.error(e?.message || "Sign-in failed");
-        navigate("/signin", { replace: true });
+        navigate("/signin?error=oauth_failed", { replace: true });
       }
     })();
   }, [navigate]);
