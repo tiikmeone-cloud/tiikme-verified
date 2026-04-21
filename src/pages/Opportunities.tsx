@@ -315,7 +315,7 @@ function StickyOppHeader({ isInstitution, userTab, setUserTab, orgTab, setOrgTab
             <button type="button" onClick={() => setActiveType("All")} className="flex-1 cursor-pointer"
               style={{ height: 40, borderRadius: 10, fontSize: 13, fontWeight: 600, background: "rgba(0,0,0,0.06)", color: "#1A1A2E", border: "none" }}>Reset</button>
             <button type="button" onClick={() => setMoreOpen(false)} className="flex-1 cursor-pointer"
-              style={{ height: 40, borderRadius: 10, fontSize: 13, fontWeight: 700, background: "#F97316", color: "#fff", border: "none" }}>Apply</button>
+              style={{ height: 40, borderRadius: 10, fontSize: 13, fontWeight: 700, background: "#FA903E", color: "#fff", border: "none" }}>Apply</button>
           </>
         }>
         <div className="flex flex-wrap gap-2">
@@ -324,7 +324,7 @@ function StickyOppHeader({ isInstitution, userTab, setUserTab, orgTab, setOrgTab
               className="cursor-pointer"
               style={{
                 height: 32, padding: "0 12px", borderRadius: 999, fontSize: 12, fontWeight: 600,
-                background: activeType === f ? "#F97316" : "rgba(0,0,0,0.05)",
+                background: activeType === f ? "#FA903E" : "rgba(0,0,0,0.05)",
                 color: activeType === f ? "#fff" : "#1A1A2E", border: "none",
               }}>{f}</button>
           ))}
@@ -461,7 +461,7 @@ function OpportunityCard({ o, user, profile, isInstitution, appliedIds, onApply,
           </span>
           {o.location && <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full flex items-center gap-1" style={{ background: "#F0FDF4", color: "#16A34A" }}><MapPin className="w-3 h-3" />{o.location}</span>}
           {o.is_remote && <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full" style={{ background: "#EFF6FF", color: "#2563EB" }}>Remote</span>}
-          {o.compensation && <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full" style={{ background: "#FFF3EC", color: "#E8580A" }}>{o.compensation}</span>}
+          {o.compensation && <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full" style={{ background: "#FEF3E8", color: "#FA903E" }}>{o.compensation}</span>}
           {o.activity_score_min > 0 && <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full" style={{ background: "#FEF3C7", color: "#D97706" }}>Score: {o.activity_score_min}+</span>}
           {(() => {
             const eb = expiryBadge(o.expires_at);

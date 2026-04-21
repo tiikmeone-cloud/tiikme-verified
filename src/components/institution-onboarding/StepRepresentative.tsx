@@ -16,9 +16,9 @@ const ROLES_BY_TYPE: Record<string, string[]> = {
 };
 
 const inputStyle: React.CSSProperties = {
-  background: "#fff", border: "1.5px solid #E5E7EB", borderRadius: 14,
-  color: "#111827", height: 48, width: "100%", padding: "0 14px", fontSize: 14,
-  outline: "none", fontFamily: "'Plus Jakarta Sans', sans-serif",
+  background: "rgba(255,255,255,0.04)", border: "1.5px solid rgba(255,255,255,0.15)", borderRadius: 14,
+  color: "#FAFAF7", height: 48, width: "100%", padding: "0 14px", fontSize: 14,
+  outline: "none",
 };
 
 interface Props {
@@ -60,9 +60,9 @@ export default function StepRepresentative({ form, update, onNext }: Props) {
                 onClick={() => update({ repRole: r })}
                 className="px-3.5 py-1.5 rounded-full text-[12px] font-semibold cursor-pointer transition-all"
                 style={{
-                  background: form.repRole === r ? "var(--brand)" : "#fff",
-                  color: form.repRole === r ? "#fff" : "var(--text-2)",
-                  border: form.repRole === r ? "none" : "1.5px solid #E5E7EB",
+                  background: form.repRole === r ? "var(--brand)" : "rgba(255,255,255,0.06)",
+                  color: form.repRole === r ? "#fff" : "rgba(250,250,247,0.85)",
+                  border: form.repRole === r ? "none" : "1.5px solid rgba(255,255,255,0.15)",
                 }}
               >
                 {r}

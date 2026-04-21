@@ -8,9 +8,9 @@ import type { InstitutionFormData } from "@/pages/JoinAsInstitution";
 const PERSONAL_DOMAINS = ["gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "rediffmail.com", "proton.me", "icloud.com", "live.com", "aol.com"];
 
 const inputStyle: React.CSSProperties = {
-  background: "#fff", border: "1.5px solid #E5E7EB", borderRadius: 14,
-  color: "#111827", height: 48, width: "100%", padding: "0 14px", fontSize: 14,
-  outline: "none", fontFamily: "'Plus Jakarta Sans', sans-serif",
+  background: "rgba(255,255,255,0.04)", border: "1.5px solid rgba(255,255,255,0.15)", borderRadius: 14,
+  color: "#FAFAF7", height: 48, width: "100%", padding: "0 14px", fontSize: 14,
+  outline: "none",
 };
 
 interface Props {

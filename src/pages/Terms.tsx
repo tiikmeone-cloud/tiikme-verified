@@ -30,7 +30,7 @@ const Sub = ({ children }: { children: React.ReactNode }) => (
   <h3 className="text-[15.5px] font-semibold text-gray-900 mt-5 mb-2">{children}</h3>
 );
 const List = ({ items }: { items: string[] }) => (
-  <ul className="list-disc pl-6 space-y-1.5 text-gray-700 text-[15px] leading-relaxed marker:text-orange-500">
+  <ul className="list-disc pl-6 space-y-1.5 text-gray-700 text-[15px] leading-relaxed marker:text-brand">
     {items.map((it, i) => <li key={i}>{it}</li>)}
   </ul>
 );
@@ -93,7 +93,7 @@ export default function Terms() {
             <li>Any advance payment of any kind</li>
           </ul>
           <p className="mb-2">That communication is FRAUDULENT. Tiikme did not send it. We are not responsible for it.</p>
-          <p>Report all such incidents immediately to: <a href="mailto:contact@tiikme.com" className="underline text-orange-600">contact@tiikme.com</a> or <a href="mailto:contact@veenavarse.com" className="underline text-orange-600">contact@veenavarse.com</a></p>
+          <p>Report all such incidents immediately to: <a href="mailto:contact@tiikme.com" className="underline text-brand-hover">contact@tiikme.com</a> or <a href="mailto:contact@veenavarse.com" className="underline text-brand-hover">contact@veenavarse.com</a></p>
         </Callout>
         <P>This policy extends to every organisation and recruiter on Tiikme. Organisations are strictly prohibited from requesting any payment from applicants at any stage of the application, interview, or hiring process conducted through this Platform.</P>
       </LegalSection>
@@ -328,12 +328,12 @@ export default function Terms() {
 
       <LegalSection id="section-19" num="19" title="Contact">
         <div className="space-y-1.5 text-[14.5px]">
-          <P>General queries: <a href="mailto:contact@tiikme.com" className="text-orange-600 underline">contact@tiikme.com</a></P>
-          <P>Alternate contact: <a href="mailto:contact@veenavarse.com" className="text-orange-600 underline">contact@veenavarse.com</a></P>
-          <P>Content reports: <a href="mailto:reports@tiikme.com" className="text-orange-600 underline">reports@tiikme.com</a></P>
-          <P>Circle appeals: <a href="mailto:circles@tiikme.com" className="text-orange-600 underline">circles@tiikme.com</a></P>
-          <P>Enforcement appeals: <a href="mailto:appeals@tiikme.com" className="text-orange-600 underline">appeals@tiikme.com</a></P>
-          <P>Data rights: <a href="mailto:contact@tiikme.com" className="text-orange-600 underline">contact@tiikme.com</a> (Subject: "Data Rights Request")</P>
+          <P>General queries: <a href="mailto:contact@tiikme.com" className="text-brand-hover underline">contact@tiikme.com</a></P>
+          <P>Alternate contact: <a href="mailto:contact@veenavarse.com" className="text-brand-hover underline">contact@veenavarse.com</a></P>
+          <P>Content reports: <a href="mailto:reports@tiikme.com" className="text-brand-hover underline">reports@tiikme.com</a></P>
+          <P>Circle appeals: <a href="mailto:circles@tiikme.com" className="text-brand-hover underline">circles@tiikme.com</a></P>
+          <P>Enforcement appeals: <a href="mailto:appeals@tiikme.com" className="text-brand-hover underline">appeals@tiikme.com</a></P>
+          <P>Data rights: <a href="mailto:contact@tiikme.com" className="text-brand-hover underline">contact@tiikme.com</a> (Subject: "Data Rights Request")</P>
           <P>Response time: 3 business days for general queries</P>
         </div>
       </LegalSection>

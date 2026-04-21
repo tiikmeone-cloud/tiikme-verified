@@ -70,14 +70,27 @@ const EMPTY: WizardState = {
   display_preference: DEFAULT_DISPLAY_PREFERENCE,
 };
 
+// Glass-on-midnight input/select styling. Translucent fill, white text,
+// brand-orange focus ring. Used by every step on the dark AuthLayout.
 const inputStyle: React.CSSProperties = {
-  background: "#fff", border: "1.5px solid #E5E7EB", borderRadius: 14,
-  color: "#111827", height: 48, width: "100%", padding: "0 14px", fontSize: 14,
+  background: "rgba(255,255,255,0.04)",
+  border: "1.5px solid rgba(255,255,255,0.15)",
+  borderRadius: 14,
+  color: "#FAFAF7",
+  height: 48,
+  width: "100%",
+  padding: "0 14px",
+  fontSize: 14,
   outline: "none",
 };
 
 const labelCls = "block text-[13px] font-semibold mb-1.5";
-const labelStyle: React.CSSProperties = { color: "#374151" };
+const labelStyle: React.CSSProperties = { color: "rgba(250,250,247,0.85)" };
+
+// Tiikme brand orange used everywhere instead of legacy #FA903E
+const BRAND = "#FA903E";
+const BRAND_DIM = "rgba(250,144,62,0.14)";
+const BRAND_RING = "rgba(250,144,62,0.45)";
 
 export default function Onboarding() {
   const navigate = useNavigate();
@@ -159,7 +172,7 @@ export default function Onboarding() {
   if (!loaded) {
     return (
       <OnboardingShell step={1} totalSteps={TOTAL}>
-        <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin" style={{ color: "#E8580A" }} /></div>
+        <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin" style={{ color: BRAND }} /></div>
       </OnboardingShell>
     );
   }
@@ -169,11 +182,11 @@ export default function Onboarding() {
 
   return (
     <OnboardingShell step={step} totalSteps={TOTAL}>
-      <div className="rounded-3xl p-8 sm:p-10" style={{ background: "#fff", border: "1px solid #F3F4F6", boxShadow: "0 4px 24px rgba(0,0,0,0.06)" }}>
+      <div>
         {showBack && (
           <button type="button" onClick={() => goto(step - 1)}
             className="flex items-center gap-1 text-[13px] font-medium mb-4 cursor-pointer hover:opacity-70"
-            style={{ color: "#6B7280" }}>
+            style={{ color: "rgba(250,250,247,0.65)" }}>
             <ArrowLeft className="w-4 h-4" /> Back
           </button>
         )}
@@ -251,8 +264,8 @@ function StepIdentity({ state, set, onNext, saving, setSaving }: {
 
   return (
     <>
-      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: "#111827" }}>Set up your identity</h1>
-      <p className="text-[14px] mb-6" style={{ color: "#6B7280" }}>This is what people see when they find you.</p>
+      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: "#FAFAF7" }}>Set up your identity</h1>
+      <p className="text-[14px] mb-6" style={{ color: "rgba(250,250,247,0.65)" }}>This is what people see when they find you.</p>
 
       <div className="space-y-4">
         <div>
@@ -263,15 +276,15 @@ function StepIdentity({ state, set, onNext, saving, setSaving }: {
         <div>
           <label className={labelCls} style={labelStyle}>Username</label>
           <div className="relative">
-            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[14px]" style={{ color: "#9CA3AF" }}>tiikme.com/</span>
+            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[14px]" style={{ color: "rgba(250,250,247,0.45)" }}>tiikme.com/</span>
             <input type="text" value={state.username}
               onChange={e => set("username", e.target.value.replace(/[^a-zA-Z0-9._-]/g, ""))}
               placeholder="yourname" style={{ ...inputStyle, paddingLeft: 110 }} maxLength={30} />
           </div>
           <p className="text-[12px] mt-1.5" style={{
-            color: !state.username ? "#9CA3AF" :
+            color: !state.username ? "rgba(250,250,247,0.45)" :
               !usernameValid ? "#EF4444" :
-              checking ? "#9CA3AF" :
+              checking ? "rgba(250,250,247,0.45)" :
               available ? "#059669" : "#EF4444",
           }}>
             {!state.username ? "Lowercase letters, numbers, dots, dashes, underscores. 3–30 chars." :
@@ -285,7 +298,7 @@ function StepIdentity({ state, set, onNext, saving, setSaving }: {
       <button type="button" disabled={!canContinue || saving}
         onClick={async () => { setSaving(true); await onNext(); setSaving(false); }}
         className="mt-6 w-full h-12 rounded-2xl text-[15px] font-bold text-white cursor-pointer transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-        style={{ background: "#E8580A" }}>
+        style={{ background: BRAND }}>
         {saving ? "Saving..." : "Continue →"}
       </button>
     </>
@@ -297,8 +310,8 @@ function StepIdentity({ state, set, onNext, saving, setSaving }: {
 function StepRole({ state, set, onNext }: { state: WizardState; set: any; onNext: () => Promise<void> }) {
   return (
     <>
-      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: "#111827" }}>What best describes you?</h1>
-      <p className="text-[14px] mb-6" style={{ color: "#6B7280" }}>Pick the closest fit. You can change this later.</p>
+      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: "#FAFAF7" }}>What best describes you?</h1>
+      <p className="text-[14px] mb-6" style={{ color: "rgba(250,250,247,0.65)" }}>Pick the closest fit. You can change this later.</p>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {ROLES.map(r => {
@@ -308,16 +321,16 @@ function StepRole({ state, set, onNext }: { state: WizardState; set: any; onNext
             <button key={r.id} type="button" onClick={() => set("role", r.id)}
               className="text-left p-4 rounded-2xl cursor-pointer transition-all duration-200 hover:shadow-md"
               style={{
-                border: selected ? "2px solid #E8580A" : "2px solid #E5E7EB",
-                background: selected ? "#FFF8F2" : "#fff",
+                border: selected ? "2px solid #FA903E" : "2px solid #E5E7EB",
+                background: selected ? BRAND_DIM : "#fff",
                 minHeight: 120,
               }}>
               <div className="w-10 h-10 rounded-xl mb-2 flex items-center justify-center"
-                style={{ background: selected ? "#E8580A20" : "#F3F4F6" }}>
-                <Icon className="w-5 h-5" style={{ color: selected ? "#E8580A" : "#374151" }} />
+                style={{ background: selected ? BRAND_DIM : "rgba(255,255,255,0.08)" }}>
+                <Icon className="w-5 h-5" style={{ color: selected ? BRAND : "rgba(250,250,247,0.85)" }} />
               </div>
-              <div className="text-[14px] font-bold mb-0.5" style={{ color: "#111827" }}>{r.label}</div>
-              <div className="text-[11px] leading-tight" style={{ color: "#6B7280" }}>{r.desc}</div>
+              <div className="text-[14px] font-bold mb-0.5" style={{ color: "#FAFAF7" }}>{r.label}</div>
+              <div className="text-[11px] leading-tight" style={{ color: "rgba(250,250,247,0.65)" }}>{r.desc}</div>
             </button>
           );
         })}
@@ -325,7 +338,7 @@ function StepRole({ state, set, onNext }: { state: WizardState; set: any; onNext
 
       <button type="button" disabled={!state.role} onClick={onNext}
         className="mt-6 w-full h-12 rounded-2xl text-[15px] font-bold text-white cursor-pointer transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-        style={{ background: "#E8580A" }}>
+        style={{ background: BRAND }}>
         Continue →
       </button>
     </>
@@ -351,8 +364,8 @@ function StepLocation({ state, set, onNext, onSkip }: {
 
   return (
     <>
-      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: "#111827" }}>Where are you based?</h1>
-      <p className="text-[14px] mb-6" style={{ color: "#6B7280" }}>Helps surface local people, jobs, and events.</p>
+      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: "#FAFAF7" }}>Where are you based?</h1>
+      <p className="text-[14px] mb-6" style={{ color: "rgba(250,250,247,0.65)" }}>Helps surface local people, jobs, and events.</p>
 
       <div className="space-y-4">
         <div>
@@ -402,13 +415,13 @@ function StepLocation({ state, set, onNext, onSkip }: {
 
       <div className="flex gap-3 mt-6">
         <button type="button" onClick={onSkip}
-          className="h-12 px-5 rounded-2xl text-[14px] font-semibold cursor-pointer hover:bg-gray-50"
-          style={{ background: "#fff", border: "1.5px solid #E5E7EB", color: "#6B7280" }}>
+          className="h-12 px-5 rounded-2xl text-[14px] font-semibold cursor-pointer hover:bg-white/[0.10]"
+          style={{ background: "rgba(255,255,255,0.04)", border: "1.5px solid #E5E7EB", color: "rgba(250,250,247,0.65)" }}>
           Skip
         </button>
         <button type="button" onClick={onNext}
           className="flex-1 h-12 rounded-2xl text-[15px] font-bold text-white cursor-pointer transition-all hover:opacity-90"
-          style={{ background: "#E8580A" }}>
+          style={{ background: BRAND }}>
           Continue →
         </button>
       </div>
@@ -425,8 +438,8 @@ function StepSubtype({ state, set, onNext, onSkip }: {
   if (!def) {
     return (
       <>
-        <p className="text-[14px] mb-4" style={{ color: "#6B7280" }}>Pick a role first.</p>
-        <button type="button" onClick={onSkip} className="w-full h-12 rounded-2xl text-[15px] font-bold text-white" style={{ background: "#E8580A" }}>Continue →</button>
+        <p className="text-[14px] mb-4" style={{ color: "rgba(250,250,247,0.65)" }}>Pick a role first.</p>
+        <button type="button" onClick={onSkip} className="w-full h-12 rounded-2xl text-[15px] font-bold text-white" style={{ background: BRAND }}>Continue →</button>
       </>
     );
   }
@@ -434,8 +447,8 @@ function StepSubtype({ state, set, onNext, onSkip }: {
 
   return (
     <>
-      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: "#111827" }}>{def.subtypeLabel}</h1>
-      <p className="text-[14px] mb-6" style={{ color: "#6B7280" }}>Pick the closest match. We use this to show you better matches.</p>
+      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: "#FAFAF7" }}>{def.subtypeLabel}</h1>
+      <p className="text-[14px] mb-6" style={{ color: "rgba(250,250,247,0.65)" }}>Pick the closest match. We use this to show you better matches.</p>
 
       <div className="space-y-2.5 max-h-[360px] overflow-y-auto pr-1">
         {def.subtypes.map(opt => {
@@ -444,11 +457,11 @@ function StepSubtype({ state, set, onNext, onSkip }: {
             <button key={opt} type="button" onClick={() => set("role_subtype", opt)}
               className="w-full text-left p-3.5 rounded-xl cursor-pointer transition-all flex items-center justify-between"
               style={{
-                border: selected ? "2px solid #E8580A" : "1.5px solid #E5E7EB",
-                background: selected ? "#FFF8F2" : "#fff",
+                border: selected ? "2px solid #FA903E" : "1.5px solid #E5E7EB",
+                background: selected ? BRAND_DIM : "#fff",
               }}>
-              <span className="text-[14px] font-semibold" style={{ color: "#111827" }}>{opt}</span>
-              {selected && <Check className="w-4 h-4" style={{ color: "#E8580A" }} />}
+              <span className="text-[14px] font-semibold" style={{ color: "#FAFAF7" }}>{opt}</span>
+              {selected && <Check className="w-4 h-4" style={{ color: BRAND }} />}
             </button>
           );
         })}
@@ -464,14 +477,14 @@ function StepSubtype({ state, set, onNext, onSkip }: {
 
       <div className="flex gap-3 mt-6">
         <button type="button" onClick={onSkip}
-          className="h-12 px-5 rounded-2xl text-[14px] font-semibold cursor-pointer hover:bg-gray-50"
-          style={{ background: "#fff", border: "1.5px solid #E5E7EB", color: "#6B7280" }}>
+          className="h-12 px-5 rounded-2xl text-[14px] font-semibold cursor-pointer hover:bg-white/[0.10]"
+          style={{ background: "rgba(255,255,255,0.04)", border: "1.5px solid #E5E7EB", color: "rgba(250,250,247,0.65)" }}>
           Skip
         </button>
         <button type="button" onClick={onNext}
           disabled={!state.role_subtype || (isOther && !state.subtype_other.trim())}
           className="flex-1 h-12 rounded-2xl text-[15px] font-bold text-white cursor-pointer transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{ background: "#E8580A" }}>
+          style={{ background: BRAND }}>
           Continue →
         </button>
       </div>
@@ -489,8 +502,8 @@ function StepRoleDetails({ state, set, onNext, onSkip }: {
 
   return (
     <>
-      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: "#111827" }}>A few quick details</h1>
-      <p className="text-[14px] mb-6" style={{ color: "#6B7280" }}>All optional — fill what feels relevant.</p>
+      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: "#FAFAF7" }}>A few quick details</h1>
+      <p className="text-[14px] mb-6" style={{ color: "rgba(250,250,247,0.65)" }}>All optional — fill what feels relevant.</p>
 
       <div className="space-y-4">
         <div>
@@ -509,9 +522,9 @@ function StepRoleDetails({ state, set, onNext, onSkip }: {
                   <button key={b} type="button" onClick={() => set("years_exp", b)}
                     className="h-11 rounded-xl text-[13px] font-semibold cursor-pointer transition-all"
                     style={{
-                      border: selected ? "2px solid #E8580A" : "1.5px solid #E5E7EB",
-                      background: selected ? "#FFF8F2" : "#fff",
-                      color: selected ? "#E8580A" : "#374151",
+                      border: selected ? "2px solid #FA903E" : "1.5px solid #E5E7EB",
+                      background: selected ? BRAND_DIM : "#fff",
+                      color: selected ? BRAND : "rgba(250,250,247,0.85)",
                     }}>
                     {b} yrs
                   </button>
@@ -535,13 +548,13 @@ function StepRoleDetails({ state, set, onNext, onSkip }: {
 
       <div className="flex gap-3 mt-6">
         <button type="button" onClick={onSkip}
-          className="h-12 px-5 rounded-2xl text-[14px] font-semibold cursor-pointer hover:bg-gray-50"
-          style={{ background: "#fff", border: "1.5px solid #E5E7EB", color: "#6B7280" }}>
+          className="h-12 px-5 rounded-2xl text-[14px] font-semibold cursor-pointer hover:bg-white/[0.10]"
+          style={{ background: "rgba(255,255,255,0.04)", border: "1.5px solid #E5E7EB", color: "rgba(250,250,247,0.65)" }}>
           Skip
         </button>
         <button type="button" onClick={onNext}
           className="flex-1 h-12 rounded-2xl text-[15px] font-bold text-white cursor-pointer transition-all hover:opacity-90"
-          style={{ background: "#E8580A" }}>
+          style={{ background: BRAND }}>
           Continue →
         </button>
       </div>
@@ -566,9 +579,9 @@ function StepInterests({ state, set, onNext, onSkip }: {
 
   return (
     <>
-      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: "#111827" }}>What are you into?</h1>
-      <p className="text-[14px] mb-2" style={{ color: "#6B7280" }}>Pick 3–8 interests. We'll use these to tune your feed.</p>
-      <p className="text-[12px] mb-5 font-semibold" style={{ color: valid ? "#059669" : "#9CA3AF" }}>
+      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: "#FAFAF7" }}>What are you into?</h1>
+      <p className="text-[14px] mb-2" style={{ color: "rgba(250,250,247,0.65)" }}>Pick 3–8 interests. We'll use these to tune your feed.</p>
+      <p className="text-[12px] mb-5 font-semibold" style={{ color: valid ? "#059669" : "rgba(250,250,247,0.45)" }}>
         {count} selected {valid ? "✓" : `(need ${count < 3 ? 3 - count + " more" : ""}${count > 8 ? "too many" : ""})`}
       </p>
 
@@ -579,9 +592,9 @@ function StepInterests({ state, set, onNext, onSkip }: {
             <button key={tag} type="button" onClick={() => toggle(tag)}
               className="px-3.5 h-9 rounded-full text-[13px] font-semibold cursor-pointer transition-all"
               style={{
-                border: selected ? "1.5px solid #E8580A" : "1.5px solid #E5E7EB",
-                background: selected ? "#FFF8F2" : "#fff",
-                color: selected ? "#E8580A" : "#374151",
+                border: selected ? "1.5px solid #FA903E" : "1.5px solid #E5E7EB",
+                background: selected ? BRAND_DIM : "#fff",
+                color: selected ? BRAND : "rgba(250,250,247,0.85)",
               }}>
               {tag}
             </button>
@@ -591,13 +604,13 @@ function StepInterests({ state, set, onNext, onSkip }: {
 
       <div className="flex gap-3 mt-6">
         <button type="button" onClick={onSkip}
-          className="h-12 px-5 rounded-2xl text-[14px] font-semibold cursor-pointer hover:bg-gray-50"
-          style={{ background: "#fff", border: "1.5px solid #E5E7EB", color: "#6B7280" }}>
+          className="h-12 px-5 rounded-2xl text-[14px] font-semibold cursor-pointer hover:bg-white/[0.10]"
+          style={{ background: "rgba(255,255,255,0.04)", border: "1.5px solid #E5E7EB", color: "rgba(250,250,247,0.65)" }}>
           Skip
         </button>
         <button type="button" onClick={onNext} disabled={!valid}
           className="flex-1 h-12 rounded-2xl text-[15px] font-bold text-white cursor-pointer transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{ background: "#E8580A" }}>
+          style={{ background: BRAND }}>
           Continue →
         </button>
       </div>
@@ -612,8 +625,8 @@ function StepDisplayPref({ state, set, onFinish, saving }: {
 }) {
   return (
     <>
-      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: "#111827" }}>What should people see?</h1>
-      <p className="text-[14px] mb-6" style={{ color: "#6B7280" }}>Pick how your card appears across Tiikme. You can change this anytime.</p>
+      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: "#FAFAF7" }}>What should people see?</h1>
+      <p className="text-[14px] mb-6" style={{ color: "rgba(250,250,247,0.65)" }}>Pick how your card appears across Tiikme. You can change this anytime.</p>
 
       <div className="space-y-2.5">
         {DISPLAY_PREFERENCE_OPTIONS.map(opt => {
@@ -622,14 +635,14 @@ function StepDisplayPref({ state, set, onFinish, saving }: {
             <button key={opt.value} type="button" onClick={() => set("display_preference", opt.value)}
               className="w-full text-left p-4 rounded-2xl cursor-pointer transition-all flex items-start justify-between gap-3"
               style={{
-                border: selected ? "2px solid #E8580A" : "1.5px solid #E5E7EB",
-                background: selected ? "#FFF8F2" : "#fff",
+                border: selected ? "2px solid #FA903E" : "1.5px solid #E5E7EB",
+                background: selected ? BRAND_DIM : "#fff",
               }}>
               <div>
-                <div className="text-[14px] font-bold mb-0.5" style={{ color: "#111827" }}>{opt.label}</div>
-                <div className="text-[12px]" style={{ color: "#6B7280" }}>{opt.desc}</div>
+                <div className="text-[14px] font-bold mb-0.5" style={{ color: "#FAFAF7" }}>{opt.label}</div>
+                <div className="text-[12px]" style={{ color: "rgba(250,250,247,0.65)" }}>{opt.desc}</div>
               </div>
-              {selected && <Check className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: "#E8580A" }} />}
+              {selected && <Check className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: BRAND }} />}
             </button>
           );
         })}
@@ -637,7 +650,7 @@ function StepDisplayPref({ state, set, onFinish, saving }: {
 
       <button type="button" onClick={onFinish} disabled={saving}
         className="mt-6 w-full h-12 rounded-2xl text-[15px] font-bold text-white cursor-pointer transition-all hover:opacity-90 disabled:opacity-50"
-        style={{ background: "#E8580A" }}>
+        style={{ background: BRAND }}>
         {saving ? "Finishing..." : "Finish & enter Tiikme →"}
       </button>
     </>

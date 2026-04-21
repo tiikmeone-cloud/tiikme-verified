@@ -63,7 +63,7 @@ const LegalPageLayout = ({ title, lastUpdated, jurisdictionLine, toc, children }
                   href={`#${t.id}`}
                   className="block text-[12.5px] leading-snug py-1 transition-colors"
                   style={{
-                    color: activeId === t.id ? "#E8580A" : "#6B7280",
+                    color: activeId === t.id ? "#FA903E" : "#6B7280",
                     fontWeight: activeId === t.id ? 700 : 500,
                   }}
                 >
@@ -92,7 +92,7 @@ export default LegalPageLayout;
 export const LegalSection = ({ id, num, title, children }: { id: string; num: string; title: string; children: ReactNode }) => (
   <section id={id} className="scroll-mt-24">
     <h2 className="text-xl md:text-[22px] font-semibold text-gray-900 mt-12 mb-4">
-      <span className="text-orange-500 font-bold mr-2">{num}.</span>
+      <span className="text-brand font-bold mr-2">{num}.</span>
       {title}
     </h2>
     <div className="space-y-4">{children}</div>
@@ -100,7 +100,7 @@ export const LegalSection = ({ id, num, title, children }: { id: string; num: st
 );
 
 export const Callout = ({ children }: { children: ReactNode }) => (
-  <div className="bg-orange-50 border-l-4 border-orange-500 px-5 py-4 rounded-r-xl my-6 text-gray-900 text-[14.5px] leading-relaxed">
+  <div className="bg-orange-50 border-l-4 border-brand px-5 py-4 rounded-r-xl my-6 text-gray-900 text-[14.5px] leading-relaxed">
     {children}
   </div>
 );

@@ -48,7 +48,7 @@ const CirclesSection = () => (
               className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
               style={{ backgroundColor: "#FFF7ED" }}
             >
-              <c.icon className="w-5 h-5" style={{ color: "#E8580A" }} strokeWidth={2} />
+              <c.icon className="w-5 h-5" style={{ color: "#FA903E" }} strokeWidth={2} />
             </div>
             <h3 className="text-[20px] font-bold mb-2" style={{ color: "#04061A" }}>
               {c.title}

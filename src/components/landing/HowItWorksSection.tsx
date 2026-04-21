@@ -19,7 +19,7 @@ const steps = [
 ];
 
 const HowItWorksSection = () => (
-  <section id="how-it-works" className="px-5 md:px-8 py-16 md:py-[100px]" style={{ backgroundColor: "#FFF8F2" }}>
+  <section id="how-it-works" className="px-5 md:px-8 py-16 md:py-[100px]" style={{ backgroundColor: "#FEF3E8" }}>
     <div className="max-w-[1200px] mx-auto">
       <h2
         className="text-center font-extrabold text-[28px] md:text-[48px] mb-12 md:mb-16"
@@ -31,7 +31,7 @@ const HowItWorksSection = () => (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-4 relative">
         {steps.map((s, i) => (
           <div key={s.num} className="flex flex-col items-start relative">
-            <span className="text-[48px] md:text-[56px] font-extrabold leading-none mb-4" style={{ color: "#E8580A" }}>
+            <span className="text-[48px] md:text-[56px] font-extrabold leading-none mb-4" style={{ color: "#FA903E" }}>
               {s.num}
             </span>
             <h3 className="text-[18px] md:text-[20px] font-bold mb-3" style={{ color: "#04061A" }}>

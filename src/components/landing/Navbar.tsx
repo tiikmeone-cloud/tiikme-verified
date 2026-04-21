@@ -58,9 +58,9 @@ const Navbar = () => {
           <Link to="/signup">
             <button
               className="h-[44px] px-6 rounded-xl font-bold text-[14px] text-white transition-colors cursor-pointer"
-              style={{ backgroundColor: "#E8580A" }}
+              style={{ backgroundColor: "#FA903E" }}
               onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#C94A07")}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#E8580A")}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#FA903E")}
             >
               Get Tiiked
             </button>
@@ -119,7 +119,7 @@ const Navbar = () => {
               <Link to="/signin" onClick={() => setMenuOpen(false)}>
                 <button
                   className="w-full h-[52px] rounded-xl font-bold text-[16px] border-2 cursor-pointer"
-                  style={{ borderColor: "#E8580A", color: "#E8580A", backgroundColor: "transparent" }}
+                  style={{ borderColor: "#FA903E", color: "#FA903E", backgroundColor: "transparent" }}
                 >
                   Sign in
                 </button>
@@ -127,7 +127,7 @@ const Navbar = () => {
               <Link to="/signup" onClick={() => setMenuOpen(false)}>
                 <button
                   className="w-full h-[52px] rounded-xl font-bold text-[16px] text-white cursor-pointer"
-                  style={{ backgroundColor: "#E8580A" }}
+                  style={{ backgroundColor: "#FA903E" }}
                 >
                   Get Tiiked
                 </button>

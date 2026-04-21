@@ -7,9 +7,9 @@ import { generateSlug } from "@/lib/utils";
 import type { InstitutionFormData } from "@/pages/JoinAsInstitution";
 
 const inputStyle: React.CSSProperties = {
-  background: "#fff", border: "1.5px solid #E5E7EB", borderRadius: 14,
-  color: "#111827", height: 48, width: "100%", padding: "0 14px", fontSize: 14,
-  outline: "none", fontFamily: "'Plus Jakarta Sans', sans-serif",
+  background: "rgba(255,255,255,0.04)", border: "1.5px solid rgba(255,255,255,0.15)", borderRadius: 14,
+  color: "#FAFAF7", height: 48, width: "100%", padding: "0 14px", fontSize: 14,
+  outline: "none",
 };
 
 const allIndianStates = ["Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Delhi","Goa","Gujarat","Haryana","Himachal Pradesh","Jharkhand","Karnataka","Kerala","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal"];
@@ -148,7 +148,7 @@ export default function StepPageSetup({ form, update, onComplete }: Props) {
         <div className="flex items-center gap-4">
           <button type="button" onClick={() => fileRef.current?.click()}
             className="w-20 h-20 rounded-2xl flex items-center justify-center overflow-hidden cursor-pointer shrink-0"
-            style={{ background: form.logoPreview ? "transparent" : "#FFF3EC", border: "2px dashed #E5E7EB" }}>
+            style={{ background: form.logoPreview ? "transparent" : "rgba(250,144,62,0.14)", border: "2px dashed rgba(255,255,255,0.20)" }}>
             {form.logoPreview ? (
               <img src={form.logoPreview} alt="" className="w-full h-full object-cover" />
             ) : (
