@@ -91,6 +91,7 @@ const AppRoutes = () => {
             <Route path="/signup" element={<PageErrorBoundary><SignupPage /></PageErrorBoundary>} />
             <Route path="/verify-email" element={<PageErrorBoundary><VerifyEmailPage /></PageErrorBoundary>} />
             <Route path="/onboarding" element={<PageErrorBoundary><Onboarding /></PageErrorBoundary>} />
+            <Route path="/onboarding/:step" element={<PageErrorBoundary><Onboarding /></PageErrorBoundary>} />
             <Route path="/auth/callback" element={<PageErrorBoundary><AuthCallback /></PageErrorBoundary>} />
             <Route path="/onboarding/role" element={<Navigate to="/onboarding" replace />} />
             <Route path="/onboarding/details" element={<Navigate to="/onboarding" replace />} />
