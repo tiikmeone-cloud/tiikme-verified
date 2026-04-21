@@ -6,7 +6,7 @@ interface ThemeLogoProps {
 }
 
 const ThemeLogo = ({ className = "h-10 w-auto", alt = "Tiikme" }: ThemeLogoProps) => {
-  return <img src={logoLight} alt={alt} className={className} />;
+  return <img src={logoLight} alt={alt} className={className} width={160} height={40} />;
 };
 
 export default ThemeLogo;
