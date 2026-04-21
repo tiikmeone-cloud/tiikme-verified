@@ -52,7 +52,8 @@ const Explore = () => {
 
   useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
-  /* ─────────── Search (debounced) ─────────── */
+  /* ─────────── Search (debounced) — also dedupes people the viewer
+   *  has already requested or connected with, using the live strandMap. */
   useEffect(() => {
     if (search.trim().length < 2) { setSearchResults([]); setShowSearchResults(false); return; }
     const t = setTimeout(async () => {
@@ -60,17 +61,21 @@ const Explore = () => {
       const [{ data: profiles }, { data: orgs }] = await Promise.all([
         supabase.from("profiles").select("id, full_name, username, avatar_url, role")
           .eq("is_public", true).neq("id", user?.id || "")
-          .or(`full_name.ilike.${term},username.ilike.${term}`).limit(5),
+          .or(`full_name.ilike.${term},username.ilike.${term}`).limit(8),
         supabase.from("organizations").select("id, name, slug, type, subtype, logo_url")
           .or(`name.ilike.${term}`).limit(5),
       ]);
       const results: any[] = [];
-      (profiles || []).forEach(p => results.push({ ...p, kind: "person" }));
+      (profiles || []).forEach(p => {
+        const st = strandMap[p.id];
+        if (st === "accepted" || st === "pending") return;   // dedupe
+        results.push({ ...p, kind: "person" });
+      });
       (orgs || []).forEach(o => results.push({ ...o, kind: "org" }));
-      if (mountedRef.current) { setSearchResults(results); setShowSearchResults(true); }
+      if (mountedRef.current) { setSearchResults(results.slice(0, 8)); setShowSearchResults(true); }
     }, 300);
     return () => clearTimeout(t);
-  }, [search, user?.id]);
+  }, [search, user?.id, strandMap]);
 
   /* ─────────── Profile signals ─────────── */
   const viewerInterests = useMemo(() => {
