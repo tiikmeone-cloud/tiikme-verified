@@ -21,6 +21,7 @@ import NotFound from "./pages/NotFound.tsx";
 import SignupPage from "./pages/SignupPage.tsx";
 import VerifyEmailPage from "./pages/VerifyEmailPage.tsx";
 import Onboarding from "./pages/Onboarding.tsx";
+import AuthCallback from "./pages/AuthCallback.tsx";
 
 // Lazy load everything else
 const Welcome = lazyWithRetry(() => import("./pages/Welcome.tsx"), "Welcome");
@@ -90,6 +91,7 @@ const AppRoutes = () => {
             <Route path="/signup" element={<PageErrorBoundary><SignupPage /></PageErrorBoundary>} />
             <Route path="/verify-email" element={<PageErrorBoundary><VerifyEmailPage /></PageErrorBoundary>} />
             <Route path="/onboarding" element={<PageErrorBoundary><Onboarding /></PageErrorBoundary>} />
+            <Route path="/auth/callback" element={<PageErrorBoundary><AuthCallback /></PageErrorBoundary>} />
             <Route path="/onboarding/role" element={<Navigate to="/onboarding" replace />} />
             <Route path="/onboarding/details" element={<Navigate to="/onboarding" replace />} />
             <Route path="/onboarding/welcome" element={<Navigate to="/onboarding" replace />} />
