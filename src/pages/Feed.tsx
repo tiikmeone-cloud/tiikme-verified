@@ -642,7 +642,7 @@ const PostGroupCard = ({
           {posts.map((post) => (
             <div key={post.id} className="min-w-0 shrink-0 grow-0 basis-full">
               <PostCard
-                post={post} connectionIds={connectionIds}
+                post={post} grouped connectionIds={connectionIds}
                 likeCounts={likeCounts} myLikes={myLikes} toggleLike={toggleLike}
                 commentCounts={commentCounts} commentsData={commentsData}
                 commentsOpen={commentsOpen} commentInputs={commentInputs}
@@ -784,6 +784,7 @@ const Feed = () => {
   );
 
   const postIds = useMemo(() => visiblePosts.map((p: any) => p.id), [visiblePosts]);
+  const feedItems = useMemo(() => groupConsecutivePosts(visiblePosts), [visiblePosts]);
   const postIdsKey = useMemo(() => postIds.join(","), [postIds]);
   const { counts: likeCounts, myLikes, toggle: toggleLike } = useLikes(postIds);
   const {
@@ -834,9 +835,19 @@ const Feed = () => {
           <FeedComposer onPublished={refresh} />
 
           {loading && !visiblePosts.length && <SkeletonCard count={3} />}
-          {visiblePosts.map((post: any) => (
+          {feedItems.map((item) => item.kind === "post" ? (
             <PostCard
-              key={post.id} post={post} connectionIds={connectionIds}
+              key={item.id} post={item.post} connectionIds={connectionIds}
+              likeCounts={likeCounts} myLikes={myLikes} toggleLike={toggleLike}
+              commentCounts={commentCounts} commentsData={commentsData}
+              commentsOpen={commentsOpen} commentInputs={commentInputs}
+              setCommentInputs={setCommentInputs} toggleComments={toggleComments}
+              submitComment={submitComment} deleteComment={deleteComment}
+              onDelete={(id) => setDeletingPostId(id)} onEdit={setEditingPost}
+            />
+          ) : (
+            <PostGroupCard
+              key={item.id} posts={item.posts} connectionIds={connectionIds}
               likeCounts={likeCounts} myLikes={myLikes} toggleLike={toggleLike}
               commentCounts={commentCounts} commentsData={commentsData}
               commentsOpen={commentsOpen} commentInputs={commentInputs}
