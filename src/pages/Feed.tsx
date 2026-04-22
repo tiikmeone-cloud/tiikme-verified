@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import useEmblaCarousel from "embla-carousel-react";
 import ImageGrid from "@/components/feed/ImageGrid";
 import MentionText from "@/components/feed/MentionText";
 import ShareModal from "@/components/feed/ShareModal";
@@ -47,6 +48,32 @@ function getTimeAgo(date: Date): string {
 
 const extractHashtags = (text: string): string[] =>
   (text.match(/#\w+/g) || []).map(t => t.slice(1));
+
+type FeedRenderItem =
+  | { kind: "post"; post: any; id: string }
+  | { kind: "post-group"; posts: any[]; id: string };
+
+function groupConsecutivePosts(items: any[]): FeedRenderItem[] {
+  const out: FeedRenderItem[] = [];
+  let bucket: any[] = [];
+
+  const flush = () => {
+    if (bucket.length >= 2) out.push({ kind: "post-group", posts: bucket, id: `group-${bucket[0].id}` });
+    else if (bucket.length === 1) out.push({ kind: "post", post: bucket[0], id: bucket[0].id });
+    bucket = [];
+  };
+
+  for (const post of items) {
+    if (post.repost_of) { flush(); out.push({ kind: "post", post, id: post.id }); continue; }
+    const last = bucket[bucket.length - 1];
+    const sameAuthor = !!last && last.author_id === post.author_id;
+    const within6h = !!last && Math.abs(new Date(last.created_at || 0).getTime() - new Date(post.created_at || 0).getTime()) < 6 * 3600 * 1000;
+    if (sameAuthor && within6h) bucket.push(post);
+    else { flush(); bucket = [post]; }
+  }
+  flush();
+  return out;
+}
 
 /* ─── INLINE COMPOSER ─── */
 interface MentionSuggestion {
@@ -253,6 +280,7 @@ const FeedComposer = ({ onPublished }: { onPublished: () => void }) => {
 /* ─── POST CARD ─── */
 interface PostCardProps {
   post: any;
+  grouped?: boolean;
   connectionIds: Set<string>;
   likeCounts: Record<string, number>;
   myLikes: Record<string, boolean>;
@@ -270,7 +298,7 @@ interface PostCardProps {
 }
 
 const PostCard = ({
-  post, connectionIds, likeCounts, myLikes, toggleLike,
+  post, grouped = false, connectionIds, likeCounts, myLikes, toggleLike,
   commentCounts, commentsData, commentsOpen, commentInputs,
   setCommentInputs, toggleComments, submitComment, deleteComment, onDelete, onEdit,
 }: PostCardProps) => {
@@ -420,7 +448,7 @@ const PostCard = ({
 
   return (
     <>
-      <article id={`post-${post.id}`} style={{ background: "#FFFFFF", border: "1px solid #E8E8E8", borderRadius: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.04)", padding: 20, marginBottom: 16, borderLeft: isTownhall ? "4px solid #E8733A" : undefined, scrollMarginTop: 80 }}>
+      <article id={`post-${post.id}`} style={{ background: "#FFFFFF", border: grouped ? "none" : "1px solid #E8E8E8", borderRadius: grouped ? 0 : 16, boxShadow: grouped ? "none" : "0 1px 4px rgba(0,0,0,0.04)", padding: 20, marginBottom: grouped ? 0 : 16, borderLeft: isTownhall ? "4px solid #E8733A" : undefined, scrollMarginTop: 80 }}>
         {isTownhall && (
           <div style={{ paddingBottom: 4 }}>
             <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#E8733A" }}>TOWNHALL</span>
@@ -428,7 +456,7 @@ const PostCard = ({
         )}
 
         {/* HEADER — single row: avatar · name · company · time · menu */}
-        <div className="flex items-center" style={{ gap: 10 }}>
+        {!grouped && <div className="flex items-center" style={{ gap: 10 }}>
           <Link to={profileLink} className="shrink-0">
             <AvatarSquare src={displayAvatar} name={displayName} size={40} />
           </Link>
@@ -489,7 +517,7 @@ const PostCard = ({
               </div>
             )}
           </div>
-        </div>
+        </div>}
 
         {/* CONTENT */}
         <div style={{ marginTop: 12 }}>
@@ -572,6 +600,66 @@ const PostCard = ({
       {/* Share modal */}
       {sharePostId && <ShareModal open postId={sharePostId} onClose={() => setSharePostId(null)} />}
     </>
+  );
+};
+
+const PostGroupCard = ({
+  posts, connectionIds, likeCounts, myLikes, toggleLike,
+  commentCounts, commentsData, commentsOpen, commentInputs,
+  setCommentInputs, toggleComments, submitComment, deleteComment, onDelete, onEdit,
+}: { posts: any[] } & Omit<PostCardProps, "post">) => {
+  const [carouselRef, api] = useEmblaCarousel({ align: "start" });
+  const [idx, setIdx] = useState(0);
+  const first = posts[0];
+  const isOrgPost = !!first.posted_by_org && !!first.org;
+  const author = first.author;
+  const authorFlags = getDisplayFlags(author);
+  const displayAvatar = isOrgPost ? first.org?.logo_url : author?.avatar_url;
+  const displayName = isOrgPost ? first.org?.name : (authorFlags.showName ? (author?.full_name || author?.username || "Unknown") : "Tiikme member");
+  const profileLink = isOrgPost ? `/org/${first.org?.slug}` : `/app/profile/${author?.id || ""}`;
+
+  useEffect(() => {
+    if (!api) return;
+    const update = () => setIdx(api.selectedScrollSnap());
+    update();
+    api.on("select", update);
+    api.on("reInit", update);
+    return () => { api.off("select", update); api.off("reInit", update); };
+  }, [api]);
+
+  return (
+    <article className="overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid #E8E8E8", borderRadius: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.04)", marginBottom: 16 }}>
+      <header className="flex items-center" style={{ gap: 10, padding: 16, borderBottom: "1px solid #F0F0F0" }}>
+        <Link to={profileLink} className="shrink-0"><AvatarSquare src={displayAvatar} name={displayName} size={40} /></Link>
+        <div className="min-w-0 flex-1">
+          <Link to={profileLink} className="truncate hover:underline block" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{displayName}</Link>
+          <div style={{ fontSize: 12, color: "#9CA3C0" }}>Posted <span className="num">{posts.length}</span> updates · {first.created_at ? getTimeAgo(new Date(first.created_at)) : ""}</div>
+        </div>
+        <div className="num shrink-0" style={{ fontSize: 12, color: "#9CA3C0" }}>{idx + 1}/{posts.length}</div>
+      </header>
+      <div ref={carouselRef} className="overflow-hidden">
+        <div className="flex">
+          {posts.map((post) => (
+            <div key={post.id} className="min-w-0 shrink-0 grow-0 basis-full">
+              <PostCard
+                post={post} grouped connectionIds={connectionIds}
+                likeCounts={likeCounts} myLikes={myLikes} toggleLike={toggleLike}
+                commentCounts={commentCounts} commentsData={commentsData}
+                commentsOpen={commentsOpen} commentInputs={commentInputs}
+                setCommentInputs={setCommentInputs} toggleComments={toggleComments}
+                submitComment={submitComment} deleteComment={deleteComment}
+                onDelete={onDelete} onEdit={onEdit}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="flex justify-center" style={{ gap: 6, padding: "0 0 10px" }}>
+        {posts.map((_, i) => (
+          <button key={i} type="button" aria-label={`Go to post ${i + 1}`} onClick={() => api?.scrollTo(i)} style={{ width: i === idx ? 24 : 6, height: 6, borderRadius: 999, background: i === idx ? "#E8733A" : "#D1D5DB", transition: "width 150ms ease" }} />
+        ))}
+      </div>
+    </article>
   );
 };
 
@@ -696,6 +784,7 @@ const Feed = () => {
   );
 
   const postIds = useMemo(() => visiblePosts.map((p: any) => p.id), [visiblePosts]);
+  const feedItems = useMemo(() => groupConsecutivePosts(visiblePosts), [visiblePosts]);
   const postIdsKey = useMemo(() => postIds.join(","), [postIds]);
   const { counts: likeCounts, myLikes, toggle: toggleLike } = useLikes(postIds);
   const {
@@ -746,9 +835,19 @@ const Feed = () => {
           <FeedComposer onPublished={refresh} />
 
           {loading && !visiblePosts.length && <SkeletonCard count={3} />}
-          {visiblePosts.map((post: any) => (
+          {feedItems.map((item) => item.kind === "post" ? (
             <PostCard
-              key={post.id} post={post} connectionIds={connectionIds}
+              key={item.id} post={item.post} connectionIds={connectionIds}
+              likeCounts={likeCounts} myLikes={myLikes} toggleLike={toggleLike}
+              commentCounts={commentCounts} commentsData={commentsData}
+              commentsOpen={commentsOpen} commentInputs={commentInputs}
+              setCommentInputs={setCommentInputs} toggleComments={toggleComments}
+              submitComment={submitComment} deleteComment={deleteComment}
+              onDelete={(id) => setDeletingPostId(id)} onEdit={setEditingPost}
+            />
+          ) : (
+            <PostGroupCard
+              key={item.id} posts={item.posts} connectionIds={connectionIds}
               likeCounts={likeCounts} myLikes={myLikes} toggleLike={toggleLike}
               commentCounts={commentCounts} commentsData={commentsData}
               commentsOpen={commentsOpen} commentInputs={commentInputs}
