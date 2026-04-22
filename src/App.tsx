@@ -27,6 +27,7 @@ import AuthCallback from "./pages/AuthCallback.tsx";
 const Welcome = lazyWithRetry(() => import("./pages/Welcome.tsx"), "Welcome");
 const Feed = lazyWithRetry(() => import("./pages/Feed.tsx"), "Feed");
 const Profile = lazyWithRetry(() => import("./pages/Profile.tsx"), "Profile");
+const ProfilePosts = lazyWithRetry(() => import("./pages/ProfilePosts.tsx"), "ProfilePosts");
 const Explore = lazyWithRetry(() => import("./pages/Explore.tsx"), "Explore");
 const MyWork = lazyWithRetry(() => import("./pages/MyWork.tsx"), "MyWork");
 const ProjectHub = lazyWithRetry(() => import("./pages/ProjectHub.tsx"), "ProjectHub");
@@ -116,6 +117,7 @@ const AppRoutes = () => {
             <Route path="/app/explore" element={<Shell><Explore /></Shell>} />
             <Route path="/app/profile" element={<Shell><Profile /></Shell>} />
             <Route path="/app/profile/:id" element={<Shell><Profile /></Shell>} />
+            <Route path="/app/u/:username/posts" element={<Shell><ProfilePosts /></Shell>} />
             <Route path="/app/teams" element={<Shell><MyWork /></Shell>} />
             <Route path="/app/teams/:projectId" element={<Shell><ProjectHub /></Shell>} />
             <Route path="/app/opportunities" element={<Shell><Opportunities /></Shell>} />

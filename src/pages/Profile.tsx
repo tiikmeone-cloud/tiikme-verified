@@ -1252,10 +1252,7 @@ const Profile = () => {
             <PostsSection
               posts={userPosts}
               stats={stats}
-              isOwnProfile={isOwnProfile}
-              currentUserId={user?.id ?? null}
-              onEdit={(p) => setEditingPost(p)}
-              onDelete={(id) => setDeletingPostId(id)}
+              username={username}
             />
           </div>
         </div>

@@ -71,7 +71,7 @@ const getCommentCount = (post: any) => {
   return post.comment_count || 0;
 };
 
-const PostPreviewCard = ({ post }: { post: any }) => {
+export const PostPreviewCard = ({ post }: { post: any }) => {
   const image = post.image_urls?.[0] ? fixStorageUrl(post.image_urls[0]) : null;
   const mediaCount = post.image_urls?.length || 0;
 
