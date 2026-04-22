@@ -280,6 +280,7 @@ const FeedComposer = ({ onPublished }: { onPublished: () => void }) => {
 /* ─── POST CARD ─── */
 interface PostCardProps {
   post: any;
+  grouped?: boolean;
   connectionIds: Set<string>;
   likeCounts: Record<string, number>;
   myLikes: Record<string, boolean>;
@@ -297,7 +298,7 @@ interface PostCardProps {
 }
 
 const PostCard = ({
-  post, connectionIds, likeCounts, myLikes, toggleLike,
+  post, grouped = false, connectionIds, likeCounts, myLikes, toggleLike,
   commentCounts, commentsData, commentsOpen, commentInputs,
   setCommentInputs, toggleComments, submitComment, deleteComment, onDelete, onEdit,
 }: PostCardProps) => {
@@ -447,7 +448,7 @@ const PostCard = ({
 
   return (
     <>
-      <article id={`post-${post.id}`} style={{ background: "#FFFFFF", border: "1px solid #E8E8E8", borderRadius: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.04)", padding: 20, marginBottom: 16, borderLeft: isTownhall ? "4px solid #E8733A" : undefined, scrollMarginTop: 80 }}>
+      <article id={`post-${post.id}`} style={{ background: "#FFFFFF", border: grouped ? "none" : "1px solid #E8E8E8", borderRadius: grouped ? 0 : 16, boxShadow: grouped ? "none" : "0 1px 4px rgba(0,0,0,0.04)", padding: 20, marginBottom: grouped ? 0 : 16, borderLeft: isTownhall ? "4px solid #E8733A" : undefined, scrollMarginTop: 80 }}>
         {isTownhall && (
           <div style={{ paddingBottom: 4 }}>
             <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#E8733A" }}>TOWNHALL</span>
@@ -455,7 +456,7 @@ const PostCard = ({
         )}
 
         {/* HEADER — single row: avatar · name · company · time · menu */}
-        <div className="flex items-center" style={{ gap: 10 }}>
+        {!grouped && <div className="flex items-center" style={{ gap: 10 }}>
           <Link to={profileLink} className="shrink-0">
             <AvatarSquare src={displayAvatar} name={displayName} size={40} />
           </Link>
@@ -516,7 +517,7 @@ const PostCard = ({
               </div>
             )}
           </div>
-        </div>
+        </div>}
 
         {/* CONTENT */}
         <div style={{ marginTop: 12 }}>
