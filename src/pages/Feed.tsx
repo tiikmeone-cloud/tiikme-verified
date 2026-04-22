@@ -602,6 +602,66 @@ const PostCard = ({
   );
 };
 
+const PostGroupCard = ({
+  posts, connectionIds, likeCounts, myLikes, toggleLike,
+  commentCounts, commentsData, commentsOpen, commentInputs,
+  setCommentInputs, toggleComments, submitComment, deleteComment, onDelete, onEdit,
+}: { posts: any[] } & Omit<PostCardProps, "post">) => {
+  const [carouselRef, api] = useEmblaCarousel({ align: "start" });
+  const [idx, setIdx] = useState(0);
+  const first = posts[0];
+  const isOrgPost = !!first.posted_by_org && !!first.org;
+  const author = first.author;
+  const authorFlags = getDisplayFlags(author);
+  const displayAvatar = isOrgPost ? first.org?.logo_url : author?.avatar_url;
+  const displayName = isOrgPost ? first.org?.name : (authorFlags.showName ? (author?.full_name || author?.username || "Unknown") : "Tiikme member");
+  const profileLink = isOrgPost ? `/org/${first.org?.slug}` : `/app/profile/${author?.id || ""}`;
+
+  useEffect(() => {
+    if (!api) return;
+    const update = () => setIdx(api.selectedScrollSnap());
+    update();
+    api.on("select", update);
+    api.on("reInit", update);
+    return () => { api.off("select", update); api.off("reInit", update); };
+  }, [api]);
+
+  return (
+    <article className="overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid #E8E8E8", borderRadius: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.04)", marginBottom: 16 }}>
+      <header className="flex items-center" style={{ gap: 10, padding: 16, borderBottom: "1px solid #F0F0F0" }}>
+        <Link to={profileLink} className="shrink-0"><AvatarSquare src={displayAvatar} name={displayName} size={40} /></Link>
+        <div className="min-w-0 flex-1">
+          <Link to={profileLink} className="truncate hover:underline block" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{displayName}</Link>
+          <div style={{ fontSize: 12, color: "#9CA3C0" }}>Posted <span className="num">{posts.length}</span> updates · {first.created_at ? getTimeAgo(new Date(first.created_at)) : ""}</div>
+        </div>
+        <div className="num shrink-0" style={{ fontSize: 12, color: "#9CA3C0" }}>{idx + 1}/{posts.length}</div>
+      </header>
+      <div ref={carouselRef} className="overflow-hidden">
+        <div className="flex">
+          {posts.map((post) => (
+            <div key={post.id} className="min-w-0 shrink-0 grow-0 basis-full">
+              <PostCard
+                post={post} connectionIds={connectionIds}
+                likeCounts={likeCounts} myLikes={myLikes} toggleLike={toggleLike}
+                commentCounts={commentCounts} commentsData={commentsData}
+                commentsOpen={commentsOpen} commentInputs={commentInputs}
+                setCommentInputs={setCommentInputs} toggleComments={toggleComments}
+                submitComment={submitComment} deleteComment={deleteComment}
+                onDelete={onDelete} onEdit={onEdit}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="flex justify-center" style={{ gap: 6, padding: "0 0 10px" }}>
+        {posts.map((_, i) => (
+          <button key={i} type="button" aria-label={`Go to post ${i + 1}`} onClick={() => api?.scrollTo(i)} style={{ width: i === idx ? 24 : 6, height: 6, borderRadius: 999, background: i === idx ? "#E8733A" : "#D1D5DB", transition: "width 150ms ease" }} />
+        ))}
+      </div>
+    </article>
+  );
+};
+
 /* ─── RIGHT SIDEBAR WIDGETS ─── */
 const ActivityWidget = () => {
   const { profile } = useAuth();
