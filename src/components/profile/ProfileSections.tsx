@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { fixStorageUrl } from "@/components/ui/AvatarSquare";
 import {
   Briefcase, GraduationCap, Rocket, Award, Code2, MessageCircle,
   MapPin, CheckCircle, Clock, Eye, EyeOff, Trash2, Plus, ExternalLink,
-  Star, X, Heart, Repeat2, Share2, MoreHorizontal, Pencil,
+  Star, X, Heart, Repeat2,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import VerificationRequest from "@/components/profile/VerificationRequest";
 import { useCompanyLogos } from "@/hooks/useCompanyLogos";
-import ImageGrid from "@/components/feed/ImageGrid";
+import { supabase } from "@/integrations/supabase/client";
 
 /* ── Helpers ── */
 const LOGO_COLORS = ["#E8733A", "#4A90D9", "#34C759", "#FF6B9D", "#8B5CF6", "#FFB800"];
@@ -51,6 +52,51 @@ function getTimeAgo(d: Date): string {
   if (h < 24) return `${h}h ago`;
   return `${Math.floor(h / 24)}d ago`;
 }
+
+function formatCount(n: number) {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1).replace(/\.0$/, "")}K`;
+  return String(n || 0);
+}
+
+const getLikeCount = (post: any) => {
+  if (Array.isArray(post.post_reactions) && post.post_reactions.length > 0) return post.post_reactions[0]?.count || 0;
+  const r = post.reactions;
+  if (!r || typeof r !== "object") return 0;
+  return (r.useful || 0) + (r.inspiring || 0) + (r.insightful || 0) + (r.like || 0);
+};
+
+const getCommentCount = (post: any) => {
+  if (Array.isArray(post.post_comments) && post.post_comments.length > 0) return post.post_comments[0]?.count || 0;
+  return post.comment_count || 0;
+};
+
+const PostPreviewCard = ({ post }: { post: any }) => {
+  const image = post.image_urls?.[0] ? fixStorageUrl(post.image_urls[0]) : null;
+  const mediaCount = post.image_urls?.length || 0;
+
+  return (
+    <Link to={`/app/post/${post.id}`} className="group relative h-[220px] w-[220px] shrink-0 snap-start overflow-hidden rounded-xl border border-border bg-muted">
+      {image ? (
+        <img src={image} alt={post.content ? post.content.slice(0, 80) : "Post media"} loading="lazy" className="h-full w-full object-cover transition group-hover:scale-105" />
+      ) : (
+        <div className="flex h-full w-full items-center bg-accent p-4">
+          <p className="line-clamp-6 text-sm text-foreground">{post.content}</p>
+        </div>
+      )}
+      {mediaCount > 1 && (
+        <div className="absolute right-2 top-2 rounded-full bg-foreground/60 px-2 py-0.5 text-[10px] text-background backdrop-blur">
+          1/<span className="num">{mediaCount}</span>
+        </div>
+      )}
+      <div className="absolute inset-x-0 bottom-0 flex items-center gap-3 bg-gradient-to-t from-foreground/80 via-foreground/30 to-transparent p-2 text-xs text-background">
+        <span className="flex items-center gap-1"><Heart className="h-3.5 w-3.5" /><span className="num">{formatCount(getLikeCount(post))}</span></span>
+        <span className="flex items-center gap-1"><MessageCircle className="h-3.5 w-3.5" /><span className="num">{formatCount(getCommentCount(post))}</span></span>
+        <span className="ml-auto flex items-center gap-1"><Repeat2 className="h-3.5 w-3.5" /><span className="num">{formatCount(post.repost_count || 0)}</span></span>
+      </div>
+    </Link>
+  );
+};
 
 /* ── Verification Badge (inline) ── */
 const VerifBadge = ({ item, isOwn, onStatusChange }: { item: any; isOwn: boolean; onStatusChange?: (id: string, status: string) => void }) => {
