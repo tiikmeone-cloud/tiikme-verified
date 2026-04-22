@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { fixStorageUrl } from "@/components/ui/AvatarSquare";
 import {
   Briefcase, GraduationCap, Rocket, Award, Code2, MessageCircle,
   MapPin, CheckCircle, Clock, Eye, EyeOff, Trash2, Plus, ExternalLink,
-  Star, X, Heart, Repeat2, Share2, MoreHorizontal, Pencil,
+  Star, X, Heart, Repeat2,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import VerificationRequest from "@/components/profile/VerificationRequest";
 import { useCompanyLogos } from "@/hooks/useCompanyLogos";
-import ImageGrid from "@/components/feed/ImageGrid";
+import { supabase } from "@/integrations/supabase/client";
 
 /* ── Helpers ── */
 const LOGO_COLORS = ["#E8733A", "#4A90D9", "#34C759", "#FF6B9D", "#8B5CF6", "#FFB800"];
@@ -51,6 +52,51 @@ function getTimeAgo(d: Date): string {
   if (h < 24) return `${h}h ago`;
   return `${Math.floor(h / 24)}d ago`;
 }
+
+function formatCount(n: number) {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1).replace(/\.0$/, "")}K`;
+  return String(n || 0);
+}
+
+const getLikeCount = (post: any) => {
+  if (Array.isArray(post.post_reactions) && post.post_reactions.length > 0) return post.post_reactions[0]?.count || 0;
+  const r = post.reactions;
+  if (!r || typeof r !== "object") return 0;
+  return (r.useful || 0) + (r.inspiring || 0) + (r.insightful || 0) + (r.like || 0);
+};
+
+const getCommentCount = (post: any) => {
+  if (Array.isArray(post.post_comments) && post.post_comments.length > 0) return post.post_comments[0]?.count || 0;
+  return post.comment_count || 0;
+};
+
+export const PostPreviewCard = ({ post }: { post: any }) => {
+  const image = post.image_urls?.[0] ? fixStorageUrl(post.image_urls[0]) : null;
+  const mediaCount = post.image_urls?.length || 0;
+
+  return (
+    <Link to={`/app/post/${post.id}`} className="group relative h-[220px] w-[220px] shrink-0 snap-start overflow-hidden rounded-xl border border-border bg-muted">
+      {image ? (
+        <img src={image} alt={post.content ? post.content.slice(0, 80) : "Post media"} loading="lazy" className="h-full w-full object-cover transition group-hover:scale-105" />
+      ) : (
+        <div className="flex h-full w-full items-center bg-accent p-4">
+          <p className="line-clamp-6 text-sm text-foreground">{post.content}</p>
+        </div>
+      )}
+      {mediaCount > 1 && (
+        <div className="absolute right-2 top-2 rounded-full bg-foreground/60 px-2 py-0.5 text-[10px] text-background backdrop-blur">
+          1/<span className="num">{mediaCount}</span>
+        </div>
+      )}
+      <div className="absolute inset-x-0 bottom-0 flex items-center gap-3 bg-gradient-to-t from-foreground/80 via-foreground/30 to-transparent p-2 text-xs text-background">
+        <span className="flex items-center gap-1"><Heart className="h-3.5 w-3.5" /><span className="num">{formatCount(getLikeCount(post))}</span></span>
+        <span className="flex items-center gap-1"><MessageCircle className="h-3.5 w-3.5" /><span className="num">{formatCount(getCommentCount(post))}</span></span>
+        <span className="ml-auto flex items-center gap-1"><Repeat2 className="h-3.5 w-3.5" /><span className="num">{formatCount(post.repost_count || 0)}</span></span>
+      </div>
+    </Link>
+  );
+};
 
 /* ── Verification Badge (inline) ── */
 const VerifBadge = ({ item, isOwn, onStatusChange }: { item: any; isOwn: boolean; onStatusChange?: (id: string, status: string) => void }) => {
@@ -414,115 +460,43 @@ export const SkillsSection = ({ skills, isOwnProfile, onAdd, onRemoveSkill }: {
 
 /* ═══ POSTS ═══ */
 export const PostsSection = ({
-  posts, stats, isOwnProfile = false, currentUserId = null, onEdit, onDelete,
+  posts, stats, username,
 }: {
   posts: any[];
   stats: { posts: number };
-  isOwnProfile?: boolean;
-  currentUserId?: string | null;
-  onEdit?: (post: any) => void;
-  onDelete?: (postId: string) => void;
+  username?: string;
 }) => {
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-
-  const getLikeCount = (p: any) => {
-    if (Array.isArray(p.post_reactions) && p.post_reactions.length > 0) {
-      return p.post_reactions[0]?.count || 0;
-    }
-    const r = p.reactions;
-    if (!r || typeof r !== "object") return 0;
-    return (r.useful || 0) + (r.inspiring || 0) + (r.insightful || 0);
-  };
-
-  const getCommentCount = (p: any) => {
-    if (Array.isArray(p.post_comments) && p.post_comments.length > 0) {
-      return p.post_comments[0]?.count || 0;
-    }
-    return p.comment_count || 0;
-  };
+  const { data: latestPosts = posts } = useQuery({
+    queryKey: ["profile-posts-preview-refresh", posts.map((p: any) => p.id).join(",")],
+    queryFn: async () => {
+      if (!posts.length) return [];
+      const { data, error } = await supabase
+        .from("posts")
+        .select("id, author_id, content, type, image_urls, comment_count, repost_count, reactions, is_edited, repost_of, created_at, updated_at, post_reactions(count), post_comments(count)")
+        .in("id", posts.map((p: any) => p.id))
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: posts.length > 0,
+    refetchInterval: 30_000,
+    initialData: posts,
+  });
 
   return (
     <SectionBox title="Posts" icon={MessageCircle} iconColor="#E8733A" borderColor="#E8733A" count={stats.posts} isOwnProfile={false}>
       {posts.length === 0 ? (
         <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "4px 0" }}>No posts yet</p>
       ) : (
-        <>
-          {posts.slice(0, 3).map((p: any, idx: number) => {
-            const isOwner = isOwnProfile && currentUserId && p.author_id === currentUserId;
-            const isRepost = !!p.repost_of;
-            return (
-              <div key={p.id} className="relative" style={{ padding: "10px 0", borderBottom: idx < Math.min(posts.length, 3) - 1 ? "1px solid var(--border-subtle)" : "none" }}>
-                <Link to={`/app/post/${p.id}`} className="block">
-                  <p style={{ fontSize: 13, fontWeight: 400, color: "var(--text-primary)", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: "18px", paddingRight: isOwner ? 32 : 0 }}>{p.content}</p>
-                  {p.image_urls && p.image_urls.length > 0 && (
-                    <div style={{ marginTop: 8 }} onClick={e => e.preventDefault()}>
-                      <ImageGrid images={p.image_urls} />
-                    </div>
-                  )}
-                  <div className="flex items-center" style={{ gap: 16, marginTop: 8 }}>
-                    <span className="flex items-center" style={{ gap: 4, fontSize: 12, color: "var(--text-muted)" }}>
-                      <Heart style={{ width: 13, height: 13 }} /> {getLikeCount(p)}
-                    </span>
-                    <span className="flex items-center" style={{ gap: 4, fontSize: 12, color: "var(--text-muted)" }}>
-                      <MessageCircle style={{ width: 13, height: 13 }} /> {getCommentCount(p)}
-                    </span>
-                    <span className="flex items-center" style={{ gap: 4, fontSize: 12, color: "var(--text-muted)" }}>
-                      <Repeat2 style={{ width: 13, height: 13 }} /> {p.repost_count || 0}
-                    </span>
-                    <span className="flex items-center" style={{ gap: 4, fontSize: 12, color: "var(--text-muted)" }}>
-                      <Share2 style={{ width: 13, height: 13 }} />
-                    </span>
-                    <span style={{ fontSize: 11, color: "var(--text-muted)", marginLeft: "auto" }}>
-                      {p.is_edited ? "(edited)" : ""}
-                    </span>
-                  </div>
-                </Link>
-
-                {isOwner && (
-                  <div className="absolute" style={{ top: 8, right: 0 }}>
-                    <button
-                      type="button"
-                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpenMenuId(openMenuId === p.id ? null : p.id); }}
-                      className="flex items-center justify-center cursor-pointer"
-                      style={{ width: 28, height: 28, borderRadius: 6, background: "transparent", border: "none", color: "#9CA3C0" }}
-                      aria-label="Post options"
-                    >
-                      <MoreHorizontal style={{ width: 16, height: 16 }} />
-                    </button>
-                    {openMenuId === p.id && (
-                      <>
-                        <div className="fixed inset-0 z-[90]" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpenMenuId(null); }} />
-                        <div className="absolute right-0 z-[100]" style={{ top: 30, width: 170, borderRadius: 12, padding: "6px 0", background: "#FFFFFF", border: "1px solid #E5E7EB", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
-                          {!isRepost && (
-                            <button
-                              type="button"
-                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpenMenuId(null); onEdit?.(p); }}
-                              className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]"
-                              style={{ padding: "10px 14px", fontSize: 13, color: "#1A1A2E", background: "transparent", border: "none" }}
-                            >
-                              <Pencil style={{ width: 14, height: 14 }} /> Edit Post
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpenMenuId(null); onDelete?.(p.id); }}
-                            className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]"
-                            style={{ padding: "10px 14px", fontSize: 13, color: "#EF4444", background: "transparent", border: "none" }}
-                          >
-                            <Trash2 style={{ width: 14, height: 14 }} /> {isRepost ? "Remove Repost" : "Delete Post"}
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-          {posts.length > 3 && (
-            <Link to="/app/feed" style={{ fontSize: 12, color: "#E8733A", marginTop: 4, display: "block" }}>See all posts →</Link>
-          )}
-        </>
+        <div>
+          <div className="mb-3 flex items-center justify-between">
+            <span className="text-sm font-semibold text-foreground">Posts <span className="num ml-1 text-muted-foreground">{stats.posts}</span></span>
+            {stats.posts > 10 && username && <Link to={`/app/u/${username}/posts`} className="text-sm font-medium text-primary">See all</Link>}
+          </div>
+          <div className="-mx-3 flex snap-x snap-mandatory gap-3 overflow-x-auto px-3 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {latestPosts.slice(0, 10).map((p: any) => <PostPreviewCard key={p.id} post={p} />)}
+          </div>
+        </div>
       )}
     </SectionBox>
   );
