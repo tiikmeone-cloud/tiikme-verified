@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import useEmblaCarousel from "embla-carousel-react";
 import ImageGrid from "@/components/feed/ImageGrid";
 import MentionText from "@/components/feed/MentionText";
 import ShareModal from "@/components/feed/ShareModal";
@@ -47,6 +48,32 @@ function getTimeAgo(date: Date): string {
 
 const extractHashtags = (text: string): string[] =>
   (text.match(/#\w+/g) || []).map(t => t.slice(1));
+
+type FeedRenderItem =
+  | { kind: "post"; post: any; id: string }
+  | { kind: "post-group"; posts: any[]; id: string };
+
+function groupConsecutivePosts(items: any[]): FeedRenderItem[] {
+  const out: FeedRenderItem[] = [];
+  let bucket: any[] = [];
+
+  const flush = () => {
+    if (bucket.length >= 2) out.push({ kind: "post-group", posts: bucket, id: `group-${bucket[0].id}` });
+    else if (bucket.length === 1) out.push({ kind: "post", post: bucket[0], id: bucket[0].id });
+    bucket = [];
+  };
+
+  for (const post of items) {
+    if (post.repost_of) { flush(); out.push({ kind: "post", post, id: post.id }); continue; }
+    const last = bucket[bucket.length - 1];
+    const sameAuthor = !!last && last.author_id === post.author_id;
+    const within6h = !!last && Math.abs(new Date(last.created_at || 0).getTime() - new Date(post.created_at || 0).getTime()) < 6 * 3600 * 1000;
+    if (sameAuthor && within6h) bucket.push(post);
+    else { flush(); bucket = [post]; }
+  }
+  flush();
+  return out;
+}
 
 /* ─── INLINE COMPOSER ─── */
 interface MentionSuggestion {
