@@ -678,11 +678,11 @@ const ActivityWidget = () => {
               strokeLinecap="round" className="transition-all duration-700" />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>{score}</span>
+            <span className="num" style={{ fontSize: 14, color: "var(--text-primary)" }}>{score}</span>
           </div>
         </div>
         <div>
-          <p style={{ fontSize: 28, fontWeight: 700, color: "var(--text-primary)", lineHeight: "32px" }}>{score}</p>
+          <p className="num" style={{ fontSize: 28, color: "var(--text-primary)", lineHeight: "32px" }}>{score}</p>
           <p style={{ fontSize: 11, fontWeight: 500, color: "#E8733A" }}>
             {score >= 500 ? "Tiiked Elite" : score >= 301 ? "Trailblazer" : score >= 151 ? "Achiever" : score >= 51 ? "Builder" : "Explorer"}
           </p>

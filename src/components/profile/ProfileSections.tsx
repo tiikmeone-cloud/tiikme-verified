@@ -153,7 +153,7 @@ const SectionBox = ({ title, icon: Icon, iconColor, count, isOwnProfile, onAdd, 
       <Icon style={{ width: 18, height: 18, color: iconColor, flexShrink: 0 }} />
       <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", flex: 1 }}>{title}</span>
       {count !== undefined && count > 0 && (
-        <span style={{ fontSize: 11, fontWeight: 500, color: "var(--text-muted)", background: "rgba(255,255,255,0.25)", padding: "0 6px", borderRadius: 4, height: 18, display: "inline-flex", alignItems: "center" }}>{count}</span>
+        <span className="num" style={{ fontSize: 11, color: "var(--text-muted)", background: "rgba(255,255,255,0.25)", padding: "0 6px", borderRadius: 4, height: 18, display: "inline-flex", alignItems: "center" }}>{count}</span>
       )}
       {isOwnProfile && onAdd && (
         <button type="button" onClick={onAdd} className="cursor-pointer" style={{

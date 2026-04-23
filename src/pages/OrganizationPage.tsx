@@ -457,13 +457,13 @@ export default function OrganizationPage() {
                       )}
                       <div className="flex items-center" style={{ gap: 12, marginTop: 6 }}>
                         <span className="flex items-center" style={{ gap: 3, fontSize: 12, color: "#9CA3C0" }}>
-                          <Star style={{ width: 12, height: 12, color: "#FF6B9D" }} /> {getLikeCount(p)}
+                          <Star style={{ width: 12, height: 12, color: "#FF6B9D" }} /> <span className="num">{getLikeCount(p)}</span>
                         </span>
                         <span className="flex items-center" style={{ gap: 3, fontSize: 12, color: "#9CA3C0" }}>
-                          <MessageCircle style={{ width: 12, height: 12 }} /> {getCommentCount(p)}
+                          <MessageCircle style={{ width: 12, height: 12 }} /> <span className="num">{getCommentCount(p)}</span>
                         </span>
                         <span className="flex items-center" style={{ gap: 3, fontSize: 12, color: "#9CA3C0" }}>
-                          <Rocket style={{ width: 12, height: 12 }} /> {p.repost_count || 0}
+                          <Rocket style={{ width: 12, height: 12 }} /> <span className="num">{p.repost_count || 0}</span>
                         </span>
                         <span style={{ fontSize: 11, color: "#9CA3C0", marginLeft: "auto" }}>
                           {p.created_at ? getTimeAgo(new Date(p.created_at)) : ""}
@@ -525,8 +525,8 @@ export default function OrganizationPage() {
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</p>
                         <p style={{ fontSize: 11, color: "#9CA3C0" }}>
-                          {c.member_count || 0} member{(c.member_count || 0) === 1 ? "" : "s"}
-                          {c.active_7d ? ` · ${c.active_7d} active this week` : ""}
+                          <span className="num">{c.member_count || 0}</span> member{(c.member_count || 0) === 1 ? "" : "s"}
+                          {c.active_7d ? <> · <span className="num">{c.active_7d}</span> active this week</> : ""}
                         </p>
                       </div>
                     </Link>
