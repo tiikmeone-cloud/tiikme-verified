@@ -146,7 +146,7 @@ function RingOnly({ score, size, color }: { score: number; size: number; color: 
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span style={{ fontSize: 22, fontWeight: 800, color: "#1A1A2E" }}>{score}</span>
+        <span className="num" style={{ fontSize: 22, color: "#1A1A2E" }}>{score}</span>
       </div>
     </div>
   );
