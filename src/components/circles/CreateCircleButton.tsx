@@ -59,7 +59,7 @@ export function CreateCircleButton() {
           />
           <RequirementRow
             done={score >= 50}
-            label={`Reach Activity Score 50 (you're at ${score})`}
+            label={<>Reach Activity Score <span className="num">50</span> (you're at <span className="num">{score}</span>)</>}
           />
         </ul>
         <Link
@@ -74,7 +74,7 @@ export function CreateCircleButton() {
   );
 }
 
-function RequirementRow({ done, label }: { done: boolean; label: string }) {
+function RequirementRow({ done, label }: { done: boolean; label: React.ReactNode }) {
   return (
     <li className="flex items-start gap-2 text-[13px]">
       <span
