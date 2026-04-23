@@ -209,8 +209,8 @@ const PageProfile = () => {
         <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
           <div className="flex items-center gap-4 text-[12px]" style={{ color: "var(--color-text-secondary)" }}>
             {page.city && <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{page.city}{page.state ? `, ${page.state}` : ""}</span>}
-            <span>{page.member_count || members.length} members</span>
-            <span>{page.tracker_count || 0} tracking</span>
+            <span><span className="num">{page.member_count || members.length}</span> members</span>
+            <span><span className="num">{page.tracker_count || 0}</span> tracking</span>
           </div>
           <div className="flex items-center gap-2">
             {isAdmin && <span className="text-[10px] font-bold px-2.5 py-1 rounded-xl" style={{ background: "rgba(245,158,11,0.12)", color: "#F59E0B" }}>Admin</span>}

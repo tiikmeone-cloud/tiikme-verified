@@ -556,7 +556,7 @@ const PostCard = ({
             style={{ gap: 5, padding: "6px 10px", borderRadius: 8, transform: likeAnimating ? "scale(1.2)" : "scale(1)", transition: "transform 150ms ease" }}>
             <Heart style={{ width: 15, height: 15, fill: liked ? "#E8733A" : "none", color: liked ? "#E8733A" : "#9CA3C0" }} />
             <span style={{ fontSize: 12, fontWeight: 500, color: liked ? "#E8733A" : "#9CA3C0" }}>
-              {likeCount > 0 ? likeCount : "Like"}
+              {likeCount > 0 ? <span className="num">{likeCount}</span> : "Like"}
             </span>
           </button>
 
@@ -565,7 +565,7 @@ const PostCard = ({
             style={{ gap: 5, padding: "6px 10px", borderRadius: 8 }}>
             <MessageCircle style={{ width: 15, height: 15, color: isOpen ? "#E8733A" : "#9CA3C0" }} />
             <span style={{ fontSize: 12, fontWeight: 500, color: isOpen ? "#E8733A" : "#9CA3C0" }}>
-              {commentCount > 0 ? commentCount : "Comment"}
+              {commentCount > 0 ? <span className="num">{commentCount}</span> : "Comment"}
             </span>
           </button>
 
@@ -574,7 +574,7 @@ const PostCard = ({
             style={{ gap: 5, padding: "6px 10px", borderRadius: 8, opacity: reposting ? 0.5 : 1 }}>
             <Repeat2 style={{ width: 15, height: 15, color: hasReposted ? "#E8733A" : "#9CA3C0" }} />
             <span style={{ fontSize: 12, fontWeight: 500, color: hasReposted ? "#E8733A" : "#9CA3C0" }}>
-              {localRepostCount > 0 ? localRepostCount : "Repost"}
+              {localRepostCount > 0 ? <span className="num">{localRepostCount}</span> : "Repost"}
             </span>
           </button>
 
