@@ -25,7 +25,7 @@ const ActivityScoreRing = ({ score, size = 80, strokeWidth = 6, trend = "+5 this
             strokeLinecap="round" className="transition-all duration-700 ease-out" />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span style={{ fontSize: 18, fontWeight: 800, color: "var(--text-primary)" }}>{score}</span>
+          <span className="num" style={{ fontSize: 18, fontWeight: 800, color: "var(--text-primary)" }}>{score}</span>
         </div>
       </div>
       <div>

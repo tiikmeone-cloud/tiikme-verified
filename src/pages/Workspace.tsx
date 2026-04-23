@@ -572,7 +572,7 @@ export default function Workspace() {
                     <SquareAvatar url={g.avatar_url} name={g.name} size={36} />
                     <div className="flex-1 min-w-0">
                       <p className="text-[13px] font-semibold truncate" style={{ color: "#1A1A2E" }}>{g.name}</p>
-                      <p className="text-[11px]" style={{ color: "#9CA3C0" }}>{g.member_count || 0} members</p>
+                      <p className="text-[11px]" style={{ color: "#9CA3C0" }}><span className="num">{g.member_count || 0}</span> members</p>
                     </div>
                   </div>
                   <div className="flex gap-2">
@@ -618,7 +618,7 @@ export default function Workspace() {
                   <div className="flex-1 min-w-0">
                     <p className="text-[13px] font-semibold truncate" style={{ color: "#1A1A2E" }}>{g.name}</p>
                     <p className="text-[11px] truncate" style={{ color: "#9CA3C0" }}>
-                      {g.member_count || 0} members
+                      <span className="num">{g.member_count || 0}</span> members
                     </p>
                   </div>
                   {g.last_message_at && (

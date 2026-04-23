@@ -956,11 +956,11 @@ const Profile = () => {
               {/* ROW 4: Compact stats row — Posts · Connections · Score pill */}
               <div className="flex items-center flex-wrap" style={{ gap: 12, marginTop: 6 }}>
                 <div style={{ fontSize: 13 }}>
-                  <span style={{ fontWeight: 700, color: "#1A1A2E" }}>{stats.posts}</span>
+                  <span className="num" style={{ color: "#1A1A2E" }}>{stats.posts}</span>
                   <span style={{ fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Posts</span>
                 </div>
                 <Link to="/app/connections" className="cursor-pointer hover:opacity-80" style={{ fontSize: 13 }}>
-                  <span style={{ fontWeight: 700, color: "#1A1A2E" }}>{stats.connections}</span>
+                  <span className="num" style={{ color: "#1A1A2E" }}>{stats.connections}</span>
                   <span style={{ fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Connections</span>
                 </Link>
                 {(() => {
@@ -980,7 +980,7 @@ const Profile = () => {
                           }}
                         >
                           <Zap style={{ width: 11, height: 11 }} fill="currentColor" />
-                          {activityScore} pts · {tier.name || (tier as any).label}
+                          <span><span className="num">{activityScore}</span> pts · {tier.name || (tier as any).label}</span>
                         </button>
                       </PopoverTrigger>
                       <PopoverContent
@@ -1062,7 +1062,7 @@ const Profile = () => {
             {/* L1: Connections preview */}
             <div className="glass-card" style={{ padding: 12, borderRadius: 16 }}>
               <p style={{ fontSize: 11, fontWeight: 600, color: "#9CA3C0", textTransform: "uppercase", letterSpacing: "0.02em" }}>CONNECTIONS</p>
-              <p style={{ fontSize: 28, fontWeight: 700, color: "#1A1A2E", margin: "4px 0", lineHeight: "36px", letterSpacing: "-0.02em" }}>{stats.connections}</p>
+              <p className="num" style={{ fontSize: 28, color: "#1A1A2E", margin: "4px 0", lineHeight: "36px" }}>{stats.connections}</p>
               {/* Mini avatars */}
               {connectedAvatars.length > 0 && (
                 <div className="flex items-center" style={{ marginBottom: 8 }}>

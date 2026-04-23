@@ -46,7 +46,7 @@ const CircleCard = ({ circle, latestPostTitle, onJoin, isMember }: CircleCardPro
           </p>
           <div className="flex items-center" style={{ gap: 4, fontSize: 11, color: "var(--text-muted)" }}>
             <Users style={{ width: 11, height: 11 }} />
-            <span>{memberCount.toLocaleString()} members</span>
+            <span><span className="num">{memberCount.toLocaleString()}</span> members</span>
           </div>
         </div>
       </div>

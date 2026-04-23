@@ -591,12 +591,12 @@ function CirclePostCard({
       <div className="flex items-center gap-4" style={{ marginTop: 10, fontSize: 12, color: "#6B7094" }}>
         <button type="button" onClick={onUpvote} className="cursor-pointer transition-all active:scale-95"
           style={{ background: "none", border: "none", padding: "2px 4px", borderRadius: 6, color: upvoted ? "#FA903E" : "#6B7094", fontWeight: upvoted ? 700 : 500 }}>
-          ▲ {post.upvote_count || 0}
+          ▲ <span className="num">{post.upvote_count || 0}</span>
         </button>
         <button type="button" onClick={() => setShowComments(s => !s)}
           className="cursor-pointer flex items-center gap-1"
           style={{ background: "none", border: "none", padding: "2px 4px", borderRadius: 6, color: showComments ? "#FA903E" : "#6B7094", fontWeight: showComments ? 700 : 500 }}>
-          <MessageCircle style={{ width: 13, height: 13 }} /> {commentCount}
+          <MessageCircle style={{ width: 13, height: 13 }} /> <span className="num">{commentCount}</span>
         </button>
         <div style={{ marginLeft: "auto" }}>
           <ReportButton contentType="circle_post" contentId={post.id} />
