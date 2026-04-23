@@ -167,7 +167,7 @@ export function OrgCard({ org, following, onToggleFollow, navigateTo }: OrgCardP
         })()}
         {audience != null && audience > 0 && (
           <span className="truncate" style={{ fontSize: 11, color: "var(--text-muted)" }}>
-            {formatCount(audience)} {audienceLabel}
+            <span className="num">{formatCount(audience)}</span> {audienceLabel}
           </span>
         )}
       </div>
@@ -232,7 +232,7 @@ export function TrendingPostCard({ post, authorProfile }: PostCardProps) {
         <img src={firstImage} alt="" loading="lazy" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} style={{ width: "100%", height: 120, objectFit: "cover", borderRadius: 8, marginTop: 6 }} />
       )}
       <p style={{ fontSize: 11, fontWeight: 400, color: "var(--text-muted)", marginTop: 8 }}>
-        {reactionTotal} likes · {post.comment_count || 0} comments
+        <span className="num">{reactionTotal}</span> likes · <span className="num">{post.comment_count || 0}</span> comments
       </p>
     </article>
   );
@@ -253,7 +253,7 @@ export function TopicPill({ tag, count, onClick }: TopicPillProps) {
       onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; }}
       onMouseLeave={e => { e.currentTarget.style.transform = ""; }}
     >
-      #{tag} <span style={{ fontSize: 11, fontWeight: 400, color: "var(--text-muted)", marginLeft: 4 }}>{count}</span>
+      #{tag} <span className="num" style={{ fontSize: 11, color: "var(--text-muted)", marginLeft: 4 }}>{count}</span>
     </button>
   );
 }
