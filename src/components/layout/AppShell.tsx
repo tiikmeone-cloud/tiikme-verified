@@ -193,7 +193,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
         <div>
           <div style={{ paddingBottom: 20 }}>
             <Link to="/app/feed" style={{ filter: "drop-shadow(0 0 10px rgba(232,115,58,0.15))" }}>
-              <ThemeLogo className="h-7 w-auto" />
+              <ThemeLogo className="h-11 w-auto" />
             </Link>
           </div>
 
@@ -302,7 +302,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           }}
         >
           <Link to="/app/feed" aria-label="Tiikme home">
-            <ThemeLogo className="h-7 w-auto" />
+            <ThemeLogo className="h-10 w-auto" />
           </Link>
           <div className="flex items-center gap-1">
             {/* Search → Explore */}
