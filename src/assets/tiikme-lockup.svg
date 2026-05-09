@@ -5,8 +5,8 @@
     <!-- ear -->
     <path d="M 30 24 C 18 30, 14 50, 22 62 C 32 64, 42 56, 42 44 C 42 34, 38 26, 30 24 Z" fill="#D93E08"/>
     <!-- eye -->
-    <circle cx="70" cy="36" r="4.2" fill="#fff"/>
-    <circle cx="70" cy="36" r="2.2" fill="#17161A"/>
+    <circle cx="70" cy="36" r="4.6" fill="#FAFAF7"/>
+    <circle cx="70" cy="36" r="2.6" fill="#1B3A6B"/>
     <!-- toe -->
     <path d="M 28 96 L 36 96 M 40 96 L 48 96" stroke="#D93E08" stroke-width="2" stroke-linecap="round"/>
   </g>
