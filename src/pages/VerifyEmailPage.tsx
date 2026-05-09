@@ -102,8 +102,8 @@ export default function VerifyEmailPage() {
               onKeyDown={(e) => handleKeyDown(i, e)}
               className="num h-14 w-12 rounded-xl border-2 bg-white/[0.04] text-center text-[22px] text-brand outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/40"
               style={{
-                borderColor: d ? "#FA903E" : error ? "#EF4444" : "rgba(255,255,255,0.15)",
-                background: d ? "rgba(250,144,62,0.10)" : "rgba(255,255,255,0.04)",
+                borderColor: d ? "#FF5A1F" : error ? "#EF4444" : "rgba(255,255,255,0.15)",
+                background: d ? "rgba(255, 90, 31,0.10)" : "rgba(255,255,255,0.04)",
               }}
             />
           ))}

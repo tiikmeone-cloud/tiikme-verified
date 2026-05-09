@@ -123,7 +123,7 @@ function CirclesDiscovery() {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Search circles..."
-          className="w-full rounded-2xl border border-neutral-200 bg-white pl-11 pr-4 py-3 text-[14px] placeholder:text-neutral-400 focus:border-[#FA903E] focus:ring-2 focus:ring-[#FA903E]/20 outline-none"
+          className="w-full rounded-2xl border border-neutral-200 bg-white pl-11 pr-4 py-3 text-[14px] placeholder:text-neutral-400 focus:border-[#FF5A1F] focus:ring-2 focus:ring-[#FF5A1F]/20 outline-none"
         />
       </div>
 
@@ -387,7 +387,7 @@ function CircleDetail({ slug }: { slug: string }) {
               className="cursor-pointer active:scale-95"
               style={{
                 height: 34, padding: "0 14px", borderRadius: 10, fontSize: 13, fontWeight: 700,
-                background: "#FA903E", color: "#fff", border: "none",
+                background: "#FF5A1F", color: "#fff", border: "none",
               }}
             >
               + Post
@@ -575,7 +575,7 @@ function CirclePostCard({
             style={{ fontSize: 13, padding: 10, borderRadius: 10, background: "#F5F5F5", border: "1px solid #E8E8E8", resize: "vertical" }} />
           <div className="flex items-center gap-2 mt-2">
             <button type="button" onClick={saveEdit} disabled={savingEdit || !editBody.trim()} className="cursor-pointer disabled:opacity-50"
-              style={{ fontSize: 12, fontWeight: 700, padding: "6px 14px", borderRadius: 8, background: "#FA903E", color: "#fff", border: "none" }}>
+              style={{ fontSize: 12, fontWeight: 700, padding: "6px 14px", borderRadius: 8, background: "#FF5A1F", color: "#fff", border: "none" }}>
               {savingEdit ? <Loader2 className="animate-spin" style={{ width: 12, height: 12 }} /> : "Save"}
             </button>
             <button type="button" onClick={() => { setEditing(false); setEditBody(post.body || post.content || ""); }} className="cursor-pointer"
@@ -590,12 +590,12 @@ function CirclePostCard({
 
       <div className="flex items-center gap-4" style={{ marginTop: 10, fontSize: 12, color: "#6B7094" }}>
         <button type="button" onClick={onUpvote} className="cursor-pointer transition-all active:scale-95"
-          style={{ background: "none", border: "none", padding: "2px 4px", borderRadius: 6, color: upvoted ? "#FA903E" : "#6B7094", fontWeight: upvoted ? 700 : 500 }}>
+          style={{ background: "none", border: "none", padding: "2px 4px", borderRadius: 6, color: upvoted ? "#FF5A1F" : "#6B7094", fontWeight: upvoted ? 700 : 500 }}>
           ▲ <span className="num">{post.upvote_count || 0}</span>
         </button>
         <button type="button" onClick={() => setShowComments(s => !s)}
           className="cursor-pointer flex items-center gap-1"
-          style={{ background: "none", border: "none", padding: "2px 4px", borderRadius: 6, color: showComments ? "#FA903E" : "#6B7094", fontWeight: showComments ? 700 : 500 }}>
+          style={{ background: "none", border: "none", padding: "2px 4px", borderRadius: 6, color: showComments ? "#FF5A1F" : "#6B7094", fontWeight: showComments ? 700 : 500 }}>
           <MessageCircle style={{ width: 13, height: 13 }} /> <span className="num">{commentCount}</span>
         </button>
         <div style={{ marginLeft: "auto" }}>
@@ -724,7 +724,7 @@ function CircleComposer({ circle, onClose, onPosted }: any) {
                   className="glass-card text-left cursor-pointer"
                   style={{
                     padding: 10, borderRadius: 10,
-                    border: postType === key ? "2px solid #FA903E" : "1px solid rgba(255,255,255,0.3)",
+                    border: postType === key ? "2px solid #FF5A1F" : "1px solid rgba(255,255,255,0.3)",
                     background: "rgba(255,255,255,0.6)",
                   }}
                 >
@@ -804,7 +804,7 @@ function CircleComposer({ circle, onClose, onPosted }: any) {
                 disabled={saving || !body.trim()}
                 style={{
                   flex: 2, height: 38, borderRadius: 10, fontSize: 13, fontWeight: 700,
-                  background: saving || !body.trim() ? "#9CA3AF" : "#FA903E",
+                  background: saving || !body.trim() ? "#9CA3AF" : "#FF5A1F",
                   color: "#fff", border: "none", cursor: saving ? "default" : "pointer",
                 }}
               >

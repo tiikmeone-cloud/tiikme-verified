@@ -122,9 +122,9 @@ export default function PostOpportunityModal({ open, onClose, onCreated }: Props
   if (!open) return null;
 
   const pillStyle = (active: boolean): React.CSSProperties => ({
-    background: active ? "#FA903E" : "#FFFFFF",
+    background: active ? "#FF5A1F" : "#FFFFFF",
     color: active ? "#FFFFFF" : "#1A1A1A",
-    border: active ? "1.5px solid #FA903E" : "1.5px solid #ECECEA",
+    border: active ? "1.5px solid #FF5A1F" : "1.5px solid #ECECEA",
     borderRadius: 999, padding: "6px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer",
   });
 
@@ -308,7 +308,7 @@ export default function PostOpportunityModal({ open, onClose, onCreated }: Props
                   </div>
                 ))}
                 {questions.length < 5 && (
-                  <button type="button" onClick={addQuestion} className="flex items-center gap-1 text-[12px] font-semibold cursor-pointer" style={{ color: "#FA903E" }}>
+                  <button type="button" onClick={addQuestion} className="flex items-center gap-1 text-[12px] font-semibold cursor-pointer" style={{ color: "#FF5A1F" }}>
                     <Plus className="w-3.5 h-3.5" /> Add question
                   </button>
                 )}
@@ -333,7 +333,7 @@ export default function PostOpportunityModal({ open, onClose, onCreated }: Props
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="outline" className="flex-1" onClick={onClose} style={{ height: 40, borderRadius: 12, borderColor: "#ECECEA" }}>Save as Draft</Button>
             <Button type="submit" className="flex-1" disabled={!title.trim() || submitting}
-              style={{ height: 52, borderRadius: 12, background: "#FA903E", color: "#FFFFFF" }}>
+              style={{ height: 52, borderRadius: 12, background: "#FF5A1F", color: "#FFFFFF" }}>
               {submitting ? "Posting..." : "Post Opportunity →"}
             </Button>
           </div>

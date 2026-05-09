@@ -189,7 +189,7 @@ export default function OpportunityCreate() {
     setSubmitting(false);
   };
 
-  const typeColor = OPP_TYPES.find(t => t.value === oppType)?.color || "#FA903E";
+  const typeColor = OPP_TYPES.find(t => t.value === oppType)?.color || "#FF5A1F";
 
   const sectionLabel = (text: string) => (
     <label className="text-[13px] font-semibold block mb-1.5" style={{ color: "var(--text-1)" }}>{text}</label>

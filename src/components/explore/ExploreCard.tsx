@@ -99,7 +99,7 @@ export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonC
               ? { background: "rgba(52,199,89,0.10)", color: "#34C759" }
               : isPending
               ? { background: "rgba(232,115,58,0.12)", color: "#E8733A" }
-              : { background: "#FA903E", color: "#fff" }
+              : { background: "#FF5A1F", color: "#fff" }
             ),
           }}
         >
@@ -183,7 +183,7 @@ export function OrgCard({ org, following, onToggleFollow, navigateTo }: OrgCardP
             ? { background: "rgba(52,199,89,0.10)", color: "#34C759" }
             : isCreator
               ? { background: "#EF4444", color: "#fff" }
-              : { background: "#FA903E", color: "#fff" }
+              : { background: "#FF5A1F", color: "#fff" }
           ),
         }}
       >

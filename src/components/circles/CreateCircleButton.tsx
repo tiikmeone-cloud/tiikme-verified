@@ -21,7 +21,7 @@ export function CreateCircleButton() {
           borderRadius: 10,
           fontSize: 13,
           fontWeight: 700,
-          background: "#FA903E",
+          background: "#FF5A1F",
           color: "#fff",
         }}
       >
@@ -66,7 +66,7 @@ export function CreateCircleButton() {
         <Link
           to="/app/settings/profile"
           className="block mt-4 text-[13px] font-semibold"
-          style={{ color: "#FA903E" }}
+          style={{ color: "#FF5A1F" }}
         >
           Start verification →
         </Link>

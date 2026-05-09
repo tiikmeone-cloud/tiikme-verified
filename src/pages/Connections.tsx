@@ -317,7 +317,7 @@ const Connections = () => {
             </button>
             <button type="button" onClick={() => setMoreOpen(false)}
               className="flex-1 cursor-pointer"
-              style={{ height: 40, borderRadius: 10, fontSize: 13, fontWeight: 700, background: "#FA903E", color: "#fff", border: "none" }}>
+              style={{ height: 40, borderRadius: 10, fontSize: 13, fontWeight: 700, background: "#FF5A1F", color: "#fff", border: "none" }}>
               Apply
             </button>
           </>
@@ -348,7 +348,7 @@ const Connections = () => {
                     className="cursor-pointer"
                     style={{
                       height: 32, padding: "0 12px", borderRadius: 999, fontSize: 12, fontWeight: 600,
-                      background: active ? "#FA903E" : "rgba(0,0,0,0.05)",
+                      background: active ? "#FF5A1F" : "rgba(0,0,0,0.05)",
                       color: active ? "#fff" : "#1A1A2E", border: "none",
                     }}>
                     {roleLabel(r)}

@@ -89,7 +89,7 @@ export default function CircleCreate() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#FA903E" }} />
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#FF5A1F" }} />
       </div>
     );
   }
@@ -240,11 +240,11 @@ export default function CircleCreate() {
                   onClick={() => setType(opt.value)}
                   className="text-left p-3 rounded-xl cursor-pointer transition"
                   style={{
-                    background: active ? "rgba(250,144,62,0.08)" : "#fff",
-                    border: `1px solid ${active ? "#FA903E" : "#E5E7EB"}`,
+                    background: active ? "rgba(255, 90, 31,0.08)" : "#fff",
+                    border: `1px solid ${active ? "#FF5A1F" : "#E5E7EB"}`,
                   }}
                 >
-                  <Icon className="w-4 h-4 mb-1" style={{ color: active ? "#FA903E" : "#6B7094" }} />
+                  <Icon className="w-4 h-4 mb-1" style={{ color: active ? "#FF5A1F" : "#6B7094" }} />
                   <p className="text-[13px] font-bold" style={{ color: "#1A1A2E" }}>{opt.label}</p>
                   <p className="text-[11px] text-neutral-500">{opt.hint}</p>
                 </button>
@@ -302,8 +302,8 @@ export default function CircleCreate() {
                   onClick={() => setIcon(e)}
                   className="w-10 h-10 rounded-xl text-[18px] cursor-pointer flex items-center justify-center transition"
                   style={{
-                    background: icon === e ? "rgba(250,144,62,0.10)" : "#fff",
-                    border: `1px solid ${icon === e ? "#FA903E" : "#E5E7EB"}`,
+                    background: icon === e ? "rgba(255, 90, 31,0.10)" : "#fff",
+                    border: `1px solid ${icon === e ? "#FF5A1F" : "#E5E7EB"}`,
                   }}
                 >
                   {e}
@@ -419,11 +419,11 @@ function Selector({ label, value, onChange, options }: {
               onClick={() => onChange(o.value)}
               className="text-left p-2.5 rounded-xl cursor-pointer relative transition"
               style={{
-                background: active ? "rgba(250,144,62,0.08)" : "#fff",
-                border: `1px solid ${active ? "#FA903E" : "#E5E7EB"}`,
+                background: active ? "rgba(255, 90, 31,0.08)" : "#fff",
+                border: `1px solid ${active ? "#FF5A1F" : "#E5E7EB"}`,
               }}
             >
-              {active && <Check className="w-3 h-3 absolute top-2 right-2" style={{ color: "#FA903E" }} />}
+              {active && <Check className="w-3 h-3 absolute top-2 right-2" style={{ color: "#FF5A1F" }} />}
               <p className="text-[12px] font-bold" style={{ color: "#1A1A2E" }}>{o.label}</p>
               <p className="text-[10px] mt-0.5 text-neutral-500">{o.hint}</p>
             </button>

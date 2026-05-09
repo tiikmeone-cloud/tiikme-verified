@@ -431,8 +431,8 @@ const Explore = () => {
                 style={{
                   flexShrink: 0, padding: "0 16px", height: 32, borderRadius: 999,
                   fontSize: 13, fontWeight: 600, whiteSpace: "nowrap",
-                  background: isActive ? "#FA903E" : "#FFFFFF",
-                  border: isActive ? "1px solid #FA903E" : "1px solid #E5E7EB",
+                  background: isActive ? "#FF5A1F" : "#FFFFFF",
+                  border: isActive ? "1px solid #FF5A1F" : "1px solid #E5E7EB",
                   color: isActive ? "#FFFFFF" : "#6B7094",
                   boxShadow: isActive ? "0 4px 12px rgba(249,115,22,0.25)" : "none",
                 }}

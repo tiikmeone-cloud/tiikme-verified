@@ -408,17 +408,17 @@ const AppShell = ({ children }: { children: ReactNode }) => {
                 <span
                   style={{
                     width: 24, height: 4, borderRadius: 999,
-                    background: active ? "#FA903E" : "transparent",
+                    background: active ? "#FF5A1F" : "transparent",
                     marginBottom: 2,
                   }}
                 />
                 <item.icon
-                  style={{ width: 24, height: 24, color: active ? "#FA903E" : "#9CA3AF" }}
+                  style={{ width: 24, height: 24, color: active ? "#FF5A1F" : "#9CA3AF" }}
                   strokeWidth={active ? 2.2 : 1.8}
                 />
                 <span style={{
                   fontSize: 10, fontWeight: active ? 700 : 500,
-                  color: active ? "#FA903E" : "#9CA3AF",
+                  color: active ? "#FF5A1F" : "#9CA3AF",
                   marginTop: 1,
                 }}>
                   {item.label}
@@ -446,7 +446,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
                 left: "50%",
                 transform: "translateX(-50%)",
                 width: 52, height: 52, borderRadius: "50%",
-                background: "#FA903E",
+                background: "#FF5A1F",
                 boxShadow: "0 8px 20px rgba(249,115,22,0.35), 0 2px 6px rgba(0,0,0,0.10)",
                 border: "3px solid #FFFFFF",
               }}
@@ -478,7 +478,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
                 <span
                   style={{
                     width: 24, height: 4, borderRadius: 999,
-                    background: active ? "#FA903E" : "transparent",
+                    background: active ? "#FF5A1F" : "transparent",
                     marginBottom: 2,
                   }}
                 />
@@ -488,7 +488,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
                       style={{
                         width: 28, height: 28, borderRadius: "50%",
                         overflow: "hidden",
-                        border: active ? "2px solid #FA903E" : "2px solid transparent",
+                        border: active ? "2px solid #FF5A1F" : "2px solid transparent",
                         display: "inline-flex", alignItems: "center", justifyContent: "center",
                       }}
                     >
@@ -500,19 +500,19 @@ const AppShell = ({ children }: { children: ReactNode }) => {
                     </span>
                   ) : (
                     <User
-                      style={{ width: 24, height: 24, color: active ? "#FA903E" : "#9CA3AF" }}
+                      style={{ width: 24, height: 24, color: active ? "#FF5A1F" : "#9CA3AF" }}
                       strokeWidth={active ? 2.2 : 1.8}
                     />
                   )
                 ) : (
                   <item.icon
-                    style={{ width: 24, height: 24, color: active ? "#FA903E" : "#9CA3AF" }}
+                    style={{ width: 24, height: 24, color: active ? "#FF5A1F" : "#9CA3AF" }}
                     strokeWidth={active ? 2.2 : 1.8}
                   />
                 )}
                 <span style={{
                   fontSize: 10, fontWeight: active ? 700 : 500,
-                  color: active ? "#FA903E" : "#9CA3AF",
+                  color: active ? "#FF5A1F" : "#9CA3AF",
                   marginTop: 1,
                 }}>
                   {item.label}

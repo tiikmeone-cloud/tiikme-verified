@@ -2,7 +2,7 @@ import { ReactNode, CSSProperties } from "react";
 import { cn } from "@/lib/utils";
 
 const ACCENT_COLORS: Record<string, string> = {
-  identity: "#FA903E",
+  identity: "#FF5A1F",
   experience: "#4A90D9",
   education: "#34C759",
   projects: "#FF6B9D",
@@ -17,7 +17,7 @@ const ACCENT_COLORS: Record<string, string> = {
   team: "#8B5CF6",
   opportunities: "#3B82F6",
   verified: "#F59E0B",
-  feed: "#FA903E",
+  feed: "#FF5A1F",
 };
 
 /* Left-glow shadow per accent */

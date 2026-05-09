@@ -25,15 +25,15 @@ export default {
 
         // OFFICIAL TIIKME BRAND
         brand: {
-          DEFAULT: "#FA903E",
-          hover: "#F37F26",
-          press: "#E46E14",
+          DEFAULT: "#FF5A1F",
+          hover: "#F04A12",
+          press: "#D93E08",
           50: "#FEF3E8",
           900: "#7A3D0E",
           // legacy compat
-          "2": "#F37F26",
-          dim: "rgba(250, 144, 62, 0.12)",
-          glow: "rgba(250, 144, 62, 0.20)",
+          "2": "#F04A12",
+          dim: "rgba(255, 90, 31, 0.12)",
+          glow: "rgba(255, 90, 31, 0.20)",
         },
         midnight: {
           DEFAULT: "#21205A",
@@ -62,14 +62,14 @@ export default {
         "t3": "var(--text-3)",
 
         // Legacy
-        "accent-orange": "#FA903E",
-        "accent-pink": "#FA903E",
+        "accent-orange": "#FF5A1F",
+        "accent-pink": "#FF5A1F",
         "text-primary": "#0A0A0B",
         "text-secondary": "#3A3A3A",
         "text-on-dark": "#FAFAF7",
 
         // shadcn semantic
-        primary: { DEFAULT: "#FA903E", foreground: "#FFFFFF" },
+        primary: { DEFAULT: "#FF5A1F", foreground: "#FFFFFF" },
         secondary: { DEFAULT: "var(--surface-2)", foreground: "var(--text-1)" },
         destructive: { DEFAULT: "var(--danger)", foreground: "#FFFFFF" },
         muted: { DEFAULT: "var(--surface-2)", foreground: "var(--text-2)" },

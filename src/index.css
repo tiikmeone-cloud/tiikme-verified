@@ -13,9 +13,9 @@
 @layer base {
   :root {
     /* ── OFFICIAL TIIKME BRAND TOKENS ── */
-    --tiikme-orange: #FA903E;
-    --tiikme-orange-hover: #F37F26;
-    --tiikme-orange-press: #E46E14;
+    --tiikme-orange: #FF5A1F;
+    --tiikme-orange-hover: #F04A12;
+    --tiikme-orange-press: #D93E08;
     --tiikme-orange-50: #FEF3E8;
     --tiikme-orange-900: #7A3D0E;
 
@@ -48,10 +48,10 @@
     --text-muted: #6B6B6B;
 
     /* ── Accent (orange brand) ── */
-    --accent: #FA903E;
-    --accent-hover: #F37F26;
-    --accent-glow: rgba(250, 144, 62, 0.15);
-    --accent-pink: #FA903E;
+    --accent: #FF5A1F;
+    --accent-hover: #F04A12;
+    --accent-glow: rgba(255, 90, 31, 0.15);
+    --accent-pink: #FF5A1F;
 
     /* ── Semantic ── */
     --success: #34C759;
@@ -70,7 +70,7 @@
     --glass-shadow-hover: rgba(10, 10, 11, 0.08);
 
     /* ── Mesh blobs (subtle on paper) ── */
-    --mesh-blob-1: rgba(250, 144, 62, 0.04);
+    --mesh-blob-1: rgba(255, 90, 31, 0.04);
     --mesh-blob-2: rgba(33, 32, 90, 0.03);
     --mesh-blob-3: rgba(74, 144, 217, 0.02);
 
@@ -82,12 +82,12 @@
     --surface-3: #FFFFFF;
     --border: #ECECEA;
     --border-2: #ECECEA;
-    --brand: #FA903E;
-    --brand-2: #F37F26;
-    --brand-dim: rgba(250, 144, 62, 0.12);
-    --brand-glow: rgba(250, 144, 62, 0.20);
-    --brand-hover: #F37F26;
-    --brand-press: #E46E14;
+    --brand: #FF5A1F;
+    --brand-2: #F04A12;
+    --brand-dim: rgba(255, 90, 31, 0.12);
+    --brand-glow: rgba(255, 90, 31, 0.20);
+    --brand-hover: #F04A12;
+    --brand-press: #D93E08;
     --text-1: #0A0A0B;
     --text-2: #3A3A3A;
     --text-3: #6B6B6B;
@@ -114,7 +114,7 @@
     --sidebar-bg: #FFFFFF;
     --sidebar-border: #ECECEA;
     --sidebar-item-hover: #F4F4F0;
-    --sidebar-item-active: rgba(250, 144, 62, 0.12);
+    --sidebar-item-active: rgba(255, 90, 31, 0.12);
     --sidebar-background: #FFFFFF;
     --sidebar-foreground: var(--text-1);
     --sidebar-primary: var(--brand);
@@ -126,16 +126,16 @@
     /* Inputs */
     --input-bg: #FFFFFF;
     --input-border: #ECECEA;
-    --input-focus-border: #FA903E;
-    --input-focus-glow: rgba(250, 144, 62, 0.20);
+    --input-focus-border: #FF5A1F;
+    --input-focus-glow: rgba(255, 90, 31, 0.20);
 
     /* Glass v2 compat (auth/dark contexts use these) */
     --glass-bg-light: #FFFFFF;
     --glass-bg-dark: rgba(33, 32, 90, 0.85);
     --glass-border-light-v2: #ECECEA;
     --glass-border-dark-v2: rgba(255, 255, 255, 0.14);
-    --glass-glow-orange: rgba(250, 144, 62, 0.20);
-    --glass-glow-pink: rgba(250, 144, 62, 0.10);
+    --glass-glow-orange: rgba(255, 90, 31, 0.20);
+    --glass-glow-pink: rgba(255, 90, 31, 0.10);
 
     /* Compat aliases */
     --color-bg: #FAFAF7;
@@ -146,11 +146,11 @@
     --color-text: #0A0A0B;
     --color-text-secondary: #3A3A3A;
     --color-text-muted: #6B6B6B;
-    --color-accent: #FA903E;
-    --color-accent-glow: rgba(250, 144, 62, 0.15);
-    --color-accent-hover: rgba(250, 144, 62, 0.25);
-    --color-accent-pink: #FA903E;
-    --color-accent-pink-glow: rgba(250, 144, 62, 0.10);
+    --color-accent: #FF5A1F;
+    --color-accent-glow: rgba(255, 90, 31, 0.15);
+    --color-accent-hover: rgba(255, 90, 31, 0.25);
+    --color-accent-pink: #FF5A1F;
+    --color-accent-pink-glow: rgba(255, 90, 31, 0.10);
   }
 
   * {
@@ -225,12 +225,12 @@
   }
 
   .glass-glow {
-    background: linear-gradient(145deg, rgba(250,144,62,0.12), rgba(250,144,62,0.06));
+    background: linear-gradient(145deg, rgba(255, 90, 31,0.12), rgba(255, 90, 31,0.06));
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(250, 144, 62, 0.25);
+    border: 1px solid rgba(255, 90, 31, 0.25);
     border-radius: 16px;
-    box-shadow: 0 12px 40px rgba(250,144,62,0.15);
+    box-shadow: 0 12px 40px rgba(255, 90, 31,0.15);
     color: var(--text-primary);
   }
 
@@ -251,7 +251,7 @@
     height: 48px;
     padding: 0 24px;
     border: none;
-    box-shadow: 0 4px 14px rgba(250,144,62,0.30);
+    box-shadow: 0 4px 14px rgba(255, 90, 31,0.30);
     cursor: pointer;
     transition: background 150ms ease, transform 150ms ease, box-shadow 150ms ease;
   }
@@ -267,7 +267,7 @@
     height: 36px;
     padding: 0 20px;
     border: none;
-    box-shadow: 0 2px 8px rgba(250,144,62,0.20);
+    box-shadow: 0 2px 8px rgba(255, 90, 31,0.20);
     cursor: pointer;
     transition: background 150ms ease;
   }
@@ -382,7 +382,7 @@
   .glass-input-dark::placeholder { color: rgba(250, 250, 247, 0.40); }
   .glass-input-dark:focus {
     border-color: var(--brand);
-    box-shadow: 0 0 0 3px rgba(250, 144, 62, 0.40);
+    box-shadow: 0 0 0 3px rgba(255, 90, 31, 0.40);
     outline: none;
   }
 
@@ -712,9 +712,9 @@
   50% { transform: translate(40px,-50px) scale(1.1); }
 }
 @keyframes pulseDot {
-  0% { box-shadow: 0 0 0 0 rgba(250,144,62,0.5); }
-  70% { box-shadow: 0 0 0 10px rgba(250,144,62,0); }
-  100% { box-shadow: 0 0 0 0 rgba(250,144,62,0); }
+  0% { box-shadow: 0 0 0 0 rgba(255, 90, 31,0.5); }
+  70% { box-shadow: 0 0 0 10px rgba(255, 90, 31,0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 90, 31,0); }
 }
 @keyframes tiikPulse {
   0% { box-shadow: 0 0 0 0 rgba(52,199,89,0.4); }
