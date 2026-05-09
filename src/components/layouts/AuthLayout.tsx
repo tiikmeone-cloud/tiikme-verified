@@ -59,8 +59,8 @@ export default function AuthLayout({
       <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 py-10">
         {!hideLogo && (
           <Link to="/" className="mb-6 inline-flex items-center" aria-label="Tiikme home">
-            <div style={{ filter: "brightness(10) drop-shadow(0 0 24px rgba(250,144,62,0.35))" }}>
-              <ThemeLogo className="h-8 w-auto" />
+            <div style={{ filter: "drop-shadow(0 0 24px rgba(250,144,62,0.35))" }}>
+              <ThemeLogo className="h-8 w-auto" variant="dark" />
             </div>
           </Link>
         )}
