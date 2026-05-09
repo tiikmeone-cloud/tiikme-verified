@@ -25,7 +25,7 @@ const Navbar = () => {
         }}
       >
         <Link to="/" className="flex items-center">
-          <ThemeLogo className="h-10 w-auto" />
+          <ThemeLogo className="h-14 w-auto" />
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
@@ -86,7 +86,7 @@ const Navbar = () => {
             style={{ animation: "fadeIn 0.2s ease-out" }}
           >
             <div className="flex items-center justify-between mb-10">
-              <ThemeLogo className="h-10 w-auto" />
+              <ThemeLogo className="h-14 w-auto" />
               <button type="button" onClick={() => setMenuOpen(false)} className="p-2 cursor-pointer" style={{ color: "#374151" }}>
                 <X className="w-6 h-6" />
               </button>
