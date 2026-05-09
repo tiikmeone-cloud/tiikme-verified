@@ -40,7 +40,7 @@ const FilterBar = ({
           className="shrink-0 flex items-center gap-1.5 cursor-pointer transition-all"
           style={{
             height: 32, padding: "0 12px", borderRadius: 999,
-            fontSize: 12, fontWeight: 700, background: "#FA903E", color: "#fff", border: "none",
+            fontSize: 12, fontWeight: 700, background: "#FF5A1F", color: "#fff", border: "none",
           }}>
           <SlidersHorizontal style={{ width: 13, height: 13 }} />
           {activeCount} {activeCount === 1 ? "filter" : "filters"}
@@ -64,7 +64,7 @@ const FilterBar = ({
               height: 32, padding: "0 12px", borderRadius: 999,
               fontSize: 12, fontWeight: 600, whiteSpace: "nowrap",
               ...(c.active
-                ? { background: "#FA903E", color: "#fff", border: "none" }
+                ? { background: "#FF5A1F", color: "#fff", border: "none" }
                 : { background: "rgba(255,255,255,0.50)", color: "#1A1A2E", border: "1px solid rgba(0,0,0,0.08)" }),
             }}>
             {c.label}

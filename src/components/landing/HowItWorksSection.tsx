@@ -31,7 +31,7 @@ const HowItWorksSection = () => (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-4 relative">
         {steps.map((s, i) => (
           <div key={s.num} className="flex flex-col items-start relative">
-            <span className="text-[48px] md:text-[56px] font-extrabold leading-none mb-4" style={{ color: "#FA903E" }}>
+            <span className="text-[48px] md:text-[56px] font-extrabold leading-none mb-4" style={{ color: "#FF5A1F" }}>
               {s.num}
             </span>
             <h3 className="text-[18px] md:text-[20px] font-bold mb-3" style={{ color: "#04061A" }}>

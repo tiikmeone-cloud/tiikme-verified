@@ -51,7 +51,7 @@ const Welcome = () => {
                 left: `${Math.random() * 100}%`,
                 width: `${4 + Math.random() * 4}px`,
                 height: `${4 + Math.random() * 4}px`,
-                backgroundColor: ["#3D5AF1", "#10B981", "#F59E0B", "#6B21A8", "#FA903E"][i % 5],
+                backgroundColor: ["#3D5AF1", "#10B981", "#F59E0B", "#6B21A8", "#FF5A1F"][i % 5],
                 animation: `confetti-fall ${1.5 + Math.random()}s ease-in forwards`,
                 animationDelay: `${Math.random() * 0.5}s`,
               }} />

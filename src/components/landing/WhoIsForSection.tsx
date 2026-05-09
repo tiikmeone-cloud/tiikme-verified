@@ -68,7 +68,7 @@ const RoleCard = ({ icon: Icon, role, copy }: { icon: typeof GraduationCap; role
     className="min-w-[280px] md:min-w-0 snap-start rounded-2xl p-6 md:p-8 flex flex-col"
     style={{ border: "1px solid #E5E7EB" }}
   >
-    <Icon className="w-7 h-7 mb-4" style={{ color: "#FA903E" }} strokeWidth={1.5} />
+    <Icon className="w-7 h-7 mb-4" style={{ color: "#FF5A1F" }} strokeWidth={1.5} />
     <p className="text-[15px] font-bold mb-2" style={{ color: "#B8460C" }}>
       {role}
     </p>

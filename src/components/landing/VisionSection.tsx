@@ -27,7 +27,7 @@ const VisionSection = () => (
           But we are building. And we want you to be part of it.
         </p>
       </div>
-      <p className="text-[20px] md:text-[24px] font-bold" style={{ color: "#FA903E" }}>
+      <p className="text-[20px] md:text-[24px] font-bold" style={{ color: "#FF5A1F" }}>
         We are early. This matters. Join us.
       </p>
     </div>

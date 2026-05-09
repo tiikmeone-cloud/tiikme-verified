@@ -111,7 +111,7 @@ const EditPostModal = ({ post, onClose, onSaved }: EditPostModalProps) => {
             onClick={handleSave}
             disabled={saving || !content.trim()}
             className="rounded-full px-6 py-2 text-[13px] font-semibold disabled:opacity-50 cursor-pointer"
-            style={{ background: "#FA903E", color: "#FFFFFF", border: "none" }}
+            style={{ background: "#FF5A1F", color: "#FFFFFF", border: "none" }}
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}
           </button>

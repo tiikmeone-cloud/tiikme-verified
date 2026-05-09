@@ -67,7 +67,7 @@ export const AuthButton = forwardRef<HTMLButtonElement, AuthButtonProps>(
 
     const variants: Record<AuthButtonVariant, string> = {
       primary:
-        "bg-brand text-white shadow-[0_4px_14px_rgba(250,144,62,0.30)] hover:bg-brand-hover active:bg-brand-press",
+        "bg-brand text-white shadow-[0_4px_14px_rgba(255, 90, 31,0.30)] hover:bg-brand-hover active:bg-brand-press",
       secondary:
         "border border-white/20 bg-white/[0.06] text-paper backdrop-blur-md hover:bg-white/[0.10]",
       ghost:

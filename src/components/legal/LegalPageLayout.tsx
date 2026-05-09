@@ -63,7 +63,7 @@ const LegalPageLayout = ({ title, lastUpdated, jurisdictionLine, toc, children }
                   href={`#${t.id}`}
                   className="block text-[12.5px] leading-snug py-1 transition-colors"
                   style={{
-                    color: activeId === t.id ? "#FA903E" : "#6B7280",
+                    color: activeId === t.id ? "#FF5A1F" : "#6B7280",
                     fontWeight: activeId === t.id ? 700 : 500,
                   }}
                 >

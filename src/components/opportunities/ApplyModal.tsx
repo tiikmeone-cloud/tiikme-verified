@@ -170,7 +170,7 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
                 <label className="flex flex-col items-center justify-center cursor-pointer rounded-xl p-4" style={{ border: "2px dashed #E5E7EB", minHeight: 80, background: "#FAFAFA" }}>
                   {resumeFile ? (
                     <div className="flex items-center gap-2">
-                      <FileText className="w-5 h-5" style={{ color: "#FA903E" }} />
+                      <FileText className="w-5 h-5" style={{ color: "#FF5A1F" }} />
                       <span className="text-[13px] font-semibold" style={{ color: "#1A1A1A" }}>{resumeFile.name}</span>
                       {resumeUploading && <span className="text-[11px]" style={{ color: "#9CA3AF" }}>Uploading...</span>}
                     </div>
@@ -216,7 +216,7 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
                           {["Yes", "No"].map(opt => (
                             <button key={opt} type="button" onClick={() => setAnswers(prev => ({ ...prev, [i]: opt }))}
                               className="px-4 py-2 rounded-full text-[13px] font-semibold"
-                              style={{ background: answers[i] === opt ? "#FA903E" : "#fff", color: answers[i] === opt ? "#fff" : "#1A1A1A", border: answers[i] === opt ? "1.5px solid #FA903E" : "1.5px solid #E5E7EB" }}>
+                              style={{ background: answers[i] === opt ? "#FF5A1F" : "#fff", color: answers[i] === opt ? "#fff" : "#1A1A1A", border: answers[i] === opt ? "1.5px solid #FF5A1F" : "1.5px solid #E5E7EB" }}>
                               {opt}
                             </button>
                           ))}
@@ -226,7 +226,7 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
                           {q.options.map((opt: string) => (
                             <button key={opt} type="button" onClick={() => setAnswers(prev => ({ ...prev, [i]: opt }))}
                               className="px-4 py-2 rounded-full text-[13px] font-semibold"
-                              style={{ background: answers[i] === opt ? "#FA903E" : "#fff", color: answers[i] === opt ? "#fff" : "#1A1A1A", border: answers[i] === opt ? "1.5px solid #FA903E" : "1.5px solid #E5E7EB" }}>
+                              style={{ background: answers[i] === opt ? "#FF5A1F" : "#fff", color: answers[i] === opt ? "#fff" : "#1A1A1A", border: answers[i] === opt ? "1.5px solid #FF5A1F" : "1.5px solid #E5E7EB" }}>
                               {opt}
                             </button>
                           ))}
@@ -247,7 +247,7 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
               </label>
 
               <Button type="submit" className="w-full" disabled={!consent || submitting || resumeUploading}
-                style={{ height: 52, borderRadius: 12, background: "#FA903E", color: "#FFFFFF" }}>
+                style={{ height: 52, borderRadius: 12, background: "#FF5A1F", color: "#FFFFFF" }}>
                 {submitting ? "Submitting..." : "Submit Application →"}
               </Button>
             </form>

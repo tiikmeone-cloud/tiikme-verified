@@ -34,7 +34,7 @@ export function CircleGridCard({
       to={`/app/circles/${circle.slug}`}
       className="group block rounded-2xl border border-neutral-200 bg-white overflow-hidden hover:shadow-md hover:border-neutral-300 transition"
     >
-      <div className="h-24 relative" style={{ background: `linear-gradient(135deg, ${conf.bg}, rgba(250,144,62,0.10))` }}>
+      <div className="h-24 relative" style={{ background: `linear-gradient(135deg, ${conf.bg}, rgba(255, 90, 31,0.10))` }}>
         <div className="absolute inset-0 flex items-center justify-center" style={{ fontSize: 36 }}>
           {customIcon ? (
             <span>{circle.icon_url}</span>
@@ -66,7 +66,7 @@ export function CircleGridCard({
             }}
             className="text-[12px] font-bold rounded-lg px-3 py-1.5 transition active:scale-95"
             style={{
-              background: isMember ? "rgba(107,112,148,0.12)" : "#FA903E",
+              background: isMember ? "rgba(107,112,148,0.12)" : "#FF5A1F",
               color: isMember ? "#1A1A2E" : "#fff",
               border: "none",
               cursor: "pointer",

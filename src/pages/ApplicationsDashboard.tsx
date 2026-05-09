@@ -266,7 +266,7 @@ export default function ApplicationsDashboard() {
                   {selectedApp.resume_url && (
                     <a href={selectedApp.resume_url} target="_blank" rel="noopener noreferrer"
                       className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-bold"
-                      style={{ background: "#FEF3E8", color: "#FA903E", border: "1px solid #FA903E" }}>
+                      style={{ background: "#FEF3E8", color: "#FF5A1F", border: "1px solid #FF5A1F" }}>
                       <FileText className="w-3.5 h-3.5" /> Resume
                     </a>
                   )}

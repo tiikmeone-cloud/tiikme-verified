@@ -59,7 +59,7 @@ export default function AuthLayout({
       <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 py-10">
         {!hideLogo && (
           <Link to="/" className="mb-6 inline-flex items-center" aria-label="Tiikme home">
-            <div style={{ filter: "drop-shadow(0 0 24px rgba(250,144,62,0.35))" }}>
+            <div style={{ filter: "drop-shadow(0 0 24px rgba(255, 90, 31,0.35))" }}>
               <ThemeLogo className="h-14 w-auto" variant="dark" />
             </div>
           </Link>
@@ -73,14 +73,14 @@ export default function AuthLayout({
                 <div
                   className="h-2.5 w-2.5 rounded-full border-2 transition-all duration-300"
                   style={{
-                    borderColor: d <= step ? "#FA903E" : "rgba(255,255,255,0.25)",
-                    background: d <= step ? "#FA903E" : "transparent",
+                    borderColor: d <= step ? "#FF5A1F" : "rgba(255,255,255,0.25)",
+                    background: d <= step ? "#FF5A1F" : "transparent",
                   }}
                 />
                 {i < dots.length - 1 && (
                   <div
                     className="h-[2px] w-7 transition-colors"
-                    style={{ background: d < step ? "#FA903E" : "rgba(255,255,255,0.15)" }}
+                    style={{ background: d < step ? "#FF5A1F" : "rgba(255,255,255,0.15)" }}
                   />
                 )}
               </div>

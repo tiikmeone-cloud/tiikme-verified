@@ -17,13 +17,13 @@ const HeroSection = () => {
           <span className="block text-[40px] md:text-[72px]" style={{ color: "#04061A" }}>
             Nobody Verified You.
           </span>
-          <span className="block text-[40px] md:text-[72px]" style={{ color: "#FA903E" }}>
+          <span className="block text-[40px] md:text-[72px]" style={{ color: "#FF5A1F" }}>
             We Will.
           </span>
         </h1>
 
         {/* Orange rule */}
-        <div className="mx-auto mb-8" style={{ width: 80, height: 3, backgroundColor: "#FA903E", borderRadius: 2 }} />
+        <div className="mx-auto mb-8" style={{ width: 80, height: 3, backgroundColor: "#FF5A1F", borderRadius: 2 }} />
 
         {/* Subheadline */}
         <p
