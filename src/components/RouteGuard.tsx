@@ -1,4 +1,5 @@
 import { useAuth } from "@/contexts/AuthContext";
+import { safeInternalRedirect } from "@/lib/safeRedirect";
 import { Navigate, useLocation } from "react-router-dom";
 
 const Spinner = () => (
@@ -50,12 +51,12 @@ export const PublicOnlyRoute = ({ children }: { children: React.ReactNode }) => 
   if (user) {
     // Honor ?redirect= so users land back on the deep link after auth
     const params = new URLSearchParams(location.search);
-    const redirect = params.get("redirect");
+    const redirect = safeInternalRedirect(params.get("redirect"));
     // If they haven't onboarded yet, route them through onboarding first
     if (profile && profile.account_type !== "institution" && !profile.onboarding_complete) {
       return <Navigate to="/onboarding" replace />;
     }
-    return <Navigate to={redirect && redirect.startsWith("/") ? redirect : "/app/feed"} replace />;
+    return <Navigate to={redirect || "/app/feed"} replace />;
   }
   return <>{children}</>;
 };

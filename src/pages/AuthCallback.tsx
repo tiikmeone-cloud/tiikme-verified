@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import AuthLayout from "@/components/layouts/AuthLayout";
+import { getStoredPostAuthRedirect } from "@/lib/safeRedirect";
 
 const AuthCallback = () => {
   const navigate = useNavigate();
@@ -19,8 +20,8 @@ const AuthCallback = () => {
         const { markRecentAuth } = await import("@/lib/idleLogout");
         markRecentAuth();
 
-        const stored = sessionStorage.getItem("post_auth_redirect");
-        if (stored && stored.startsWith("/")) {
+        const stored = getStoredPostAuthRedirect();
+        if (stored) {
           sessionStorage.removeItem("post_auth_redirect");
           navigate(stored, { replace: true });
           return;

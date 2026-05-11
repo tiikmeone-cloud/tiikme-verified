@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import EncryptionKeyManager from "@/components/pings/EncryptionKeyManager";
 
 import { validateUpload } from "@/lib/uploadValidation";
+import { resolveMessageAttachmentUrl, safeAttachmentPath } from "@/lib/privateAttachments";
 
 const ROLE_COLORS: Record<string, string> = { faculty: "#92400E", professional: "#0369A1", doctor: "#0E7490", student: "#4F46E5", skilled_trade: "#C2410C", hr: "#6B21A8", government: "#166534" };
 
@@ -69,6 +70,59 @@ function dateSeparator(dateStr: string | null): string {
   if (diff === 0) return "Today";
   if (diff === 1) return "Yesterday";
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: d.getFullYear() !== today.getFullYear() ? "numeric" : undefined });
+}
+
+function MessageAttachment({ msg, isMe }: { msg: any; isMe: boolean }) {
+  const [url, setUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    setUrl(null);
+    if (!msg.attachment_url) return;
+
+    resolveMessageAttachmentUrl(msg.attachment_url)
+      .then((resolved) => { if (alive) setUrl(resolved); })
+      .catch(() => { if (alive) setUrl(null); });
+
+    return () => { alive = false; };
+  }, [msg.attachment_url]);
+
+  if (!msg.attachment_url) return null;
+
+  if (msg.attachment_type === "image") {
+    return (
+      <img
+        src={url || ""}
+        alt=""
+        loading="lazy"
+        className="w-full max-w-[240px] rounded-xl mb-2 cursor-pointer"
+        onClick={() => url && window.open(url, "_blank", "noopener,noreferrer")}
+        onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+      />
+    );
+  }
+
+  if (msg.attachment_type === "pdf" || msg.attachment_type === "document") {
+    return (
+      <a
+        href={url || undefined}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-2 p-2 rounded-lg mb-2"
+        style={{ background: isMe ? "rgba(255,255,255,0.15)" : "var(--surface-2)" }}
+        onClick={(event) => { if (!url) event.preventDefault(); }}
+      >
+        <FileText className="w-8 h-8 shrink-0" style={{ color: isMe ? "white" : "var(--brand)" }} />
+        <div className="flex-1 min-w-0">
+          <p className="text-[12px] font-bold truncate">{msg.attachment_name || "Document"}</p>
+          {msg.attachment_size && <p className="text-[10px] opacity-70">{(msg.attachment_size / 1024).toFixed(0)} KB</p>}
+        </div>
+        <Download className="w-4 h-4 shrink-0" />
+      </a>
+    );
+  }
+
+  return null;
 }
 
 const Pings = () => {
@@ -152,19 +206,17 @@ const Pings = () => {
     setUploading(true);
     const isImage = file.type.startsWith("image/");
     const isPDF = file.type === "application/pdf";
-    const ext = file.name.split(".").pop();
-    const path = `${user.id}/${Date.now()}.${ext}`;
+    const path = safeAttachmentPath(user.id, file.name);
 
     const { data, error } = await supabase.storage.from("message-attachments").upload(path, file, { contentType: file.type });
     if (error) { toast.error("Upload failed: " + error.message); setUploading(false); e.target.value = ""; return; }
 
-    const { data: urlData } = supabase.storage.from("message-attachments").getPublicUrl(data.path);
     const attachType = isImage ? "image" : isPDF ? "pdf" : "document";
 
     // Create local preview for images
     const previewUrl = isImage ? URL.createObjectURL(file) : undefined;
 
-    setPendingAttachment({ url: urlData.publicUrl, type: attachType, name: file.name, size: file.size, previewUrl });
+    setPendingAttachment({ url: data.path, type: attachType, name: file.name, size: file.size, previewUrl });
     setUploading(false);
     e.target.value = "";
   };
@@ -416,21 +468,7 @@ const Pings = () => {
                           <p className="text-[13px] select-none">This message was deleted</p>
                         ) : (
                           <>
-                            {/* Image attachment */}
-                            {msg.attachment_type === "image" && msg.attachment_url && (
-                              <img src={msg.attachment_url} alt="" loading="lazy" className="w-full max-w-[240px] rounded-xl mb-2 cursor-pointer" onClick={() => window.open(msg.attachment_url!, "_blank")} onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                            )}
-                            {/* PDF/Doc attachment */}
-                            {(msg.attachment_type === "pdf" || msg.attachment_type === "document") && msg.attachment_url && (
-                              <a href={msg.attachment_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 rounded-lg mb-2" style={{ background: isMe ? "rgba(255,255,255,0.15)" : "var(--surface-2)" }}>
-                                <FileText className="w-8 h-8 shrink-0" style={{ color: isMe ? "white" : "var(--brand)" }} />
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-[12px] font-bold truncate">{msg.attachment_name || "Document"}</p>
-                                  {msg.attachment_size && <p className="text-[10px] opacity-70">{(msg.attachment_size / 1024).toFixed(0)} KB</p>}
-                                </div>
-                                <Download className="w-4 h-4 shrink-0" />
-                              </a>
-                            )}
+                            <MessageAttachment msg={msg} isMe={isMe} />
                             {/* Text with URL detection */}
                             {(!msg.attachment_type || msg.content !== msg.attachment_name) && msg.content && (
                               <p className="text-[14px] leading-[1.6] whitespace-pre-wrap">{renderLinkedText(msg.content, isMe)}</p>

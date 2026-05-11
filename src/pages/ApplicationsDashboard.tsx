@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import ActivityScoreRing from "@/components/ActivityScoreRing";
 import GlassBox from "@/components/ui/GlassBox";
+import { resolveResumeUrl } from "@/lib/privateAttachments";
 
 const STATUS_TABS = ["All", "Reviewing", "Shortlisted", "Selected", "Rejected", "Auto-rejected"] as const;
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
@@ -114,6 +115,15 @@ export default function ApplicationsDashboard() {
       participant_1: user.id, participant_2: applicantId,
     }).select().single();
     if (conv) navigate(`/app/pings/${conv.id}`);
+  };
+
+  const openResume = async (resumeUrl: string) => {
+    try {
+      const signedUrl = await resolveResumeUrl(resumeUrl);
+      window.open(signedUrl, "_blank", "noopener,noreferrer");
+    } catch (error: any) {
+      toast.error(error?.message || "Could not open resume");
+    }
   };
 
   if (loading) return (
@@ -264,11 +274,11 @@ export default function ApplicationsDashboard() {
                 {/* Resume & Portfolio */}
                 <div className="flex gap-2">
                   {selectedApp.resume_url && (
-                    <a href={selectedApp.resume_url} target="_blank" rel="noopener noreferrer"
+                    <button type="button" onClick={() => openResume(selectedApp.resume_url)}
                       className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-bold"
                       style={{ background: "#FEF3E8", color: "#FF5A1F", border: "1px solid #FF5A1F" }}>
                       <FileText className="w-3.5 h-3.5" /> Resume
-                    </a>
+                    </button>
                   )}
                   {selectedApp.portfolio_url && (
                     <a href={selectedApp.portfolio_url} target="_blank" rel="noopener noreferrer"

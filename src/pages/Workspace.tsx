@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { useWorkspaces, type WorkspaceGroup, type GroupMember, type GroupMessage } from "@/hooks/useWorkspaces";
 import GlassModal from "@/components/ui/GlassModal";
 import { cleanUsername } from "@/lib/cleanUsername";
+import { resolveMessageAttachmentUrl, safeAttachmentPath } from "@/lib/privateAttachments";
 
 /* ── Helpers ── */
 const AVATAR_COLORS = ["#E8733A", "#4A90D9", "#34C759", "#FF6B9D", "#8B5CF6", "#FFB800"];
@@ -63,6 +64,46 @@ const ChatMessageContent = ({ text }: { text: string }) => {
         return <span key={i}>{part}</span>;
       })}
     </>
+  );
+};
+
+const WorkspaceAttachment = ({ msg }: { msg: GroupMessage }) => {
+  const [url, setUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    setUrl(null);
+    if (!msg.attachment_url) return;
+
+    resolveMessageAttachmentUrl(msg.attachment_url)
+      .then((resolved) => { if (alive) setUrl(resolved); })
+      .catch(() => { if (alive) setUrl(null); });
+
+    return () => { alive = false; };
+  }, [msg.attachment_url]);
+
+  if (!msg.attachment_url) return null;
+
+  return msg.attachment_type?.startsWith("image/") ? (
+    <img
+      src={url || ""}
+      alt=""
+      loading="lazy"
+      className="mt-1 rounded-md cursor-pointer"
+      style={{ maxWidth: 240, maxHeight: 200, objectFit: "cover" }}
+      onClick={() => url && window.open(url, "_blank", "noopener,noreferrer")}
+    />
+  ) : (
+    <a
+      href={url || undefined}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-1 mt-1 text-[11px] font-semibold"
+      style={{ color: "#4A90D9" }}
+      onClick={(event) => { if (!url) event.preventDefault(); }}
+    >
+      <Paperclip className="w-3 h-3" /> {msg.attachment_name || "Download"}
+    </a>
   );
 };
 
@@ -311,11 +352,10 @@ const GroupChat = ({ group, userId, onBack, onSendMessage, onDeleteMessage, fetc
         const { validateUpload } = await import("@/lib/uploadValidation");
         const verr = validateUpload(file, { maxBytes: 25 * 1024 * 1024, allowImages: true, allowPdf: true, allowOffice: true });
         if (verr) { toast.error(verr); setSending(false); return; }
-        const path = `${userId}/${Date.now()}-${file.name.replace(/[^a-z0-9.]/gi, "_")}`;
+        const path = safeAttachmentPath(userId, file.name);
         const { error } = await supabase.storage.from("message-attachments").upload(path, file);
         if (error) { toast.error("Upload failed"); setSending(false); return; }
-        const { data: urlData } = supabase.storage.from("message-attachments").getPublicUrl(path);
-        attachment = { url: urlData.publicUrl, type: file.type, name: file.name };
+        attachment = { url: path, type: file.type, name: file.name };
       }
       await onSendMessage(channelId, msgInput.trim(), attachment);
       setMsgInput("");
@@ -431,16 +471,7 @@ const GroupChat = ({ group, userId, onBack, onSendMessage, onDeleteMessage, fetc
                         <p className="text-[13px] whitespace-pre-wrap break-words" style={{ color: "#1A1A2E" }}>
                           <ChatMessageContent text={msg.content} />
                         </p>
-                        {msg.attachment_url && (
-                          msg.attachment_type?.startsWith("image/") ? (
-                            <img src={msg.attachment_url} alt="" loading="lazy" className="mt-1 rounded-md cursor-pointer" style={{ maxWidth: 240, maxHeight: 200, objectFit: "cover" }} onClick={() => window.open(msg.attachment_url!, "_blank")} />
-                          ) : (
-                            <a href={msg.attachment_url} target="_blank" rel="noopener noreferrer"
-                              className="flex items-center gap-1 mt-1 text-[11px] font-semibold" style={{ color: "#4A90D9" }}>
-                              <Paperclip className="w-3 h-3" /> {msg.attachment_name || "Download"}
-                            </a>
-                          )
-                        )}
+                        <WorkspaceAttachment msg={msg} />
                       </>
                     )}
                     {isOwn && !msg.is_deleted && (

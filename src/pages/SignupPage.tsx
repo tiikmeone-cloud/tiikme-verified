@@ -9,6 +9,7 @@ import { checkPassword, MIN_PASSWORD_LENGTH } from "@/lib/passwordStrength";
 import { markRecentAuth } from "@/lib/idleLogout";
 import { PageSEO } from "@/hooks/usePageSEO";
 import { AuthButton, AuthInput } from "@/components/layouts/AuthPrimitives";
+import { safeInternalRedirect, storePostAuthRedirect } from "@/lib/safeRedirect";
 
 const TERMS_VERSION = "2025-04-20";
 
@@ -24,7 +25,7 @@ export default function SignupPage() {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const redirectTo = searchParams.get("redirect");
-  const safeRedirect = redirectTo && redirectTo.startsWith("/") ? redirectTo : null;
+  const safeRedirect = safeInternalRedirect(redirectTo);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -34,7 +35,7 @@ export default function SignupPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (safeRedirect) sessionStorage.setItem("post_auth_redirect", safeRedirect);
+    storePostAuthRedirect(safeRedirect);
   }, [safeRedirect]);
 
   useEffect(() => {

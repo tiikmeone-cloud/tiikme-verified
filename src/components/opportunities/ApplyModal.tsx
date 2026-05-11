@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { storageImageUrl } from "@/lib/imageTransform";
+import { safeAttachmentPath } from "@/lib/privateAttachments";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -41,11 +42,10 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
     setResumeFile(file);
     setResumeUploading(true);
     try {
-      const path = `${user.id}/${Date.now()}_${file.name}`;
-      const { data, error } = await supabase.storage.from("resumes").upload(path, file, { upsert: true });
+      const path = safeAttachmentPath(user.id, file.name);
+      const { data, error } = await supabase.storage.from("resumes").upload(path, file, { upsert: false });
       if (error) { toast.error(error.message); setResumeUploading(false); return; }
-      const { data: { publicUrl } } = supabase.storage.from("resumes").getPublicUrl(data.path);
-      setResumeUrl(publicUrl);
+      setResumeUrl(data.path);
     } catch (e: any) { toast.error(e.message || "Upload failed"); }
     setResumeUploading(false);
   };

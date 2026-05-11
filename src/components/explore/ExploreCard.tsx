@@ -277,7 +277,7 @@ export function StartupCard({ startup, page }: { startup: any; page?: any }) {
       }}
       onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(26,26,78,0.12)"; }}
       onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
-      onClick={() => slug ? navigate(`/page/${slug}`) : undefined}
+      onClick={() => slug ? navigate(`/p/${slug}`) : undefined}
     >
       <AvatarSquare src={page?.logo_url} name={name} size={64} bgColor="#7C3AED" />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 1, minWidth: 0 }}>

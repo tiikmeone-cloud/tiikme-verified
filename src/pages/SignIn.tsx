@@ -6,12 +6,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageSEO } from "@/hooks/usePageSEO";
 import AuthLayout from "@/components/layouts/AuthLayout";
 import { AuthButton, AuthInput } from "@/components/layouts/AuthPrimitives";
+import { getStoredPostAuthRedirect, safeInternalRedirect } from "@/lib/safeRedirect";
 
 const SignIn = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirectTo = searchParams.get("redirect");
-  const safeRedirect = redirectTo && redirectTo.startsWith("/") ? redirectTo : null;
+  const safeRedirect = safeInternalRedirect(redirectTo);
   const prefillEmail = searchParams.get("email") || "";
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState(prefillEmail);
@@ -36,8 +37,7 @@ const SignIn = () => {
     const { markRecentAuth } = await import("@/lib/idleLogout");
     markRecentAuth();
 
-    const stored = sessionStorage.getItem("post_auth_redirect");
-    const finalRedirect = safeRedirect || (stored && stored.startsWith("/") ? stored : null);
+    const finalRedirect = safeRedirect || getStoredPostAuthRedirect();
     if (finalRedirect) {
       sessionStorage.removeItem("post_auth_redirect");
       navigate(finalRedirect);
