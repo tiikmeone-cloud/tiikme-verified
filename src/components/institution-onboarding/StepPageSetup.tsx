@@ -11,6 +11,8 @@ const inputStyle: React.CSSProperties = {
   color: "#FAFAF7", height: 48, width: "100%", padding: "0 14px", fontSize: 14,
   outline: "none",
 };
+const TEXT_PRIMARY = "#FAFAF7";
+const TEXT_SECONDARY = "rgba(250,250,247,0.68)";
 
 const allIndianStates = ["Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Delhi","Goa","Gujarat","Haryana","Himachal Pradesh","Jharkhand","Karnataka","Kerala","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal"];
 
@@ -140,8 +142,8 @@ export default function StepPageSetup({ form, update, onComplete }: Props) {
 
   return (
     <div>
-      <h1 className="text-[22px] font-extrabold mb-1" style={{ color: "var(--text-1)" }}>Set up your page</h1>
-      <p className="text-[13px] mb-6" style={{ color: "var(--text-3)" }}>This is how your organisation will appear on Tiikme</p>
+      <h1 className="text-[22px] font-extrabold mb-1" style={{ color: TEXT_PRIMARY }}>Set up your page</h1>
+      <p className="text-[13px] mb-6" style={{ color: TEXT_SECONDARY }}>This is how your organisation will appear on Tiikme</p>
 
       <div className="space-y-4">
         {/* Logo upload */}
@@ -160,7 +162,7 @@ export default function StepPageSetup({ form, update, onComplete }: Props) {
           </button>
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleLogo} />
           <div className="flex-1">
-            <label className="text-[12px] font-bold mb-1 block" style={{ color: "var(--text-2)" }}>Organisation Name *</label>
+            <label className="text-[12px] font-bold mb-1 block" style={{ color: TEXT_PRIMARY }}>Organisation Name *</label>
             <input
               type="text" placeholder="e.g. Acme Technologies Pvt Ltd"
               value={form.orgName} onChange={e => update({ orgName: e.target.value })}
@@ -170,7 +172,7 @@ export default function StepPageSetup({ form, update, onComplete }: Props) {
         </div>
 
         <div>
-          <label className="text-[12px] font-bold mb-1 block" style={{ color: "var(--text-2)" }}>Tagline</label>
+          <label className="text-[12px] font-bold mb-1 block" style={{ color: TEXT_PRIMARY }}>Tagline</label>
           <input
             type="text" placeholder="One-liner about your organisation"
             value={form.tagline} onChange={e => update({ tagline: e.target.value })}
@@ -180,11 +182,11 @@ export default function StepPageSetup({ form, update, onComplete }: Props) {
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-[12px] font-bold mb-1 block" style={{ color: "var(--text-2)" }}>City</label>
+            <label className="text-[12px] font-bold mb-1 block" style={{ color: TEXT_PRIMARY }}>City</label>
             <input type="text" placeholder="Mumbai" value={form.city} onChange={e => update({ city: e.target.value })} style={inputStyle} />
           </div>
           <div>
-            <label className="text-[12px] font-bold mb-1 block" style={{ color: "var(--text-2)" }}>State</label>
+            <label className="text-[12px] font-bold mb-1 block" style={{ color: TEXT_PRIMARY }}>State</label>
             <select
               value={form.state} onChange={e => update({ state: e.target.value })}
               style={{ ...inputStyle, appearance: "none" as any }}
@@ -196,7 +198,7 @@ export default function StepPageSetup({ form, update, onComplete }: Props) {
         </div>
 
         <div>
-          <label className="text-[12px] font-bold mb-1 block" style={{ color: "var(--text-2)" }}>Website</label>
+          <label className="text-[12px] font-bold mb-1 block" style={{ color: TEXT_PRIMARY }}>Website</label>
           <input type="url" placeholder="https://yourcompany.com" value={form.website} onChange={e => update({ website: e.target.value })} style={inputStyle} />
         </div>
 

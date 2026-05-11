@@ -92,10 +92,14 @@ const labelStyle: React.CSSProperties = { color: "rgba(250,250,247,0.85)" };
 const BRAND = "#FF5A1F";
 const BRAND_DIM = "rgba(255, 90, 31,0.14)";
 const BRAND_RING = "rgba(255, 90, 31,0.45)";
+const CARD_IDLE = "rgba(255,255,255,0.055)";
+const CARD_IDLE_BORDER = "rgba(255,255,255,0.16)";
+const TEXT_PRIMARY = "#FAFAF7";
+const TEXT_SECONDARY = "rgba(250,250,247,0.68)";
 
 export default function Onboarding() {
   const navigate = useNavigate();
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile, loading } = useAuth();
   const [state, setState] = useState<WizardState>(EMPTY);
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -122,6 +126,12 @@ export default function Onboarding() {
     }));
     setLoaded(true);
   }, [user, profile]);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/signin?redirect=%2Fonboarding", { replace: true });
+    }
+  }, [loading, user, navigate]);
 
   // Persist on change
   useEffect(() => {
@@ -285,8 +295,8 @@ function StepIdentity({ state, set, onNext, saving, setSaving }: {
 
   return (
     <>
-      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: "#FAFAF7" }}>Set up your identity</h1>
-      <p className="text-[14px] mb-6" style={{ color: "rgba(250,250,247,0.65)" }}>This is what people see when they find you.</p>
+      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: TEXT_PRIMARY }}>Set up your identity</h1>
+      <p className="text-[14px] mb-6" style={{ color: TEXT_SECONDARY }}>This is what people see when they find you.</p>
 
       <div className="space-y-4">
         <div>
@@ -308,8 +318,8 @@ function StepIdentity({ state, set, onNext, saving, setSaving }: {
               checking ? "rgba(250,250,247,0.45)" :
               available ? "#059669" : "#EF4444",
           }}>
-            {!state.username ? "Lowercase letters, numbers, dots, dashes, underscores. 3–30 chars." :
-              !usernameValid ? "Use lowercase letters, numbers, . _ - (3–30 chars)" :
+            {!state.username ? "Lowercase letters, numbers, dots, dashes, underscores. 3-30 chars." :
+              !usernameValid ? "Use lowercase letters, numbers, . _ - (3-30 chars)" :
               checking ? "Checking availability..." :
               available ? "✓ Available" : "Already taken"}
           </p>
@@ -331,8 +341,8 @@ function StepIdentity({ state, set, onNext, saving, setSaving }: {
 function StepRole({ state, set, onNext }: { state: WizardState; set: any; onNext: () => Promise<void> }) {
   return (
     <>
-      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: "#FAFAF7" }}>What best describes you?</h1>
-      <p className="text-[14px] mb-6" style={{ color: "rgba(250,250,247,0.65)" }}>Pick the closest fit. You can change this later.</p>
+      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: TEXT_PRIMARY }}>What best describes you?</h1>
+      <p className="text-[14px] mb-6" style={{ color: TEXT_SECONDARY }}>Pick the closest fit. You can change this later.</p>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {ROLES.map(r => {
@@ -342,16 +352,16 @@ function StepRole({ state, set, onNext }: { state: WizardState; set: any; onNext
             <button key={r.id} type="button" onClick={() => set("role", r.id)}
               className="text-left p-4 rounded-2xl cursor-pointer transition-all duration-200 hover:shadow-md"
               style={{
-                border: selected ? "2px solid #FF5A1F" : "2px solid #E5E7EB",
-                background: selected ? BRAND_DIM : "#fff",
+                border: selected ? `2px solid ${BRAND}` : `1.5px solid ${CARD_IDLE_BORDER}`,
+                background: selected ? BRAND_DIM : CARD_IDLE,
                 minHeight: 120,
               }}>
               <div className="w-10 h-10 rounded-xl mb-2 flex items-center justify-center"
                 style={{ background: selected ? BRAND_DIM : "rgba(255,255,255,0.08)" }}>
-                <Icon className="w-5 h-5" style={{ color: selected ? BRAND : "rgba(250,250,247,0.85)" }} />
+                <Icon className="w-5 h-5" style={{ color: selected ? BRAND : TEXT_PRIMARY }} />
               </div>
-              <div className="text-[14px] font-bold mb-0.5" style={{ color: "#FAFAF7" }}>{r.label}</div>
-              <div className="text-[11px] leading-tight" style={{ color: "rgba(250,250,247,0.65)" }}>{r.desc}</div>
+              <div className="text-[14px] font-bold mb-0.5" style={{ color: TEXT_PRIMARY }}>{r.label}</div>
+              <div className="text-[11px] leading-tight" style={{ color: TEXT_SECONDARY }}>{r.desc}</div>
             </button>
           );
         })}
@@ -385,8 +395,8 @@ function StepLocation({ state, set, onNext, onSkip }: {
 
   return (
     <>
-      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: "#FAFAF7" }}>Where are you based?</h1>
-      <p className="text-[14px] mb-6" style={{ color: "rgba(250,250,247,0.65)" }}>Helps surface local people, jobs, and events.</p>
+      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: TEXT_PRIMARY }}>Where are you based?</h1>
+      <p className="text-[14px] mb-6" style={{ color: TEXT_SECONDARY }}>Helps surface local people, jobs, and events.</p>
 
       <div className="space-y-4">
         <div>
@@ -437,7 +447,7 @@ function StepLocation({ state, set, onNext, onSkip }: {
       <div className="flex gap-3 mt-6">
         <button type="button" onClick={onSkip}
           className="h-12 px-5 rounded-2xl text-[14px] font-semibold cursor-pointer hover:bg-white/[0.10]"
-          style={{ background: "rgba(255,255,255,0.04)", border: "1.5px solid #E5E7EB", color: "rgba(250,250,247,0.65)" }}>
+          style={{ background: CARD_IDLE, border: `1.5px solid ${CARD_IDLE_BORDER}`, color: TEXT_SECONDARY }}>
           Skip
         </button>
         <button type="button" onClick={onNext}
@@ -459,7 +469,7 @@ function StepSubtype({ state, set, onNext, onSkip }: {
   if (!def) {
     return (
       <>
-        <p className="text-[14px] mb-4" style={{ color: "rgba(250,250,247,0.65)" }}>Pick a role first.</p>
+        <p className="text-[14px] mb-4" style={{ color: TEXT_SECONDARY }}>Pick a role first.</p>
         <button type="button" onClick={onSkip} className="w-full h-12 rounded-2xl text-[15px] font-bold text-white" style={{ background: BRAND }}>Continue →</button>
       </>
     );
@@ -468,8 +478,8 @@ function StepSubtype({ state, set, onNext, onSkip }: {
 
   return (
     <>
-      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: "#FAFAF7" }}>{def.subtypeLabel}</h1>
-      <p className="text-[14px] mb-6" style={{ color: "rgba(250,250,247,0.65)" }}>Pick the closest match. We use this to show you better matches.</p>
+      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: TEXT_PRIMARY }}>{def.subtypeLabel}</h1>
+      <p className="text-[14px] mb-6" style={{ color: TEXT_SECONDARY }}>Pick the closest match. We use this to show you better matches.</p>
 
       <div className="space-y-2.5 max-h-[360px] overflow-y-auto pr-1">
         {def.subtypes.map(opt => {
@@ -478,10 +488,10 @@ function StepSubtype({ state, set, onNext, onSkip }: {
             <button key={opt} type="button" onClick={() => set("role_subtype", opt)}
               className="w-full text-left p-3.5 rounded-xl cursor-pointer transition-all flex items-center justify-between"
               style={{
-                border: selected ? "2px solid #FF5A1F" : "1.5px solid #E5E7EB",
-                background: selected ? BRAND_DIM : "#fff",
+                border: selected ? `2px solid ${BRAND}` : `1.5px solid ${CARD_IDLE_BORDER}`,
+                background: selected ? BRAND_DIM : CARD_IDLE,
               }}>
-              <span className="text-[14px] font-semibold" style={{ color: "#FAFAF7" }}>{opt}</span>
+              <span className="text-[14px] font-semibold" style={{ color: TEXT_PRIMARY }}>{opt}</span>
               {selected && <Check className="w-4 h-4" style={{ color: BRAND }} />}
             </button>
           );
@@ -499,7 +509,7 @@ function StepSubtype({ state, set, onNext, onSkip }: {
       <div className="flex gap-3 mt-6">
         <button type="button" onClick={onSkip}
           className="h-12 px-5 rounded-2xl text-[14px] font-semibold cursor-pointer hover:bg-white/[0.10]"
-          style={{ background: "rgba(255,255,255,0.04)", border: "1.5px solid #E5E7EB", color: "rgba(250,250,247,0.65)" }}>
+          style={{ background: CARD_IDLE, border: `1.5px solid ${CARD_IDLE_BORDER}`, color: TEXT_SECONDARY }}>
           Skip
         </button>
         <button type="button" onClick={onNext}
@@ -523,8 +533,8 @@ function StepRoleDetails({ state, set, onNext, onSkip }: {
 
   return (
     <>
-      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: "#FAFAF7" }}>A few quick details</h1>
-      <p className="text-[14px] mb-6" style={{ color: "rgba(250,250,247,0.65)" }}>All optional — fill what feels relevant.</p>
+      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: TEXT_PRIMARY }}>A few quick details</h1>
+      <p className="text-[14px] mb-6" style={{ color: TEXT_SECONDARY }}>All optional - fill what feels relevant.</p>
 
       <div className="space-y-4">
         <div>
@@ -543,9 +553,9 @@ function StepRoleDetails({ state, set, onNext, onSkip }: {
                   <button key={b} type="button" onClick={() => set("years_exp", b)}
                     className="h-11 rounded-xl text-[13px] font-semibold cursor-pointer transition-all"
                     style={{
-                      border: selected ? "2px solid #FF5A1F" : "1.5px solid #E5E7EB",
-                      background: selected ? BRAND_DIM : "#fff",
-                      color: selected ? BRAND : "rgba(250,250,247,0.85)",
+                      border: selected ? `2px solid ${BRAND}` : `1.5px solid ${CARD_IDLE_BORDER}`,
+                      background: selected ? BRAND_DIM : CARD_IDLE,
+                      color: selected ? BRAND : TEXT_PRIMARY,
                     }}>
                     {b} yrs
                   </button>
@@ -570,7 +580,7 @@ function StepRoleDetails({ state, set, onNext, onSkip }: {
       <div className="flex gap-3 mt-6">
         <button type="button" onClick={onSkip}
           className="h-12 px-5 rounded-2xl text-[14px] font-semibold cursor-pointer hover:bg-white/[0.10]"
-          style={{ background: "rgba(255,255,255,0.04)", border: "1.5px solid #E5E7EB", color: "rgba(250,250,247,0.65)" }}>
+          style={{ background: CARD_IDLE, border: `1.5px solid ${CARD_IDLE_BORDER}`, color: TEXT_SECONDARY }}>
           Skip
         </button>
         <button type="button" onClick={onNext}
@@ -600,8 +610,8 @@ function StepInterests({ state, set, onNext, onSkip }: {
 
   return (
     <>
-      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: "#FAFAF7" }}>What are you into?</h1>
-      <p className="text-[14px] mb-2" style={{ color: "rgba(250,250,247,0.65)" }}>Pick 3–8 interests. We'll use these to tune your feed.</p>
+      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: TEXT_PRIMARY }}>What are you into?</h1>
+      <p className="text-[14px] mb-2" style={{ color: TEXT_SECONDARY }}>Pick 3-8 interests. We'll use these to tune your feed.</p>
       <p className="text-[12px] mb-5 font-semibold" style={{ color: valid ? "#059669" : "rgba(250,250,247,0.45)" }}>
         {count} selected {valid ? "✓" : `(need ${count < 3 ? 3 - count + " more" : ""}${count > 8 ? "too many" : ""})`}
       </p>
@@ -613,9 +623,9 @@ function StepInterests({ state, set, onNext, onSkip }: {
             <button key={tag} type="button" onClick={() => toggle(tag)}
               className="px-3.5 h-9 rounded-full text-[13px] font-semibold cursor-pointer transition-all"
               style={{
-                border: selected ? "1.5px solid #FF5A1F" : "1.5px solid #E5E7EB",
-                background: selected ? BRAND_DIM : "#fff",
-                color: selected ? BRAND : "rgba(250,250,247,0.85)",
+                border: selected ? `1.5px solid ${BRAND}` : `1.5px solid ${CARD_IDLE_BORDER}`,
+                background: selected ? BRAND_DIM : CARD_IDLE,
+                color: selected ? BRAND : TEXT_PRIMARY,
               }}>
               {tag}
             </button>
@@ -626,7 +636,7 @@ function StepInterests({ state, set, onNext, onSkip }: {
       <div className="flex gap-3 mt-6">
         <button type="button" onClick={onSkip}
           className="h-12 px-5 rounded-2xl text-[14px] font-semibold cursor-pointer hover:bg-white/[0.10]"
-          style={{ background: "rgba(255,255,255,0.04)", border: "1.5px solid #E5E7EB", color: "rgba(250,250,247,0.65)" }}>
+          style={{ background: CARD_IDLE, border: `1.5px solid ${CARD_IDLE_BORDER}`, color: TEXT_SECONDARY }}>
           Skip
         </button>
         <button type="button" onClick={onNext} disabled={!valid}
@@ -646,8 +656,8 @@ function StepDisplayPref({ state, set, onFinish, saving }: {
 }) {
   return (
     <>
-      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: "#FAFAF7" }}>What should people see?</h1>
-      <p className="text-[14px] mb-6" style={{ color: "rgba(250,250,247,0.65)" }}>Pick how your card appears across Tiikme. You can change this anytime.</p>
+      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: TEXT_PRIMARY }}>What should people see?</h1>
+      <p className="text-[14px] mb-6" style={{ color: TEXT_SECONDARY }}>Pick how your card appears across Tiikme. You can change this anytime.</p>
 
       <div className="space-y-2.5">
         {DISPLAY_PREFERENCE_OPTIONS.map(opt => {
@@ -656,12 +666,12 @@ function StepDisplayPref({ state, set, onFinish, saving }: {
             <button key={opt.value} type="button" onClick={() => set("display_preference", opt.value)}
               className="w-full text-left p-4 rounded-2xl cursor-pointer transition-all flex items-start justify-between gap-3"
               style={{
-                border: selected ? "2px solid #FF5A1F" : "1.5px solid #E5E7EB",
-                background: selected ? BRAND_DIM : "#fff",
+                border: selected ? `2px solid ${BRAND}` : `1.5px solid ${CARD_IDLE_BORDER}`,
+                background: selected ? BRAND_DIM : CARD_IDLE,
               }}>
               <div>
-                <div className="text-[14px] font-bold mb-0.5" style={{ color: "#FAFAF7" }}>{opt.label}</div>
-                <div className="text-[12px]" style={{ color: "rgba(250,250,247,0.65)" }}>{opt.desc}</div>
+                <div className="text-[14px] font-bold mb-0.5" style={{ color: TEXT_PRIMARY }}>{opt.label}</div>
+                <div className="text-[12px]" style={{ color: TEXT_SECONDARY }}>{opt.desc}</div>
               </div>
               {selected && <Check className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: BRAND }} />}
             </button>

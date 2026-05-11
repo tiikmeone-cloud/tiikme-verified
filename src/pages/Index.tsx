@@ -1,7 +1,7 @@
 import { lazy, Suspense } from "react";
 import Navbar from "@/components/landing/Navbar";
 import HeroSection from "@/components/landing/HeroSection";
-import { PageSEO } from "@/hooks/usePageSEO";
+import { PageSEO, absoluteUrl, SITE_URL } from "@/hooks/usePageSEO";
 
 // Defer below-the-fold sections to reduce initial JS payload
 const ProblemSection = lazy(() => import("@/components/landing/ProblemSection"));
@@ -23,16 +23,16 @@ const Index = () => {
         description="Tiikme is a professional social network built in India for students, freelancers, founders, and creators. Join Circles, find opportunities, build your professional identity. No fees. Ever."
         ogTitle="Tiikme — A Professional Network for India"
         ogDescription="Built for the ones who build. Students, freelancers, founders, creators. Circles, opportunities, verified communities. No fees."
-        ogImage="https://tiikme.com/og-image.png"
+        ogImage={absoluteUrl("/og-image.png")}
         twitterCard="summary_large_image"
-        canonical="https://tiikme.com/"
+        canonical={absoluteUrl("/")}
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "Organization",
           name: "Tiikme",
           alternateName: "Tiikme — Professional Network for India",
-          url: "https://tiikme.com",
-          logo: "https://tiikme.com/og-image.png",
+          url: SITE_URL,
+          logo: absoluteUrl("/og-image.png"),
           description: "A professional social network built in India for students, freelancers, founders, and creators.",
           foundingDate: "2025",
           founders: [{ "@type": "Person", name: "Saai Nadhan" }],

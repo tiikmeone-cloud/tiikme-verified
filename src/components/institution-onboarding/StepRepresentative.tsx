@@ -2,6 +2,9 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { InstitutionFormData } from "@/pages/JoinAsInstitution";
 
+const TEXT_PRIMARY = "#FAFAF7";
+const TEXT_SECONDARY = "rgba(250,250,247,0.68)";
+
 const ROLES_BY_TYPE: Record<string, string[]> = {
   company:     ["Founder / CEO", "CTO", "CMO", "CXO", "HR Head", "Manager", "Admin", "Other"],
   startup:     ["Founder / CEO", "Co-founder", "CTO", "Head of Product", "Head of Growth", "Operator", "Other"],
@@ -38,12 +41,12 @@ export default function StepRepresentative({ form, update, onNext }: Props) {
 
   return (
     <div>
-      <h1 className="text-[22px] font-extrabold mb-1" style={{ color: "var(--text-1)" }}>Who are you?</h1>
-      <p className="text-[13px] mb-6" style={{ color: "var(--text-3)" }}>Tell us about yourself — you'll be the primary admin</p>
+      <h1 className="text-[22px] font-extrabold mb-1" style={{ color: TEXT_PRIMARY }}>Who are you?</h1>
+      <p className="text-[13px] mb-6" style={{ color: TEXT_SECONDARY }}>Tell us about yourself - you'll be the primary admin</p>
 
       <div className="space-y-4">
         <div>
-          <label className="text-[12px] font-bold mb-1 block" style={{ color: "var(--text-2)" }}>Your Full Name</label>
+          <label className="text-[12px] font-bold mb-1 block" style={{ color: TEXT_PRIMARY }}>Your Full Name</label>
           <input
             type="text" placeholder="e.g. Rajesh Kumar"
             value={form.repName} onChange={e => update({ repName: e.target.value })}
@@ -52,7 +55,7 @@ export default function StepRepresentative({ form, update, onNext }: Props) {
         </div>
 
         <div>
-          <label className="text-[12px] font-bold mb-2 block" style={{ color: "var(--text-2)" }}>Your Role in the Organisation</label>
+          <label className="text-[12px] font-bold mb-2 block" style={{ color: TEXT_PRIMARY }}>Your Role in the Organisation</label>
           <div className="flex flex-wrap gap-2">
             {roles.map(r => (
               <button

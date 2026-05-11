@@ -1,6 +1,5 @@
 import { Helmet } from "react-helmet-async";
-
-const BASE_URL = "https://tiikme.com";
+import { absoluteUrl, SITE_URL } from "@/lib/siteConfig";
 
 interface SEOProps {
   title?: string;
@@ -20,7 +19,7 @@ export const PageSEO = ({
   description = "Build your verified professional identity. Connect with verified professionals, organizations, and opportunities across India.",
   ogTitle,
   ogDescription,
-  ogImage = `${BASE_URL}/og-default.png`,
+  ogImage = absoluteUrl("/og-default.png"),
   ogType = "website",
   twitterCard = "summary",
   canonical,
@@ -79,7 +78,7 @@ export const profileSEO = (p: {
     ogDescription: [p.headline, loc].filter(Boolean).join(". "),
     ogImage: p.avatar_url || undefined,
     ogType: "profile" as const,
-    canonical: p.username ? `${BASE_URL}/profile/${p.username}` : undefined,
+    canonical: p.username ? absoluteUrl(`/${p.username}`) : undefined,
     jsonLd: {
       "@context": "https://schema.org",
       "@type": "Person",
@@ -88,7 +87,7 @@ export const profileSEO = (p: {
       ...(p.institution_name && { worksFor: { "@type": "Organization", name: p.institution_name } }),
       ...(loc && { address: { "@type": "PostalAddress", addressLocality: p.location_city, addressRegion: p.location_state } }),
       ...(p.avatar_url && { image: p.avatar_url }),
-      ...(p.username && { url: `${BASE_URL}/profile/${p.username}` }),
+      ...(p.username && { url: absoluteUrl(`/${p.username}`) }),
     },
   };
 };
@@ -118,14 +117,14 @@ export const orgSEO = (o: {
     description: desc,
     ogTitle: `${o.name} | Tiikme`,
     ogImage: o.logo_url || o.cover_url || undefined,
-    canonical: o.slug ? `${BASE_URL}/p/${o.slug}` : undefined,
+    canonical: o.slug ? absoluteUrl(`/org/${o.slug}`) : undefined,
     jsonLd: {
       "@context": "https://schema.org",
       "@type": "Organization",
       name: o.name,
       ...(o.tagline && { description: o.tagline }),
       ...(o.logo_url && { logo: o.logo_url }),
-      ...(o.slug && { url: `${BASE_URL}/p/${o.slug}` }),
+      ...(o.slug && { url: absoluteUrl(`/org/${o.slug}`) }),
       ...(o.city && { address: { "@type": "PostalAddress", addressLocality: o.city, addressRegion: o.state } }),
     },
   };
@@ -155,7 +154,7 @@ export const opportunitySEO = (opp: {
   return {
     title: `${opp.title}${opp.company_name ? ` at ${opp.company_name}` : ""} | Tiikme Opportunities`,
     description: desc,
-    canonical: opp.id ? `${BASE_URL}/app/opportunities/${opp.id}` : undefined,
+    canonical: opp.id ? absoluteUrl(`/app/opportunities/${opp.id}`) : undefined,
     jsonLd: {
       "@context": "https://schema.org",
       "@type": "JobPosting",
@@ -167,3 +166,5 @@ export const opportunitySEO = (opp: {
     },
   };
 };
+
+export { SITE_URL, absoluteUrl };

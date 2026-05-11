@@ -3,7 +3,7 @@ import { Eye, EyeOff, Building2 } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { PageSEO } from "@/hooks/usePageSEO";
+import { PageSEO, absoluteUrl } from "@/hooks/usePageSEO";
 import AuthLayout from "@/components/layouts/AuthLayout";
 import { AuthButton, AuthInput } from "@/components/layouts/AuthPrimitives";
 import { getStoredPostAuthRedirect, safeInternalRedirect } from "@/lib/safeRedirect";
@@ -90,7 +90,7 @@ const SignIn = () => {
       <PageSEO
         title="Sign In — Tiikme"
         description="Sign in to Tiikme, India's verified professional identity platform."
-        canonical="https://tiikme.com/signin"
+        canonical={absoluteUrl("/signin")}
       />
 
       <h1 className="mb-1 text-[28px] font-bold tracking-[-0.02em] text-paper">Welcome back.</h1>
