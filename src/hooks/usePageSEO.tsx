@@ -118,14 +118,14 @@ export const orgSEO = (o: {
     description: desc,
     ogTitle: `${o.name} | Tiikme`,
     ogImage: o.logo_url || o.cover_url || undefined,
-    canonical: o.slug ? `${BASE_URL}/page/${o.slug}` : undefined,
+    canonical: o.slug ? `${BASE_URL}/p/${o.slug}` : undefined,
     jsonLd: {
       "@context": "https://schema.org",
       "@type": "Organization",
       name: o.name,
       ...(o.tagline && { description: o.tagline }),
       ...(o.logo_url && { logo: o.logo_url }),
-      ...(o.slug && { url: `${BASE_URL}/page/${o.slug}` }),
+      ...(o.slug && { url: `${BASE_URL}/p/${o.slug}` }),
       ...(o.city && { address: { "@type": "PostalAddress", addressLocality: o.city, addressRegion: o.state } }),
     },
   };

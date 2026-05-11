@@ -23,6 +23,7 @@ import { ArrowLeft, Check, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import OnboardingShell from "@/components/onboarding/OnboardingShell";
+import { consumePostAuthRedirect } from "@/lib/safeRedirect";
 import {
   ROLES, ROLE_BY_ID, INTERESTS, YEARS_EXP_BUCKETS, SECTORS,
   type Role,
@@ -131,8 +132,7 @@ export default function Onboarding() {
   // Already finished? Bounce to feed.
   useEffect(() => {
     if (profile?.onboarding_complete) {
-      const dest = sessionStorage.getItem("post_auth_redirect") || "/app/feed";
-      sessionStorage.removeItem("post_auth_redirect");
+      const dest = consumePostAuthRedirect();
       navigate(dest, { replace: true });
     }
   }, [profile?.onboarding_complete, navigate]);
@@ -185,8 +185,7 @@ export default function Onboarding() {
     await refreshProfile();
     setSaving(false);
     localStorage.removeItem(STORAGE_KEY);
-    const dest = sessionStorage.getItem("post_auth_redirect") || "/app/feed";
-    sessionStorage.removeItem("post_auth_redirect");
+    const dest = consumePostAuthRedirect();
     toast.success("Welcome to Tiikme!");
     navigate(dest, { replace: true });
   };

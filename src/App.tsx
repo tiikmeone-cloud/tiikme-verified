@@ -110,6 +110,14 @@ const AppRoutes = () => {
             <Route path="/post/create" element={<Shell><PostCreate /></Shell>} />
             <Route path="/post/:postId" element={<Shell><PostDetail /></Shell>} />
 
+            {/* Public shorthand redirects */}
+            <Route path="/home" element={<Navigate to="/app/feed" replace />} />
+            <Route path="/feed" element={<Navigate to="/app/feed" replace />} />
+            <Route path="/jobs" element={<Navigate to="/app/opportunities" replace />} />
+            <Route path="/opportunities" element={<Navigate to="/app/opportunities" replace />} />
+            <Route path="/circles" element={<Navigate to="/app/circles" replace />} />
+            <Route path="/profile" element={<Navigate to="/app/profile" replace />} />
+
             {/* App (protected) */}
             <Route path="/app/home" element={<Shell><Feed /></Shell>} />
             <Route path="/app/feed" element={<Shell><Feed /></Shell>} />
