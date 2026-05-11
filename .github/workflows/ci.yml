@@ -21,7 +21,11 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
+
+      - name: Dependency audit report
+        continue-on-error: true
+        run: npm audit --audit-level=high
 
       - name: Lint
         continue-on-error: true
