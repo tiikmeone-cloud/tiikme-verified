@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Award, ExternalLink, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PageLoader from "@/components/PageLoader";
+import { PageSEO } from "@/hooks/usePageSEO";
 
 export default function CertificatePage() {
   const { id } = useParams<{ id: string }>();
@@ -31,6 +32,20 @@ export default function CertificatePage() {
 
   return (
     <div className="min-h-screen" style={{ background: "#FEF3E8" }} data-theme="light">
+      <PageSEO
+        title={`${cert.title} — Certificate from ${cert.org?.name || "Tiikme"} | Tiikme`}
+        description={`${cert.recipient?.full_name || "A professional"} earned "${cert.title}" from ${cert.org?.name || "an organization"}. Verified on Tiikme.`}
+        ogImage={cert.org?.logo_url || undefined}
+        canonical={`https://tiikme.com/certificate/${id}`}
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "EducationalOccupationalCredential",
+          name: cert.title,
+          ...(cert.org?.name && { recognizedBy: { "@type": "Organization", name: cert.org.name } }),
+          ...(cert.recipient?.full_name && { credentialCategory: "certificate", about: { "@type": "Person", name: cert.recipient.full_name } }),
+          url: `https://tiikme.com/certificate/${id}`,
+        }}
+      />
       <div className="max-w-2xl mx-auto px-4 py-12">
         <div className="rounded-2xl overflow-hidden" style={{ background: "white", border: "2px solid var(--border)", boxShadow: "0 8px 32px rgba(0,0,0,0.08)" }}>
           {/* Header */}

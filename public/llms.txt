@@ -1,0 +1,23 @@
+# Tiikme
+
+> India's verified professional identity platform for students, doctors, engineers, freelancers, and every working person. Build your verified profile, join Circles, find opportunities.
+
+Tiikme is a professional social network built in India. Members create a verified professional identity, join topic-based Circles, post Work projects, request peer and institutional verification, and discover opportunities. Pages exist for individuals, organizations (companies, institutions, government bodies), and the Work projects they ship.
+
+## Pages
+
+- [Home](/): What Tiikme is and who it's for.
+- [Sign in](/signin): Existing member sign in.
+- [Sign up](/signup): Create a new Tiikme account.
+- [Join as Institution](/join-as-institution): Onboard a company, college, or government body.
+- [Welcome](/welcome): Post-signup welcome and next steps.
+
+## Legal
+
+- [Terms of Service](/terms): Platform terms.
+- [Privacy Policy](/privacy): How user data is handled (DPDP Act compliant).
+
+## Optional
+
+- [Verify Email](/verify-email): Email verification step.
+- [Onboarding](/onboarding): Multi-step profile setup flow (auth required).
