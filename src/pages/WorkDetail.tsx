@@ -72,6 +72,20 @@ const WorkDetail = () => {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-7">
+      <PageSEO
+        title={`${work.title}${work.owner?.full_name ? ` by ${work.owner.full_name}` : ""} | Tiikme`}
+        description={(work.description || `${work.title} — a project on Tiikme.`).toString().slice(0, 160)}
+        ogType="article"
+        canonical={work.owner?.username && work.slug ? `https://tiikme.com/${work.owner.username}/${work.slug}` : undefined}
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "CreativeWork",
+          name: work.title,
+          ...(work.description && { description: String(work.description).slice(0, 500) }),
+          ...(work.owner?.full_name && { creator: { "@type": "Person", name: work.owner.full_name } }),
+          ...(work.created_at && { datePublished: work.created_at }),
+        }}
+      />
       <div className="flex items-center gap-2 text-sm mb-5" style={{ color: "var(--text-2)" }}>
         <button type="button" onClick={() => navigate(-1)} className="cursor-pointer" style={{ color: "var(--text-2)" }}><ArrowLeft className="w-4 h-4" /></button>
         {owner?.username && <Link to={`/app/profile/${owner.id}`} className="hover:underline" style={{ color: "var(--brand)" }}>{owner.username}</Link>}
