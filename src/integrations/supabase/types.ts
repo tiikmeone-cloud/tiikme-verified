@@ -664,6 +664,108 @@ export type Database = {
         }
         Relationships: []
       }
+      domain_verification_challenges: {
+        Row: {
+          attempts_count: number
+          created_at: string
+          created_by: string | null
+          domain: string
+          evidence_type: string
+          expires_at: string
+          id: string
+          last_attempt_at: string | null
+          metadata: Json
+          method: string
+          status: string
+          subject_category: string
+          subject_org_id: string | null
+          subject_page_id: string | null
+          subject_profile_id: string | null
+          token_hash: string
+          trust_evidence_id: string
+          updated_at: string
+          verified_at: string | null
+        }
+        Insert: {
+          attempts_count?: number
+          created_at?: string
+          created_by?: string | null
+          domain: string
+          evidence_type: string
+          expires_at: string
+          id?: string
+          last_attempt_at?: string | null
+          metadata?: Json
+          method: string
+          status?: string
+          subject_category: string
+          subject_org_id?: string | null
+          subject_page_id?: string | null
+          subject_profile_id?: string | null
+          token_hash: string
+          trust_evidence_id: string
+          updated_at?: string
+          verified_at?: string | null
+        }
+        Update: {
+          attempts_count?: number
+          created_at?: string
+          created_by?: string | null
+          domain?: string
+          evidence_type?: string
+          expires_at?: string
+          id?: string
+          last_attempt_at?: string | null
+          metadata?: Json
+          method?: string
+          status?: string
+          subject_category?: string
+          subject_org_id?: string | null
+          subject_page_id?: string | null
+          subject_profile_id?: string | null
+          token_hash?: string
+          trust_evidence_id?: string
+          updated_at?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "domain_verification_challenges_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "domain_verification_challenges_subject_org_id_fkey"
+            columns: ["subject_org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "domain_verification_challenges_subject_page_id_fkey"
+            columns: ["subject_page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "domain_verification_challenges_subject_profile_id_fkey"
+            columns: ["subject_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "domain_verification_challenges_trust_evidence_id_fkey"
+            columns: ["trust_evidence_id"]
+            isOneToOne: false
+            referencedRelation: "trust_evidence"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employer_endorsement_requests: {
         Row: {
           approval_note: string | null
@@ -2957,6 +3059,102 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_verification_state: {
+        Row: {
+          created_at: string
+          evidence_id: string | null
+          evidence_type: string | null
+          expires_at: string | null
+          id: string
+          issued_at: string
+          issuer_org_id: string | null
+          metadata: Json
+          request_id: string | null
+          revoked_at: string | null
+          revoked_reason: string | null
+          status: string
+          subject_user_id: string
+          target_item_id: string | null
+          updated_at: string
+          verification_type: string
+          verifier_user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          evidence_id?: string | null
+          evidence_type?: string | null
+          expires_at?: string | null
+          id?: string
+          issued_at?: string
+          issuer_org_id?: string | null
+          metadata?: Json
+          request_id?: string | null
+          revoked_at?: string | null
+          revoked_reason?: string | null
+          status: string
+          subject_user_id: string
+          target_item_id?: string | null
+          updated_at?: string
+          verification_type: string
+          verifier_user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          evidence_id?: string | null
+          evidence_type?: string | null
+          expires_at?: string | null
+          id?: string
+          issued_at?: string
+          issuer_org_id?: string | null
+          metadata?: Json
+          request_id?: string | null
+          revoked_at?: string | null
+          revoked_reason?: string | null
+          status?: string
+          subject_user_id?: string
+          target_item_id?: string | null
+          updated_at?: string
+          verification_type?: string
+          verifier_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_verification_state_evidence_id_fkey"
+            columns: ["evidence_id"]
+            isOneToOne: false
+            referencedRelation: "verification_evidence"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_verification_state_issuer_org_id_fkey"
+            columns: ["issuer_org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_verification_state_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: true
+            referencedRelation: "verification_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_verification_state_subject_user_id_fkey"
+            columns: ["subject_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_verification_state_verifier_user_id_fkey"
+            columns: ["verifier_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           about: string | null
@@ -3380,6 +3578,608 @@ export type Database = {
           },
         ]
       }
+      trust_badges: {
+        Row: {
+          badge_type: string
+          confidence_score: number
+          created_at: string
+          evidence_id: string | null
+          expires_at: string | null
+          id: string
+          issued_at: string
+          issued_by_org_id: string | null
+          issued_by_user_id: string | null
+          issued_reason: string | null
+          metadata: Json
+          revoked_at: string | null
+          revoked_reason: string | null
+          score_id: string | null
+          status: string
+          subject_category: string
+          subject_org_id: string | null
+          subject_page_id: string | null
+          subject_profile_id: string | null
+          updated_at: string
+          verification_state_id: string | null
+        }
+        Insert: {
+          badge_type: string
+          confidence_score?: number
+          created_at?: string
+          evidence_id?: string | null
+          expires_at?: string | null
+          id?: string
+          issued_at?: string
+          issued_by_org_id?: string | null
+          issued_by_user_id?: string | null
+          issued_reason?: string | null
+          metadata?: Json
+          revoked_at?: string | null
+          revoked_reason?: string | null
+          score_id?: string | null
+          status?: string
+          subject_category: string
+          subject_org_id?: string | null
+          subject_page_id?: string | null
+          subject_profile_id?: string | null
+          updated_at?: string
+          verification_state_id?: string | null
+        }
+        Update: {
+          badge_type?: string
+          confidence_score?: number
+          created_at?: string
+          evidence_id?: string | null
+          expires_at?: string | null
+          id?: string
+          issued_at?: string
+          issued_by_org_id?: string | null
+          issued_by_user_id?: string | null
+          issued_reason?: string | null
+          metadata?: Json
+          revoked_at?: string | null
+          revoked_reason?: string | null
+          score_id?: string | null
+          status?: string
+          subject_category?: string
+          subject_org_id?: string | null
+          subject_page_id?: string | null
+          subject_profile_id?: string | null
+          updated_at?: string
+          verification_state_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trust_badges_evidence_id_fkey"
+            columns: ["evidence_id"]
+            isOneToOne: false
+            referencedRelation: "trust_evidence"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_badges_issued_by_org_id_fkey"
+            columns: ["issued_by_org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_badges_issued_by_user_id_fkey"
+            columns: ["issued_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_badges_score_id_fkey"
+            columns: ["score_id"]
+            isOneToOne: false
+            referencedRelation: "trust_scores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_badges_subject_org_id_fkey"
+            columns: ["subject_org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_badges_subject_page_id_fkey"
+            columns: ["subject_page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_badges_subject_profile_id_fkey"
+            columns: ["subject_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_badges_verification_state_id_fkey"
+            columns: ["verification_state_id"]
+            isOneToOne: false
+            referencedRelation: "profile_verification_state"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trust_checks: {
+        Row: {
+          actor_user_id: string | null
+          check_type: string
+          checked_at: string
+          confidence_score: number
+          created_at: string
+          evidence_id: string | null
+          id: string
+          next_check_at: string | null
+          notes: string | null
+          outcome: string
+          performed_by: string
+          result_payload: Json
+          risk_level: string
+          subject_category: string
+          subject_org_id: string | null
+          subject_page_id: string | null
+          subject_profile_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          actor_user_id?: string | null
+          check_type: string
+          checked_at?: string
+          confidence_score?: number
+          created_at?: string
+          evidence_id?: string | null
+          id?: string
+          next_check_at?: string | null
+          notes?: string | null
+          outcome: string
+          performed_by?: string
+          result_payload?: Json
+          risk_level?: string
+          subject_category: string
+          subject_org_id?: string | null
+          subject_page_id?: string | null
+          subject_profile_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          actor_user_id?: string | null
+          check_type?: string
+          checked_at?: string
+          confidence_score?: number
+          created_at?: string
+          evidence_id?: string | null
+          id?: string
+          next_check_at?: string | null
+          notes?: string | null
+          outcome?: string
+          performed_by?: string
+          result_payload?: Json
+          risk_level?: string
+          subject_category?: string
+          subject_org_id?: string | null
+          subject_page_id?: string | null
+          subject_profile_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trust_checks_actor_user_id_fkey"
+            columns: ["actor_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_checks_evidence_id_fkey"
+            columns: ["evidence_id"]
+            isOneToOne: false
+            referencedRelation: "trust_evidence"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_checks_subject_org_id_fkey"
+            columns: ["subject_org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_checks_subject_page_id_fkey"
+            columns: ["subject_page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_checks_subject_profile_id_fkey"
+            columns: ["subject_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trust_events: {
+        Row: {
+          actor_role: string
+          actor_user_id: string | null
+          badge_id: string | null
+          check_id: string | null
+          created_at: string
+          event_type: string
+          evidence_id: string | null
+          id: string
+          note: string | null
+          payload: Json
+          score_id: string | null
+          subject_category: string | null
+          subject_org_id: string | null
+          subject_page_id: string | null
+          subject_profile_id: string | null
+          verification_request_id: string | null
+          verification_state_id: string | null
+        }
+        Insert: {
+          actor_role?: string
+          actor_user_id?: string | null
+          badge_id?: string | null
+          check_id?: string | null
+          created_at?: string
+          event_type: string
+          evidence_id?: string | null
+          id?: string
+          note?: string | null
+          payload?: Json
+          score_id?: string | null
+          subject_category?: string | null
+          subject_org_id?: string | null
+          subject_page_id?: string | null
+          subject_profile_id?: string | null
+          verification_request_id?: string | null
+          verification_state_id?: string | null
+        }
+        Update: {
+          actor_role?: string
+          actor_user_id?: string | null
+          badge_id?: string | null
+          check_id?: string | null
+          created_at?: string
+          event_type?: string
+          evidence_id?: string | null
+          id?: string
+          note?: string | null
+          payload?: Json
+          score_id?: string | null
+          subject_category?: string | null
+          subject_org_id?: string | null
+          subject_page_id?: string | null
+          subject_profile_id?: string | null
+          verification_request_id?: string | null
+          verification_state_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trust_events_actor_user_id_fkey"
+            columns: ["actor_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_events_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "trust_badges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_events_check_id_fkey"
+            columns: ["check_id"]
+            isOneToOne: false
+            referencedRelation: "trust_checks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_events_evidence_id_fkey"
+            columns: ["evidence_id"]
+            isOneToOne: false
+            referencedRelation: "trust_evidence"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_events_score_id_fkey"
+            columns: ["score_id"]
+            isOneToOne: false
+            referencedRelation: "trust_scores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_events_subject_org_id_fkey"
+            columns: ["subject_org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_events_subject_page_id_fkey"
+            columns: ["subject_page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_events_subject_profile_id_fkey"
+            columns: ["subject_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_events_verification_request_id_fkey"
+            columns: ["verification_request_id"]
+            isOneToOne: false
+            referencedRelation: "verification_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_events_verification_state_id_fkey"
+            columns: ["verification_state_id"]
+            isOneToOne: false
+            referencedRelation: "profile_verification_state"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trust_evidence: {
+        Row: {
+          collected_by_user_id: string | null
+          confidence_score: number
+          created_at: string
+          document_path: string | null
+          evidence_hash: string | null
+          evidence_type: string
+          evidence_value: string | null
+          expires_at: string | null
+          id: string
+          last_checked_at: string | null
+          metadata: Json
+          observed_at: string
+          source_label: string | null
+          source_reference: string | null
+          source_type: string
+          source_url: string | null
+          status: string
+          subject_category: string
+          subject_org_id: string | null
+          subject_page_id: string | null
+          subject_profile_id: string | null
+          updated_at: string
+          verification_request_id: string | null
+          verification_state_id: string | null
+          verified_at: string | null
+        }
+        Insert: {
+          collected_by_user_id?: string | null
+          confidence_score?: number
+          created_at?: string
+          document_path?: string | null
+          evidence_hash?: string | null
+          evidence_type: string
+          evidence_value?: string | null
+          expires_at?: string | null
+          id?: string
+          last_checked_at?: string | null
+          metadata?: Json
+          observed_at?: string
+          source_label?: string | null
+          source_reference?: string | null
+          source_type?: string
+          source_url?: string | null
+          status?: string
+          subject_category: string
+          subject_org_id?: string | null
+          subject_page_id?: string | null
+          subject_profile_id?: string | null
+          updated_at?: string
+          verification_request_id?: string | null
+          verification_state_id?: string | null
+          verified_at?: string | null
+        }
+        Update: {
+          collected_by_user_id?: string | null
+          confidence_score?: number
+          created_at?: string
+          document_path?: string | null
+          evidence_hash?: string | null
+          evidence_type?: string
+          evidence_value?: string | null
+          expires_at?: string | null
+          id?: string
+          last_checked_at?: string | null
+          metadata?: Json
+          observed_at?: string
+          source_label?: string | null
+          source_reference?: string | null
+          source_type?: string
+          source_url?: string | null
+          status?: string
+          subject_category?: string
+          subject_org_id?: string | null
+          subject_page_id?: string | null
+          subject_profile_id?: string | null
+          updated_at?: string
+          verification_request_id?: string | null
+          verification_state_id?: string | null
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trust_evidence_collected_by_user_id_fkey"
+            columns: ["collected_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_evidence_subject_org_id_fkey"
+            columns: ["subject_org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_evidence_subject_page_id_fkey"
+            columns: ["subject_page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_evidence_subject_profile_id_fkey"
+            columns: ["subject_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_evidence_verification_request_id_fkey"
+            columns: ["verification_request_id"]
+            isOneToOne: false
+            referencedRelation: "verification_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_evidence_verification_state_id_fkey"
+            columns: ["verification_state_id"]
+            isOneToOne: false
+            referencedRelation: "profile_verification_state"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trust_scores: {
+        Row: {
+          computed_by: string
+          computed_by_user_id: string | null
+          consistency_score: number
+          created_at: string
+          expires_at: string | null
+          explanation: string | null
+          failed_signal_count: number
+          id: string
+          internal_notes: string | null
+          last_recomputed_at: string
+          legal_existence_score: number
+          metadata: Json
+          model_version: string
+          next_review_at: string | null
+          overall_score: number
+          ownership_control_score: number
+          public_presence_score: number
+          relationship_score: number
+          risk_score: number
+          subject_category: string
+          subject_org_id: string | null
+          subject_page_id: string | null
+          subject_profile_id: string | null
+          updated_at: string
+          valid_signal_count: number
+          verdict: string
+        }
+        Insert: {
+          computed_by?: string
+          computed_by_user_id?: string | null
+          consistency_score?: number
+          created_at?: string
+          expires_at?: string | null
+          explanation?: string | null
+          failed_signal_count?: number
+          id?: string
+          internal_notes?: string | null
+          last_recomputed_at?: string
+          legal_existence_score?: number
+          metadata?: Json
+          model_version?: string
+          next_review_at?: string | null
+          overall_score?: number
+          ownership_control_score?: number
+          public_presence_score?: number
+          relationship_score?: number
+          risk_score?: number
+          subject_category: string
+          subject_org_id?: string | null
+          subject_page_id?: string | null
+          subject_profile_id?: string | null
+          updated_at?: string
+          valid_signal_count?: number
+          verdict: string
+        }
+        Update: {
+          computed_by?: string
+          computed_by_user_id?: string | null
+          consistency_score?: number
+          created_at?: string
+          expires_at?: string | null
+          explanation?: string | null
+          failed_signal_count?: number
+          id?: string
+          internal_notes?: string | null
+          last_recomputed_at?: string
+          legal_existence_score?: number
+          metadata?: Json
+          model_version?: string
+          next_review_at?: string | null
+          overall_score?: number
+          ownership_control_score?: number
+          public_presence_score?: number
+          relationship_score?: number
+          risk_score?: number
+          subject_category?: string
+          subject_org_id?: string | null
+          subject_page_id?: string | null
+          subject_profile_id?: string | null
+          updated_at?: string
+          valid_signal_count?: number
+          verdict?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trust_scores_computed_by_user_id_fkey"
+            columns: ["computed_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_scores_subject_org_id_fkey"
+            columns: ["subject_org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_scores_subject_page_id_fkey"
+            columns: ["subject_page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_scores_subject_profile_id_fkey"
+            columns: ["subject_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_additional_roles: {
         Row: {
           about: string | null
@@ -3481,6 +4281,120 @@ export type Database = {
         }
         Relationships: []
       }
+      verification_events: {
+        Row: {
+          actor_role: string | null
+          actor_user_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          note: string | null
+          payload: Json
+          request_id: string
+        }
+        Insert: {
+          actor_role?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          note?: string | null
+          payload?: Json
+          request_id: string
+        }
+        Update: {
+          actor_role?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          note?: string | null
+          payload?: Json
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verification_events_actor_user_id_fkey"
+            columns: ["actor_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verification_events_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "verification_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      verification_evidence: {
+        Row: {
+          created_at: string
+          evidence_type: string | null
+          file_name: string | null
+          file_size_bytes: number | null
+          id: string
+          is_primary: boolean
+          metadata: Json
+          mime_type: string | null
+          notes: string | null
+          request_id: string
+          status: string
+          storage_bucket: string
+          storage_path: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          evidence_type?: string | null
+          file_name?: string | null
+          file_size_bytes?: number | null
+          id?: string
+          is_primary?: boolean
+          metadata?: Json
+          mime_type?: string | null
+          notes?: string | null
+          request_id: string
+          status?: string
+          storage_bucket?: string
+          storage_path: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          evidence_type?: string | null
+          file_name?: string | null
+          file_size_bytes?: number | null
+          id?: string
+          is_primary?: boolean
+          metadata?: Json
+          mime_type?: string | null
+          notes?: string | null
+          request_id?: string
+          status?: string
+          storage_bucket?: string
+          storage_path?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verification_evidence_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "verification_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verification_evidence_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       verification_requests: {
         Row: {
           assigned_to: string | null
@@ -3498,9 +4412,11 @@ export type Database = {
           rejection_reason: string | null
           requested_doc_message: string | null
           requested_role: string | null
+          requested_verification_type: string | null
           requester_id: string
           resolved_at: string | null
           review_note: string | null
+          review_queue: string
           review_thread: Json | null
           reviewed_by: string | null
           role_category: string | null
@@ -3525,9 +4441,11 @@ export type Database = {
           rejection_reason?: string | null
           requested_doc_message?: string | null
           requested_role?: string | null
+          requested_verification_type?: string | null
           requester_id: string
           resolved_at?: string | null
           review_note?: string | null
+          review_queue?: string
           review_thread?: Json | null
           reviewed_by?: string | null
           role_category?: string | null
@@ -3552,9 +4470,11 @@ export type Database = {
           rejection_reason?: string | null
           requested_doc_message?: string | null
           requested_role?: string | null
+          requested_verification_type?: string | null
           requester_id?: string
           resolved_at?: string | null
           review_note?: string | null
+          review_queue?: string
           review_thread?: Json | null
           reviewed_by?: string | null
           role_category?: string | null
@@ -3625,6 +4545,122 @@ export type Database = {
           work_item_id?: string | null
         }
         Relationships: []
+      }
+      verified_employment_claims: {
+        Row: {
+          claim_kind: string
+          claimed_role: string | null
+          created_at: string
+          evidence_id: string | null
+          expires_at: string | null
+          id: string
+          issuer_org_id: string
+          metadata: Json
+          org_id: string
+          org_member_id: string | null
+          request_id: string | null
+          revoked_at: string | null
+          revoked_reason: string | null
+          role_category: string | null
+          status: string
+          subject_user_id: string
+          updated_at: string
+          verified_at: string
+          verifier_user_id: string | null
+        }
+        Insert: {
+          claim_kind: string
+          claimed_role?: string | null
+          created_at?: string
+          evidence_id?: string | null
+          expires_at?: string | null
+          id?: string
+          issuer_org_id: string
+          metadata?: Json
+          org_id: string
+          org_member_id?: string | null
+          request_id?: string | null
+          revoked_at?: string | null
+          revoked_reason?: string | null
+          role_category?: string | null
+          status?: string
+          subject_user_id: string
+          updated_at?: string
+          verified_at?: string
+          verifier_user_id?: string | null
+        }
+        Update: {
+          claim_kind?: string
+          claimed_role?: string | null
+          created_at?: string
+          evidence_id?: string | null
+          expires_at?: string | null
+          id?: string
+          issuer_org_id?: string
+          metadata?: Json
+          org_id?: string
+          org_member_id?: string | null
+          request_id?: string | null
+          revoked_at?: string | null
+          revoked_reason?: string | null
+          role_category?: string | null
+          status?: string
+          subject_user_id?: string
+          updated_at?: string
+          verified_at?: string
+          verifier_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verified_employment_claims_evidence_id_fkey"
+            columns: ["evidence_id"]
+            isOneToOne: false
+            referencedRelation: "verification_evidence"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verified_employment_claims_issuer_org_id_fkey"
+            columns: ["issuer_org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verified_employment_claims_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verified_employment_claims_org_member_id_fkey"
+            columns: ["org_member_id"]
+            isOneToOne: false
+            referencedRelation: "org_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verified_employment_claims_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: true
+            referencedRelation: "verification_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verified_employment_claims_subject_user_id_fkey"
+            columns: ["subject_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verified_employment_claims_verifier_user_id_fkey"
+            columns: ["verifier_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       work_items: {
         Row: {
@@ -4205,6 +5241,10 @@ export type Database = {
       }
     }
     Functions: {
+      approve_verification_request: {
+        Args: { p_request_id: string; p_review_note?: string }
+        Returns: Json
+      }
       are_users_connected: {
         Args: { _a: string; _b: string }
         Returns: boolean
@@ -4219,6 +5259,10 @@ export type Database = {
         }
         Returns: Json
       }
+      build_domain_verification_instructions: {
+        Args: { _domain: string; _method: string; _raw_token: string }
+        Returns: Json
+      }
       calculate_activity_score: { Args: { p_user_id: string }; Returns: number }
       calculate_activity_score_v2: { Args: { uid: string }; Returns: number }
       calculate_circle_post_hot_score: {
@@ -4226,6 +5270,47 @@ export type Database = {
         Returns: number
       }
       can_message_user: { Args: { _target: string }; Returns: boolean }
+      confirm_domain_verification_challenge: {
+        Args: {
+          _challenge_id: string
+          _observed_payload?: Json
+          _provided_token?: string
+        }
+        Returns: Json
+      }
+      create_domain_verification_challenge: {
+        Args: {
+          _domain_or_email?: string
+          _evidence_type?: string
+          _method?: string
+          _subject_org_id?: string
+          _subject_page_id?: string
+          _subject_profile_id?: string
+        }
+        Returns: Json
+      }
+      current_user_can_manage_trust_subject: {
+        Args: {
+          _subject_org_id?: string
+          _subject_page_id?: string
+          _subject_profile_id?: string
+        }
+        Returns: boolean
+      }
+      current_user_is_moderator: { Args: never; Returns: boolean }
+      derive_requested_verification_type: {
+        Args: { _entity_type: string; _org_id: string }
+        Returns: string
+      }
+      derive_trust_subject_category: {
+        Args: {
+          _subject_org_id?: string
+          _subject_page_id?: string
+          _subject_profile_id?: string
+        }
+        Returns: string
+      }
+      expire_domain_verification_challenges: { Args: never; Returns: Json }
       generate_clean_username: {
         Args: { p_full_name: string; p_user_id: string }
         Returns: string
@@ -4250,10 +5335,30 @@ export type Database = {
         Args: { amount: number; uid: string }
         Returns: undefined
       }
+      internal_recompute_trust_score: {
+        Args: {
+          _actor_role?: string
+          _actor_user_id?: string
+          _note?: string
+          _subject_category?: string
+          _subject_org_id?: string
+          _subject_page_id?: string
+          _subject_profile_id?: string
+        }
+        Returns: Json
+      }
       is_moderator: { Args: { _user_id: string }; Returns: boolean }
       is_org_admin: {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
+      }
+      is_platform_verification_reviewer: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      issue_domain_verified_badge_if_eligible: {
+        Args: { _reason?: string; _trust_evidence_id: string }
+        Returns: string
       }
       match_opportunities_for_user: {
         Args: { p_user_id: string }
@@ -4262,6 +5367,14 @@ export type Database = {
           opportunity_id: string
         }[]
       }
+      materialize_verification_from_request: {
+        Args: { _request_id: string }
+        Returns: undefined
+      }
+      normalize_trust_domain_input: {
+        Args: { _evidence_type: string; _input: string }
+        Returns: string
+      }
       rank_explore_pages: {
         Args: { p_page_type?: string; p_user_id: string }
         Returns: {
@@ -4269,12 +5382,43 @@ export type Database = {
           page_id: string
         }[]
       }
+      recompute_trust_score: {
+        Args: {
+          _note?: string
+          _subject_category?: string
+          _subject_org_id?: string
+          _subject_page_id?: string
+          _subject_profile_id?: string
+        }
+        Returns: Json
+      }
+      reject_verification_request: {
+        Args: {
+          p_rejection_reason: string
+          p_request_id: string
+          p_review_note?: string
+        }
+        Returns: Json
+      }
+      request_verification_more_info: {
+        Args: { p_message: string; p_request_id: string }
+        Returns: Json
+      }
       resolve_verification_assignee: {
         Args: { _org_id: string; _role_category: string }
         Returns: string
       }
+      sync_legacy_verification_evidence: {
+        Args: { _request_id: string }
+        Returns: string
+      }
       update_all_activity_scores: { Args: never; Returns: undefined }
       update_all_activity_scores_v2: { Args: never; Returns: undefined }
+      user_can_review_verification_request: {
+        Args: { _actor: string; _request_id: string }
+        Returns: boolean
+      }
+      verification_internal_write_allowed: { Args: never; Returns: boolean }
     }
     Enums: {
       circle_post_type:
