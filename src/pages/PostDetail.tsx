@@ -13,6 +13,7 @@ import EditPostModal from "@/components/feed/EditPostModal";
 import DeletePostDialog from "@/components/feed/DeletePostDialog";
 import ShareModal from "@/components/feed/ShareModal";
 import CommentLoveButton from "@/components/feed/CommentLoveButton";
+import { PageSEO } from "@/hooks/usePageSEO";
 
 const roleColorMap: Record<string, string> = {
   student: "#4F46E5", professional: "#0369A1", doctor: "#0E7490",
