@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Award, ExternalLink, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PageLoader from "@/components/PageLoader";
+import { PageSEO } from "@/hooks/usePageSEO";
 
 export default function CertificatePage() {
   const { id } = useParams<{ id: string }>();
