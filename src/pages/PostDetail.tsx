@@ -155,6 +155,21 @@ const PostDetail = () => {
 
   return (
     <main className="max-w-[660px] mx-auto px-4 py-4">
+      <PageSEO
+        title={`${name} on Tiikme${post.content ? `: ${String(post.content).slice(0, 50)}…` : ""}`}
+        description={(post.content ? String(post.content) : `Post by ${name} on Tiikme.`).slice(0, 160)}
+        ogType="article"
+        ogImage={post.images?.[0] || author?.avatar_url || undefined}
+        canonical={`https://tiikme.com/post/${postId}`}
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "SocialMediaPosting",
+          headline: post.content ? String(post.content).slice(0, 110) : `Post by ${name}`,
+          ...(post.created_at && { datePublished: post.created_at }),
+          ...(name && { author: { "@type": "Person", name } }),
+          url: `https://tiikme.com/post/${postId}`,
+        }}
+      />
       <button type="button" onClick={() => navigate(-1)} className="flex items-center gap-2 text-[14px] font-semibold cursor-pointer min-h-[44px] mb-4" style={{ color: "var(--text-2)" }}>
         <ArrowLeft className="w-5 h-5" /> Back
       </button>
