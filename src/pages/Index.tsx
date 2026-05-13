@@ -20,9 +20,9 @@ const Index = () => {
     <div className="min-h-screen bg-white" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
       <PageSEO
         title="Tiikme — A Professional Network for India"
-        description="Tiikme is a professional social network built in India for students, freelancers, founders, and creators. Join Circles, find opportunities, build your professional identity. No fees. Ever."
+        description="India's professional network for students, freelancers, founders, and creators. Join Circles, find opportunities, build verified identity. No fees."
         ogTitle="Tiikme — A Professional Network for India"
-        ogDescription="Built for the ones who build. Students, freelancers, founders, creators. Circles, opportunities, verified communities. No fees."
+        ogDescription="Built for the ones who build. Students, freelancers, founders, creators. Circles, opportunities, verified communities."
         ogImage="https://tiikme.com/og-image.png"
         twitterCard="summary_large_image"
         canonical="https://tiikme.com/"
