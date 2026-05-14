@@ -56,6 +56,8 @@ const OpportunityCreate = lazyWithRetry(() => import("./pages/OpportunityCreate.
 const WorkspacePage = lazyWithRetry(() => import("./pages/Workspace.tsx"), "WorkspacePage");
 const CirclesPage = lazyWithRetry(() => import("./pages/Circles.tsx"), "CirclesPage");
 const VerificationInbox = lazyWithRetry(() => import("./pages/VerificationInbox.tsx"), "VerificationInbox");
+const Academy = lazyWithRetry(() => import("./pages/Academy.tsx"), "Academy");
+const BuildLog = lazyWithRetry(() => import("./pages/BuildLog.tsx"), "BuildLog");
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -151,11 +153,14 @@ const AppRoutes = () => {
             {/* Pages (org profiles) */}
             <Route path="/p/:slug" element={<Shell><PageProfile /></Shell>} />
 
+            {/* Feature routes */}
+            <Route path="/app/academy" element={<Shell><Academy /></Shell>} />
+            <Route path="/app/build-log" element={<Shell><BuildLog /></Shell>} />
+
             {/* Legacy redirects */}
             <Route path="/app/nexus" element={<Shell><Explore /></Shell>} />
             <Route path="/app/work" element={<Shell><MyWork /></Shell>} />
             <Route path="/app/my-work" element={<Shell><MyWork /></Shell>} />
-            <Route path="/app/build-log" element={<Shell><MyWork /></Shell>} />
             <Route path="/app/challenges" element={<Shell><Opportunities /></Shell>} />
             <Route path="/app/messages" element={<Shell><Pings /></Shell>} />
 
