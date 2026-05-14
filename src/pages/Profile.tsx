@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import { fixStorageUrl } from "@/components/ui/AvatarSquare";
+import VerifiedBadge from "@/components/VerifiedBadge";
 import { cleanUsername } from "@/lib/cleanUsername";
 import { SUBTYPE_OPTIONS, hasSubtypes } from "@/lib/roleSubtypes";
 import { getDisplayFlags, safeDisplayName } from "@/utils/displayProfile";
@@ -889,9 +890,23 @@ const Profile = () => {
 
             {/* RIGHT COLUMN: Info */}
             <div className="profile-info-body" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
-              {/* ROW 1: Name + optional Open to work pill */}
+              {/* ROW 1: Name + verified badge + optional Open to work pill */}
               <div className="flex items-center flex-wrap" style={{ gap: 8 }}>
                 <p style={{ fontSize: 20, fontWeight: 700, lineHeight: "28px", color: "#1A1A2E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</p>
+                {isVerified && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="cursor-default">
+                          <VerifiedBadge size={20} />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                        <span>{(profileData as any).verification_badge_text || "Tiiked — identity verified"}</span>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
                 {showOTW && (
                   <span
                     style={{
@@ -1252,6 +1267,7 @@ const Profile = () => {
               posts={userPosts}
               stats={stats}
               username={username}
+              isOwnProfile={isOwnProfile}
             />
           </div>
         </div>

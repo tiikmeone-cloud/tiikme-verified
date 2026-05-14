@@ -480,6 +480,9 @@ const PostCard = ({
               <span className="shrink-0" style={{ fontSize: 13, color: "#9CA3C0" }}>{timeAgo}</span>
               {isEdited && <span className="shrink-0" style={{ fontSize: 11, fontStyle: "italic", color: "#9CA3C0" }}>(edited)</span>}
             </div>
+            {viaName && (
+              <p style={{ fontSize: 11, color: "#9CA3C0", marginTop: 1 }}>via {viaName}</p>
+            )}
           </div>
 
           {/* Three-dot menu — solid white dropdown */}

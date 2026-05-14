@@ -121,6 +121,7 @@ const AppRoutes = () => {
             {/* App (protected) */}
             <Route path="/app/home" element={<Shell><Feed /></Shell>} />
             <Route path="/app/feed" element={<Shell><Feed /></Shell>} />
+            <Route path="/app/post/create" element={<Shell><PostCreate /></Shell>} />
             <Route path="/app/post/:postId" element={<Shell><PostDetail /></Shell>} />
             <Route path="/app/explore" element={<Shell><Explore /></Shell>} />
             <Route path="/app/profile" element={<Shell><Profile /></Shell>} />

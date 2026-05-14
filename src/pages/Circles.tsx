@@ -145,7 +145,7 @@ function CirclesDiscovery() {
 
         <TabsContent value="joined" className="mt-5">
           {loadingCircles ? (
-            <p className="text-center text-neutral-500 text-[13px] py-10">Loading...</p>
+            <CirclesSkeleton />
           ) : yourCircles.length === 0 ? (
             <CirclesEmptyState
               title="You haven't joined any circles yet"
@@ -181,7 +181,7 @@ function CirclesDiscovery() {
             })}
           </div>
           {loadingCircles ? (
-            <p className="text-center text-neutral-500 text-[13px] py-10">Loading...</p>
+            <CirclesSkeleton />
           ) : discover.length === 0 ? (
             <CirclesEmptyState title="No circles match" hint="Try a different filter or search term." />
           ) : (
@@ -191,7 +191,7 @@ function CirclesDiscovery() {
 
         <TabsContent value="trending" className="mt-5">
           {loadingCircles ? (
-            <p className="text-center text-neutral-500 text-[13px] py-10">Loading...</p>
+            <CirclesSkeleton />
           ) : trending.length === 0 ? (
             <CirclesEmptyState title="Nothing trending right now" hint="Check back later." />
           ) : (
@@ -199,6 +199,27 @@ function CirclesDiscovery() {
           )}
         </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+function CirclesSkeleton() {
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 animate-pulse">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="rounded-2xl border border-neutral-200 bg-white overflow-hidden">
+          <div className="h-24 bg-neutral-100" />
+          <div className="p-4 space-y-2">
+            <div className="h-3.5 w-3/4 rounded-full bg-neutral-200" />
+            <div className="h-3 w-full rounded-full bg-neutral-100" />
+            <div className="h-3 w-4/5 rounded-full bg-neutral-100" />
+            <div className="flex justify-between mt-3">
+              <div className="h-3 w-16 rounded-full bg-neutral-100" />
+              <div className="h-7 w-14 rounded-lg bg-neutral-200" />
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
