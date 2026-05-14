@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import { PageSEO } from "@/hooks/usePageSEO";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import { Link2, Search, MessageCircle, Compass, MoreHorizontal, Clock, UserPlus, UserX, BellOff, Ban, Flag, ChevronDown, Eye } from "lucide-react";
@@ -257,6 +258,7 @@ const Connections = () => {
 
   return (
     <main style={{ maxWidth: 960, margin: "0 auto", padding: 16 }}>
+      <PageSEO title="My Connections | Tiikme" description="Manage your professional connections and pending requests on Tiikme." noIndex />
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">

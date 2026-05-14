@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrgSubscription } from "@/hooks/useOrgSubscription";
 import { DISPLAY_PREFERENCE_OPTIONS, DEFAULT_DISPLAY_PREFERENCE, type DisplayPreference } from "@/utils/displayProfile";
+import { PageSEO } from "@/hooks/usePageSEO";
 import LinkedAccounts from "@/components/settings/LinkedAccounts";
 
 const baseNavItems = [
@@ -576,6 +577,8 @@ const SettingsPage = () => {
   const shareEmail = () => window.open(`mailto:?subject=${encodeURIComponent("Join Tiikme")}&body=${encodeURIComponent(inviteMessage)}`, "_blank");
 
   return (
+    <>
+    <PageSEO title="Settings | Tiikme" description="Manage your Tiikme account settings, privacy, and preferences." noIndex />
     <motion.div
       animate={loggingOut ? { scale: 0.97, opacity: 0 } : { scale: 1, opacity: 1 }}
       transition={{ duration: 0.5, ease: "easeInOut" }}
@@ -822,6 +825,7 @@ const SettingsPage = () => {
         </div>
       </div>
     </motion.div>
+    </>
   );
 };
 

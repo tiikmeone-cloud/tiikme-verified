@@ -18,6 +18,7 @@ import CommentPanel from "@/components/comments/CommentPanel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CircleGrid } from "@/components/circles/CircleGridCard";
 import { CreateCircleButton } from "@/components/circles/CreateCircleButton";
+import { PageSEO } from "@/hooks/usePageSEO";
 
 type CircleRecord = any;
 
@@ -103,6 +104,7 @@ function CirclesDiscovery() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 md:px-6 pt-6 pb-24 md:pb-12 space-y-6 md:space-y-8">
+      <PageSEO title="Circles | Tiikme" description="Join professional circles to connect with peers in your industry, city, or role. Verified community spaces on Tiikme." noIndex />
       {/* Header */}
       <header className="flex items-start justify-between gap-4">
         <div>

@@ -14,6 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import OrgVerificationRouting from "@/components/verification/OrgVerificationRouting";
 import { isCreatorOrg } from "@/lib/orgTypes";
+import { PageSEO, orgSEO } from "@/hooks/usePageSEO";
 
 const AVATAR_COLORS = ["#E8733A", "#4A90D9", "#34C759", "#FF6B9D", "#8B5CF6", "#FFB800"];
 const hashColor = (s: string) => AVATAR_COLORS[Math.abs([...s].reduce((a, c) => a + c.charCodeAt(0), 0)) % AVATAR_COLORS.length];
@@ -153,8 +154,22 @@ export default function OrganizationPage() {
   if (org.employee_count) infoCards.push({ label: teamSizeLabel, value: org.employee_count });
   if (org.website_url) infoCards.push({ label: "Website", value: org.website_url.replace(/https?:\/\//, "") });
 
+  const seoProps = orgSEO({
+    name: org.name,
+    tagline: org.tagline,
+    about: org.about,
+    logo_url: org.logo_url,
+    cover_url: org.cover_url,
+    city: org.city,
+    state: org.state,
+    page_type: org.type,
+    slug: org.slug,
+    member_count: org.member_count,
+  });
+
   return (
     <div className="min-h-screen pb-8">
+      <PageSEO {...seoProps} />
       <div style={{ maxWidth: 960, margin: "0 auto", padding: 16 }}>
 
         {/* ── PROFILE INFO CARD (matching user profile style) ── */}

@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PostPreviewCard } from "@/components/profile/ProfileSections";
 import { fixStorageUrl } from "@/components/ui/AvatarSquare";
 import MentionText from "@/components/feed/MentionText";
+import { PageSEO } from "@/hooks/usePageSEO";
 
 type ViewMode = "grid" | "list";
 
@@ -93,6 +94,12 @@ const ProfilePosts = () => {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 pb-24 pt-6 md:px-6">
+      <PageSEO
+        title={`${displayName} — Posts | Tiikme`}
+        description={`All posts by ${displayName} on Tiikme. Verified professional insights, updates, and industry knowledge.`}
+        canonical={`https://tiikme.com/${cleanUsername}/posts`}
+        ogType="profile"
+      />
       <header className="flex items-center justify-between gap-4">
         <div>
           <Link to={`/${cleanUsername}`} className="text-sm text-muted-foreground hover:text-foreground">← {displayName}</Link>

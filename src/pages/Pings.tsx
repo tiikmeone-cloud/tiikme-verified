@@ -11,6 +11,7 @@ import { useConversations } from "@/hooks/useConversations";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import EncryptionKeyManager from "@/components/pings/EncryptionKeyManager";
+import { PageSEO } from "@/hooks/usePageSEO";
 
 import { validateUpload } from "@/lib/uploadValidation";
 import { resolveMessageAttachmentUrl, safeAttachmentPath } from "@/lib/privateAttachments";
@@ -261,6 +262,7 @@ const Pings = () => {
 
   return (
     <div className="flex relative" style={{ height: "calc(100vh - 52px)", maxHeight: "calc(100dvh - 52px - env(safe-area-inset-bottom, 0px))" }}>
+      <PageSEO title="Pings | Tiikme" description="End-to-end encrypted messages on Tiikme." noIndex />
       <input ref={fileInputRef} type="file" accept="image/*,.pdf,.doc,.docx" className="hidden" onChange={handleFileSelect} />
 
       {/* Left panel */}

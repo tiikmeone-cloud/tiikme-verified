@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import AvatarSquare from "@/components/ui/AvatarSquare";
+import { PageSEO } from "@/hooks/usePageSEO";
 
 const ICON_MAP: Record<string, any> = {
   strand: Link2, hr: Briefcase, verified: Shield, work: Target, score: TrendingUp,
@@ -201,6 +202,7 @@ const Alerts = () => {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
+      <PageSEO title="Alerts | Tiikme" description="Your Tiikme alerts and notifications." noIndex />
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
           <Bell className="w-6 h-6" style={{ color: "#E8733A" }} />

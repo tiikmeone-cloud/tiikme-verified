@@ -13,6 +13,7 @@ import HorizontalCarousel from "@/components/explore/HorizontalCarousel";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import { getOrgTypeConfig } from "@/lib/orgTypes";
 import { sendConnectionRequest } from "@/hooks/useConnectionStatus";
+import { PageSEO } from "@/hooks/usePageSEO";
 
 /* ─────────── Helpers ─────────── */
 const HASHTAG_RE = /#([\p{L}0-9_]{2,40})/gu;
@@ -354,6 +355,7 @@ const Explore = () => {
 
   return (
     <main className="mx-auto max-w-6xl px-4 md:px-6 pt-4 pb-24 md:pb-12">
+      <PageSEO title="Explore | Tiikme" description="Discover verified professionals, organizations, circles, and opportunities on Tiikme." noIndex />
       {/* Sticky top bar */}
       <div style={{ position: "sticky", top: 0, zIndex: 20, background: "var(--bg-base)", paddingBottom: 12 }}>
         {/* Search */}
