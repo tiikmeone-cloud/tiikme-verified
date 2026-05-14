@@ -35,7 +35,6 @@ import { sendNotification } from "@/lib/notify";
 import VerificationRequest from "@/components/profile/VerificationRequest";
 import VerificationStatusCard from "@/components/verification/VerificationStatusCard";
 import CertificatesSection from "@/components/profile/CertificatesSection";
-import ActivityScoreRing from "@/components/ActivityScoreRing";
 import { getActivityTier } from "@/lib/algorithms";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle
