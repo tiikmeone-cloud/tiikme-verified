@@ -52,16 +52,20 @@ const Index = () => {
         }}
       />
       <Navbar />
-      <HeroSection />
+      <main>
+        <HeroSection />
+        <Suspense fallback={null}>
+          <ProblemSection />
+          <HowItWorksSection />
+          <WhoIsForSection />
+          <CirclesSection />
+          <InstitutionsSection />
+          <ComparisonSection />
+          <VisionSection />
+          <CTASection />
+        </Suspense>
+      </main>
       <Suspense fallback={null}>
-        <ProblemSection />
-        <HowItWorksSection />
-        <WhoIsForSection />
-        <CirclesSection />
-        <InstitutionsSection />
-        <ComparisonSection />
-        <VisionSection />
-        <CTASection />
         <Footer />
         <AuthThemeToggle />
       </Suspense>
