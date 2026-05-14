@@ -59,6 +59,7 @@ const CircleCreate = lazyWithRetry(() => import("./pages/CircleCreate.tsx"), "Ci
 const VerificationInbox = lazyWithRetry(() => import("./pages/VerificationInbox.tsx"), "VerificationInbox");
 const Academy = lazyWithRetry(() => import("./pages/Academy.tsx"), "Academy");
 const BuildLog = lazyWithRetry(() => import("./pages/BuildLog.tsx"), "BuildLog");
+const AcceptAdminInvite = lazyWithRetry(() => import("./pages/AcceptAdminInvite.tsx"), "AcceptAdminInvite");
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -107,6 +108,7 @@ const AppRoutes = () => {
             
             <Route path="/reset-password" element={<PageErrorBoundary><ResetPassword /></PageErrorBoundary>} />
             <Route path="/join-as-institution" element={<PageErrorBoundary><JoinAsInstitution /></PageErrorBoundary>} />
+            <Route path="/accept-admin-invite" element={<PageErrorBoundary><AcceptAdminInvite /></PageErrorBoundary>} />
 
             <Route path="/certificate/:id" element={<PageErrorBoundary><CertificatePage /></PageErrorBoundary>} />
             <Route path="/create-page" element={<Shell><CreatePage /></Shell>} />
