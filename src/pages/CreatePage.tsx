@@ -1,3 +1,4 @@
+import { PageSEO } from "@/hooks/usePageSEO";
 import { useState } from "react";
 import { ArrowLeft, ArrowRight, GraduationCap, Building2, Landmark, Hospital, Palette, Radio, Upload, Plus, X, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,7 @@ const CreatePage = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12" style={{ background: "var(--bg)" }}>
+      <PageSEO title="Register Your Organization | Tiikme" description="Add your company, institution, or government body to Tiikme's verified professional network." noIndex />
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-[560px]">
         <h1 className="text-[24px] font-extrabold text-center mb-2" style={{ color: "var(--text-1)" }}>Create a Tiikme Page</h1>
         <p className="text-[14px] text-center mb-8" style={{ color: "var(--text-2)" }}>Build your organisation's presence on Tiikme</p>

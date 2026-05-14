@@ -1,3 +1,4 @@
+import { PageSEO } from "@/hooks/usePageSEO";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
@@ -78,6 +79,7 @@ const ProjectHub = () => {
 
   return (
     <main className="max-w-5xl mx-auto px-4 py-6 space-y-5">
+      <PageSEO title="Project Hub | Tiikme" description="Manage your verified projects and team collaboration on Tiikme." noIndex />
       <Link to="/app/teams" className="flex items-center gap-1.5 text-[13px] font-medium active:scale-95" style={{ color: "var(--text-3)" }}>
         <ArrowLeft className="w-4 h-4" /> Back to Teams & Projects
       </Link>

@@ -1,3 +1,4 @@
+import { PageSEO } from "@/hooks/usePageSEO";
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Zap, Link2, Users, Copy } from "lucide-react";
@@ -33,6 +34,8 @@ const Welcome = () => {
   }, [navigate]);
 
   return (
+    <>
+    <PageSEO title="Welcome to Tiikme" description="You're in. Start building your verified professional identity on Tiikme." noIndex />
     <motion.div
       animate={exiting ? { scale: 0.96, opacity: 0 } : { scale: 1, opacity: 1 }}
       transition={{ duration: 0.5, ease: "easeInOut" }}
@@ -106,6 +109,7 @@ const Welcome = () => {
         </motion.div>
       </div>
     </motion.div>
+    </>
   );
 };
 

@@ -1,3 +1,4 @@
+import { PageSEO } from "@/hooks/usePageSEO";
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
@@ -185,6 +186,7 @@ const MyWork = () => {
 
   return (
     <div className="max-w-[960px] mx-auto px-3 md:px-6 py-7">
+      <PageSEO title="My Work | Tiikme" description="Your verified professional record on Tiikme. Track projects, roles, and contributions." noIndex />
       <div className="flex items-center justify-between mb-1">
         <h1 className="text-[20px] font-extrabold" style={{ color: "var(--text-1)" }}>My Work</h1>
         <Button onClick={() => setAddOpen(true)} className="gap-1.5"><Plus className="w-4 h-4" /> Add work</Button>

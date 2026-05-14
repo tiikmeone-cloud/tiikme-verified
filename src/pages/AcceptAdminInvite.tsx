@@ -4,6 +4,7 @@
  * the org_admins row is inserted. Renders inside the unified Tiikme
  * AuthLayout (Glass on Midnight).
  */
+import { PageSEO } from "@/hooks/usePageSEO";
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { ShieldCheck, Building2 } from "lucide-react";
@@ -113,6 +114,8 @@ export default function AcceptAdminInvite() {
   };
 
   return (
+    <>
+    <PageSEO title="Accept Admin Invite | Tiikme" description="Accept your organization admin invitation on Tiikme." noIndex />
     <AuthLayout>
       <div className="flex items-center gap-3 mb-5">
         <div className="w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center bg-brand/15">
@@ -165,5 +168,6 @@ export default function AcceptAdminInvite() {
         </div>
       )}
     </AuthLayout>
+    </>
   );
 }

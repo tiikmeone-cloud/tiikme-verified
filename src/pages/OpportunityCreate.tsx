@@ -1,3 +1,4 @@
+import { PageSEO } from "@/hooks/usePageSEO";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Briefcase, Clock, Code, GraduationCap, Hammer, Trophy, Users, MapPin, Zap, ChevronDown, ChevronUp, Plus, X, DollarSign, CalendarDays } from "lucide-react";
@@ -199,6 +200,7 @@ export default function OpportunityCreate() {
 
   return (
     <main className="max-w-[720px] mx-auto px-4 py-6">
+      <PageSEO title="Post an Opportunity | Tiikme" description="Create a job, internship, or project opportunity on Tiikme for verified professionals." noIndex />
       <button type="button" onClick={() => step > 1 ? setStep(step - 1) : navigate(-1)} className="flex items-center gap-2 text-[14px] font-semibold cursor-pointer mb-5 min-h-[44px]" style={{ color: "var(--text-2)" }}>
         <ArrowLeft className="w-5 h-5" /> {step === 1 ? "Back" : "Previous Step"}
       </button>

@@ -1,3 +1,4 @@
+import { PageSEO } from "@/hooks/usePageSEO";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Layers, Plus, ExternalLink, Copy, Users, Settings, Eye, Shield, PlayCircle, Target, Briefcase, Wrench, BookOpen, GraduationCap, Rocket, Heart, Info } from "lucide-react";
@@ -99,6 +100,7 @@ const MyWork = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
+      <PageSEO title="Build Log | Tiikme" description="Track your verified professional projects and build history on Tiikme." noIndex />
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-3">
           <Layers className="w-7 h-7 text-electric" />

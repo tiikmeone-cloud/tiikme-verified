@@ -1,3 +1,4 @@
+import { PageSEO } from "@/hooks/usePageSEO";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AvatarSquare from "@/components/ui/AvatarSquare";
@@ -137,6 +138,7 @@ export default function ApplicationsDashboard() {
 
   return (
     <div className="max-w-[1100px] mx-auto px-4 md:px-6 py-6">
+      <PageSEO title="Applications Dashboard | Tiikme" description="Review and manage candidate applications for your opportunities on Tiikme." noIndex />
       {/* Header */}
       <div className="flex items-center gap-3 mb-5">
         <button type="button" onClick={() => navigate(-1)} className="p-2 rounded-xl cursor-pointer" style={{ color: "#9CA3AF" }}>

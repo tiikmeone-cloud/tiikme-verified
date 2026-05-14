@@ -5,6 +5,7 @@
  *  - is_verified = true
  *  - max 3 circles per user per 30 days
  */
+import { PageSEO } from "@/hooks/usePageSEO";
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Hash, MapPin, Users, Briefcase, Loader2, Check, Lock } from "lucide-react";
@@ -178,6 +179,7 @@ export default function CircleCreate() {
 
   return (
     <div className="min-h-screen pb-28" style={{ background: "var(--bg)" }}>
+      <PageSEO title="Create a Circle | Tiikme" description="Start a new professional circle on Tiikme. Bring together verified experts around a shared mission." noIndex />
       <div className="max-w-[720px] mx-auto px-4 md:px-6 py-6 space-y-4">
         <button
           type="button"

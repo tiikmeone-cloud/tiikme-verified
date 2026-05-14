@@ -1,3 +1,4 @@
+import { PageSEO } from "@/hooks/usePageSEO";
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
 
@@ -10,6 +11,7 @@ const NotFound = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted">
+      <PageSEO title="404 — Page Not Found | Tiikme" description="The page you're looking for doesn't exist on Tiikme." />
       <div className="text-center">
         <h1 className="mb-4 text-4xl font-bold">404</h1>
         <p className="mb-4 text-xl text-muted-foreground">Oops! Page not found</p>

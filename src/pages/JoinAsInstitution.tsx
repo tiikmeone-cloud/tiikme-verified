@@ -1,3 +1,4 @@
+import { PageSEO } from "@/hooks/usePageSEO";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -50,6 +51,8 @@ export default function JoinAsInstitution() {
   }, [isPersonal]);
 
   return (
+    <>
+    <PageSEO title="Join as Institution | Tiikme" description="Register your institution on Tiikme's verified professional network for India." noIndex />
     <OnboardingShell step={step} totalSteps={5} showBack={step > 1} backTo={undefined}>
       {step > 1 && (
         <button
@@ -77,5 +80,6 @@ export default function JoinAsInstitution() {
         <StepPageSetup form={form} update={update} onComplete={(slug) => navigate(`/org/${slug}`, { replace: true })} />
       )}
     </OnboardingShell>
+    </>
   );
 }

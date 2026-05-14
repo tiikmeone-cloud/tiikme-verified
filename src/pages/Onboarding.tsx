@@ -16,6 +16,7 @@
  * dispatches a single supabase.from('profiles').update() with only the
  * keys the user actually filled — never null strings.
  */
+import { PageSEO } from "@/hooks/usePageSEO";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -202,6 +203,8 @@ export default function Onboarding() {
   const showBack = step > 1;
 
   return (
+    <>
+    <PageSEO title="Create Your Profile | Tiikme" description="Set up your verified professional identity on Tiikme." noIndex />
     <OnboardingShell step={step} totalSteps={TOTAL}>
       <div>
         {showBack && (
@@ -255,6 +258,7 @@ export default function Onboarding() {
         {step === 7 && <StepDisplayPref state={state} set={set} onFinish={finish} saving={saving} />}
       </div>
     </OnboardingShell>
+    </>
   );
 }
 

@@ -1,3 +1,4 @@
+import { PageSEO } from "@/hooks/usePageSEO";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import { storageImageUrl } from "@/lib/imageTransform";
 import { useState, useRef, useEffect } from "react";
@@ -158,6 +159,7 @@ const PostCreate = () => {
 
   return (
     <main className="max-w-[660px] mx-auto px-4 py-3 md:py-4">
+      <PageSEO title="Create Post | Tiikme" description="Share a verified professional update, insight, or achievement on Tiikme." noIndex />
       {/* Header */}
       <div className="flex items-center justify-between mb-4 md:mb-5">
         <button type="button" onClick={() => navigate(-1)} className="flex items-center gap-2 text-[14px] font-semibold cursor-pointer min-h-[44px]" style={{ color: "var(--text-2)" }}>

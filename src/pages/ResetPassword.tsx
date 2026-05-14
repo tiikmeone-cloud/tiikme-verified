@@ -1,3 +1,4 @@
+import { PageSEO } from "@/hooks/usePageSEO";
 import { useState } from "react";
 import { Eye, EyeOff, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
@@ -31,6 +32,8 @@ const ResetPassword = () => {
   };
 
   return (
+    <>
+    <PageSEO title="Reset Password | Tiikme" description="Set a new password for your Tiikme account." noIndex />
     <AuthLayout>
       {done ? (
         <div className="text-center">
@@ -79,6 +82,7 @@ const ResetPassword = () => {
         </>
       )}
     </AuthLayout>
+    </>
   );
 };
 

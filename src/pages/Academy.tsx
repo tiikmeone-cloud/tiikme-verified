@@ -1,3 +1,4 @@
+import { PageSEO } from "@/hooks/usePageSEO";
 import { useState, useEffect } from "react";
 import { GraduationCap, Clock, Zap, CheckCircle, ArrowRight, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -295,6 +296,7 @@ const Academy = () => {
 
   return (
     <main className="max-w-[960px] mx-auto px-4 md:px-6 py-7">
+      <PageSEO title="Tiikme Academy | Tiikme" description="Learn, grow, and earn credentials on Tiikme Academy. Verified professional development for India's trust economy." noIndex />
       <div className="text-center mb-8">
         <div className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center" style={{ background: "var(--brand-dim)" }}>
           <GraduationCap className="w-8 h-8" style={{ color: "var(--brand)" }} />

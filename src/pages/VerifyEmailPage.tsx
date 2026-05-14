@@ -1,3 +1,4 @@
+import { PageSEO } from "@/hooks/usePageSEO";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Mail } from "lucide-react";
@@ -81,6 +82,8 @@ export default function VerifyEmailPage() {
   };
 
   return (
+    <>
+    <PageSEO title="Verify Your Email | Tiikme" description="Check your inbox and verify your email to complete registration on Tiikme." noIndex />
     <AuthLayout step={2} totalSteps={5} showBack backTo="/signup">
       <div className="text-center">
         <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-brand/15">
@@ -140,5 +143,6 @@ export default function VerifyEmailPage() {
         .animate-shake { animation: shake 0.4s ease-in-out; }
       `}</style>
     </AuthLayout>
+    </>
   );
 }

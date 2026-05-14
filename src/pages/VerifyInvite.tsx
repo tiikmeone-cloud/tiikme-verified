@@ -1,3 +1,4 @@
+import { PageSEO } from "@/hooks/usePageSEO";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Shield, ArrowRight, X } from "lucide-react";
@@ -110,6 +111,8 @@ const VerifyInvite = () => {
   const projectName = params.get("project") || "TelemedicineRx";
 
   return (
+    <>
+    <PageSEO title="Verify Your Invite | Tiikme" description="Confirm your invitation and join your team on Tiikme." noIndex />
     <AuthLayout maxWidth={460}>
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center">
         <Link to="/" className="text-[20px] font-extrabold text-paper mb-8 block">Tiikme</Link>
@@ -159,6 +162,7 @@ const VerifyInvite = () => {
 
       <OTPModal open={otpOpen} onClose={() => setOtpOpen(false)} />
     </AuthLayout>
+    </>
   );
 };
 
