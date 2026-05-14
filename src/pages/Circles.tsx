@@ -321,7 +321,15 @@ function CircleDetail({ slug }: { slug: string }) {
     }
   };
 
-  if (!circle) return <p style={{ textAlign: "center", color: "#6B7094", fontSize: 13, padding: 32 }}>Loading circle...</p>;
+  if (!circle) return (
+    <div style={{ maxWidth: 720, margin: "0 auto" }} className="px-4 py-6 animate-pulse space-y-4">
+      <div className="h-8 w-24 rounded-lg bg-neutral-200" />
+      <div className="h-40 rounded-2xl bg-neutral-200" />
+      <div className="h-4 w-3/4 rounded-full bg-neutral-100" />
+      <div className="h-4 w-1/2 rounded-full bg-neutral-100" />
+      {[1, 2, 3].map(i => <div key={i} className="h-24 rounded-2xl bg-neutral-100" />)}
+    </div>
+  );
 
   const conf = (CIRCLE_TYPE_CONFIG as any)[circle.type] || CIRCLE_TYPE_CONFIG.topic;
   const Icon = conf.icon;
