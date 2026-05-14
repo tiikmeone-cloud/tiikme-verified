@@ -55,6 +55,7 @@ const ApplicationsDashboard = lazyWithRetry(() => import("./pages/ApplicationsDa
 const OpportunityCreate = lazyWithRetry(() => import("./pages/OpportunityCreate.tsx"), "OpportunityCreate");
 const WorkspacePage = lazyWithRetry(() => import("./pages/Workspace.tsx"), "WorkspacePage");
 const CirclesPage = lazyWithRetry(() => import("./pages/Circles.tsx"), "CirclesPage");
+const CircleCreate = lazyWithRetry(() => import("./pages/CircleCreate.tsx"), "CircleCreate");
 const VerificationInbox = lazyWithRetry(() => import("./pages/VerificationInbox.tsx"), "VerificationInbox");
 const Academy = lazyWithRetry(() => import("./pages/Academy.tsx"), "Academy");
 const BuildLog = lazyWithRetry(() => import("./pages/BuildLog.tsx"), "BuildLog");
@@ -136,6 +137,7 @@ const AppRoutes = () => {
             <Route path="/app/opportunities/:id/applications" element={<Shell><ApplicationsDashboard /></Shell>} />
             <Route path="/app/workspace" element={<Navigate to="/app/circles" replace />} />
             <Route path="/app/circles" element={<Shell><CirclesPage /></Shell>} />
+            <Route path="/app/circles/create" element={<Shell><CircleCreate /></Shell>} />
             <Route path="/app/circles/:circleSlug" element={<Shell><CirclesPage /></Shell>} />
             <Route path="/app/connections" element={<Shell><ConnectionsPage /></Shell>} />
             <Route path="/app/strands" element={<Shell><Strands /></Shell>} />

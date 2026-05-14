@@ -57,7 +57,7 @@ const FrostedProfileCard = ({ name, initials, role, roleColor, institution, head
               style={{ backgroundColor: `${roleColor}14`, color: roleColor }}>
               {role}
             </span>
-            <Link to="/app/institution/1" className="text-[10px] text-t3 hover:text-brand transition-colors">{institution}</Link>
+            <span className="text-[10px] text-t3">{institution}</span>
           </div>
           <p className="text-[12px] text-t2 mt-2 line-clamp-2 leading-relaxed">{headline}</p>
           {contextBadge && (

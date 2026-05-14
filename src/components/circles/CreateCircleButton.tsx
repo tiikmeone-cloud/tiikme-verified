@@ -64,7 +64,7 @@ export function CreateCircleButton() {
           />
         </ul>
         <Link
-          to="/app/settings/profile"
+          to="/app/settings"
           className="block mt-4 text-[13px] font-semibold"
           style={{ color: "#FF5A1F" }}
         >

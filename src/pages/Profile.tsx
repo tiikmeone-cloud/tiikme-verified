@@ -200,10 +200,24 @@ const ContactSection = ({ isOwnProfile, profile, userEmail }: { isOwnProfile: bo
 
 /* ═══════════ MAIN PROFILE ═══════════ */
 const Profile = () => {
-  const { id: urlUserId } = useParams<{ id: string }>();
+  // /app/profile/:id uses { id }, /:username uses { username }
+  const { id: urlUserId, username: urlUsername } = useParams<{ id?: string; username?: string }>();
   const { profile: authProfile, initials: authInitials, displayName: authDisplayName, refreshProfile, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const isOwnProfile = !urlUserId || urlUserId === user?.id;
+  const [resolvedUserId, setResolvedUserId] = useState<string | null>(null);
+
+  // Resolve username → uuid when visiting the public /:username route
+  useEffect(() => {
+    if (!urlUsername) { setResolvedUserId(null); return; }
+    supabase.from("profiles").select("id").eq("username", urlUsername).maybeSingle()
+      .then(({ data }) => {
+        if (data?.id) setResolvedUserId(data.id);
+        else setResolvedUserId("not-found");
+      });
+  }, [urlUsername]);
+
+  const effectiveId = urlUserId || (urlUsername ? resolvedUserId : undefined);
+  const isOwnProfile = !effectiveId || effectiveId === user?.id;
 
   useEffect(() => {
     if (isOwnProfile && authProfile?.account_type === "institution" && authProfile?.org_id) {
@@ -245,7 +259,7 @@ const Profile = () => {
   const [connectLoading, setConnectLoading] = useState(false);
   const [showScoreDetails, setShowScoreDetails] = useState(false);
 
-  const targetUserId = isOwnProfile ? user?.id : urlUserId;
+  const targetUserId = isOwnProfile ? user?.id : (effectiveId || undefined);
 
   // Get user email
   useEffect(() => {
@@ -305,7 +319,7 @@ const Profile = () => {
 
   useEffect(() => { if (!authLoading) loadProfile(); }, [authLoading, loadProfile]);
 
-  if (authLoading || dataLoading) return (
+  if (authLoading || dataLoading || (urlUsername && !resolvedUserId)) return (
     <div className="min-h-screen" style={{ background: "transparent" }}>
       <div style={{ maxWidth: 960, margin: "0 auto", padding: 16 }}>
         <div className="animate-pulse space-y-3">
@@ -320,6 +334,12 @@ const Profile = () => {
     </div>
   );
   if (!user && isOwnProfile) return null;
+  if (resolvedUserId === "not-found") return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
+      <p style={{ fontSize: 16, fontWeight: 700, color: "#1A1A2E" }}>Profile not found</p>
+      <button type="button" onClick={() => navigate("/app/explore")} className="cursor-pointer" style={{ fontSize: 13, marginTop: 8, color: "#E8733A", background: "none", border: "none" }}>Back to Explore</button>
+    </div>
+  );
 
   const rawProfileData = viewedProfile || authProfile;
   if (!rawProfileData) return (

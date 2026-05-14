@@ -225,6 +225,54 @@ export default function ApplicationsDashboard() {
           })}
         </div>
 
+        {/* Mobile detail sheet — slides up when an applicant is selected */}
+        {selectedApp && (
+          <div
+            className="md:hidden fixed inset-0 z-50 flex items-end"
+            style={{ background: "rgba(0,0,0,0.45)" }}
+            onClick={() => setSelectedApp(null)}
+          >
+            <div
+              className="w-full rounded-t-2xl overflow-y-auto"
+              style={{ background: "#fff", maxHeight: "85vh", padding: 20 }}
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-[16px] font-extrabold" style={{ color: "#1A1A1A" }}>{selectedApp.applicant?.full_name}</p>
+                <button type="button" onClick={() => setSelectedApp(null)} style={{ background: "none", border: "none", cursor: "pointer" }}>
+                  <XCircle className="w-5 h-5" style={{ color: "#9CA3AF" }} />
+                </button>
+              </div>
+              {/* Reuse the same detail content block */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <AvatarSquare src={selectedApp.applicant?.avatar_url} name={selectedApp.applicant?.full_name || "?"} size="lg" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px]" style={{ color: "#9CA3AF" }}>{selectedApp.applicant?.headline || selectedApp.applicant?.role}</p>
+                    {selectedApp.applicant?.location_city && <p className="text-[11px]" style={{ color: "#9CA3AF" }}>{selectedApp.applicant.location_city}</p>}
+                  </div>
+                  <ActivityScoreRing score={selectedApp.applicant?.activity_score || 0} size={40} />
+                </div>
+                {selectedApp.why_good_fit && <p className="text-[13px]" style={{ color: "#1A1A1A" }}>{selectedApp.why_good_fit}</p>}
+                {selectedApp.cover_letter && <p className="text-[13px]" style={{ color: "#1A1A1A" }}>{selectedApp.cover_letter}</p>}
+                <div className="flex gap-2 flex-wrap">
+                  {selectedApp.resume_url && (
+                    <button type="button" onClick={() => openResume(selectedApp.resume_url)} className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-bold" style={{ background: "#FEF3E8", color: "#FF5A1F", border: "1px solid #FF5A1F" }}>
+                      <FileText className="w-3.5 h-3.5" /> Resume
+                    </button>
+                  )}
+                  <Button variant="secondary" size="sm" onClick={() => contactViaPings(selectedApp.applicant_id)}>
+                    <MessageCircle className="w-3.5 h-3.5 mr-1" /> Ping
+                  </Button>
+                  {selectedApp.status !== "shortlisted" && <Button size="sm" onClick={() => { updateStatus(selectedApp.id, "shortlisted"); setSelectedApp(null); }}><CheckCircle className="w-3.5 h-3.5 mr-1" /> Shortlist</Button>}
+                  {selectedApp.status !== "selected" && <Button size="sm" onClick={() => { updateStatus(selectedApp.id, "selected"); setSelectedApp(null); }} style={{ background: "#059669" }}><Shield className="w-3.5 h-3.5 mr-1" /> Select</Button>}
+                  {selectedApp.status !== "rejected" && <Button variant="destructive" size="sm" onClick={() => { updateStatus(selectedApp.id, "rejected"); setSelectedApp(null); }}><XCircle className="w-3.5 h-3.5 mr-1" /> Reject</Button>}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Right — Detail panel */}
         <div className="hidden md:block flex-1">
           <GlassBox accent="identity" className="h-full">

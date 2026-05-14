@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { MessageCircle, Search, Send, Paperclip, PenSquare, X, Shield, ArrowLeft, FileText, Briefcase, Download, Trash2, ArrowUp, Image as ImageIcon, Lock, Key } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import EmptyState from "@/components/EmptyState";
 import { useAuth } from "@/contexts/AuthContext";
 import { useConversations } from "@/hooks/useConversations";
@@ -127,6 +127,8 @@ function MessageAttachment({ msg, isMe }: { msg: any; isMe: boolean }) {
 }
 
 const Pings = () => {
+  const { id: routeConvoId } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const { user, profile } = useAuth();
   const { conversations, loading, activeConvoId, messages, messagesLoading, loadMessages, sendMessage, deleteMessage, findOrCreateConversation } = useConversations(user?.id);
   const [tab, setTab] = useState<"chats" | "applications" | "requests">("chats");
@@ -154,6 +156,18 @@ const Pings = () => {
   );
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+
+  // Auto-open conversation from route param (/app/pings/:id) or ?to= query param
+  useEffect(() => {
+    if (loading) return;
+    if (routeConvoId) {
+      loadMessages(routeConvoId);
+      setShowMobileList(false);
+    } else {
+      const toUserId = searchParams.get("to");
+      if (toUserId) startConversation(toUserId);
+    }
+  }, [loading, routeConvoId, searchParams.get("to")]);
 
   // Mark all incoming pings as read when the page opens
   useEffect(() => {
