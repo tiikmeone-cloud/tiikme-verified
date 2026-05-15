@@ -14,6 +14,159 @@ export type Database = {
   }
   public: {
     Tables: {
+      _backup_profiles_20260515: {
+        Row: {
+          id: string | null
+          is_verified: boolean | null
+          verification_badge_text: string | null
+          verification_type: string | null
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          id?: string | null
+          is_verified?: boolean | null
+          verification_badge_text?: string | null
+          verification_type?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          id?: string | null
+          is_verified?: boolean | null
+          verification_badge_text?: string | null
+          verification_type?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: []
+      }
+      _backup_pvs_20260515: {
+        Row: {
+          created_at: string | null
+          evidence_id: string | null
+          evidence_type: string | null
+          expires_at: string | null
+          id: string | null
+          issued_at: string | null
+          issuer_org_id: string | null
+          metadata: Json | null
+          request_id: string | null
+          revoked_at: string | null
+          revoked_reason: string | null
+          status: string | null
+          subject_user_id: string | null
+          target_item_id: string | null
+          updated_at: string | null
+          verification_type: string | null
+          verifier_user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          evidence_id?: string | null
+          evidence_type?: string | null
+          expires_at?: string | null
+          id?: string | null
+          issued_at?: string | null
+          issuer_org_id?: string | null
+          metadata?: Json | null
+          request_id?: string | null
+          revoked_at?: string | null
+          revoked_reason?: string | null
+          status?: string | null
+          subject_user_id?: string | null
+          target_item_id?: string | null
+          updated_at?: string | null
+          verification_type?: string | null
+          verifier_user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          evidence_id?: string | null
+          evidence_type?: string | null
+          expires_at?: string | null
+          id?: string | null
+          issued_at?: string | null
+          issuer_org_id?: string | null
+          metadata?: Json | null
+          request_id?: string | null
+          revoked_at?: string | null
+          revoked_reason?: string | null
+          status?: string | null
+          subject_user_id?: string | null
+          target_item_id?: string | null
+          updated_at?: string | null
+          verification_type?: string | null
+          verifier_user_id?: string | null
+        }
+        Relationships: []
+      }
+      _backup_vec_20260515: {
+        Row: {
+          claim_kind: string | null
+          claimed_role: string | null
+          created_at: string | null
+          evidence_id: string | null
+          expires_at: string | null
+          id: string | null
+          issuer_org_id: string | null
+          metadata: Json | null
+          org_id: string | null
+          org_member_id: string | null
+          request_id: string | null
+          revoked_at: string | null
+          revoked_reason: string | null
+          role_category: string | null
+          status: string | null
+          subject_user_id: string | null
+          updated_at: string | null
+          verified_at: string | null
+          verifier_user_id: string | null
+        }
+        Insert: {
+          claim_kind?: string | null
+          claimed_role?: string | null
+          created_at?: string | null
+          evidence_id?: string | null
+          expires_at?: string | null
+          id?: string | null
+          issuer_org_id?: string | null
+          metadata?: Json | null
+          org_id?: string | null
+          org_member_id?: string | null
+          request_id?: string | null
+          revoked_at?: string | null
+          revoked_reason?: string | null
+          role_category?: string | null
+          status?: string | null
+          subject_user_id?: string | null
+          updated_at?: string | null
+          verified_at?: string | null
+          verifier_user_id?: string | null
+        }
+        Update: {
+          claim_kind?: string | null
+          claimed_role?: string | null
+          created_at?: string | null
+          evidence_id?: string | null
+          expires_at?: string | null
+          id?: string | null
+          issuer_org_id?: string | null
+          metadata?: Json | null
+          org_id?: string | null
+          org_member_id?: string | null
+          request_id?: string | null
+          revoked_at?: string | null
+          revoked_reason?: string | null
+          role_category?: string | null
+          status?: string | null
+          subject_user_id?: string | null
+          updated_at?: string | null
+          verified_at?: string | null
+          verifier_user_id?: string | null
+        }
+        Relationships: []
+      }
       academy_progress: {
         Row: {
           completed: boolean | null
@@ -147,6 +300,63 @@ export type Database = {
           w_profile?: number | null
         }
         Relationships: []
+      }
+      admin_audit_log: {
+        Row: {
+          action_type: string
+          actor_id: string | null
+          actor_role: string | null
+          actor_type: string
+          created_at: string
+          id: string
+          payload: Json
+          reason: string | null
+          target_id: string | null
+          target_table: string | null
+          target_user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          actor_id?: string | null
+          actor_role?: string | null
+          actor_type: string
+          created_at?: string
+          id?: string
+          payload?: Json
+          reason?: string | null
+          target_id?: string | null
+          target_table?: string | null
+          target_user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          actor_id?: string | null
+          actor_role?: string | null
+          actor_type?: string
+          created_at?: string
+          id?: string
+          payload?: Json
+          reason?: string | null
+          target_id?: string | null
+          target_table?: string | null
+          target_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_audit_log_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_audit_log_target_user_id_fkey"
+            columns: ["target_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       alerts: {
         Row: {
@@ -2069,67 +2279,6 @@ export type Database = {
           },
         ]
       }
-      org_verif_requests: {
-        Row: {
-          created_at: string | null
-          id: string
-          member_type: string | null
-          message: string | null
-          org_id: string
-          reviewed_at: string | null
-          reviewed_by: string | null
-          status: string | null
-          title_at_org: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          member_type?: string | null
-          message?: string | null
-          org_id: string
-          reviewed_at?: string | null
-          reviewed_by?: string | null
-          status?: string | null
-          title_at_org?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          member_type?: string | null
-          message?: string | null
-          org_id?: string
-          reviewed_at?: string | null
-          reviewed_by?: string | null
-          status?: string | null
-          title_at_org?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "org_verif_requests_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "org_verif_requests_reviewed_by_fkey"
-            columns: ["reviewed_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "org_verif_requests_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       org_verif_routes: {
         Row: {
           assigned_to_user_id: string | null
@@ -2577,6 +2726,67 @@ export type Database = {
             columns: ["work_item_id"]
             isOneToOne: false
             referencedRelation: "work_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_roles: {
+        Row: {
+          created_at: string
+          granted_at: string
+          granted_by: string | null
+          id: string
+          notes: string | null
+          revocation_reason: string | null
+          revoked_at: string | null
+          revoked_by: string | null
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          notes?: string | null
+          revocation_reason?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          role: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          notes?: string | null
+          revocation_reason?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_roles_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_roles_revoked_by_fkey"
+            columns: ["revoked_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -4507,45 +4717,6 @@ export type Database = {
           },
         ]
       }
-      verifications: {
-        Row: {
-          created_at: string | null
-          id: string
-          notes: string | null
-          scope: string | null
-          status: string | null
-          subject_user_id: string
-          verification_type: string | null
-          verified_at: string | null
-          verifier_user_id: string | null
-          work_item_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          notes?: string | null
-          scope?: string | null
-          status?: string | null
-          subject_user_id: string
-          verification_type?: string | null
-          verified_at?: string | null
-          verifier_user_id?: string | null
-          work_item_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          notes?: string | null
-          scope?: string | null
-          status?: string | null
-          subject_user_id?: string
-          verification_type?: string | null
-          verified_at?: string | null
-          verifier_user_id?: string | null
-          work_item_id?: string | null
-        }
-        Relationships: []
-      }
       verified_employment_claims: {
         Row: {
           claim_kind: string
@@ -5241,6 +5412,10 @@ export type Database = {
       }
     }
     Functions: {
+      approve_employer_endorsement: {
+        Args: { _endorsement_id: string }
+        Returns: Json
+      }
       approve_verification_request: {
         Args: { p_request_id: string; p_review_note?: string }
         Returns: Json
@@ -5289,6 +5464,17 @@ export type Database = {
         }
         Returns: Json
       }
+      create_notification: {
+        Args: {
+          p_action_url?: string
+          p_body?: string
+          p_data?: Json
+          p_title: string
+          p_type: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       current_user_can_manage_trust_subject: {
         Args: {
           _subject_org_id?: string
@@ -5297,7 +5483,9 @@ export type Database = {
         }
         Returns: boolean
       }
+      current_user_is_active: { Args: never; Returns: boolean }
       current_user_is_moderator: { Args: never; Returns: boolean }
+      current_user_platform_role: { Args: never; Returns: string }
       derive_requested_verification_type: {
         Args: { _entity_type: string; _org_id: string }
         Returns: string
@@ -5329,6 +5517,10 @@ export type Database = {
           role: string
           user_id: string
         }[]
+      }
+      grant_platform_role: {
+        Args: { p_notes?: string; p_role: string; p_user_id: string }
+        Returns: Json
       }
       increment_days_active: { Args: { uid: string }; Returns: undefined }
       increment_score: {
@@ -5407,6 +5599,10 @@ export type Database = {
       resolve_verification_assignee: {
         Args: { _org_id: string; _role_category: string }
         Returns: string
+      }
+      revoke_platform_role: {
+        Args: { p_reason: string; p_role: string; p_user_id: string }
+        Returns: Json
       }
       sync_legacy_verification_evidence: {
         Args: { _request_id: string }
