@@ -55,9 +55,9 @@ const GetTiikedModal = ({ open, onClose, userId, userRole, onVerified }: Props) 
   const handleEmailVerify = async () => {
     if (!email.trim()) return;
     setSending(true);
-    await supabase.from("verifications").insert({
-      subject_user_id: userId, verification_type: "email",
-      scope: "profile", status: "pending", notes: email,
+    await supabase.from("verification_requests").insert({
+      requester_id: userId, item_id: userId, item_type: "profile",
+      requested_verification_type: "email", status: "pending", context_note: email,
     });
     toast.success("Verification email sent! Check your inbox.");
     setSending(false);
