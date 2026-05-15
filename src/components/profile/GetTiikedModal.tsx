@@ -33,9 +33,10 @@ const GetTiikedModal = ({ open, onClose, userId, userRole, onVerified }: Props) 
 
   const sendPeerRequest = async (verifierId: string, verifierName: string) => {
     setSending(true);
-    const { error } = await supabase.from("verifications").insert({
-      subject_user_id: userId, verifier_user_id: verifierId,
-      verification_type: "peer", scope: "profile", status: "pending",
+    const { error } = await supabase.from("verification_requests").insert({
+      requester_id: userId, assigned_to: verifierId,
+      item_id: userId, item_type: "profile",
+      requested_verification_type: "peer", status: "pending",
     });
     if (error) { toast.error(error.message); setSending(false); return; }
     // Send alert
