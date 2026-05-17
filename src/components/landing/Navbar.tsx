@@ -43,6 +43,13 @@ const Navbar = () => {
             </a>
           ))}
           <Link
+            to="/guides"
+            className="text-[14px] font-medium transition-colors"
+            style={{ color: "#374151" }}
+          >
+            Guides
+          </Link>
+          <Link
             to="/join-as-institution"
             className="text-[14px] font-medium transition-colors"
             style={{ color: "#374151" }}
@@ -106,6 +113,14 @@ const Navbar = () => {
                   {l.label}
                 </a>
               ))}
+              <Link
+                to="/guides"
+                onClick={() => setMenuOpen(false)}
+                className="text-[18px] font-medium py-3 px-2 rounded-lg"
+                style={{ color: "#04061A" }}
+              >
+                Guides
+              </Link>
               <Link
                 to="/join-as-institution"
                 onClick={() => setMenuOpen(false)}
