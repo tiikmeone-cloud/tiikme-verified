@@ -216,13 +216,23 @@ export default function CircleCreate() {
             style={{ background: "rgba(245,158,11,0.10)", border: "1px solid rgba(245,158,11,0.40)" }}
           >
             <Lock className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "#92400E" }} />
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="text-[13px] font-bold mb-1" style={{ color: "#92400E" }}>
                 Almost there — a few things to check
               </p>
-              <ul className="text-[12px] list-disc pl-4 space-y-0.5" style={{ color: "#92400E" }}>
+              <ul className="text-[12px] list-disc pl-4 space-y-0.5 mb-3" style={{ color: "#92400E" }}>
                 {blockedReasons.map((r) => <li key={r}>{r}</li>)}
               </ul>
+              {!canCreate && (
+                <button
+                  type="button"
+                  onClick={() => navigate("/onboarding")}
+                  className="cursor-pointer"
+                  style={{ fontSize: 12, fontWeight: 700, padding: "6px 14px", borderRadius: 8, background: "#FF5A1F", color: "#fff", border: "none" }}
+                >
+                  Complete Onboarding →
+                </button>
+              )}
             </div>
           </div>
         )}

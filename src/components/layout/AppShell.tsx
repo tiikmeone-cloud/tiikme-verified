@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { prefetchRoute, prefetchAdjacent } from "@/lib/prefetchRoutes";
 import { prefetchOnHover, prefetchAdjacentData } from "@/lib/prefetchData";
+import { getProfileSubtitle } from "@/lib/profileUtils";
 
 const navGroups = [
   {
@@ -67,7 +68,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
   const [unreadPings, setUnreadPings] = useState(0);
   const roleLabel = isInstitution && orgData?.type
     ? orgData.type.charAt(0).toUpperCase() + orgData.type.slice(1).replace(/_/g, " ")
-    : profile?.role ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1).replace(/_/g, " ") : "Member";
+    : getProfileSubtitle(profile) || "Member";
   const identityName = isInstitution && orgData?.name ? orgData.name : displayName;
   const identityAvatar = isInstitution && orgData?.logo_url ? orgData.logo_url : (profile?.avatar_url || null);
 
