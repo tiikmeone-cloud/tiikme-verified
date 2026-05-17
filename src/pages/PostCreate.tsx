@@ -73,7 +73,7 @@ const PostCreate = () => {
     if (!user) { toast.error("Please sign in"); return; }
     setPublishing(true);
     try {
-      let imageUrls: string[] = [];
+      const imageUrls: string[] = [];
 
       if (imageFiles.length > 0) {
         setUploading(true);

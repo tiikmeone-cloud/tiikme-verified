@@ -88,7 +88,7 @@ const Alerts = () => {
       const n = notifsRes.status === "fulfilled" ? ((notifsRes.value as any).data || []).map((x: any) => ({ ...x, _source: "notifications" })) : [];
       const merged = [...a, ...n].sort((x: any, y: any) => new Date(y.created_at).getTime() - new Date(x.created_at).getTime()).slice(0, 80);
       const actorIds = [...new Set(merged.map((x: any) => x.data?.actor_id).filter(Boolean))] as string[];
-      let actorProfiles: Record<string, any> = {};
+      const actorProfiles: Record<string, any> = {};
       if (actorIds.length > 0) {
         const { data: profiles } = await supabase.from("profiles").select("id, full_name, avatar_url, role").in("id", actorIds);
         for (const p of profiles || []) actorProfiles[p.id] = p;
