@@ -121,12 +121,12 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center" style={{ background: "rgba(0,0,0,0.5)" }} onClick={onClose}>
       <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
-        className="w-full max-w-[600px] max-h-[90vh] overflow-y-auto rounded-t-2xl md:rounded-2xl p-6"
+        className="w-full max-w-[600px] max-h-[85vh] flex flex-col rounded-t-2xl md:rounded-2xl"
         style={{ background: "#FFFFFF", boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06)" }}
         onClick={e => e.stopPropagation()}>
 
         {success ? (
-          <div className="text-center py-8">
+          <div className="text-center py-8 px-6">
             <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200, damping: 15 }}
               className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(22,163,74,0.1)" }}>
               <CheckCircle className="w-6 h-6" style={{ color: "#16A34A" }} />
@@ -137,15 +137,18 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
           </div>
         ) : (
           <>
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <h2 className="text-[20px] font-bold" style={{ color: "#1A1A1A" }}>{opportunity.title}</h2>
-                <p className="text-[14px]" style={{ color: "#9CA3AF" }}>{displayOrg}</p>
+            {/* Sticky header */}
+            <div className="flex items-center justify-between px-6 pt-5 pb-3 shrink-0" style={{ borderBottom: "1px solid #F0F0F0" }}>
+              <div className="min-w-0 pr-2">
+                <h2 className="text-[20px] font-bold truncate" style={{ color: "#1A1A1A" }}>{opportunity.title}</h2>
+                <p className="text-[14px] truncate" style={{ color: "#9CA3AF" }}>{displayOrg}</p>
               </div>
-              <button type="button" onClick={onClose} className="p-2 rounded-lg cursor-pointer" style={{ color: "#9CA3AF" }}><X className="w-5 h-5" /></button>
+              <button type="button" onClick={onClose} className="p-2 rounded-lg cursor-pointer shrink-0" style={{ color: "#9CA3AF" }}><X className="w-5 h-5" /></button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Scrollable form body */}
+            <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+              <div className="overflow-y-auto flex-1 px-6 py-4 space-y-5">
               {/* Section 1: Profile preview */}
               <div className="flex items-center gap-3 p-4 rounded-xl" style={{ background: "#F9FAFB", border: "1px solid #ECECEA" }}>
                 <AvatarSquare src={profile?.avatar_url} name={profile?.full_name || "U"} size="lg" />
@@ -245,11 +248,15 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
                 <input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} className="mt-0.5" />
                 I agree that my Tiikme profile will be shared with {displayOrg}
               </label>
+              </div>{/* end scrollable area */}
 
-              <Button type="submit" className="w-full" disabled={!consent || submitting || resumeUploading}
-                style={{ height: 52, borderRadius: 12, background: "#FF5A1F", color: "#FFFFFF" }}>
-                {submitting ? "Submitting..." : "Submit Application →"}
-              </Button>
+              {/* Sticky submit footer */}
+              <div className="px-6 py-4 shrink-0" style={{ borderTop: "1px solid #F0F0F0", background: "#FFFFFF" }}>
+                <Button type="submit" className="w-full" disabled={!consent || submitting || resumeUploading}
+                  style={{ height: 52, borderRadius: 12, background: "#FF5A1F", color: "#FFFFFF" }}>
+                  {submitting ? "Submitting..." : "Submit Application →"}
+                </Button>
+              </div>
             </form>
           </>
         )}

@@ -163,7 +163,7 @@ const Opportunities = () => {
 
   return (
     <SubscriptionGate feature="opportunities">
-    <main className="max-w-[960px] mx-auto px-4 md:px-6 py-6">
+    <main className="max-w-[960px] mx-auto px-4 md:px-6 py-3">
       <PageSEO
         title="Opportunities | Tiikme"
         description="Browse verified jobs, internships, hackathons, and freelance opportunities across India. Apply on Tiikme."
@@ -204,8 +204,8 @@ const Opportunities = () => {
             </div>
 
             {visibleRecommended.length > 0 && !search.trim() && activeType === "All" && (
-              <div className="mb-6">
-                <h2 className="text-[16px] font-bold mb-3 flex items-center gap-2" style={{ color: "var(--text-1)" }}>
+              <div className="mb-3">
+                <h2 className="text-[16px] font-bold mb-2 flex items-center gap-2" style={{ color: "var(--text-1)" }}>
                   <Zap className="w-4 h-4" style={{ color: "#F59E0B" }} /> Recommended for You
                 </h2>
                 <div className="space-y-3">
@@ -221,7 +221,7 @@ const Opportunities = () => {
                 </div>
               ))}</div>
             ) : visibleOpps.length === 0 ? (
-              <div className="text-center py-16">
+              <div className="text-center py-10">
                 <Briefcase className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
                 <p className="text-[16px] font-bold" style={{ color: "var(--text-1)" }}>No opportunities yet</p>
                 <p className="text-[13px] mt-1" style={{ color: "var(--text-3)" }}>Check back later</p>

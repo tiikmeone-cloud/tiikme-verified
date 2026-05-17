@@ -189,7 +189,7 @@ export default function OrganizationPage() {
             <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
               {/* Row 1: Name + verified */}
               <div className="flex items-center" style={{ gap: 6 }}>
-                <p style={{ fontSize: 20, fontWeight: 700, lineHeight: "28px", color: "#1A1A2E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{org.name}</p>
+                <p style={{ fontSize: 20, fontWeight: 700, lineHeight: "28px", color: "#1A1A2E", wordBreak: "break-word" }} className="line-clamp-2">{org.name}</p>
                 {org.is_verified && (
                   <div className="flex items-center justify-center shrink-0" style={{ width: 20, height: 20, borderRadius: 10, background: "#FFB800", boxShadow: "0 0 8px rgba(255,184,0,0.40)" }}>
                     <Shield className="w-3 h-3 text-white" />
@@ -394,7 +394,7 @@ export default function OrganizationPage() {
                     <Link key={m.id} to={`/app/profile/${m.user_id}`} className="flex items-center" style={{ gap: 10, padding: "6px 0", borderBottom: "1px solid rgba(0,0,0,0.04)" }}>
                       <AvatarSquare src={m.profile?.avatar_url} name={m.profile?.full_name || "Member"} size="sm" />
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.profile?.full_name || "Member"}</p>
+                        <p className="line-clamp-2 break-words" style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>{m.profile?.full_name || "Member"}</p>
                         <p style={{ fontSize: 11, color: "#9CA3C0" }}>{m.title || m.role}{m.department ? ` · ${m.department}` : ""}</p>
                       </div>
                       {m.is_verified && (

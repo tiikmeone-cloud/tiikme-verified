@@ -636,7 +636,7 @@ const PostGroupCard = ({
       <header className="flex items-center" style={{ gap: 10, padding: 16, borderBottom: "1px solid #F0F0F0" }}>
         <Link to={profileLink} className="shrink-0"><AvatarSquare src={displayAvatar} name={displayName} size={40} /></Link>
         <div className="min-w-0 flex-1">
-          <Link to={profileLink} className="truncate hover:underline block" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{displayName}</Link>
+          <Link to={profileLink} className="line-clamp-2 break-words hover:underline block" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{displayName}</Link>
           <div style={{ fontSize: 12, color: "#9CA3C0" }}>Posted <span className="num">{posts.length}</span> updates · {first.created_at ? getTimeAgo(new Date(first.created_at)) : ""}</div>
         </div>
         <div className="num shrink-0" style={{ fontSize: 12, color: "#9CA3C0" }}>{idx + 1}/{posts.length}</div>

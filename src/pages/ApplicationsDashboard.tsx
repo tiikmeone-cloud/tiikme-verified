@@ -277,7 +277,7 @@ export default function ApplicationsDashboard() {
         <div className="hidden md:block flex-1">
           <GlassBox accent="identity" className="h-full">
             {!selectedApp ? (
-              <div className="flex flex-col items-center justify-center h-full text-center py-16">
+              <div className="flex flex-col items-center justify-center h-full text-center py-10">
                 <User className="w-12 h-12 mb-3" style={{ color: "#9CA3AF" }} />
                 <p className="text-[14px] font-bold" style={{ color: "#1A1A1A" }}>Select an applicant</p>
                 <p className="text-[12px]" style={{ color: "#9CA3AF" }}>Click to view details</p>

@@ -144,7 +144,7 @@ export default function FindTab() {
 
   if (!profiles.length) {
     return (
-      <div className="text-center py-16">
+      <div className="text-center py-10">
         <SearchIcon className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
         <p className="text-[16px] font-bold" style={{ color: "var(--text-1)" }}>No one is Open to Work yet</p>
         <p className="text-[13px] mt-1" style={{ color: "var(--text-3)" }}>Check back later or enable it on your profile</p>

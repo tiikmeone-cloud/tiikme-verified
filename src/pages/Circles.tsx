@@ -577,10 +577,14 @@ function CirclePostCard({
   const doDelete = async () => {
     if (!user) return;
     setDeleting(true);
-    const { error } = await supabase.from("circle_posts").delete().eq("id", post.id).eq("author_id", user.id);
+    // Mods can remove any post; owners can only delete their own
+    const query = isMod && !isOwn
+      ? supabase.from("circle_posts").delete().eq("id", post.id)
+      : supabase.from("circle_posts").delete().eq("id", post.id).eq("author_id", user.id);
+    const { error } = await query;
     setDeleting(false);
     if (error) { toast.error("Failed to delete"); return; }
-    toast.success("Post deleted");
+    toast.success("Post removed");
     onDeleted?.(post.id);
   };
 
@@ -637,10 +641,10 @@ function CirclePostCard({
                     <Pencil style={{ width: 12, height: 12 }} /> Edit post
                   </button>
                 )}
-                {isOwn && (
+                {(isOwn || isMod) && (
                   <button type="button" onClick={() => { setConfirmDelete(true); setShowMenu(false); }}
                     className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "8px 12px", fontSize: 13, color: "#EF4444", background: "none", border: "none" }}>
-                    <Trash2 style={{ width: 12, height: 12 }} /> Delete post
+                    <Trash2 style={{ width: 12, height: 12 }} /> {isOwn ? "Delete post" : "Remove post"}
                   </button>
                 )}
               </div>

@@ -916,7 +916,7 @@ const Profile = () => {
             <div className="profile-info-body" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
               {/* ROW 1: Name + verified badge + optional Open to work pill */}
               <div className="flex items-center flex-wrap" style={{ gap: 8 }}>
-                <p style={{ fontSize: 20, fontWeight: 700, lineHeight: "28px", color: "#1A1A2E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</p>
+                <p style={{ fontSize: 20, fontWeight: 700, lineHeight: "28px", color: "#1A1A2E", wordBreak: "break-word" }} className="line-clamp-2">{displayName}</p>
                 {isVerified && (
                   <TooltipProvider>
                     <Tooltip>

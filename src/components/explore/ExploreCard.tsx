@@ -5,6 +5,21 @@ import { getOrgTypeConfig, isCreatorOrg } from "@/lib/orgTypes";
 import { ActivityScoreMini } from "@/components/profile/ActivityScoreCard";
 import { getDisplayFlags } from "@/utils/displayProfile";
 
+export function getSubtitle(profile: any): string {
+  if (profile?.headline) return profile.headline;
+  if (profile?.role === "student") return [profile.role_metadata?.degree, profile.institution_name].filter(Boolean).join(" · ") || "Student";
+  if (profile?.role === "faculty") return [profile.designation, profile.institution_name].filter(Boolean).join(" · ") || "Faculty";
+  if (profile?.role === "researcher") return [profile.designation, profile.institution_name].filter(Boolean).join(" · ") || "Researcher";
+  if (profile?.role === "founder") return profile.role_metadata?.company || profile.currently_working_at || "Founder";
+  if (profile?.role === "creator") return profile.role_metadata?.platform || "Creator";
+  const roleMap: Record<string, string> = {
+    professional: "Professional", doctor: "Doctor", freelancer: "Freelancer",
+    investor: "Investor", government: "Government", skilled_trade: "Skilled Trade",
+    hr: "HR Professional",
+  };
+  return roleMap[profile?.role] || (profile?.role ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1).replace(/_/g, " ") : "Tiikme Member");
+}
+
 interface PersonCardProps {
   p: {
     id: string;
@@ -53,8 +68,8 @@ export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonC
     >
       <AvatarSquare src={p.avatar_url} name={name} size={80} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 2, minWidth: 0 }}>
-        <div className="flex items-center gap-1.5">
-          <span className="truncate" style={{ fontWeight: 700, fontSize: 14, color: "var(--text-primary)" }}>{name}</span>
+        <div className="flex items-center flex-wrap gap-1.5">
+          <span className="line-clamp-2 break-words" style={{ fontWeight: 700, fontSize: 14, color: "var(--text-primary)" }}>{name}</span>
           {p.is_verified && <VerifiedBadge size={14} />}
           {typeof p.activity_score === "number" && (
             <ActivityScoreMini score={p.activity_score} viewerIsOwner={currentUserId === p.id} />
@@ -65,8 +80,10 @@ export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonC
             </span>
           )}
         </div>
-        {flags.showRole && designation && (
-          <span className="truncate" style={{ fontSize: 12, color: "var(--text-secondary)" }}>{designation}</span>
+        {flags.showRole && (
+          <span className="truncate" style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+            {getSubtitle(p)}
+          </span>
         )}
         {flags.showRole && p.role_subtype && (
           <span
@@ -80,9 +97,6 @@ export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonC
           >
             {p.role_subtype}
           </span>
-        )}
-        {flags.showCompany && company && (
-          <span className="truncate" style={{ fontSize: 11, color: "var(--text-muted)" }}>{company}</span>
         )}
       </div>
       {currentUserId !== p.id && (
@@ -149,7 +163,7 @@ export function OrgCard({ org, following, onToggleFollow, navigateTo }: OrgCardP
     >
       <AvatarSquare src={org.logo_url} name={org.name || "?"} size={80} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 4, minWidth: 0 }}>
-        <span className="truncate" style={{ fontWeight: 700, fontSize: 14, color: "var(--text-primary)" }}>{org.name}</span>
+        <span className="line-clamp-2 break-words" style={{ fontWeight: 700, fontSize: 14, color: "var(--text-primary)" }}>{org.name}</span>
         {(() => {
           const conf = getOrgTypeConfig(org.type || org.page_type);
           return (
@@ -222,7 +236,7 @@ export function TrendingPostCard({ post, authorProfile }: PostCardProps) {
     >
       <div className="flex items-center gap-2" style={{ marginBottom: 8 }}>
         <AvatarSquare src={authorProfile?.avatar_url} name={name} size={28} />
-        <p className="truncate" style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", flex: 1 }}>{name}</p>
+        <p className="line-clamp-2 break-words" style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", flex: 1 }}>{name}</p>
         <span style={{ fontSize: 11, fontWeight: 400, color: "var(--text-muted)", flexShrink: 0 }}>{timeAgo}</span>
       </div>
       <p style={{ fontSize: 13, fontWeight: 400, lineHeight: "18px", color: "var(--text-secondary)", flex: 1, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
@@ -281,7 +295,7 @@ export function StartupCard({ startup, page }: { startup: any; page?: any }) {
     >
       <AvatarSquare src={page?.logo_url} name={name} size={64} bgColor="#7C3AED" />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 1, minWidth: 0 }}>
-        <span className="truncate" style={{ fontWeight: 700, fontSize: 15, color: "var(--text-primary)" }}>{name}</span>
+        <span className="line-clamp-2 break-words" style={{ fontWeight: 700, fontSize: 15, color: "var(--text-primary)" }}>{name}</span>
         {stage && (
           <span style={{ fontSize: 12, color: "#7C3AED" }}>{stage}</span>
         )}
@@ -328,7 +342,7 @@ export function InvestorCard({ investor }: { investor: any }) {
     >
       <AvatarSquare src={investor.avatar_url} name={name} size={64} bgColor="#059669" />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 1, minWidth: 0 }}>
-        <span className="truncate" style={{ fontWeight: 700, fontSize: 15, color: "var(--text-primary)" }}>{name}</span>
+        <span className="line-clamp-2 break-words" style={{ fontWeight: 700, fontSize: 15, color: "var(--text-primary)" }}>{name}</span>
         <span style={{ fontSize: 12, color: "#059669" }}>Investor</span>
         {range && <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{range}</span>}
         {sectors.length > 0 && (
