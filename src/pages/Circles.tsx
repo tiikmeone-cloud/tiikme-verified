@@ -494,9 +494,11 @@ function CircleDetail({ slug }: { slug: string }) {
           <CirclePostCard
             key={p.id}
             post={p}
+            isMod={!!user && (user.id === circle.created_by)}
             onUpvote={() => toggleUpvote(p.id, !!p.viewer_upvoted)}
             onDeleted={(id) => setPosts(prev => prev.filter(x => x.id !== id))}
             onEdited={(id, body) => setPosts(prev => prev.map(x => x.id === id ? { ...x, body, content: body } : x))}
+            onPinToggled={(id, pinned) => setPosts(prev => prev.map(x => x.id === id ? { ...x, is_pinned: pinned } : x))}
           />
         ))}
       </div>
@@ -516,12 +518,14 @@ function CircleDetail({ slug }: { slug: string }) {
 // POST CARD (with edit/delete for owner — already implemented)
 // =================================================================
 function CirclePostCard({
-  post, onUpvote, onDeleted, onEdited,
+  post, isMod, onUpvote, onDeleted, onEdited, onPinToggled,
 }: {
   post: any;
+  isMod?: boolean;
   onUpvote?: () => void;
   onDeleted?: (id: string) => void;
   onEdited?: (id: string, body: string) => void;
+  onPinToggled?: (id: string, pinned: boolean) => void;
 }) {
   const { user } = useAuth();
   const author = post.author;
@@ -530,6 +534,7 @@ function CirclePostCard({
   const typeConf = (POST_TYPE_CONFIG as any)[post.post_type] || POST_TYPE_CONFIG.discussion;
   const upvoted = !!post.viewer_upvoted;
   const isOwn = user?.id === post.author_id;
+  const canModerate = isOwn || !!isMod;
 
   const [showMenu, setShowMenu] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -537,6 +542,7 @@ function CirclePostCard({
   const [savingEdit, setSavingEdit] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [pinning, setPinning] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [commentDelta, setCommentDelta] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -578,6 +584,20 @@ function CirclePostCard({
     onDeleted?.(post.id);
   };
 
+  const togglePin = async () => {
+    if (!user) return;
+    const newPinned = !post.is_pinned;
+    setPinning(true);
+    const { error } = await supabase.from("circle_posts")
+      .update({ is_pinned: newPinned } as any)
+      .eq("id", post.id);
+    setPinning(false);
+    if (error) { toast.error("Failed to update pin"); return; }
+    toast.success(newPinned ? "Post pinned" : "Post unpinned");
+    onPinToggled?.(post.id, newPinned);
+    setShowMenu(false);
+  };
+
   const commentCount = Math.max(0, (post.comment_count || post.reply_count || 0) + commentDelta);
 
   return (
@@ -596,7 +616,7 @@ function CirclePostCard({
             {typeConf.icon} {typeConf.label} · {new Date(post.created_at).toLocaleDateString()}
           </p>
         </div>
-        {isOwn && (
+        {canModerate && (
           <div className="relative shrink-0" ref={menuRef}>
             <button type="button" onClick={() => setShowMenu(s => !s)}
               className="flex items-center justify-center cursor-pointer"
@@ -604,15 +624,25 @@ function CirclePostCard({
               <MoreHorizontal style={{ width: 16, height: 16 }} />
             </button>
             {showMenu && (
-              <div className="absolute right-0 z-[60]" style={{ top: 30, width: 160, borderRadius: 10, padding: "6px 0", background: "#FFFFFF", border: "1px solid #E5E7EB", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
-                <button type="button" onClick={() => { setEditing(true); setShowMenu(false); }}
-                  className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "8px 12px", fontSize: 13, color: "#1A1A2E", background: "none", border: "none" }}>
-                  <Pencil style={{ width: 12, height: 12 }} /> Edit post
-                </button>
-                <button type="button" onClick={() => { setConfirmDelete(true); setShowMenu(false); }}
-                  className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "8px 12px", fontSize: 13, color: "#EF4444", background: "none", border: "none" }}>
-                  <Trash2 style={{ width: 12, height: 12 }} /> Delete post
-                </button>
+              <div className="absolute right-0 z-[60]" style={{ top: 30, width: 170, borderRadius: 10, padding: "6px 0", background: "#FFFFFF", border: "1px solid #E5E7EB", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
+                {isMod && (
+                  <button type="button" onClick={togglePin} disabled={pinning}
+                    className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5] disabled:opacity-50" style={{ padding: "8px 12px", fontSize: 13, color: "#1A1A2E", background: "none", border: "none" }}>
+                    📌 {post.is_pinned ? "Unpin post" : "Pin post"}
+                  </button>
+                )}
+                {isOwn && (
+                  <button type="button" onClick={() => { setEditing(true); setShowMenu(false); }}
+                    className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "8px 12px", fontSize: 13, color: "#1A1A2E", background: "none", border: "none" }}>
+                    <Pencil style={{ width: 12, height: 12 }} /> Edit post
+                  </button>
+                )}
+                {isOwn && (
+                  <button type="button" onClick={() => { setConfirmDelete(true); setShowMenu(false); }}
+                    className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "8px 12px", fontSize: 13, color: "#EF4444", background: "none", border: "none" }}>
+                    <Trash2 style={{ width: 12, height: 12 }} /> Delete post
+                  </button>
+                )}
               </div>
             )}
           </div>

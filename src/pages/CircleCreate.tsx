@@ -30,8 +30,8 @@ const RULES_TEMPLATE = `1. Be respectful — disagree with ideas, not people.
 3. Stay on topic — keep discussions relevant to this circle.
 4. No spam, no harassment, no slurs.`;
 
-const MIN_SCORE = 50;
 const MAX_PER_30D = 3;
+const MAX_PER_DAY_LOW_SCORE = 1;
 
 function SectionCard({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
@@ -71,19 +71,23 @@ export default function CircleCreate() {
   const [submitting, setSubmitting] = useState(false);
   const [softWarn, setSoftWarn] = useState<{ open: boolean; category?: string; matchedTerm?: string }>({ open: false });
   const [recentCount, setRecentCount] = useState<number | null>(null);
+  const [todayCount, setTodayCount] = useState<number | null>(null);
 
   const slug = useMemo(() => generateSlug(name), [name]);
 
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-      const { count } = await supabase
-        .from("circles")
-        .select("id", { count: "exact", head: true })
-        .eq("created_by", user.id)
-        .gte("created_at", since);
-      setRecentCount(count ?? 0);
+      const since30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+      const [res30d, resDay] = await Promise.all([
+        supabase.from("circles").select("id", { count: "exact", head: true })
+          .eq("created_by", user.id).gte("created_at", since30d),
+        supabase.from("circles").select("id", { count: "exact", head: true })
+          .eq("created_by", user.id).gte("created_at", todayStart.toISOString()),
+      ]);
+      setRecentCount(res30d.count ?? 0);
+      setTodayCount(resDay.count ?? 0);
     })();
   }, [user]);
 
@@ -97,10 +101,16 @@ export default function CircleCreate() {
 
   const score = profile?.activity_score ?? 0;
   const isVerified = !!profile?.is_verified;
+  const onboardingComplete = !!(profile as any)?.onboarding_complete;
+  const canCreate = isVerified || onboardingComplete;
 
   const blockedReasons: string[] = [];
-  if (score < MIN_SCORE) blockedReasons.push(`Reach Activity Score ${MIN_SCORE} (you're at ${score})`);
-  if (!isVerified) blockedReasons.push("Get verified on your profile first");
+  if (!canCreate) {
+    blockedReasons.push("Complete onboarding or get verified to create circles");
+  }
+  if (canCreate && score < 50 && todayCount !== null && todayCount >= MAX_PER_DAY_LOW_SCORE) {
+    blockedReasons.push(`You've already created a circle today (max ${MAX_PER_DAY_LOW_SCORE}/day until your Activity Score reaches 50)`);
+  }
   if (recentCount !== null && recentCount >= MAX_PER_30D) {
     blockedReasons.push(`You've created ${recentCount} circles in the last 30 days (max ${MAX_PER_30D})`);
   }
@@ -208,7 +218,7 @@ export default function CircleCreate() {
             <Lock className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "#92400E" }} />
             <div>
               <p className="text-[13px] font-bold mb-1" style={{ color: "#92400E" }}>
-                You can't create a circle yet
+                Almost there — a few things to check
               </p>
               <ul className="text-[12px] list-disc pl-4 space-y-0.5" style={{ color: "#92400E" }}>
                 {blockedReasons.map((r) => <li key={r}>{r}</li>)}

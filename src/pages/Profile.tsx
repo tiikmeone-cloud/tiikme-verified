@@ -211,6 +211,8 @@ const Profile = () => {
   // Resolve username → uuid when visiting the public /:username route
   useEffect(() => {
     if (!urlUsername) { setResolvedUserId(null); return; }
+    setDataLoading(true);
+    setViewedProfile(null);
     supabase.from("profiles").select("id").eq("username", urlUsername).maybeSingle()
       .then(({ data }) => {
         if (data?.id) setResolvedUserId(data.id);
@@ -343,7 +345,7 @@ const Profile = () => {
     </div>
   );
 
-  const rawProfileData = viewedProfile || authProfile;
+  const rawProfileData = viewedProfile ?? (isOwnProfile ? authProfile : null);
   if (!rawProfileData) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
       <p style={{ fontSize: 16, fontWeight: 700, color: "#1A1A2E" }}>Profile not found</p>

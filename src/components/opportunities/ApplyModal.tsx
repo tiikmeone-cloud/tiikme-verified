@@ -83,7 +83,7 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
         portfolio_url: portfolioUrl.trim() || null,
         cover_letter: coverLetter.trim() || null,
         custom_answers: Object.keys(answers).length > 0 ? answers : null,
-        status: autoRejected ? "auto_rejected" : "reviewing",
+        status: autoRejected ? "rejected" : "applied",
       });
       if (error) {
         if (error.code === "23505") toast.error("You already applied");

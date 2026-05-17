@@ -18,6 +18,7 @@ import ReferModal from "@/components/opportunities/ReferModal";
 import ReferralsTab from "@/components/opportunities/ReferralsTab";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import PrimaryTabs from "@/components/filters/PrimaryTabs";
+import { trackPageView } from "@/lib/analytics";
 import FilterBar, { useScrollPastThreshold } from "@/components/filters/FilterBar";
 import BottomSheet from "@/components/ui/BottomSheet";
 import { useFilterFlag, useFilterParam } from "@/lib/useFilterParam";
@@ -613,16 +614,28 @@ function MyApplicationsTab({ userId }: { userId: string | undefined }) {
   }, [userId]);
 
   const statusColors: Record<string, { bg: string; color: string; label: string }> = {
-    under_review: { bg: "rgba(255,184,0,0.12)", color: "#FFB800", label: "Under Review" },
-    qualified: { bg: "rgba(16,185,129,0.12)", color: "#10B981", label: "Qualified" },
-    shortlisted: { bg: "rgba(59,130,246,0.12)", color: "#3B82F6", label: "Shortlisted" },
-    offered: { bg: "rgba(52,199,89,0.12)", color: "#34C759", label: "Offered" },
-    rejected: { bg: "rgba(239,68,68,0.10)", color: "#EF4444", label: "Not Selected" },
+    applied:          { bg: "rgba(255,184,0,0.12)",  color: "#FFB800", label: "Applied" },
+    under_review:     { bg: "rgba(255,184,0,0.12)",  color: "#FFB800", label: "Under Review" },
+    screening:        { bg: "rgba(255,184,0,0.12)",  color: "#FFB800", label: "Screening" },
+    qualified:        { bg: "rgba(16,185,129,0.12)", color: "#10B981", label: "Qualified" },
+    shortlisted:      { bg: "rgba(59,130,246,0.12)", color: "#3B82F6", label: "Shortlisted" },
+    interview_scheduled: { bg: "rgba(59,130,246,0.12)", color: "#3B82F6", label: "Interview" },
+    interview_done:   { bg: "rgba(59,130,246,0.12)", color: "#3B82F6", label: "Interviewed" },
+    selected:         { bg: "rgba(52,199,89,0.12)",  color: "#34C759", label: "Selected" },
+    offer_sent:       { bg: "rgba(52,199,89,0.12)",  color: "#34C759", label: "Offered" },
+    offer_accepted:   { bg: "rgba(52,199,89,0.12)",  color: "#34C759", label: "Accepted" },
+    hired:            { bg: "rgba(52,199,89,0.12)",  color: "#34C759", label: "Hired" },
+    offered:          { bg: "rgba(52,199,89,0.12)",  color: "#34C759", label: "Offered" },
+    rejected:         { bg: "rgba(239,68,68,0.10)",  color: "#EF4444", label: "Not Selected" },
   };
+
+  const OFFERED_STATUSES = new Set(["offered", "offer_sent", "offer_accepted", "selected", "hired"]);
 
   const visibleApps = statusFilter === "all"
     ? applications
-    : applications.filter(a => a.status === statusFilter);
+    : statusFilter === "offered"
+      ? applications.filter(a => OFFERED_STATUSES.has(a.status))
+      : applications.filter(a => a.status === statusFilter);
 
   if (loading) return <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="animate-pulse glass-light rounded-xl" style={{ height: 80 }} />)}</div>;
   if (applications.length === 0) return (
@@ -648,7 +661,7 @@ function MyApplicationsTab({ userId }: { userId: string | undefined }) {
       </div>
     <div className="space-y-3">
       {visibleApps.map((app: any) => {
-        const s = statusColors[app.status] || statusColors.under_review;
+        const s = statusColors[app.status] || statusColors.applied;
         const opp = app.opportunity;
         return (
           <div key={app.id} className="glass-card" style={{ padding: 14, borderRadius: 14 }}>
