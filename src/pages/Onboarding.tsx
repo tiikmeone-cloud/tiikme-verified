@@ -645,13 +645,38 @@ function StepInterests({ state, set, onNext, onSkip }: {
 
 /* ───────────────────────── Step 7: Display preference ───────────────────────── */
 
+function DisplayPreviewCard({ state }: { state: WizardState }) {
+  const pref = state.display_preference;
+  const showName = pref !== "dp_only";
+  const showRole = pref === "dp_name_profession" || pref === "dp_name_profession_company";
+  const showCompany = pref === "dp_name_profession_company";
+  const name = state.full_name.trim() || "Your Name";
+  const role = state.role_subtype || (state.role ? state.role.charAt(0).toUpperCase() + state.role.slice(1).replace(/_/g, " ") : "Your Role");
+
+  return (
+    <div style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 12 }}>
+      <div style={{ width: 44, height: 44, borderRadius: 10, background: "linear-gradient(135deg,#FF5A1F,#E8733A)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <span style={{ fontSize: 18, fontWeight: 700, color: "#fff" }}>{name.charAt(0).toUpperCase()}</span>
+      </div>
+      <div style={{ minWidth: 0 }}>
+        {showName && <p style={{ fontSize: 14, fontWeight: 700, color: "#FAFAF7", margin: 0, lineHeight: "20px" }}>{name}</p>}
+        {showRole && <p style={{ fontSize: 12, color: "rgba(250,250,247,0.65)", margin: 0 }}>{role}</p>}
+        {showCompany && <p style={{ fontSize: 11, color: "rgba(250,250,247,0.45)", margin: 0 }}>Tiikme Inc.</p>}
+        {!showName && <p style={{ fontSize: 12, color: "rgba(250,250,247,0.45)", margin: 0, fontStyle: "italic" }}>Name hidden</p>}
+      </div>
+    </div>
+  );
+}
+
 function StepDisplayPref({ state, set, onFinish, saving }: {
   state: WizardState; set: any; onFinish: () => Promise<void>; saving: boolean;
 }) {
   return (
     <>
       <h1 className="text-[26px] font-extrabold mb-1" style={{ color: "#FAFAF7" }}>What should people see?</h1>
-      <p className="text-[14px] mb-6" style={{ color: "rgba(250,250,247,0.65)" }}>Pick how your card appears across Tiikme. You can change this anytime.</p>
+      <p className="text-[14px] mb-4" style={{ color: "rgba(250,250,247,0.65)" }}>Pick how your card appears across Tiikme. You can change this anytime.</p>
+
+      <DisplayPreviewCard state={state} />
 
       <div className="space-y-2.5">
         {DISPLAY_PREFERENCE_OPTIONS.map(opt => {
