@@ -22,7 +22,6 @@ import { trackPageView } from "@/lib/analytics";
 import FilterBar, { useScrollPastThreshold } from "@/components/filters/FilterBar";
 import BottomSheet from "@/components/ui/BottomSheet";
 import { useFilterFlag, useFilterParam } from "@/lib/useFilterParam";
-import { trackPageView } from "@/lib/analytics";
 
 const TYPE_META: Record<string, { label: string; color: string; icon: any }> = {
   full_time: { label: "Full-time", color: "#2563EB", icon: Briefcase },
