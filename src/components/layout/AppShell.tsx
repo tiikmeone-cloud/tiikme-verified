@@ -419,7 +419,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
                 <span style={{
                   fontSize: 10, fontWeight: active ? 700 : 500,
                   color: active ? "#FF5A1F" : "#9CA3AF",
-                  marginTop: 1,
+                  marginTop: 1, maxWidth: 48, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                 }}>
                   {item.label}
                 </span>
@@ -513,7 +513,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
                 <span style={{
                   fontSize: 10, fontWeight: active ? 700 : 500,
                   color: active ? "#FF5A1F" : "#9CA3AF",
-                  marginTop: 1,
+                  marginTop: 1, maxWidth: 48, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                 }}>
                   {item.label}
                 </span>
