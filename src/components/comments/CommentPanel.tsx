@@ -87,6 +87,7 @@ const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post"
   const [replyText, setReplyText] = useState("");
   const taRef = useRef<HTMLTextAreaElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   /* ----- Load total count + initial 20 ----- */
   useEffect(() => {
@@ -180,6 +181,9 @@ const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post"
       setInput("");
       setTotalCount(c => c + 1);
       onCountChange?.(1);
+      requestAnimationFrame(() => {
+        if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
+      });
     }
 
     const { data, error } = await supabase.from(table)
@@ -388,7 +392,7 @@ const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post"
       }}
     >
       {/* Scrollable list */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "8px 12px", minHeight: 80 }}>
+      <div ref={listRef} style={{ flex: 1, overflowY: "auto", padding: "8px 12px", minHeight: 80 }}>
         {loading ? (
           <div className="flex justify-center items-center" style={{ padding: 20 }}>
             <Loader2 className="animate-spin" style={{ width: 18, height: 18, color: "#9CA3C0" }} />
