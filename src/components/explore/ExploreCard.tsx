@@ -4,20 +4,11 @@ import { useNavigate } from "react-router-dom";
 import { getOrgTypeConfig, isCreatorOrg } from "@/lib/orgTypes";
 import { ActivityScoreMini } from "@/components/profile/ActivityScoreCard";
 import { getDisplayFlags } from "@/utils/displayProfile";
+import { getProfileSubtitle } from "@/lib/profileUtils";
 
+/** @deprecated use getProfileSubtitle from @/lib/profileUtils */
 export function getSubtitle(profile: any): string {
-  if (profile?.headline) return profile.headline;
-  if (profile?.role === "student") return [profile.role_metadata?.degree, profile.institution_name].filter(Boolean).join(" · ") || "Student";
-  if (profile?.role === "faculty") return [profile.designation, profile.institution_name].filter(Boolean).join(" · ") || "Faculty";
-  if (profile?.role === "researcher") return [profile.designation, profile.institution_name].filter(Boolean).join(" · ") || "Researcher";
-  if (profile?.role === "founder") return profile.role_metadata?.company || profile.currently_working_at || "Founder";
-  if (profile?.role === "creator") return profile.role_metadata?.platform || "Creator";
-  const roleMap: Record<string, string> = {
-    professional: "Professional", doctor: "Doctor", freelancer: "Freelancer",
-    investor: "Investor", government: "Government", skilled_trade: "Skilled Trade",
-    hr: "HR Professional",
-  };
-  return roleMap[profile?.role] || (profile?.role ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1).replace(/_/g, " ") : "Tiikme Member");
+  return getProfileSubtitle(profile) || "Tiikme Member";
 }
 
 interface PersonCardProps {

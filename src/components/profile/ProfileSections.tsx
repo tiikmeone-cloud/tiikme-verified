@@ -179,8 +179,8 @@ const ItemRow = ({ logo, line1, line2, line3, line4, right, isLast, extra }: {
   <div className="flex" style={{ alignItems: "flex-start", gap: 10, padding: "8px 0", borderBottom: isLast ? "none" : "1px solid var(--border-subtle)" }}>
     {logo}
     <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 1 }}>
-      <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{line1}</p>
-      {line2 && <p style={{ fontSize: 13, fontWeight: 400, color: "var(--text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{line2}</p>}
+      <p className="line-clamp-2 break-words" style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>{line1}</p>
+      {line2 && <p className="truncate" style={{ fontSize: 13, fontWeight: 400, color: "var(--text-secondary)" }}>{line2}</p>}
       {line3 && <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)" }}>{line3}</p>}
       {line4 && <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)" }}>{line4}</p>}
       {extra}

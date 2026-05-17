@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { getProfileSubtitle } from "@/lib/profileUtils";
 import { storageImageUrl } from "@/lib/imageTransform";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import {
@@ -216,7 +217,7 @@ export default function OrganizationPage() {
               </div>
 
               {/* Row 4: Stats */}
-              <div className="flex items-center" style={{ gap: 16, marginTop: 4 }}>
+              <div className="flex items-center flex-wrap" style={{ gap: 16, marginTop: 4 }}>
                 <div>
                   <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{followerCount}</span>
                   <span style={{ fontSize: 12, fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>{followerLabel}</span>
@@ -300,7 +301,7 @@ export default function OrganizationPage() {
                 boxShadow: "0 4px 16px rgba(26,26,78,0.05), inset 0 1px 0 rgba(255,255,255,0.60)",
               }}>
                 <p style={{ fontSize: 10, fontWeight: 600, color: "#9CA3C0", textTransform: "uppercase", letterSpacing: "0.04em" }}>{card.label}</p>
-                <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{card.value}</p>
+                <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", marginTop: 2 }}>{card.value}</p>
               </div>
             ))}
           </div>
@@ -395,7 +396,7 @@ export default function OrganizationPage() {
                       <AvatarSquare src={m.profile?.avatar_url} name={m.profile?.full_name || "Member"} size="sm" />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p className="line-clamp-2 break-words" style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>{m.profile?.full_name || "Member"}</p>
-                        <p style={{ fontSize: 11, color: "#9CA3C0" }}>{m.title || m.role}{m.department ? ` · ${m.department}` : ""}</p>
+                        <p className="truncate" style={{ fontSize: 11, color: "#9CA3C0" }}>{getProfileSubtitle(m.profile) || m.title || m.role || ''}{m.department ? ` · ${m.department}` : ""}</p>
                       </div>
                       {m.is_verified && (
                         <div className="flex items-center justify-center shrink-0" style={{ width: 18, height: 18, borderRadius: 9, background: "#FFB800" }}>

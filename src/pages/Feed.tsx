@@ -463,7 +463,7 @@ const PostCard = ({
           </Link>
           <div className="min-w-0 flex-1">
             <div className="flex items-center flex-wrap" style={{ gap: "0 5px", lineHeight: "20px" }}>
-              <Link to={profileLink} className="hover:underline shrink-0" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{displayName}</Link>
+              <Link to={profileLink} className="hover:underline" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{displayName}</Link>
               {(author?.is_verified || post.org?.is_verified) && <VerifiedBadge size={14} />}
               {roleLine && (
                 <>
@@ -863,9 +863,13 @@ const Feed = () => {
           ))}
 
           {!loading && !visiblePosts.length && (
-            <div className="text-center" style={{ padding: 20, borderRadius: 16, background: "#FFFFFF", border: "1px solid #E8E8E8" }}>
+            <div className="text-center" style={{ padding: "28px 20px", borderRadius: 16, background: "#FFFFFF", border: "1px solid #E8E8E8" }}>
               <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", marginBottom: 4 }}>Nothing here yet</p>
-              <p style={{ fontSize: 13, color: "#9CA3C0" }}>Be the first to post something.</p>
+              <p style={{ fontSize: 13, color: "#9CA3C0", marginBottom: 12 }}>Connect with people to start seeing posts, or share your first update.</p>
+              <div className="flex items-center justify-center gap-2 flex-wrap">
+                <Link to="/app/explore" style={{ fontSize: 13, fontWeight: 600, padding: "7px 16px", borderRadius: 8, background: "linear-gradient(135deg,#E8733A,#FF6B9D)", color: "#fff", textDecoration: "none" }}>Find People</Link>
+                <button type="button" onClick={refresh} style={{ fontSize: 13, fontWeight: 500, padding: "7px 16px", borderRadius: 8, background: "rgba(0,0,0,0.05)", color: "#1A1A2E", border: "none", cursor: "pointer" }}>Refresh</button>
+              </div>
             </div>
           )}
 

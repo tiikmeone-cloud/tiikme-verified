@@ -279,7 +279,7 @@ const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post"
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center" style={{ gap: 6 }}>
-            <Link to={`/app/profile/${c.user_id}`} className="hover:underline truncate" style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E", maxWidth: 180 }}>
+            <Link to={`/app/profile/${c.user_id}`} className="hover:underline truncate min-w-0" style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>
               {safeDisplayName(c.author, "Tiikme member")}
             </Link>
             <span style={{ fontSize: 11, color: "#9CA3C0" }}>·</span>
