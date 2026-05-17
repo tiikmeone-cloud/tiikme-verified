@@ -61,6 +61,14 @@ const Academy = lazyWithRetry(() => import("./pages/Academy.tsx"), "Academy");
 const BuildLog = lazyWithRetry(() => import("./pages/BuildLog.tsx"), "BuildLog");
 const AcceptAdminInvite = lazyWithRetry(() => import("./pages/AcceptAdminInvite.tsx"), "AcceptAdminInvite");
 
+// SEO guides hub
+const GuidesHub = lazyWithRetry(() => import("./pages/guides/GuidesHub.tsx"), "GuidesHub");
+const GuideProfileSummaryResume = lazyWithRetry(() => import("./pages/guides/ProfileSummaryResume.tsx"), "GuideProfileSummaryResume");
+const GuideResumeSummaryExamples = lazyWithRetry(() => import("./pages/guides/ResumeSummaryExamples.tsx"), "GuideResumeSummaryExamples");
+const GuideProfileSummaryFreshers = lazyWithRetry(() => import("./pages/guides/ProfileSummaryFreshers.tsx"), "GuideProfileSummaryFreshers");
+const GuideProfessionalHeadlineExamples = lazyWithRetry(() => import("./pages/guides/ProfessionalHeadlineExamples.tsx"), "GuideProfessionalHeadlineExamples");
+const GuideProfessionalProfilePicture = lazyWithRetry(() => import("./pages/guides/ProfessionalProfilePicture.tsx"), "GuideProfessionalProfilePicture");
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -105,6 +113,14 @@ const AppRoutes = () => {
             <Route path="/verify-invite" element={<PageErrorBoundary><VerifyInvite /></PageErrorBoundary>} />
             <Route path="/privacy" element={<PageErrorBoundary><Privacy /></PageErrorBoundary>} />
             <Route path="/terms" element={<PageErrorBoundary><Terms /></PageErrorBoundary>} />
+
+            {/* SEO Guides */}
+            <Route path="/guides" element={<PageErrorBoundary><GuidesHub /></PageErrorBoundary>} />
+            <Route path="/guides/profile-summary-for-resume" element={<PageErrorBoundary><GuideProfileSummaryResume /></PageErrorBoundary>} />
+            <Route path="/guides/resume-summary-examples" element={<PageErrorBoundary><GuideResumeSummaryExamples /></PageErrorBoundary>} />
+            <Route path="/guides/profile-summary-for-freshers" element={<PageErrorBoundary><GuideProfileSummaryFreshers /></PageErrorBoundary>} />
+            <Route path="/guides/professional-headline-examples" element={<PageErrorBoundary><GuideProfessionalHeadlineExamples /></PageErrorBoundary>} />
+            <Route path="/guides/professional-profile-picture" element={<PageErrorBoundary><GuideProfessionalProfilePicture /></PageErrorBoundary>} />
             
             <Route path="/reset-password" element={<PageErrorBoundary><ResetPassword /></PageErrorBoundary>} />
             <Route path="/join-as-institution" element={<PageErrorBoundary><JoinAsInstitution /></PageErrorBoundary>} />
