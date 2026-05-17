@@ -574,12 +574,22 @@ function OpportunityCard({ o, user, profile, isInstitution, appliedIds, onApply,
 function MyApplicationsTab({ userId }: { userId: string | undefined }) {
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  const STATUS_FILTERS = [
+    { key: "all", label: "All" },
+    { key: "under_review", label: "In Review" },
+    { key: "shortlisted", label: "Shortlisted" },
+    { key: "offered", label: "Offered" },
+    { key: "rejected", label: "Not Selected" },
+  ];
 
   useEffect(() => {
     if (!userId) { setLoading(false); return; }
     supabase.from("opportunity_applications")
-      .select("id, status, created_at, opportunity:opportunities(id, title, type, location, org:organizations!opportunities_org_id_fkey(name, logo_url))")
+      .select("id, status, created_at, opportunity:opportunities(id, title, type, location, is_expired, org:organizations!opportunities_org_id_fkey(name, logo_url))")
       .eq("applicant_id", userId)
+      .neq("status", "withdrawn")
       .order("created_at", { ascending: false })
       .then(({ data }) => { setApplications(data || []); setLoading(false); });
   }, [userId]);
@@ -592,6 +602,10 @@ function MyApplicationsTab({ userId }: { userId: string | undefined }) {
     rejected: { bg: "rgba(239,68,68,0.10)", color: "#EF4444", label: "Not Selected" },
   };
 
+  const visibleApps = statusFilter === "all"
+    ? applications
+    : applications.filter(a => a.status === statusFilter);
+
   if (loading) return <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="animate-pulse glass-light rounded-xl" style={{ height: 80 }} />)}</div>;
   if (applications.length === 0) return (
     <div className="text-center py-16">
@@ -602,8 +616,20 @@ function MyApplicationsTab({ userId }: { userId: string | undefined }) {
   );
 
   return (
+    <>
+      <div className="flex overflow-x-auto gap-2 py-2 mb-1" style={{ scrollbarWidth: "none" }}>
+        {STATUS_FILTERS.map(f => (
+          <button key={f.key} type="button" onClick={() => setStatusFilter(f.key)}
+            className="cursor-pointer shrink-0"
+            style={{
+              height: 30, padding: "0 12px", borderRadius: 999, fontSize: 12, fontWeight: 600, whiteSpace: "nowrap",
+              background: statusFilter === f.key ? "#FF5A1F" : "rgba(0,0,0,0.05)",
+              color: statusFilter === f.key ? "#fff" : "#6B7094", border: "none",
+            }}>{f.label}</button>
+        ))}
+      </div>
     <div className="space-y-3">
-      {applications.map((app: any) => {
+      {visibleApps.map((app: any) => {
         const s = statusColors[app.status] || statusColors.under_review;
         const opp = app.opportunity;
         return (
@@ -626,6 +652,7 @@ function MyApplicationsTab({ userId }: { userId: string | undefined }) {
         );
       })}
     </div>
+    </>
   );
 }
 
