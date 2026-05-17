@@ -573,6 +573,7 @@ function OpportunityCard({ o, user, profile, isInstitution, appliedIds, onApply,
 
 /* ─── My Applications Tab ─── */
 function MyApplicationsTab({ userId }: { userId: string | undefined }) {
+  const navigate = useNavigate();
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -638,10 +639,11 @@ function MyApplicationsTab({ userId }: { userId: string | undefined }) {
 
   if (loading) return <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="animate-pulse glass-light rounded-xl" style={{ height: 80 }} />)}</div>;
   if (applications.length === 0) return (
-    <div className="text-center py-16">
-      <Briefcase className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
-      <p className="text-[16px] font-bold" style={{ color: "#1A1A2E" }}>No applications yet</p>
-      <p className="text-[13px] mt-1" style={{ color: "#6B7094" }}>Apply to jobs and track your status here</p>
+    <div className="text-center py-10">
+      <Briefcase className="w-10 h-10 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
+      <p className="text-[15px] font-bold" style={{ color: "#1A1A2E" }}>No applications yet</p>
+      <p className="text-[13px] mt-1 mb-4" style={{ color: "#6B7094" }}>Apply to jobs and track your status here</p>
+      <button type="button" onClick={() => navigate("/app/opportunities")} style={{ fontSize: 13, fontWeight: 600, padding: "8px 18px", borderRadius: 9, background: "#FF5A1F", color: "#fff", border: "none", cursor: "pointer" }}>Browse Jobs</button>
     </div>
   );
 

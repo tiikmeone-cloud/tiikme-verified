@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { storageImageUrl } from "@/lib/imageTransform";
+import { getProfileSubtitle } from "@/lib/profileUtils";
 import { safeAttachmentPath } from "@/lib/privateAttachments";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import { toast } from "sonner";
@@ -154,7 +155,7 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
                 <AvatarSquare src={profile?.avatar_url} name={profile?.full_name || "U"} size="lg" />
                 <div className="flex-1 min-w-0">
                   <p className="text-[18px] font-bold" style={{ color: "#1A1A1A" }}>{profile?.full_name || "You"}</p>
-                  <p className="text-[13px]" style={{ color: "#6B6B6B" }}>{profile?.headline || profile?.role || ""}</p>
+                  <p className="text-[13px]" style={{ color: "#6B6B6B" }}>{getProfileSubtitle(profile)}</p>
                 </div>
                 <ActivityScoreRing score={profile?.activity_score || 0} size={40} />
               </div>

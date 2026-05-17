@@ -8,6 +8,7 @@ import ReferModal from "@/components/opportunities/ReferModal";
 import { ActivityScoreMini } from "@/components/profile/ActivityScoreCard";
 import { toast } from "sonner";
 import { getDisplayFlags, safeDisplayName, formatRoleLine } from "@/utils/displayProfile";
+import { getProfileSubtitle } from "@/lib/profileUtils";
 
 interface OTWProfile {
   id: string;
@@ -184,7 +185,7 @@ export default function FindTab() {
           const isExpanded = expanded === p.id;
           const flags = getDisplayFlags(p.profile);
           const name = safeDisplayName(p.profile, "Tiikme member");
-          const roleLine = flags.showRole ? (p.desired_title || formatRoleLine(p.profile) || p.profile?.headline || "Professional") : "Professional";
+          const roleLine = flags.showRole ? (p.desired_title || getProfileSubtitle(p.profile) || formatRoleLine(p.profile) || '') : '';
           const company = flags.showCompany ? (p.profile?.currently_working_at || p.profile?.institution_name || null) : null;
           const location = p.preferred_location || p.profile?.location_city || null;
 
