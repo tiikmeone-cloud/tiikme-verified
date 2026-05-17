@@ -6801,6 +6801,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      cron_refresh_circle_post_hot: { Args: never; Returns: undefined }
       current_user_can_manage_trust_subject: {
         Args: {
           _subject_org_id?: string
