@@ -1,5 +1,6 @@
 import AvatarSquare from "@/components/ui/AvatarSquare";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { Paperclip } from "lucide-react";
 import { createPortal } from "react-dom";
 import { Search, Send, CheckCircle, Clock, RefreshCw, X, ArrowLeft, Copy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,6 +27,9 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
   const [selectedVerifier, setSelectedVerifier] = useState<any>(null);
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [docFile, setDocFile] = useState<File | null>(null);
+  const [docUploading, setDocUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Close on Escape key
   useEffect(() => {
@@ -101,11 +105,25 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
     })();
   }, [selectedOrg, item.department]);
 
+  const uploadDoc = async (authUserId: string): Promise<string | null> => {
+    if (!docFile) return null;
+    setDocUploading(true);
+    const ext = docFile.name.split(".").pop() || "bin";
+    const path = `verification-docs/${authUserId}/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("verification-docs").upload(path, docFile, { upsert: false });
+    setDocUploading(false);
+    if (error) { toast.error("Could not upload document"); return null; }
+    const { data: { publicUrl } } = supabase.storage.from("verification-docs").getPublicUrl(path);
+    return publicUrl;
+  };
+
   const handleSubmit = async (verifierId: string | null, verifierName: string) => {
     // Always pull live auth user — RLS check uses auth.uid()
     const { data: { user: authUser } } = await supabase.auth.getUser();
     if (!authUser) { toast.error("Please log in"); return; }
     setSubmitting(true);
+
+    const documentUrl = await uploadDoc(authUser.id);
 
     const payload: any = {
       requester_id: authUser.id,
@@ -119,6 +137,7 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
       requested_role: item.job_title || item.title || null,
       role_category: item.domain || null,
       context_note: message.trim() || null,
+      document_url: documentUrl,
       status: "pending",
     };
 
@@ -382,6 +401,26 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
 
                   <input value={message} onChange={e => setMessage(e.target.value.slice(0, 100))} placeholder="Optional message (100 chars)" maxLength={100}
                     style={{ width: "100%", height: 36, borderRadius: 8, border: "1px solid rgba(0,0,0,0.10)", padding: "0 12px", fontSize: 12, color: "#1A1A2E", outline: "none" }} />
+
+                  {/* Document upload */}
+                  <div>
+                    <p style={{ fontSize: 12, fontWeight: 600, color: "#6B7094", marginBottom: 6 }}>Attach proof (optional) — offer letter, employee ID, student ID</p>
+                    <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display: "none" }} onChange={e => setDocFile(e.target.files?.[0] || null)} />
+                    <button type="button" onClick={() => fileInputRef.current?.click()}
+                      style={{
+                        display: "inline-flex", alignItems: "center", gap: 6,
+                        height: 34, padding: "0 12px", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer",
+                        background: docFile ? "rgba(16,185,129,0.10)" : "rgba(0,0,0,0.05)",
+                        border: `1px solid ${docFile ? "rgba(16,185,129,0.30)" : "rgba(0,0,0,0.10)"}`,
+                        color: docFile ? "#059669" : "#6B7094",
+                      }}>
+                      <Paperclip style={{ width: 13, height: 13 }} />
+                      {docFile ? docFile.name.slice(0, 28) : "Attach document"}
+                    </button>
+                    {docFile && (
+                      <button type="button" onClick={() => setDocFile(null)} style={{ marginLeft: 8, fontSize: 11, color: "#EF4444", background: "none", border: "none", cursor: "pointer" }}>Remove</button>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -404,7 +443,7 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
                 const label = noAdmins ? "Submit for Tiikme review" : "Send Request";
                 return (
                   <button type="button"
-                    disabled={!canSend || submitting}
+                    disabled={!canSend || submitting || docUploading}
                     onClick={() => handleSubmit(selectedVerifier?.user_id || null, selectedVerifier?.profile?.full_name || "")}
                     className="cursor-pointer flex-1"
                     style={{
