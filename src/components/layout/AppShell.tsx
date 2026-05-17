@@ -168,7 +168,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
   // Mobile bottom nav items (left-of-center and right-of-center)
   const mobileLeftItems = [
     { label: "Feed", icon: Home, path: "/app/feed" },
-    { label: "Circles", icon: Users, path: "/app/circles" },
+    { label: "Explore", icon: Compass, path: "/app/explore" },
   ];
   const mobileRightItems = [
     { label: "Opps", icon: Briefcase, path: "/app/opportunities" },

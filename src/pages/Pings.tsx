@@ -1,5 +1,6 @@
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import React from "react";
+import { trackPageView } from "@/lib/analytics";
 import { useState, useRef, useEffect } from "react";
 import { MessageCircle, Search, Send, Paperclip, PenSquare, X, Shield, ArrowLeft, FileText, Briefcase, Download, Trash2, ArrowUp, Image as ImageIcon, Lock, Key } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -127,6 +128,7 @@ function MessageAttachment({ msg, isMe }: { msg: any; isMe: boolean }) {
 }
 
 const Pings = () => {
+  useEffect(() => { trackPageView("messaging"); }, []);
   const { id: routeConvoId } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const { user, profile } = useAuth();

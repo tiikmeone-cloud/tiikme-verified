@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { trackPageView } from "@/lib/analytics";
 import { PageSEO } from "@/hooks/usePageSEO";
 import { cleanUsername } from "@/lib/cleanUsername";
 import AvatarSquare from "@/components/ui/AvatarSquare";
@@ -752,6 +753,7 @@ const SuggestedWidget = ({ connectionIds }: { connectionIds: Set<string> }) => {
 
 /* ─── FEED PAGE ─── */
 const Feed = () => {
+  useEffect(() => { trackPageView("feed"); }, []);
   const { posts: livePosts, loading, loadingMore, hasMore, loadMore, refresh } = useFeedPosts();
   const sentinelRef = useRef<HTMLDivElement>(null);
   const { user, profile } = useAuth();

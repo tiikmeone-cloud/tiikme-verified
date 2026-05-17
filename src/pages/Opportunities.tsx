@@ -62,6 +62,7 @@ function expiryBadge(d: string | null) {
 }
 
 const Opportunities = () => {
+  useEffect(() => { trackPageView("opportunities"); }, []);
   const { user, profile } = useAuth();
   const isInstitution = profile?.account_type === "institution";
   const navigate = useNavigate();
@@ -129,7 +130,7 @@ const Opportunities = () => {
     queryKey: ["applied-opportunities", user?.id],
     queryFn: async () => {
       if (!user) return new Set<string>();
-      const { data } = await supabase.from("opportunity_applications").select("opportunity_id").eq("applicant_id", user.id);
+      const { data } = await supabase.from("opportunity_applications").select("opportunity_id").eq("applicant_id", user.id).neq("status", "withdrawn");
       return new Set((data || []).map((a: any) => a.opportunity_id));
     },
     enabled: !!user,

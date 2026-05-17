@@ -6969,6 +6969,7 @@ export type Database = {
           page_id: string
         }[]
       }
+      recompute_overdue_trust_scores: { Args: never; Returns: undefined }
       recompute_trust_score: {
         Args: {
           _note?: string

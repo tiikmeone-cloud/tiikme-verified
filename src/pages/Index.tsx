@@ -4,6 +4,7 @@ import HeroSection from "@/components/landing/HeroSection";
 import { PageSEO } from "@/hooks/usePageSEO";
 
 // Defer below-the-fold sections to reduce initial JS payload
+const TrustSystemsSection = lazy(() => import("@/components/landing/TrustSystemsSection"));
 const ProblemSection = lazy(() => import("@/components/landing/ProblemSection"));
 const HowItWorksSection = lazy(() => import("@/components/landing/HowItWorksSection"));
 const WhoIsForSection = lazy(() => import("@/components/landing/WhoIsForSection"));
@@ -55,6 +56,7 @@ const Index = () => {
       <main>
         <HeroSection />
         <Suspense fallback={null}>
+          <TrustSystemsSection />
           <ProblemSection />
           <HowItWorksSection />
           <WhoIsForSection />

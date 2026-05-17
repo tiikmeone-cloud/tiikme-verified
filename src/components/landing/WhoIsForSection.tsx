@@ -1,4 +1,4 @@
-import { GraduationCap, Briefcase, Stethoscope, Landmark, Wrench, BookOpen } from "lucide-react";
+import { GraduationCap, Briefcase, Stethoscope, Landmark, Wrench, BookOpen, Youtube, FlaskConical } from "lucide-react";
 
 const roles = [
   {
@@ -9,12 +9,22 @@ const roles = [
   {
     icon: Briefcase,
     role: "The Professional",
-    copy: "You\u2019ve been working for years and have no portable proof of any of it. Tiikme keeps your verified history with you when you move on.",
+    copy: "You've been working for years and have no portable proof of any of it. Tiikme keeps your verified history with you when you move on.",
   },
   {
     icon: Stethoscope,
     role: "The Doctor",
     copy: "Your qualifications are serious. Your patients and your next employer deserve a way to confirm them without a bureaucratic marathon.",
+  },
+  {
+    icon: Youtube,
+    role: "The Creator",
+    copy: "You built an audience from nothing. Now get the verified professional identity your work always deserved — subscriber count, platform, niche, all on one profile.",
+  },
+  {
+    icon: FlaskConical,
+    role: "The Researcher",
+    copy: "Your papers are real. Your citations are real. Your institution will back it up. Tiikme makes your academic identity portable and provable.",
   },
   {
     icon: Landmark,
@@ -24,7 +34,7 @@ const roles = [
   {
     icon: Wrench,
     role: "The Skilled Worker",
-    copy: "You did an ITI course. You have real craft. You\u2019ve just never had a professional identity that shows that off. Now you do.",
+    copy: "You did an ITI course. You have real craft. You've just never had a professional identity that shows that off. Now you do.",
   },
   {
     icon: BookOpen,
@@ -48,13 +58,13 @@ const WhoIsForSection = () => (
         </span>
       </h2>
 
-      {/* Mobile: horizontal scroll. Desktop: 3-col grid */}
+      {/* Mobile: horizontal scroll. Desktop: 4-col grid */}
       <div className="flex md:hidden gap-4 overflow-x-auto pb-4 snap-x snap-mandatory -mx-5 px-5" style={{ scrollbarWidth: "none" }}>
         {roles.map((r) => (
           <RoleCard key={r.role} {...r} />
         ))}
       </div>
-      <div className="hidden md:grid grid-cols-3 gap-6">
+      <div className="hidden md:grid grid-cols-4 gap-6">
         {roles.map((r) => (
           <RoleCard key={r.role} {...r} />
         ))}

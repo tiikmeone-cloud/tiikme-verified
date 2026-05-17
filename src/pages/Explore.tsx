@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { trackPageView } from "@/lib/analytics";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Search, X, AlertCircle } from "lucide-react";
 import { cleanUsername } from "@/lib/cleanUsername";
@@ -65,6 +66,7 @@ const GridCell = ({ children }: { children: React.ReactNode }) => (
 
 
 const Explore = () => {
+  useEffect(() => { trackPageView("explore"); }, []);
   const { user, profile } = useAuth();
   const qc = useQueryClient();
   const navigate = useNavigate();

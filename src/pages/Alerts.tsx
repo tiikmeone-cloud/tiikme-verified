@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { trackPageView } from "@/lib/analytics";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Bell, Briefcase, Link2, Shield, TrendingUp, Target, Check, X, UserCheck, Heart, MessageSquare, Repeat2, AtSign, Users } from "lucide-react";
@@ -67,6 +68,7 @@ function getGroup(dateStr: string): string {
 const filterTabs = ["All", "Unread"];
 
 const Alerts = () => {
+  useEffect(() => { trackPageView("notifications"); }, []);
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("All");

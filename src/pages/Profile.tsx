@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { trackPageView } from "@/lib/analytics";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import { fixStorageUrl } from "@/components/ui/AvatarSquare";
 import VerifiedBadge from "@/components/VerifiedBadge";
@@ -200,6 +201,7 @@ const ContactSection = ({ isOwnProfile, profile, userEmail }: { isOwnProfile: bo
 
 /* ═══════════ MAIN PROFILE ═══════════ */
 const Profile = () => {
+  useEffect(() => { trackPageView("profile"); }, []);
   // /app/profile/:id uses { id }, /:username uses { username }
   const { id: urlUserId, username: urlUsername } = useParams<{ id?: string; username?: string }>();
   const { profile: authProfile, initials: authInitials, displayName: authDisplayName, refreshProfile, user, loading: authLoading } = useAuth();

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import { trackPageView } from "@/lib/analytics";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -26,6 +27,7 @@ type CircleRecord = any;
 // DISCOVERY — tabbed grid layout
 // =================================================================
 function CirclesDiscovery() {
+  useEffect(() => { trackPageView("circles"); }, []);
   const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
