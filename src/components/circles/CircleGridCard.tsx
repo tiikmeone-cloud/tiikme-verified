@@ -50,7 +50,7 @@ export function CircleGridCard({
         </span>
       </div>
       <div className="p-4">
-        <h3 className="font-semibold text-[15px] text-[#1A1A2E] truncate">{circle.name}</h3>
+        <h3 className="font-semibold text-[15px] text-[#1A1A2E] line-clamp-2 break-words">{circle.name}</h3>
         <p className="text-sm text-neutral-600 mt-1 line-clamp-2 min-h-[40px]">
           {circle.description || "—"}
         </p>

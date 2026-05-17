@@ -226,7 +226,7 @@ function CircleCarouselCard({ circle, isMember, joined, onJoin }: { circle: any;
           {customIcon ? <span>{circle.icon_url}</span> : <Icon style={{ width: 28, height: 28, color: conf.color }} />}
         </div>
         <div style={{ padding: "10px 10px 8px" }}>
-          <p style={{ fontSize: 13, fontWeight: 700, color: "#1A1A2E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{circle.name}</p>
+          <p className="line-clamp-2 break-words" style={{ fontSize: 13, fontWeight: 700, color: "#1A1A2E" }}>{circle.name}</p>
           <p style={{ fontSize: 11, color: "#9CA3C0", marginTop: 2 }}><span className="num">{circle.member_count || 0}</span> members</p>
           <button
             type="button"
@@ -689,14 +689,14 @@ function CirclePostCard({
         </div>
       </div>
 
-      {showComments && (
+      <div className={showComments ? '' : 'hidden'}>
         <CommentPanel
           postId={post.id}
           table="circle_post_comments"
           postAuthorId={post.author_id}
           onCountChange={(d) => setCommentDelta(prev => prev + d)}
         />
-      )}
+      </div>
 
       {confirmDelete && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center" style={{ background: "rgba(0,0,0,0.45)" }} onClick={() => setConfirmDelete(false)}>
