@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageSEO } from "@/hooks/usePageSEO";
 import { AnimatePresence } from "framer-motion";
-import { Search, Briefcase, MapPin, Clock, Plus, Building2, Users as UsersIcon, Eye, Trophy, GraduationCap, Code, Zap, Hammer, CalendarDays, Shield, Heart, MessageCircle, Link2, Send, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, Briefcase, MapPin, Clock, Plus, Building2, Users as UsersIcon, Eye, Trophy, GraduationCap, Code, Zap, Hammer, CalendarDays, Shield, Heart, MessageCircle, Link2, Send, ChevronDown, ChevronUp, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -575,6 +575,23 @@ function MyApplicationsTab({ userId }: { userId: string | undefined }) {
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [withdrawConfirmId, setWithdrawConfirmId] = useState<string | null>(null);
+
+  const handleWithdraw = async (appId: string) => {
+    const prev = applications;
+    setApplications(a => a.filter(x => x.id !== appId));
+    setWithdrawConfirmId(null);
+    const { error } = await supabase
+      .from("opportunity_applications")
+      .update({ status: "withdrawn" })
+      .eq("id", appId);
+    if (error) {
+      setApplications(prev);
+      toast.error("Couldn't withdraw — try again");
+    } else {
+      toast.success("Application withdrawn");
+    }
+  };
 
   const STATUS_FILTERS = [
     { key: "all", label: "All" },
@@ -647,7 +664,27 @@ function MyApplicationsTab({ userId }: { userId: string | undefined }) {
               </div>
               <span className="text-[11px] font-semibold px-3 py-1 rounded-full shrink-0"
                 style={{ background: s.bg, color: s.color }}>{s.label}</span>
+              <button type="button" onClick={() => setWithdrawConfirmId(app.id)}
+                style={{ background: "none", border: "none", cursor: "pointer", padding: 4, color: "#9CA3AF", flexShrink: 0 }}
+                title="Withdraw application">
+                <X style={{ width: 14, height: 14 }} />
+              </button>
             </div>
+            {withdrawConfirmId === app.id && (
+              <div style={{ marginTop: 10, padding: "10px 12px", borderRadius: 10, background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.18)" }}>
+                <p style={{ fontSize: 12, color: "#EF4444", fontWeight: 600, marginBottom: 8 }}>Withdraw this application?</p>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button type="button" onClick={() => handleWithdraw(app.id)}
+                    style={{ height: 28, padding: "0 12px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "#EF4444", color: "#fff", border: "none", cursor: "pointer" }}>
+                    Yes, withdraw
+                  </button>
+                  <button type="button" onClick={() => setWithdrawConfirmId(null)}
+                    style={{ height: 28, padding: "0 12px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "rgba(0,0,0,0.06)", color: "#6B7094", border: "none", cursor: "pointer" }}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         );
       })}
