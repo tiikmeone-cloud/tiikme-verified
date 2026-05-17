@@ -1289,6 +1289,38 @@ const Profile = () => {
 
           {/* ═══ RIGHT COLUMN ═══ */}
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {profileData.role === "creator" && (() => {
+              const m = (profileData as any).role_metadata as Record<string, any> | null;
+              if (!m) return null;
+              const subs = m.subscribers;
+              const platform = m.platform;
+              const niche = m.content_niche || m.niche;
+              const channelUrl = m.channel_url;
+              if (!subs && !platform && !niche) return null;
+              return (
+                <div className="glass-card" style={{ padding: 14, borderRadius: 14 }}>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: "#1A1A2E", marginBottom: 10 }}>Creator Stats</p>
+                  <div className="flex flex-wrap gap-3">
+                    {platform && (
+                      <span style={{ fontSize: 12, fontWeight: 600, padding: "3px 10px", borderRadius: 999, background: "rgba(239,68,68,0.10)", color: "#B91C1C" }}>{platform}</span>
+                    )}
+                    {subs && (
+                      <span style={{ fontSize: 12, color: "#6B7094" }}>
+                        <span className="num" style={{ fontWeight: 700, color: "#1A1A2E" }}>{Number(subs).toLocaleString()}</span> subscribers
+                      </span>
+                    )}
+                    {niche && (
+                      <span style={{ fontSize: 12, color: "#6B7094" }}>· {niche}</span>
+                    )}
+                  </div>
+                  {channelUrl && (
+                    <a href={channelUrl} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 8, fontSize: 12, color: "#E8733A", fontWeight: 600, textDecoration: "none" }}>
+                      <ExternalLink style={{ width: 12, height: 12 }} /> View Channel
+                    </a>
+                  )}
+                </div>
+              );
+            })()}
             <ExperienceSection items={experiences} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("experience")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
             <EducationSection items={education} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("education")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
             <RolesSection items={profileRoles} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("role")} onDelete={deleteRole} />
