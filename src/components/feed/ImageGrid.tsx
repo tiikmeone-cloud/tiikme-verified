@@ -99,7 +99,6 @@ const ImageItem = ({ src, className, style, onClick }: { src: string; className?
       src={src}
       alt=""
       loading="lazy"
-      crossOrigin="anonymous"
       className={className}
       style={{ borderRadius: 8, cursor: "pointer", ...style }}
       onError={() => setError(true)}

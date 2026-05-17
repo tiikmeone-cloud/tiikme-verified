@@ -558,8 +558,8 @@ const PostCard = ({
           <button type="button" onClick={handleLike}
             className="flex items-center cursor-pointer active:scale-95"
             style={{ gap: 5, padding: "6px 10px", borderRadius: 8, transform: likeAnimating ? "scale(1.2)" : "scale(1)", transition: "transform 150ms ease" }}>
-            <Heart style={{ width: 15, height: 15, fill: liked ? "#E8733A" : "none", color: liked ? "#E8733A" : "#9CA3C0" }} />
-            <span style={{ fontSize: 12, fontWeight: 500, color: liked ? "#E8733A" : "#9CA3C0" }}>
+            <Heart style={{ width: 15, height: 15, fill: liked ? "#E8733A" : "none", color: liked ? "#E8733A" : "#6B7094" }} />
+            <span style={{ fontSize: 12, fontWeight: 500, color: liked ? "#E8733A" : "#6B7094" }}>
               {likeCount > 0 ? <span className="num">{likeCount}</span> : "Like"}
             </span>
           </button>
@@ -567,8 +567,8 @@ const PostCard = ({
           <button type="button" onClick={() => toggleComments(post.id)}
             className="flex items-center cursor-pointer"
             style={{ gap: 5, padding: "6px 10px", borderRadius: 8 }}>
-            <MessageCircle style={{ width: 15, height: 15, color: isOpen ? "#E8733A" : "#9CA3C0" }} />
-            <span style={{ fontSize: 12, fontWeight: 500, color: isOpen ? "#E8733A" : "#9CA3C0" }}>
+            <MessageCircle style={{ width: 15, height: 15, color: isOpen ? "#E8733A" : "#6B7094" }} />
+            <span style={{ fontSize: 12, fontWeight: 500, color: isOpen ? "#E8733A" : "#6B7094" }}>
               {commentCount > 0 ? <span className="num">{commentCount}</span> : "Comment"}
             </span>
           </button>
@@ -576,8 +576,8 @@ const PostCard = ({
           <button type="button" onClick={handleRepost} disabled={reposting}
             className="flex items-center cursor-pointer"
             style={{ gap: 5, padding: "6px 10px", borderRadius: 8, opacity: reposting ? 0.5 : 1 }}>
-            <Repeat2 style={{ width: 15, height: 15, color: hasReposted ? "#E8733A" : "#9CA3C0" }} />
-            <span style={{ fontSize: 12, fontWeight: 500, color: hasReposted ? "#E8733A" : "#9CA3C0" }}>
+            <Repeat2 style={{ width: 15, height: 15, color: hasReposted ? "#E8733A" : "#6B7094" }} />
+            <span style={{ fontSize: 12, fontWeight: 500, color: hasReposted ? "#E8733A" : "#6B7094" }}>
               {localRepostCount > 0 ? <span className="num">{localRepostCount}</span> : "Repost"}
             </span>
           </button>
@@ -585,8 +585,8 @@ const PostCard = ({
           <button type="button" onClick={() => setSharePostId(post.id)}
             className="flex items-center cursor-pointer"
             style={{ gap: 5, padding: "6px 10px", borderRadius: 8 }}>
-            <Send style={{ width: 15, height: 15, color: "#9CA3C0" }} />
-            <span style={{ fontSize: 12, fontWeight: 500, color: "#9CA3C0" }}>Share</span>
+            <Send style={{ width: 15, height: 15, color: "#6B7094" }} />
+            <span style={{ fontSize: 12, fontWeight: 500, color: "#6B7094" }}>Share</span>
           </button>
         </div>
 
@@ -832,11 +832,11 @@ const Feed = () => {
   }, [hasMore, loadingMore, loadMore]);
 
   return (
-    <main className="feed-main" style={{ maxWidth: 960, width: "100%", margin: "0 auto", padding: "0 16px" }}>
+    <main className="feed-main" style={{ maxWidth: 1100, width: "100%", margin: "0 auto", padding: "0 16px" }}>
       <PageSEO title="Feed | Tiikme" description="Your professional feed — posts, updates, and insights from verified professionals and organizations on Tiikme." noIndex />
 
       <div className="flex" style={{ gap: 20 }}>
-        <div style={{ flex: 1, minWidth: 0, maxWidth: 640 }}>
+        <div style={{ flex: 1, minWidth: 0, maxWidth: 760 }}>
           <FeedComposer onPublished={refresh} />
 
           {loading && !visiblePosts.length && <SkeletonCard count={3} />}
@@ -886,7 +886,7 @@ const Feed = () => {
           )}
         </div>
 
-        <aside className="hidden md:block shrink-0 sticky top-4 self-start" style={{ width: 280 }}>
+        <aside className="hidden md:block shrink-0 sticky top-4 self-start" style={{ width: 300 }}>
           <ActivityWidget />
           <SuggestedWidget connectionIds={connectionIds} />
         </aside>

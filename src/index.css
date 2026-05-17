@@ -123,6 +123,21 @@
     --sidebar-accent-foreground: var(--text-1);
     --sidebar-ring: var(--brand);
 
+    /* ── Typography scale ── */
+    --font-h1: 40px;
+    --font-h2: 32px;
+    --font-h3: 24px;
+    --font-body: 16px;
+    --font-meta: 14px;
+    --font-tag: 12px;
+
+    /* ── Spacing scale ── */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 40px;
+
     /* Inputs */
     --input-bg: #FFFFFF;
     --input-border: #ECECEA;

@@ -6,6 +6,7 @@ import VerifiedBadge from "@/components/VerifiedBadge";
 import { cleanUsername } from "@/lib/cleanUsername";
 import { SUBTYPE_OPTIONS, hasSubtypes } from "@/lib/roleSubtypes";
 import { getDisplayFlags, safeDisplayName } from "@/utils/displayProfile";
+import { getProfileSubtitle } from "@/lib/profileUtils";
 import { PageSEO, profileSEO } from "@/hooks/usePageSEO";
 import {
   MapPin, Copy, Shield, X, MessageCircle, CheckCircle, Building2, Link2, Plus,
@@ -947,36 +948,12 @@ const Profile = () => {
                 )}
               </div>
 
-              {/* ROW 1b: Role · Subtype */}
+              {/* ROW 2: Single consolidated identity subtitle */}
               {dpFlags.showRole && (
-                <p style={{ fontSize: 12, fontWeight: 600, color: roleColor }}>
-                  {profileData.role_subtype ? `${roleLabel} · ${profileData.role_subtype}` : roleLabel}
-                </p>
-              )}
-
-              {/* ROW 1c: Currently working at / institution */}
-              {dpFlags.showCompany && (() => {
-                const m = (profileData as any).role_metadata as Record<string, any> | null;
-                let parts: string[] = [];
-                if (m && typeof m === "object") {
-                  const r = profileData.role;
-                  if (r === "student") parts = [m.institution, m.current_year].filter(Boolean);
-                  else if (r === "professional") parts = [m.company, m.years_experience ? `${m.years_experience} yrs` : ""].filter(Boolean);
-                  else if (r === "doctor") parts = [m.hospital, m.specialty === "Other" ? m.specialty_other : m.specialty].filter(Boolean);
-                  else if (r === "faculty") parts = [m.institution, m.department].filter(Boolean);
-                }
-                if (parts.length === 0) {
-                  const fallback = (profileData as any).currently_working_at || profileData.institution_name;
-                  if (!fallback) return null;
-                  return <p style={{ fontSize: 13, fontWeight: 500, color: "#6B7094" }}>{fallback}</p>;
-                }
-                return <p style={{ fontSize: 13, fontWeight: 500, color: "#6B7094" }}>{parts.join(" · ")}</p>;
-              })()}
-
-              {/* ROW 2: Headline */}
-              {dpFlags.showRole && (currentExp || headline) && (
-                <p style={{ fontSize: 13, fontWeight: 400, color: "#6B7094" }}>
-                  {currentExp ? `${currentExp.job_title || currentExp.title} at ${currentExp.company_name || ""}` : headline}
+                <p style={{ fontSize: 13, fontWeight: 500, color: "#6B7094" }}>
+                  {currentExp
+                    ? [currentExp.job_title || currentExp.title, currentExp.company_name].filter(Boolean).join(' @ ')
+                    : getProfileSubtitle(profileData)}
                 </p>
               )}
 
