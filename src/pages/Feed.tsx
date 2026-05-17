@@ -554,7 +554,7 @@ const PostCard = ({
         )}
 
         {/* REACTION BAR */}
-        <div className="flex items-center" style={{ marginTop: 12, gap: 4, borderTop: "1px solid #F0F0F0", paddingTop: 10 }}>
+        <div className="flex items-center justify-between" style={{ marginTop: 12, borderTop: "1px solid #F0F0F0", paddingTop: 10 }}>
           <button type="button" onClick={handleLike}
             className="flex items-center cursor-pointer active:scale-95"
             style={{ gap: 5, padding: "6px 10px", borderRadius: 8, transform: likeAnimating ? "scale(1.2)" : "scale(1)", transition: "transform 150ms ease" }}>
