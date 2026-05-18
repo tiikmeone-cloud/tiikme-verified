@@ -449,10 +449,12 @@ export const SkillsSection = ({ skills, isOwnProfile, onAdd, onRemoveSkill }: {
     <SectionBox title="Skills" icon={Star} iconColor="#8B5CF6" borderColor="#8B5CF6" count={skills.length} isOwnProfile={isOwnProfile} onAdd={onAdd}>
       {skills.length === 0 ? (
         isOwnProfile ? (
-          <div style={{ padding: "8px 0" }}>
-            <p style={{ fontSize: 13, color: "var(--text-muted)" }}>List your technical and professional skills</p>
-            <button type="button" onClick={onAdd} className="cursor-pointer" style={{ fontSize: 12, fontWeight: 600, color: "#8B5CF6", background: "none", border: "none", padding: "4px 0 0", display: "block" }}>+ Add skill</button>
-          </div>
+          <button type="button" onClick={onAdd}
+            className="flex items-center gap-2 cursor-pointer w-full text-left"
+            style={{ background: "rgba(139,92,246,0.05)", border: "1px dashed rgba(139,92,246,0.30)", borderRadius: 10, padding: "10px 12px", marginTop: 4 }}>
+            <Plus style={{ width: 14, height: 14, color: "#8B5CF6", flexShrink: 0 }} />
+            <span style={{ fontSize: 13, color: "#8B5CF6", fontWeight: 500 }}>Add your top skills</span>
+          </button>
         ) : null
       ) : (
         <div className="flex flex-wrap" style={{ gap: 6, padding: "8px 0" }}>

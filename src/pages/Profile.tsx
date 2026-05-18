@@ -135,9 +135,16 @@ const AboutSection = ({ about, isOwnProfile, userId }: { about: string; isOwnPro
               )}
             </>
           ) : (
-            <p style={{ fontSize: 13, fontWeight: 400, color: "#9CA3C0", fontStyle: "italic" }}>
-              {isOwnProfile ? "Tell people about yourself..." : "No about section"}
-            </p>
+            isOwnProfile ? (
+              <button type="button" onClick={() => setEditing(true)}
+                className="flex items-center gap-2 cursor-pointer w-full text-left"
+                style={{ background: "rgba(232,115,58,0.04)", border: "1px dashed rgba(232,115,58,0.30)", borderRadius: 10, padding: "10px 12px", marginTop: 4 }}>
+                <Pencil style={{ width: 14, height: 14, color: "#E8733A", flexShrink: 0 }} />
+                <span style={{ fontSize: 13, color: "#E8733A", fontWeight: 500 }}>Tell your story — add a bio</span>
+              </button>
+            ) : (
+              <p style={{ fontSize: 13, fontWeight: 400, color: "#9CA3C0", fontStyle: "italic" }}>No about section</p>
+            )
           )}
         </div>
       )}
@@ -653,7 +660,12 @@ const Profile = () => {
 
   const addSkill = async () => {
     if (!newSkill.trim() || !user) return;
-    const updated = [...skills, newSkill.trim()];
+    const trimmed = newSkill.trim();
+    if (skills.some(s => s.toLowerCase() === trimmed.toLowerCase())) {
+      toast.error("Skill already added");
+      return;
+    }
+    const updated = [...skills, trimmed];
     await supabase.from("profiles").update({ skills: updated } as any).eq("id", user.id);
     toast.success("Skill added");
     setNewSkill(""); setModalSection(null);
@@ -686,7 +698,7 @@ const Profile = () => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
     const { validateUpload } = await import("@/lib/uploadValidation");
-    const err = validateUpload(file, { maxBytes: 2 * 1024 * 1024, allowImages: true });
+    const err = validateUpload(file, { maxBytes: 5 * 1024 * 1024, allowImages: true });
     if (err) { toast.error(err); return; }
     const canvas = document.createElement("canvas");
     canvas.width = 400; canvas.height = 400;
@@ -877,13 +889,75 @@ const Profile = () => {
       <PageSEO {...seoProps} />
 
       <div className="mx-auto p-3 md:p-4 space-y-3 md:space-y-5" style={{ maxWidth: 960 }}>
-        {/* ── PROFILE INFO CARD (no cover) ── */}
-        <div className="glass-card relative p-5 md:p-6" style={{
+        {/* ── PROFILE INFO CARD ── */}
+        <div className="glass-card relative overflow-hidden" style={{
           borderRadius: 16,
           background: "rgba(255,255,255,0.25)", backdropFilter: "blur(20px)",
           border: "1px solid rgba(255,255,255,0.40)",
           boxShadow: "0 8px 32px rgba(26,26,78,0.08), inset 0 1px 0 rgba(255,255,255,0.60)",
         }}>
+          {/* Cover Photo Banner */}
+          {(() => {
+            const coverUrl = (profileData as any).cover_url || null;
+            return (
+              <div
+                className="relative w-full"
+                style={{
+                  height: 120,
+                  background: coverUrl
+                    ? `url(${coverUrl}) center/cover no-repeat`
+                    : `linear-gradient(135deg, ${roleColor}22, ${roleColor}44)`,
+                  borderRadius: "16px 16px 0 0",
+                }}
+              >
+                {isOwnProfile && (
+                  <label
+                    className="absolute flex items-center justify-center cursor-pointer"
+                    style={{
+                      bottom: 8, right: 8, width: 32, height: 32, borderRadius: 8,
+                      background: "rgba(0,0,0,0.40)", color: "#fff", backdropFilter: "blur(4px)",
+                    }}
+                    title="Change cover photo"
+                  >
+                    <Camera style={{ width: 16, height: 16 }} />
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file || !user) return;
+                        if (file.size > 5 * 1024 * 1024) { toast.error("Cover photo max 5MB"); return; }
+                        const path = `${user.id}/cover.webp`;
+                        const canvas = document.createElement("canvas");
+                        canvas.width = 1200; canvas.height = 400;
+                        const ctx = canvas.getContext("2d")!;
+                        const img = new Image();
+                        img.src = URL.createObjectURL(file);
+                        await new Promise(r => { img.onload = r; });
+                        const ratio = img.width / img.height;
+                        const targetRatio = 3;
+                        let sx = 0, sy = 0, sw = img.width, sh = img.height;
+                        if (ratio > targetRatio) { sw = img.height * targetRatio; sx = (img.width - sw) / 2; }
+                        else { sh = img.width / targetRatio; sy = (img.height - sh) / 2; }
+                        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 1200, 400);
+                        const blob = await new Promise<Blob | null>(r => canvas.toBlob(r, "image/webp", 0.85));
+                        if (!blob) return;
+                        await supabase.storage.from("avatars").upload(path, blob, { upsert: true, contentType: "image/webp" });
+                        const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
+                        const coverUrl = urlData.publicUrl + "?t=" + Date.now();
+                        await supabase.from("profiles").update({ cover_url: coverUrl } as any).eq("id", user.id);
+                        toast.success("Cover photo updated");
+                        await refreshProfile(); loadProfile();
+                      }}
+                    />
+                  </label>
+                )}
+              </div>
+            );
+          })()}
+
+          <div className="p-5 md:p-6 relative" style={{ marginTop: -24 }}>
           {isOwnProfile && (
             <Link
               to="/app/settings"
@@ -891,7 +965,7 @@ const Profile = () => {
               className="absolute flex items-center justify-center cursor-pointer active:scale-95"
               style={{
                 top: 12, right: 12, width: 36, height: 36, borderRadius: 10,
-                background: "rgba(255,255,255,0.40)", border: "1px solid rgba(255,255,255,0.50)",
+                background: "rgba(255,255,255,0.85)", border: "1px solid rgba(0,0,0,0.08)",
                 color: "#1A1A2E", zIndex: 5,
               }}
             >
@@ -908,9 +982,11 @@ const Profile = () => {
             );
             return (
           <div className="flex profile-info-flex" style={{ gap: 16, alignItems: "flex-start" }}>
-            {/* LEFT COLUMN: Avatar only */}
-            <div className="shrink-0" style={{ width: 96 }}>
-              <AvatarSquare src={profileData.avatar_url} name={displayName || "U"} size="profile" bgColor={roleColor} className="shadow-md" />
+            {/* LEFT COLUMN: Avatar with ring for OTW */}
+            <div className="shrink-0" style={{ width: 96, marginTop: -8 }}>
+              <div style={{ padding: showOTW ? 3 : 0, borderRadius: showOTW ? "50%" : undefined, background: showOTW ? "rgba(16,185,129,0.25)" : undefined, display: "inline-block" }}>
+                <AvatarSquare src={profileData.avatar_url} name={displayName || "U"} size="profile" bgColor={roleColor} className="shadow-md" />
+              </div>
             </div>
 
             {/* RIGHT COLUMN: Info */}

@@ -751,6 +751,112 @@ const SuggestedWidget = ({ connectionIds }: { connectionIds: Set<string> }) => {
   );
 };
 
+/* ─── CIRCLES DISCOVERY WIDGET ─── */
+const CirclesWidget = () => {
+  const { user, profile } = useAuth();
+  const [circles, setCircles] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    // Find circles the user hasn't joined yet, filtered by their role/sector
+    supabase.from("circles")
+      .select("id, name, slug, description, member_count, category")
+      .eq("is_public", true)
+      .order("member_count", { ascending: false })
+      .limit(8)
+      .then(({ data }) => {
+        if (!data) return;
+        // Prefer circles matching user's role
+        const role = profile?.role || "";
+        const sorted = [...data].sort((a, b) => {
+          const aMatch = a.category?.toLowerCase().includes(role) ? 1 : 0;
+          const bMatch = b.category?.toLowerCase().includes(role) ? 1 : 0;
+          return bMatch - aMatch;
+        });
+        setCircles(sorted.slice(0, 3));
+      });
+  }, [user, profile?.role]);
+
+  if (!circles.length) return null;
+
+  return (
+    <div className="glass-card" style={{ padding: 12, borderRadius: 16, marginTop: 12 }}>
+      <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
+        <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>Discover Circles</span>
+        <Link to="/app/circles" style={{ fontSize: 12, color: "#E8733A" }}>See all</Link>
+      </div>
+      {circles.map((c, i) => (
+        <Link
+          key={c.id}
+          to={`/app/circles/${c.slug || c.id}`}
+          className="flex items-center hover:opacity-80 transition-opacity"
+          style={{ gap: 10, padding: "7px 0", borderBottom: i < circles.length - 1 ? "1px solid var(--border-subtle)" : "none", textDecoration: "none" }}
+        >
+          <div
+            className="flex items-center justify-center shrink-0"
+            style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(139,92,246,0.10)", border: "1px solid rgba(139,92,246,0.20)" }}
+          >
+            <span style={{ fontSize: 16 }}>
+              {c.category === "tech" ? "💻" : c.category === "finance" ? "📊" : c.category === "healthcare" ? "🏥" : c.category === "education" ? "🎓" : "💬"}
+            </span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="truncate" style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>{c.name}</p>
+            <p style={{ fontSize: 11, color: "#9CA3C0" }}>
+              <span className="num">{(c.member_count || 0).toLocaleString()}</span> members
+            </p>
+          </div>
+        </Link>
+      ))}
+    </div>
+  );
+};
+
+/* ─── OPPORTUNITIES TEASER WIDGET ─── */
+const OpportunitiesWidget = () => {
+  const { user, profile } = useAuth();
+  const [opps, setOpps] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("opportunities")
+      .select("id, title, company_name, location, type")
+      .eq("status", "open")
+      .order("created_at", { ascending: false })
+      .limit(3)
+      .then(({ data }) => setOpps(data || []));
+  }, [user]);
+
+  if (!opps.length) return null;
+
+  return (
+    <div className="glass-card" style={{ padding: 12, borderRadius: 16, marginTop: 12 }}>
+      <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
+        <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>Open Roles</span>
+        <Link to="/app/opportunities" style={{ fontSize: 12, color: "#E8733A" }}>See all</Link>
+      </div>
+      {opps.map((o, i) => (
+        <Link
+          key={o.id}
+          to={`/app/opportunities?opp=${o.id}`}
+          className="flex flex-col hover:opacity-80 transition-opacity"
+          style={{ padding: "7px 0", borderBottom: i < opps.length - 1 ? "1px solid var(--border-subtle)" : "none", textDecoration: "none" }}
+        >
+          <p className="truncate" style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>{o.title}</p>
+          <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>
+            {[o.company_name, o.location].filter(Boolean).join(" · ")}
+          </p>
+          {o.type && (
+            <span style={{ marginTop: 3, fontSize: 11, fontWeight: 500, padding: "1px 6px", borderRadius: 4, background: "rgba(232,115,58,0.10)", color: "#E8733A", alignSelf: "flex-start" }}>
+              {o.type}
+            </span>
+          )}
+        </Link>
+      ))}
+    </div>
+  );
+};
+
 /* ─── FEED PAGE ─── */
 const Feed = () => {
   useEffect(() => { trackPageView("feed"); }, []);
@@ -889,6 +995,8 @@ const Feed = () => {
         <aside className="hidden md:block shrink-0 sticky top-4 self-start" style={{ width: 300 }}>
           <ActivityWidget />
           <SuggestedWidget connectionIds={connectionIds} />
+          <CirclesWidget />
+          <OpportunitiesWidget />
         </aside>
       </div>
 
