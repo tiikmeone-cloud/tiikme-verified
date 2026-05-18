@@ -5,11 +5,11 @@ import AvatarSquare from "@/components/ui/AvatarSquare";
 import { Link2, Search, MessageCircle, Compass, MoreHorizontal, Clock, UserPlus, UserX, BellOff, Ban, Flag, ChevronDown, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { sendNotification } from "@/lib/notify";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { connectionButtonStyle } from "@/hooks/useConnectionStatus";
-import VerifiedBadge from "@/components/VerifiedBadge";
+import VerifiedBadge from "@/components/Verifiedadge";
 import PrimaryTabs from "@/components/filters/PrimaryTabs";
 import FilterBar, { useScrollPastThreshold } from "@/components/filters/FilterBar";
 import BottomSheet from "@/components/ui/BottomSheet";
@@ -25,7 +25,7 @@ const ROLE_COLORS: Record<string, string> = {
 interface ProfileLite {
   id: string; full_name: string | null; avatar_url: string | null; role: string | null;
   role_subtype?: string | null; institution_name: string | null; is_verified?: boolean | null;
-  last_active?: string | null; updated_at?: string | null;
+  last_active_date?: string | null; updated_at?: string | null;
   display_preference?: string | null;
   currently_working_at?: string | null;
   designation?: string | null;
@@ -102,7 +102,7 @@ const Connections = () => {
     if (!user) return { connected: [], pendingIncoming: [], pendingSent: [], suggested: [] };
     const [acceptedRes, incomingRes, sentRes] = await Promise.allSettled([
       supabase.from("strands")
-        .select("id, requester_id, receiver_id, status, created_at, requester:profiles!strands_requester_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified, last_active, updated_at, display_preference, currently_working_at, designation, headline), receiver:profiles!strands_receiver_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified, last_active, updated_at, display_preference, currently_working_at, designation, headline)")
+        .select("id, requester_id, receiver_id, status, created_at, requester:profiles!strands_requester_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified, last_active_date, updated_at, display_preference, currently_working_at, designation, headline), receiver:profiles!strands_receiver_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified, last_active_date, updated_at, display_preference, currently_working_at, designation, headline)")
         .or(`requester_id.eq.${user.id},receiver_id.eq.${user.id}`).eq("status", "accepted"),
       supabase.from("strands")
         .select("id, requester_id, receiver_id, status, created_at, requester:profiles!strands_requester_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified, display_preference, currently_working_at, designation, headline)")
@@ -136,7 +136,7 @@ const Connections = () => {
     queryKey,
     queryFn: fetchStrandsData,
     enabled: !!user,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
   });
 
   const connected = strandsData?.connected || [];
@@ -204,7 +204,7 @@ const Connections = () => {
   const handleMute = async (otherId: string) => {
     if (!user || !otherId) return;
     const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-    const { error } = await (supabase as any).from("user_mutes").upsert({
+    const { error } = await (supabase as any).frm("user_mutes").upsert({
       muter_id: user.id, muted_id: otherId, expires_at: expires,
     }, { onConflict: "muter_id,muted_id" });
     if (error) { toast.error("Could not mute"); return; }
@@ -222,7 +222,7 @@ const Connections = () => {
     if (activeRecent) {
       const week = Date.now() - 7 * 86400000;
       list = list.filter(s => {
-        const ts = getOther(s)?.last_active || getOther(s)?.updated_at;
+        const ts = getOther(s)?.last_active_date || getOther(s)?.updated_at;
         return ts && new Date(ts).getTime() > week;
       });
     }
@@ -235,12 +235,12 @@ const Connections = () => {
         case "recently_connected":
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         case "mutual":
-          return new Date(ob?.last_active || ob?.updated_at || 0).getTime()
-               - new Date(oa?.last_active || oa?.updated_at || 0).getTime();
+          return new Date(ob?.last_active_date || ob?.updated_at || 0).getTime()
+               - new Date(oa?.last_active_date || oa?.updated_at || 0).getTime();
         case "recent_activity":
         default:
-          return new Date(ob?.last_active || ob?.updated_at || 0).getTime()
-               - new Date(oa?.last_active || oa?.updated_at || 0).getTime();
+          return new Date(ob?.last_active_date || ob?.updated_at || 0).getTime()
+               - new Date(oa?.last_active_date || oa?.updated_at || 0).getTime();
       }
     });
     return list;
@@ -263,7 +263,7 @@ const Connections = () => {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <Link2 style={{ width: 22, height: 22, color: "#E8733A" }} />
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: "#1A1A2E" }}>My Network</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: "#1A1A2E" }}>My Connections</h1>
         </div>
         <div className="flex items-center gap-1.5"
           style={{ height: 32, padding: "0 12px", borderRadius: 999,
@@ -333,7 +333,7 @@ const Connections = () => {
             </label>
             <label className="flex items-center gap-2 py-2 cursor-pointer">
               <input type="checkbox" checked={withCompany} onChange={e => setWithCompany(e.target.checked)} />
-              <span style={{ fontSize: 13, color: "#1A1A2E" }}>Has company / institution</span>
+              <span style={{ fontSize: 13, color: "#1A1A2E" }}>Has company / institution</span
             </label>
             <label className="flex items-center gap-2 py-2 cursor-pointer">
               <input type="checkbox" checked={activeRecent} onChange={e => setActiveRecent(e.target.checked)} />
@@ -411,7 +411,7 @@ const Connections = () => {
             <div className="space-y-2">
               {filteredConnected.map(s => {
                 const other = getOther(s);
-                const lastActiveSrc = other?.last_active || other?.updated_at;
+                const lastActiveSrc = other?.last_active_date || other?.updated_at;
                 const flags = getDisplayFlags(other);
                 const cardName = flags.showName ? (other?.full_name || "User") : "Tiikme member";
                 const subtype = other?.role_subtype;
