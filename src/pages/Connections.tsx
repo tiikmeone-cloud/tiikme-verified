@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { connectionButtonStyle } from "@/hooks/useConnectionStatus";
-import VerifiedBadge from "@/components/Verifiedadge";
+import VerifiedBadge from "@/components/VerifiedBadge";
 import PrimaryTabs from "@/components/filters/PrimaryTabs";
 import FilterBar, { useScrollPastThreshold } from "@/components/filters/FilterBar";
 import BottomSheet from "@/components/ui/BottomSheet";
@@ -333,7 +333,7 @@ const Connections = () => {
             </label>
             <label className="flex items-center gap-2 py-2 cursor-pointer">
               <input type="checkbox" checked={withCompany} onChange={e => setWithCompany(e.target.checked)} />
-              <span style={{ fontSize: 13, color: "#1A1A2E" }}>Has company / institution</span
+              <span style={{ fontSize: 13, color: "#1A1A2E" }}>Has company / institution</span>
             </label>
             <label className="flex items-center gap-2 py-2 cursor-pointer">
               <input type="checkbox" checked={activeRecent} onChange={e => setActiveRecent(e.target.checked)} />
