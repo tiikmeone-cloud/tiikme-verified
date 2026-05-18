@@ -12,7 +12,8 @@ interface ActivityScoreRingProps {
 const ActivityScoreRing = ({ score, size = 80, strokeWidth = 6, trend = "+5 this week" }: ActivityScoreRingProps) => {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const progress = (Math.min(score, 100) / 100) * circumference;
+  const safeScore = (isNaN(score) || score == null) ? 0 : score;
+  const progress = (Math.min(safeScore, 100) / 100) * circumference;
   const tier = getActivityTier(score);
 
   return (
