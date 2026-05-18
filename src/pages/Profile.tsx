@@ -1118,6 +1118,7 @@ const Profile = () => {
 
           {/* Activity Score details now render in the popover above */}
         </div>
+        </div>{/* end glass-card */}
 
         {/* ── MOBILE-ONLY QUICK NAV (own profile) ── */}
         {isOwnProfile && (
