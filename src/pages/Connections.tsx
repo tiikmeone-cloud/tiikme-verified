@@ -25,7 +25,7 @@ const ROLE_COLORS: Record<string, string> = {
 interface ProfileLite {
   id: string; full_name: string | null; avatar_url: string | null; role: string | null;
   role_subtype?: string | null; institution_name: string | null; is_verified?: boolean | null;
-  last_active?: string | null; updated_at?: string | null;
+  last_active_date?: string | null; updated_at?: string | null;
   display_preference?: string | null;
   currently_working_at?: string | null;
   designation?: string | null;
@@ -102,7 +102,7 @@ const Connections = () => {
     if (!user) return { connected: [], pendingIncoming: [], pendingSent: [], suggested: [] };
     const [acceptedRes, incomingRes, sentRes] = await Promise.allSettled([
       supabase.from("strands")
-        .select("id, requester_id, receiver_id, status, created_at, requester:profiles!strands_requester_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified, last_active, updated_at, display_preference, currently_working_at, designation, headline), receiver:profiles!strands_receiver_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified, last_active, updated_at, display_preference, currently_working_at, designation, headline)")
+        .select("id, requester_id, receiver_id, status, created_at, requester:profiles!strands_requester_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified, last_active_date, updated_at, display_preference, currently_working_at, designation, headline), receiver:profiles!strands_receiver_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified, last_active_date, updated_at, display_preference, currently_working_at, designation, headline)")
         .or(`requester_id.eq.${user.id},receiver_id.eq.${user.id}`).eq("status", "accepted"),
       supabase.from("strands")
         .select("id, requester_id, receiver_id, status, created_at, requester:profiles!strands_requester_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified, display_preference, currently_working_at, designation, headline)")
@@ -136,7 +136,7 @@ const Connections = () => {
     queryKey,
     queryFn: fetchStrandsData,
     enabled: !!user,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
   });
 
   const connected = strandsData?.connected || [];
@@ -222,7 +222,7 @@ const Connections = () => {
     if (activeRecent) {
       const week = Date.now() - 7 * 86400000;
       list = list.filter(s => {
-        const ts = getOther(s)?.last_active || getOther(s)?.updated_at;
+        const ts = getOther(s)?.last_active_date || getOther(s)?.updated_at;
         return ts && new Date(ts).getTime() > week;
       });
     }
@@ -235,12 +235,12 @@ const Connections = () => {
         case "recently_connected":
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         case "mutual":
-          return new Date(ob?.last_active || ob?.updated_at || 0).getTime()
-               - new Date(oa?.last_active || oa?.updated_at || 0).getTime();
+          return new Date(ob?.last_active_date || ob?.updated_at || 0).getTime()
+               - new Date(oa?.last_active_date || oa?.updated_at || 0).getTime();
         case "recent_activity":
         default:
-          return new Date(ob?.last_active || ob?.updated_at || 0).getTime()
-               - new Date(oa?.last_active || oa?.updated_at || 0).getTime();
+          return new Date(ob?.last_active_date || ob?.updated_at || 0).getTime()
+               - new Date(oa?.last_active_date || oa?.updated_at || 0).getTime();
       }
     });
     return list;
@@ -411,7 +411,7 @@ const Connections = () => {
             <div className="space-y-2">
               {filteredConnected.map(s => {
                 const other = getOther(s);
-                const lastActiveSrc = other?.last_active || other?.updated_at;
+                const lastActiveSrc = other?.last_active_date || other?.updated_at;
                 const flags = getDisplayFlags(other);
                 const cardName = flags.showName ? (other?.full_name || "User") : "Tiikme member";
                 const subtype = other?.role_subtype;

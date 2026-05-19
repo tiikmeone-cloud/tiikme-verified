@@ -8,7 +8,7 @@ import { getProfileSubtitle } from "@/lib/profileUtils";
 
 /** @deprecated use getProfileSubtitle from @/lib/profileUtils */
 export function getSubtitle(profile: any): string {
-  return getProfileSubtitle(profile) || "Tiikme Member";
+  return getProfileSubtitle(profile);
 }
 
 interface PersonCardProps {

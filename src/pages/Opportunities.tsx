@@ -451,7 +451,14 @@ function OpportunityCard({ o, user, profile, isInstitution, appliedIds, onApply,
               {orgData?.is_verified && <Shield className="w-3.5 h-3.5" style={{ color: "#10B981" }} />}
             </div>
           </div>
-          <span className="text-[11px] shrink-0" style={{ color: "var(--text-3)" }}>{o.created_at ? daysAgo(o.created_at) : ""}</span>
+          <div className="flex items-center gap-2 shrink-0">
+            {(o.responses_count || 0) > 0 && (
+              <span className="text-[11px] flex items-center gap-1" style={{ color: "var(--text-3)" }}>
+                <UsersIcon className="w-3 h-3" />{o.responses_count} applicants
+              </span>
+            )}
+            <span className="text-[11px]" style={{ color: "var(--text-3)" }}>{o.created_at ? daysAgo(o.created_at) : ""}</span>
+          </div>
         </div>
 
         <h3 className="text-[16px] font-bold mt-2" style={{ color: "var(--text-1)" }}>{o.title}</h3>
@@ -544,7 +551,6 @@ function OpportunityCard({ o, user, profile, isInstitution, appliedIds, onApply,
         {/* Bottom actions */}
         <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
           <div className="flex items-center gap-3 text-[12px]" style={{ color: "var(--text-3)" }}>
-            <span><UsersIcon className="w-3.5 h-3.5 inline mr-1" />{o.responses_count || 0} applicants</span>
             {o.deadline && <span><Clock className="w-3.5 h-3.5 inline mr-1" />{daysLeft(o.deadline)}</span>}
           </div>
           <div className="flex items-center gap-2">

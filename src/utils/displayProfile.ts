@@ -45,13 +45,11 @@ export function getDisplayFlags(profile: DisplayInputProfile | null | undefined)
   };
 }
 
-/** Single composed string for cards that show role inline. */
+/** Single composed string for cards that show role inline. Never returns raw role type. */
 export function formatRoleLine(profile: DisplayInputProfile | null | undefined): string {
   if (!profile) return "";
-  // role_subtype is the most specific title — show it alone to avoid "CEO · CEO / Founder" duplication
   if (profile.role_subtype) return profile.role_subtype;
-  return profile.designation || profile.headline ||
-    (profile.role ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1).replace(/_/g, " ") : "");
+  return profile.designation || profile.headline || "";
 }
 
 export function formatCompanyLine(profile: DisplayInputProfile | null | undefined): string {

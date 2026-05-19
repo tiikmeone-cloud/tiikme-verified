@@ -686,7 +686,7 @@ const ActivityWidget = () => {
           </div>
         </div>
         <div>
-          <p className="num" style={{ fontSize: 28, color: "var(--text-primary)", lineHeight: "32px" }}>{score}</p>
+          <p style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>Activity Score</p>
           <p style={{ fontSize: 11, fontWeight: 500, color: "#E8733A" }}>
             {score >= 500 ? "Tiiked Elite" : score >= 301 ? "Trailblazer" : score >= 151 ? "Achiever" : score >= 51 ? "Builder" : "Explorer"}
           </p>

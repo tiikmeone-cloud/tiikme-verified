@@ -149,7 +149,10 @@ export default function OrganizationPage() {
 
   /* Info cards data */
   const infoCards: { label: string; value: string }[] = [];
-  if (org.type) infoCards.push({ label: "Type", value: `${typeLabel}${org.subtype ? ` · ${org.subtype}` : ""}` });
+  if (org.type) {
+    const subtypeDisplay = org.subtype && org.subtype.toLowerCase() !== org.type.toLowerCase() ? ` · ${org.subtype}` : "";
+    infoCards.push({ label: "Type", value: `${typeLabel}${subtypeDisplay}` });
+  }
   if (org.founded_year) infoCards.push({ label: "Established", value: String(org.founded_year) });
   if (org.city || org.state) infoCards.push({ label: "Headquarters", value: [org.city, org.state].filter(Boolean).join(", ") });
   if (org.employee_count) infoCards.push({ label: teamSizeLabel, value: org.employee_count });
