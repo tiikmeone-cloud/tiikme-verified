@@ -19,7 +19,7 @@ export function getProfileSubtitle(profile: any): string {
   if (r === 'professional') {
     const title = profile.designation || rm.jobTitle || '';
     const company = profile.currently_working_at || rm.company || '';
-    return at(title, company) || 'Professional';
+    return at(title, company) || (profile.role_subtype ? profile.role_subtype.replace(/_/g,' ') : '');
   }
   if (r === 'founder') {
     const company = rm.company || profile.currently_working_at || '';
@@ -52,7 +52,9 @@ export function getProfileSubtitle(profile: any): string {
     return rm.fund || rm.firm || profile.currently_working_at || 'Investor';
   }
 
-  return r ? r.charAt(0).toUpperCase() + r.slice(1).replace(/_/g, ' ') : '';
+  const sub = profile.role_subtype ? profile.role_subtype.replace(/_/g,' ') : '';
+  const desig = profile.designation || profile.currently_working_at || '';
+  return desig || sub || '';
 }
 
 /**
