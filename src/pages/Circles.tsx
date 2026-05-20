@@ -674,15 +674,33 @@ function CirclePostCard({
         <p style={{ fontSize: 13, color: "#374151", lineHeight: 1.55, whiteSpace: "pre-wrap" }}>{post.body || post.content}</p>
       )}
 
-      <div className="flex items-center gap-4" style={{ marginTop: 10, fontSize: 12, color: "#6B7094" }}>
+      <div className="flex items-center flex-wrap gap-2" style={{ marginTop: 10, fontSize: 12, color: "#6B7094" }}>
         <button type="button" onClick={onUpvote} className="cursor-pointer transition-all active:scale-95"
-          style={{ background: "none", border: "none", padding: "2px 4px", borderRadius: 6, color: upvoted ? "#FF5A1F" : "#6B7094", fontWeight: upvoted ? 700 : 500 }}>
-          ▲ <span className="num">{post.upvote_count || 0}</span>
+          style={{
+            background: "none",
+            border: "none",
+            padding: "8px 10px",
+            borderRadius: 10,
+            color: upvoted ? "#FF5A1F" : "#6B7094",
+            fontWeight: upvoted ? 700 : 500,
+            minWidth: 82,
+          }}>
+          ▲ <span className="num" style={{ marginLeft: 4 }}>{post.upvote_count > 0 ? post.upvote_count : "Like"}</span>
         </button>
         <button type="button" onClick={() => setShowComments(s => !s)}
           className="cursor-pointer flex items-center gap-1"
-          style={{ background: "none", border: "none", padding: "2px 4px", borderRadius: 6, color: showComments ? "#FF5A1F" : "#6B7094", fontWeight: showComments ? 700 : 500 }}>
-          <MessageCircle style={{ width: 13, height: 13 }} /> <span className="num">{commentCount}</span>
+          style={{
+            background: "none",
+            border: "none",
+            padding: "8px 10px",
+            borderRadius: 10,
+            color: showComments ? "#FF5A1F" : "#6B7094",
+            fontWeight: showComments ? 700 : 500,
+            minWidth: 96,
+            justifyContent: "center",
+          }}>
+          <MessageCircle style={{ width: 13, height: 13 }} />
+          <span className="num">{commentCount > 0 ? commentCount : "Comment"}</span>
         </button>
         <div style={{ marginLeft: "auto" }}>
           <ReportButton contentType="circle_post" contentId={post.id} />

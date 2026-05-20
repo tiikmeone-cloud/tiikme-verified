@@ -1,4 +1,5 @@
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { safeInternalRedirect } from "@/lib/safeRedirect";
 import { Navigate, useLocation } from "react-router-dom";
 
@@ -12,7 +13,7 @@ const Spinner = () => (
 );
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, profileReady, profileError, refreshProfile } = useAuth();
   const location = useLocation();
 
   if (loading) return <Spinner />;
@@ -26,7 +27,37 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   // While the profile row hasn't loaded yet (just after Google signup the
   // handle_new_user trigger is still firing), don't bounce — show the spinner
   // so we never flash the wrong screen and never lose the deep link.
-  if (!profile) return <Spinner />;
+  if (!profile && !profileReady) return <Spinner />;
+  if (!profile && profileReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "var(--bg)" }}>
+        <div className="max-w-md w-full rounded-2xl border p-6 text-center bg-white shadow-sm" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
+          <h1 className="text-lg font-semibold" style={{ color: "var(--text-1)" }}>We couldn&apos;t load your profile</h1>
+          <p className="mt-2 text-sm" style={{ color: "var(--text-3)" }}>
+            {profileError || "Your session is active, but profile data did not finish loading."}
+          </p>
+          <div className="mt-4 flex items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => void refreshProfile()}
+              className="px-4 py-2 rounded-xl text-sm font-semibold"
+              style={{ background: "#FF5A1F", color: "#fff", border: "none" }}
+            >
+              Retry
+            </button>
+            <button
+              type="button"
+              onClick={() => void supabase.auth.signOut()}
+              className="px-4 py-2 rounded-xl text-sm font-semibold"
+              style={{ background: "rgba(0,0,0,0.06)", color: "var(--text-1)", border: "none" }}
+            >
+              Sign out
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Institution accounts skip the personal onboarding flow entirely.
   const needsOnboarding =

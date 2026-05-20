@@ -4,6 +4,9 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { InstitutionFormData } from "@/pages/JoinAsInstitution";
 
+const TEXT_PRIMARY = "#FAFAF7";
+const TEXT_SECONDARY = "rgba(250,250,247,0.68)";
+
 interface Props {
   form: InstitutionFormData;
   onNext: () => void;
@@ -81,8 +84,8 @@ export default function StepOTP({ form, onNext }: Props) {
 
   return (
     <div>
-      <h1 className="text-[22px] font-extrabold mb-1" style={{ color: "var(--text-1)" }}>Verify your email</h1>
-      <p className="text-[13px] mb-6" style={{ color: "var(--text-3)" }}>
+      <h1 className="text-[22px] font-extrabold mb-1" style={{ color: TEXT_PRIMARY }}>Verify your email</h1>
+      <p className="text-[13px] mb-6" style={{ color: TEXT_SECONDARY }}>
         Enter the 6-digit code sent to <span className="font-bold" style={{ color: "var(--brand)" }}>{form.email}</span>
       </p>
 
@@ -110,7 +113,7 @@ export default function StepOTP({ form, onNext }: Props) {
         {verifying ? "Verifying..." : "Verify & Continue →"}
       </Button>
 
-      <p className="text-center text-[13px] mt-4" style={{ color: "var(--text-3)" }}>
+      <p className="text-center text-[13px] mt-4" style={{ color: TEXT_SECONDARY }}>
         {cooldown > 0 ? (
           <>Resend code in <span className="font-bold" style={{ color: "var(--brand)" }}>{cooldown}s</span></>
         ) : (

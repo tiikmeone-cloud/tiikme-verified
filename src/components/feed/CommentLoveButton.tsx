@@ -48,7 +48,7 @@ export default function CommentLoveButton({ commentId, userId }: Props) {
       type="button"
       onClick={toggle}
       className="inline-flex items-center gap-1 cursor-pointer active:scale-95 shrink-0"
-      style={{ background: "none", border: "none", padding: "2px 4px", borderRadius: 6 }}
+      style={{ background: "none", border: "none", padding: "2px 4px", borderRadius: 6, minWidth: 44, justifyContent: "flex-start" }}
     >
       <Heart
         style={{
@@ -59,11 +59,9 @@ export default function CommentLoveButton({ commentId, userId }: Props) {
           transition: "all 150ms ease",
         }}
       />
-      {count > 0 && (
-        <span style={{ fontSize: 11, fontWeight: 600, color: loved ? "#EF4444" : "#9CA3C0" }}>
-          {count}
-        </span>
-      )}
+      <span style={{ fontSize: 11, fontWeight: 600, color: loved ? "#EF4444" : "#9CA3C0" }}>
+        {count > 0 ? count : "Like"}
+      </span>
     </button>
   );
 }

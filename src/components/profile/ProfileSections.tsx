@@ -173,14 +173,14 @@ const SectionBox = ({ title, icon: Icon, iconColor, count, isOwnProfile, onAdd, 
 
 /* ── Item Row ── */
 const ItemRow = ({ logo, line1, line2, line3, line4, right, isLast, extra }: {
-  logo: React.ReactNode; line1: string; line2?: string; line3?: string; line4?: string;
+  logo: React.ReactNode; line1: React.ReactNode; line2?: string; line3?: string; line4?: string;
   right?: React.ReactNode; isLast: boolean; extra?: React.ReactNode;
 }) => (
   <div className="flex" style={{ alignItems: "flex-start", gap: 10, padding: "8px 0", borderBottom: isLast ? "none" : "1px solid var(--border-subtle)" }}>
     {logo}
     <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 1 }}>
-      <p className="line-clamp-2 break-words" style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>{line1}</p>
-      {line2 && <p className="truncate" style={{ fontSize: 13, fontWeight: 400, color: "var(--text-secondary)" }}>{line2}</p>}
+      <div style={{ fontSize: 14, fontWeight: 600, lineHeight: "18px", color: "var(--text-primary)", overflowWrap: "anywhere", wordBreak: "break-word" }}>{line1}</div>
+      {line2 && <p style={{ fontSize: 13, fontWeight: 400, lineHeight: "17px", color: "var(--text-secondary)", overflowWrap: "anywhere", wordBreak: "break-word" }}>{line2}</p>}
       {line3 && <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)" }}>{line3}</p>}
       {line4 && <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)" }}>{line4}</p>}
       {extra}
@@ -208,15 +208,11 @@ export const ExperienceSection = ({ items, isOwnProfile, onAdd, onDelete, onTogg
     if (names.length > 0) lookupBatch(names);
   }, [items, lookupBatch]);
   const visible = items.slice(0, MAX);
-  if (items.length === 0 && !isOwnProfile) return null;
 
   return (
     <SectionBox title="Experience" icon={Briefcase} iconColor="#4A90D9" borderColor="#4A90D9" count={items.length} isOwnProfile={isOwnProfile} onAdd={onAdd}>
       {items.length === 0 ? (
-        <div style={{ padding: "8px 0" }}>
-          <p style={{ fontSize: 13, color: "var(--text-muted)" }}>Add your jobs, internships, and roles</p>
-          <button type="button" onClick={onAdd} className="cursor-pointer" style={{ fontSize: 12, fontWeight: 600, color: "#4A90D9", background: "none", border: "none", padding: "4px 0 0", display: "block" }}>+ Add experience</button>
-        </div>
+        <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "4px 0" }}>No experience added</p>
       ) : (
         <>
           {visible.map((exp: any, idx: number) => {
@@ -225,7 +221,14 @@ export const ExperienceSection = ({ items, isOwnProfile, onAdd, onDelete, onTogg
             return (
               <ItemRow key={exp.id} isLast={idx === visible.length - 1}
                 logo={<CompanyLogo name={companyName} logoUrl={logo?.logo_url} />}
-                line1={exp.job_title || exp.title}
+                line1={
+                  <span className="inline-flex items-center gap-1.5 flex-wrap">
+                    <span>{exp.job_title || exp.title}</span>
+                    {exp.verification_status === "verified" && (
+                      <CheckCircle className="w-3.5 h-3.5 shrink-0" style={{ color: "#16A34A" }} />
+                    )}
+                  </span>
+                }
                 line2={companyName}
                 line3={getDuration(exp)}
                 line4={exp.work_location || undefined}
@@ -267,15 +270,11 @@ export const EducationSection = ({ items, isOwnProfile, onAdd, onDelete, onToggl
     if (names.length > 0) lookupBatch(names);
   }, [items, lookupBatch]);
   const visible = items.slice(0, MAX);
-  if (items.length === 0 && !isOwnProfile) return null;
 
   return (
     <SectionBox title="Education" icon={GraduationCap} iconColor="#34C759" borderColor="#34C759" count={items.length} isOwnProfile={isOwnProfile} onAdd={onAdd}>
       {items.length === 0 ? (
-        <div style={{ padding: "8px 0" }}>
-          <p style={{ fontSize: 13, color: "var(--text-muted)" }}>Add your college, university, or training</p>
-          <button type="button" onClick={onAdd} className="cursor-pointer" style={{ fontSize: 12, fontWeight: 600, color: "#34C759", background: "none", border: "none", padding: "4px 0 0", display: "block" }}>+ Add education</button>
-        </div>
+        <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "4px 0" }}>No education added</p>
       ) : (
         <>
           {visible.map((edu: any, idx: number) => {
@@ -321,15 +320,11 @@ export const EducationSection = ({ items, isOwnProfile, onAdd, onDelete, onToggl
 export const ProjectsSection = ({ items, isOwnProfile, onAdd, onDelete, onToggleVisibility, onStatusChange }: SectionProps) => {
   const MAX = 3;
   const visible = items.slice(0, MAX);
-  if (items.length === 0 && !isOwnProfile) return null;
 
   return (
     <SectionBox title="Projects" icon={Rocket} iconColor="#FF6B9D" borderColor="#FF6B9D" count={items.length} isOwnProfile={isOwnProfile} onAdd={onAdd}>
       {items.length === 0 ? (
-        <div style={{ padding: "8px 0" }}>
-          <p style={{ fontSize: 13, color: "var(--text-muted)" }}>Share what you've built — open source, side projects, research</p>
-          <button type="button" onClick={onAdd} className="cursor-pointer" style={{ fontSize: 12, fontWeight: 600, color: "#FF6B9D", background: "none", border: "none", padding: "4px 0 0", display: "block" }}>+ Add project</button>
-        </div>
+        <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "4px 0" }}>No projects added</p>
       ) : (
         <>
           {visible.map((p: any, idx: number) => {
@@ -384,15 +379,11 @@ export const ProjectsSection = ({ items, isOwnProfile, onAdd, onDelete, onToggle
 export const AchievementsSection = ({ items, isOwnProfile, onAdd, onDelete, onToggleVisibility }: Omit<SectionProps, "onStatusChange">) => {
   const MAX = 3;
   const visible = items.slice(0, MAX);
-  if (items.length === 0 && !isOwnProfile) return null;
 
   return (
     <SectionBox title="Achievements" icon={Award} iconColor="#FFB800" borderColor="#FFB800" count={items.length} isOwnProfile={isOwnProfile} onAdd={onAdd}>
       {items.length === 0 ? (
-        <div style={{ padding: "8px 0" }}>
-          <p style={{ fontSize: 13, color: "var(--text-muted)" }}>Add awards, certifications, and milestones</p>
-          <button type="button" onClick={onAdd} className="cursor-pointer" style={{ fontSize: 12, fontWeight: 600, color: "#FFB800", background: "none", border: "none", padding: "4px 0 0", display: "block" }}>+ Add achievement</button>
-        </div>
+        <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "4px 0" }}>No achievements added</p>
       ) : (
         <>
           {visible.map((a: any, idx: number) => {
@@ -448,12 +439,7 @@ export const SkillsSection = ({ skills, isOwnProfile, onAdd, onRemoveSkill }: {
   return (
     <SectionBox title="Skills" icon={Star} iconColor="#8B5CF6" borderColor="#8B5CF6" count={skills.length} isOwnProfile={isOwnProfile} onAdd={onAdd}>
       {skills.length === 0 ? (
-        isOwnProfile ? (
-          <div style={{ padding: "8px 0" }}>
-            <p style={{ fontSize: 13, color: "var(--text-muted)" }}>List your technical and professional skills</p>
-            <button type="button" onClick={onAdd} className="cursor-pointer" style={{ fontSize: 12, fontWeight: 600, color: "#8B5CF6", background: "none", border: "none", padding: "4px 0 0", display: "block" }}>+ Add skill</button>
-          </div>
-        ) : null
+        <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "4px 0" }}>No skills added</p>
       ) : (
         <div className="flex flex-wrap" style={{ gap: 6, padding: "8px 0" }}>
           {visible.map((s: string) => (
@@ -481,12 +467,11 @@ export const SkillsSection = ({ skills, isOwnProfile, onAdd, onRemoveSkill }: {
 
 /* ═══ POSTS ═══ */
 export const PostsSection = ({
-  posts, stats, username, isOwnProfile,
+  posts, stats, username,
 }: {
   posts: any[];
   stats: { posts: number };
   username?: string;
-  isOwnProfile?: boolean;
 }) => {
   const { data: latestPosts = posts } = useQuery({
     queryKey: ["profile-posts-preview-refresh", posts.map((p: any) => p.id).join(",")],
@@ -505,15 +490,10 @@ export const PostsSection = ({
     initialData: posts,
   });
 
-  if (posts.length === 0 && !isOwnProfile) return null;
-
   return (
-    <SectionBox title="Posts" icon={MessageCircle} iconColor="#E8733A" borderColor="#E8733A" count={stats.posts} isOwnProfile={!!isOwnProfile}>
+    <SectionBox title="Posts" icon={MessageCircle} iconColor="#E8733A" borderColor="#E8733A" count={stats.posts} isOwnProfile={false}>
       {posts.length === 0 ? (
-        <div style={{ padding: "8px 0" }}>
-          <p style={{ fontSize: 13, color: "var(--text-muted)" }}>Share your first verified professional update</p>
-          <Link to="/post/create" style={{ fontSize: 12, fontWeight: 600, color: "#E8733A", textDecoration: "none", display: "block", paddingTop: 4 }}>+ Write a post</Link>
-        </div>
+        <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "4px 0" }}>No posts yet</p>
       ) : (
         <div>
           <div className="mb-3 flex items-center justify-between">
@@ -540,15 +520,10 @@ export const RolesSection = ({ items, isOwnProfile, onAdd, onDelete }: {
     "Moonlighting": "#34C759",
   };
 
-  if (items.length === 0 && !isOwnProfile) return null;
-
   return (
     <SectionBox title="Moonlighting" icon={Star} iconColor="#0369A1" borderColor="#0369A1" count={items.length} isOwnProfile={isOwnProfile} onAdd={onAdd}>
       {items.length === 0 ? (
-        <div style={{ padding: "8px 0" }}>
-          <p style={{ fontSize: 13, color: "var(--text-muted)" }}>Disclose freelance, side hustles, or dual roles</p>
-          <button type="button" onClick={onAdd} className="cursor-pointer" style={{ fontSize: 12, fontWeight: 600, color: "#0369A1", background: "none", border: "none", padding: "4px 0 0", display: "block" }}>+ Add role</button>
-        </div>
+        <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "4px 0" }}>No additional roles added</p>
       ) : (
         <div className="flex flex-wrap" style={{ gap: 8, padding: "8px 0" }}>
           {items.map((r: any) => {

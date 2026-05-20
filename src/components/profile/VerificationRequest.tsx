@@ -1,11 +1,26 @@
-import AvatarSquare from "@/components/ui/AvatarSquare";
-import { useState, useEffect, useRef } from "react";
-import { Paperclip } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { Search, Send, CheckCircle, Clock, RefreshCw, X, ArrowLeft, Copy } from "lucide-react";
+import {
+  ArrowLeft,
+  Briefcase,
+  CheckCircle,
+  Clock,
+  Mail,
+  Send,
+  ShieldCheck,
+  Upload,
+  UserCheck,
+  X,
+} from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
+import {
+  domainsMatch,
+  extractDomain,
+  sendWorkEmailOtp,
+  verifyWorkEmailOtp,
+} from "@/lib/verificationOtp";
 
 interface VerificationRequestProps {
   item: any;
@@ -13,466 +28,514 @@ interface VerificationRequestProps {
   onStatusChange: (itemId: string, status: string, verifierName?: string) => void;
 }
 
-const LOGO_COLORS = ["#E8733A", "#4A90D9", "#34C759", "#FF6B9D", "#8B5CF6", "#FFB800"];
-const hashColor = (name: string) => LOGO_COLORS[name.split("").reduce((a, c) => a + c.charCodeAt(0), 0) % LOGO_COLORS.length];
+type VerifyMethod = "otp" | "upload" | "manager";
+
+const overlayStyle: React.CSSProperties = {
+  position: "fixed",
+  inset: 0,
+  zIndex: 9999,
+  background: "rgba(26,26,78,0.40)",
+  backdropFilter: "blur(8px)",
+  WebkitBackdropFilter: "blur(8px)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: 16,
+};
+
+const cardStyle: React.CSSProperties = {
+  width: "100%",
+  maxWidth: 560,
+  maxHeight: "88vh",
+  borderRadius: 20,
+  background: "#fff",
+  border: "1px solid rgba(0,0,0,0.08)",
+  boxShadow: "0 24px 80px rgba(26,26,78,0.20)",
+  overflow: "hidden",
+  display: "flex",
+  flexDirection: "column",
+};
 
 export default function VerificationRequest({ item, itemType, onStatusChange }: VerificationRequestProps) {
-  const { user, profile } = useAuth();
-  const [expanded, setExpanded] = useState(false);
-  const [step, setStep] = useState<"search" | "confirm" | "not_found" | "sent">("search");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [orgs, setOrgs] = useState<any[]>([]);
-  const [selectedOrg, setSelectedOrg] = useState<any>(null);
-  const [verifiers, setVerifiers] = useState<any[]>([]);
-  const [selectedVerifier, setSelectedVerifier] = useState<any>(null);
-  const [message, setMessage] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [docFile, setDocFile] = useState<File | null>(null);
-  const [docUploading, setDocUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [method, setMethod] = useState<VerifyMethod>("otp");
+  const [matchedOrg, setMatchedOrg] = useState<any>(null);
+  const [orgLoading, setOrgLoading] = useState(false);
 
-  // Close on Escape key
+  const [workEmail, setWorkEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+
+  const [offerFile, setOfferFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const [managerEmail, setManagerEmail] = useState("");
+  const [managerNote, setManagerNote] = useState("");
+  const [submittingManager, setSubmittingManager] = useState(false);
+
+  const companyName =
+    item.company_name ||
+    item.institution_name ||
+    item.institution_name_edu ||
+    "this company";
+
+  const titleText =
+    itemType === "education"
+      ? `Verify your education at ${companyName}`
+      : itemType === "project"
+        ? `Verify your project at ${companyName}`
+        : `Verify your role at ${companyName}`;
+
+  const orgDomain = matchedOrg?.email_domain?.trim().toLowerCase() || "";
+  const emailLooksValid = /\S+@\S+\.\S+/.test(workEmail.trim());
+  const emailDomainMatches = emailLooksValid && orgDomain ? domainsMatch(workEmail.trim(), orgDomain) : false;
+
   useEffect(() => {
-    if (!expanded) return;
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") setExpanded(false); };
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, [expanded]);
-
-  // Lock body scroll
-  useEffect(() => {
-    if (expanded) { document.body.style.overflow = "hidden"; return () => { document.body.style.overflow = ""; }; }
-  }, [expanded]);
-
-  const companyName = item.company_name || item.institution_name || item.institution_name_edu || "";
-
-  // Search organizations AND pages
-  useEffect(() => {
-    if (searchQuery.length < 2) { setOrgs([]); return; }
-    const t = setTimeout(async () => {
-      const term = `%${searchQuery}%`;
-      const [orgRes, pageRes] = await Promise.all([
-        supabase.from("organizations").select("id, name, type, logo_url, slug").ilike("name", term).limit(5),
-        supabase.from("pages").select("id, name, page_type, logo_url, slug").or(`name.ilike.${term},also_known_as.ilike.${term}`).limit(5),
-      ]);
-      const results: any[] = [];
-      (orgRes.data || []).forEach(o => results.push({ ...o, source: "org" }));
-      (pageRes.data || []).forEach(p => results.push({ id: p.id, name: p.name, type: p.page_type, logo_url: p.logo_url, slug: p.slug, source: "page" }));
-      // Deduplicate by name
-      const seen = new Set<string>();
-      setOrgs(results.filter(r => { const k = r.name.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; }));
-    }, 300);
-    return () => clearTimeout(t);
-  }, [searchQuery]);
-
-  // Fetch verifiers for selected org
-  useEffect(() => {
-    if (!selectedOrg) return;
+    if (!open) return;
+    let cancelled = false;
     (async () => {
-      const itemDept = item.department || "";
-      const orgId = selectedOrg.id;
+      if (!companyName || itemType === "achievement") return;
+      setOrgLoading(true);
+      const exact = await supabase
+        .from("organizations")
+        .select("id, name, email_domain")
+        .ilike("name", companyName)
+        .limit(1)
+        .maybeSingle();
 
-      const { data: routes } = await supabase.from("org_verif_routes")
-        .select("assigned_to_user_id, condition_type, condition_value")
-        .eq("org_id", orgId);
-
-      let assignedIds: string[] = [];
-      if (routes?.length) {
-        const matched = routes.filter(r =>
-          !r.condition_type || r.condition_type === "all" ||
-          (r.condition_type === "department" && r.condition_value?.toLowerCase() === itemDept.toLowerCase())
-        );
-        assignedIds = matched.map(r => r.assigned_to_user_id).filter(Boolean) as string[];
+      if (!cancelled && exact.data) {
+        setMatchedOrg(exact.data);
+        setOrgLoading(false);
+        return;
       }
 
-      if (assignedIds.length > 0) {
-        const { data: profiles } = await supabase.from("profiles")
-          .select("id, full_name, avatar_url")
-          .in("id", assignedIds);
-        setVerifiers((profiles || []).map(p => ({ user_id: p.id, profile: p, title: "Assigned Verifier", role: "verifier" })));
-      } else {
-        const { data } = await supabase.from("org_members")
-          .select("user_id, title, role")
-          .eq("org_id", orgId)
-          .or("role.in.(owner,admin)");
-        if (!data?.length) { setVerifiers([]); return; }
-        const uids = data.map(d => d.user_id);
-        const { data: profiles } = await supabase.from("profiles")
-          .select("id, full_name, avatar_url")
-          .in("id", uids);
-        setVerifiers(data.map(d => ({ ...d, profile: profiles?.find(p => p.id === d.user_id) })));
+      const loose = await supabase
+        .from("organizations")
+        .select("id, name, email_domain")
+        .ilike("name", `%${companyName}%`)
+        .limit(1)
+        .maybeSingle();
+
+      if (!cancelled) {
+        setMatchedOrg(loose.data || null);
+        setOrgLoading(false);
       }
     })();
-  }, [selectedOrg, item.department]);
 
-  const uploadDoc = async (authUserId: string): Promise<string | null> => {
-    if (!docFile) return null;
-    setDocUploading(true);
-    const ext = docFile.name.split(".").pop() || "bin";
-    const path = `verification-docs/${authUserId}/${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("verification-docs").upload(path, docFile, { upsert: false });
-    setDocUploading(false);
-    if (error) { toast.error("Could not upload document"); return null; }
-    const { data: { publicUrl } } = supabase.storage.from("verification-docs").getPublicUrl(path);
-    return publicUrl;
+    return () => {
+      cancelled = true;
+    };
+  }, [open, companyName, itemType]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("keydown", handler);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handler);
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
+  const resetAndClose = () => {
+    setOpen(false);
+    setMethod("otp");
+    setWorkEmail("");
+    setOtp("");
+    setOtpSent(false);
+    setOfferFile(null);
+    setManagerEmail("");
+    setManagerNote("");
   };
 
-  const handleSubmit = async (verifierId: string | null, verifierName: string) => {
-    // Always pull live auth user — RLS check uses auth.uid()
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-    if (!authUser) { toast.error("Please log in"); return; }
-    setSubmitting(true);
-
-    const documentUrl = await uploadDoc(authUser.id);
-
-    const payload: any = {
-      requester_id: authUser.id,
-      item_type: item.item_type || itemType || "experience",
-      item_id: item.id,
-      submitted_id: item.id,                    // has DB default, set explicitly to be safe
-      org_id: selectedOrg?.id || null,
-      entity_type: "work_item",
-      entity_id: item.id,
-      assigned_to: verifierId || null,          // null when org has no admin
-      requested_role: item.job_title || item.title || null,
-      role_category: item.domain || null,
-      context_note: message.trim() || null,
-      document_url: documentUrl,
-      status: "pending",
+  const updateVerifiedState = async (status: "verified" | "pending") => {
+    if (!user || itemType === "achievement") return;
+    const patch: any = {
+      verification_status: status,
+      verified_at: status === "verified" ? new Date().toISOString() : null,
     };
+    const { error } = await supabase
+      .from("work_items")
+      .update(patch)
+      .eq("id", item.id)
+      .eq("owner_id", user.id);
 
-    const { error } = await supabase.from("verification_requests").insert(payload);
+    if (error) throw error;
+    onStatusChange(item.id, status);
+  };
 
-    if (error) {
-      console.error("[verify] error:", error);
-      toast.error("Could not submit verification. Please try again.");
-      setSubmitting(false);
+  const createVerificationRequest = async ({
+    status,
+    verifierEmail,
+    message,
+  }: {
+    status: "pending" | "approved";
+    verifierEmail?: string | null;
+    message?: string | null;
+  }) => {
+    if (!user || itemType === "achievement") return;
+    const { error } = await supabase.from("item_verification_requests").insert({
+      requester_id: user.id,
+      work_item_id: item.id,
+      org_id: matchedOrg?.id || null,
+      verifier_email: verifierEmail || null,
+      status,
+      message: message || null,
+    });
+    if (error) throw error;
+  };
+
+  const handleSendOtp = async () => {
+    if (!orgDomain) {
+      toast.error("No verified company domain found for this role yet.");
+      return;
+    }
+    if (!emailDomainMatches) {
+      toast.error(`Use your ${orgDomain} work email to continue.`);
       return;
     }
 
-    // Notify the assigned verifier (if any)
-    if (verifierId) {
-      try {
-        const { sendNotification } = await import("@/lib/notify");
-        sendNotification({
-          userId: verifierId,
-          actorId: authUser.id,
-          type: "verification_request",
-          title: "Verification Request",
-          body: `${profile?.full_name || "Someone"} wants you to verify their ${itemType} at ${companyName}`,
-          actionUrl: `/app/profile/${authUser.id}`,
-          data: { item_id: item.id, item_type: itemType, org_id: selectedOrg?.id },
-        });
-      } catch (e) { console.warn("notify failed", e); }
+    setSendingOtp(true);
+    const result = await sendWorkEmailOtp(workEmail.trim().toLowerCase());
+    setSendingOtp(false);
+    if (!result.ok) {
+      toast.error(result.error || "Could not send verification code.");
+      return;
     }
-
-    // Mark the item as pending (scoped to owner — RLS-safe)
-    if (itemType === "achievement") {
-      await supabase.from("achievements").update({ verification_status: "pending" } as any)
-        .eq("id", item.id).eq("user_id", authUser.id);
-    } else {
-      await supabase.from("work_items").update({ verification_status: "pending" } as any)
-        .eq("id", item.id).eq("owner_id", authUser.id);
-    }
-
-    onStatusChange(item.id, "pending");
-    toast.success(verifierId
-      ? "Verification request sent"
-      : "Submitted — the Tiikme team will review it soon.");
-    setStep("sent");
-    setSubmitting(false);
+    setOtpSent(true);
+    toast.success(`Verification code sent to ${workEmail.trim().toLowerCase()}`);
   };
 
-  const handleInvite = () => {
-    const inviteLink = `${window.location.origin}/invite?ref=${user?.id}&org=${encodeURIComponent(searchQuery || companyName)}`;
-    navigator.clipboard.writeText(inviteLink);
-    toast.success("Invite link copied to clipboard!");
-  };
+  const handleVerifyOtp = async () => {
+    if (!otpSent || otp.trim().length !== 6) return;
+    setVerifyingOtp(true);
+    const result = await verifyWorkEmailOtp(workEmail.trim().toLowerCase(), otp.trim());
+    if (!result.ok) {
+      setVerifyingOtp(false);
+      toast.error(result.error || "Invalid verification code.");
+      return;
+    }
 
-  const goBack = () => {
-    if (step === "confirm" || step === "not_found") {
-      setStep("search");
-      setSelectedOrg(null);
-      setSelectedVerifier(null);
-    } else if (step === "sent") {
-      setExpanded(false);
+    try {
+      await createVerificationRequest({
+        status: "approved",
+        verifierEmail: workEmail.trim().toLowerCase(),
+        message: `Verified via work email OTP (${extractDomain(workEmail)})`,
+      });
+      await updateVerifiedState("verified");
+      toast.success(`Role verified at ${companyName}!`);
+      resetAndClose();
+    } catch (error: any) {
+      toast.error(error?.message || "Could not complete verification.");
+    } finally {
+      setVerifyingOtp(false);
     }
   };
 
-  const stepTitle = step === "search" ? `Verify: ${item.title || companyName}`
-    : step === "confirm" ? "Select Verifier"
-    : step === "not_found" ? "Organization Not Found"
-    : "Request Sent";
+  const handleOfferUpload = async () => {
+    if (!user || !offerFile) {
+      toast.error("Attach your offer letter first.");
+      return;
+    }
+    setUploading(true);
+    try {
+      const ext = offerFile.name.split(".").pop() || "pdf";
+      const path = `role-verification/${user.id}/${item.id}/${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("verification-docs")
+        .upload(path, offerFile, { upsert: false, contentType: offerFile.type || undefined });
+      if (uploadError) throw uploadError;
 
-  // VERIFIED
+      await createVerificationRequest({
+        status: "pending",
+        message: `Offer letter uploaded to verification-docs: ${path}`,
+      });
+      await updateVerifiedState("pending");
+      toast.success(`Verification submitted for ${companyName}.`);
+      resetAndClose();
+    } catch (error: any) {
+      toast.error(error?.message || "Could not submit offer letter.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleManagerReference = async () => {
+    if (!user) return;
+    const email = managerEmail.trim().toLowerCase();
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      toast.error("Enter a valid manager email.");
+      return;
+    }
+
+    setSubmittingManager(true);
+    try {
+      await createVerificationRequest({
+        status: "pending",
+        verifierEmail: email,
+        message: managerNote.trim()
+          ? `Manager reference requested. Note: ${managerNote.trim()}`
+          : "Manager reference requested.",
+      });
+      await updateVerifiedState("pending");
+      toast.success("Manager reference request submitted.");
+      resetAndClose();
+    } catch (error: any) {
+      toast.error(error?.message || "Could not submit manager reference.");
+    } finally {
+      setSubmittingManager(false);
+    }
+  };
+
+  const methodCards = useMemo(() => ([
+    {
+      key: "otp" as const,
+      title: "Work email OTP",
+      subtitle: orgDomain ? `Instant verification using ${orgDomain}` : "Needs a matched company domain",
+      icon: ShieldCheck,
+    },
+    {
+      key: "upload" as const,
+      title: "Upload offer letter",
+      subtitle: "Submit proof for review",
+      icon: Upload,
+    },
+    {
+      key: "manager" as const,
+      title: "Manager reference",
+      subtitle: "Send a reference request",
+      icon: UserCheck,
+    },
+  ]), [orgDomain]);
+
   if (item.verification_status === "verified") {
     return (
-      <span className="inline-flex items-center gap-1 shrink-0 cursor-default"
-        title={`Verified${item.verified_at ? ` on ${new Date(item.verified_at).toLocaleDateString()}` : ""}`}
-        style={{ color: "#F59E0B", fontSize: 16, fontWeight: 700 }}>
-        <CheckCircle className="w-4 h-4" style={{ color: "#F59E0B" }} />
+      <span
+        className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full shrink-0"
+        style={{ background: "rgba(34,197,94,0.10)", color: "#15803D", border: "1px solid rgba(34,197,94,0.30)" }}
+      >
+        <CheckCircle className="w-3 h-3" /> Verified
       </span>
     );
   }
 
-  // PENDING
   if (item.verification_status === "pending") {
     return (
-      <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full shrink-0"
-        style={{ background: "rgba(245,158,11,0.10)", color: "#D97706", border: "1px solid rgba(245,158,11,0.25)" }}>
+      <span
+        className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full shrink-0"
+        style={{ background: "rgba(245,158,11,0.10)", color: "#D97706", border: "1px solid rgba(245,158,11,0.25)" }}
+      >
         <Clock className="w-3 h-3" /> Pending
       </span>
     );
   }
 
-  // REJECTED
-  if (item.verification_status === "rejected" || item.verification_status === "declined") {
-    return (
-      <div className="flex items-center gap-2 shrink-0">
-        <span className="text-[10px] font-semibold" style={{ color: "#DC2626" }}>Declined</span>
-        <button type="button" onClick={() => { setExpanded(true); setStep("search"); setSearchQuery(""); }}
-          className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full cursor-pointer"
-          style={{ color: "#E8733A", border: "1px solid #E8733A", background: "transparent" }}>
-          <RefreshCw className="w-2.5 h-2.5" /> Retry
-        </button>
-      </div>
-    );
-  }
+  if (itemType === "achievement") return null;
 
-  // UNVERIFIED — trigger button + full-screen modal
   return (
     <div className="shrink-0">
-      <button type="button" onClick={() => { setExpanded(true); setStep("search"); setSearchQuery(""); }}
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
         className="inline-flex items-center gap-1 text-[10px] font-bold px-3 py-1 rounded-full cursor-pointer transition-all hover:shadow-md"
-        style={{ color: "#E8733A", border: "1.5px solid #E8733A", background: "transparent" }}>
+        style={{ color: "#E8733A", border: "1.5px solid #E8733A", background: "transparent" }}
+      >
         Verify
       </button>
 
-      {expanded && createPortal(
-        <div
-          style={{
-            position: "fixed",
-            top: 0, left: 0, right: 0, bottom: 0,
-            zIndex: 9999,
-            background: "rgba(26,26,78,0.40)",
-            backdropFilter: "blur(8px)",
-            WebkitBackdropFilter: "blur(8px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 16,
-          }}
-          onClick={() => setExpanded(false)}
-        >
-          <div
-            className="flex flex-col"
-            style={{
-              width: "100%",
-              maxWidth: 520,
-              maxHeight: "85vh",
-              borderRadius: 20,
-              background: "#fff",
-              border: "1px solid rgba(0,0,0,0.08)",
-              boxShadow: "0 24px 80px rgba(26,26,78,0.20)",
-              overflow: "hidden",
-              margin: "auto",
-            }}
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Header */}
+      {open && createPortal(
+        <div style={overlayStyle} onClick={resetAndClose}>
+          <div style={cardStyle} onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3 shrink-0" style={{ padding: "14px 20px", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
-              {step !== "search" && (
-                <button type="button" onClick={goBack} className="cursor-pointer p-1" style={{ color: "#1A1A2E" }}>
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
-              )}
-              <p className="flex-1 truncate" style={{ fontSize: 16, fontWeight: 700, color: "#1A1A2E" }}>{stepTitle}</p>
-              <button type="button" onClick={() => setExpanded(false)} className="p-1 cursor-pointer" style={{ color: "#9CA3C0" }}>
+              <button type="button" onClick={resetAndClose} className="cursor-pointer p-1" style={{ color: "#1A1A2E" }}>
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <p className="flex-1 truncate" style={{ fontSize: 16, fontWeight: 700, color: "#1A1A2E" }}>{titleText}</p>
+              <button type="button" onClick={resetAndClose} className="p-1 cursor-pointer" style={{ color: "#9CA3C0" }}>
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Work item summary */}
-            {step === "search" && companyName && (
-              <div className="shrink-0" style={{ padding: "10px 20px", background: "rgba(0,0,0,0.02)", borderBottom: "1px solid rgba(0,0,0,0.04)" }}>
-                <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>{item.title}</p>
-                <p style={{ fontSize: 12, color: "#9CA3C0" }}>{companyName}{item.start_date ? ` · ${new Date(item.start_date).getFullYear()}` : ""}</p>
-              </div>
-            )}
+            <div className="shrink-0" style={{ padding: "10px 20px", background: "rgba(0,0,0,0.02)", borderBottom: "1px solid rgba(0,0,0,0.04)" }}>
+              <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>{item.job_title || item.title}</p>
+              <p style={{ fontSize: 12, color: "#9CA3C0" }}>
+                {companyName}
+                {orgDomain ? ` · ${orgDomain}` : orgLoading ? " · matching company..." : " · no company domain found"}
+              </p>
+            </div>
 
-            {/* Search bar */}
-            {step === "search" && (
-              <div className="shrink-0" style={{ padding: "12px 20px 0" }}>
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 w-4 h-4" style={{ color: "#9CA3C0" }} />
-                  <input
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    placeholder="Search organization..."
-                    autoFocus
+            <div className="flex-1 overflow-y-auto" style={{ padding: "16px 20px 20px" }}>
+              <div className="grid gap-2 md:grid-cols-3">
+                {methodCards.map(({ key, title, subtitle, icon: Icon }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setMethod(key)}
+                    className="text-left rounded-2xl p-3 transition-all cursor-pointer"
                     style={{
-                      width: "100%", height: 44,
-                      background: "rgba(0,0,0,0.03)", border: "1px solid rgba(0,0,0,0.10)", borderRadius: 10,
-                      padding: "0 16px 0 40px", fontSize: 14, color: "#1A1A2E", outline: "none",
+                      border: method === key ? "1.5px solid #E8733A" : "1px solid rgba(0,0,0,0.08)",
+                      background: method === key ? "rgba(232,115,58,0.05)" : "#fff",
                     }}
-                  />
-                </div>
+                  >
+                    <Icon className="w-4 h-4 mb-2" style={{ color: method === key ? "#E8733A" : "#6B7094" }} />
+                    <p style={{ fontSize: 13, fontWeight: 700, color: "#1A1A2E" }}>{title}</p>
+                    <p style={{ fontSize: 11, color: "#9CA3C0", marginTop: 2 }}>{subtitle}</p>
+                  </button>
+                ))}
               </div>
-            )}
 
-            {/* Scrollable content */}
-            <div className="flex-1 overflow-y-auto" style={{ padding: "12px 20px" }}>
-              {step === "search" && (
-                <div className="space-y-2">
-                  {orgs.map(org => (
-                    <button type="button" key={`${org.source}-${org.id}`} onClick={() => { setSelectedOrg(org); setStep("confirm"); }}
-                      className="flex items-center gap-3 w-full p-3 rounded-xl text-left cursor-pointer transition-colors hover:bg-gray-50"
-                      style={{ border: "1px solid rgba(0,0,0,0.06)" }}>
-                      <div className="w-10 h-10 flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden"
-                        style={{ borderRadius: 0, background: org.logo_url ? "transparent" : hashColor(org.name) }}>
-                        {org.logo_url ? <img src={org.logo_url} loading="lazy" className="w-full h-full object-cover" style={{ borderRadius: 0 }} alt="" /> : org.name.slice(0, 2).toUpperCase()}
-                      </div>
-                      <div className="min-w-0">
-                        <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>{org.name}</p>
-                        <p style={{ fontSize: 11, color: "#9CA3C0" }}>{org.type}</p>
-                      </div>
-                    </button>
-                  ))}
-
-                  {/* Not found — invite only */}
-                  {searchQuery.length >= 2 && orgs.length === 0 && (
-                    <div className="p-5 rounded-xl text-center space-y-3" style={{ background: "rgba(245,158,11,0.04)", border: "1px solid rgba(245,158,11,0.12)" }}>
-                      <p style={{ fontSize: 14, fontWeight: 700, color: "#1A1A2E" }}>"{searchQuery}" is not on Tiikme yet</p>
-                      <p style={{ fontSize: 12, color: "#9CA3C0" }}>Invite them to join so they can verify your {itemType}</p>
-                      <button type="button" onClick={handleInvite}
-                        className="flex items-center justify-center gap-2 mx-auto cursor-pointer"
-                        style={{
-                          height: 40, padding: "0 24px", borderRadius: 10,
-                          background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff",
-                          fontSize: 13, fontWeight: 600, border: "none",
-                        }}>
-                        <Copy className="w-4 h-4" /> Invite
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {step === "confirm" && selectedOrg && (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: "rgba(16,185,129,0.04)", border: "1px solid rgba(16,185,129,0.12)" }}>
-                    <div className="w-10 h-10 flex items-center justify-center text-[11px] font-bold text-white shrink-0 overflow-hidden"
-                      style={{ borderRadius: 0, background: selectedOrg.logo_url ? "transparent" : hashColor(selectedOrg.name) }}>
-                      {selectedOrg.logo_url ? <img src={selectedOrg.logo_url} loading="lazy" className="w-full h-full object-cover" style={{ borderRadius: 0 }} alt="" /> : selectedOrg.name.slice(0, 2).toUpperCase()}
-                    </div>
-                    <div>
-                      <p style={{ fontSize: 13, fontWeight: 700, color: "#1A1A2E" }}>Send request to {selectedOrg.name}?</p>
-                      <p style={{ fontSize: 11, color: "#9CA3C0" }}>Select who should verify you</p>
-                    </div>
-                  </div>
-
-                  {verifiers.length === 0 && (
-                    <div className="rounded-xl p-3" style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.18)" }}>
-                      <p style={{ fontSize: 12, fontWeight: 600, color: "#92400E" }}>
-                        No admin is currently assigned at this organization.
-                      </p>
-                      <p style={{ fontSize: 11, color: "#9CA3C0", marginTop: 4 }}>
-                        Your request will be reviewed by the Tiikme team.
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="space-y-2" style={{ maxHeight: 200, overflowY: "auto" }}>
-                    {verifiers.map(v => (
-                      <button type="button" key={v.user_id} onClick={() => setSelectedVerifier(v)}
-                        className="flex items-center gap-3 w-full p-3 rounded-xl cursor-pointer transition-colors"
-                        style={{
-                          background: selectedVerifier?.user_id === v.user_id ? "rgba(232,115,58,0.06)" : "transparent",
-                          border: `1.5px solid ${selectedVerifier?.user_id === v.user_id ? "#E8733A" : "rgba(0,0,0,0.06)"}`,
-                        }}>
-                        <AvatarSquare src={v.profile?.avatar_url} name={v.profile?.full_name || "U"} size="sm" />
-                        <div className="text-left min-w-0">
-                          <p style={{ fontSize: 12, fontWeight: 600, color: "#1A1A2E" }}>{v.profile?.full_name}</p>
-                          <p style={{ fontSize: 10, color: "#9CA3C0" }}>{v.title || v.role}</p>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-
-                  <input value={message} onChange={e => setMessage(e.target.value.slice(0, 100))} placeholder="Optional message (100 chars)" maxLength={100}
-                    style={{ width: "100%", height: 36, borderRadius: 8, border: "1px solid rgba(0,0,0,0.10)", padding: "0 12px", fontSize: 12, color: "#1A1A2E", outline: "none" }} />
-
-                  {/* Document upload */}
+              {method === "otp" && (
+                <div className="mt-4 space-y-3">
                   <div>
-                    <p style={{ fontSize: 12, fontWeight: 600, color: "#6B7094", marginBottom: 6 }}>Attach proof (optional) — offer letter, employee ID, student ID</p>
-                    <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display: "none" }} onChange={e => setDocFile(e.target.files?.[0] || null)} />
-                    <button type="button" onClick={() => fileInputRef.current?.click()}
-                      style={{
-                        display: "inline-flex", alignItems: "center", gap: 6,
-                        height: 34, padding: "0 12px", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer",
-                        background: docFile ? "rgba(16,185,129,0.10)" : "rgba(0,0,0,0.05)",
-                        border: `1px solid ${docFile ? "rgba(16,185,129,0.30)" : "rgba(0,0,0,0.10)"}`,
-                        color: docFile ? "#059669" : "#6B7094",
-                      }}>
-                      <Paperclip style={{ width: 13, height: 13 }} />
-                      {docFile ? docFile.name.slice(0, 28) : "Attach document"}
-                    </button>
-                    {docFile && (
-                      <button type="button" onClick={() => setDocFile(null)} style={{ marginLeft: 8, fontSize: 11, color: "#EF4444", background: "none", border: "none", cursor: "pointer" }}>Remove</button>
+                    <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#1A1A2E", marginBottom: 6 }}>Work email</label>
+                    <input
+                      value={workEmail}
+                      onChange={(e) => setWorkEmail(e.target.value)}
+                      placeholder={orgDomain ? `you@${orgDomain}` : "you@company.com"}
+                      style={{ width: "100%", height: 42, borderRadius: 10, border: "1px solid rgba(0,0,0,0.10)", padding: "0 12px", fontSize: 13, color: "#1A1A2E", outline: "none" }}
+                    />
+                    {!!workEmail && (
+                      <p style={{ fontSize: 11, marginTop: 6, color: emailDomainMatches ? "#16A34A" : "#EF4444" }}>
+                        {orgDomain
+                          ? emailDomainMatches
+                            ? "Domain matched. You can send a verification code."
+                            : `Email must match ${orgDomain}`
+                          : "OTP is available after a company domain is matched."}
+                      </p>
                     )}
                   </div>
+                  {otpSent && (
+                    <div>
+                      <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#1A1A2E", marginBottom: 6 }}>Enter 6-digit code</label>
+                      <input
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                        placeholder="123456"
+                        inputMode="numeric"
+                        maxLength={6}
+                        style={{ width: "100%", height: 42, borderRadius: 10, border: "1px solid rgba(0,0,0,0.10)", padding: "0 12px", fontSize: 18, letterSpacing: "0.35em", textAlign: "center", color: "#1A1A2E", outline: "none" }}
+                      />
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={sendingOtp || !emailDomainMatches}
+                      onClick={handleSendOtp}
+                      style={{
+                        height: 40, padding: "0 16px", borderRadius: 10, fontSize: 13, fontWeight: 600,
+                        background: emailDomainMatches ? "#FFF3EC" : "#F3F4F6",
+                        color: emailDomainMatches ? "#E8733A" : "#9CA3AF",
+                        border: "1px solid rgba(232,115,58,0.18)",
+                      }}
+                    >
+                      {sendingOtp ? "Sending..." : "Send OTP"}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={verifyingOtp || otp.length !== 6}
+                      onClick={handleVerifyOtp}
+                      style={{
+                        height: 40, padding: "0 16px", borderRadius: 10, fontSize: 13, fontWeight: 700,
+                        background: otp.length === 6 ? "linear-gradient(135deg, #E8733A, #FF6B9D)" : "#E5E7EB",
+                        color: otp.length === 6 ? "#fff" : "#9CA3AF",
+                        border: "none",
+                      }}
+                    >
+                      {verifyingOtp ? "Verifying..." : "Confirm & verify"}
+                    </button>
+                  </div>
                 </div>
               )}
 
-              {step === "sent" && (
-                <div className="p-6 text-center space-y-3">
-                  <CheckCircle className="w-12 h-12 mx-auto" style={{ color: "#34C759" }} />
-                  <p style={{ fontSize: 16, fontWeight: 700, color: "#1A1A2E" }}>Request Sent!</p>
-                  <p style={{ fontSize: 13, color: "#9CA3C0" }}>You'll be notified when they respond.</p>
+              {method === "upload" && (
+                <div className="mt-4 space-y-3">
+                  <div
+                    style={{
+                      border: "1.5px dashed rgba(232,115,58,0.35)",
+                      borderRadius: 14,
+                      padding: 16,
+                      background: "rgba(232,115,58,0.03)",
+                    }}
+                  >
+                    <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#1A1A2E", marginBottom: 8 }}>Upload offer letter</label>
+                    <input
+                      type="file"
+                      accept=".pdf,.png,.jpg,.jpeg,.webp"
+                      onChange={(e) => setOfferFile(e.target.files?.[0] || null)}
+                      style={{ fontSize: 13, color: "#1A1A2E" }}
+                    />
+                    <p style={{ fontSize: 11, color: "#9CA3C0", marginTop: 8 }}>
+                      Your file will be stored in the verification documents bucket and submitted for review.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={!offerFile || uploading}
+                    onClick={handleOfferUpload}
+                    style={{
+                      height: 40, padding: "0 16px", borderRadius: 10, fontSize: 13, fontWeight: 700,
+                      background: offerFile ? "linear-gradient(135deg, #E8733A, #FF6B9D)" : "#E5E7EB",
+                      color: offerFile ? "#fff" : "#9CA3AF",
+                      border: "none",
+                    }}
+                  >
+                    {uploading ? "Submitting..." : "Submit offer letter"}
+                  </button>
+                </div>
+              )}
+
+              {method === "manager" && (
+                <div className="mt-4 space-y-3">
+                  <div>
+                    <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#1A1A2E", marginBottom: 6 }}>Manager email</label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#9CA3C0" }} />
+                      <input
+                        value={managerEmail}
+                        onChange={(e) => setManagerEmail(e.target.value)}
+                        placeholder="manager@company.com"
+                        style={{ width: "100%", height: 42, borderRadius: 10, border: "1px solid rgba(0,0,0,0.10)", padding: "0 12px 0 38px", fontSize: 13, color: "#1A1A2E", outline: "none" }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#1A1A2E", marginBottom: 6 }}>Optional note</label>
+                    <textarea
+                      value={managerNote}
+                      onChange={(e) => setManagerNote(e.target.value.slice(0, 240))}
+                      placeholder="Add context for the reviewer..."
+                      rows={3}
+                      style={{ width: "100%", borderRadius: 10, border: "1px solid rgba(0,0,0,0.10)", padding: 12, fontSize: 13, color: "#1A1A2E", outline: "none", resize: "vertical" }}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    disabled={submittingManager || !managerEmail.trim()}
+                    onClick={handleManagerReference}
+                    style={{
+                      height: 40, padding: "0 16px", borderRadius: 10, fontSize: 13, fontWeight: 700,
+                      background: managerEmail.trim() ? "linear-gradient(135deg, #E8733A, #FF6B9D)" : "#E5E7EB",
+                      color: managerEmail.trim() ? "#fff" : "#9CA3AF",
+                      border: "none",
+                    }}
+                  >
+                    {submittingManager ? "Submitting..." : "Send manager reference"}
+                  </button>
                 </div>
               )}
             </div>
 
-            {/* Footer */}
-            <div className="shrink-0 flex items-center gap-3" style={{
-              padding: "12px 20px", borderTop: "1px solid rgba(0,0,0,0.06)", background: "#fff",
-            }}>
-              {step === "confirm" && (() => {
-                const noAdmins = verifiers.length === 0;
-                const canSend = noAdmins || !!selectedVerifier;
-                const label = noAdmins ? "Submit for Tiikme review" : "Send Request";
-                return (
-                  <button type="button"
-                    disabled={!canSend || submitting || docUploading}
-                    onClick={() => handleSubmit(selectedVerifier?.user_id || null, selectedVerifier?.profile?.full_name || "")}
-                    className="cursor-pointer flex-1"
-                    style={{
-                      height: 40, borderRadius: 10, fontSize: 13, fontWeight: 600,
-                      background: canSend ? "linear-gradient(135deg, #E8733A, #FF6B9D)" : "#ddd",
-                      color: canSend ? "#fff" : "#999", border: "none",
-                      display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                    }}>
-                    <Send className="w-3.5 h-3.5" /> {submitting ? "Sending..." : label}
-                  </button>
-                );
-              })()}
-              {step === "search" && (
-                <button type="button" onClick={() => setExpanded(false)}
-                  className="cursor-pointer flex-1"
-                  style={{ height: 40, borderRadius: 10, fontSize: 13, fontWeight: 500, background: "rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.08)", color: "#1A1A2E" }}>
-                  Cancel
-                </button>
-              )}
-              {step === "sent" && (
-                <button type="button" onClick={() => setExpanded(false)}
-                  className="cursor-pointer flex-1"
-                  style={{
-                    height: 40, borderRadius: 10, fontSize: 13, fontWeight: 600,
-                    background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none",
-                  }}>
-                  Done
-                </button>
-              )}
+            <div className="shrink-0" style={{ padding: "12px 20px", borderTop: "1px solid rgba(0,0,0,0.06)", background: "#fff" }}>
+              <p style={{ fontSize: 11, color: "#9CA3C0", lineHeight: "16px" }}>
+                Work email OTP can verify instantly when the company domain matches. Offer letter and manager reference requests are submitted for review using the existing verification request table.
+              </p>
             </div>
           </div>
         </div>,

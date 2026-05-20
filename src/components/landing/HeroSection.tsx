@@ -46,12 +46,13 @@ const HeroSection = () => {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-8">
           <Link to="/signup" className="w-full sm:w-auto">
             <button
+              type="button"
               className="w-full sm:w-auto h-[52px] px-8 rounded-xl font-bold text-[16px] text-white cursor-pointer transition-colors"
               style={{ backgroundColor: "#B8460C" }}
               onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#9C3A0A")}
               onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#B8460C")}
              >
-              Get Tiiked — It's Free
+              Create your profile — It's Free
             </button>
             <p className="text-[12px] mt-2 w-full text-center" style={{ color: "#6B7280" }}>
               No credit card required. Free forever for individuals.
@@ -59,6 +60,7 @@ const HeroSection = () => {
           </Link>
           <a href="#how-it-works" className="w-full sm:w-auto">
             <button
+              type="button"
               className="w-full sm:w-auto h-[52px] px-8 rounded-xl font-bold text-[16px] cursor-pointer transition-colors border-2"
               style={{ borderColor: "#B8460C", color: "#B8460C", backgroundColor: "transparent" }}
               onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#FFF7ED")}

@@ -1,7 +1,5 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { trackPageView } from "@/lib/analytics";
+import { useState, useEffect, useRef, useMemo, useCallback, type CSSProperties } from "react";
 import { PageSEO } from "@/hooks/usePageSEO";
-import { cleanUsername } from "@/lib/cleanUsername";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import {
   Heart, MessageCircle, Repeat2, Send, SendHorizontal, MoreHorizontal,
@@ -14,12 +12,11 @@ import ImageGrid from "@/components/feed/ImageGrid";
 import MentionText from "@/components/feed/MentionText";
 import ShareModal from "@/components/feed/ShareModal";
 import { sendNotification } from "@/lib/notify";
-import ActivityScoreRing from "@/components/ActivityScoreRing";
+import { ActivityWidget } from "@/components/ActivityScoreRing";
 import SkeletonCard from "@/components/SkeletonCard";
-import VerifiedBadge from "@/components/VerifiedBadge";
 import EditPostModal from "@/components/feed/EditPostModal";
 import DeletePostDialog from "@/components/feed/DeletePostDialog";
-import CommentPanel from "@/components/comments/CommentPanel";
+import { PostCard as SharedFeedPostCard } from "@/components/feed/PostCard";
 import { useFeedPosts } from "@/hooks/useFeedPosts";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,7 +25,6 @@ import { useComments } from "@/hooks/useComments";
 import PrimaryTabs from "@/components/filters/PrimaryTabs";
 import FilterBar, { useScrollPastThreshold } from "@/components/filters/FilterBar";
 import BottomSheet from "@/components/ui/BottomSheet";
-import { useFilterParam } from "@/lib/useFilterParam";
 import { getDisplayFlags, formatRoleLine } from "@/utils/displayProfile";
 
 /* ─── HELPERS ─── */
@@ -45,6 +41,27 @@ function getTimeAgo(date: Date): string {
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours}h ago`;
   return `${Math.floor(hours / 24)}d ago`;
+}
+
+const clampTwoLinesStyle: CSSProperties = {
+  display: "-webkit-box",
+  WebkitLineClamp: 2,
+  WebkitBoxOrient: "vertical",
+  overflow: "hidden",
+  overflowWrap: "anywhere",
+  wordBreak: "break-word",
+};
+
+function formatCompactCount(value: number): string {
+  if (value >= 1_000_000) {
+    const compact = value >= 10_000_000 ? Math.round(value / 1_000_000) : Number((value / 1_000_000).toFixed(1));
+    return `${compact}M`;
+  }
+  if (value >= 1_000) {
+    const compact = value >= 10_000 ? Math.round(value / 1_000) : Number((value / 1_000).toFixed(1));
+    return `${compact}K`;
+  }
+  return String(value);
 }
 
 const extractHashtags = (text: string): string[] =>
@@ -278,335 +295,6 @@ const FeedComposer = ({ onPublished }: { onPublished: () => void }) => {
   );
 };
 
-/* ─── POST CARD ─── */
-interface PostCardProps {
-  post: any;
-  grouped?: boolean;
-  connectionIds: Set<string>;
-  likeCounts: Record<string, number>;
-  myLikes: Record<string, boolean>;
-  toggleLike: (postId: string) => void;
-  commentCounts: Record<string, number>;
-  commentsData: Record<string, any[]>;
-  commentsOpen: Set<string>;
-  commentInputs: Record<string, string>;
-  setCommentInputs: (fn: (prev: Record<string, string>) => Record<string, string>) => void;
-  toggleComments: (postId: string) => void;
-  submitComment: (postId: string) => void;
-  deleteComment: (postId: string, commentId: string) => void;
-  onDelete: (postId: string) => void;
-  onEdit: (post: any) => void;
-}
-
-const PostCard = ({
-  post, grouped = false, connectionIds, likeCounts, myLikes, toggleLike,
-  commentCounts, commentsData, commentsOpen, commentInputs,
-  setCommentInputs, toggleComments, submitComment, deleteComment, onDelete, onEdit,
-}: PostCardProps) => {
-  const [showMenu, setShowMenu] = useState(false);
-  const [expanded, setExpanded] = useState(false);
-  const [likeAnimating, setLikeAnimating] = useState(false);
-  const [followState, setFollowState] = useState<"none" | "pending">("none");
-  const [sharePostId, setSharePostId] = useState<string | null>(null);
-  const { user, profile: authProfile } = useAuth();
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!showMenu) return;
-    const handleClick = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setShowMenu(false);
-    };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [showMenu]);
-
-  const isOrgPost = !!post.posted_by_org && !!post.org;
-  const author = post.author;
-  const authorFlags = getDisplayFlags(author);
-  const displayAvatar = isOrgPost ? post.org?.logo_url : author?.avatar_url;
-  const displayName = isOrgPost
-    ? post.org?.name
-    : (authorFlags.showName ? (author?.full_name || author?.username || "Unknown") : "Tiikme member");
-  const profileLink = isOrgPost ? `/org/${post.org?.slug}` : `/app/profile/${author?.id || ""}`;
-  const viaName = isOrgPost && post.poster_profile?.full_name ? post.poster_profile.full_name : null;
-  const companyLine = !isOrgPost && authorFlags.showCompany
-    ? (author?.currently_working_at || author?.institution_name || null)
-    : null;
-  const companyName = !isOrgPost && companyLine && post.show_company_badge !== false ? companyLine : null;
-  const roleLine = !isOrgPost && authorFlags.showRole ? formatRoleLine(author) : null;
-  const timeAgo = post.created_at ? getTimeAgo(new Date(post.created_at)) : "";
-  // Owner check uses author_id only (matches RLS policy auth.uid() = author_id)
-  const isOwn = !!user?.id && user.id === post.author_id;
-  const isRepost = !!post.repost_of;
-  const isEdited = post.is_edited;
-  const isConnected = !isOrgPost && author?.id && connectionIds.has(author.id);
-  const showFollow = !isOrgPost && !isOwn && !isConnected && author?.id;
-
-  const liked = myLikes[post.id] || false;
-  const likeCount = likeCounts[post.id] || 0;
-  const commentCount = commentCounts[post.id] || 0;
-  const isOpen = commentsOpen.has(post.id);
-  const comments = commentsData[post.id] || [];
-  const commentText = commentInputs[post.id] || "";
-  const [localRepostCount, setLocalRepostCount] = useState(post.repost_count || 0);
-  const [hasReposted, setHasReposted] = useState(false);
-
-  useEffect(() => {
-    if (!user) return;
-    supabase.from("post_reposts").select("id").eq("post_id", post.id).eq("reposted_by", user.id).maybeSingle()
-      .then(({ data }) => setHasReposted(!!data));
-  }, [post.id, user]);
-
-  const sortedComments = useMemo(() => {
-    const arr = [...comments];
-    arr.sort((a, b) => {
-      if (a.user_id === user?.id && b.user_id !== user?.id) return -1;
-      if (a.user_id !== user?.id && b.user_id === user?.id) return 1;
-      return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
-    });
-    return arr;
-  }, [comments, user?.id]);
-
-  const [showAllComments, setShowAllComments] = useState(false);
-  const visibleComments = showAllComments ? sortedComments : sortedComments.slice(0, 5);
-
-  const [reposting, setReposting] = useState(false);
-  const handleRepost = async () => {
-    if (!user || reposting) return;
-    setReposting(true);
-    try {
-      if (hasReposted) {
-        // Undo repost
-        const { data: existing } = await supabase.from("posts").select("id").eq("repost_of", post.id).eq("author_id", user.id).maybeSingle();
-        if (existing) await supabase.from("posts").delete().eq("id", existing.id);
-        await supabase.from("post_reposts").delete().eq("post_id", post.id).eq("reposted_by", user.id);
-        setLocalRepostCount(prev => Math.max(0, prev - 1));
-        setHasReposted(false);
-        toast.success("Repost removed");
-      } else {
-        // Create repost
-        await supabase.from("posts").insert({
-          author_id: user.id, content: post.content, repost_of: post.id,
-          post_type: "thought", type: "thought", visibility: "everyone",
-          image_urls: post.image_urls || [],
-        } as any);
-        await supabase.from("post_reposts").insert({ post_id: post.id, reposted_by: user.id });
-        if (post.author_id && post.author_id !== user.id) {
-          sendNotification({
-            userId: post.author_id, actorId: user.id, type: "repost",
-            title: `${authProfile?.full_name || "Someone"} reposted your post`,
-            actionUrl: `/post/${post.id}`,
-          });
-        }
-        setLocalRepostCount(prev => prev + 1);
-        setHasReposted(true);
-        toast.success("Reposted");
-      }
-    } catch (e) { console.warn("[Feed] repost failed:", e); }
-    setReposting(false);
-  };
-
-  const handleLike = () => {
-    if (!liked) { setLikeAnimating(true); setTimeout(() => setLikeAnimating(false), 150); }
-    toggleLike(post.id);
-  };
-
-  const handleFollow = async () => {
-    if (!user || !author?.id) return;
-    const { sendConnectionRequest } = await import("@/hooks/useConnectionStatus");
-    const result = await sendConnectionRequest(user.id, author.id, authProfile?.full_name || "Someone");
-    if (result === null) { setFollowState("pending"); return; }
-    setFollowState(result === "accepted" ? "none" : "pending");
-    if (result === "accepted") toast.success("Connected!");
-  };
-
-  const handleReport = async () => {
-    if (!user) return;
-    await supabase.from("post_reports").insert({ post_id: post.id, reporter_id: user.id, reason: "reported" });
-    const postUrl = `${window.location.origin}/app/post/${post.id}`;
-    const subject = encodeURIComponent(`Report: Post ${post.id}`);
-    const body = encodeURIComponent(`I am reporting the following post: ${postUrl}\n\nReason: \n\nReported by: ${authProfile?.full_name || "User"}`);
-    window.location.href = `mailto:contact@tiikme.com?subject=${subject}&body=${body}`;
-    toast.success("Report submitted");
-    setShowMenu(false);
-  };
-
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(`${window.location.origin}/app/post/${post.id}`);
-    toast.success("Link copied!");
-    setShowMenu(false);
-  };
-
-  // Content clamp
-  const contentRef = useRef<HTMLDivElement>(null);
-  const [needsClamp, setNeedsClamp] = useState(false);
-  useEffect(() => {
-    const el = contentRef.current;
-    if (el) setNeedsClamp(el.scrollHeight > 100);
-  }, [post.content]);
-
-  const isTownhall = post.post_type === "townhall";
-
-  return (
-    <>
-      <article id={`post-${post.id}`} style={{ background: "#FFFFFF", border: grouped ? "none" : "1px solid #E8E8E8", borderRadius: grouped ? 0 : 16, boxShadow: grouped ? "none" : "0 1px 4px rgba(0,0,0,0.04)", padding: 20, marginBottom: grouped ? 0 : 16, borderLeft: isTownhall ? "4px solid #E8733A" : undefined, scrollMarginTop: 80 }}>
-        {isTownhall && (
-          <div style={{ paddingBottom: 4 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#E8733A" }}>TOWNHALL</span>
-          </div>
-        )}
-
-        {/* HEADER — single row: avatar · name · company · time · menu */}
-        {!grouped && <div className="flex items-center" style={{ gap: 10 }}>
-          <Link to={profileLink} className="shrink-0">
-            <AvatarSquare src={displayAvatar} name={displayName} size={40} />
-          </Link>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center flex-wrap" style={{ gap: "0 5px", lineHeight: "20px" }}>
-              <Link to={profileLink} className="hover:underline" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{displayName}</Link>
-              {(author?.is_verified || post.org?.is_verified) && <VerifiedBadge size={14} />}
-              {roleLine && (
-                <>
-                  <span className="shrink-0" style={{ fontSize: 13, color: "#9CA3C0" }}>·</span>
-                  <span style={{ fontSize: 13, color: "#6B7094" }}>{roleLine}</span>
-                </>
-              )}
-              {companyName && (
-                <>
-                  <span className="shrink-0" style={{ fontSize: 13, color: "#9CA3C0" }}>·</span>
-                  <span style={{ fontSize: 13, color: "#6B7094" }}>{companyName}</span>
-                </>
-              )}
-              <span className="shrink-0" style={{ fontSize: 13, color: "#9CA3C0" }}>·</span>
-              <span className="shrink-0" style={{ fontSize: 13, color: "#9CA3C0" }}>{timeAgo}</span>
-              {isEdited && <span className="shrink-0" style={{ fontSize: 11, fontStyle: "italic", color: "#9CA3C0" }}>(edited)</span>}
-            </div>
-            {viaName && (
-              <p style={{ fontSize: 11, color: "#9CA3C0", marginTop: 1 }}>via {viaName}</p>
-            )}
-          </div>
-
-          {/* Three-dot menu — solid white dropdown */}
-          <div className="relative shrink-0" ref={menuRef}>
-            <button type="button" onClick={() => setShowMenu(!showMenu)}
-              className="flex items-center justify-center cursor-pointer"
-              style={{ width: 32, height: 32, color: "#9CA3C0" }}>
-              <MoreHorizontal style={{ width: 16, height: 16 }} />
-            </button>
-            {showMenu && (
-              <div className="absolute right-0 top-8 z-[100]" style={{ width: 180, borderRadius: 12, padding: "8px 0", background: "#FFFFFF", border: "1px solid #E5E7EB", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
-                <button type="button" onClick={handleCopyLink}
-                  className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "10px 16px", fontSize: 14, color: "#1A1A2E" }}>
-                  <Copy style={{ width: 14, height: 14 }} /> Copy Link
-                </button>
-                {isOwn ? (
-                  <>
-                    {!isRepost && (
-                      <button type="button" onClick={() => { onEdit(post); setShowMenu(false); }}
-                        className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "10px 16px", fontSize: 14, color: "#1A1A2E" }}>
-                        <Pencil style={{ width: 14, height: 14 }} /> Edit Post
-                      </button>
-                    )}
-                    <button type="button" onClick={() => { onDelete(post.id); setShowMenu(false); }}
-                      className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "10px 16px", fontSize: 14, color: "#EF4444" }}>
-                      <Trash2 style={{ width: 14, height: 14 }} /> {isRepost ? "Remove Repost" : "Delete Post"}
-                    </button>
-                  </>
-                ) : (
-                  <button type="button" onClick={handleReport}
-                    className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "10px 16px", fontSize: 14, color: "#1A1A2E" }}>
-                    <Flag style={{ width: 14, height: 14 }} /> Report
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        </div>}
-
-        {/* CONTENT */}
-        <div style={{ marginTop: 12 }}>
-          <div ref={contentRef}
-            style={{
-              fontSize: 15, fontWeight: 400, lineHeight: "22px", color: "#1A1A2E",
-              ...((!expanded && needsClamp) ? { maxHeight: 100, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 5, WebkitBoxOrient: "vertical" as any } : {}),
-            }}>
-            <MentionText text={post.content} />
-          </div>
-          {needsClamp && !expanded && (
-            <button type="button" onClick={() => setExpanded(true)} className="cursor-pointer" style={{ fontSize: 13, fontWeight: 600, color: "#E8733A", marginTop: 2 }}>
-              See more
-            </button>
-          )}
-        </div>
-
-        {/* IMAGES */}
-        {post.image_urls?.length > 0 && (
-          <div style={{ marginTop: 12 }}>
-            <ImageGrid images={post.image_urls} />
-          </div>
-        )}
-
-        {/* Repost info */}
-        {localRepostCount >= 2 && (
-          <p style={{ fontSize: 12, color: "#9CA3C0", marginTop: 4 }}>
-            {displayName} and {localRepostCount - 1} other{localRepostCount > 2 ? "s" : ""} reposted
-          </p>
-        )}
-
-        {/* REACTION BAR */}
-        <div className="flex items-center justify-between" style={{ marginTop: 12, borderTop: "1px solid #F0F0F0", paddingTop: 10 }}>
-          <button type="button" onClick={handleLike}
-            className="flex items-center cursor-pointer active:scale-95"
-            style={{ gap: 5, padding: "6px 10px", borderRadius: 8, transform: likeAnimating ? "scale(1.2)" : "scale(1)", transition: "transform 150ms ease" }}>
-            <Heart style={{ width: 15, height: 15, fill: liked ? "#E8733A" : "none", color: liked ? "#E8733A" : "#6B7094" }} />
-            <span style={{ fontSize: 12, fontWeight: 500, color: liked ? "#E8733A" : "#6B7094" }}>
-              {likeCount > 0 ? <span className="num">{likeCount}</span> : "Like"}
-            </span>
-          </button>
-
-          <button type="button" onClick={() => toggleComments(post.id)}
-            className="flex items-center cursor-pointer"
-            style={{ gap: 5, padding: "6px 10px", borderRadius: 8 }}>
-            <MessageCircle style={{ width: 15, height: 15, color: isOpen ? "#E8733A" : "#6B7094" }} />
-            <span style={{ fontSize: 12, fontWeight: 500, color: isOpen ? "#E8733A" : "#6B7094" }}>
-              {commentCount > 0 ? <span className="num">{commentCount}</span> : "Comment"}
-            </span>
-          </button>
-
-          <button type="button" onClick={handleRepost} disabled={reposting}
-            className="flex items-center cursor-pointer"
-            style={{ gap: 5, padding: "6px 10px", borderRadius: 8, opacity: reposting ? 0.5 : 1 }}>
-            <Repeat2 style={{ width: 15, height: 15, color: hasReposted ? "#E8733A" : "#6B7094" }} />
-            <span style={{ fontSize: 12, fontWeight: 500, color: hasReposted ? "#E8733A" : "#6B7094" }}>
-              {localRepostCount > 0 ? <span className="num">{localRepostCount}</span> : "Repost"}
-            </span>
-          </button>
-
-          <button type="button" onClick={() => setSharePostId(post.id)}
-            className="flex items-center cursor-pointer"
-            style={{ gap: 5, padding: "6px 10px", borderRadius: 8 }}>
-            <Send style={{ width: 15, height: 15, color: "#6B7094" }} />
-            <span style={{ fontSize: 12, fontWeight: 500, color: "#6B7094" }}>Share</span>
-          </button>
-        </div>
-
-        {/* COMMENT PANEL — fixed-height scrollable, never pushes other posts down */}
-        {isOpen && (
-          <CommentPanel
-            postId={post.id}
-            table="post_comments"
-            postAuthorId={post.author_id}
-            postUrlPrefix="/app/post"
-          />
-        )}
-      </article>
-
-      {/* Share modal */}
-      {sharePostId && <ShareModal open postId={sharePostId} onClose={() => setSharePostId(null)} />}
-    </>
-  );
-};
-
 const PostGroupCard = ({
   posts, connectionIds, likeCounts, myLikes, toggleLike,
   commentCounts, commentsData, commentsOpen, commentInputs,
@@ -633,11 +321,21 @@ const PostGroupCard = ({
 
   return (
     <article className="overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid #E8E8E8", borderRadius: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.04)", marginBottom: 16 }}>
-      <header className="flex items-center" style={{ gap: 10, padding: 16, borderBottom: "1px solid #F0F0F0" }}>
+      <header className="flex items-start" style={{ gap: 10, padding: 16, borderBottom: "1px solid #F0F0F0" }}>
         <Link to={profileLink} className="shrink-0"><AvatarSquare src={displayAvatar} name={displayName} size={40} /></Link>
         <div className="min-w-0 flex-1">
-          <Link to={profileLink} className="line-clamp-2 break-words hover:underline block" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{displayName}</Link>
-          <div style={{ fontSize: 12, color: "#9CA3C0" }}>Posted <span className="num">{posts.length}</span> updates · {first.created_at ? getTimeAgo(new Date(first.created_at)) : ""}</div>
+          <Link
+            to={profileLink}
+            className="hover:underline block"
+            style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", lineHeight: "18px", ...clampTwoLinesStyle }}
+          >
+            {displayName}
+          </Link>
+          <div className="flex items-center flex-wrap" style={{ gap: "2px 6px", marginTop: 3, fontSize: 12, color: "#9CA3C0" }}>
+            <span>Posted <span className="num">{posts.length}</span> updates</span>
+            <span style={{ color: "#C0C4D8" }}>•</span>
+            <span>{first.created_at ? getTimeAgo(new Date(first.created_at)) : ""}</span>
+          </div>
         </div>
         <div className="num shrink-0" style={{ fontSize: 12, color: "#9CA3C0" }}>{idx + 1}/{posts.length}</div>
       </header>
@@ -645,7 +343,7 @@ const PostGroupCard = ({
         <div className="flex">
           {posts.map((post) => (
             <div key={post.id} className="min-w-0 shrink-0 grow-0 basis-full">
-              <PostCard
+              <SharedFeedPostCard
                 post={post} grouped connectionIds={connectionIds}
                 likeCounts={likeCounts} myLikes={myLikes} toggleLike={toggleLike}
                 commentCounts={commentCounts} commentsData={commentsData}
@@ -668,35 +366,6 @@ const PostGroupCard = ({
 };
 
 /* ─── RIGHT SIDEBAR WIDGETS ─── */
-const ActivityWidget = () => {
-  const { profile } = useAuth();
-  const score = profile?.activity_score || 0;
-  return (
-    <div className="glass-glow" style={{ padding: 12, borderRadius: 16, marginBottom: 12 }}>
-      <div className="flex items-center gap-3">
-        <div className="relative" style={{ width: 48, height: 48 }}>
-          <svg width={48} height={48} className="-rotate-90">
-            <circle cx={24} cy={24} r={21} fill="none" stroke="var(--border-subtle)" strokeWidth={3} />
-            <circle cx={24} cy={24} r={21} fill="none" stroke="#E8733A" strokeWidth={3}
-              strokeDasharray={2 * Math.PI * 21} strokeDashoffset={2 * Math.PI * 21 * (1 - Math.min(score, 100) / 100)}
-              strokeLinecap="round" className="transition-all duration-700" />
-          </svg>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="num" style={{ fontSize: 14, color: "var(--text-primary)" }}>{score}</span>
-          </div>
-        </div>
-        <div>
-          <p className="num" style={{ fontSize: 28, color: "var(--text-primary)", lineHeight: "32px" }}>{score}</p>
-          <p style={{ fontSize: 11, fontWeight: 500, color: "#E8733A" }}>
-            {score >= 500 ? "Tiiked Elite" : score >= 301 ? "Trailblazer" : score >= 151 ? "Achiever" : score >= 51 ? "Builder" : "Explorer"}
-          </p>
-        </div>
-      </div>
-      <p style={{ fontSize: 11, color: "#9CA3C0", marginTop: 6 }}>Post more, get verified, connect with others</p>
-    </div>
-  );
-};
-
 const SuggestedWidget = ({ connectionIds }: { connectionIds: Set<string> }) => {
   const { user, profile } = useAuth();
   const [suggested, setSuggested] = useState<any[]>([]);
@@ -740,10 +409,18 @@ const SuggestedWidget = ({ connectionIds }: { connectionIds: Set<string> }) => {
             <AvatarSquare src={s.avatar_url} name={s.full_name || "User"} size={40} bgColor={roleColorMap[s.role || ""] || "#6B7280"} />
           </Link>
           <div className="flex-1 min-w-0">
-            <Link to={`/app/profile/${s.id}`} className="hover:underline truncate block" style={{ fontSize: 13, fontWeight: 500, color: "#1A1A2E" }}>{s.full_name || "User"}</Link>
-            <p className="truncate" style={{ fontSize: 12, color: "#9CA3C0" }}>{s.designation || (s.role_metadata as any)?.jobTitle || s.role || ""}</p>
+            <Link
+              to={`/app/profile/${s.id}`}
+              className="hover:underline block"
+              style={{ fontSize: 13, fontWeight: 500, color: "#1A1A2E", lineHeight: "17px", ...clampTwoLinesStyle }}
+            >
+              {s.full_name || "User"}
+            </Link>
+            <p style={{ fontSize: 12, color: "#9CA3C0", lineHeight: "16px", ...clampTwoLinesStyle }}>
+              {s.designation || (s.role_metadata as any)?.jobTitle || s.role || ""}
+            </p>
           </div>
-          <button className="btn-glass-pill cursor-pointer" style={{ fontSize: 12, fontWeight: 500, padding: "4px 10px" }}
+          <button type="button" className="btn-glass-pill cursor-pointer" style={{ fontSize: 12, fontWeight: 500, padding: "4px 10px" }}
             onClick={() => handleConnect(s.id)}>Connect</button>
         </div>
       ))}
@@ -753,7 +430,6 @@ const SuggestedWidget = ({ connectionIds }: { connectionIds: Set<string> }) => {
 
 /* ─── FEED PAGE ─── */
 const Feed = () => {
-  useEffect(() => { trackPageView("feed"); }, []);
   const { posts: livePosts, loading, loadingMore, hasMore, loadMore, refresh } = useFeedPosts();
   const sentinelRef = useRef<HTMLDivElement>(null);
   const { user, profile } = useAuth();
@@ -832,16 +508,16 @@ const Feed = () => {
   }, [hasMore, loadingMore, loadMore]);
 
   return (
-    <main className="feed-main" style={{ maxWidth: 1100, width: "100%", margin: "0 auto", padding: "0 16px" }}>
+    <main className="feed-main" style={{ maxWidth: 960, width: "100%", margin: "0 auto", padding: "0 16px" }}>
       <PageSEO title="Feed | Tiikme" description="Your professional feed — posts, updates, and insights from verified professionals and organizations on Tiikme." noIndex />
 
       <div className="flex" style={{ gap: 20 }}>
-        <div style={{ flex: 1, minWidth: 0, maxWidth: 760 }}>
+        <div style={{ flex: 1, minWidth: 0, maxWidth: 640 }}>
           <FeedComposer onPublished={refresh} />
 
           {loading && !visiblePosts.length && <SkeletonCard count={3} />}
           {feedItems.map((item) => item.kind === "post" ? (
-            <PostCard
+            <SharedFeedPostCard
               key={item.id} post={item.post} connectionIds={connectionIds}
               likeCounts={likeCounts} myLikes={myLikes} toggleLike={toggleLike}
               commentCounts={commentCounts} commentsData={commentsData}
@@ -863,13 +539,9 @@ const Feed = () => {
           ))}
 
           {!loading && !visiblePosts.length && (
-            <div className="text-center" style={{ padding: "28px 20px", borderRadius: 16, background: "#FFFFFF", border: "1px solid #E8E8E8" }}>
+            <div className="text-center" style={{ padding: 20, borderRadius: 16, background: "#FFFFFF", border: "1px solid #E8E8E8" }}>
               <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", marginBottom: 4 }}>Nothing here yet</p>
-              <p style={{ fontSize: 13, color: "#9CA3C0", marginBottom: 12 }}>Connect with people to start seeing posts, or share your first update.</p>
-              <div className="flex items-center justify-center gap-2 flex-wrap">
-                <Link to="/app/explore" style={{ fontSize: 13, fontWeight: 600, padding: "7px 16px", borderRadius: 8, background: "linear-gradient(135deg,#E8733A,#FF6B9D)", color: "#fff", textDecoration: "none" }}>Find People</Link>
-                <button type="button" onClick={refresh} style={{ fontSize: 13, fontWeight: 500, padding: "7px 16px", borderRadius: 8, background: "rgba(0,0,0,0.05)", color: "#1A1A2E", border: "none", cursor: "pointer" }}>Refresh</button>
-              </div>
+              <p style={{ fontSize: 13, color: "#9CA3C0" }}>Be the first to post something.</p>
             </div>
           )}
 
@@ -886,8 +558,8 @@ const Feed = () => {
           )}
         </div>
 
-        <aside className="hidden md:block shrink-0 sticky top-4 self-start" style={{ width: 300 }}>
-          <ActivityWidget />
+        <aside className="hidden md:block shrink-0 sticky top-4 self-start" style={{ width: 280 }}>
+          <ActivityWidget score={profile?.activity_score || 0} />
           <SuggestedWidget connectionIds={connectionIds} />
         </aside>
       </div>

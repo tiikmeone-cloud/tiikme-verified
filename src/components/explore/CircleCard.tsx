@@ -41,7 +41,7 @@ const CircleCard = ({ circle, latestPostTitle, onJoin, isMember }: CircleCardPro
               Circle
             </span>
           </div>
-          <p className="truncate" style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>
+          <p style={{ fontSize: 14, fontWeight: 700, lineHeight: "18px", color: "var(--text-primary)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", wordBreak: "break-word" }}>
             {circle.name}
           </p>
           <div className="flex items-center" style={{ gap: 4, fontSize: 11, color: "var(--text-muted)" }}>
@@ -68,7 +68,7 @@ const CircleCard = ({ circle, latestPostTitle, onJoin, isMember }: CircleCardPro
           <p style={{ fontSize: 10, fontWeight: 600, color: "#7C3AED", textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 2 }}>
             Latest post
           </p>
-          <p className="truncate" style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+          <p style={{ fontSize: 12, lineHeight: "16px", color: "var(--text-secondary)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", wordBreak: "break-word" }}>
             {latestPostTitle}
           </p>
         </div>

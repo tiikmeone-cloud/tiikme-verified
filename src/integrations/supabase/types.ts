@@ -148,63 +148,6 @@ export type Database = {
         }
         Relationships: []
       }
-      admin_audit_log: {
-        Row: {
-          action_type: string
-          actor_id: string | null
-          actor_role: string | null
-          actor_type: string
-          created_at: string
-          id: string
-          payload: Json
-          reason: string | null
-          target_id: string | null
-          target_table: string | null
-          target_user_id: string | null
-        }
-        Insert: {
-          action_type: string
-          actor_id?: string | null
-          actor_role?: string | null
-          actor_type: string
-          created_at?: string
-          id?: string
-          payload?: Json
-          reason?: string | null
-          target_id?: string | null
-          target_table?: string | null
-          target_user_id?: string | null
-        }
-        Update: {
-          action_type?: string
-          actor_id?: string | null
-          actor_role?: string | null
-          actor_type?: string
-          created_at?: string
-          id?: string
-          payload?: Json
-          reason?: string | null
-          target_id?: string | null
-          target_table?: string | null
-          target_user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "admin_audit_log_actor_id_fkey"
-            columns: ["actor_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "admin_audit_log_target_user_id_fkey"
-            columns: ["target_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       alerts: {
         Row: {
           action_url: string | null
@@ -243,108 +186,6 @@ export type Database = {
           {
             foreignKeyName: "alerts_user_id_fkey"
             columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      appeal_requests: {
-        Row: {
-          appellant_id: string
-          created_at: string
-          entity_id: string
-          entity_type: string
-          id: string
-          reason: string
-          reviewed_at: string | null
-          reviewed_by: string | null
-          reviewer_notes: string | null
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          appellant_id: string
-          created_at?: string
-          entity_id: string
-          entity_type: string
-          id?: string
-          reason: string
-          reviewed_at?: string | null
-          reviewed_by?: string | null
-          reviewer_notes?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          appellant_id?: string
-          created_at?: string
-          entity_id?: string
-          entity_type?: string
-          id?: string
-          reason?: string
-          reviewed_at?: string | null
-          reviewed_by?: string | null
-          reviewer_notes?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "appeal_requests_appellant_id_fkey"
-            columns: ["appellant_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "appeal_requests_reviewed_by_fkey"
-            columns: ["reviewed_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      application_stage_history: {
-        Row: {
-          application_id: string
-          changed_by: string | null
-          created_at: string
-          from_status: string | null
-          id: string
-          note: string | null
-          to_status: string
-        }
-        Insert: {
-          application_id: string
-          changed_by?: string | null
-          created_at?: string
-          from_status?: string | null
-          id?: string
-          note?: string | null
-          to_status: string
-        }
-        Update: {
-          application_id?: string
-          changed_by?: string | null
-          created_at?: string
-          from_status?: string | null
-          id?: string
-          note?: string | null
-          to_status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "application_stage_history_application_id_fkey"
-            columns: ["application_id"]
-            isOneToOne: false
-            referencedRelation: "opportunity_applications"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "application_stage_history_changed_by_fkey"
-            columns: ["changed_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -395,240 +236,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      campaign_daily_stats: {
-        Row: {
-          applications: number
-          budget_allocated: number
-          campaign_id: string
-          clicks: number
-          created_at: string
-          date: string
-          follows: number
-          id: string
-          impressions: number
-          spent: number
-        }
-        Insert: {
-          applications?: number
-          budget_allocated?: number
-          campaign_id: string
-          clicks?: number
-          created_at?: string
-          date: string
-          follows?: number
-          id?: string
-          impressions?: number
-          spent?: number
-        }
-        Update: {
-          applications?: number
-          budget_allocated?: number
-          campaign_id?: string
-          clicks?: number
-          created_at?: string
-          date?: string
-          follows?: number
-          id?: string
-          impressions?: number
-          spent?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "campaign_daily_stats_campaign_id_fkey"
-            columns: ["campaign_id"]
-            isOneToOne: false
-            referencedRelation: "campaigns"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      campaign_impressions: {
-        Row: {
-          action: string
-          campaign_id: string
-          created_at: string
-          id: string
-          placement: string
-          user_id: string | null
-        }
-        Insert: {
-          action?: string
-          campaign_id: string
-          created_at?: string
-          id?: string
-          placement?: string
-          user_id?: string | null
-        }
-        Update: {
-          action?: string
-          campaign_id?: string
-          created_at?: string
-          id?: string
-          placement?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      campaign_impressions_2026_05: {
-        Row: {
-          action: string
-          campaign_id: string
-          created_at: string
-          id: string
-          placement: string
-          user_id: string | null
-        }
-        Insert: {
-          action?: string
-          campaign_id: string
-          created_at?: string
-          id?: string
-          placement?: string
-          user_id?: string | null
-        }
-        Update: {
-          action?: string
-          campaign_id?: string
-          created_at?: string
-          id?: string
-          placement?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      campaign_impressions_2026_06: {
-        Row: {
-          action: string
-          campaign_id: string
-          created_at: string
-          id: string
-          placement: string
-          user_id: string | null
-        }
-        Insert: {
-          action?: string
-          campaign_id: string
-          created_at?: string
-          id?: string
-          placement?: string
-          user_id?: string | null
-        }
-        Update: {
-          action?: string
-          campaign_id?: string
-          created_at?: string
-          id?: string
-          placement?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      campaign_impressions_default: {
-        Row: {
-          action: string
-          campaign_id: string
-          created_at: string
-          id: string
-          placement: string
-          user_id: string | null
-        }
-        Insert: {
-          action?: string
-          campaign_id: string
-          created_at?: string
-          id?: string
-          placement?: string
-          user_id?: string | null
-        }
-        Update: {
-          action?: string
-          campaign_id?: string
-          created_at?: string
-          id?: string
-          placement?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      campaigns: {
-        Row: {
-          budget_daily: number | null
-          budget_total: number | null
-          content_id: string | null
-          content_type: string
-          created_at: string
-          created_by: string
-          end_date: string | null
-          id: string
-          name: string
-          objective: string
-          org_id: string
-          spent_total: number
-          start_date: string | null
-          status: string
-          targeting: Json
-          updated_at: string
-        }
-        Insert: {
-          budget_daily?: number | null
-          budget_total?: number | null
-          content_id?: string | null
-          content_type?: string
-          created_at?: string
-          created_by: string
-          end_date?: string | null
-          id?: string
-          name: string
-          objective?: string
-          org_id: string
-          spent_total?: number
-          start_date?: string | null
-          status?: string
-          targeting?: Json
-          updated_at?: string
-        }
-        Update: {
-          budget_daily?: number | null
-          budget_total?: number | null
-          content_id?: string | null
-          content_type?: string
-          created_at?: string
-          created_by?: string
-          end_date?: string | null
-          id?: string
-          name?: string
-          objective?: string
-          org_id?: string
-          spent_total?: number
-          start_date?: string | null
-          status?: string
-          targeting?: Json
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "campaigns_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "campaigns_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "campaigns_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -692,13 +299,6 @@ export type Database = {
             foreignKeyName: "certificates_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "certificates_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -729,58 +329,6 @@ export type Database = {
             columns: ["circle_id"]
             isOneToOne: false
             referencedRelation: "circles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      circle_moderators: {
-        Row: {
-          circle_id: string
-          created_at: string
-          granted_at: string
-          granted_by: string | null
-          id: string
-          role: string
-          user_id: string
-        }
-        Insert: {
-          circle_id: string
-          created_at?: string
-          granted_at?: string
-          granted_by?: string | null
-          id?: string
-          role?: string
-          user_id: string
-        }
-        Update: {
-          circle_id?: string
-          created_at?: string
-          granted_at?: string
-          granted_by?: string | null
-          id?: string
-          role?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "circle_moderators_circle_id_fkey"
-            columns: ["circle_id"]
-            isOneToOne: false
-            referencedRelation: "circles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "circle_moderators_granted_by_fkey"
-            columns: ["granted_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "circle_moderators_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -881,7 +429,6 @@ export type Database = {
           flag_reason: string | null
           hot_score: number
           id: string
-          is_edited: boolean | null
           is_flagged: boolean
           is_pinned: boolean
           link_url: string | null
@@ -906,7 +453,6 @@ export type Database = {
           flag_reason?: string | null
           hot_score?: number
           id?: string
-          is_edited?: boolean | null
           is_flagged?: boolean
           is_pinned?: boolean
           link_url?: string | null
@@ -931,7 +477,6 @@ export type Database = {
           flag_reason?: string | null
           hot_score?: number
           id?: string
-          is_edited?: boolean | null
           is_flagged?: boolean
           is_pinned?: boolean
           link_url?: string | null
@@ -977,7 +522,6 @@ export type Database = {
           post_count: number
           rules: string | null
           slug: string
-          status: string
           type: string
           updated_at: string
           visibility: string
@@ -998,7 +542,6 @@ export type Database = {
           post_count?: number
           rules?: string | null
           slug: string
-          status?: string
           type?: string
           updated_at?: string
           visibility?: string
@@ -1019,7 +562,6 @@ export type Database = {
           post_count?: number
           rules?: string | null
           slug?: string
-          status?: string
           type?: string
           updated_at?: string
           visibility?: string
@@ -1027,13 +569,6 @@ export type Database = {
           who_can_post?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "circles_linked_org_id_fkey"
-            columns: ["linked_org_id"]
-            isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
           {
             foreignKeyName: "circles_linked_org_id_fkey"
             columns: ["linked_org_id"]
@@ -1129,115 +664,6 @@ export type Database = {
         }
         Relationships: []
       }
-      domain_verification_challenges: {
-        Row: {
-          attempts_count: number
-          created_at: string
-          created_by: string | null
-          domain: string
-          evidence_type: string
-          expires_at: string
-          id: string
-          last_attempt_at: string | null
-          metadata: Json
-          method: string
-          status: string
-          subject_category: string
-          subject_org_id: string | null
-          subject_page_id: string | null
-          subject_profile_id: string | null
-          token_hash: string
-          trust_evidence_id: string
-          updated_at: string
-          verified_at: string | null
-        }
-        Insert: {
-          attempts_count?: number
-          created_at?: string
-          created_by?: string | null
-          domain: string
-          evidence_type: string
-          expires_at: string
-          id?: string
-          last_attempt_at?: string | null
-          metadata?: Json
-          method: string
-          status?: string
-          subject_category: string
-          subject_org_id?: string | null
-          subject_page_id?: string | null
-          subject_profile_id?: string | null
-          token_hash: string
-          trust_evidence_id: string
-          updated_at?: string
-          verified_at?: string | null
-        }
-        Update: {
-          attempts_count?: number
-          created_at?: string
-          created_by?: string | null
-          domain?: string
-          evidence_type?: string
-          expires_at?: string
-          id?: string
-          last_attempt_at?: string | null
-          metadata?: Json
-          method?: string
-          status?: string
-          subject_category?: string
-          subject_org_id?: string | null
-          subject_page_id?: string | null
-          subject_profile_id?: string | null
-          token_hash?: string
-          trust_evidence_id?: string
-          updated_at?: string
-          verified_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "domain_verification_challenges_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "domain_verification_challenges_subject_org_id_fkey"
-            columns: ["subject_org_id"]
-            isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "domain_verification_challenges_subject_org_id_fkey"
-            columns: ["subject_org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "domain_verification_challenges_subject_page_id_fkey"
-            columns: ["subject_page_id"]
-            isOneToOne: false
-            referencedRelation: "pages"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "domain_verification_challenges_subject_profile_id_fkey"
-            columns: ["subject_profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "domain_verification_challenges_trust_evidence_id_fkey"
-            columns: ["trust_evidence_id"]
-            isOneToOne: false
-            referencedRelation: "trust_evidence"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       employer_endorsement_requests: {
         Row: {
           approval_note: string | null
@@ -1293,13 +719,6 @@ export type Database = {
             foreignKeyName: "employer_endorsement_requests_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "employer_endorsement_requests_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -1311,134 +730,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      explore_impressions: {
-        Row: {
-          action: string
-          created_at: string
-          entity_id: string
-          entity_type: string
-          id: string
-          source: string
-          user_id: string | null
-        }
-        Insert: {
-          action?: string
-          created_at?: string
-          entity_id: string
-          entity_type: string
-          id?: string
-          source?: string
-          user_id?: string | null
-        }
-        Update: {
-          action?: string
-          created_at?: string
-          entity_id?: string
-          entity_type?: string
-          id?: string
-          source?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "explore_impressions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      explore_impressions_2026_05: {
-        Row: {
-          action: string
-          created_at: string
-          entity_id: string
-          entity_type: string
-          id: string
-          source: string
-          user_id: string | null
-        }
-        Insert: {
-          action?: string
-          created_at?: string
-          entity_id: string
-          entity_type: string
-          id?: string
-          source?: string
-          user_id?: string | null
-        }
-        Update: {
-          action?: string
-          created_at?: string
-          entity_id?: string
-          entity_type?: string
-          id?: string
-          source?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      explore_impressions_2026_06: {
-        Row: {
-          action: string
-          created_at: string
-          entity_id: string
-          entity_type: string
-          id: string
-          source: string
-          user_id: string | null
-        }
-        Insert: {
-          action?: string
-          created_at?: string
-          entity_id: string
-          entity_type: string
-          id?: string
-          source?: string
-          user_id?: string | null
-        }
-        Update: {
-          action?: string
-          created_at?: string
-          entity_id?: string
-          entity_type?: string
-          id?: string
-          source?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      explore_impressions_default: {
-        Row: {
-          action: string
-          created_at: string
-          entity_id: string
-          entity_type: string
-          id: string
-          source: string
-          user_id: string | null
-        }
-        Insert: {
-          action?: string
-          created_at?: string
-          entity_id: string
-          entity_type: string
-          id?: string
-          source?: string
-          user_id?: string | null
-        }
-        Update: {
-          action?: string
-          created_at?: string
-          entity_id?: string
-          entity_type?: string
-          id?: string
-          source?: string
-          user_id?: string | null
-        }
-        Relationships: []
       }
       hiring_assessments: {
         Row: {
@@ -1484,13 +775,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "hiring_assessments_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
           },
           {
             foreignKeyName: "hiring_assessments_org_id_fkey"
@@ -1598,83 +882,6 @@ export type Database = {
             columns: ["parent_institution_id"]
             isOneToOne: false
             referencedRelation: "institutions_public"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      interview_schedules: {
-        Row: {
-          application_id: string
-          created_at: string
-          duration_mins: number
-          feedback: Json | null
-          id: string
-          interview_type: string
-          interviewer_ids: string[]
-          meeting_link: string | null
-          org_id: string | null
-          scheduled_at: string
-          scheduled_by: string
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          application_id: string
-          created_at?: string
-          duration_mins?: number
-          feedback?: Json | null
-          id?: string
-          interview_type?: string
-          interviewer_ids?: string[]
-          meeting_link?: string | null
-          org_id?: string | null
-          scheduled_at: string
-          scheduled_by: string
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          application_id?: string
-          created_at?: string
-          duration_mins?: number
-          feedback?: Json | null
-          id?: string
-          interview_type?: string
-          interviewer_ids?: string[]
-          meeting_link?: string | null
-          org_id?: string | null
-          scheduled_at?: string
-          scheduled_by?: string
-          status?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "interview_schedules_application_id_fkey"
-            columns: ["application_id"]
-            isOneToOne: false
-            referencedRelation: "opportunity_applications"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "interview_schedules_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "interview_schedules_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "interview_schedules_scheduled_by_fkey"
-            columns: ["scheduled_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1836,625 +1043,46 @@ export type Database = {
           },
         ]
       }
-      notification_preferences: {
-        Row: {
-          alerts_email: boolean
-          alerts_in_app: boolean
-          alerts_push: boolean
-          circles_email: boolean
-          circles_in_app: boolean
-          circles_push: boolean
-          connections_email: boolean
-          connections_in_app: boolean
-          connections_push: boolean
-          jobs_email: boolean
-          jobs_in_app: boolean
-          jobs_push: boolean
-          messages_email: boolean
-          messages_in_app: boolean
-          messages_push: boolean
-          posts_email: boolean
-          posts_in_app: boolean
-          posts_push: boolean
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          alerts_email?: boolean
-          alerts_in_app?: boolean
-          alerts_push?: boolean
-          circles_email?: boolean
-          circles_in_app?: boolean
-          circles_push?: boolean
-          connections_email?: boolean
-          connections_in_app?: boolean
-          connections_push?: boolean
-          jobs_email?: boolean
-          jobs_in_app?: boolean
-          jobs_push?: boolean
-          messages_email?: boolean
-          messages_in_app?: boolean
-          messages_push?: boolean
-          posts_email?: boolean
-          posts_in_app?: boolean
-          posts_push?: boolean
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          alerts_email?: boolean
-          alerts_in_app?: boolean
-          alerts_push?: boolean
-          circles_email?: boolean
-          circles_in_app?: boolean
-          circles_push?: boolean
-          connections_email?: boolean
-          connections_in_app?: boolean
-          connections_push?: boolean
-          jobs_email?: boolean
-          jobs_in_app?: boolean
-          jobs_push?: boolean
-          messages_email?: boolean
-          messages_in_app?: boolean
-          messages_push?: boolean
-          posts_email?: boolean
-          posts_in_app?: boolean
-          posts_push?: boolean
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "notification_preferences_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       notifications: {
         Row: {
           action_url: string | null
-          actor_count: number
-          actor_id: string | null
           body: string | null
-          category: string
           created_at: string | null
           data: Json | null
-          expires_at: string | null
-          group_key: string | null
           id: string
           is_read: boolean | null
-          priority: string
           title: string | null
           type: string
           user_id: string
         }
         Insert: {
           action_url?: string | null
-          actor_count?: number
-          actor_id?: string | null
           body?: string | null
-          category?: string
           created_at?: string | null
           data?: Json | null
-          expires_at?: string | null
-          group_key?: string | null
           id?: string
           is_read?: boolean | null
-          priority?: string
           title?: string | null
           type: string
           user_id: string
         }
         Update: {
           action_url?: string | null
-          actor_count?: number
-          actor_id?: string | null
           body?: string | null
-          category?: string
           created_at?: string | null
           data?: Json | null
-          expires_at?: string | null
-          group_key?: string | null
           id?: string
           is_read?: boolean | null
-          priority?: string
           title?: string | null
           type?: string
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "notifications_actor_id_fkey"
-            columns: ["actor_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "notifications_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      obs_alert_firings: {
-        Row: {
-          fired_at: string
-          id: string
-          metric_value: number
-          notified: boolean
-          resolved_at: string | null
-          rule_id: string
-        }
-        Insert: {
-          fired_at?: string
-          id?: string
-          metric_value: number
-          notified?: boolean
-          resolved_at?: string | null
-          rule_id: string
-        }
-        Update: {
-          fired_at?: string
-          id?: string
-          metric_value?: number
-          notified?: boolean
-          resolved_at?: string | null
-          rule_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "obs_alert_firings_rule_id_fkey"
-            columns: ["rule_id"]
-            isOneToOne: false
-            referencedRelation: "obs_alert_rules"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      obs_alert_rules: {
-        Row: {
-          created_at: string
-          enabled: boolean
-          id: string
-          metric: string
-          name: string
-          operator: string
-          severity: string
-          surface: string | null
-          threshold: number
-          webhook_url: string | null
-          window_min: number
-        }
-        Insert: {
-          created_at?: string
-          enabled?: boolean
-          id?: string
-          metric: string
-          name: string
-          operator: string
-          severity: string
-          surface?: string | null
-          threshold: number
-          webhook_url?: string | null
-          window_min?: number
-        }
-        Update: {
-          created_at?: string
-          enabled?: boolean
-          id?: string
-          metric?: string
-          name?: string
-          operator?: string
-          severity?: string
-          surface?: string | null
-          threshold?: number
-          webhook_url?: string | null
-          window_min?: number
-        }
-        Relationships: []
-      }
-      obs_db_failures: {
-        Row: {
-          captured_at: string
-          duration_ms: number | null
-          id: string
-          pid: number | null
-          query_sample: string | null
-          state: string | null
-          wait_event: string | null
-        }
-        Insert: {
-          captured_at?: string
-          duration_ms?: number | null
-          id?: string
-          pid?: number | null
-          query_sample?: string | null
-          state?: string | null
-          wait_event?: string | null
-        }
-        Update: {
-          captured_at?: string
-          duration_ms?: number | null
-          id?: string
-          pid?: number | null
-          query_sample?: string | null
-          state?: string | null
-          wait_event?: string | null
-        }
-        Relationships: []
-      }
-      obs_events: {
-        Row: {
-          created_at: string
-          event: string
-          id: string
-          properties: Json
-          session_id: string | null
-          surface: string | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          event: string
-          id?: string
-          properties?: Json
-          session_id?: string | null
-          surface?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          event?: string
-          id?: string
-          properties?: Json
-          session_id?: string | null
-          surface?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      obs_events_2026_05: {
-        Row: {
-          created_at: string
-          event: string
-          id: string
-          properties: Json
-          session_id: string | null
-          surface: string | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          event: string
-          id?: string
-          properties?: Json
-          session_id?: string | null
-          surface?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          event?: string
-          id?: string
-          properties?: Json
-          session_id?: string | null
-          surface?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      obs_events_2026_06: {
-        Row: {
-          created_at: string
-          event: string
-          id: string
-          properties: Json
-          session_id: string | null
-          surface: string | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          event: string
-          id?: string
-          properties?: Json
-          session_id?: string | null
-          surface?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          event?: string
-          id?: string
-          properties?: Json
-          session_id?: string | null
-          surface?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      obs_events_2026_07: {
-        Row: {
-          created_at: string
-          event: string
-          id: string
-          properties: Json
-          session_id: string | null
-          surface: string | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          event: string
-          id?: string
-          properties?: Json
-          session_id?: string | null
-          surface?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          event?: string
-          id?: string
-          properties?: Json
-          session_id?: string | null
-          surface?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      obs_events_2026_08: {
-        Row: {
-          created_at: string
-          event: string
-          id: string
-          properties: Json
-          session_id: string | null
-          surface: string | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          event: string
-          id?: string
-          properties?: Json
-          session_id?: string | null
-          surface?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          event?: string
-          id?: string
-          properties?: Json
-          session_id?: string | null
-          surface?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      obs_events_2026_09: {
-        Row: {
-          created_at: string
-          event: string
-          id: string
-          properties: Json
-          session_id: string | null
-          surface: string | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          event: string
-          id?: string
-          properties?: Json
-          session_id?: string | null
-          surface?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          event?: string
-          id?: string
-          properties?: Json
-          session_id?: string | null
-          surface?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      obs_events_default: {
-        Row: {
-          created_at: string
-          event: string
-          id: string
-          properties: Json
-          session_id: string | null
-          surface: string | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          event: string
-          id?: string
-          properties?: Json
-          session_id?: string | null
-          surface?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          event?: string
-          id?: string
-          properties?: Json
-          session_id?: string | null
-          surface?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      obs_frontend_errors: {
-        Row: {
-          component: string | null
-          created_at: string
-          error_type: string
-          id: string
-          message: string
-          metadata: Json
-          session_id: string | null
-          stack: string | null
-          surface: string | null
-          url: string | null
-          user_id: string | null
-        }
-        Insert: {
-          component?: string | null
-          created_at?: string
-          error_type: string
-          id?: string
-          message: string
-          metadata?: Json
-          session_id?: string | null
-          stack?: string | null
-          surface?: string | null
-          url?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          component?: string | null
-          created_at?: string
-          error_type?: string
-          id?: string
-          message?: string
-          metadata?: Json
-          session_id?: string | null
-          stack?: string | null
-          surface?: string | null
-          url?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "obs_frontend_errors_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      obs_rpc_logs: {
-        Row: {
-          caller_id: string | null
-          created_at: string
-          duration_ms: number
-          error_code: string | null
-          error_msg: string | null
-          id: string
-          rpc_name: string
-          success: boolean
-          surface: string | null
-        }
-        Insert: {
-          caller_id?: string | null
-          created_at?: string
-          duration_ms: number
-          error_code?: string | null
-          error_msg?: string | null
-          id?: string
-          rpc_name: string
-          success?: boolean
-          surface?: string | null
-        }
-        Update: {
-          caller_id?: string | null
-          created_at?: string
-          duration_ms?: number
-          error_code?: string | null
-          error_msg?: string | null
-          id?: string
-          rpc_name?: string
-          success?: boolean
-          surface?: string | null
-        }
-        Relationships: []
-      }
-      offer_letters: {
-        Row: {
-          application_id: string
-          candidate_response_at: string | null
-          compensation: Json
-          created_at: string
-          created_by: string
-          id: string
-          offer_expiry_date: string | null
-          org_id: string
-          revocation_reason: string | null
-          start_date: string | null
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          application_id: string
-          candidate_response_at?: string | null
-          compensation?: Json
-          created_at?: string
-          created_by: string
-          id?: string
-          offer_expiry_date?: string | null
-          org_id: string
-          revocation_reason?: string | null
-          start_date?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          application_id?: string
-          candidate_response_at?: string | null
-          compensation?: Json
-          created_at?: string
-          created_by?: string
-          id?: string
-          offer_expiry_date?: string | null
-          org_id?: string
-          revocation_reason?: string | null
-          start_date?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "offer_letters_application_id_fkey"
-            columns: ["application_id"]
-            isOneToOne: false
-            referencedRelation: "opportunity_applications"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "offer_letters_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "offer_letters_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "offer_letters_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -2685,13 +1313,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "institutions_public"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "opportunities_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
           },
           {
             foreignKeyName: "opportunities_org_id_fkey"
@@ -2987,13 +1608,6 @@ export type Database = {
             foreignKeyName: "org_access_rules_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "org_access_rules_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -3055,13 +1669,6 @@ export type Database = {
             foreignKeyName: "org_admin_invites_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "org_admin_invites_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -3099,13 +1706,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "org_admins_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
           },
           {
             foreignKeyName: "org_admins_org_id_fkey"
@@ -3165,208 +1765,6 @@ export type Database = {
             foreignKeyName: "org_contacts_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "org_contacts_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      org_culture_ratings: {
-        Row: {
-          cons: string | null
-          created_at: string
-          employment_status: string | null
-          id: string
-          is_anonymous: boolean
-          is_verified_employee: boolean
-          job_title: string | null
-          org_id: string
-          pros: string | null
-          rater_id: string | null
-          rating_compensation: number | null
-          rating_culture: number | null
-          rating_growth: number | null
-          rating_management: number | null
-          rating_overall: number | null
-          rating_work_life: number | null
-          status: string
-          would_recommend: boolean | null
-        }
-        Insert: {
-          cons?: string | null
-          created_at?: string
-          employment_status?: string | null
-          id?: string
-          is_anonymous?: boolean
-          is_verified_employee?: boolean
-          job_title?: string | null
-          org_id: string
-          pros?: string | null
-          rater_id?: string | null
-          rating_compensation?: number | null
-          rating_culture?: number | null
-          rating_growth?: number | null
-          rating_management?: number | null
-          rating_overall?: number | null
-          rating_work_life?: number | null
-          status?: string
-          would_recommend?: boolean | null
-        }
-        Update: {
-          cons?: string | null
-          created_at?: string
-          employment_status?: string | null
-          id?: string
-          is_anonymous?: boolean
-          is_verified_employee?: boolean
-          job_title?: string | null
-          org_id?: string
-          pros?: string | null
-          rater_id?: string | null
-          rating_compensation?: number | null
-          rating_culture?: number | null
-          rating_growth?: number | null
-          rating_management?: number | null
-          rating_overall?: number | null
-          rating_work_life?: number | null
-          status?: string
-          would_recommend?: boolean | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "org_culture_ratings_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "org_culture_ratings_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "org_culture_ratings_rater_id_fkey"
-            columns: ["rater_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      org_faq_upvotes: {
-        Row: {
-          created_at: string
-          faq_id: string
-          id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          faq_id: string
-          id?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          faq_id?: string
-          id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "org_faq_upvotes_faq_id_fkey"
-            columns: ["faq_id"]
-            isOneToOne: false
-            referencedRelation: "org_faqs"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "org_faq_upvotes_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      org_faqs: {
-        Row: {
-          answer: string | null
-          answered_by: string | null
-          asked_by: string | null
-          created_at: string
-          id: string
-          is_anonymous: boolean
-          is_official_answer: boolean
-          org_id: string
-          question: string
-          status: string
-          updated_at: string
-          upvote_count: number
-        }
-        Insert: {
-          answer?: string | null
-          answered_by?: string | null
-          asked_by?: string | null
-          created_at?: string
-          id?: string
-          is_anonymous?: boolean
-          is_official_answer?: boolean
-          org_id: string
-          question: string
-          status?: string
-          updated_at?: string
-          upvote_count?: number
-        }
-        Update: {
-          answer?: string | null
-          answered_by?: string | null
-          asked_by?: string | null
-          created_at?: string
-          id?: string
-          is_anonymous?: boolean
-          is_official_answer?: boolean
-          org_id?: string
-          question?: string
-          status?: string
-          updated_at?: string
-          upvote_count?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "org_faqs_answered_by_fkey"
-            columns: ["answered_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "org_faqs_asked_by_fkey"
-            columns: ["asked_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "org_faqs_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "org_faqs_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -3396,13 +1794,6 @@ export type Database = {
             foreignKeyName: "org_followers_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "org_followers_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -3411,130 +1802,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      org_follows: {
-        Row: {
-          created_at: string | null
-          follower_org_id: string
-          following_org_id: string
-          id: string
-        }
-        Insert: {
-          created_at?: string | null
-          follower_org_id: string
-          following_org_id: string
-          id?: string
-        }
-        Update: {
-          created_at?: string | null
-          follower_org_id?: string
-          following_org_id?: string
-          id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "org_follows_follower_org_id_fkey"
-            columns: ["follower_org_id"]
-            isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "org_follows_follower_org_id_fkey"
-            columns: ["follower_org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "org_follows_following_org_id_fkey"
-            columns: ["following_org_id"]
-            isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "org_follows_following_org_id_fkey"
-            columns: ["following_org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      org_knowledge_items: {
-        Row: {
-          content: string | null
-          content_type: string
-          created_at: string
-          created_by: string
-          id: string
-          org_id: string
-          source_id: string | null
-          tags: string[]
-          title: string
-          updated_at: string
-          visibility: string
-          workspace_id: string | null
-        }
-        Insert: {
-          content?: string | null
-          content_type?: string
-          created_at?: string
-          created_by: string
-          id?: string
-          org_id: string
-          source_id?: string | null
-          tags?: string[]
-          title: string
-          updated_at?: string
-          visibility?: string
-          workspace_id?: string | null
-        }
-        Update: {
-          content?: string | null
-          content_type?: string
-          created_at?: string
-          created_by?: string
-          id?: string
-          org_id?: string
-          source_id?: string | null
-          tags?: string[]
-          title?: string
-          updated_at?: string
-          visibility?: string
-          workspace_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "org_knowledge_items_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "org_knowledge_items_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "org_knowledge_items_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "org_knowledge_items_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
         ]
@@ -3593,92 +1860,11 @@ export type Database = {
             foreignKeyName: "org_members_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "org_members_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "org_members_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      org_memberships: {
-        Row: {
-          created_at: string
-          ended_at: string | null
-          id: string
-          invited_by: string | null
-          joined_at: string
-          membership_type: string
-          org_id: string
-          permissions: Json
-          role: string
-          status: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          ended_at?: string | null
-          id?: string
-          invited_by?: string | null
-          joined_at?: string
-          membership_type?: string
-          org_id: string
-          permissions?: Json
-          role?: string
-          status?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          ended_at?: string | null
-          id?: string
-          invited_by?: string | null
-          joined_at?: string
-          membership_type?: string
-          org_id?: string
-          permissions?: Json
-          role?: string
-          status?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "org_memberships_invited_by_fkey"
-            columns: ["invited_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "org_memberships_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "org_memberships_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "org_memberships_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -3710,99 +1896,7 @@ export type Database = {
             foreignKeyName: "org_metadata_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "org_metadata_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
             referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      org_salary_insights: {
-        Row: {
-          benefits: string | null
-          created_at: string
-          employment_type: string | null
-          experience_years_max: number | null
-          experience_years_min: number | null
-          id: string
-          is_anonymous: boolean
-          is_verified_employee: boolean
-          job_title: string
-          location_city: string | null
-          org_id: string
-          salary_currency: string
-          salary_max: number | null
-          salary_min: number | null
-          salary_period: string
-          status: string
-          submitted_by: string | null
-          updated_at: string
-        }
-        Insert: {
-          benefits?: string | null
-          created_at?: string
-          employment_type?: string | null
-          experience_years_max?: number | null
-          experience_years_min?: number | null
-          id?: string
-          is_anonymous?: boolean
-          is_verified_employee?: boolean
-          job_title: string
-          location_city?: string | null
-          org_id: string
-          salary_currency?: string
-          salary_max?: number | null
-          salary_min?: number | null
-          salary_period?: string
-          status?: string
-          submitted_by?: string | null
-          updated_at?: string
-        }
-        Update: {
-          benefits?: string | null
-          created_at?: string
-          employment_type?: string | null
-          experience_years_max?: number | null
-          experience_years_min?: number | null
-          id?: string
-          is_anonymous?: boolean
-          is_verified_employee?: boolean
-          job_title?: string
-          location_city?: string | null
-          org_id?: string
-          salary_currency?: string
-          salary_max?: number | null
-          salary_min?: number | null
-          salary_period?: string
-          status?: string
-          submitted_by?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "org_salary_insights_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "org_salary_insights_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "org_salary_insights_submitted_by_fkey"
-            columns: ["submitted_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -3861,13 +1955,6 @@ export type Database = {
             foreignKeyName: "org_subscriptions_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: true
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "org_subscriptions_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: true
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -3875,6 +1962,67 @@ export type Database = {
             foreignKeyName: "org_subscriptions_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_verif_requests: {
+        Row: {
+          created_at: string | null
+          id: string
+          member_type: string | null
+          message: string | null
+          org_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string | null
+          title_at_org: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          member_type?: string | null
+          message?: string | null
+          org_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          title_at_org?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          member_type?: string | null
+          message?: string | null
+          org_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          title_at_org?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_verif_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_verif_requests_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_verif_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -3913,13 +2061,6 @@ export type Database = {
             foreignKeyName: "org_verif_routes_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "org_verif_routes_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -3938,7 +2079,7 @@ export type Database = {
           district: string | null
           email: string | null
           email_domain: string | null
-          employee_count: number | null
+          employee_count: string | null
           followers_count: number | null
           founded_year: number | null
           full_address: string | null
@@ -3954,7 +2095,6 @@ export type Database = {
           slug: string
           social_links: Json | null
           state: string | null
-          status: string
           subtype: string | null
           tagline: string | null
           type: string
@@ -3975,7 +2115,7 @@ export type Database = {
           district?: string | null
           email?: string | null
           email_domain?: string | null
-          employee_count?: number | null
+          employee_count?: string | null
           followers_count?: number | null
           founded_year?: number | null
           full_address?: string | null
@@ -3991,7 +2131,6 @@ export type Database = {
           slug: string
           social_links?: Json | null
           state?: string | null
-          status?: string
           subtype?: string | null
           tagline?: string | null
           type: string
@@ -4012,7 +2151,7 @@ export type Database = {
           district?: string | null
           email?: string | null
           email_domain?: string | null
-          employee_count?: number | null
+          employee_count?: string | null
           followers_count?: number | null
           founded_year?: number | null
           full_address?: string | null
@@ -4028,7 +2167,6 @@ export type Database = {
           slug?: string
           social_links?: Json | null
           state?: string | null
-          status?: string
           subtype?: string | null
           tagline?: string | null
           type?: string
@@ -4341,67 +2479,6 @@ export type Database = {
           },
         ]
       }
-      platform_roles: {
-        Row: {
-          created_at: string
-          granted_at: string
-          granted_by: string | null
-          id: string
-          notes: string | null
-          revocation_reason: string | null
-          revoked_at: string | null
-          revoked_by: string | null
-          role: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          granted_at?: string
-          granted_by?: string | null
-          id?: string
-          notes?: string | null
-          revocation_reason?: string | null
-          revoked_at?: string | null
-          revoked_by?: string | null
-          role: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          granted_at?: string
-          granted_by?: string | null
-          id?: string
-          notes?: string | null
-          revocation_reason?: string | null
-          revoked_at?: string | null
-          revoked_by?: string | null
-          role?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "platform_roles_granted_by_fkey"
-            columns: ["granted_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "platform_roles_revoked_by_fkey"
-            columns: ["revoked_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "platform_roles_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       post_comments: {
         Row: {
           content: string
@@ -4494,13 +2571,6 @@ export type Database = {
           post_id?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "post_mentions_mentioned_org_id_fkey"
-            columns: ["mentioned_org_id"]
-            isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
           {
             foreignKeyName: "post_mentions_mentioned_org_id_fkey"
             columns: ["mentioned_org_id"]
@@ -4655,13 +2725,6 @@ export type Database = {
             foreignKeyName: "post_reposts_reposted_by_org_fkey"
             columns: ["reposted_by_org"]
             isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "post_reposts_reposted_by_org_fkey"
-            columns: ["reposted_by_org"]
-            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -4718,17 +2781,15 @@ export type Database = {
       }
       posts: {
         Row: {
-          author_id: string
-          comment_count: number
+          author_id: string | null
+          comment_count: number | null
           content: string
           created_at: string | null
           hashtags: string[] | null
           id: string
           image_urls: string[] | null
           is_edited: boolean | null
-          is_featured: boolean
           is_shared_to_feed: boolean | null
-          like_count: number
           pdf_url: string | null
           post_type: string | null
           posted_by_org: string | null
@@ -4736,28 +2797,24 @@ export type Database = {
           reactions: Json | null
           repost_count: number | null
           repost_of: string | null
-          share_count: number
           show_company_badge: boolean | null
           type: string | null
           updated_at: string | null
-          view_count: number
           visibility: string | null
           work_item_id: string | null
           workspace_id: string | null
           workspace_name: string | null
         }
         Insert: {
-          author_id: string
-          comment_count?: number
+          author_id?: string | null
+          comment_count?: number | null
           content: string
           created_at?: string | null
           hashtags?: string[] | null
           id?: string
           image_urls?: string[] | null
           is_edited?: boolean | null
-          is_featured?: boolean
           is_shared_to_feed?: boolean | null
-          like_count?: number
           pdf_url?: string | null
           post_type?: string | null
           posted_by_org?: string | null
@@ -4765,28 +2822,24 @@ export type Database = {
           reactions?: Json | null
           repost_count?: number | null
           repost_of?: string | null
-          share_count?: number
           show_company_badge?: boolean | null
           type?: string | null
           updated_at?: string | null
-          view_count?: number
           visibility?: string | null
           work_item_id?: string | null
           workspace_id?: string | null
           workspace_name?: string | null
         }
         Update: {
-          author_id?: string
-          comment_count?: number
+          author_id?: string | null
+          comment_count?: number | null
           content?: string
           created_at?: string | null
           hashtags?: string[] | null
           id?: string
           image_urls?: string[] | null
           is_edited?: boolean | null
-          is_featured?: boolean
           is_shared_to_feed?: boolean | null
-          like_count?: number
           pdf_url?: string | null
           post_type?: string | null
           posted_by_org?: string | null
@@ -4794,11 +2847,9 @@ export type Database = {
           reactions?: Json | null
           repost_count?: number | null
           repost_of?: string | null
-          share_count?: number
           show_company_badge?: boolean | null
           type?: string | null
           updated_at?: string | null
-          view_count?: number
           visibility?: string | null
           work_item_id?: string | null
           workspace_id?: string | null
@@ -4811,13 +2862,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "posts_posted_by_org_fkey"
-            columns: ["posted_by_org"]
-            isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
           },
           {
             foreignKeyName: "posts_posted_by_org_fkey"
@@ -4890,137 +2934,28 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
-          end_date: string | null
           id: string
           role_type: string
-          start_date: string | null
           title: string
           user_id: string
         }
         Insert: {
           created_at?: string
           description?: string | null
-          end_date?: string | null
           id?: string
           role_type: string
-          start_date?: string | null
           title: string
           user_id: string
         }
         Update: {
           created_at?: string
           description?: string | null
-          end_date?: string | null
           id?: string
           role_type?: string
-          start_date?: string | null
           title?: string
           user_id?: string
         }
         Relationships: []
-      }
-      profile_verification_state: {
-        Row: {
-          created_at: string
-          evidence_id: string | null
-          evidence_type: string | null
-          expires_at: string | null
-          id: string
-          issued_at: string
-          issuer_org_id: string | null
-          metadata: Json
-          request_id: string | null
-          revoked_at: string | null
-          revoked_reason: string | null
-          status: string
-          subject_user_id: string
-          target_item_id: string | null
-          updated_at: string
-          verification_type: string
-          verifier_user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          evidence_id?: string | null
-          evidence_type?: string | null
-          expires_at?: string | null
-          id?: string
-          issued_at?: string
-          issuer_org_id?: string | null
-          metadata?: Json
-          request_id?: string | null
-          revoked_at?: string | null
-          revoked_reason?: string | null
-          status: string
-          subject_user_id: string
-          target_item_id?: string | null
-          updated_at?: string
-          verification_type: string
-          verifier_user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          evidence_id?: string | null
-          evidence_type?: string | null
-          expires_at?: string | null
-          id?: string
-          issued_at?: string
-          issuer_org_id?: string | null
-          metadata?: Json
-          request_id?: string | null
-          revoked_at?: string | null
-          revoked_reason?: string | null
-          status?: string
-          subject_user_id?: string
-          target_item_id?: string | null
-          updated_at?: string
-          verification_type?: string
-          verifier_user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "profile_verification_state_evidence_id_fkey"
-            columns: ["evidence_id"]
-            isOneToOne: false
-            referencedRelation: "verification_evidence"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "profile_verification_state_issuer_org_id_fkey"
-            columns: ["issuer_org_id"]
-            isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "profile_verification_state_issuer_org_id_fkey"
-            columns: ["issuer_org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "profile_verification_state_request_id_fkey"
-            columns: ["request_id"]
-            isOneToOne: true
-            referencedRelation: "verification_requests"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "profile_verification_state_subject_user_id_fkey"
-            columns: ["subject_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "profile_verification_state_verifier_user_id_fkey"
-            columns: ["verifier_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       profiles: {
         Row: {
@@ -5031,7 +2966,6 @@ export type Database = {
           activity_score_v2_live: boolean | null
           avatar_url: string | null
           bio: string | null
-          clean_username: string | null
           contact_email_visible: boolean | null
           country: string | null
           cover_url: string | null
@@ -5044,8 +2978,6 @@ export type Database = {
           designation: string | null
           display_preference: string | null
           email: string | null
-          follower_count: number | null
-          following_count: number | null
           full_name: string | null
           headline: string | null
           id: string
@@ -5103,7 +3035,6 @@ export type Database = {
           activity_score_v2_live?: boolean | null
           avatar_url?: string | null
           bio?: string | null
-          clean_username?: string | null
           contact_email_visible?: boolean | null
           country?: string | null
           cover_url?: string | null
@@ -5116,8 +3047,6 @@ export type Database = {
           designation?: string | null
           display_preference?: string | null
           email?: string | null
-          follower_count?: number | null
-          following_count?: number | null
           full_name?: string | null
           headline?: string | null
           id: string
@@ -5175,7 +3104,6 @@ export type Database = {
           activity_score_v2_live?: boolean | null
           avatar_url?: string | null
           bio?: string | null
-          clean_username?: string | null
           contact_email_visible?: boolean | null
           country?: string | null
           cover_url?: string | null
@@ -5188,8 +3116,6 @@ export type Database = {
           designation?: string | null
           display_preference?: string | null
           email?: string | null
-          follower_count?: number | null
-          following_count?: number | null
           full_name?: string | null
           headline?: string | null
           id?: string
@@ -5240,13 +3166,6 @@ export type Database = {
           years_exp?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "profiles_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
           {
             foreignKeyName: "profiles_org_id_fkey"
             columns: ["org_id"]
@@ -5461,650 +3380,6 @@ export type Database = {
           },
         ]
       }
-      trust_badges: {
-        Row: {
-          badge_type: string
-          confidence_score: number
-          created_at: string
-          evidence_id: string | null
-          expires_at: string | null
-          id: string
-          issued_at: string
-          issued_by_org_id: string | null
-          issued_by_user_id: string | null
-          issued_reason: string | null
-          metadata: Json
-          revoked_at: string | null
-          revoked_reason: string | null
-          score_id: string | null
-          status: string
-          subject_category: string
-          subject_org_id: string | null
-          subject_page_id: string | null
-          subject_profile_id: string | null
-          updated_at: string
-          verification_state_id: string | null
-        }
-        Insert: {
-          badge_type: string
-          confidence_score?: number
-          created_at?: string
-          evidence_id?: string | null
-          expires_at?: string | null
-          id?: string
-          issued_at?: string
-          issued_by_org_id?: string | null
-          issued_by_user_id?: string | null
-          issued_reason?: string | null
-          metadata?: Json
-          revoked_at?: string | null
-          revoked_reason?: string | null
-          score_id?: string | null
-          status?: string
-          subject_category: string
-          subject_org_id?: string | null
-          subject_page_id?: string | null
-          subject_profile_id?: string | null
-          updated_at?: string
-          verification_state_id?: string | null
-        }
-        Update: {
-          badge_type?: string
-          confidence_score?: number
-          created_at?: string
-          evidence_id?: string | null
-          expires_at?: string | null
-          id?: string
-          issued_at?: string
-          issued_by_org_id?: string | null
-          issued_by_user_id?: string | null
-          issued_reason?: string | null
-          metadata?: Json
-          revoked_at?: string | null
-          revoked_reason?: string | null
-          score_id?: string | null
-          status?: string
-          subject_category?: string
-          subject_org_id?: string | null
-          subject_page_id?: string | null
-          subject_profile_id?: string | null
-          updated_at?: string
-          verification_state_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "trust_badges_evidence_id_fkey"
-            columns: ["evidence_id"]
-            isOneToOne: false
-            referencedRelation: "trust_evidence"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trust_badges_issued_by_org_id_fkey"
-            columns: ["issued_by_org_id"]
-            isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "trust_badges_issued_by_org_id_fkey"
-            columns: ["issued_by_org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trust_badges_issued_by_user_id_fkey"
-            columns: ["issued_by_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trust_badges_score_id_fkey"
-            columns: ["score_id"]
-            isOneToOne: false
-            referencedRelation: "trust_scores"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trust_badges_subject_org_id_fkey"
-            columns: ["subject_org_id"]
-            isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "trust_badges_subject_org_id_fkey"
-            columns: ["subject_org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trust_badges_subject_page_id_fkey"
-            columns: ["subject_page_id"]
-            isOneToOne: false
-            referencedRelation: "pages"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trust_badges_subject_profile_id_fkey"
-            columns: ["subject_profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trust_badges_verification_state_id_fkey"
-            columns: ["verification_state_id"]
-            isOneToOne: false
-            referencedRelation: "profile_verification_state"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      trust_checks: {
-        Row: {
-          actor_user_id: string | null
-          check_type: string
-          checked_at: string
-          confidence_score: number
-          created_at: string
-          evidence_id: string | null
-          id: string
-          next_check_at: string | null
-          notes: string | null
-          outcome: string
-          performed_by: string
-          result_payload: Json
-          risk_level: string
-          subject_category: string
-          subject_org_id: string | null
-          subject_page_id: string | null
-          subject_profile_id: string | null
-          updated_at: string
-        }
-        Insert: {
-          actor_user_id?: string | null
-          check_type: string
-          checked_at?: string
-          confidence_score?: number
-          created_at?: string
-          evidence_id?: string | null
-          id?: string
-          next_check_at?: string | null
-          notes?: string | null
-          outcome: string
-          performed_by?: string
-          result_payload?: Json
-          risk_level?: string
-          subject_category: string
-          subject_org_id?: string | null
-          subject_page_id?: string | null
-          subject_profile_id?: string | null
-          updated_at?: string
-        }
-        Update: {
-          actor_user_id?: string | null
-          check_type?: string
-          checked_at?: string
-          confidence_score?: number
-          created_at?: string
-          evidence_id?: string | null
-          id?: string
-          next_check_at?: string | null
-          notes?: string | null
-          outcome?: string
-          performed_by?: string
-          result_payload?: Json
-          risk_level?: string
-          subject_category?: string
-          subject_org_id?: string | null
-          subject_page_id?: string | null
-          subject_profile_id?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "trust_checks_actor_user_id_fkey"
-            columns: ["actor_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trust_checks_evidence_id_fkey"
-            columns: ["evidence_id"]
-            isOneToOne: false
-            referencedRelation: "trust_evidence"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trust_checks_subject_org_id_fkey"
-            columns: ["subject_org_id"]
-            isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "trust_checks_subject_org_id_fkey"
-            columns: ["subject_org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trust_checks_subject_page_id_fkey"
-            columns: ["subject_page_id"]
-            isOneToOne: false
-            referencedRelation: "pages"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trust_checks_subject_profile_id_fkey"
-            columns: ["subject_profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      trust_events: {
-        Row: {
-          actor_role: string
-          actor_user_id: string | null
-          badge_id: string | null
-          check_id: string | null
-          created_at: string
-          event_type: string
-          evidence_id: string | null
-          id: string
-          note: string | null
-          payload: Json
-          score_id: string | null
-          subject_category: string | null
-          subject_org_id: string | null
-          subject_page_id: string | null
-          subject_profile_id: string | null
-          verification_request_id: string | null
-          verification_state_id: string | null
-        }
-        Insert: {
-          actor_role?: string
-          actor_user_id?: string | null
-          badge_id?: string | null
-          check_id?: string | null
-          created_at?: string
-          event_type: string
-          evidence_id?: string | null
-          id?: string
-          note?: string | null
-          payload?: Json
-          score_id?: string | null
-          subject_category?: string | null
-          subject_org_id?: string | null
-          subject_page_id?: string | null
-          subject_profile_id?: string | null
-          verification_request_id?: string | null
-          verification_state_id?: string | null
-        }
-        Update: {
-          actor_role?: string
-          actor_user_id?: string | null
-          badge_id?: string | null
-          check_id?: string | null
-          created_at?: string
-          event_type?: string
-          evidence_id?: string | null
-          id?: string
-          note?: string | null
-          payload?: Json
-          score_id?: string | null
-          subject_category?: string | null
-          subject_org_id?: string | null
-          subject_page_id?: string | null
-          subject_profile_id?: string | null
-          verification_request_id?: string | null
-          verification_state_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "trust_events_actor_user_id_fkey"
-            columns: ["actor_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trust_events_badge_id_fkey"
-            columns: ["badge_id"]
-            isOneToOne: false
-            referencedRelation: "trust_badges"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trust_events_check_id_fkey"
-            columns: ["check_id"]
-            isOneToOne: false
-            referencedRelation: "trust_checks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trust_events_evidence_id_fkey"
-            columns: ["evidence_id"]
-            isOneToOne: false
-            referencedRelation: "trust_evidence"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trust_events_score_id_fkey"
-            columns: ["score_id"]
-            isOneToOne: false
-            referencedRelation: "trust_scores"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trust_events_subject_org_id_fkey"
-            columns: ["subject_org_id"]
-            isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "trust_events_subject_org_id_fkey"
-            columns: ["subject_org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trust_events_subject_page_id_fkey"
-            columns: ["subject_page_id"]
-            isOneToOne: false
-            referencedRelation: "pages"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trust_events_subject_profile_id_fkey"
-            columns: ["subject_profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trust_events_verification_request_id_fkey"
-            columns: ["verification_request_id"]
-            isOneToOne: false
-            referencedRelation: "verification_requests"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trust_events_verification_state_id_fkey"
-            columns: ["verification_state_id"]
-            isOneToOne: false
-            referencedRelation: "profile_verification_state"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      trust_evidence: {
-        Row: {
-          collected_by_user_id: string | null
-          confidence_score: number
-          created_at: string
-          document_path: string | null
-          evidence_hash: string | null
-          evidence_type: string
-          evidence_value: string | null
-          expires_at: string | null
-          id: string
-          last_checked_at: string | null
-          metadata: Json
-          observed_at: string
-          source_label: string | null
-          source_reference: string | null
-          source_type: string
-          source_url: string | null
-          status: string
-          subject_category: string
-          subject_org_id: string | null
-          subject_page_id: string | null
-          subject_profile_id: string | null
-          updated_at: string
-          verification_request_id: string | null
-          verification_state_id: string | null
-          verified_at: string | null
-        }
-        Insert: {
-          collected_by_user_id?: string | null
-          confidence_score?: number
-          created_at?: string
-          document_path?: string | null
-          evidence_hash?: string | null
-          evidence_type: string
-          evidence_value?: string | null
-          expires_at?: string | null
-          id?: string
-          last_checked_at?: string | null
-          metadata?: Json
-          observed_at?: string
-          source_label?: string | null
-          source_reference?: string | null
-          source_type?: string
-          source_url?: string | null
-          status?: string
-          subject_category: string
-          subject_org_id?: string | null
-          subject_page_id?: string | null
-          subject_profile_id?: string | null
-          updated_at?: string
-          verification_request_id?: string | null
-          verification_state_id?: string | null
-          verified_at?: string | null
-        }
-        Update: {
-          collected_by_user_id?: string | null
-          confidence_score?: number
-          created_at?: string
-          document_path?: string | null
-          evidence_hash?: string | null
-          evidence_type?: string
-          evidence_value?: string | null
-          expires_at?: string | null
-          id?: string
-          last_checked_at?: string | null
-          metadata?: Json
-          observed_at?: string
-          source_label?: string | null
-          source_reference?: string | null
-          source_type?: string
-          source_url?: string | null
-          status?: string
-          subject_category?: string
-          subject_org_id?: string | null
-          subject_page_id?: string | null
-          subject_profile_id?: string | null
-          updated_at?: string
-          verification_request_id?: string | null
-          verification_state_id?: string | null
-          verified_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "trust_evidence_collected_by_user_id_fkey"
-            columns: ["collected_by_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trust_evidence_subject_org_id_fkey"
-            columns: ["subject_org_id"]
-            isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "trust_evidence_subject_org_id_fkey"
-            columns: ["subject_org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trust_evidence_subject_page_id_fkey"
-            columns: ["subject_page_id"]
-            isOneToOne: false
-            referencedRelation: "pages"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trust_evidence_subject_profile_id_fkey"
-            columns: ["subject_profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trust_evidence_verification_request_id_fkey"
-            columns: ["verification_request_id"]
-            isOneToOne: false
-            referencedRelation: "verification_requests"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trust_evidence_verification_state_id_fkey"
-            columns: ["verification_state_id"]
-            isOneToOne: false
-            referencedRelation: "profile_verification_state"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      trust_scores: {
-        Row: {
-          computed_by: string
-          computed_by_user_id: string | null
-          consistency_score: number
-          created_at: string
-          expires_at: string | null
-          explanation: string | null
-          failed_signal_count: number
-          id: string
-          internal_notes: string | null
-          last_recomputed_at: string
-          legal_existence_score: number
-          metadata: Json
-          model_version: string
-          next_review_at: string | null
-          overall_score: number
-          ownership_control_score: number
-          public_presence_score: number
-          relationship_score: number
-          risk_score: number
-          subject_category: string
-          subject_org_id: string | null
-          subject_page_id: string | null
-          subject_profile_id: string | null
-          updated_at: string
-          valid_signal_count: number
-          verdict: string
-        }
-        Insert: {
-          computed_by?: string
-          computed_by_user_id?: string | null
-          consistency_score?: number
-          created_at?: string
-          expires_at?: string | null
-          explanation?: string | null
-          failed_signal_count?: number
-          id?: string
-          internal_notes?: string | null
-          last_recomputed_at?: string
-          legal_existence_score?: number
-          metadata?: Json
-          model_version?: string
-          next_review_at?: string | null
-          overall_score?: number
-          ownership_control_score?: number
-          public_presence_score?: number
-          relationship_score?: number
-          risk_score?: number
-          subject_category: string
-          subject_org_id?: string | null
-          subject_page_id?: string | null
-          subject_profile_id?: string | null
-          updated_at?: string
-          valid_signal_count?: number
-          verdict: string
-        }
-        Update: {
-          computed_by?: string
-          computed_by_user_id?: string | null
-          consistency_score?: number
-          created_at?: string
-          expires_at?: string | null
-          explanation?: string | null
-          failed_signal_count?: number
-          id?: string
-          internal_notes?: string | null
-          last_recomputed_at?: string
-          legal_existence_score?: number
-          metadata?: Json
-          model_version?: string
-          next_review_at?: string | null
-          overall_score?: number
-          ownership_control_score?: number
-          public_presence_score?: number
-          relationship_score?: number
-          risk_score?: number
-          subject_category?: string
-          subject_org_id?: string | null
-          subject_page_id?: string | null
-          subject_profile_id?: string | null
-          updated_at?: string
-          valid_signal_count?: number
-          verdict?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "trust_scores_computed_by_user_id_fkey"
-            columns: ["computed_by_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trust_scores_subject_org_id_fkey"
-            columns: ["subject_org_id"]
-            isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "trust_scores_subject_org_id_fkey"
-            columns: ["subject_org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trust_scores_subject_page_id_fkey"
-            columns: ["subject_page_id"]
-            isOneToOne: false
-            referencedRelation: "pages"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trust_scores_subject_profile_id_fkey"
-            columns: ["subject_profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       user_additional_roles: {
         Row: {
           about: string | null
@@ -6146,42 +3421,6 @@ export type Database = {
           {
             foreignKeyName: "user_additional_roles_user_id_fkey"
             columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_follows: {
-        Row: {
-          created_at: string | null
-          follower_id: string
-          following_id: string
-          id: string
-        }
-        Insert: {
-          created_at?: string | null
-          follower_id: string
-          following_id: string
-          id?: string
-        }
-        Update: {
-          created_at?: string | null
-          follower_id?: string
-          following_id?: string
-          id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_follows_follower_id_fkey"
-            columns: ["follower_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_follows_following_id_fkey"
-            columns: ["following_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -6242,184 +3481,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_restrictions: {
-        Row: {
-          created_at: string
-          expires_at: string | null
-          id: string
-          imposed_at: string
-          imposed_by: string | null
-          lifted_at: string | null
-          lifted_by: string | null
-          notes: string | null
-          reason: string | null
-          restriction: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          expires_at?: string | null
-          id?: string
-          imposed_at?: string
-          imposed_by?: string | null
-          lifted_at?: string | null
-          lifted_by?: string | null
-          notes?: string | null
-          reason?: string | null
-          restriction: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          expires_at?: string | null
-          id?: string
-          imposed_at?: string
-          imposed_by?: string | null
-          lifted_at?: string | null
-          lifted_by?: string | null
-          notes?: string | null
-          reason?: string | null
-          restriction?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_restrictions_imposed_by_fkey"
-            columns: ["imposed_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_restrictions_lifted_by_fkey"
-            columns: ["lifted_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_restrictions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      verification_events: {
-        Row: {
-          actor_role: string | null
-          actor_user_id: string | null
-          created_at: string
-          event_type: string
-          id: string
-          note: string | null
-          payload: Json
-          request_id: string
-        }
-        Insert: {
-          actor_role?: string | null
-          actor_user_id?: string | null
-          created_at?: string
-          event_type: string
-          id?: string
-          note?: string | null
-          payload?: Json
-          request_id: string
-        }
-        Update: {
-          actor_role?: string | null
-          actor_user_id?: string | null
-          created_at?: string
-          event_type?: string
-          id?: string
-          note?: string | null
-          payload?: Json
-          request_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "verification_events_actor_user_id_fkey"
-            columns: ["actor_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "verification_events_request_id_fkey"
-            columns: ["request_id"]
-            isOneToOne: false
-            referencedRelation: "verification_requests"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      verification_evidence: {
-        Row: {
-          created_at: string
-          evidence_type: string | null
-          file_name: string | null
-          file_size_bytes: number | null
-          id: string
-          is_primary: boolean
-          metadata: Json
-          mime_type: string | null
-          notes: string | null
-          request_id: string
-          status: string
-          storage_bucket: string
-          storage_path: string
-          uploaded_by: string
-        }
-        Insert: {
-          created_at?: string
-          evidence_type?: string | null
-          file_name?: string | null
-          file_size_bytes?: number | null
-          id?: string
-          is_primary?: boolean
-          metadata?: Json
-          mime_type?: string | null
-          notes?: string | null
-          request_id: string
-          status?: string
-          storage_bucket?: string
-          storage_path: string
-          uploaded_by: string
-        }
-        Update: {
-          created_at?: string
-          evidence_type?: string | null
-          file_name?: string | null
-          file_size_bytes?: number | null
-          id?: string
-          is_primary?: boolean
-          metadata?: Json
-          mime_type?: string | null
-          notes?: string | null
-          request_id?: string
-          status?: string
-          storage_bucket?: string
-          storage_path?: string
-          uploaded_by?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "verification_evidence_request_id_fkey"
-            columns: ["request_id"]
-            isOneToOne: false
-            referencedRelation: "verification_requests"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "verification_evidence_uploaded_by_fkey"
-            columns: ["uploaded_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       verification_requests: {
         Row: {
           assigned_to: string | null
@@ -6437,11 +3498,11 @@ export type Database = {
           rejection_reason: string | null
           requested_doc_message: string | null
           requested_role: string | null
-          requested_verification_type: string | null
           requester_id: string
+          requested_verification_type: string | null
+          review_queue: string
           resolved_at: string | null
           review_note: string | null
-          review_queue: string
           review_thread: Json | null
           reviewed_by: string | null
           role_category: string | null
@@ -6466,11 +3527,11 @@ export type Database = {
           rejection_reason?: string | null
           requested_doc_message?: string | null
           requested_role?: string | null
-          requested_verification_type?: string | null
           requester_id: string
+          requested_verification_type?: string | null
+          review_queue?: string
           resolved_at?: string | null
           review_note?: string | null
-          review_queue?: string
           review_thread?: Json | null
           reviewed_by?: string | null
           role_category?: string | null
@@ -6495,11 +3556,11 @@ export type Database = {
           rejection_reason?: string | null
           requested_doc_message?: string | null
           requested_role?: string | null
-          requested_verification_type?: string | null
           requester_id?: string
+          requested_verification_type?: string | null
+          review_queue?: string
           resolved_at?: string | null
           review_note?: string | null
-          review_queue?: string
           review_thread?: Json | null
           reviewed_by?: string | null
           role_category?: string | null
@@ -6509,13 +3570,6 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "verification_requests_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
           {
             foreignKeyName: "verification_requests_org_id_fkey"
             columns: ["org_id"]
@@ -6539,135 +3593,44 @@ export type Database = {
           },
         ]
       }
-      verified_employment_claims: {
+      verifications: {
         Row: {
-          claim_kind: string
-          claimed_role: string | null
-          created_at: string
-          evidence_id: string | null
-          expires_at: string | null
+          created_at: string | null
           id: string
-          issuer_org_id: string
-          metadata: Json
-          org_id: string
-          org_member_id: string | null
-          request_id: string | null
-          revoked_at: string | null
-          revoked_reason: string | null
-          role_category: string | null
-          status: string
+          notes: string | null
+          scope: string | null
+          status: string | null
           subject_user_id: string
-          updated_at: string
-          verified_at: string
+          verification_type: string | null
+          verified_at: string | null
           verifier_user_id: string | null
+          work_item_id: string | null
         }
         Insert: {
-          claim_kind: string
-          claimed_role?: string | null
-          created_at?: string
-          evidence_id?: string | null
-          expires_at?: string | null
+          created_at?: string | null
           id?: string
-          issuer_org_id: string
-          metadata?: Json
-          org_id: string
-          org_member_id?: string | null
-          request_id?: string | null
-          revoked_at?: string | null
-          revoked_reason?: string | null
-          role_category?: string | null
-          status?: string
+          notes?: string | null
+          scope?: string | null
+          status?: string | null
           subject_user_id: string
-          updated_at?: string
-          verified_at?: string
+          verification_type?: string | null
+          verified_at?: string | null
           verifier_user_id?: string | null
+          work_item_id?: string | null
         }
         Update: {
-          claim_kind?: string
-          claimed_role?: string | null
-          created_at?: string
-          evidence_id?: string | null
-          expires_at?: string | null
+          created_at?: string | null
           id?: string
-          issuer_org_id?: string
-          metadata?: Json
-          org_id?: string
-          org_member_id?: string | null
-          request_id?: string | null
-          revoked_at?: string | null
-          revoked_reason?: string | null
-          role_category?: string | null
-          status?: string
+          notes?: string | null
+          scope?: string | null
+          status?: string | null
           subject_user_id?: string
-          updated_at?: string
-          verified_at?: string
+          verification_type?: string | null
+          verified_at?: string | null
           verifier_user_id?: string | null
+          work_item_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "verified_employment_claims_evidence_id_fkey"
-            columns: ["evidence_id"]
-            isOneToOne: false
-            referencedRelation: "verification_evidence"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "verified_employment_claims_issuer_org_id_fkey"
-            columns: ["issuer_org_id"]
-            isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "verified_employment_claims_issuer_org_id_fkey"
-            columns: ["issuer_org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "verified_employment_claims_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "org_brain_summary"
-            referencedColumns: ["org_id"]
-          },
-          {
-            foreignKeyName: "verified_employment_claims_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "verified_employment_claims_org_member_id_fkey"
-            columns: ["org_member_id"]
-            isOneToOne: false
-            referencedRelation: "org_members"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "verified_employment_claims_request_id_fkey"
-            columns: ["request_id"]
-            isOneToOne: true
-            referencedRelation: "verification_requests"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "verified_employment_claims_subject_user_id_fkey"
-            columns: ["subject_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "verified_employment_claims_verifier_user_id_fkey"
-            columns: ["verifier_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       work_items: {
         Row: {
@@ -7029,7 +3992,6 @@ export type Database = {
           id: string
           is_deleted: boolean | null
           sender_id: string | null
-          work_item_id: string | null
         }
         Insert: {
           attachment_name?: string | null
@@ -7042,7 +4004,6 @@ export type Database = {
           id?: string
           is_deleted?: boolean | null
           sender_id?: string | null
-          work_item_id?: string | null
         }
         Update: {
           attachment_name?: string | null
@@ -7055,7 +4016,6 @@ export type Database = {
           id?: string
           is_deleted?: boolean | null
           sender_id?: string | null
-          work_item_id?: string | null
         }
         Relationships: [
           {
@@ -7070,13 +4030,6 @@ export type Database = {
             columns: ["sender_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "workspace_messages_work_item_id_fkey"
-            columns: ["work_item_id"]
-            isOneToOne: false
-            referencedRelation: "work_items"
             referencedColumns: ["id"]
           },
         ]
@@ -7256,96 +4209,8 @@ export type Database = {
           },
         ]
       }
-      obs_v_dau: {
-        Row: {
-          dau: number | null
-          day: string | null
-          total_events: number | null
-        }
-        Relationships: []
-      }
-      obs_v_error_rate: {
-        Row: {
-          bucket: string | null
-          cnt: number | null
-          error_type: string | null
-          surface: string | null
-        }
-        Relationships: []
-      }
-      obs_v_product_funnel: {
-        Row: {
-          cnt: number | null
-          event: string | null
-          hour: string | null
-          surface: string | null
-          unique_users: number | null
-        }
-        Relationships: []
-      }
-      obs_v_rpc_health: {
-        Row: {
-          avg_ms: number | null
-          calls: number | null
-          errors: number | null
-          p50_ms: number | null
-          p95_ms: number | null
-          p99_ms: number | null
-          rpc_name: string | null
-        }
-        Relationships: []
-      }
-      obs_v_surface_health: {
-        Row: {
-          errors_1h: number | null
-          errors_5m: number | null
-          errors_6h: number | null
-          last_error_at: string | null
-          surface: string | null
-        }
-        Relationships: []
-      }
-      org_brain_summary: {
-        Row: {
-          faqs_answered: number | null
-          faqs_open: number | null
-          is_verified: boolean | null
-          org_id: string | null
-          org_name: string | null
-          org_type: string | null
-          rating_compensation: number | null
-          rating_growth: number | null
-          rating_management: number | null
-          rating_overall: number | null
-          rating_work_life: number | null
-          salary_summary: Json | null
-          total_ratings: number | null
-        }
-        Relationships: []
-      }
     }
     Functions: {
-      apply_to_opportunity: {
-        Args: {
-          p_cover_letter?: string
-          p_cover_note?: string
-          p_custom_answers?: Json
-          p_opportunity_id: string
-          p_portfolio_url?: string
-          p_resume_url?: string
-          p_why_good_fit?: string
-          p_work_items?: string[]
-        }
-        Returns: Json
-      }
-      approve_employer_endorsement: {
-        Args: { _endorsement_id: string }
-        Returns: Json
-      }
-      approve_verification_request: {
-        Args: { p_request_id: string; p_review_note?: string }
-        Returns: Json
-      }
       are_users_connected: {
         Args: { _a: string; _b: string }
         Returns: boolean
@@ -7360,10 +4225,6 @@ export type Database = {
         }
         Returns: Json
       }
-      build_domain_verification_instructions: {
-        Args: { _domain: string; _method: string; _raw_token: string }
-        Returns: Json
-      }
       calculate_activity_score: { Args: { p_user_id: string }; Returns: number }
       calculate_activity_score_v2: { Args: { uid: string }; Returns: number }
       calculate_circle_post_hot_score: {
@@ -7371,124 +4232,11 @@ export type Database = {
         Returns: number
       }
       can_message_user: { Args: { _target: string }; Returns: boolean }
-      circle_add_moderator: {
-        Args: { p_circle_id: string; p_user_id: string }
-        Returns: undefined
-      }
-      circle_archive: {
-        Args: { p_circle_id: string; p_status?: string }
-        Returns: undefined
-      }
-      circle_flag_post: {
-        Args: {
-          p_circle_id: string
-          p_flagged?: boolean
-          p_post_id: string
-          p_reason?: string
-        }
-        Returns: undefined
-      }
-      circle_pin_post: {
-        Args: { p_circle_id: string; p_pinned?: boolean; p_post_id: string }
-        Returns: undefined
-      }
-      circle_remove_moderator: {
-        Args: { p_circle_id: string; p_user_id: string }
-        Returns: undefined
-      }
-      complete_interview: {
-        Args: { p_interview_id: string; p_notes?: string; p_outcome?: string }
-        Returns: Json
-      }
-      confirm_domain_verification_challenge: {
-        Args: {
-          _challenge_id: string
-          _observed_payload?: Json
-          _provided_token?: string
-        }
-        Returns: Json
-      }
-      create_domain_verification_challenge: {
-        Args: {
-          _domain_or_email?: string
-          _evidence_type?: string
-          _method?: string
-          _subject_org_id?: string
-          _subject_page_id?: string
-          _subject_profile_id?: string
-        }
-        Returns: Json
-      }
-      create_notification: {
-        Args: {
-          p_action_url?: string
-          p_actor_id?: string
-          p_body?: string
-          p_category?: string
-          p_data?: Json
-          p_expires_at?: string
-          p_group_key?: string
-          p_priority?: string
-          p_title: string
-          p_type: string
-          p_user_id: string
-        }
-        Returns: undefined
-      }
-      cron_refresh_circle_post_hot: { Args: never; Returns: undefined }
-      current_user_can_manage_trust_subject: {
-        Args: {
-          _subject_org_id?: string
-          _subject_page_id?: string
-          _subject_profile_id?: string
-        }
-        Returns: boolean
-      }
-      current_user_has_restriction: {
-        Args: { p_restriction: string }
-        Returns: boolean
-      }
-      current_user_is_active: { Args: never; Returns: boolean }
-      current_user_is_circle_mod: {
-        Args: { p_circle_id: string }
-        Returns: boolean
-      }
-      current_user_is_circle_owner: {
-        Args: { p_circle_id: string }
-        Returns: boolean
-      }
-      current_user_is_moderator: { Args: never; Returns: boolean }
-      current_user_is_platform_admin: { Args: never; Returns: boolean }
-      current_user_platform_role: { Args: never; Returns: string }
-      derive_requested_verification_type: {
-        Args: { _entity_type: string; _org_id: string }
-        Returns: string
-      }
-      derive_trust_subject_category: {
-        Args: {
-          _subject_org_id?: string
-          _subject_page_id?: string
-          _subject_profile_id?: string
-        }
-        Returns: string
-      }
-      expire_domain_verification_challenges: { Args: never; Returns: Json }
-      expire_stale_verifications: { Args: never; Returns: number }
       generate_clean_username: {
         Args: { p_full_name: string; p_user_id: string }
         Returns: string
       }
-      get_clean_username: { Args: { raw_username: string }; Returns: string }
-      get_explore_profiles: {
-        Args: { p_cursor?: number; p_limit?: number; p_role?: string }
-        Returns: Json
-      }
-      get_feed_posts: {
-        Args: { p_cursor?: string; p_limit?: number }
-        Returns: Json
-      }
       get_page_tracker_count: { Args: { p_page_id: string }; Returns: number }
-      get_profile_completion_score: { Args: { p_id: string }; Returns: number }
       get_user_list: {
         Args: { p_limit?: number; p_offset?: number; p_role?: string }
         Returns: {
@@ -7503,57 +4251,15 @@ export type Database = {
           user_id: string
         }[]
       }
-      grant_platform_role: {
-        Args: { p_notes?: string; p_role: string; p_user_id: string }
-        Returns: Json
-      }
-      impose_restriction: {
-        Args: {
-          p_expires_at?: string
-          p_notes?: string
-          p_reason?: string
-          p_restriction: string
-          p_user_id: string
-        }
-        Returns: string
-      }
       increment_days_active: { Args: { uid: string }; Returns: undefined }
       increment_score: {
         Args: { amount: number; uid: string }
         Returns: undefined
       }
-      internal_recompute_trust_score: {
-        Args: {
-          _actor_role?: string
-          _actor_user_id?: string
-          _note?: string
-          _subject_category?: string
-          _subject_org_id?: string
-          _subject_page_id?: string
-          _subject_profile_id?: string
-        }
-        Returns: Json
-      }
       is_moderator: { Args: { _user_id: string }; Returns: boolean }
       is_org_admin: {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
-      }
-      is_org_admin_m5: {
-        Args: { _org_id: string; _user_id: string }
-        Returns: boolean
-      }
-      is_platform_verification_reviewer: {
-        Args: { _user_id: string }
-        Returns: boolean
-      }
-      issue_domain_verified_badge_if_eligible: {
-        Args: { _reason?: string; _trust_evidence_id: string }
-        Returns: string
-      }
-      lift_restriction: {
-        Args: { p_notes?: string; p_restriction_id: string }
-        Returns: undefined
       }
       match_opportunities_for_user: {
         Args: { p_user_id: string }
@@ -7562,43 +4268,6 @@ export type Database = {
           opportunity_id: string
         }[]
       }
-      materialize_verification_from_request: {
-        Args: { _request_id: string }
-        Returns: undefined
-      }
-      normalize_trust_domain_input: {
-        Args: { _evidence_type: string; _input: string }
-        Returns: string
-      }
-      obs_capture_db_failures: { Args: never; Returns: number }
-      obs_check_alerts: {
-        Args: never
-        Returns: {
-          fired: boolean
-          metric_value: number
-          rule_name: string
-          severity: string
-        }[]
-      }
-      obs_cleanup_old_data: {
-        Args: never
-        Returns: {
-          rows_deleted: number
-          table_name: string
-        }[]
-      }
-      obs_log_rpc: {
-        Args: {
-          p_caller_id: string
-          p_duration_ms: number
-          p_error_code?: string
-          p_error_msg?: string
-          p_rpc_name: string
-          p_success?: boolean
-          p_surface?: string
-        }
-        Returns: undefined
-      }
       rank_explore_pages: {
         Args: { p_page_type?: string; p_user_id: string }
         Returns: {
@@ -7606,22 +4275,15 @@ export type Database = {
           page_id: string
         }[]
       }
-      recompute_overdue_trust_scores: { Args: never; Returns: undefined }
-      recompute_trust_score: {
-        Args: {
-          _note?: string
-          _subject_category?: string
-          _subject_org_id?: string
-          _subject_page_id?: string
-          _subject_profile_id?: string
-        }
+      approve_verification_request: {
+        Args: { p_request_id: string; p_review_note?: string | null }
         Returns: Json
       }
       reject_verification_request: {
         Args: {
           p_rejection_reason: string
           p_request_id: string
-          p_review_note?: string
+          p_review_note?: string | null
         }
         Returns: Json
       }
@@ -7631,78 +4293,10 @@ export type Database = {
       }
       resolve_verification_assignee: {
         Args: { _org_id: string; _role_category: string }
-        Returns: string
-      }
-      respond_to_offer: {
-        Args: { p_accept: boolean; p_offer_id: string }
-        Returns: Json
-      }
-      revoke_platform_role: {
-        Args: { p_reason: string; p_role: string; p_user_id: string }
-        Returns: Json
-      }
-      schedule_interview: {
-        Args: {
-          p_application_id: string
-          p_duration_mins?: number
-          p_interview_type?: string
-          p_interviewer_ids?: string[]
-          p_meeting_link?: string
-          p_scheduled_at: string
-        }
-        Returns: Json
-      }
-      send_offer: {
-        Args: {
-          p_application_id: string
-          p_compensation: Json
-          p_offer_expiry_date?: string
-          p_start_date?: string
-        }
-        Returns: Json
-      }
-      send_ping: {
-        Args: {
-          p_content?: string
-          p_conversation_id: string
-          p_encrypted_body?: string
-          p_is_encrypted?: boolean
-          p_nonce?: string
-        }
-        Returns: Json
-      }
-      send_workspace_message: {
-        Args: {
-          p_channel_id: string
-          p_content: string
-          p_work_item_id?: string
-        }
-        Returns: Json
-      }
-      submit_appeal: {
-        Args: { p_entity_id: string; p_entity_type: string; p_reason: string }
-        Returns: string
-      }
-      sync_legacy_verification_evidence: {
-        Args: { _request_id: string }
-        Returns: string
-      }
-      track_explore_impression: {
-        Args: {
-          p_action?: string
-          p_entity_id: string
-          p_entity_type: string
-          p_source?: string
-        }
-        Returns: undefined
+        Returns: string | null
       }
       update_all_activity_scores: { Args: never; Returns: undefined }
       update_all_activity_scores_v2: { Args: never; Returns: undefined }
-      user_can_review_verification_request: {
-        Args: { _actor: string; _request_id: string }
-        Returns: boolean
-      }
-      verification_internal_write_allowed: { Args: never; Returns: boolean }
     }
     Enums: {
       circle_post_type:

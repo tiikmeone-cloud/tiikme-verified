@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { trackPageView } from "@/lib/analytics";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Search, X, AlertCircle } from "lucide-react";
 import { cleanUsername } from "@/lib/cleanUsername";
@@ -14,7 +13,6 @@ import HorizontalCarousel from "@/components/explore/HorizontalCarousel";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import { getOrgTypeConfig } from "@/lib/orgTypes";
 import { sendConnectionRequest } from "@/hooks/useConnectionStatus";
-import { PageSEO } from "@/hooks/usePageSEO";
 
 /* ─────────── Helpers ─────────── */
 const HASHTAG_RE = /#([\p{L}0-9_]{2,40})/gu;
@@ -34,9 +32,47 @@ const SECTIONS: { key: SectionKey; label: string }[] = [
   { key: "hashtags", label: "Hashtags" },
 ];
 
+/* ─────────── Section helpers (responsive grid w/ section header) ─────────── */
+const SectionGrid = ({
+  sectionRef, title, count, cols, children,
+}: {
+  sectionRef: (el: HTMLDivElement | null) => void;
+  title: string;
+  count: number;
+  cols: string;
+  children: React.ReactNode;
+}) => (
+  <section ref={sectionRef} style={{ marginBottom: 28 }}>
+    <div className="flex items-center" style={{ marginBottom: 12 }}>
+      <div style={{ width: 3, height: 18, borderRadius: 2, background: "#E8733A", marginRight: 8, flexShrink: 0 }} />
+      <h2 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)", flex: 1, margin: 0 }}>{title}</h2>
+      <span className="num" style={{ fontSize: 12, color: "var(--text-muted)", marginLeft: 8 }}>{count}</span>
+    </div>
+    <div className={`grid gap-3 md:gap-4 ${cols}`}>
+      {children}
+    </div>
+  </section>
+);
+
+/* GridCell breaks the 280px hardcoded width on the inner card so it
+ * fills the grid track instead of overflowing. */
+const GridCell = ({ children }: { children: React.ReactNode }) => (
+  <div className="min-w-0 [&>article]:!w-full [&>article]:!min-w-0">
+    {children}
+  </div>
+);
+
+const clampTwoLinesStyle = {
+  display: "-webkit-box",
+  WebkitLineClamp: 2,
+  WebkitBoxOrient: "vertical" as const,
+  overflow: "hidden",
+  overflowWrap: "anywhere" as const,
+  wordBreak: "break-word" as const,
+};
+
 
 const Explore = () => {
-  useEffect(() => { trackPageView("explore"); }, []);
   const { user, profile } = useAuth();
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -327,7 +363,6 @@ const Explore = () => {
 
   return (
     <main className="mx-auto max-w-6xl px-4 md:px-6 pt-4 pb-24 md:pb-12">
-      <PageSEO title="Explore | Tiikme" description="Discover verified professionals, organizations, circles, and opportunities on Tiikme." noIndex />
       {/* Sticky top bar */}
       <div style={{ position: "sticky", top: 0, zIndex: 20, background: "var(--bg-base)", paddingBottom: 12 }}>
         {/* Search */}
@@ -361,27 +396,27 @@ const Explore = () => {
             }}>
               {searchResults.map((r: any) => (
                 <button key={r.id} type="button"
-                  className="w-full flex items-center text-left"
-                  style={{ gap: 8, padding: 8, borderRadius: 6, transition: "background 100ms", cursor: "pointer", background: "transparent", border: "none" }}
+                  className="w-full flex items-start text-left"
+                  style={{ gap: 10, padding: 10, borderRadius: 8, transition: "background 100ms", cursor: "pointer", background: "transparent", border: "none" }}
                   onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-card-hover)"; }}
                   onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
                   onClick={() => { navigate(r.kind === "person" ? `/app/profile/${r.id}` : `/org/${r.slug}`); setShowSearchResults(false); setSearch(""); }}>
                   <AvatarSquare src={r.avatar_url || r.logo_url} name={r.full_name || r.name || "?"} size={32} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.full_name || r.name}</p>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", lineHeight: "17px", ...clampTwoLinesStyle }}>{r.full_name || r.name}</p>
                     {r.kind === "person" ? (
-                      <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)" }}>@{cleanUsername(r.username) || "user"}</p>
+                      <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)", marginTop: 2, lineHeight: "16px", ...clampTwoLinesStyle }}>@{cleanUsername(r.username) || "user"}</p>
                     ) : (() => {
                       const conf = getOrgTypeConfig(r.type);
                       return (
                         <span style={{
-                          display: "inline-flex", alignItems: "center", marginTop: 2,
-                          padding: "2px 6px", borderRadius: 5,
+                          display: "inline-flex", alignItems: "center", flexWrap: "wrap", gap: 4, marginTop: 4,
+                          padding: "3px 7px", borderRadius: 6,
                           fontSize: 9, fontWeight: 700, letterSpacing: 0.3,
                           background: conf.bg, color: conf.color, textTransform: "uppercase",
                         }}>
                           {conf.label}
-                          {r.subtype && <span style={{ marginLeft: 5, opacity: 0.7, textTransform: "none", fontWeight: 500 }}>· {r.subtype}</span>}
+                          {r.subtype && <span style={{ opacity: 0.7, textTransform: "none", fontWeight: 500, maxWidth: 160, ...clampTwoLinesStyle }}>· {r.subtype}</span>}
                         </span>
                       );
                     })()}
@@ -453,62 +488,71 @@ const Explore = () => {
       )}
 
       {/* Sections */}
-      <div style={{ marginTop: 16 }}>
+      <div style={{ marginTop: 18 }}>
         {showPeople && (
-          <div ref={el => { sectionRefs.current.people = el; }}>
-            <HorizontalCarousel title="People you may know" count={exploreData!.people.length}>
-              {exploreData!.people.map(p => (
-                <div key={p.id} style={{ scrollSnapAlign: "start", flexShrink: 0 }}>
-                  <PersonCard
-                    p={p}
-                    strandStatus={strandMap[p.id] || "none"}
-                    onStrand={() => handleStrand(p.id)}
-                    currentUserId={user?.id}
-                  />
-                </div>
-              ))}
-            </HorizontalCarousel>
-          </div>
+          <SectionGrid
+            sectionRef={el => { sectionRefs.current.people = el; }}
+            title="People you may know"
+            count={exploreData!.people.length}
+            cols="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+          >
+            {exploreData!.people.slice(0, 12).map(p => (
+              <GridCell key={p.id}>
+                <PersonCard
+                  p={p}
+                  strandStatus={strandMap[p.id] || "none"}
+                  onStrand={() => handleStrand(p.id)}
+                  currentUserId={user?.id}
+                />
+              </GridCell>
+            ))}
+          </SectionGrid>
         )}
 
         {showCircles && (
-          <div ref={el => { sectionRefs.current.circles = el; }}>
-            <HorizontalCarousel title="Circles for you" count={exploreData!.circles.length}>
-              {exploreData!.circles.map(c => (
-                <div key={c.id} style={{ scrollSnapAlign: "start", flexShrink: 0, width: 280, minWidth: 280 }}>
-                  <CircleCard
-                    circle={c}
-                    isMember={!!memberMap[c.id]}
-                    onJoin={(e) => { e.stopPropagation(); joinCircle(c.id); }}
-                  />
-                </div>
-              ))}
-            </HorizontalCarousel>
-          </div>
+          <SectionGrid
+            sectionRef={el => { sectionRefs.current.circles = el; }}
+            title="Circles for you"
+            count={exploreData!.circles.length}
+            cols="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            {exploreData!.circles.slice(0, 9).map(c => (
+              <GridCell key={c.id}>
+                <CircleCard
+                  circle={c}
+                  isMember={!!memberMap[c.id]}
+                  onJoin={(e) => { e.stopPropagation(); joinCircle(c.id); }}
+                />
+              </GridCell>
+            ))}
+          </SectionGrid>
         )}
 
         {showOrgs && (
-          <div ref={el => { sectionRefs.current.orgs = el; }}>
-            <HorizontalCarousel title="Organizations to discover" count={exploreData!.orgs.length}>
-              {exploreData!.orgs.map(o => (
-                <div key={o.id} style={{ scrollSnapAlign: "start", flexShrink: 0 }}>
-                  <OrgCard
-                    org={o}
-                    following={!!followMap[o.id]}
-                    onToggleFollow={() => toggleFollow(o.id, o.created_by)}
-                    navigateTo={getOrgNavigateTo(o)}
-                  />
-                </div>
-              ))}
-            </HorizontalCarousel>
-          </div>
+          <SectionGrid
+            sectionRef={el => { sectionRefs.current.orgs = el; }}
+            title="Organizations to discover"
+            count={exploreData!.orgs.length}
+            cols="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            {exploreData!.orgs.slice(0, 9).map(o => (
+              <GridCell key={o.id}>
+                <OrgCard
+                  org={o}
+                  following={!!followMap[o.id]}
+                  onToggleFollow={() => toggleFollow(o.id, o.created_by)}
+                  navigateTo={getOrgNavigateTo(o)}
+                />
+              </GridCell>
+            ))}
+          </SectionGrid>
         )}
 
         {showPosts && (
           <div ref={el => { sectionRefs.current.posts = el; }}>
             <HorizontalCarousel title="Top posts" count={exploreData!.posts.length}>
               {exploreData!.posts.map(p => (
-                <div key={p.id} style={{ scrollSnapAlign: "start", flexShrink: 0 }}>
+                <div key={p.id} style={{ scrollSnapAlign: "start", flexShrink: 0, width: "min(320px, calc(100vw - 48px))" }}>
                   <TrendingPostCard post={p} authorProfile={exploreData!.postAuthors[p.author_id]} />
                 </div>
               ))}

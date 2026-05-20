@@ -4,12 +4,20 @@ import { useNavigate } from "react-router-dom";
 import { getOrgTypeConfig, isCreatorOrg } from "@/lib/orgTypes";
 import { ActivityScoreMini } from "@/components/profile/ActivityScoreCard";
 import { getDisplayFlags } from "@/utils/displayProfile";
-import { getProfileSubtitle } from "@/lib/profileUtils";
 
-/** @deprecated use getProfileSubtitle from @/lib/profileUtils */
-export function getSubtitle(profile: any): string {
-  return getProfileSubtitle(profile) || "Tiikme Member";
-}
+const clampTwoLines = {
+  display: "-webkit-box",
+  WebkitBoxOrient: "vertical" as const,
+  WebkitLineClamp: 2,
+  overflow: "hidden",
+  wordBreak: "break-word" as const,
+};
+
+const singleLineClamp = {
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap" as const,
+};
 
 interface PersonCardProps {
   p: {
@@ -48,46 +56,48 @@ export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonC
       className="glass-card cursor-pointer"
       style={{
         display: "flex", gap: 12, padding: 14, borderRadius: 12,
-        width: 280, minWidth: 280,
+        width: 280, minWidth: 180,
         scrollSnapAlign: "start", flexShrink: 0,
         transition: "transform 200ms, box-shadow 200ms",
-        alignItems: "center",
+        alignItems: "flex-start",
       }}
       onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(26,26,78,0.12)"; }}
       onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
       onClick={() => navigate(`/app/profile/${p.id}`)}
     >
       <AvatarSquare src={p.avatar_url} name={name} size={80} />
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 2, minWidth: 0 }}>
-        <div className="flex items-center flex-wrap gap-1.5">
-          <span className="line-clamp-2 break-words" style={{ fontWeight: 700, fontSize: 14, color: "var(--text-primary)" }}>{name}</span>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-start", gap: 4, minWidth: 0, paddingTop: 1 }}>
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span style={{ ...singleLineClamp, fontWeight: 700, fontSize: 14, lineHeight: "18px", color: "var(--text-primary)", flex: 1, minWidth: 0 }}>{name}</span>
           {p.is_verified && <VerifiedBadge size={14} />}
+        </div>
+        <div className="flex items-center gap-1.5 flex-wrap min-w-0">
           {typeof p.activity_score === "number" && (
             <ActivityScoreMini score={p.activity_score} viewerIsOwner={currentUserId === p.id} />
           )}
           {p.account_type === "institution" && (
-            <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 999, background: "rgba(37,99,235,0.10)", color: "#2563EB", marginLeft: 2 }}>
+            <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 999, background: "rgba(37,99,235,0.10)", color: "#2563EB" }}>
               Company
             </span>
           )}
         </div>
-        {flags.showRole && (
-          <span className="truncate" style={{ fontSize: 12, color: "var(--text-secondary)" }}>
-            {getSubtitle(p)}
-          </span>
+        {flags.showRole && designation && (
+          <span style={{ ...clampTwoLines, fontSize: 12, lineHeight: "16px", color: "var(--text-secondary)" }}>{designation}</span>
         )}
         {flags.showRole && p.role_subtype && (
           <span
-            className="truncate"
             style={{
               fontSize: 11, color: "var(--text-muted)",
               background: "rgba(156,163,192,0.12)",
               padding: "1px 8px", borderRadius: 999,
-              alignSelf: "flex-start", marginTop: 1,
+              alignSelf: "flex-start", marginTop: 1, maxWidth: "100%",
             }}
           >
             {p.role_subtype}
           </span>
+        )}
+        {flags.showCompany && company && (
+          <span style={{ ...clampTwoLines, fontSize: 11, lineHeight: "15px", color: "var(--text-muted)" }}>{company}</span>
         )}
       </div>
       {currentUserId !== p.id && (
@@ -95,9 +105,9 @@ export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonC
           type="button"
           disabled={strandStatus !== "none"}
           onClick={e => { e.stopPropagation(); onStrand(); }}
-          className="cursor-pointer shrink-0 self-center"
+          className="cursor-pointer shrink-0 self-start"
           style={{
-            padding: "6px 14px", borderRadius: 8,
+            padding: "6px 14px", borderRadius: 8, minWidth: 94,
             fontSize: 12, fontWeight: 600, border: "none",
             whiteSpace: "nowrap",
             ...(isConnected
@@ -143,18 +153,18 @@ export function OrgCard({ org, following, onToggleFollow, navigateTo }: OrgCardP
       className="glass-card cursor-pointer"
       style={{
         display: "flex", gap: 12, padding: 14, borderRadius: 12,
-        width: 280, minWidth: 280,
+        width: 280, minWidth: 180,
         scrollSnapAlign: "start", flexShrink: 0,
         transition: "transform 200ms, box-shadow 200ms",
-        alignItems: "center",
+        alignItems: "flex-start",
       }}
       onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(26,26,78,0.12)"; }}
       onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
       onClick={() => navigate(navigateTo)}
     >
       <AvatarSquare src={org.logo_url} name={org.name || "?"} size={80} />
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 4, minWidth: 0 }}>
-        <span className="line-clamp-2 break-words" style={{ fontWeight: 700, fontSize: 14, color: "var(--text-primary)" }}>{org.name}</span>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-start", gap: 4, minWidth: 0, paddingTop: 1 }}>
+        <span style={{ ...singleLineClamp, fontWeight: 700, fontSize: 14, lineHeight: "18px", color: "var(--text-primary)" }}>{org.name}</span>
         {(() => {
           const conf = getOrgTypeConfig(org.type || org.page_type);
           return (
@@ -163,15 +173,19 @@ export function OrgCard({ org, following, onToggleFollow, navigateTo }: OrgCardP
               padding: "3px 8px", borderRadius: 6,
               fontSize: 10, fontWeight: 700, letterSpacing: 0.3,
               background: conf.bg, color: conf.color,
-              textTransform: "uppercase",
+              textTransform: "uppercase", maxWidth: "100%",
             }}>
               {conf.label}
-              {subtype && <span style={{ marginLeft: 6, opacity: 0.7, textTransform: "none", fontWeight: 500 }}>· {subtype}</span>}
             </span>
           );
         })()}
+        {subtype && (
+          <span style={{ ...clampTwoLines, fontSize: 11, lineHeight: "15px", color: "var(--text-muted)" }}>
+            {subtype}
+          </span>
+        )}
         {audience != null && audience > 0 && (
-          <span className="truncate" style={{ fontSize: 11, color: "var(--text-muted)" }}>
+          <span style={{ ...clampTwoLines, fontSize: 11, lineHeight: "15px", color: "var(--text-muted)" }}>
             <span className="num">{formatCount(audience)}</span> {audienceLabel}
           </span>
         )}
@@ -179,9 +193,9 @@ export function OrgCard({ org, following, onToggleFollow, navigateTo }: OrgCardP
       <button
         type="button"
         onClick={e => { e.stopPropagation(); onToggleFollow(e); }}
-        className="cursor-pointer shrink-0 self-center"
+        className="cursor-pointer shrink-0 self-start"
         style={{
-          padding: "6px 14px", borderRadius: 8,
+          padding: "6px 14px", borderRadius: 8, minWidth: 92,
           fontSize: 12, fontWeight: 600, border: "none",
           whiteSpace: "nowrap",
           ...(following
@@ -227,7 +241,7 @@ export function TrendingPostCard({ post, authorProfile }: PostCardProps) {
     >
       <div className="flex items-center gap-2" style={{ marginBottom: 8 }}>
         <AvatarSquare src={authorProfile?.avatar_url} name={name} size={28} />
-        <p className="line-clamp-2 break-words" style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", flex: 1 }}>{name}</p>
+        <p className="truncate" style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", flex: 1 }}>{name}</p>
         <span style={{ fontSize: 11, fontWeight: 400, color: "var(--text-muted)", flexShrink: 0 }}>{timeAgo}</span>
       </div>
       <p style={{ fontSize: 13, fontWeight: 400, lineHeight: "18px", color: "var(--text-secondary)", flex: 1, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
@@ -279,19 +293,20 @@ export function StartupCard({ startup, page }: { startup: any; page?: any }) {
         width: 280, minWidth: 280,
         scrollSnapAlign: "start", flexShrink: 0,
         transition: "transform 200ms, box-shadow 200ms",
+        alignItems: "flex-start",
       }}
       onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(26,26,78,0.12)"; }}
       onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
       onClick={() => slug ? navigate(`/p/${slug}`) : undefined}
     >
       <AvatarSquare src={page?.logo_url} name={name} size={64} bgColor="#7C3AED" />
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 1, minWidth: 0 }}>
-        <span className="line-clamp-2 break-words" style={{ fontWeight: 700, fontSize: 15, color: "var(--text-primary)" }}>{name}</span>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-start", gap: 4, minWidth: 0, paddingTop: 1 }}>
+        <span style={{ ...clampTwoLines, fontWeight: 700, fontSize: 15, lineHeight: "20px", color: "var(--text-primary)" }}>{name}</span>
         {stage && (
           <span style={{ fontSize: 12, color: "#7C3AED" }}>{stage}</span>
         )}
         {sectors.length > 0 && (
-          <span className="truncate" style={{ fontSize: 12, color: "var(--text-muted)" }}>{sectors.slice(0, 3).join(", ")}</span>
+          <span style={{ ...clampTwoLines, fontSize: 12, lineHeight: "16px", color: "var(--text-muted)" }}>{sectors.slice(0, 3).join(", ")}</span>
         )}
         <span
           className="cursor-pointer"
@@ -326,18 +341,19 @@ export function InvestorCard({ investor }: { investor: any }) {
         width: 280, minWidth: 280,
         scrollSnapAlign: "start", flexShrink: 0,
         transition: "transform 200ms, box-shadow 200ms",
+        alignItems: "flex-start",
       }}
       onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(26,26,78,0.12)"; }}
       onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
       onClick={() => navigate(`/app/profile/${investor.id}`)}
     >
       <AvatarSquare src={investor.avatar_url} name={name} size={64} bgColor="#059669" />
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 1, minWidth: 0 }}>
-        <span className="line-clamp-2 break-words" style={{ fontWeight: 700, fontSize: 15, color: "var(--text-primary)" }}>{name}</span>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-start", gap: 4, minWidth: 0, paddingTop: 1 }}>
+        <span style={{ ...clampTwoLines, fontWeight: 700, fontSize: 15, lineHeight: "20px", color: "var(--text-primary)" }}>{name}</span>
         <span style={{ fontSize: 12, color: "#059669" }}>Investor</span>
         {range && <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{range}</span>}
         {sectors.length > 0 && (
-          <span className="truncate" style={{ fontSize: 12, color: "var(--text-muted)" }}>{sectors.slice(0, 2).join(", ")}</span>
+          <span style={{ ...clampTwoLines, fontSize: 12, lineHeight: "16px", color: "var(--text-muted)" }}>{sectors.slice(0, 2).join(", ")}</span>
         )}
       </div>
     </article>
