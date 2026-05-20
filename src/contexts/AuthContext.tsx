@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { PROFILE_SELECT_COLUMNS } from "@/lib/profileColumns";
 import type { User } from "@supabase/supabase-js";
 // NOTE: messageEncryption (libsodium ~50KB) is dynamically imported inside the
 // effect below so anonymous landing-page visitors never pay for it.
