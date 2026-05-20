@@ -38,7 +38,7 @@ const HeroSection = () => {
         </p>
 
         {/* Supporting note */}
-        <p className="text-[14px] mb-10 md:mb-12" style={{ color: "#6B7280" }}>
+        <p className="text-[14px] mb-10 md:mb-12" style={{ color: "#4B5563" }}>
           We are building this for every working Indian. Join us from day one.
         </p>
 
@@ -54,7 +54,7 @@ const HeroSection = () => {
              >
               Create your profile — It's Free
             </button>
-            <p className="text-[12px] mt-2 w-full text-center" style={{ color: "#6B7280" }}>
+            <p className="text-[12px] mt-2 w-full text-center" style={{ color: "#4B5563" }}>
               No credit card required. Free forever for individuals.
             </p>
           </Link>
@@ -72,7 +72,7 @@ const HeroSection = () => {
         </div>
 
         {/* Honest note */}
-        <p className="text-[13px]" style={{ color: "#6B7280" }}>
+        <p className="text-[13px]" style={{ color: "#4B5563" }}>
           Built by Veenavarse Private Limited
         </p>
       </div>
