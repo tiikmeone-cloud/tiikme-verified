@@ -7517,6 +7517,13 @@ export type Database = {
         Args: { p_cursor?: string; p_limit?: number }
         Returns: Json
       }
+      get_my_contact: {
+        Args: never
+        Returns: {
+          email: string
+          phone: string
+        }[]
+      }
       get_page_tracker_count: { Args: { p_page_id: string }; Returns: number }
       get_profile_completion_score: { Args: { p_id: string }; Returns: number }
       get_user_list: {
