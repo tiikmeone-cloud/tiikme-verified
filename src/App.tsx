@@ -17,6 +17,8 @@ import Index from "./pages/Index.tsx";
 import SignIn from "./pages/SignIn.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import Opportunities from "./pages/Opportunities.tsx";
+import Profile from "./pages/Profile.tsx";
+import OrganizationPage from "./pages/OrganizationPage.tsx";
 
 // New onboarding pages (eager — critical path)
 import SignupPage from "./pages/SignupPage.tsx";
@@ -27,7 +29,6 @@ import AuthCallback from "./pages/AuthCallback.tsx";
 // Lazy load everything else
 const Welcome = lazyWithRetry(() => import("./pages/Welcome.tsx"), "Welcome");
 const Feed = lazyWithRetry(() => import("./pages/Feed.tsx"), "Feed");
-const Profile = lazyWithRetry(() => import("./pages/Profile.tsx"), "Profile");
 const ProfilePosts = lazyWithRetry(() => import("./pages/ProfilePosts.tsx"), "ProfilePosts");
 const Explore = lazyWithRetry(() => import("./pages/Explore.tsx"), "Explore");
 const MyWork = lazyWithRetry(() => import("./pages/MyWork.tsx"), "MyWork");
@@ -48,7 +49,6 @@ const PostCreate = lazyWithRetry(() => import("./pages/PostCreate.tsx"), "PostCr
 const CertificatePage = lazyWithRetry(() => import("./pages/CertificatePage.tsx"), "CertificatePage");
 const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword.tsx"), "ResetPassword");
 const PostDetail = lazyWithRetry(() => import("./pages/PostDetail.tsx"), "PostDetail");
-const OrganizationPage = lazyWithRetry(() => import("./pages/OrganizationPage.tsx"), "OrganizationPage");
 const JoinAsInstitution = lazyWithRetry(() => import("./pages/JoinAsInstitution.tsx"), "JoinAsInstitution");
 const OrganizationCreate = lazyWithRetry(() => import("./pages/OrganizationCreate.tsx"), "OrganizationCreate");
 const ApplicationsDashboard = lazyWithRetry(() => import("./pages/ApplicationsDashboard.tsx"), "ApplicationsDashboard");
