@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { getOrgTypeConfig, isCreatorOrg } from "@/lib/orgTypes";
 import { ActivityScoreMini } from "@/components/profile/ActivityScoreCard";
 import { getDisplayFlags } from "@/utils/displayProfile";
-import { getProfileSubtitle, sanitizeIdentityText } from "@/lib/profileUtils";
+import { getPrimaryRoleLine, sanitizeIdentityText } from "@/lib/profileUtils";
 
 const clampTwoLines = {
   display: "-webkit-box",
@@ -47,9 +47,7 @@ export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonC
   const flags = getDisplayFlags(p);
   const name = flags.showName ? (p.full_name || p.username || "User") : "Tiikme member";
   const designation = sanitizeIdentityText(
-    p.designation ||
-    p.role_metadata?.jobTitle ||
-    getProfileSubtitle(p) ||
+    getPrimaryRoleLine(p) ||
     (p.role ? p.role.charAt(0).toUpperCase() + p.role.slice(1).replace(/_/g, " ") : "")
   );
   const roleSubtype = sanitizeIdentityText(p.role_subtype || "");

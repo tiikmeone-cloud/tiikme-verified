@@ -1,10 +1,18 @@
 const GENERIC_ROLE_PREFIX_RE =
-  /^(student|professional|founder|doctor|faculty|researcher|creator|freelancer|investor|member)(?:\s*[·•|:/,@-]\s*|\s+)/i;
+  /^(student|professional|founder|doctor|faculty|researcher|creator|freelancer|investor|member)(?:\s*[^\p{L}\p{N}]+\s*|\s+)/iu;
 
 export function sanitizeIdentityText(text?: string | null): string {
   const value = (text || "").trim();
   if (!value) return "";
   return value.replace(GENERIC_ROLE_PREFIX_RE, "").trim();
+}
+
+function stripCompanySuffix(text?: string | null): string {
+  const value = sanitizeIdentityText(text);
+  if (!value) return "";
+  return value
+    .replace(/\s+(?:at|@)\s+.+$/i, "")
+    .trim();
 }
 
 /**
@@ -64,6 +72,30 @@ export function getProfileSubtitle(profile: any): string {
   const sub = profile.role_subtype ? profile.role_subtype.replace(/_/g,' ') : '';
   const desig = profile.designation || profile.currently_working_at || '';
   return sanitizeIdentityText(desig || sub || '');
+}
+
+/**
+ * Primary role line for cards/headers where we want the person's title,
+ * not a generic role label and not a duplicated company suffix.
+ */
+export function getPrimaryRoleLine(profile: any): string {
+  if (!profile) return "";
+
+  const rm = profile.role_metadata || {};
+  const candidates = [
+    profile.designation,
+    rm.jobTitle,
+    profile.role_subtype,
+    stripCompanySuffix(profile.headline),
+    stripCompanySuffix(getProfileSubtitle(profile)),
+  ];
+
+  for (const candidate of candidates) {
+    const cleaned = sanitizeIdentityText(candidate);
+    if (cleaned) return cleaned;
+  }
+
+  return "";
 }
 
 /**
