@@ -124,6 +124,8 @@ const AppRoutes = () => {
             
             <Route path="/reset-password" element={<PageErrorBoundary><ResetPassword /></PageErrorBoundary>} />
             <Route path="/join-as-institution" element={<PageErrorBoundary><JoinAsInstitution /></PageErrorBoundary>} />
+            <Route path="/org-signup" element={<PageErrorBoundary><JoinAsInstitution /></PageErrorBoundary>} />
+            <Route path="/institution-signup" element={<PageErrorBoundary><JoinAsInstitution /></PageErrorBoundary>} />
             <Route path="/accept-admin-invite" element={<PageErrorBoundary><AcceptAdminInvite /></PageErrorBoundary>} />
 
             <Route path="/certificate/:id" element={<PageErrorBoundary><CertificatePage /></PageErrorBoundary>} />
