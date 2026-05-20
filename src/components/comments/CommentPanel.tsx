@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import MentionText from "@/components/feed/MentionText";
+import CommentLoveButton from "@/components/feed/CommentLoveButton";
 import { sendNotification } from "@/lib/notify";
 import { safeDisplayName } from "@/utils/displayProfile";
 
@@ -32,6 +33,7 @@ interface CommentRow {
   content: string;
   parent_id: string | null;
   created_at: string | null;
+  reply_count?: number;
   author?: Author | null;
   __optimistic?: boolean;
 }
@@ -47,7 +49,7 @@ interface CommentPanelProps {
 }
 
 const PAGE_SIZE = 20;
-const REPLY_PAGE_SIZE = 5;
+const REPLY_PAGE_SIZE = 10;
 
 function timeAgo(d?: string | null): string {
   if (!d) return "";
@@ -69,6 +71,22 @@ async function attachAuthors(rows: CommentRow[]): Promise<CommentRow[]> {
   return rows.map(r => ({ ...r, author: map[r.user_id] || null }));
 }
 
+async function attachReplyCounts(table: CommentTable, postId: string, rows: CommentRow[]): Promise<CommentRow[]> {
+  const parentIds = rows.map(row => row.id).filter(Boolean);
+  if (!parentIds.length) return rows;
+  const { data } = await supabase.from(table)
+    .select("parent_id")
+    .eq("post_id", postId)
+    .in("parent_id", parentIds);
+  const counts = new Map<string, number>();
+  for (const row of data || []) {
+    const parentId = row.parent_id;
+    if (!parentId) continue;
+    counts.set(parentId, (counts.get(parentId) || 0) + 1);
+  }
+  return rows.map(row => ({ ...row, reply_count: counts.get(row.id) || 0 }));
+}
+
 const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post", onCountChange }: CommentPanelProps) => {
   const { user, profile } = useAuth();
   const [comments, setComments] = useState<CommentRow[]>([]);
@@ -85,8 +103,21 @@ const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post"
   const [replyVisibleCount, setReplyVisibleCount] = useState<Record<string, number>>({});
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
+  const [sortMode, setSortMode] = useState<"top" | "newest">("top");
   const taRef = useRef<HTMLTextAreaElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const orderedComments = useMemo(() => {
+    const rows = [...comments];
+    if (sortMode === "newest") {
+      return rows.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+    }
+    return rows.sort((a, b) => {
+      const replyDiff = (b.reply_count || 0) - (a.reply_count || 0);
+      if (replyDiff !== 0) return replyDiff;
+      return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
+    });
+  }, [comments, sortMode]);
 
   /* ----- Load total count + initial 20 ----- */
   useEffect(() => {
@@ -104,7 +135,8 @@ const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post"
       ]);
       if (!alive) return;
       const rows = ((data as any[]) || []).reverse() as CommentRow[];
-      const enriched = await attachAuthors(rows);
+      const withCounts = await attachReplyCounts(table, postId, rows);
+      const enriched = await attachAuthors(withCounts);
       if (!alive) return;
       setTotalCount(count || 0);
       setComments(enriched);
@@ -137,7 +169,8 @@ const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post"
       .order("created_at", { ascending: false })
       .limit(PAGE_SIZE);
     const rows = ((data as any[]) || []).reverse() as CommentRow[];
-    const enriched = await attachAuthors(rows);
+    const withCounts = await attachReplyCounts(table, postId, rows);
+    const enriched = await attachAuthors(withCounts);
     setComments(prev => [...enriched, ...prev]);
     setHasMore((data?.length || 0) === PAGE_SIZE);
     setLoadingMore(false);
@@ -174,6 +207,7 @@ const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post"
     };
     if (parentId) {
       setExpandedReplies(prev => ({ ...prev, [parentId]: [...(prev[parentId] || []), optimistic] }));
+      setComments(prev => prev.map(comment => comment.id === parentId ? { ...comment, reply_count: (comment.reply_count || 0) + 1 } : comment));
       setReplyText(""); setReplyingTo(null);
     } else {
       setComments(prev => [...prev, optimistic]);
@@ -193,6 +227,7 @@ const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post"
       toast.error("Failed to post comment");
       if (parentId) {
         setExpandedReplies(prev => ({ ...prev, [parentId]: (prev[parentId] || []).filter(c => c.id !== tempId) }));
+        setComments(prev => prev.map(comment => comment.id === parentId ? { ...comment, reply_count: Math.max(0, (comment.reply_count || 1) - 1) } : comment));
       } else {
         setComments(prev => prev.filter(c => c.id !== tempId));
         setTotalCount(c => Math.max(0, c - 1));
@@ -225,6 +260,7 @@ const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post"
     const isReply = !!c.parent_id;
     if (isReply) {
       setExpandedReplies(prev => ({ ...prev, [c.parent_id!]: (prev[c.parent_id!] || []).filter(r => r.id !== c.id) }));
+      setComments(prev => prev.map(comment => comment.id === c.parent_id ? { ...comment, reply_count: Math.max(0, (comment.reply_count || 1) - 1) } : comment));
     } else {
       setComments(prev => prev.filter(r => r.id !== c.id));
       setTotalCount(n => Math.max(0, n - 1));
@@ -287,11 +323,18 @@ const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post"
               <MentionText text={c.content} />
             </p>
           )}
-          {!isReply && !isEditing && (
-            <button type="button" onClick={() => { setReplyingTo(replyingTo === c.id ? null : c.id); setReplyText(""); }}
-              className="cursor-pointer" style={{ fontSize: 11, fontWeight: 600, color: "#6B7094", background: "none", border: "none", padding: "2px 0", marginTop: 2 }}>
-              Reply
-            </button>
+          {!isEditing && (
+          <div className="flex items-center flex-wrap" style={{ gap: 12, marginTop: 4, rowGap: 6 }}>
+              {table === "post_comments" && (
+                <CommentLoveButton commentId={c.id} userId={user?.id} />
+              )}
+              {!isReply && (
+                <button type="button" onClick={() => { setReplyingTo(replyingTo === c.id ? null : c.id); setReplyText(""); }}
+                  className="cursor-pointer" style={{ fontSize: 11, fontWeight: 600, color: "#6B7094", background: "none", border: "none", padding: 0, minWidth: 38, textAlign: "left" }}>
+                  Reply
+                </button>
+              )}
+            </div>
           )}
 
           {/* Reply composer */}
@@ -332,7 +375,7 @@ const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post"
                   {replies.length > visible && (
                     <button type="button" onClick={() => setReplyVisibleCount(p => ({ ...p, [c.id]: visible + REPLY_PAGE_SIZE }))}
                       className="cursor-pointer" style={{ fontSize: 11, fontWeight: 600, color: "#E8733A", background: "none", border: "none", paddingLeft: 36 }}>
-                      Show more replies
+                      Show {Math.min(REPLY_PAGE_SIZE, replies.length - visible)} more {replies.length - visible === 1 ? "reply" : "replies"}
                     </button>
                   )}
                   <button type="button" onClick={() => toggleReplies(c.id)}
@@ -397,6 +440,39 @@ const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post"
           <p style={{ fontSize: 12, color: "#9CA3C0", textAlign: "center", padding: 16 }}>No comments yet. Be the first!</p>
         ) : (
           <>
+            <div className="flex items-center justify-between" style={{ gap: 12, padding: "4px 0 8px" }}>
+              <p style={{ fontSize: 12, fontWeight: 700, color: "#1A1A2E" }}>
+                {totalCount > 0 ? `${totalCount} ${totalCount === 1 ? "comment" : "comments"}` : "Comments"}
+              </p>
+              <div className="flex items-center gap-1" style={{ background: "#FFFFFF", borderRadius: 999, padding: 2, border: "1px solid #E8E8E8" }}>
+                {[
+                  { key: "top", label: "Top" },
+                  { key: "newest", label: "Newest" },
+                ].map(option => {
+                  const active = sortMode === option.key;
+                  return (
+                    <button
+                      key={option.key}
+                      type="button"
+                      onClick={() => setSortMode(option.key as "top" | "newest")}
+                      className="cursor-pointer"
+                      style={{
+                        height: 24,
+                        padding: "0 10px",
+                        borderRadius: 999,
+                        border: "none",
+                        background: active ? "#F5E8E1" : "transparent",
+                        color: active ? "#E8733A" : "#6B7094",
+                        fontSize: 11,
+                        fontWeight: 700,
+                      }}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
             {hasMore && (
               <button type="button" onClick={loadOlder} disabled={loadingMore}
                 className="w-full cursor-pointer disabled:opacity-50"
@@ -404,7 +480,7 @@ const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post"
                 {loadingMore ? "Loading..." : `Show ${Math.min(PAGE_SIZE, totalCount - comments.length)} more comments`}
               </button>
             )}
-            {comments.map(c => renderRow(c))}
+            {orderedComments.map(c => renderRow(c))}
           </>
         )}
       </div>

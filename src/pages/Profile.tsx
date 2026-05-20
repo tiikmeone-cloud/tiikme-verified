@@ -19,7 +19,6 @@ import { detectPlatform } from "@/lib/platformDetect";
 import GlassModal, { glassInputDarkStyle as gInputStyle, glassSelectDarkStyle as gSelectStyle, glassTextareaDarkStyle as gTextareaStyle, labelStyle } from "@/components/ui/GlassModal";
 import ActivityScoreCard from "@/components/profile/ActivityScoreCard";
 import { shouldShowPublicScore } from "@/lib/activityTiers";
-import GetTiikedModal from "@/components/profile/GetTiikedModal";
 import { ExperienceSection, EducationSection, ProjectsSection, AchievementsSection, SkillsSection, PostsSection, RolesSection } from "@/components/profile/ProfileSections";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +31,6 @@ import MentionText from "@/components/feed/MentionText";
 import EditPostModal from "@/components/feed/EditPostModal";
 import DeletePostDialog from "@/components/feed/DeletePostDialog";
 import { sendNotification } from "@/lib/notify";
-import VerificationRequest from "@/components/profile/VerificationRequest";
 import VerificationStatusCard from "@/components/verification/VerificationStatusCard";
 import CertificatesSection from "@/components/profile/CertificatesSection";
 import ActivityScoreRing from "@/components/ActivityScoreRing";
@@ -221,7 +219,6 @@ const Profile = () => {
   const [stats, setStats] = useState({ connections: 0, posts: 0 });
   const [connectedAvatars, setConnectedAvatars] = useState<any[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
-  const [showGetTiiked, setShowGetTiiked] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [editingPost, setEditingPost] = useState<any | null>(null);
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
@@ -397,8 +394,17 @@ const Profile = () => {
   });
   const education = visFilter(workItems.filter((w: any) => w.item_type === "education"));
   const projects = visFilter(workItems.filter((w: any) => w.item_type === "project" || (!w.item_type && w.title)));
+  const cleanProfileUsername =
+    (profileData as any).clean_username ||
+    profileData.username?.replace(/-[0-9a-f]{6}$/i, "") ||
+    "";
+  const tiikmeProfilePath = cleanProfileUsername ? `https://tiikme.com/${cleanProfileUsername}` : "";
 
-  const handleCopyLink = () => { navigator.clipboard.writeText(window.location.origin + "/" + username); toast.success("Profile link copied"); };
+  const handleCopyLink = () => {
+    const url = tiikmeProfilePath || `${window.location.origin}/${username}`;
+    navigator.clipboard.writeText(url);
+    toast.success("Profile link copied!");
+  };
 
   const handleConnect = async () => {
     if (!user || !targetUserId || connectLoading) return;
@@ -882,22 +888,47 @@ const Profile = () => {
               (otwVis === "recruiters" && viewerIsRecruiter)
             );
             return (
-          <div className="flex profile-info-flex" style={{ gap: 16, alignItems: "flex-start" }}>
+          <div className="flex flex-col md:flex-row items-center md:items-start profile-info-flex" style={{ gap: 18, paddingRight: isOwnProfile ? 44 : 0 }}>
             {/* LEFT COLUMN: Avatar only */}
-            <div className="shrink-0" style={{ width: 96 }}>
-              <AvatarSquare src={profileData.avatar_url} name={displayName || "U"} size="profile" bgColor={roleColor} className="shadow-md" />
+            <div className="profile-avatar-wrap shrink-0" style={{ width: 80, display: "flex", justifyContent: "center" }}>
+              <div
+                className="shadow-md overflow-hidden shrink-0"
+                style={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: 0,
+                  border: "2px solid rgba(255,255,255,0.55)",
+                  background: roleColor,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {fixStorageUrl(profileData.avatar_url) ? (
+                  <img
+                    src={fixStorageUrl(profileData.avatar_url) || ""}
+                    alt={displayName || "Profile"}
+                    loading="lazy"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span style={{ color: "#fff", fontSize: 26, fontWeight: 700, lineHeight: 1 }}>
+                    {initials}
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* RIGHT COLUMN: Info */}
-            <div className="profile-info-body" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
+            <div className="profile-info-body w-full text-center md:text-left" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 5 }}>
               {/* ROW 1: Name + optional Open to work pill */}
-              <div className="flex items-center flex-wrap" style={{ gap: 8 }}>
-                <p style={{ fontSize: 20, fontWeight: 700, lineHeight: "28px", color: "#1A1A2E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</p>
+              <div className="flex items-center md:items-start justify-center md:justify-start flex-wrap" style={{ gap: 8 }}>
+                <p style={{ flex: 1, minWidth: 0, fontSize: 20, fontWeight: 700, lineHeight: "28px", color: "#1A1A2E", whiteSpace: "normal", overflowWrap: "anywhere", wordBreak: "break-word" }}>{displayName}</p>
                 {showOTW && (
                   <span
                     style={{
                       display: "inline-flex", alignItems: "center", gap: 4,
-                      height: 22, padding: "0 8px", borderRadius: 999,
+                      minHeight: 22, padding: "2px 8px", borderRadius: 999,
                       fontSize: 11, fontWeight: 700,
                       background: "rgba(16,185,129,0.12)", color: "#059669",
                       border: "1px solid rgba(16,185,129,0.30)",
@@ -930,20 +961,20 @@ const Profile = () => {
                 if (parts.length === 0) {
                   const fallback = (profileData as any).currently_working_at || profileData.institution_name;
                   if (!fallback) return null;
-                  return <p style={{ fontSize: 13, fontWeight: 500, color: "#6B7094" }}>{fallback}</p>;
+                  return <p style={{ fontSize: 13, fontWeight: 500, lineHeight: "18px", color: "#E8733A", overflowWrap: "anywhere" }}>{fallback}</p>;
                 }
-                return <p style={{ fontSize: 13, fontWeight: 500, color: "#6B7094" }}>{parts.join(" · ")}</p>;
+                return <p style={{ fontSize: 13, fontWeight: 500, lineHeight: "18px", color: "#E8733A", overflowWrap: "anywhere" }}>{parts.join(" · ")}</p>;
               })()}
 
               {/* ROW 2: Headline */}
               {dpFlags.showRole && (currentExp || headline) && (
-                <p style={{ fontSize: 13, fontWeight: 400, color: "#6B7094" }}>
+                <p style={{ fontSize: 13, fontWeight: 400, lineHeight: "18px", color: "#6B7094", overflowWrap: "anywhere" }}>
                   {currentExp ? `${currentExp.job_title || currentExp.title} at ${currentExp.company_name || ""}` : headline}
                 </p>
               )}
 
               {/* ROW 3: @username + location */}
-              <div className="flex items-center flex-wrap" style={{ gap: 8 }}>
+              <div className="flex items-center justify-center md:justify-start flex-wrap" style={{ gap: 8 }}>
                 {username && <span style={{ fontSize: 12, fontWeight: 400, color: "#9CA3C0" }}>@{username}</span>}
                 {username && (city || state) && <span style={{ width: 3, height: 3, borderRadius: "50%", background: "#9CA3C0", flexShrink: 0 }} />}
                 {(city || state) && (
@@ -954,7 +985,7 @@ const Profile = () => {
               </div>
 
               {/* ROW 4: Compact stats row — Posts · Connections · Score pill */}
-              <div className="flex items-center flex-wrap" style={{ gap: 12, marginTop: 6 }}>
+              <div className="flex items-center justify-center md:justify-start flex-wrap" style={{ gap: 12, marginTop: 6 }}>
                 <div style={{ fontSize: 13 }}>
                   <span className="num" style={{ color: "#1A1A2E" }}>{stats.posts}</span>
                   <span style={{ fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Posts</span>
@@ -999,7 +1030,7 @@ const Profile = () => {
 
               {/* ROW 5: Action buttons (own profile shows nothing — edit happens inline / via Settings) */}
               {!isOwnProfile && (
-                <div className="flex items-center flex-wrap" style={{ gap: 8, marginTop: 10 }}>
+                <div className="flex items-center justify-center md:justify-start flex-wrap" style={{ gap: 8, marginTop: 10 }}>
                   {renderConnectButton()}
                   <button type="button" onClick={() => navigate(`/app/pings?to=${targetUserId}`)} className="cursor-pointer" style={{
                     height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 500,
@@ -1082,22 +1113,6 @@ const Profile = () => {
               <Link to="/app/connections" style={{ fontSize: 12, fontWeight: 400, color: "#E8733A" }}>See all &gt;</Link>
             </div>
 
-            {/* L2: Get Tiiked */}
-            {isOwnProfile && !isVerified && (
-              <div className="glass-glow" style={{ padding: 12, borderRadius: 16, display: "flex", alignItems: "center", gap: 10 }}>
-                <Shield style={{ width: 24, height: 24, color: "#E8733A", flexShrink: 0 }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>Get Tiiked</p>
-                  <p style={{ fontSize: 12, fontWeight: 400, color: "#9CA3C0" }}>Verify your profile</p>
-                </div>
-                <button type="button" onClick={() => setShowGetTiiked(true)} className="cursor-pointer" style={{
-                  height: 28, padding: "0 12px", borderRadius: 8, fontSize: 11, fontWeight: 600,
-                  background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none",
-                  boxShadow: "0 2px 12px rgba(232,115,58,0.25)", flexShrink: 0,
-                }}>Verify</button>
-              </div>
-            )}
-
             {/* L3: Links */}
             <div className="glass-card" style={{ padding: 12, borderRadius: 16 }}>
               <div className="flex items-center" style={{ gap: 8 }}>
@@ -1115,6 +1130,22 @@ const Profile = () => {
               </div>
               {customLinks.length > 0 ? (
                 <div className="flex flex-wrap" style={{ gap: 6, marginTop: 8 }}>
+                  {cleanProfileUsername && (
+                    <button
+                      type="button"
+                      onClick={handleCopyLink}
+                      className="flex items-center cursor-pointer"
+                      style={{
+                        height: 28, padding: "0 10px", borderRadius: 6, gap: 6,
+                        background: "rgba(255,255,255,0.12)", border: "1px solid rgba(0,0,0,0.06)",
+                      }}
+                    >
+                      <Globe style={{ width: 14, height: 14, color: "#4A90D9", flexShrink: 0 }} />
+                      <span style={{ fontSize: 12, fontWeight: 400, color: "#1A1A2E" }}>
+                        tiikme.com/{cleanProfileUsername}
+                      </span>
+                    </button>
+                  )}
                   {customLinks.map((link: any, i: number) => {
                     const platform = detectPlatform(link.url);
                     const Icon = platform.icon;
@@ -1130,7 +1161,25 @@ const Profile = () => {
                   })}
                 </div>
               ) : (
-                <p style={{ fontSize: 12, fontWeight: 400, color: "#9CA3C0", marginTop: 8 }}>{isOwnProfile ? "Add your links" : "No links added"}</p>
+                <div style={{ marginTop: 8 }}>
+                  {cleanProfileUsername && (
+                    <button
+                      type="button"
+                      onClick={handleCopyLink}
+                      className="flex items-center cursor-pointer"
+                      style={{
+                        height: 28, padding: "0 10px", borderRadius: 6, gap: 6,
+                        background: "rgba(255,255,255,0.12)", border: "1px solid rgba(0,0,0,0.06)",
+                      }}
+                    >
+                      <Globe style={{ width: 14, height: 14, color: "#4A90D9", flexShrink: 0 }} />
+                      <span style={{ fontSize: 12, fontWeight: 400, color: "#1A1A2E" }}>
+                        tiikme.com/{cleanProfileUsername}
+                      </span>
+                    </button>
+                  )}
+                  <p style={{ fontSize: 12, fontWeight: 400, color: "#9CA3C0", marginTop: cleanProfileUsername ? 8 : 0 }}>{isOwnProfile ? "Add your links" : "No links added"}</p>
+                </div>
               )}
               {showAddLink && (
                 <div style={{ marginTop: 8 }} className="space-y-2">
@@ -1371,7 +1420,6 @@ const Profile = () => {
         <div><label style={labelStyle}>Description</label><textarea value={roleForm.description} onChange={e => setRoleForm({ ...roleForm, description: e.target.value.slice(0, 300) })} style={gTextareaStyle} placeholder="Brief description..." maxLength={300} /></div>
       </GlassModal>
 
-      {user && <GetTiikedModal open={showGetTiiked} onClose={() => setShowGetTiiked(false)} userId={user.id} userRole={role} onVerified={loadProfile} />}
 
       {editingPost && (
         <EditPostModal

@@ -62,6 +62,15 @@ const GridCell = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
+const clampTwoLinesStyle = {
+  display: "-webkit-box",
+  WebkitLineClamp: 2,
+  WebkitBoxOrient: "vertical" as const,
+  overflow: "hidden",
+  overflowWrap: "anywhere" as const,
+  wordBreak: "break-word" as const,
+};
+
 
 const Explore = () => {
   const { user, profile } = useAuth();
@@ -387,27 +396,27 @@ const Explore = () => {
             }}>
               {searchResults.map((r: any) => (
                 <button key={r.id} type="button"
-                  className="w-full flex items-center text-left"
-                  style={{ gap: 8, padding: 8, borderRadius: 6, transition: "background 100ms", cursor: "pointer", background: "transparent", border: "none" }}
+                  className="w-full flex items-start text-left"
+                  style={{ gap: 10, padding: 10, borderRadius: 8, transition: "background 100ms", cursor: "pointer", background: "transparent", border: "none" }}
                   onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-card-hover)"; }}
                   onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
                   onClick={() => { navigate(r.kind === "person" ? `/app/profile/${r.id}` : `/org/${r.slug}`); setShowSearchResults(false); setSearch(""); }}>
                   <AvatarSquare src={r.avatar_url || r.logo_url} name={r.full_name || r.name || "?"} size={32} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.full_name || r.name}</p>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", lineHeight: "17px", ...clampTwoLinesStyle }}>{r.full_name || r.name}</p>
                     {r.kind === "person" ? (
-                      <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)" }}>@{cleanUsername(r.username) || "user"}</p>
+                      <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)", marginTop: 2, lineHeight: "16px", ...clampTwoLinesStyle }}>@{cleanUsername(r.username) || "user"}</p>
                     ) : (() => {
                       const conf = getOrgTypeConfig(r.type);
                       return (
                         <span style={{
-                          display: "inline-flex", alignItems: "center", marginTop: 2,
-                          padding: "2px 6px", borderRadius: 5,
+                          display: "inline-flex", alignItems: "center", flexWrap: "wrap", gap: 4, marginTop: 4,
+                          padding: "3px 7px", borderRadius: 6,
                           fontSize: 9, fontWeight: 700, letterSpacing: 0.3,
                           background: conf.bg, color: conf.color, textTransform: "uppercase",
                         }}>
                           {conf.label}
-                          {r.subtype && <span style={{ marginLeft: 5, opacity: 0.7, textTransform: "none", fontWeight: 500 }}>· {r.subtype}</span>}
+                          {r.subtype && <span style={{ opacity: 0.7, textTransform: "none", fontWeight: 500, maxWidth: 160, ...clampTwoLinesStyle }}>· {r.subtype}</span>}
                         </span>
                       );
                     })()}
@@ -479,7 +488,7 @@ const Explore = () => {
       )}
 
       {/* Sections */}
-      <div style={{ marginTop: 16 }}>
+      <div style={{ marginTop: 18 }}>
         {showPeople && (
           <SectionGrid
             sectionRef={el => { sectionRefs.current.people = el; }}
@@ -543,7 +552,7 @@ const Explore = () => {
           <div ref={el => { sectionRefs.current.posts = el; }}>
             <HorizontalCarousel title="Top posts" count={exploreData!.posts.length}>
               {exploreData!.posts.map(p => (
-                <div key={p.id} style={{ scrollSnapAlign: "start", flexShrink: 0 }}>
+                <div key={p.id} style={{ scrollSnapAlign: "start", flexShrink: 0, width: "min(320px, calc(100vw - 48px))" }}>
                   <TrendingPostCard post={p} authorProfile={exploreData!.postAuthors[p.author_id]} />
                 </div>
               ))}

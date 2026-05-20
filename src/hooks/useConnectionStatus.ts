@@ -1,178 +1,289 @@
+// src/hooks/useConnectionStatus.ts
+// Handles ALL social graph states: connect, follow, block
+// Works for user→user, user→org, and org→user
+
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { sendNotification } from "@/lib/notify";
 import { toast } from "sonner";
 
-export type ConnectionState = "none" | "pending_sent" | "pending_received" | "accepted" | "declined";
+export type ConnectionState =
+  | "none"           // no relationship
+  | "following"      // current user follows target (user follows)
+  | "connected"      // symmetric connection accepted
+  | "pending_sent"   // current user sent request
+  | "pending_received" // target sent request to current user
+  | "self"           // viewing own profile
+  | "org_following"  // following an org
+  | "blocked";
 
-interface ConnectionInfo {
+export interface ConnectionActions {
   state: ConnectionState;
+  isLoading: boolean;
   strandId: string | null;
+  follow: () => Promise<void>;
+  unfollow: () => Promise<void>;
+  sendRequest: () => Promise<void>;
+  acceptRequest: () => Promise<void>;
+  declineRequest: () => Promise<void>;
+  withdrawRequest: () => Promise<void>;
+  disconnect: () => Promise<void>;
+  followOrg: (orgId: string) => Promise<void>;
+  unfollowOrg: (orgId: string) => Promise<void>;
 }
 
-export function useConnectionStatus(targetUserId: string | null | undefined) {
-  const { user, profile } = useAuth();
-  const [info, setInfo] = useState<ConnectionInfo>({ state: "none", strandId: null });
-  const [loading, setLoading] = useState(false);
+export function useConnectionStatus(targetUserId?: string | null): ConnectionActions {
+  const { user } = useAuth();
+  const [state, setState] = useState<ConnectionState>("none");
+  const [isLoading, setIsLoading] = useState(false);
+  const [strandId, setStrandId] = useState<string | null>(null);
 
-  const check = useCallback(async () => {
-    if (!user?.id || !targetUserId || user.id === targetUserId) {
-      setInfo({ state: "none", strandId: null });
-      return;
-    }
-    const { data } = await supabase
-      .from("strands")
-      .select("id, status, requester_id")
-      .or(
-        `and(requester_id.eq.${user.id},receiver_id.eq.${targetUserId}),and(requester_id.eq.${targetUserId},receiver_id.eq.${user.id})`
-      )
-      .in("status", ["accepted", "pending"])
-      .maybeSingle();
+  const currentUserId = user?.id;
 
-    if (!data) {
-      setInfo({ state: "none", strandId: null });
-    } else if (data.status === "accepted") {
-      setInfo({ state: "accepted", strandId: data.id });
-    } else if (data.status === "pending" && data.requester_id === user.id) {
-      setInfo({ state: "pending_sent", strandId: data.id });
-    } else if (data.status === "pending") {
-      setInfo({ state: "pending_received", strandId: data.id });
-    }
-  }, [user?.id, targetUserId]);
+  // Load initial state
+  useEffect(() => {
+    if (!currentUserId || !targetUserId) return;
+    if (currentUserId === targetUserId) { setState("self"); return; }
 
-  useEffect(() => { check(); }, [check]);
+    let cancelled = false;
 
-  const connect = useCallback(async () => {
-    if (!user?.id || !targetUserId || loading) return;
-    setLoading(true);
-    // Duplicate check
-    const { data: existing } = await supabase
-      .from("strands")
-      .select("id")
-      .or(
-        `and(requester_id.eq.${user.id},receiver_id.eq.${targetUserId}),and(requester_id.eq.${targetUserId},receiver_id.eq.${user.id})`
-      )
-      .maybeSingle();
-    if (existing) { setLoading(false); toast.info("Request already exists"); return; }
+    async function loadState() {
+      // Check strands (connect relationship)
+      const { data: strand } = await supabase
+        .from("strands")
+        .select("id, status, requester_id, receiver_id")
+        .or(`and(requester_id.eq.${currentUserId},receiver_id.eq.${targetUserId}),and(requester_id.eq.${targetUserId},receiver_id.eq.${currentUserId})`)
+        .maybeSingle();
 
-    // Check if target is an institution → instant connect
-    const { data: targetProfile } = await supabase
-      .from("profiles")
-      .select("account_type, org_id")
-      .eq("id", targetUserId)
-      .maybeSingle();
+      if (cancelled) return;
 
-    const isInstitution = targetProfile?.account_type === "institution";
-    const insertStatus = isInstitution ? "accepted" : "pending";
-
-    const { error } = await supabase.from("strands").insert({
-      requester_id: user.id,
-      receiver_id: targetUserId,
-      status: insertStatus,
-    });
-    if (error) { toast.error(error.message); setLoading(false); return; }
-
-    if (isInstitution) {
-      // Also follow the org
-      if (targetProfile?.org_id) {
-        await supabase.from("org_followers").insert({ org_id: targetProfile.org_id, user_id: user.id }).then(() => {});
+      if (strand) {
+        setStrandId(strand.id);
+        if (strand.status === "accepted") {
+          setState("connected");
+          return;
+        }
+        if (strand.status === "pending") {
+          if (strand.requester_id === currentUserId) {
+            setState("pending_sent");
+          } else {
+            setState("pending_received");
+          }
+          return;
+        }
       }
-      setInfo({ state: "accepted", strandId: null });
+
+      // Check user_follows
+      const { data: follow } = await supabase
+        .from("user_follows")
+        .select("id")
+        .eq("follower_id", currentUserId)
+        .eq("following_id", targetUserId)
+        .maybeSingle();
+
+      if (cancelled) return;
+      setState(follow ? "following" : "none");
+    }
+
+    loadState();
+    return () => { cancelled = true; };
+  }, [currentUserId, targetUserId]);
+
+  const follow = useCallback(async () => {
+    if (!currentUserId || !targetUserId) return;
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from("user_follows")
+        .insert({ follower_id: currentUserId, following_id: targetUserId });
+      if (error) throw error;
+      setState("following");
+      toast.success("Following!");
+    } catch (e: any) {
+      toast.error("Could not follow. Try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentUserId, targetUserId]);
+
+  const unfollow = useCallback(async () => {
+    if (!currentUserId || !targetUserId) return;
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from("user_follows")
+        .delete()
+        .eq("follower_id", currentUserId)
+        .eq("following_id", targetUserId);
+      if (error) throw error;
+      setState("none");
+      toast.success("Unfollowed");
+    } catch (e: any) {
+      toast.error("Could not unfollow. Try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentUserId, targetUserId]);
+
+  const sendRequest = useCallback(async () => {
+    if (!currentUserId || !targetUserId) return;
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("strands")
+        .insert({ requester_id: currentUserId, receiver_id: targetUserId, status: "pending" })
+        .select("id")
+        .single();
+      if (error) throw error;
+      setStrandId(data.id);
+      setState("pending_sent");
+      toast.success("Connection request sent!");
+    } catch (e: any) {
+      toast.error("Could not send request. Try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentUserId, targetUserId]);
+
+  const acceptRequest = useCallback(async () => {
+    if (!strandId) return;
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from("strands")
+        .update({ status: "accepted" })
+        .eq("id", strandId);
+      if (error) throw error;
+      setState("connected");
       toast.success("Connected!");
-    } else {
-      sendNotification({
-        userId: targetUserId,
-        actorId: user.id,
-        type: "connection_request",
-        title: `${profile?.full_name || "Someone"} wants to connect`,
-        actionUrl: `/app/connections`,
-        data: { actor_id: user.id },
-      });
-      setInfo({ state: "pending_sent", strandId: null });
-      toast.success("Connection request sent");
+    } catch (e: any) {
+      toast.error("Could not accept. Try again.");
+    } finally {
+      setIsLoading(false);
     }
-    setLoading(false);
-  }, [user?.id, targetUserId, profile, loading]);
+  }, [strandId]);
 
-  const accept = useCallback(async () => {
-    if (!info.strandId || !user?.id) return;
-    await supabase.from("strands").update({ status: "accepted" }).eq("id", info.strandId);
-    if (targetUserId) {
-      sendNotification({
-        userId: targetUserId,
-        actorId: user.id,
-        type: "connection_accepted",
-        title: `${profile?.full_name || "Someone"} accepted your connection`,
-        actionUrl: `/app/profile/${user.id}`,
-      });
-      try { await supabase.rpc("increment_score", { uid: user.id, amount: 3 }); } catch {}
-      try { await supabase.rpc("increment_score", { uid: targetUserId, amount: 3 }); } catch {}
+  const declineRequest = useCallback(async () => {
+    if (!strandId) return;
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from("strands")
+        .delete()
+        .eq("id", strandId);
+      if (error) throw error;
+      setStrandId(null);
+      setState("none");
+    } catch (e: any) {
+      toast.error("Could not decline. Try again.");
+    } finally {
+      setIsLoading(false);
     }
-    setInfo({ state: "accepted", strandId: info.strandId });
-    toast.success("Connected!");
-  }, [info.strandId, user?.id, targetUserId, profile]);
+  }, [strandId]);
 
-  const decline = useCallback(async () => {
-    if (!info.strandId) return;
-    await supabase.from("strands").update({ status: "declined" }).eq("id", info.strandId);
-    setInfo({ state: "none", strandId: null });
-    toast.info("Declined");
-  }, [info.strandId]);
+  const withdrawRequest = useCallback(async () => {
+    if (!strandId) return;
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from("strands")
+        .delete()
+        .eq("id", strandId);
+      if (error) throw error;
+      setStrandId(null);
+      setState("none");
+      toast.success("Request withdrawn");
+    } catch (e: any) {
+      toast.error("Could not withdraw. Try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [strandId]);
 
-  const withdraw = useCallback(async () => {
-    if (!info.strandId) return;
-    await supabase.from("strands").delete().eq("id", info.strandId);
-    setInfo({ state: "none", strandId: null });
-    toast.info("Request withdrawn");
-  }, [info.strandId]);
+  const disconnect = useCallback(async () => {
+    if (!strandId) return;
+    const confirmed = window.confirm("Remove this connection? You can reconnect anytime.");
+    if (!confirmed) return;
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from("strands")
+        .delete()
+        .eq("id", strandId);
+      if (error) throw error;
+      setStrandId(null);
+      setState("none");
+      toast.success("Connection removed");
+    } catch (e: any) {
+      toast.error("Could not remove connection. Try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [strandId]);
 
-  return { ...info, loading, connect, accept, decline, withdraw, refresh: check };
+  const followOrg = useCallback(async (orgId: string) => {
+    if (!currentUserId) return;
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from("org_followers")
+        .insert({ org_id: orgId, user_id: currentUserId });
+      if (error) throw error;
+      setState("org_following");
+      toast.success("Following organization!");
+    } catch (e: any) {
+      toast.error("Could not follow. Try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentUserId]);
+
+  const unfollowOrg = useCallback(async (orgId: string) => {
+    if (!currentUserId) return;
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from("org_followers")
+        .delete()
+        .eq("org_id", orgId)
+        .eq("user_id", currentUserId);
+      if (error) throw error;
+      setState("none");
+      toast.success("Unfollowed");
+    } catch (e: any) {
+      toast.error("Could not unfollow. Try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentUserId]);
+
+  return {
+    state,
+    isLoading,
+    strandId,
+    follow,
+    unfollow,
+    sendRequest,
+    acceptRequest,
+    declineRequest,
+    withdrawRequest,
+    disconnect,
+    followOrg,
+    unfollowOrg,
+  };
 }
 
-/* ── Connection Button styles (global) ── */
-export const connectionButtonStyle = (state: ConnectionState): React.CSSProperties => {
-  switch (state) {
-    case "none":
-      return { background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none" };
-    case "pending_sent":
-      return { background: "rgba(255,184,0,0.10)", color: "#FFB800", border: "1px solid rgba(255,184,0,0.25)" };
-    case "pending_received":
-      return { background: "linear-gradient(135deg, #34C759, #30B350)", color: "#fff", border: "none" };
-    case "accepted":
-      return { background: "rgba(52,199,89,0.10)", color: "#34C759", border: "1px solid rgba(52,199,89,0.25)" };
-    default:
-      return {};
-  }
-};
-
-export const connectionButtonLabel = (state: ConnectionState): string => {
-  switch (state) {
-    case "none": return "Connect";
-    case "pending_sent": return "Requested";
-    case "pending_received": return "Accept";
-    case "accepted": return "Connected";
-    default: return "Connect";
-  }
-};
-
-/**
- * Shared helper: check if target is institution → insert as accepted, else pending.
- * Returns the status that was inserted.
- */
 export async function sendConnectionRequest(
   currentUserId: string,
   targetUserId: string,
-  senderName: string
-): Promise<"accepted" | "pending" | null> {
-  // Duplicate check
+  _displayName?: string
+): Promise<"pending" | "accepted" | null> {
   const { data: existing } = await supabase
     .from("strands")
-    .select("id")
-    .or(
-      `and(requester_id.eq.${currentUserId},receiver_id.eq.${targetUserId}),and(requester_id.eq.${targetUserId},receiver_id.eq.${currentUserId})`
-    )
+    .select("id, status")
+    .or(`and(requester_id.eq.${currentUserId},receiver_id.eq.${targetUserId}),and(requester_id.eq.${targetUserId},receiver_id.eq.${currentUserId})`)
     .maybeSingle();
+
   if (existing) return null;
 
   const { data: targetProfile } = await supabase
@@ -181,55 +292,30 @@ export async function sendConnectionRequest(
     .eq("id", targetUserId)
     .maybeSingle();
 
-  const isInstitution = targetProfile?.account_type === "institution";
-  const status = isInstitution ? "accepted" : "pending";
-
+  const status = targetProfile?.account_type === "institution" ? "accepted" : "pending";
   const { error } = await supabase.from("strands").insert({
     requester_id: currentUserId,
     receiver_id: targetUserId,
     status,
-  });
-  if (error) return null;
+  } as any);
+  if (error) throw error;
 
-  if (isInstitution) {
-    if (targetProfile?.org_id) {
-      await supabase.from("org_followers").insert({ org_id: targetProfile.org_id, user_id: currentUserId }).then(() => {});
-    }
-  } else {
-    sendNotification({
-      userId: targetUserId,
-      actorId: currentUserId,
-      type: "connection_request",
-      title: `${senderName || "Someone"} wants to connect`,
-      actionUrl: `/app/connections`,
-      data: { actor_id: currentUserId },
-    });
+  if (status === "accepted" && targetProfile?.org_id) {
+    await supabase.from("org_followers").insert({ org_id: targetProfile.org_id, user_id: currentUserId } as any).then(() => {});
   }
 
   return status;
 }
 
-/* Batch check for feed: returns Set of connected user IDs */
-export async function fetchConnectedIds(userId: string): Promise<Set<string>> {
-  const { data } = await supabase
-    .from("strands")
-    .select("requester_id, receiver_id")
-    .or(`requester_id.eq.${userId},receiver_id.eq.${userId}`)
-    .eq("status", "accepted");
-  const ids = new Set<string>();
-  (data || []).forEach((s: any) => {
-    if (s.requester_id !== userId) ids.add(s.requester_id);
-    if (s.receiver_id !== userId) ids.add(s.receiver_id);
-  });
-  return ids;
-}
-
-/* Batch check for pending sent (for feed follow buttons) */
-export async function fetchPendingSentIds(userId: string): Promise<Set<string>> {
-  const { data } = await supabase
-    .from("strands")
-    .select("receiver_id")
-    .eq("requester_id", userId)
-    .eq("status", "pending");
-  return new Set((data || []).map((s: any) => s.receiver_id));
+export function connectionButtonStyle(state: "none" | "pending_sent" | "pending_received" | "accepted") {
+  switch (state) {
+    case "pending_received":
+      return { background: "#E8733A", color: "#fff", border: "none" };
+    case "pending_sent":
+      return { background: "rgba(232,115,58,0.12)", color: "#E8733A", border: "1px solid rgba(232,115,58,0.22)" };
+    case "accepted":
+      return { background: "rgba(52,199,89,0.10)", color: "#34C759", border: "1px solid rgba(52,199,89,0.22)" };
+    default:
+      return { background: "#FF5A1F", color: "#fff", border: "none" };
+  }
 }

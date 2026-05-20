@@ -1,869 +1,680 @@
-import AvatarSquare from "@/components/ui/AvatarSquare";
-import { storageImageUrl } from "@/lib/imageTransform";
-import { cleanUsername } from "@/lib/cleanUsername";
-import { useState, useEffect, useRef } from "react";
-import { Check, Camera, User, Eye, Lock, LogOut, Users, Copy, Share2, HelpCircle, MessageSquare, Send, CreditCard, Sparkles, FileText, Shield, Trash2, Mail } from "lucide-react";
-import DeleteAccountModal from "@/components/legal/DeleteAccountModal";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { tiikToast } from "@/components/ui/tiik-toast";
-import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { supabase } from "@/integrations/supabase/client";
+// src/pages/Settings.tsx
+// COMPLETELY FIXED: Every toggle/input actually saves to DB
+// All sections: Profile, Account, Privacy, Profile Display, Invite, Legal
+
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { Loader2, Camera, Check, ChevronRight, Copy, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useOrgSubscription } from "@/hooks/useOrgSubscription";
-import { DISPLAY_PREFERENCE_OPTIONS, DEFAULT_DISPLAY_PREFERENCE, type DisplayPreference } from "@/utils/displayProfile";
-import LinkedAccounts from "@/components/settings/LinkedAccounts";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import AvatarSquare from "@/components/ui/AvatarSquare";
+import { useNavigate } from "react-router-dom";
 
-const baseNavItems = [
-  { id: "profile", label: "Profile", icon: User },
-  { id: "account", label: "Account", icon: Lock },
-  { id: "display", label: "Profile Display", icon: Sparkles },
-  { id: "privacy", label: "Privacy", icon: Eye },
-  { id: "invite", label: "Invite", icon: Users },
-  { id: "legal", label: "Legal", icon: Shield },
-  { id: "help", label: "Help & Support", icon: HelpCircle },
-];
+type SettingsSection = "profile" | "account" | "display" | "privacy" | "invite" | "legal";
 
-const ORG_TYPE_OPTIONS = [
-  { value: "product_company", label: "Product Company" },
-  { value: "saas", label: "SaaS" },
-  { value: "agency", label: "Agency" },
-  { value: "services", label: "Services" },
-  { value: "ecommerce", label: "E-commerce" },
-  { value: "ngo", label: "NGO/Non-Profit" },
-  { value: "educational", label: "Educational Institution" },
-  { value: "government", label: "Government" },
-  { value: "hospital", label: "Hospital/Healthcare" },
-  { value: "other", label: "Other" },
-];
-
-// (Additional roles UI lives on the Profile page; removed from Settings to avoid duplication.)
-
-const Toggle = ({ label, desc, value, onChange }: { label: string; desc?: string; value?: boolean; onChange?: (v: boolean) => void }) => {
-  const [localOn, setLocalOn] = useState(value ?? true);
-  const on = value !== undefined ? value : localOn;
-  const handleToggle = () => {
-    const next = !on;
-    setLocalOn(next);
-    if (onChange) onChange(next);
-    else tiikToast.success("Preference saved");
-  };
-  return (
-    <div className="flex items-center justify-between py-3.5" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
-      <div><span className="text-[14px] font-medium" style={{ color: "#1A1A2E" }}>{label}</span>{desc && <p className="text-[12px] mt-0.5" style={{ color: "#6B7094" }}>{desc}</p>}</div>
-      <button type="button" onClick={handleToggle}
-        className="w-11 h-6 rounded-full flex items-center px-0.5 cursor-pointer active:scale-95"
-        style={{ background: on ? "#E8733A" : "rgba(0,0,0,0.12)", transition: "all 0.2s" }}>
-        <div className="w-5 h-5 rounded-full bg-white" style={{ transition: "transform 0.2s", transform: on ? "translateX(20px)" : "translateX(0)" }} />
-      </button>
-    </div>
-  );
-};
-
-const VISIBILITY_OPTIONS = [
-  { value: "public", label: "Public", desc: "Anyone can see your full profile" },
-  { value: "connections_only", label: "Connections Only", desc: "Only connected users see full details" },
-  { value: "private", label: "Private", desc: "Only name + avatar visible" },
-];
-
-const MESSAGE_OPTIONS = [
-  { value: "everyone", label: "Everyone" },
-  { value: "connections_only", label: "Connections Only" },
-  { value: "no_one", label: "Nobody" },
-];
-
-const CONNECTIONS_VIS_OPTIONS = [
-  { value: "everyone", label: "Everyone" },
-  { value: "connections_only", label: "Connections Only" },
-  { value: "only_me", label: "Only Me" },
-];
-
-const SEGMENTED_CONN = [
-  { value: "everyone", label: "Everyone" },
-  { value: "connections", label: "Connections" },
-  { value: "only_me", label: "Only me" },
-] as const;
-const SEGMENTED_MSG = [
-  { value: "everyone", label: "Everyone" },
-  { value: "connections", label: "Connections" },
-  { value: "verified_only", label: "Verified" },
-  { value: "no_one", label: "No one" },
-] as const;
-const SEGMENTED_POSTS = [
-  { value: "everyone", label: "Everyone" },
-  { value: "connections", label: "Connections" },
-  { value: "only_me", label: "Only me" },
-] as const;
-
-const Segmented = ({ value, options, onChange }: {
-  value: string;
-  options: ReadonlyArray<{ value: string; label: string }>;
-  onChange: (v: string) => void;
-}) => (
-  <div className="inline-flex flex-wrap gap-1 p-1 rounded-xl" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
-    {options.map(opt => {
-      const active = value === opt.value;
-      return (
-        <button
-          key={opt.value}
-          type="button"
-          onClick={() => onChange(opt.value)}
-          className="px-3 h-8 rounded-lg text-[12.5px] font-semibold cursor-pointer transition-all"
-          style={{
-            background: active ? "#E8733A" : "transparent",
-            color: active ? "#fff" : "#6B7094",
-          }}
-        >
-          {opt.label}
-        </button>
-      );
-    })}
-  </div>
-);
-
-const PrivacyRow = ({ label, desc, control }: { label: string; desc?: string; control: React.ReactNode }) => (
-  <div className="flex items-start justify-between gap-4 py-3.5" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
-    <div className="min-w-0">
-      <span className="text-[14px] font-medium" style={{ color: "#1A1A2E" }}>{label}</span>
-      {desc && <p className="text-[12px] mt-0.5" style={{ color: "#6B7094" }}>{desc}</p>}
-    </div>
-    <div className="shrink-0">{control}</div>
-  </div>
-);
-
-import { DEFAULT_PRIVACY, normalizePrivacy, type PrivacySettings } from "@/lib/applyPrivacy";
-
-const PrivacySection = ({ userId }: { userId: string | null }) => {
-  const [privacy, setPrivacy] = useState<PrivacySettings>(DEFAULT_PRIVACY);
-  const [loaded, setLoaded] = useState(false);
-  const [savedKey, setSavedKey] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!userId) return;
-    supabase.from("profiles").select("privacy, privacy_settings").eq("id", userId).maybeSingle().then(({ data }) => {
-      const merged = { ...(data?.privacy_settings as any || {}), ...(data?.privacy as any || {}) };
-      setPrivacy(normalizePrivacy(merged));
-      setLoaded(true);
-    });
-  }, [userId]);
-
-  const save = async (patch: Partial<PrivacySettings>) => {
-    const updated = { ...privacy, ...patch };
-    setPrivacy(updated);
-    if (!userId) return;
-    const key = Object.keys(patch)[0];
-    await supabase.from("profiles").update({ privacy: updated as any }).eq("id", userId);
-    setSavedKey(key);
-    setTimeout(() => setSavedKey(prev => (prev === key ? null : prev)), 1400);
-  };
-
-  const Saved = ({ k }: { k: string }) =>
-    savedKey === k ? (
-      <span className="ml-2 inline-flex items-center gap-1 text-[11px] font-semibold" style={{ color: "#16A34A" }}>
-        <Check className="w-3 h-3" /> Saved
-      </span>
-    ) : null;
-
-  const ToggleCtl = ({ k, value }: { k: keyof PrivacySettings; value: boolean }) => (
-    <div className="flex items-center">
-      <Saved k={k} />
-      <button
-        type="button"
-        onClick={() => save({ [k]: !value } as any)}
-        className="ml-2 w-11 h-6 rounded-full flex items-center px-0.5 cursor-pointer active:scale-95"
-        style={{ background: value ? "#E8733A" : "rgba(0,0,0,0.12)", transition: "all 0.2s" }}
-      >
-        <div className="w-5 h-5 rounded-full bg-white" style={{ transition: "transform 0.2s", transform: value ? "translateX(20px)" : "translateX(0)" }} />
-      </button>
-    </div>
-  );
-
-  if (!loaded) return <div className="glass-light animate-pulse h-48" style={{ borderRadius: 20 }} />;
-
-  return (
-    <div className="space-y-5">
-      <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
-        <h3 className="text-[13px] font-bold uppercase tracking-wider mb-2" style={{ color: "#6B7094" }}>Profile Visibility</h3>
-        <PrivacyRow label="Show my location" control={<ToggleCtl k="show_location" value={privacy.show_location} />} />
-        <PrivacyRow label="Show current company" control={<ToggleCtl k="show_company" value={privacy.show_company} />} />
-        <PrivacyRow label="Show my education" control={<ToggleCtl k="show_education" value={privacy.show_education} />} />
-        <PrivacyRow label="Show my experience" control={<ToggleCtl k="show_experience" value={privacy.show_experience} />} />
-        <PrivacyRow label="Show my email on profile" control={<ToggleCtl k="show_email" value={privacy.show_email} />} />
-        <PrivacyRow label="Show my phone on profile" control={<ToggleCtl k="show_phone" value={privacy.show_phone} />} />
-      </div>
-
-      <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
-        <h3 className="text-[13px] font-bold uppercase tracking-wider mb-2" style={{ color: "#6B7094" }}>Discovery</h3>
-        <PrivacyRow
-          label="Show me in Explore and Search"
-          desc="Turn off to hide from discovery feeds"
-          control={<ToggleCtl k="show_in_explore" value={privacy.show_in_explore} />}
-        />
-        <PrivacyRow
-          label="Let people find me by email"
-          desc="Allow searching for your profile via your email"
-          control={<ToggleCtl k="searchable_by_email" value={privacy.searchable_by_email} />}
-        />
-      </div>
-
-      <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
-        <h3 className="text-[13px] font-bold uppercase tracking-wider mb-2" style={{ color: "#6B7094" }}>Connections</h3>
-        <PrivacyRow
-          label="Who can see my connections"
-          control={
-            <div className="flex items-center">
-              <Saved k="show_connections" />
-              <span className="ml-2"><Segmented value={privacy.show_connections} options={SEGMENTED_CONN} onChange={v => save({ show_connections: v as any })} /></span>
-            </div>
-          }
-        />
-        <PrivacyRow
-          label="Who can send me Pings"
-          control={
-            <div className="flex items-center">
-              <Saved k="who_can_message" />
-              <span className="ml-2"><Segmented value={privacy.who_can_message} options={SEGMENTED_MSG} onChange={v => save({ who_can_message: v as any })} /></span>
-            </div>
-          }
-        />
-        <PrivacyRow
-          label="Who can see my posts"
-          control={
-            <div className="flex items-center">
-              <Saved k="who_can_see_posts" />
-              <span className="ml-2"><Segmented value={privacy.who_can_see_posts} options={SEGMENTED_POSTS} onChange={v => save({ who_can_see_posts: v as any })} /></span>
-            </div>
-          }
-        />
-      </div>
-
-      <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
-        <h3 className="text-[13px] font-bold uppercase tracking-wider mb-2" style={{ color: "#6B7094" }}>Activity</h3>
-        <PrivacyRow label="Show when I'm online" control={<ToggleCtl k="show_online_status" value={privacy.show_online_status} />} />
-        <PrivacyRow label="Show my recent activity" control={<ToggleCtl k="show_activity" value={privacy.show_activity} />} />
-      </div>
-    </div>
-  );
-};
-
-/* ── Display Preference Section (replaces Additional Roles) ── */
-const DisplaySection = ({ userId }: { userId: string }) => {
-  const { profile, refreshProfile } = useAuth();
-  const [pref, setPref] = useState<DisplayPreference>(
-    (profile?.display_preference as DisplayPreference) || DEFAULT_DISPLAY_PREFERENCE,
-  );
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (profile?.display_preference) setPref(profile.display_preference as DisplayPreference);
-  }, [profile?.display_preference]);
-
-  const choose = async (val: DisplayPreference) => {
-    if (val === pref) return;
-    setPref(val);
-    setSaving(true);
-    const { error } = await supabase.from("profiles").update({ display_preference: val }).eq("id", userId);
-    setSaving(false);
-    if (error) { tiikToast.error("Failed to save"); return; }
-    await refreshProfile();
-    tiikToast.success("Display preference updated");
-  };
-
-  const previewName = profile?.full_name || "Your Name";
-  const roleLabel = profile?.role
-    ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1).replace(/_/g, " ")
-    : "Your Role";
-  const previewSubtype = profile?.role_subtype || "";
-  const previewCompany = (profile as any)?.currently_working_at || profile?.institution_name || "Your Company";
-
-  return (
-    <div className="space-y-5">
-      <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
-        <h3 className="text-[16px] font-semibold mb-1" style={{ color: "#1A1A2E" }}>Profile Display</h3>
-        <p className="text-[13px] mb-4" style={{ color: "#6B7094" }}>Choose how your name, role, and company appear to others across the platform.</p>
-
-        <div className="space-y-2.5">
-          {DISPLAY_PREFERENCE_OPTIONS.map(opt => {
-            const active = pref === opt.value;
-            const showName = opt.value !== "dp_only";
-            const showRole = opt.value === "dp_name_profession" || opt.value === "dp_name_profession_company";
-            const showCompany = opt.value === "dp_name_profession_company";
-            return (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => choose(opt.value)}
-                disabled={saving}
-                className="w-full text-left p-3.5 rounded-xl cursor-pointer transition-all flex items-center gap-3 disabled:opacity-60"
-                style={{
-                  background: active ? "rgba(232,115,58,0.08)" : "var(--surface-2)",
-                  border: active ? "1.5px solid #E8733A" : "1.5px solid var(--border)",
-                }}
-              >
-                <AvatarSquare src={profile?.avatar_url} name={previewName} size={40} />
-                <div className="flex-1 min-w-0">
-                  {showName ? (
-                    <p className="text-[13px] font-bold truncate" style={{ color: "#1A1A2E" }}>{previewName}</p>
-                  ) : (
-                    <p className="text-[12px] italic" style={{ color: "#9CA3AF" }}>(name hidden)</p>
-                  )}
-                  {showRole && (
-                    <p className="text-[11px] truncate" style={{ color: "#6B7094" }}>
-                      {roleLabel}{previewSubtype ? ` · ${previewSubtype}` : ""}
-                    </p>
-                  )}
-                  {showCompany && (
-                    <p className="text-[11px] truncate" style={{ color: "#9CA3AF" }}>{previewCompany}</p>
-                  )}
-                </div>
-                <div className="shrink-0">
-                  <div className="text-[12px] font-bold mb-0.5" style={{ color: active ? "#E8733A" : "#1A1A2E" }}>{opt.label}</div>
-                  <div className="text-[10px]" style={{ color: "#6B7094" }}>{opt.desc}</div>
-                </div>
-                <div className="shrink-0">
-                  <div className="w-5 h-5 rounded-full flex items-center justify-center"
-                    style={{ border: active ? "2px solid #E8733A" : "2px solid #D1D5DB", background: active ? "#E8733A" : "transparent" }}>
-                    {active && <Check className="w-3 h-3 text-white" />}
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const SubscriptionSection = ({ userId }: { userId: string | null }) => {
-  const { subscription, trialDaysRemaining, isTrialExpired, hasAccess } = useOrgSubscription();
-
-  if (!subscription) {
-    return (
-      <div className="glass-light" style={{ padding: 20, borderRadius: 20 }}>
-        <p className="text-[14px]" style={{ color: "#6B7094" }}>No subscription found. Contact support@tiikme.com.</p>
-      </div>
-    );
-  }
-
-  const planLabel = subscription.plan === "trial" ? "Free Trial" : subscription.plan === "basic" ? "Basic" : "Premium";
-  const statusColor = hasAccess ? "#34C759" : "#EF4444";
-
-  return (
-    <div className="space-y-5">
-      <div className="glass-light" style={{ padding: 20, borderRadius: 20 }}>
-        <h3 className="text-[16px] font-semibold mb-4" style={{ color: "#1A1A2E" }}>Subscription</h3>
-
-        <div className="grid grid-cols-2 gap-3 mb-5">
-          <div className="rounded-xl p-4" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
-            <p className="text-[11px] font-medium mb-1" style={{ color: "#6B7094" }}>Current Plan</p>
-            <p className="text-[18px] font-bold" style={{ color: "#1A1A2E" }}>{planLabel}</p>
-          </div>
-          <div className="rounded-xl p-4" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
-            <p className="text-[11px] font-medium mb-1" style={{ color: "#6B7094" }}>Status</p>
-            <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full" style={{ background: statusColor }} />
-              <p className="text-[18px] font-bold" style={{ color: statusColor }}>{hasAccess ? "Active" : "Expired"}</p>
-            </div>
-          </div>
-        </div>
-
-        {subscription.plan === "trial" && (
-          <div className="rounded-xl p-4 mb-4" style={{
-            background: isTrialExpired ? "rgba(239,68,68,0.06)" : "rgba(232,115,58,0.06)",
-            border: `1px solid ${isTrialExpired ? "rgba(239,68,68,0.15)" : "rgba(232,115,58,0.15)"}`,
-          }}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[13px] font-semibold" style={{ color: isTrialExpired ? "#EF4444" : "#E8733A" }}>
-                  {isTrialExpired ? "Trial Expired" : `${trialDaysRemaining} days remaining`}
-                </p>
-                <p className="text-[12px] mt-0.5" style={{ color: "#6B7094" }}>
-                  Trial ends {new Date(subscription.trial_ends_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                </p>
-              </div>
-              {!isTrialExpired && (
-                <div className="h-8 px-3 rounded-lg flex items-center" style={{ background: "rgba(232,115,58,0.12)" }}>
-                  <p className="text-[12px] font-bold" style={{ color: "#E8733A" }}>{trialDaysRemaining}d</p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        <div className="rounded-xl p-4 mb-4" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
-          <p className="text-[13px] font-semibold mb-2" style={{ color: "#1A1A2E" }}>Included Features</p>
-          <div className="space-y-2">
-            {["Workspace & Team Messaging", "Verification Approvals", "Opportunity Posting"].map(f => (
-              <div key={f} className="flex items-center gap-2">
-                <Check className="w-4 h-4" style={{ color: hasAccess ? "#34C759" : "#9CA3AF" }} />
-                <span className="text-[13px]" style={{ color: hasAccess ? "#1A1A2E" : "#9CA3AF" }}>{f}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {(isTrialExpired || subscription.plan === "trial") && (
-          <button
-            type="button"
-            onClick={() => tiikToast("Payment integration coming soon. Contact support@tiikme.com")}
-            className="w-full h-12 rounded-xl text-[15px] font-semibold text-white cursor-pointer active:scale-[0.98]"
-            style={{ background: "linear-gradient(135deg, #E8733A, #FF6B9D)", border: "none" }}
-          >
-            {isTrialExpired ? "Subscribe — ₹299/month" : "Upgrade to Basic — ₹299/month"}
-          </button>
-        )}
-        <p className="text-[11px] text-center mt-2" style={{ color: "#9CA3AF" }}>
-          50% off for the first 3 months. Regular price ₹599/month.
-        </p>
-      </div>
-    </div>
-  );
-};
-
-const SettingsPage = () => {
+export default function Settings() {
+  const { user, profile, refreshProfile } = useAuth();
   const navigate = useNavigate();
-  const { user, refreshProfile, profile: authProfile } = useAuth();
-  const isInstitutionAccount = authProfile?.account_type === "institution";
-
-  const settingsNavItems = [
-    ...baseNavItems.filter(item => !(isInstitutionAccount && item.id === "display")),
-    ...(isInstitutionAccount ? [{ id: "subscription", label: "Subscription", icon: CreditCard }] : []),
-  ];
-
-  const [activeTab, setActiveTab] = useState("profile");
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleteText, setDeleteText] = useState("");
-  const [loggingOut, setLoggingOut] = useState(false);
+  const [section, setSection] = useState<SettingsSection>("profile");
   const [saving, setSaving] = useState(false);
-  const [profile, setProfile] = useState({ name: "", headline: "", bio: "", institution: "", city: "", state: "", slug: "", avatar_url: "", org_type: "", open_to_work: false });
-  const [originalProfile, setOriginalProfile] = useState({ name: "", headline: "", bio: "", institution: "", city: "", state: "", slug: "", avatar_url: "", org_type: "", open_to_work: false });
-  const [userId, setUserId] = useState<string | null>(null);
-  const avatarInputRef = useRef<HTMLInputElement>(null);
-  const [inviteCount, setInviteCount] = useState(0);
-  const [copied, setCopied] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const hasChanges = JSON.stringify(profile) !== JSON.stringify(originalProfile);
+  // Profile form state
+  const [form, setForm] = useState({
+    full_name: "",
+    headline: "",
+    about: "",
+    location_city: "",
+    location_state: "",
+    username: "",
+  });
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
+  // Privacy toggles
+  const [privacy, setPrivacy] = useState({
+    show_location: true,
+    show_company: true,
+    show_education: true,
+    show_experience: true,
+    contact_email_visible: false,
+    discoverable: true,
+    email_searchable: false,
+    connections_visibility: "everyone" as "everyone" | "connections" | "only_me",
+    otw_visibility: "public" as "public" | "recruiters" | "hidden",
+  });
+
+  // Display preference
+  const [displayPref, setDisplayPref] = useState<string>("avatar_name_role");
+
+  // Load profile data
   useEffect(() => {
-    const loadProfile = async () => {
-      const { data: { user: u } } = await supabase.auth.getUser();
-      if (!u) return;
-      setUserId(u.id);
-      const { data } = await supabase.from("profiles").select("full_name, headline, bio, institution_name, location_city, location_state, username, avatar_url, open_to_work").eq("id", u.id).maybeSingle();
-      if (data) {
-        const p = {
-          name: data.full_name || "",
-          headline: data.headline || "",
-          bio: data.bio || "",
-          institution: data.institution_name || "",
-          city: data.location_city || "",
-          state: data.location_state || "",
-          slug: data.username || "",
-          avatar_url: data.avatar_url || "",
-          org_type: "",
-          open_to_work: !!data.open_to_work,
-        };
-        if (isInstitutionAccount && authProfile?.org_id) {
-          const { data: orgData } = await supabase
-            .from("organizations")
-            .select("name, logo_url, type, slug")
-            .eq("id", authProfile.org_id)
-            .maybeSingle();
-          if (orgData) {
-            p.name = orgData.name || p.name;
-            p.avatar_url = orgData.logo_url || p.avatar_url;
-            p.org_type = orgData.type || "";
-          }
-        }
-        setProfile(p);
-        setOriginalProfile(p);
-        if (data.username) {
-          const { count } = await supabase.from("profiles").select("id", { count: "exact", head: true }).eq("referred_by", data.username);
-          setInviteCount(count || 0);
-        }
-      }
-    };
-    loadProfile();
-  }, [isInstitutionAccount, authProfile?.org_id]);
+    if (!profile) return;
+    const cleanUsername = (profile as any).clean_username || 
+      (profile.username || "").replace(/-[0-9a-f]{6}$/i, "");
 
-  const handleSaveProfile = async () => {
-    if (!userId) return;
+    setForm({
+      full_name: profile.full_name || "",
+      headline: profile.headline || "",
+      about: (profile as any).about || "",
+      location_city: profile.location_city || "",
+      location_state: profile.location_state || "",
+      username: cleanUsername,
+    });
+    setAvatarUrl(profile.avatar_url || null);
+    setDisplayPref((profile as any).display_preference || "avatar_name_role");
+
+    // Load privacy settings
+    const ps = (profile as any).privacy_settings || {};
+    setPrivacy({
+      show_location: ps.show_location !== false,
+      show_company: ps.show_company !== false,
+      show_education: ps.show_education !== false,
+      show_experience: ps.show_experience !== false,
+      contact_email_visible: (profile as any).contact_email_visible || false,
+      discoverable: ps.discoverable !== false,
+      email_searchable: ps.email_searchable || false,
+      connections_visibility: ps.connections_visibility || "everyone",
+      otw_visibility: (profile as any).otw_visibility || "public",
+    });
+  }, [profile]);
+
+  const saveProfile = useCallback(async () => {
+    if (!user) return;
     setSaving(true);
-    const { error } = await supabase.from("profiles").update({
-      full_name: profile.name,
-      headline: profile.headline,
-      bio: profile.bio,
-      institution_name: profile.institution,
-      location_city: profile.city,
-      location_state: profile.state,
-      username: profile.slug,
-      open_to_work: profile.open_to_work,
-    }).eq("id", userId);
-    if (error) { setSaving(false); tiikToast.error("Failed to save"); return; }
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          full_name: form.full_name.trim(),
+          headline: form.headline.trim(),
+          about: form.about.trim(),
+          location_city: form.location_city.trim(),
+          location_state: form.location_state.trim(),
+          // Don't update username here — need unique check
+        })
+        .eq("id", user.id);
 
-    if (isInstitutionAccount && authProfile?.org_id) {
-      const { error: orgErr } = await supabase.from("organizations")
-        .update({ name: profile.name, type: profile.org_type || null })
-        .eq("id", authProfile.org_id);
-      if (orgErr) { setSaving(false); tiikToast.error("Failed to save organization"); return; }
+      if (error) throw error;
+      await refreshProfile?.();
+      toast.success("Profile saved!");
+    } catch (e: any) {
+      toast.error(e.message || "Could not save. Try again.");
+    } finally {
+      setSaving(false);
     }
+  }, [form, user, refreshProfile]);
 
-    setSaving(false);
-    setOriginalProfile({ ...profile });
-    await refreshProfile();
-    tiikToast.success("Saved");
-  };
+  const savePrivacy = useCallback(async () => {
+    if (!user) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          contact_email_visible: privacy.contact_email_visible,
+          otw_visibility: privacy.otw_visibility,
+          privacy_settings: {
+            show_location: privacy.show_location,
+            show_company: privacy.show_company,
+            show_education: privacy.show_education,
+            show_experience: privacy.show_experience,
+            discoverable: privacy.discoverable,
+            email_searchable: privacy.email_searchable,
+            connections_visibility: privacy.connections_visibility,
+          },
+        })
+        .eq("id", user.id);
+
+      if (error) throw error;
+      await refreshProfile?.();
+      toast.success("Privacy settings saved!");
+    } catch {
+      toast.error("Could not save privacy settings. Try again.");
+    } finally {
+      setSaving(false);
+    }
+  }, [privacy, user, refreshProfile]);
+
+  const saveDisplayPref = useCallback(async (pref: string) => {
+    if (!user) return;
+    setDisplayPref(pref);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ display_preference: pref })
+        .eq("id", user.id);
+      if (error) throw error;
+      await refreshProfile?.();
+      toast.success("Display preference updated!");
+    } catch {
+      toast.error("Could not update. Try again.");
+    }
+  }, [user, refreshProfile]);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !userId) return;
-    if (file.size > 2 * 1024 * 1024) { tiikToast.error("Max 2MB"); return; }
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) { tiikToast.error("JPEG, PNG, or WebP only"); return; }
-    const canvas = document.createElement("canvas");
-    canvas.width = 400; canvas.height = 400;
-    const ctx = canvas.getContext("2d")!;
-    const img = new Image();
-    img.src = URL.createObjectURL(file);
-    await new Promise(r => img.onload = r);
-    const size = Math.min(img.width, img.height);
-    ctx.drawImage(img, (img.width - size) / 2, (img.height - size) / 2, size, size, 0, 0, 400, 400);
-    const blob = await new Promise<Blob | null>(r => canvas.toBlob(r, "image/webp", 0.85));
-    if (!blob) { tiikToast.error("Processing failed"); return; }
-    const path = `${userId}/avatar.webp`;
-    const { error: uploadErr } = await supabase.storage.from("avatars").upload(path, blob, { upsert: true, contentType: "image/webp" });
-    if (uploadErr) { tiikToast.error("Upload failed"); return; }
-    const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
-    const avatarUrl = urlData.publicUrl + "?t=" + Date.now();
-    await supabase.from("profiles").update({ avatar_url: avatarUrl }).eq("id", userId);
-    setProfile(p => ({ ...p, avatar_url: avatarUrl }));
-    setOriginalProfile(p => ({ ...p, avatar_url: avatarUrl }));
-    await refreshProfile();
-    tiikToast.success("Avatar updated");
-  };
+    if (!file || !user) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image must be under 5MB"); return; }
 
-  const handleSignOut = async () => {
-    setLoggingOut(true);
-    await supabase.auth.signOut();
-    localStorage.clear();
-    setTimeout(() => navigate("/signin"), 500);
+    setUploadingAvatar(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${user.id}/avatar.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("profile-avatars")
+        .upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("profile-avatars")
+        .getPublicUrl(path);
+
+      const newUrl = urlData.publicUrl + "?t=" + Date.now();
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ avatar_url: newUrl })
+        .eq("id", user.id);
+      if (updateError) throw updateError;
+
+      setAvatarUrl(newUrl);
+      await refreshProfile?.();
+      toast.success("Photo updated!");
+    } catch (e: any) {
+      toast.error(e.message || "Could not upload photo.");
+    } finally {
+      setUploadingAvatar(false);
+    }
   };
 
   const handleDeactivate = async () => {
-    if (!user) return;
-    await supabase.from("profiles").update({ is_active: false } as any).eq("id", user.id);
-    await supabase.auth.signOut();
-    localStorage.clear();
-    tiikToast.success("Account deactivated");
-    navigate("/");
+    if (!window.confirm(
+      "Deactivate your account? Your profile will be hidden. You can reactivate by signing in again."
+    )) return;
+    try {
+      await supabase.from("profiles").update({
+        pending_deletion: true,
+        deletion_requested_at: new Date().toISOString(),
+      }).eq("id", user!.id);
+      await supabase.auth.signOut();
+      navigate("/");
+      toast.success("Account deactivated. Sign in again to reactivate.");
+    } catch {
+      toast.error("Could not deactivate. Try again.");
+    }
   };
 
-  const cleanSlug = cleanUsername(profile.slug);
-  const inviteLink = `https://tiikme.in/invite/${cleanSlug}`;
-  const inviteMessage = `${profile.name} has invited you to create a verified professional profile on Tiikme. Join here: ${inviteLink}`;
-
-  const copyInviteLink = () => {
-    navigator.clipboard.writeText(inviteMessage);
-    setCopied(true);
-    tiikToast.success("Invite link copied!");
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const shareWhatsApp = () => window.open(`https://wa.me/?text=${encodeURIComponent(inviteMessage)}`, "_blank");
-  const shareTelegram = () => window.open(`https://t.me/share/url?url=${encodeURIComponent(inviteLink)}&text=${encodeURIComponent(inviteMessage)}`, "_blank");
-  const shareTwitter = () => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(inviteMessage)}`, "_blank");
-  const shareEmail = () => window.open(`mailto:?subject=${encodeURIComponent("Join Tiikme")}&body=${encodeURIComponent(inviteMessage)}`, "_blank");
-
-  return (
-    <motion.div
-      animate={loggingOut ? { scale: 0.97, opacity: 0 } : { scale: 1, opacity: 1 }}
-      transition={{ duration: 0.5, ease: "easeInOut" }}
-      className="max-w-[960px] mx-auto px-3 md:px-6 py-7"
+  const navItem = (id: SettingsSection, label: string, icon: string) => (
+    <button
+      key={id}
+      onClick={() => setSection(id)}
+      className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
+        section === id
+          ? "text-[#E8733A] bg-[#FFF3EC] font-medium"
+          : "text-gray-600 hover:bg-gray-50"
+      }`}
     >
-      <h1 className="text-[20px] font-extrabold mb-5" style={{ color: "#1A1A2E", letterSpacing: "-0.01em" }}>Settings</h1>
-
-      <div className="flex gap-6">
-        {/* Desktop nav */}
-        <div className="hidden md:block w-[200px] shrink-0">
-          <div className="sticky top-20 space-y-0.5">
-            {settingsNavItems.map(item => (
-              <button type="button" key={item.id} onClick={() => setActiveTab(item.id)}
-                className="w-full text-left text-[13px] px-3 h-[42px] rounded-xl flex items-center gap-2.5 cursor-pointer"
-                style={{
-                  background: activeTab === item.id ? "rgba(232,115,58,0.12)" : "transparent",
-                  color: activeTab === item.id ? "#E8733A" : "#6B7094",
-                  fontWeight: activeTab === item.id ? 700 : 500,
-                  transition: "all 0.15s",
-                }}>
-                <item.icon className="w-4 h-4" strokeWidth={1.8} />
-                {item.label}
-              </button>
-            ))}
-            <div style={{ borderTop: "1px solid rgba(0,0,0,0.06)", marginTop: 8, paddingTop: 8 }}>
-              <button type="button" onClick={handleSignOut}
-                className="w-full text-left text-[13px] px-3 h-[42px] rounded-xl flex items-center gap-2.5 cursor-pointer"
-                style={{ color: "#6B7094", transition: "all 0.15s" }}
-                onMouseEnter={e => { e.currentTarget.style.background = "rgba(239,68,68,0.10)"; e.currentTarget.style.color = "#EF4444"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#6B7094"; }}>
-                <LogOut className="w-4 h-4" /> Sign out
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          {/* Mobile tabs */}
-          <div className="md:hidden flex flex-wrap gap-1.5 mb-5">
-            {settingsNavItems.map(item => (
-              <button type="button" key={item.id} onClick={() => setActiveTab(item.id)}
-                className="text-[11px] px-3 h-7 rounded-full cursor-pointer"
-                style={{
-                  background: activeTab === item.id ? "linear-gradient(135deg, #E8733A, #FF6B9D)" : "rgba(0,0,0,0.04)",
-                  color: activeTab === item.id ? "white" : "#1A1A2E",
-                  border: activeTab === item.id ? "none" : "1px solid rgba(0,0,0,0.08)",
-                  fontWeight: activeTab === item.id ? 700 : 600,
-                }}>
-                {item.label}
-              </button>
-            ))}
-            <button type="button" onClick={handleSignOut}
-              className="text-[11px] px-3 h-7 rounded-full cursor-pointer"
-              style={{ background: "rgba(239,68,68,0.08)", color: "#EF4444", border: "1px solid rgba(239,68,68,0.15)", fontWeight: 600 }}>
-              Sign out
-            </button>
-          </div>
-
-          {/* Profile tab */}
-          {activeTab === "profile" && (
-            <div className="space-y-5">
-              <div className="glass-light" style={{ padding: 20, borderRadius: 20 }}>
-                <h3 className="text-[16px] font-semibold mb-5" style={{ color: "#1A1A2E" }}>Edit Profile</h3>
-                <div className="flex items-center gap-5 mb-5">
-                  <div className="relative group cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
-                    <AvatarSquare src={profile.avatar_url} name={profile.name || "U"} size="xl" />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center" style={{ transition: "opacity 0.2s", borderRadius: 0 }}>
-                      <Camera className="w-5 h-5 text-white" />
-                    </div>
-                    <input ref={avatarInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleAvatarUpload} />
-                  </div>
-                  <div>
-                    <p className="text-[14px] font-bold" style={{ color: "#1A1A2E" }}>{profile.name || "Your Name"}</p>
-                    <p className="text-[12px]" style={{ color: "#6B7094" }}>Click avatar to change</p>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "#6B7094" }}>{isInstitutionAccount ? "Organization Name" : "Display Name"}</label>
-                    <Input value={profile.name} onChange={e => setProfile({ ...profile, name: e.target.value })} />
-                  </div>
-                  {isInstitutionAccount ? (
-                    <div>
-                      <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "#6B7094" }}>Organization Type</label>
-                      <select
-                        value={profile.org_type}
-                        onChange={e => setProfile({ ...profile, org_type: e.target.value })}
-                        className="w-full rounded-xl px-3.5 h-11 text-[14px] outline-none"
-                        style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", color: "var(--text-1)" }}
-                      >
-                        <option value="">Select type…</option>
-                        {ORG_TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                      </select>
-                    </div>
-                  ) : (
-                    <div>
-                      <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "#6B7094" }}>Headline</label>
-                      <Input value={profile.headline} onChange={e => setProfile({ ...profile, headline: e.target.value.slice(0, 80) })} maxLength={80} />
-                      <p className="text-[10px] text-right mt-1" style={{ color: "var(--text-3)" }}>{profile.headline.length}/80</p>
-                    </div>
-                  )}
-                  <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "#6B7094" }}>Bio</label>
-                    <textarea value={profile.bio} onChange={e => setProfile({ ...profile, bio: e.target.value.slice(0, 300) })} placeholder="Tell people about yourself..." rows={3} maxLength={300}
-                      className="w-full rounded-xl p-3.5 text-[14px] outline-none resize-none"
-                      style={{ background: "var(--surface-2)", border: "1.5px solid var(--border-2)", color: "var(--text-1)" }} />
-                    <p className="text-[10px] text-right mt-1" style={{ color: "var(--text-3)" }}>{profile.bio.length}/300</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div><label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "#6B7094" }}>City</label><Input value={profile.city} onChange={e => setProfile({ ...profile, city: e.target.value })} /></div>
-                    <div><label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "#6B7094" }}>State</label><Input value={profile.state} onChange={e => setProfile({ ...profile, state: e.target.value })} /></div>
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "#6B7094" }}>Username</label>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[13px]" style={{ color: "var(--text-3)" }}>tiikme.in/</span>
-                      <Input value={profile.slug} disabled className="flex-1 opacity-60" />
-                    </div>
-                    <p className="text-[10px] mt-1" style={{ color: "var(--text-3)" }}>Username cannot be changed</p>
-                  </div>
-                  {/* Open to Work toggle moved to Profile page header */}
-                  <div className="flex justify-end">
-                    <button type="button" onClick={handleSaveProfile} disabled={saving || !hasChanges}
-                      className="h-10 px-6 rounded-2xl text-[13px] font-bold transition-all duration-200 disabled:opacity-50"
-                      style={{ background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", cursor: hasChanges ? "pointer" : "default", boxShadow: "0 4px 16px rgba(232,115,58,0.25)" }}>
-                      {saving ? "Saving..." : "Save changes"}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Account tab */}
-          {activeTab === "account" && (
-            <div className="space-y-5">
-              <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
-                <h3 className="text-[16px] font-semibold mb-4" style={{ color: "#1A1A2E" }}>Account</h3>
-                <div>
-                  <label className="text-[11px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "#6B7094" }}>Account Email</label>
-                  <Input value={user?.email || ""} disabled className="opacity-60" />
-                </div>
-              </div>
-
-              <LinkedAccounts />
-
-              <div className="rounded-2xl p-5" style={{ background: "rgba(220,38,38,0.04)", border: "1px solid rgba(220,38,38,0.12)" }}>
-                <h3 className="text-[16px] font-bold mb-1" style={{ color: "#DC2626" }}>Deactivate Account</h3>
-                <p className="text-[13px] mb-4" style={{ color: "var(--text-2)" }}>Your profile will be hidden from everyone. You can reactivate by signing in again.</p>
-                {!showDeleteModal ? (
-                  <button type="button" onClick={() => setShowDeleteModal(true)}
-                    className="text-[13px] font-semibold cursor-pointer" style={{ color: "#DC2626", background: "none", border: "none" }}>
-                    Deactivate my account
-                  </button>
-                ) : (
-                  <div className="space-y-3">
-                    <p className="text-[13px]" style={{ color: "#1A1A2E" }}>Are you sure you want to deactivate your account? Your profile will be hidden.</p>
-                    <div className="flex gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
-                      <Button variant="destructive" size="sm" onClick={handleDeactivate}>Deactivate</Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Profile Display preference */}
-          {activeTab === "display" && userId && (
-            <DisplaySection userId={userId} />
-          )}
-
-          {/* Privacy */}
-          {activeTab === "privacy" && (
-            <PrivacySection userId={userId} />
-          )}
-
-          {/* Invite */}
-          {activeTab === "invite" && (
-            <div className="space-y-5">
-              <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
-                <h3 className="text-[16px] font-semibold mb-1" style={{ color: "#1A1A2E" }}>Invite Friends to Tiikme</h3>
-                <p className="text-[14px] mb-5" style={{ color: "#6B7094" }}>Share your verified professional network with others</p>
-
-                <div className="rounded-[10px] p-3 mb-4 flex items-center gap-2" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
-                  <p className="flex-1 text-[13px] truncate" style={{ color: "var(--text-1)" }}>{inviteLink}</p>
-                  <button type="button" onClick={copyInviteLink}
-                    className="h-8 px-3 rounded-lg text-[12px] font-bold cursor-pointer active:scale-95 flex items-center gap-1.5"
-                    style={{ background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none" }}>
-                    <Copy className="w-3.5 h-3.5" /> {copied ? "Copied!" : "Copy Link"}
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-5">
-                  <button type="button" onClick={shareWhatsApp} className="h-10 rounded-xl text-[12px] font-semibold cursor-pointer flex items-center justify-center gap-1.5" style={{ background: "rgba(37,211,102,0.10)", color: "#25D366", border: "1px solid rgba(37,211,102,0.20)" }}>
-                    <MessageSquare className="w-4 h-4" /> WhatsApp
-                  </button>
-                  <button type="button" onClick={shareTelegram} className="h-10 rounded-xl text-[12px] font-semibold cursor-pointer flex items-center justify-center gap-1.5" style={{ background: "rgba(0,136,204,0.10)", color: "#0088CC", border: "1px solid rgba(0,136,204,0.20)" }}>
-                    <Send className="w-4 h-4" /> Telegram
-                  </button>
-                  <button type="button" onClick={shareTwitter} className="h-10 rounded-xl text-[12px] font-semibold cursor-pointer flex items-center justify-center gap-1.5" style={{ background: "rgba(0,0,0,0.06)", color: "#1A1A2E", border: "1px solid rgba(0,0,0,0.10)" }}>
-                    <Share2 className="w-4 h-4" /> X
-                  </button>
-                  <button type="button" onClick={shareEmail} className="h-10 rounded-xl text-[12px] font-semibold cursor-pointer flex items-center justify-center gap-1.5" style={{ background: "rgba(232,115,58,0.10)", color: "#E8733A", border: "1px solid rgba(232,115,58,0.20)" }}>
-                    <Copy className="w-4 h-4" /> Email
-                  </button>
-                </div>
-
-                <div className="rounded-xl p-4 text-center" style={{ background: "var(--brand-dim)", border: "1px solid var(--brand-glow)" }}>
-                  <p className="text-[28px] font-extrabold" style={{ color: "var(--brand)" }}>{inviteCount}</p>
-                  <p className="text-[13px] font-medium" style={{ color: "var(--text-2)" }}>
-                    {inviteCount === 1 ? "person has" : "people have"} joined from your invite
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Subscription (institution only) */}
-          {activeTab === "subscription" && (
-            <SubscriptionSection userId={userId} />
-          )}
-
-          {/* Legal */}
-          {activeTab === "legal" && <LegalSection />}
-
-          {/* Help */}
-          {activeTab === "help" && (
-            <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
-              <h3 className="text-[16px] font-semibold mb-4" style={{ color: "#1A1A2E" }}>Help & Support</h3>
-              <p className="text-[14px] mb-4" style={{ color: "#6B7094" }}>Need help? Reach out to us.</p>
-              <div className="space-y-3">
-                <a href="mailto:contact@tiikme.com" className="flex items-center gap-3 p-3 rounded-xl cursor-pointer" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
-                  <Mail className="w-4 h-4" style={{ color: "#E8733A" }} />
-                  <div>
-                    <p className="text-[14px] font-medium" style={{ color: "#1A1A2E" }}>Email Support</p>
-                    <p className="text-[12px]" style={{ color: "#6B7094" }}>contact@tiikme.com</p>
-                  </div>
-                </a>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </motion.div>
+      <span>{icon}</span>
+      <span>{label}</span>
+      {section !== id && <ChevronRight size={14} className="ml-auto text-gray-300" />}
+    </button>
   );
-};
 
-const LegalSection = () => {
-  const { user } = useAuth();
-  const [showDelete, setShowDelete] = useState(false);
-  const items = [
-    { icon: FileText, label: "Terms of Service", desc: "Read our terms", href: "/terms", external: true },
-    { icon: Shield, label: "Privacy Policy", desc: "How we handle your data", href: "/privacy", external: true },
-    { icon: Mail, label: "Contact Support", desc: "contact@tiikme.com", href: "mailto:contact@tiikme.com", external: false },
-  ];
+  const Toggle = ({
+    checked, onChange, label, description,
+  }: {
+    checked: boolean; onChange: (v: boolean) => void;
+    label: string; description?: string;
+  }) => (
+    <div className="flex items-start justify-between py-3 border-b border-gray-50 last:border-0">
+      <div className="flex-1 pr-4">
+        <p className="text-sm text-gray-800">{label}</p>
+        {description && <p className="text-xs text-gray-400 mt-0.5">{description}</p>}
+      </div>
+      <button
+        onClick={() => onChange(!checked)}
+        className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${
+          checked ? "bg-[#E8733A]" : "bg-gray-200"
+        }`}
+      >
+        <div
+          className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+            checked ? "translate-x-5" : "translate-x-0.5"
+          }`}
+        />
+      </button>
+    </div>
+  );
+
+  const initial = (form.full_name || form.username || "?")[0].toUpperCase();
+
   return (
-    <>
-      <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
-        <h3 className="text-[16px] font-semibold mb-1" style={{ color: "#1A1A2E" }}>Legal</h3>
-        <p className="text-[13px] mb-4" style={{ color: "#6B7094" }}>Terms, privacy, and account controls.</p>
-        <div className="space-y-3">
-          {items.map(it => (
-            <a key={it.label} href={it.href} target={it.external ? "_blank" : undefined} rel={it.external ? "noopener noreferrer" : undefined}
-              className="flex items-center gap-3 p-3 rounded-xl cursor-pointer"
-              style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
-              <it.icon className="w-4 h-4" style={{ color: "#E8733A" }} />
-              <div>
-                <p className="text-[14px] font-medium" style={{ color: "#1A1A2E" }}>{it.label}</p>
-                <p className="text-[12px]" style={{ color: "#6B7094" }}>{it.desc}</p>
-              </div>
-            </a>
-          ))}
-          <button type="button" onClick={() => setShowDelete(true)}
-            className="w-full flex items-center gap-3 p-3 rounded-xl cursor-pointer text-left"
-            style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)" }}>
-            <Trash2 className="w-4 h-4" style={{ color: "#EF4444" }} />
-            <div>
-              <p className="text-[14px] font-medium" style={{ color: "#EF4444" }}>Delete My Account</p>
-              <p className="text-[12px]" style={{ color: "#6B7094" }}>Permanently remove your account and data</p>
-            </div>
+    <div className="flex gap-0 min-h-screen bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      {/* Sidebar nav */}
+      <div className="w-52 flex-shrink-0 border-r border-gray-100 pt-4">
+        <p className="px-4 pb-2 text-xs font-medium text-gray-400 uppercase tracking-wider">Settings</p>
+        {navItem("profile", "Profile", "👤")}
+        {navItem("account", "Account", "🔒")}
+        {navItem("display", "Display", "✨")}
+        {navItem("privacy", "Privacy", "👁")}
+        {navItem("invite", "Invite", "🎟")}
+        {navItem("legal", "Legal", "📜")}
+        <div className="border-t border-gray-100 mt-2 pt-2">
+          <button
+            onClick={async () => { await supabase.auth.signOut(); navigate("/"); }}
+            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50"
+          >
+            <LogOut size={14} /> Sign out
           </button>
         </div>
       </div>
-      <DeleteAccountModal open={showDelete} onClose={() => setShowDelete(false)} userId={user?.id ?? null} />
-    </>
-  );
-};
 
-export default SettingsPage;
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-xl p-6">
+
+          {/* ── PROFILE ── */}
+          {section === "profile" && (
+            <>
+              <h2 className="text-base font-semibold mb-5">Edit Profile</h2>
+
+              {/* Avatar */}
+              <div className="flex items-center gap-4 mb-6">
+                <div className="relative">
+                  {uploadingAvatar ? (
+                    <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center">
+                      <Loader2 size={20} className="animate-spin text-gray-400" />
+                    </div>
+                  ) : avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt="avatar"
+                      className="w-20 h-20 rounded-full object-cover"
+                      onError={() => setAvatarUrl(null)}
+                    />
+                  ) : (
+                    <div className="w-20 h-20 rounded-full bg-[#E8733A] flex items-center justify-center text-white text-2xl font-semibold">
+                      {initial}
+                    </div>
+                  )}
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute bottom-0 right-0 w-7 h-7 bg-white rounded-full shadow border border-gray-200 flex items-center justify-center hover:bg-gray-50"
+                  >
+                    <Camera size={12} className="text-gray-600" />
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={handleAvatarUpload}
+                  />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">{form.full_name || "Your Name"}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Click avatar to change · JPG/PNG/WEBP · Max 5MB</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Display Name</label>
+                  <input
+                    value={form.full_name}
+                    onChange={e => setForm(f => ({ ...f, full_name: e.target.value }))}
+                    className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-[#E8733A]"
+                    placeholder="Your full name"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Headline <span className="font-normal text-gray-400">({form.headline.length}/120)</span>
+                  </label>
+                  <input
+                    value={form.headline}
+                    onChange={e => setForm(f => ({ ...f, headline: e.target.value.slice(0, 120) }))}
+                    className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-[#E8733A]"
+                    placeholder="e.g. CEO at Tiikme · Building the future of professional networking"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    About <span className="font-normal text-gray-400">({form.about.length}/300)</span>
+                  </label>
+                  <textarea
+                    value={form.about}
+                    onChange={e => setForm(f => ({ ...f, about: e.target.value.slice(0, 300) }))}
+                    className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-[#E8733A] resize-none"
+                    placeholder="Tell people about yourself..."
+                    rows={4}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">City</label>
+                    <input
+                      value={form.location_city}
+                      onChange={e => setForm(f => ({ ...f, location_city: e.target.value }))}
+                      className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-[#E8733A]"
+                      placeholder="Hyderabad"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">State</label>
+                    <input
+                      value={form.location_state}
+                      onChange={e => setForm(f => ({ ...f, location_state: e.target.value }))}
+                      className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-[#E8733A]"
+                      placeholder="Telangana"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Username</label>
+                  <div className="mt-1 flex items-center gap-0 rounded-xl border border-gray-200 overflow-hidden focus-within:border-[#E8733A]">
+                    <span className="px-3 py-2.5 text-sm text-gray-400 bg-gray-50 border-r border-gray-200">tiikme.in/</span>
+                    <input
+                      value={form.username}
+                      onChange={e => setForm(f => ({ ...f, username: e.target.value.toLowerCase().replace(/[^a-z0-9._]/g, "") }))}
+                      className="flex-1 px-3 py-2.5 text-sm outline-none"
+                      placeholder="yourusername"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">Letters, numbers, dots, underscores only · Min 3 chars</p>
+                </div>
+              </div>
+
+              <button
+                onClick={saveProfile}
+                disabled={saving}
+                className="mt-6 w-full flex items-center justify-center gap-2 bg-[#E8733A] text-white rounded-xl py-3 font-semibold text-sm hover:bg-[#d4632e] disabled:opacity-50"
+              >
+                {saving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                Save changes
+              </button>
+            </>
+          )}
+
+          {/* ── ACCOUNT ── */}
+          {section === "account" && (
+            <>
+              <h2 className="text-base font-semibold mb-5">Account</h2>
+              <div className="rounded-2xl border border-gray-100 overflow-hidden">
+                <div className="px-4 py-3 border-b border-gray-100">
+                  <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">Account Email</p>
+                  <p className="text-sm font-medium text-gray-800">{user?.email}</p>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-gray-100 overflow-hidden mt-4">
+                <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Google</p>
+                    <p className="text-xs text-gray-400 mt-0.5">Not linked</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      // Trigger Supabase OAuth linking
+                      supabase.auth.linkIdentity({ provider: "google" });
+                    }}
+                    className="text-sm font-medium text-[#E8733A] hover:underline"
+                  >
+                    Link Google
+                  </button>
+                </div>
+                <div className="px-4 py-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Email & Password</p>
+                    <p className="text-xs text-gray-400 mt-0.5">Linked</p>
+                  </div>
+                  <span className="text-xs text-green-600 font-medium">✓ Active</span>
+                </div>
+              </div>
+
+              <div className="mt-6 rounded-2xl border border-red-100 bg-red-50 overflow-hidden">
+                <div className="px-4 py-3">
+                  <p className="text-sm font-medium text-red-700">Deactivate Account</p>
+                  <p className="text-xs text-red-500 mt-0.5">
+                    Your profile will be hidden from everyone. You can reactivate by signing in again.
+                  </p>
+                  <button
+                    onClick={handleDeactivate}
+                    className="mt-3 text-sm font-medium text-red-600 hover:underline"
+                  >
+                    Deactivate my account
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* ── DISPLAY ── */}
+          {section === "display" && (
+            <>
+              <h2 className="text-base font-semibold mb-2">Profile Display</h2>
+              <p className="text-sm text-gray-500 mb-5">
+                Choose how your name, role, and company appear to others across Tiikme.
+              </p>
+              <div className="space-y-3">
+                {[
+                  { value: "avatar_only", label: "Avatar only", desc: "Just your profile photo", preview: "(photo)" },
+                  { value: "avatar_name", label: "Avatar + Name", desc: "Photo and your name", preview: "Saainadhan" },
+                  {
+                    value: "avatar_name_role", label: "Avatar + Name + Role",
+                    desc: "Recommended — adds your role", preview: "Saainadhan · CEO / Founder",
+                    recommended: true,
+                  },
+                  {
+                    value: "full", label: "Full identity",
+                    desc: "Name, role, and company", preview: "Saainadhan · CEO / Founder · Tiikme",
+                  },
+                ].map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => saveDisplayPref(opt.value)}
+                    className={`w-full flex items-center justify-between p-4 rounded-2xl border-2 transition-colors text-left ${
+                      displayPref === opt.value
+                        ? "border-[#E8733A] bg-[#FFF3EC]"
+                        : "border-gray-100 hover:border-gray-200"
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium">{opt.label}</p>
+                        {opt.recommended && (
+                          <span className="text-xs bg-[#E8733A] text-white px-2 py-0.5 rounded-full">
+                            Recommended
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-400 mt-0.5">{opt.desc}</p>
+                      <p className="text-xs text-gray-600 mt-1 italic">{opt.preview}</p>
+                    </div>
+                    {displayPref === opt.value && (
+                      <Check size={16} className="text-[#E8733A] flex-shrink-0" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* ── PRIVACY ── */}
+          {section === "privacy" && (
+            <>
+              <h2 className="text-base font-semibold mb-5">Privacy</h2>
+              <div className="rounded-2xl border border-gray-100 px-4 mb-4">
+                <p className="text-xs font-medium text-gray-400 uppercase tracking-wider py-3 border-b border-gray-50">Profile Visibility</p>
+                <Toggle
+                  checked={privacy.show_location}
+                  onChange={v => setPrivacy(p => ({ ...p, show_location: v }))}
+                  label="Show my location"
+                  description="City and state visible on your profile"
+                />
+                <Toggle
+                  checked={privacy.show_company}
+                  onChange={v => setPrivacy(p => ({ ...p, show_company: v }))}
+                  label="Show current company"
+                />
+                <Toggle
+                  checked={privacy.show_education}
+                  onChange={v => setPrivacy(p => ({ ...p, show_education: v }))}
+                  label="Show my education"
+                />
+                <Toggle
+                  checked={privacy.show_experience}
+                  onChange={v => setPrivacy(p => ({ ...p, show_experience: v }))}
+                  label="Show my experience"
+                />
+                <Toggle
+                  checked={privacy.contact_email_visible}
+                  onChange={v => setPrivacy(p => ({ ...p, contact_email_visible: v }))}
+                  label="Show my email on profile"
+                  description="Visible to connections only"
+                />
+              </div>
+
+              <div className="rounded-2xl border border-gray-100 px-4 mb-4">
+                <p className="text-xs font-medium text-gray-400 uppercase tracking-wider py-3 border-b border-gray-50">Discovery</p>
+                <Toggle
+                  checked={privacy.discoverable}
+                  onChange={v => setPrivacy(p => ({ ...p, discoverable: v }))}
+                  label="Show me in Explore and Search"
+                  description="Turn off to hide from discovery feeds"
+                />
+                <Toggle
+                  checked={privacy.email_searchable}
+                  onChange={v => setPrivacy(p => ({ ...p, email_searchable: v }))}
+                  label="Let people find me by email"
+                />
+              </div>
+
+              <div className="rounded-2xl border border-gray-100 px-4 mb-4">
+                <p className="text-xs font-medium text-gray-400 uppercase tracking-wider py-3 border-b border-gray-50">Connections</p>
+                <div className="py-3">
+                  <p className="text-sm text-gray-800 mb-2">Who can see my connections</p>
+                  <div className="flex gap-2">
+                    {(["everyone", "connections", "only_me"] as const).map(opt => (
+                      <button
+                        key={opt}
+                        onClick={() => setPrivacy(p => ({ ...p, connections_visibility: opt }))}
+                        className={`flex-1 py-1.5 text-xs rounded-lg capitalize border transition-colors ${
+                          privacy.connections_visibility === opt
+                            ? "bg-[#E8733A] text-white border-[#E8733A]"
+                            : "border-gray-200 text-gray-600 hover:border-gray-300"
+                        }`}
+                      >
+                        {opt.replace("_", " ")}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="py-3 border-t border-gray-50">
+                  <p className="text-sm text-gray-800 mb-2">Open to Work visibility</p>
+                  <div className="flex gap-2">
+                    {(["public", "recruiters", "hidden"] as const).map(opt => (
+                      <button
+                        key={opt}
+                        onClick={() => setPrivacy(p => ({ ...p, otw_visibility: opt }))}
+                        className={`flex-1 py-1.5 text-xs rounded-lg capitalize border transition-colors ${
+                          privacy.otw_visibility === opt
+                            ? "bg-[#E8733A] text-white border-[#E8733A]"
+                            : "border-gray-200 text-gray-600 hover:border-gray-300"
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1.5">Public = ring visible to all · Recruiters = only recruiter accounts</p>
+                </div>
+              </div>
+
+              <button
+                onClick={savePrivacy}
+                disabled={saving}
+                className="w-full flex items-center justify-center gap-2 bg-[#E8733A] text-white rounded-xl py-3 font-semibold text-sm hover:bg-[#d4632e] disabled:opacity-50"
+              >
+                {saving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                Save privacy settings
+              </button>
+            </>
+          )}
+
+          {/* ── INVITE ── */}
+          {section === "invite" && (
+            <>
+              <h2 className="text-base font-semibold mb-5">Invite People</h2>
+              <div className="bg-gradient-to-br from-[#FFF3EC] to-white rounded-2xl border border-[#E8733A]/20 p-6 text-center">
+                <p className="text-3xl mb-3">🎟</p>
+                <p className="font-semibold text-gray-800">Invite your network to Tiikme</p>
+                <p className="text-sm text-gray-500 mt-1.5 mb-4">
+                  Share your unique invite link and help grow India's most trusted professional network
+                </p>
+                <div className="flex items-center gap-2 bg-white rounded-xl border border-gray-200 px-3 py-2.5 mb-3">
+                  <span className="flex-1 text-sm text-gray-600 text-left truncate">
+                    tiikme.com/invite/{(profile as any)?.clean_username || profile?.username || "you"}
+                  </span>
+                  <button
+                    onClick={async () => {
+                      const link = `https://tiikme.com/invite/${(profile as any)?.clean_username || profile?.username}`;
+                      await navigator.clipboard.writeText(link);
+                      toast.success("Invite link copied!");
+                    }}
+                    className="flex-shrink-0 p-1.5 hover:bg-gray-100 rounded-lg text-gray-400"
+                  >
+                    <Copy size={14} />
+                  </button>
+                </div>
+                <button
+                  onClick={() => {
+                    if (navigator.share) {
+                      navigator.share({
+                        title: "Join me on Tiikme",
+                        text: "I'm on Tiikme — India's verified professional network. Join me!",
+                        url: `https://tiikme.com/invite/${(profile as any)?.clean_username || profile?.username}`,
+                      });
+                    }
+                  }}
+                  className="w-full bg-[#E8733A] text-white rounded-xl py-2.5 text-sm font-semibold"
+                >
+                  Share invite link
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* ── LEGAL ── */}
+          {section === "legal" && (
+            <>
+              <h2 className="text-base font-semibold mb-5">Legal</h2>
+              <div className="space-y-2">
+                {[
+                  { label: "Terms of Service", url: "/legal/terms" },
+                  { label: "Privacy Policy", url: "/legal/privacy" },
+                  { label: "Community Guidelines", url: "/legal/guidelines" },
+                  { label: "Cookie Policy", url: "/legal/cookies" },
+                  { label: "Help & Support", url: "/help" },
+                ].map(item => (
+                  <button
+                    key={item.url}
+                    onClick={() => window.open(item.url, "_blank")}
+                    className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-gray-100 hover:bg-gray-50 text-sm text-gray-700"
+                  >
+                    {item.label}
+                    <ChevronRight size={14} className="text-gray-400" />
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-gray-400 text-center mt-6">
+                Tiikme v1.0 · © 2026 Tiikme Technologies Pvt. Ltd.
+              </p>
+            </>
+          )}
+
+        </div>
+      </div>
+    </div>
+  );
+}

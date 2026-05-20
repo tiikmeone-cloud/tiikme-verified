@@ -171,7 +171,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
     { label: "Circles", icon: Users, path: "/app/circles" },
   ];
   const mobileRightItems = [
-    { label: "Opps", icon: Briefcase, path: "/app/opportunities" },
+    { label: "Jobs", icon: Briefcase, path: "/app/opportunities" },
     { label: "Profile", icon: User, path: profilePath, isProfile: true },
   ];
 
@@ -264,11 +264,26 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           <Link to={profilePath} className="flex items-center" style={{ gap: 10 }}>
             <AvatarSquare src={identityAvatar} name={identityName || "You"} size={32} />
             <div className="min-w-0 flex-1">
-              <p className="truncate" style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{identityName || "Your Name"}</p>
+              <p
+                style={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "var(--text-primary)",
+                  lineHeight: "16px",
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                  overflowWrap: "anywhere",
+                  wordBreak: "break-word",
+                }}
+              >
+                {identityName || "Your Name"}
+              </p>
               <span style={{
-                fontSize: 11, fontWeight: 500, padding: "0 6px", borderRadius: 4,
+                fontSize: 11, fontWeight: 500, padding: "2px 6px", borderRadius: 999,
                 background: "rgba(232,115,58,0.12)", color: "#E8733A",
-                lineHeight: "14px", display: "inline-block",
+                lineHeight: "14px", display: "inline-block", marginTop: 4,
               }}>{roleLabel}</span>
             </div>
           </Link>

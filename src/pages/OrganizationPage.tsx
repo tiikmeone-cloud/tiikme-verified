@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import OrgVerificationRouting from "@/components/verification/OrgVerificationRouting";
 import { isCreatorOrg } from "@/lib/orgTypes";
 import { PageSEO, orgSEO } from "@/hooks/usePageSEO";
+import { CompanyBrain } from "@/components/org/CompanyBrain";
 
 const AVATAR_COLORS = ["#E8733A", "#4A90D9", "#34C759", "#FF6B9D", "#8B5CF6", "#FFB800"];
 const hashColor = (s: string) => AVATAR_COLORS[Math.abs([...s].reduce((a, c) => a + c.charCodeAt(0), 0)) % AVATAR_COLORS.length];
@@ -33,6 +34,10 @@ function getTimeAgo(d: Date): string {
   return `${Math.floor(h / 24)}d ago`;
 }
 
+function isOrgMembershipConfirmed(member: { is_verified?: boolean | null; approval_status?: string | null }) {
+  return !!member.is_verified && member.approval_status === "approved";
+}
+
 export default function OrganizationPage() {
   const { slug } = useParams<{ slug: string }>();
   const { user, profile } = useAuth();
@@ -47,6 +52,7 @@ export default function OrganizationPage() {
   const [posts, setPosts] = useState<any[]>([]);
   const [communityCircles, setCommunityCircles] = useState<any[]>([]);
   const [showUnfollow, setShowUnfollow] = useState(false);
+  const [activeTab, setActiveTab] = useState<"overview" | "brain">("overview");
 
   useEffect(() => {
     if (!slug) return;
@@ -289,7 +295,36 @@ export default function OrganizationPage() {
         </div>
 
         {/* ── COMPANY INFO CARDS ── */}
-        {infoCards.length > 0 && (
+        <div className="flex items-center gap-2 mt-12">
+          {[
+            { key: "overview", label: "Overview" },
+            { key: "brain", label: "Brain 🧠" },
+          ].map((tab) => {
+            const active = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key as "overview" | "brain")}
+                className="cursor-pointer"
+                style={{
+                  height: 34,
+                  padding: "0 14px",
+                  borderRadius: 999,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  border: active ? "1px solid #FF5A1F" : "1px solid rgba(0,0,0,0.08)",
+                  background: active ? "#FF5A1F" : "rgba(255,255,255,0.30)",
+                  color: active ? "#fff" : "#6B7094",
+                }}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {activeTab === "overview" && infoCards.length > 0 && (
           <div className="flex flex-wrap" style={{ gap: 8, marginTop: 12 }}>
             {infoCards.map((card, i) => (
               <div key={i} className="glass-card" style={{
@@ -306,7 +341,7 @@ export default function OrganizationPage() {
         )}
 
         {/* ── ADMIN: VERIFICATION ROUTING ── */}
-        {isAdmin && (
+        {activeTab === "overview" && isAdmin && (
           <div className="glass-card" style={{
             padding: 16, borderRadius: 16, marginTop: 12,
             background: "rgba(255,255,255,0.25)", backdropFilter: "blur(20px)",
@@ -325,7 +360,7 @@ export default function OrganizationPage() {
         )}
 
         {/* ── ABOUT ── */}
-        <div className="glass-card" style={{
+        {activeTab === "overview" && <div className="glass-card" style={{
           padding: 16, borderRadius: 16, marginTop: 12,
           background: "rgba(255,255,255,0.25)", backdropFilter: "blur(20px)",
           border: "1px solid rgba(255,255,255,0.40)",
@@ -351,9 +386,14 @@ export default function OrganizationPage() {
               ))}
             </div>
           )}
-        </div>
+        </div>}
 
         {/* ── SECTION GRID ── */}
+        {activeTab === "brain" ? (
+          <div style={{ marginTop: 12 }}>
+            <CompanyBrain orgId={org.id} orgType={org.type} orgName={org.name} isAdmin={isAdmin} />
+          </div>
+        ) : (
         <div className="grid grid-cols-1 md:grid-cols-[280px_1fr]" style={{ marginTop: 12, gap: 12 }}>
 
           {/* ═══ LEFT COLUMN ═══ */}
@@ -396,10 +436,23 @@ export default function OrganizationPage() {
                         <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.profile?.full_name || "Member"}</p>
                         <p style={{ fontSize: 11, color: "#9CA3C0" }}>{m.title || m.role}{m.department ? ` · ${m.department}` : ""}</p>
                       </div>
-                      {m.is_verified && (
-                        <div className="flex items-center justify-center shrink-0" style={{ width: 18, height: 18, borderRadius: 9, background: "#FFB800" }}>
-                          <Shield className="w-2.5 h-2.5 text-white" />
-                        </div>
+                      {isOrgMembershipConfirmed(m) && (
+                        <span
+                          className="shrink-0"
+                          title="Organization-confirmed member"
+                          aria-label="Organization-confirmed member"
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 700,
+                            padding: "3px 6px",
+                            borderRadius: 999,
+                            background: "rgba(255,184,0,0.16)",
+                            color: "#B77900",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          Org confirmed
+                        </span>
                       )}
                     </Link>
                   ))}
@@ -550,6 +603,7 @@ export default function OrganizationPage() {
             </SectionBox>
           </div>
         </div>
+        )}
       </div>
     </div>
   );

@@ -87,13 +87,17 @@ export default function StepPageSetup({ form, update, onComplete }: Props) {
 
       if (orgErr) { toast.error("Failed to create organisation: " + orgErr.message); setSubmitting(false); return; }
 
-      // Create owner membership
+      // Create owner membership.
+      // This is onboarding bootstrap metadata for the org creator, not the
+      // canonical public profile verification flow. Keep it separate from the
+      // profile trust system until institution bootstrap is redesigned.
       await supabase.from("org_members").insert({
         org_id: org.id,
         user_id: user.id,
         role: "owner",
         title: form.repRole,
         is_verified: true,
+        approval_status: "owner_bootstrap",
         is_current: true,
       });
 

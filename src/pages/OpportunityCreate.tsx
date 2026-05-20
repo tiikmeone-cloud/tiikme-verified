@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Briefcase, Clock, Code, GraduationCap, Hammer, Trophy, Users, MapPin, Zap, ChevronDown, ChevronUp, Plus, X, DollarSign, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,10 +29,13 @@ const isFreelanceType = (t: string) => ["freelance", "gig"].includes(t);
 
 export default function OpportunityCreate() {
   const navigate = useNavigate();
+  const { id: editId } = useParams();
   const { user, profile } = useAuth();
+  const isEditMode = !!editId;
   const [step, setStep] = useState(1);
   const [oppType, setOppType] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [loadingExisting, setLoadingExisting] = useState(false);
 
   // Common fields
   const [title, setTitle] = useState("");
@@ -111,6 +114,67 @@ export default function OpportunityCreate() {
     if (questions.length < 10) setQuestions([...questions, { question: "", type: "text", options: [], correct: [], is_eliminatory: false }]);
   };
 
+  useEffect(() => {
+    if (!editId || !user?.id) return;
+    let cancelled = false;
+    (async () => {
+      setLoadingExisting(true);
+      const { data, error } = await supabase
+        .from("opportunities")
+        .select("*")
+        .eq("id", editId)
+        .eq("poster_id", user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      if (error || !data) {
+        toast.error("Could not load this opportunity");
+        navigate("/app/opportunities");
+        return;
+      }
+      setOppType(data.type || "");
+      setTitle(data.title || "");
+      setDescription(data.description || "");
+      setDomain(data.domain || "");
+      setLocation(data.location && data.location !== "Remote" ? data.location : "");
+      setIsRemote(!!data.is_remote || data.location === "Remote");
+      setDeadline(data.deadline || "");
+      setSkills(Array.isArray(data.skills_required) ? data.skills_required : []);
+      setSalaryMin(data.salary_min ? String(data.salary_min) : "");
+      setSalaryMax(data.salary_max ? String(data.salary_max) : "");
+      setSalaryCurrency(data.salary_currency || "INR");
+      setExperienceMin(data.experience_min ? String(data.experience_min) : "");
+      setActivityScoreMin(data.activity_score_min ? String(data.activity_score_min) : "");
+      setDurationMonths(data.duration_months ? String(data.duration_months) : "");
+      setStipend(data.stipend || "");
+      setCanConvert(!!data.can_convert_fulltime);
+      setProjectDuration(data.project_duration || "");
+      setBudgetMin(data.budget_min ? String(data.budget_min) : "");
+      setBudgetMax(data.budget_max ? String(data.budget_max) : "");
+      setPricingModel(data.pricing_model || "fixed");
+      setStartDate(data.start_date || "");
+      setEndDate(data.end_date || "");
+      setTeamSizeMin(data.team_size_min ? String(data.team_size_min) : "");
+      setTeamSizeMax(data.team_size_max ? String(data.team_size_max) : "");
+      setPrizePool(data.prize_pool || "");
+      setThemes(Array.isArray(data.themes) ? data.themes : []);
+      setRegistrationDeadline(data.registration_deadline || "");
+      setEventMode(data.event_mode || "offline");
+      setEventDate(data.event_date || "");
+      setEventTime(data.event_time || "");
+      setVenue(data.venue || "");
+      setDocuments(Array.isArray(data.documents_to_bring) ? data.documents_to_bring : []);
+      setPositionsAvailable(data.positions_available ? String(data.positions_available) : "");
+      setQuestions(Array.isArray(data.screening_questions) ? data.screening_questions : []);
+      setRequireResume(data.require_resume ?? true);
+      setAskPortfolio(!!data.ask_portfolio);
+      setCustomAttachmentLabel(data.custom_attachment_label || "");
+      setHrContactId(data.hr_contact_id || "");
+      setStep(2);
+      setLoadingExisting(false);
+    })();
+    return () => { cancelled = true; };
+  }, [editId, user?.id, navigate]);
+
   const handleSubmit = async () => {
     if (!title.trim() || !user) return;
     setSubmitting(true);
@@ -177,11 +241,15 @@ export default function OpportunityCreate() {
         insertData.positions_available = positionsAvailable ? parseInt(positionsAvailable) : null;
       }
 
-      const { error } = await supabase.from("opportunities").insert(insertData as any).select().single();
+      const { error } = isEditMode
+        ? await supabase.from("opportunities").update(insertData as any).eq("id", editId!).eq("poster_id", user.id)
+        : await supabase.from("opportunities").insert(insertData as any).select().single();
       if (error) throw error;
 
-      await supabase.rpc("increment_score", { uid: user.id, amount: 3 });
-      toast.success("Opportunity posted!");
+      if (!isEditMode) {
+        await supabase.rpc("increment_score", { uid: user.id, amount: 3 });
+      }
+      toast.success(isEditMode ? "Opportunity updated!" : "Opportunity posted!");
       navigate("/app/opportunities");
     } catch (err: any) {
       toast.error(err.message || "Failed to post");
@@ -203,11 +271,17 @@ export default function OpportunityCreate() {
         <ArrowLeft className="w-5 h-5" /> {step === 1 ? "Back" : "Previous Step"}
       </button>
 
+      {loadingExisting && (
+        <div className="glass-card rounded-2xl p-6 text-sm" style={{ color: "var(--text-2)" }}>
+          Loading opportunity...
+        </div>
+      )}
+
       {/* Step 1: Type Selection */}
-      {step === 1 && (
+      {!loadingExisting && step === 1 && (
         <>
-          <h1 className="text-[24px] font-bold mb-1" style={{ color: "var(--text-1)" }}>Post an Opportunity</h1>
-          <p className="text-[14px] mb-6" style={{ color: "var(--text-3)" }}>Choose what type of opportunity you're posting</p>
+          <h1 className="text-[24px] font-bold mb-1" style={{ color: "var(--text-1)" }}>{isEditMode ? "Edit Opportunity" : "Post an Opportunity"}</h1>
+          <p className="text-[14px] mb-6" style={{ color: "var(--text-3)" }}>{isEditMode ? "Update the opportunity type and details" : "Choose what type of opportunity you're posting"}</p>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {OPP_TYPES.map(t => {
               const Icon = t.icon;
@@ -235,13 +309,13 @@ export default function OpportunityCreate() {
       )}
 
       {/* Step 2: Details Form */}
-      {step === 2 && (
+      {!loadingExisting && step === 2 && (
         <>
           <div className="flex items-center gap-2 mb-5">
             <span className="text-[11px] font-bold uppercase px-3 py-1 rounded-full" style={{ background: `${typeColor}14`, color: typeColor }}>
               {OPP_TYPES.find(t => t.value === oppType)?.label}
             </span>
-            <h1 className="text-[22px] font-bold" style={{ color: "var(--text-1)" }}>Opportunity Details</h1>
+            <h1 className="text-[22px] font-bold" style={{ color: "var(--text-1)" }}>{isEditMode ? "Edit Opportunity" : "Opportunity Details"}</h1>
           </div>
 
           <div className="space-y-5">
@@ -440,7 +514,7 @@ export default function OpportunityCreate() {
       )}
 
       {/* Step 3: Screening & Application Requirements */}
-      {step === 3 && (
+      {!loadingExisting && step === 3 && (
         <>
           <h1 className="text-[22px] font-bold mb-5" style={{ color: "var(--text-1)" }}>Screening & Requirements</h1>
 

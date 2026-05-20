@@ -130,6 +130,7 @@ const AppRoutes = () => {
             <Route path="/app/teams/:projectId" element={<Shell><ProjectHub /></Shell>} />
             <Route path="/app/opportunities" element={<Shell><Opportunities /></Shell>} />
             <Route path="/app/opportunities/create" element={<Shell><OpportunityCreate /></Shell>} />
+            <Route path="/app/opportunities/:id/edit" element={<Shell><OpportunityCreate /></Shell>} />
             <Route path="/app/opportunities/:id/applications" element={<Shell><ApplicationsDashboard /></Shell>} />
             <Route path="/app/workspace" element={<Navigate to="/app/circles" replace />} />
             <Route path="/app/circles" element={<Shell><CirclesPage /></Shell>} />

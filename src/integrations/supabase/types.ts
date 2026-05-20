@@ -3499,6 +3499,8 @@ export type Database = {
           requested_doc_message: string | null
           requested_role: string | null
           requester_id: string
+          requested_verification_type: string | null
+          review_queue: string
           resolved_at: string | null
           review_note: string | null
           review_thread: Json | null
@@ -3526,6 +3528,8 @@ export type Database = {
           requested_doc_message?: string | null
           requested_role?: string | null
           requester_id: string
+          requested_verification_type?: string | null
+          review_queue?: string
           resolved_at?: string | null
           review_note?: string | null
           review_thread?: Json | null
@@ -3553,6 +3557,8 @@ export type Database = {
           requested_doc_message?: string | null
           requested_role?: string | null
           requester_id?: string
+          requested_verification_type?: string | null
+          review_queue?: string
           resolved_at?: string | null
           review_note?: string | null
           review_thread?: Json | null
@@ -4269,9 +4275,25 @@ export type Database = {
           page_id: string
         }[]
       }
+      approve_verification_request: {
+        Args: { p_request_id: string; p_review_note?: string | null }
+        Returns: Json
+      }
+      reject_verification_request: {
+        Args: {
+          p_rejection_reason: string
+          p_request_id: string
+          p_review_note?: string | null
+        }
+        Returns: Json
+      }
+      request_verification_more_info: {
+        Args: { p_message: string; p_request_id: string }
+        Returns: Json
+      }
       resolve_verification_assignee: {
         Args: { _org_id: string; _role_category: string }
-        Returns: string
+        Returns: string | null
       }
       update_all_activity_scores: { Args: never; Returns: undefined }
       update_all_activity_scores_v2: { Args: never; Returns: undefined }

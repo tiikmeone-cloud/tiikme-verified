@@ -173,14 +173,14 @@ const SectionBox = ({ title, icon: Icon, iconColor, count, isOwnProfile, onAdd, 
 
 /* ── Item Row ── */
 const ItemRow = ({ logo, line1, line2, line3, line4, right, isLast, extra }: {
-  logo: React.ReactNode; line1: string; line2?: string; line3?: string; line4?: string;
+  logo: React.ReactNode; line1: React.ReactNode; line2?: string; line3?: string; line4?: string;
   right?: React.ReactNode; isLast: boolean; extra?: React.ReactNode;
 }) => (
   <div className="flex" style={{ alignItems: "flex-start", gap: 10, padding: "8px 0", borderBottom: isLast ? "none" : "1px solid var(--border-subtle)" }}>
     {logo}
     <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 1 }}>
-      <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{line1}</p>
-      {line2 && <p style={{ fontSize: 13, fontWeight: 400, color: "var(--text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{line2}</p>}
+      <div style={{ fontSize: 14, fontWeight: 600, lineHeight: "18px", color: "var(--text-primary)", overflowWrap: "anywhere", wordBreak: "break-word" }}>{line1}</div>
+      {line2 && <p style={{ fontSize: 13, fontWeight: 400, lineHeight: "17px", color: "var(--text-secondary)", overflowWrap: "anywhere", wordBreak: "break-word" }}>{line2}</p>}
       {line3 && <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)" }}>{line3}</p>}
       {line4 && <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)" }}>{line4}</p>}
       {extra}
@@ -221,7 +221,14 @@ export const ExperienceSection = ({ items, isOwnProfile, onAdd, onDelete, onTogg
             return (
               <ItemRow key={exp.id} isLast={idx === visible.length - 1}
                 logo={<CompanyLogo name={companyName} logoUrl={logo?.logo_url} />}
-                line1={exp.job_title || exp.title}
+                line1={
+                  <span className="inline-flex items-center gap-1.5 flex-wrap">
+                    <span>{exp.job_title || exp.title}</span>
+                    {exp.verification_status === "verified" && (
+                      <CheckCircle className="w-3.5 h-3.5 shrink-0" style={{ color: "#16A34A" }} />
+                    )}
+                  </span>
+                }
                 line2={companyName}
                 line3={getDuration(exp)}
                 line4={exp.work_location || undefined}
