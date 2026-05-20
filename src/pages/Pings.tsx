@@ -310,8 +310,8 @@ const Pings = () => {
           {!loading && tab === "chats" && filteredConvos.length === 0 && (
             <div className="p-6"><EmptyState icon={MessageCircle} title="No conversations yet" description="Start a conversation by visiting someone's profile and clicking 'Message'." /></div>
           )}
-          {tab === "applications" && <div className="p-6"><EmptyState icon={Briefcase} title="No applications" description="Application messages will appear here." /></div>}
-          {tab === "requests" && <div className="p-6"><EmptyState icon={MessageCircle} title="No requests" description="Ping requests will appear here." /></div>}
+          {tab === "applications" && <ApplicationThreads userId={user?.id} onOpen={(id) => { loadMessages(id); setShowMobileList(false); }} activeId={activeConvoId} />}
+          {tab === "requests" && <ConnectionRequests userId={user?.id} />}
           {tab === "chats" && filteredConvos.map(convo => {
             const other = convo.other_user;
             const name = other?.full_name || other?.username || "User";
@@ -612,5 +612,112 @@ const Pings = () => {
     </div>
   );
 };
+
+/* ── Application Threads: conversations with context_type='application' ── */
+function ApplicationThreads({ userId, onOpen, activeId }: { userId: string | undefined; onOpen: (id: string) => void; activeId: string | null }) {
+  const [threads, setThreads] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!userId) { setLoading(false); return; }
+    supabase
+      .from("conversations")
+      .select("id, context_id, last_message_at, participant_1, participant_2, context_type")
+      .or(`participant_1.eq.${userId},participant_2.eq.${userId}`)
+      .eq("context_type", "application")
+      .order("last_message_at", { ascending: false })
+      .limit(30)
+      .then(async ({ data }) => {
+        if (!data?.length) { setThreads([]); setLoading(false); return; }
+        const oppIds = [...new Set(data.map(d => d.context_id).filter(Boolean))];
+        const { data: opps } = oppIds.length
+          ? await supabase.from("opportunities").select("id, title, org:organizations!opportunities_org_id_fkey(name, logo_url)").in("id", oppIds)
+          : { data: [] };
+        const oppMap = Object.fromEntries((opps || []).map(o => [o.id, o]));
+        setThreads(data.map(d => ({ ...d, opp: oppMap[d.context_id] || null })));
+        setLoading(false);
+      });
+  }, [userId]);
+
+  if (loading) return <div className="flex justify-center py-10"><div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: "var(--brand)", borderTopColor: "transparent" }} /></div>;
+  if (!threads.length) return <div className="p-6"><EmptyState icon={Briefcase} title="No application threads" description="When orgs message you about your applications, they'll appear here." /></div>;
+
+  return (
+    <div>
+      {threads.map(t => (
+        <button type="button" key={t.id} onClick={() => onOpen(t.id)}
+          className="w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-all hover:bg-white/[0.04]"
+          style={{ borderBottom: "1px solid var(--border)", background: t.id === activeId ? "var(--brand-dim)" : "transparent" }}>
+          <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center" style={{ background: "var(--surface-2)" }}>
+            {t.opp?.org?.logo_url
+              ? <img src={t.opp.org.logo_url} alt="" className="w-full h-full object-cover" />
+              : <Briefcase className="w-4 h-4" style={{ color: "var(--text-3)" }} />}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-[13px] font-bold truncate" style={{ color: "var(--text-1)" }}>{t.opp?.title || "Application"}</p>
+            <p className="text-[11px] truncate" style={{ color: "var(--text-3)" }}>{t.opp?.org?.name || "—"}</p>
+          </div>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/* ── Connection Requests: pending strand requests ── */
+function ConnectionRequests({ userId }: { userId: string | undefined }) {
+  const [requests, setRequests] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = () => {
+    if (!userId) { setLoading(false); return; }
+    supabase
+      .from("strands")
+      .select("id, requester_id, created_at, requester:profiles!strands_requester_id_fkey(id, full_name, avatar_url, designation, currently_working_at)")
+      .eq("receiver_id", userId)
+      .eq("status", "pending")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => { setRequests(data || []); setLoading(false); });
+  };
+
+  useEffect(() => { load(); }, [userId]);
+
+  const respond = async (id: string, accept: boolean) => {
+    await supabase.from("strands").update({ status: accept ? "accepted" : "declined" }).eq("id", id);
+    setRequests(r => r.filter(x => x.id !== id));
+    toast.success(accept ? "Connection accepted!" : "Request declined");
+  };
+
+  if (loading) return <div className="flex justify-center py-10"><div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: "var(--brand)", borderTopColor: "transparent" }} /></div>;
+  if (!requests.length) return <div className="p-6"><EmptyState icon={MessageCircle} title="No pending requests" description="When someone sends you a connection request, it'll appear here." /></div>;
+
+  return (
+    <div>
+      {requests.map(req => {
+        const r = req.requester;
+        const name = r?.full_name || "User";
+        const sub = r?.designation || r?.currently_working_at || "";
+        return (
+          <div key={req.id} className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
+            <AvatarSquare src={r?.avatar_url} name={name} size={44} />
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-bold truncate" style={{ color: "var(--text-1)" }}>{name}</p>
+              {sub && <p className="text-[11px] truncate" style={{ color: "var(--text-3)" }}>{sub}</p>}
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <button type="button" onClick={() => respond(req.id, true)}
+                style={{ height: 28, padding: "0 12px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "#FF5A1F", color: "#fff", border: "none", cursor: "pointer" }}>
+                Accept
+              </button>
+              <button type="button" onClick={() => respond(req.id, false)}
+                style={{ height: 28, padding: "0 10px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "rgba(0,0,0,0.06)", color: "var(--text-2)", border: "none", cursor: "pointer" }}>
+                Decline
+              </button>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export default Pings;
