@@ -20,8 +20,7 @@ import FilterBar, { useScrollPastThreshold } from "@/components/filters/FilterBa
 import BottomSheet from "@/components/ui/BottomSheet";
 
 const FILTER_TABS = ["All", "Full-time", "Internship", "Freelance", "Hackathon", "Remote"];
-type OpportunitiesQuery = ReturnType<typeof supabase.from<"opportunities", Database["public"]["Tables"]["opportunities"]["Row"]>>;
-const filterMap: Record<string, (q: OpportunitiesQuery) => OpportunitiesQuery> = {
+const filterMap: Record<string, (q: any) => any> = {
   "Full-time": q => q.or("type.eq.full_time,type.eq.fulltime,type.eq.full-time,type.eq.job"),
   "Internship": q => q.eq("type", "internship"),
   "Freelance": q => q.or("type.eq.freelance,type.eq.gig"),
