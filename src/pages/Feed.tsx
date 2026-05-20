@@ -871,6 +871,9 @@ const Feed = () => {
   const [searchParams] = useSearchParams();
   const targetPostId = searchParams.get("post");
   const scrolledRef = useRef(false);
+  const [showFeedPrefs, setShowFeedPrefs] = useState(false);
+  const [hideOrgPosts, setHideOrgPosts] = useState(() => localStorage.getItem("feed_hide_org") === "1");
+  const [hideCirclePosts, setHideCirclePosts] = useState(() => localStorage.getItem("feed_hide_circle") === "1");
 
   // Load connection IDs
   useEffect(() => {
@@ -890,8 +893,12 @@ const Feed = () => {
   }, [user]);
 
   const visiblePosts = useMemo(() =>
-    livePosts.filter((p: any) => !deletedIds.has(p.id)).map((p: any) => editedPosts[p.id] ? { ...p, ...editedPosts[p.id] } : p),
-    [livePosts, deletedIds, editedPosts]
+    livePosts
+      .filter((p: any) => !deletedIds.has(p.id))
+      .filter((p: any) => !(hideOrgPosts && p.posted_as_org_id))
+      .filter((p: any) => !(hideCirclePosts && p.circle_id))
+      .map((p: any) => editedPosts[p.id] ? { ...p, ...editedPosts[p.id] } : p),
+    [livePosts, deletedIds, editedPosts, hideOrgPosts, hideCirclePosts]
   );
 
   const postIds = useMemo(() => visiblePosts.map((p: any) => p.id), [visiblePosts]);
@@ -944,6 +951,27 @@ const Feed = () => {
       <div className="flex" style={{ gap: 20 }}>
         <div style={{ flex: 1, minWidth: 0, maxWidth: 760 }}>
           <FeedComposer onPublished={refresh} />
+
+          {/* Feed preferences */}
+          <div className="flex justify-end mb-2">
+            <button type="button" onClick={() => setShowFeedPrefs(v => !v)}
+              style={{ fontSize: 12, color: "var(--text-3)", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: "2px 6px" }}>
+              ⚙ Feed settings
+            </button>
+          </div>
+          {showFeedPrefs && (
+            <div style={{ background: "#fff", border: "1px solid #E8E8E8", borderRadius: 12, padding: "12px 16px", marginBottom: 12, fontSize: 13, color: "#1A1A2E" }}>
+              <p style={{ fontWeight: 600, marginBottom: 10 }}>Customize your feed</p>
+              <label className="flex items-center gap-2 cursor-pointer mb-2">
+                <input type="checkbox" checked={hideOrgPosts} onChange={e => { setHideOrgPosts(e.target.checked); localStorage.setItem("feed_hide_org", e.target.checked ? "1" : "0"); }} className="accent-orange-500" />
+                Hide posts from organizations
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={hideCirclePosts} onChange={e => { setHideCirclePosts(e.target.checked); localStorage.setItem("feed_hide_circle", e.target.checked ? "1" : "0"); }} className="accent-orange-500" />
+                Hide posts from circles
+              </label>
+            </div>
+          )}
 
           {loading && !visiblePosts.length && <SkeletonCard count={3} />}
           {feedItems.map((item) => item.kind === "post" ? (
