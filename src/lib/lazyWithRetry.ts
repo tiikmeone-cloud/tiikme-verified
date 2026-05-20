@@ -14,6 +14,12 @@ function isDynamicImportFailure(error: unknown) {
   );
 }
 
+function reloadWithCacheBust() {
+  const url = new URL(window.location.href);
+  url.searchParams.set("__lazy_retry", String(Date.now()));
+  window.location.replace(url.toString());
+}
+
 export function lazyWithRetry<T extends ComponentType<any>>(
   importer: () => Promise<LazyModule<T>>,
   key: string,
@@ -35,7 +41,7 @@ export function lazyWithRetry<T extends ComponentType<any>>(
     } catch (error) {
       if (canUseSessionStorage && isDynamicImportFailure(error) && !alreadyRetried) {
         window.sessionStorage.setItem(storageKey, "true");
-        window.location.reload();
+        reloadWithCacheBust();
 
         return new Promise<LazyModule<T>>(() => undefined);
       }

@@ -16,6 +16,7 @@ import AppShell from "./components/layout/AppShell.tsx";
 import Index from "./pages/Index.tsx";
 import SignIn from "./pages/SignIn.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import Opportunities from "./pages/Opportunities.tsx";
 
 // New onboarding pages (eager — critical path)
 import SignupPage from "./pages/SignupPage.tsx";
@@ -31,7 +32,6 @@ const ProfilePosts = lazyWithRetry(() => import("./pages/ProfilePosts.tsx"), "Pr
 const Explore = lazyWithRetry(() => import("./pages/Explore.tsx"), "Explore");
 const MyWork = lazyWithRetry(() => import("./pages/MyWork.tsx"), "MyWork");
 const ProjectHub = lazyWithRetry(() => import("./pages/ProjectHub.tsx"), "ProjectHub");
-const Opportunities = lazyWithRetry(() => import("./pages/Opportunities.tsx"), "Opportunities");
 const Strands = lazyWithRetry(() => import("./pages/Strands.tsx"), "Strands");
 const ConnectionsPage = lazyWithRetry(() => import("./pages/Connections.tsx"), "ConnectionsPage");
 const Pings = lazyWithRetry(() => import("./pages/Pings.tsx"), "Pings");

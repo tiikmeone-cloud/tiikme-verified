@@ -347,9 +347,16 @@ const Explore = () => {
     toast.success("Joined circle");
   };
 
-  const scrollToSection = (k: SectionKey) => {
-    setActiveFilter(prev => prev === k ? null : k);
-    sectionRefs.current[k]?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const toggleSectionFilter = (k: SectionKey) => {
+    setActiveFilter(prev => {
+      const next = prev === k ? null : k;
+      if (next) {
+        requestAnimationFrame(() => {
+          sectionRefs.current[next]?.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      }
+      return next;
+    });
   };
 
   const getOrgNavigateTo = (org: any) => org.slug ? `/org/${org.slug}` : "#";
@@ -435,7 +442,7 @@ const Explore = () => {
               <button
                 key={s.key}
                 type="button"
-                onClick={() => scrollToSection(s.key)}
+                onClick={() => toggleSectionFilter(s.key)}
                 className="cursor-pointer transition-all active:scale-95 hover:opacity-90"
                 style={{
                   flexShrink: 0, padding: "0 16px", height: 32, borderRadius: 999,
@@ -489,7 +496,7 @@ const Explore = () => {
 
       {/* Sections */}
       <div style={{ marginTop: 18 }}>
-        {showPeople && (
+        {showPeople && (!activeFilter || activeFilter === "people") && (
           <SectionGrid
             sectionRef={el => { sectionRefs.current.people = el; }}
             title="People you may know"
@@ -509,7 +516,7 @@ const Explore = () => {
           </SectionGrid>
         )}
 
-        {showCircles && (
+        {showCircles && (!activeFilter || activeFilter === "circles") && (
           <SectionGrid
             sectionRef={el => { sectionRefs.current.circles = el; }}
             title="Circles for you"
@@ -528,7 +535,7 @@ const Explore = () => {
           </SectionGrid>
         )}
 
-        {showOrgs && (
+        {showOrgs && (!activeFilter || activeFilter === "orgs") && (
           <SectionGrid
             sectionRef={el => { sectionRefs.current.orgs = el; }}
             title="Organizations to discover"
@@ -548,7 +555,7 @@ const Explore = () => {
           </SectionGrid>
         )}
 
-        {showPosts && (
+        {showPosts && (!activeFilter || activeFilter === "posts") && (
           <div ref={el => { sectionRefs.current.posts = el; }}>
             <HorizontalCarousel title="Top posts" count={exploreData!.posts.length}>
               {exploreData!.posts.map(p => (
@@ -560,7 +567,7 @@ const Explore = () => {
           </div>
         )}
 
-        {showHashtags && (
+        {showHashtags && (!activeFilter || activeFilter === "hashtags") && (
           <div ref={el => { sectionRefs.current.hashtags = el; }} style={{ marginBottom: 24 }}>
             <div className="flex items-center" style={{ marginBottom: 10 }}>
               <div style={{ width: 3, height: 18, borderRadius: 2, background: "#E8733A", marginRight: 8, flexShrink: 0 }} />

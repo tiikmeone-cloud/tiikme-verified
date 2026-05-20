@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import { fixStorageUrl } from "@/components/ui/AvatarSquare";
 import { cleanUsername } from "@/lib/cleanUsername";
+import { sanitizeIdentityText } from "@/lib/profileUtils";
 import { SUBTYPE_OPTIONS, hasSubtypes } from "@/lib/roleSubtypes";
 import { getDisplayFlags, safeDisplayName } from "@/utils/displayProfile";
 import { PageSEO, profileSEO } from "@/hooks/usePageSEO";
@@ -367,11 +368,14 @@ const Profile = () => {
   const realName = profileData.full_name || authDisplayName || "";
   const displayName = dpFlags.showName ? realName : safeDisplayName(profileData, "Tiikme member");
   const username = cleanUsername(profileData.username || "");
-  const headline = profileData.headline || "";
+  const headline = sanitizeIdentityText(profileData.headline || "");
   const city = showLocation || isOwnProfile ? (profileData.location_city || "") : "";
   const state = showLocation || isOwnProfile ? (profileData.location_state || "") : "";
   const role = profileData.role || "student";
   const roleLabel = role.charAt(0).toUpperCase() + role.slice(1).replace(/_/g, " ");
+  const compactRoleLine =
+    sanitizeIdentityText(profileData.role_subtype || profileData.designation || "") ||
+    (role !== "professional" ? roleLabel : "");
   const initials = displayName ? displayName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase() : authInitials || "U";
   const roleColor = ROLE_COLOR_MAP[role] || "#4F46E5";
   const isVerified = profileData.is_verified === true && (() => {
@@ -941,9 +945,9 @@ const Profile = () => {
               </div>
 
               {/* ROW 1b: Role · Subtype */}
-              {dpFlags.showRole && (
+              {dpFlags.showRole && compactRoleLine && (
                 <p style={{ fontSize: 12, fontWeight: 600, color: roleColor }}>
-                  {profileData.role_subtype ? `${roleLabel} · ${profileData.role_subtype}` : roleLabel}
+                  {compactRoleLine}
                 </p>
               )}
 

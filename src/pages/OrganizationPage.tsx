@@ -19,6 +19,11 @@ import { CompanyBrain } from "@/components/org/CompanyBrain";
 
 const AVATAR_COLORS = ["#E8733A", "#4A90D9", "#34C759", "#FF6B9D", "#8B5CF6", "#FFB800"];
 const hashColor = (s: string) => AVATAR_COLORS[Math.abs([...s].reduce((a, c) => a + c.charCodeAt(0), 0)) % AVATAR_COLORS.length];
+const normalizeWebsiteUrl = (url?: string | null) => {
+  if (!url) return "";
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+};
+const stripWebsiteProtocol = (url?: string | null) => (url || "").replace(/^https?:\/\//i, "").replace(/\/$/, "");
 const daysAgo = (d: string) => {
   const diff = Math.floor((Date.now() - new Date(d).getTime()) / 86400000);
   return diff === 0 ? "Today" : diff === 1 ? "1d ago" : `${diff}d ago`;
@@ -116,6 +121,10 @@ export default function OrganizationPage() {
 
   const activeOpps = useMemo(() => opps.filter(o => o.is_open), [opps]);
   const typeLabel = org?.type?.charAt(0).toUpperCase() + org?.type?.slice(1).replace(/_/g, " ");
+  const normalizedSubtype = typeof org?.subtype === "string" ? org.subtype.trim() : "";
+  const showSubtype = normalizedSubtype && normalizedSubtype.toLowerCase() !== (typeLabel || "").toLowerCase();
+  const websiteUrl = normalizeWebsiteUrl(org?.website_url);
+  const websiteLabel = stripWebsiteProtocol(org?.website_url);
   const isCreator = isCreatorOrg(org?.type, org?.subtype);
   const followLabel = isCreator
     ? (isFollowing ? "Subscribed" : "Subscribe")
@@ -154,11 +163,11 @@ export default function OrganizationPage() {
 
   /* Info cards data */
   const infoCards: { label: string; value: string }[] = [];
-  if (org.type) infoCards.push({ label: "Type", value: `${typeLabel}${org.subtype ? ` · ${org.subtype}` : ""}` });
+  if (org.type) infoCards.push({ label: "Type", value: `${typeLabel}${showSubtype ? ` · ${normalizedSubtype}` : ""}` });
   if (org.founded_year) infoCards.push({ label: "Established", value: String(org.founded_year) });
   if (org.city || org.state) infoCards.push({ label: "Headquarters", value: [org.city, org.state].filter(Boolean).join(", ") });
   if (org.employee_count) infoCards.push({ label: teamSizeLabel, value: org.employee_count });
-  if (org.website_url) infoCards.push({ label: "Website", value: org.website_url.replace(/https?:\/\//, "") });
+  if (org.website_url) infoCards.push({ label: "Website", value: websiteLabel });
   const seoProps = orgSEO({
     name: org.name,
     tagline: org.tagline,
@@ -187,7 +196,7 @@ export default function OrganizationPage() {
           <div className="flex" style={{ gap: 16, alignItems: "flex-start" }}>
             {/* Logo */}
             <div className="shrink-0">
-              <AvatarSquare src={org.logo_url ? storageImageUrl(org.logo_url, "thumbnail") : undefined} name={org.name} size="profile" bgColor={hashColor(org.id)} className="shadow-md" />
+              <AvatarSquare src={org.logo_url ? storageImageUrl(org.logo_url) : undefined} name={org.name} size="profile" bgColor={hashColor(org.id)} className="shadow-md" />
             </div>
 
             {/* Info */}
@@ -411,9 +420,9 @@ export default function OrganizationPage() {
                 {org.email && <DetailRow icon={Globe} label="Email" value={org.email} />}
                 {org.phone && <DetailRow icon={Globe} label="Phone" value={org.phone} />}
                 {org.founded_year && <DetailRow icon={Calendar} label="Founded" value={String(org.founded_year)} />}
-                {org.website_url && (
-                  <a href={org.website_url} target="_blank" rel="noopener noreferrer" className="flex items-center" style={{ gap: 6, fontSize: 12, color: "#E8733A" }}>
-                    <Globe style={{ width: 13, height: 13 }} /> Website
+                {websiteUrl && (
+                  <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center" style={{ gap: 6, fontSize: 12, color: "#E8733A" }}>
+                    <Globe style={{ width: 13, height: 13 }} /> {websiteLabel || "Website"}
                   </a>
                 )}
               </div>
