@@ -1,5 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { PROFILE_SELECT_COLUMNS } from "@/lib/profileColumns";
 
 /**
  * Tier 2/3 data prefetchers — keyed by route prefix (first 3 segments).
