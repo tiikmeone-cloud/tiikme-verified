@@ -164,7 +164,7 @@ export default function OpportunityCreate() {
       setVenue(data.venue || "");
       setDocuments(Array.isArray(data.documents_to_bring) ? data.documents_to_bring : []);
       setPositionsAvailable(data.positions_available ? String(data.positions_available) : "");
-      setQuestions(Array.isArray(data.screening_questions) ? data.screening_questions : []);
+      setQuestions(Array.isArray(data.screening_questions) ? (data.screening_questions as any) : []);
       setRequireResume(data.require_resume ?? true);
       setAskPortfolio(!!data.ask_portfolio);
       setCustomAttachmentLabel(data.custom_attachment_label || "");

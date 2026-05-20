@@ -299,7 +299,7 @@ const PostGroupCard = ({
   posts, connectionIds, likeCounts, myLikes, toggleLike,
   commentCounts, commentsData, commentsOpen, commentInputs,
   setCommentInputs, toggleComments, submitComment, deleteComment, onDelete, onEdit,
-}: { posts: any[] } & Omit<PostCardProps, "post">) => {
+}: { posts: any[] } & Record<string, any>) => {
   const [carouselRef, api] = useEmblaCarousel({ align: "start" });
   const [idx, setIdx] = useState(0);
   const first = posts[0];
