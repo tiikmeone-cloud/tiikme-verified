@@ -29,7 +29,7 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
   const [resumeUploading, setResumeUploading] = useState(false);
   const [portfolioUrl, setPortfolioUrl] = useState("");
   const [coverLetter, setCoverLetter] = useState("");
-  const [consent, setConsent] = useState(false);
+  const [consent, setConsent] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [answers, setAnswers] = useState<Record<number, string>>({});

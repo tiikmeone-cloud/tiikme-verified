@@ -1,32 +1,24 @@
 /**
- * Unified 7-step onboarding wizard. Replaces the legacy
- * /onboarding/role + /onboarding/details + /onboarding/welcome trio.
+ * Unified 5-step onboarding wizard.
  *
  * Steps:
  *   1. Identity      — full name + username
- *   2. Role          — pick one of 9 roles
+ *   2. Work          — org search + job title + work type (derives role)
  *   3. Location      — country / state / city
- *   4. Subtype       — role-specific dropdown ("Other" → free-text)
- *   5. Role details  — years of experience / headline / sector / etc.
- *   6. Interests     — pick 3–8 tags
- *   7. Display pref  — what to show publicly + finish
- *
- * Every step (except 1, 2, 7) has a Skip button. State is persisted to
- * localStorage so a refresh never loses progress. Each Continue/Skip
- * dispatches a single supabase.from('profiles').update() with only the
- * keys the user actually filled — never null strings.
+ *   4. Interests     — pick 3–8 tags
+ *   5. Display pref  — what to show publicly + finish
  */
 import { PageSEO } from "@/hooks/usePageSEO";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { ArrowLeft, Check, Loader2 } from "lucide-react";
+import { ArrowLeft, Check, Loader2, Search, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import OnboardingShell from "@/components/onboarding/OnboardingShell";
 import { consumePostAuthRedirect } from "@/lib/safeRedirect";
 import {
-  ROLES, ROLE_BY_ID, INTERESTS, YEARS_EXP_BUCKETS, SECTORS,
+  INTERESTS,
   type Role,
 } from "@/lib/onboardingTaxonomy";
 import { COUNTRIES, loadIndiaStates } from "@/data/indiaStatesLazy";
@@ -35,8 +27,16 @@ import {
   type DisplayPreference,
 } from "@/utils/displayProfile";
 
-const STORAGE_KEY = "ob_wizard_state_v2";
-const TOTAL = 7;
+const STORAGE_KEY = "ob_wizard_state_v3";
+const TOTAL = 5;
+
+const WORK_TYPES = [
+  { value: "full_time",     label: "Full-time employee",   role: "professional" as Role },
+  { value: "part_time",     label: "Part-time / Contract", role: "professional" as Role },
+  { value: "freelance",     label: "Freelancer",           role: "freelancer"   as Role },
+  { value: "student",       label: "Student / Intern",     role: "student"      as Role },
+  { value: "self_employed", label: "Founder / Self-employed", role: "founder"   as Role },
+];
 
 interface WizardState {
   step: number;
@@ -46,13 +46,14 @@ interface WizardState {
   country: string;
   location_state: string;
   location_city: string;
-  role_subtype: string;
-  subtype_other: string;        // free-text when "Other" is selected
-  years_exp: string;
-  headline: string;
-  sector: string;
   interests: string[];
   display_preference: DisplayPreference;
+  // Work step
+  orgQuery: string;
+  selectedOrgId: string;
+  selectedOrgName: string;
+  jobTitle: string;
+  workType: string;
 }
 
 const EMPTY: WizardState = {
@@ -63,13 +64,13 @@ const EMPTY: WizardState = {
   country: "India",
   location_state: "",
   location_city: "",
-  role_subtype: "",
-  subtype_other: "",
-  years_exp: "",
-  headline: "",
-  sector: "",
   interests: [],
   display_preference: DEFAULT_DISPLAY_PREFERENCE,
+  orgQuery: "",
+  selectedOrgId: "",
+  selectedOrgName: "",
+  jobTitle: "",
+  workType: "",
 };
 
 // Glass-on-midnight input/select styling. Translucent fill, white text,
@@ -220,10 +221,17 @@ export default function Onboarding() {
           if (ok) goto(2);
         }} saving={saving} setSaving={setSaving} />}
 
-        {step === 2 && <StepRole state={state} set={set} onNext={async () => {
-          const ok = await savePatch({ role: state.role });
-          if (ok) goto(3);
-        }} />}
+        {step === 2 && <StepWork state={state} set={set} onNext={async () => {
+          const wt = WORK_TYPES.find(w => w.value === state.workType);
+          const derivedRole: Role | "" = wt ? wt.role : "";
+          const ok = await savePatch({
+            role: derivedRole,
+            designation: state.jobTitle.trim(),
+            currently_working_at: state.selectedOrgName || state.orgQuery.trim(),
+            org_id: state.selectedOrgId || null,
+          });
+          if (ok) { set("role", derivedRole as any); goto(3); }
+        }} onSkip={() => goto(3)} />}
 
         {step === 3 && <StepLocation state={state} set={set} onNext={async () => {
           const ok = await savePatch({
@@ -234,28 +242,12 @@ export default function Onboarding() {
           if (ok) goto(4);
         }} onSkip={() => goto(4)} />}
 
-        {step === 4 && <StepSubtype state={state} set={set} onNext={async () => {
-          const finalSubtype = state.role_subtype === "Other" && state.subtype_other.trim()
-            ? state.subtype_other.trim() : state.role_subtype;
-          const ok = await savePatch({ role_subtype: finalSubtype });
+        {step === 4 && <StepInterests state={state} set={set} onNext={async () => {
+          const ok = await savePatch({ interests: state.interests });
           if (ok) goto(5);
         }} onSkip={() => goto(5)} />}
 
-        {step === 5 && <StepRoleDetails state={state} set={set} onNext={async () => {
-          const ok = await savePatch({
-            years_exp: state.years_exp,
-            headline: state.headline.trim(),
-            sector: state.sector,
-          });
-          if (ok) goto(6);
-        }} onSkip={() => goto(6)} />}
-
-        {step === 6 && <StepInterests state={state} set={set} onNext={async () => {
-          const ok = await savePatch({ interests: state.interests });
-          if (ok) goto(7);
-        }} onSkip={() => goto(7)} />}
-
-        {step === 7 && <StepDisplayPref state={state} set={set} onFinish={finish} saving={saving} />}
+        {step === 5 && <StepDisplayPref state={state} set={set} onFinish={finish} saving={saving} />}
       </div>
     </OnboardingShell>
     </>
@@ -330,42 +322,143 @@ function StepIdentity({ state, set, onNext, saving, setSaving }: {
   );
 }
 
-/* ───────────────────────── Step 2: Role ───────────────────────── */
+/* ───────────────────────── Step 2: Work ───────────────────────── */
 
-function StepRole({ state, set, onNext }: { state: WizardState; set: any; onNext: () => Promise<void> }) {
+function StepWork({ state, set, onNext, onSkip }: {
+  state: WizardState; set: any; onNext: () => Promise<void>; onSkip: () => void;
+}) {
+  const [orgResults, setOrgResults] = useState<{ id: string; name: string; logo_url: string | null }[]>([]);
+  const [searching, setSearching] = useState(false);
+
+  const searchOrgs = useCallback(async (q: string) => {
+    if (q.trim().length < 2) { setOrgResults([]); return; }
+    setSearching(true);
+    const { data } = await supabase
+      .from("organizations")
+      .select("id, name, logo_url")
+      .ilike("name", `%${q.trim()}%`)
+      .eq("status", "active")
+      .limit(6);
+    setOrgResults(data || []);
+    setSearching(false);
+  }, []);
+
+  useEffect(() => {
+    const t = setTimeout(() => searchOrgs(state.orgQuery), 300);
+    return () => clearTimeout(t);
+  }, [state.orgQuery, searchOrgs]);
+
+  const selectOrg = (org: { id: string; name: string }) => {
+    set("selectedOrgId", org.id);
+    set("selectedOrgName", org.name);
+    set("orgQuery", org.name);
+    setOrgResults([]);
+  };
+
+  const clearOrg = () => {
+    set("selectedOrgId", "");
+    set("selectedOrgName", "");
+    set("orgQuery", "");
+    setOrgResults([]);
+  };
+
   return (
     <>
-      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: "#FAFAF7" }}>What best describes you?</h1>
-      <p className="text-[14px] mb-6" style={{ color: "rgba(250,250,247,0.65)" }}>Pick the closest fit. You can change this later.</p>
+      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: "#FAFAF7" }}>Where do you work?</h1>
+      <p className="text-[14px] mb-6" style={{ color: "rgba(250,250,247,0.65)" }}>Help people find you in the right context.</p>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        {ROLES.map(r => {
-          const Icon = r.icon;
-          const selected = state.role === r.id;
-          return (
-            <button key={r.id} type="button" onClick={() => set("role", r.id)}
-              className="text-left p-4 rounded-2xl cursor-pointer transition-all duration-200 hover:shadow-md"
-              style={{
-                border: selected ? "2px solid #FF5A1F" : "2px solid #E5E7EB",
-                background: selected ? BRAND_DIM : "#fff",
-                minHeight: 120,
-              }}>
-              <div className="w-10 h-10 rounded-xl mb-2 flex items-center justify-center"
-                style={{ background: selected ? BRAND_DIM : "rgba(255,255,255,0.08)" }}>
-                <Icon className="w-5 h-5" style={{ color: selected ? BRAND : "rgba(250,250,247,0.85)" }} />
-              </div>
-              <div className="text-[14px] font-bold mb-0.5" style={{ color: "#FAFAF7" }}>{r.label}</div>
-              <div className="text-[11px] leading-tight" style={{ color: "rgba(250,250,247,0.65)" }}>{r.desc}</div>
-            </button>
-          );
-        })}
+      <div className="space-y-4">
+        {/* Org search */}
+        <div>
+          <label className={labelCls} style={labelStyle}>Organization</label>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "rgba(250,250,247,0.45)" }} />
+            <input
+              type="text"
+              value={state.orgQuery}
+              onChange={e => { set("orgQuery", e.target.value); set("selectedOrgId", ""); set("selectedOrgName", ""); }}
+              placeholder="Company, college, hospital…"
+              style={{ ...inputStyle, paddingLeft: 36, paddingRight: 36 }}
+            />
+            {state.orgQuery && (
+              <button type="button" onClick={clearOrg} className="absolute right-3 top-1/2 -translate-y-1/2">
+                <X className="w-4 h-4" style={{ color: "rgba(250,250,247,0.45)" }} />
+              </button>
+            )}
+          </div>
+          {/* Dropdown */}
+          {orgResults.length > 0 && !state.selectedOrgId && (
+            <div className="mt-1 rounded-xl overflow-hidden" style={{ background: "#1A1A2E", border: "1px solid rgba(255,255,255,0.12)" }}>
+              {orgResults.map(org => (
+                <button key={org.id} type="button" onClick={() => selectOrg(org)}
+                  className="w-full text-left px-3 py-2.5 flex items-center gap-2 hover:bg-white/[0.06] transition-colors">
+                  {org.logo_url
+                    ? <img src={org.logo_url} alt="" className="w-6 h-6 rounded object-cover flex-shrink-0" />
+                    : <div className="w-6 h-6 rounded flex-shrink-0 flex items-center justify-center text-[10px] font-bold" style={{ background: BRAND, color: "#fff" }}>{org.name.charAt(0)}</div>
+                  }
+                  <span className="text-[13px]" style={{ color: "#FAFAF7" }}>{org.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
+          {searching && (
+            <p className="text-[12px] mt-1" style={{ color: "rgba(250,250,247,0.45)" }}>Searching…</p>
+          )}
+          {state.selectedOrgId && (
+            <p className="text-[12px] mt-1" style={{ color: "#059669" }}>✓ Linked to {state.selectedOrgName}</p>
+          )}
+          {!state.selectedOrgId && state.orgQuery.trim().length >= 2 && orgResults.length === 0 && !searching && (
+            <p className="text-[12px] mt-1" style={{ color: "rgba(250,250,247,0.45)" }}>Not found — we'll save the name anyway</p>
+          )}
+        </div>
+
+        {/* Job title */}
+        <div>
+          <label className={labelCls} style={labelStyle}>Your title / role</label>
+          <input
+            type="text"
+            value={state.jobTitle}
+            onChange={e => set("jobTitle", e.target.value)}
+            placeholder="e.g. Software Engineer, Marketing Manager"
+            style={inputStyle}
+            maxLength={80}
+          />
+        </div>
+
+        {/* Work type */}
+        <div>
+          <label className={labelCls} style={labelStyle}>Work type</label>
+          <div className="grid grid-cols-1 gap-2">
+            {WORK_TYPES.map(w => {
+              const selected = state.workType === w.value;
+              return (
+                <button key={w.value} type="button" onClick={() => set("workType", w.value)}
+                  className="text-left px-4 py-3 rounded-xl cursor-pointer transition-all flex items-center justify-between"
+                  style={{
+                    border: selected ? `2px solid ${BRAND}` : "1.5px solid rgba(255,255,255,0.12)",
+                    background: selected ? BRAND_DIM : "rgba(255,255,255,0.04)",
+                  }}>
+                  <span className="text-[13px] font-semibold" style={{ color: "#FAFAF7" }}>{w.label}</span>
+                  {selected && <span style={{ color: BRAND, fontSize: 14 }}>✓</span>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
-      <button type="button" disabled={!state.role} onClick={onNext}
-        className="mt-6 w-full h-12 rounded-2xl text-[15px] font-bold text-white cursor-pointer transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-        style={{ background: BRAND }}>
-        Continue →
-      </button>
+      <div className="flex gap-3 mt-6">
+        <button type="button" onClick={onSkip}
+          className="h-12 px-5 rounded-2xl text-[14px] font-semibold cursor-pointer hover:bg-white/[0.10]"
+          style={{ background: "rgba(255,255,255,0.04)", border: "1.5px solid rgba(255,255,255,0.12)", color: "rgba(250,250,247,0.65)" }}>
+          Skip
+        </button>
+        <button type="button" onClick={onNext}
+          className="flex-1 h-12 rounded-2xl text-[15px] font-bold text-white cursor-pointer transition-all hover:opacity-90"
+          style={{ background: BRAND }}>
+          Continue →
+        </button>
+      </div>
     </>
   );
 }
@@ -454,140 +547,7 @@ function StepLocation({ state, set, onNext, onSkip }: {
   );
 }
 
-/* ───────────────────────── Step 4: Subtype ───────────────────────── */
-
-function StepSubtype({ state, set, onNext, onSkip }: {
-  state: WizardState; set: any; onNext: () => Promise<void>; onSkip: () => void;
-}) {
-  const def = state.role ? ROLE_BY_ID[state.role] : null;
-  if (!def) {
-    return (
-      <>
-        <p className="text-[14px] mb-4" style={{ color: "rgba(250,250,247,0.65)" }}>Pick a role first.</p>
-        <button type="button" onClick={onSkip} className="w-full h-12 rounded-2xl text-[15px] font-bold text-white" style={{ background: BRAND }}>Continue →</button>
-      </>
-    );
-  }
-  const isOther = state.role_subtype === "Other";
-
-  return (
-    <>
-      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: "#FAFAF7" }}>{def.subtypeLabel}</h1>
-      <p className="text-[14px] mb-6" style={{ color: "rgba(250,250,247,0.65)" }}>Pick the closest match. We use this to show you better matches.</p>
-
-      <div className="space-y-2.5 max-h-[360px] overflow-y-auto pr-1">
-        {def.subtypes.map(opt => {
-          const selected = state.role_subtype === opt;
-          return (
-            <button key={opt} type="button" onClick={() => set("role_subtype", opt)}
-              className="w-full text-left p-3.5 rounded-xl cursor-pointer transition-all flex items-center justify-between"
-              style={{
-                border: selected ? "2px solid #FF5A1F" : "1.5px solid #E5E7EB",
-                background: selected ? BRAND_DIM : "#fff",
-              }}>
-              <span className="text-[14px] font-semibold" style={{ color: "#FAFAF7" }}>{opt}</span>
-              {selected && <Check className="w-4 h-4" style={{ color: BRAND }} />}
-            </button>
-          );
-        })}
-      </div>
-
-      {isOther && (
-        <div className="mt-3">
-          <label className={labelCls} style={labelStyle}>Tell us what you do</label>
-          <input type="text" value={state.subtype_other} onChange={e => set("subtype_other", e.target.value)}
-            placeholder="e.g. Sound designer" style={inputStyle} maxLength={60} />
-        </div>
-      )}
-
-      <div className="flex gap-3 mt-6">
-        <button type="button" onClick={onSkip}
-          className="h-12 px-5 rounded-2xl text-[14px] font-semibold cursor-pointer hover:bg-white/[0.10]"
-          style={{ background: "rgba(255,255,255,0.04)", border: "1.5px solid #E5E7EB", color: "rgba(250,250,247,0.65)" }}>
-          Skip
-        </button>
-        <button type="button" onClick={onNext}
-          disabled={!state.role_subtype || (isOther && !state.subtype_other.trim())}
-          className="flex-1 h-12 rounded-2xl text-[15px] font-bold text-white cursor-pointer transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{ background: BRAND }}>
-          Continue →
-        </button>
-      </div>
-    </>
-  );
-}
-
-/* ───────────────────────── Step 5: Role details ───────────────────────── */
-
-function StepRoleDetails({ state, set, onNext, onSkip }: {
-  state: WizardState; set: any; onNext: () => Promise<void>; onSkip: () => void;
-}) {
-  const showYears = ["professional", "freelancer", "founder", "investor", "doctor", "researcher", "faculty"].includes(state.role);
-  const showSector = ["founder", "investor", "professional"].includes(state.role);
-
-  return (
-    <>
-      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: "#FAFAF7" }}>A few quick details</h1>
-      <p className="text-[14px] mb-6" style={{ color: "rgba(250,250,247,0.65)" }}>All optional — fill what feels relevant.</p>
-
-      <div className="space-y-4">
-        <div>
-          <label className={labelCls} style={labelStyle}>One-line headline</label>
-          <input type="text" value={state.headline} onChange={e => set("headline", e.target.value)}
-            placeholder="e.g. Backend engineer · ex-Razorpay · open to consulting" style={inputStyle} maxLength={120} />
-        </div>
-
-        {showYears && (
-          <div>
-            <label className={labelCls} style={labelStyle}>Years of experience</label>
-            <div className="grid grid-cols-3 gap-2">
-              {YEARS_EXP_BUCKETS.map(b => {
-                const selected = state.years_exp === b;
-                return (
-                  <button key={b} type="button" onClick={() => set("years_exp", b)}
-                    className="h-11 rounded-xl text-[13px] font-semibold cursor-pointer transition-all"
-                    style={{
-                      border: selected ? "2px solid #FF5A1F" : "1.5px solid #E5E7EB",
-                      background: selected ? BRAND_DIM : "#fff",
-                      color: selected ? BRAND : "rgba(250,250,247,0.85)",
-                    }}>
-                    {b} yrs
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {showSector && (
-          <div>
-            <label className={labelCls} style={labelStyle}>Sector / Industry</label>
-            <select value={state.sector} onChange={e => set("sector", e.target.value)}
-              style={{ ...inputStyle, cursor: "pointer" }}>
-              <option value="">Select sector…</option>
-              {SECTORS.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </div>
-        )}
-      </div>
-
-      <div className="flex gap-3 mt-6">
-        <button type="button" onClick={onSkip}
-          className="h-12 px-5 rounded-2xl text-[14px] font-semibold cursor-pointer hover:bg-white/[0.10]"
-          style={{ background: "rgba(255,255,255,0.04)", border: "1.5px solid #E5E7EB", color: "rgba(250,250,247,0.65)" }}>
-          Skip
-        </button>
-        <button type="button" onClick={onNext}
-          className="flex-1 h-12 rounded-2xl text-[15px] font-bold text-white cursor-pointer transition-all hover:opacity-90"
-          style={{ background: BRAND }}>
-          Continue →
-        </button>
-      </div>
-    </>
-  );
-}
-
-/* ───────────────────────── Step 6: Interests ───────────────────────── */
+/* ───────────────────────── Step 4: Interests ───────────────────────── */
 
 function StepInterests({ state, set, onNext, onSkip }: {
   state: WizardState; set: any; onNext: () => Promise<void>; onSkip: () => void;
@@ -643,7 +603,7 @@ function StepInterests({ state, set, onNext, onSkip }: {
   );
 }
 
-/* ───────────────────────── Step 7: Display preference ───────────────────────── */
+/* ───────────────────────── Step 5: Display preference ───────────────────────── */
 
 function DisplayPreviewCard({ state }: { state: WizardState }) {
   const pref = state.display_preference;
@@ -651,7 +611,7 @@ function DisplayPreviewCard({ state }: { state: WizardState }) {
   const showRole = pref === "dp_name_profession" || pref === "dp_name_profession_company";
   const showCompany = pref === "dp_name_profession_company";
   const name = state.full_name.trim() || "Your Name";
-  const role = state.role_subtype || (state.role ? state.role.charAt(0).toUpperCase() + state.role.slice(1).replace(/_/g, " ") : "Your Role");
+  const role = state.jobTitle || (state.workType ? WORK_TYPES.find(w => w.value === state.workType)?.label : "") || "Your Role";
 
   return (
     <div style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 12 }}>
