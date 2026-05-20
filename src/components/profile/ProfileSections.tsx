@@ -203,11 +203,12 @@ interface SectionProps {
 export const ExperienceSection = ({ items, isOwnProfile, onAdd, onDelete, onToggleVisibility, onStatusChange }: SectionProps) => {
   const { lookupBatch, getLogo } = useCompanyLogos();
   const MAX = 3;
+  const [showAll, setShowAll] = useState(false);
   useEffect(() => {
     const names = items.map(e => e.company_name || e.institution_name || "").filter(Boolean);
     if (names.length > 0) lookupBatch(names);
   }, [items, lookupBatch]);
-  const visible = items.slice(0, MAX);
+  const visible = showAll ? items : items.slice(0, MAX);
   if (items.length === 0 && !isOwnProfile) return null;
 
   return (
@@ -248,8 +249,8 @@ export const ExperienceSection = ({ items, isOwnProfile, onAdd, onDelete, onTogg
             );
           })}
           {items.length > MAX && (
-            <button type="button" className="cursor-pointer" style={{ fontSize: 12, fontWeight: 400, color: "#E8733A", marginTop: 4, background: "none", border: "none", padding: 0 }}>
-              See all {items.length} →
+            <button type="button" onClick={() => setShowAll(v => !v)} className="cursor-pointer" style={{ fontSize: 12, fontWeight: 400, color: "#E8733A", marginTop: 4, background: "none", border: "none", padding: 0 }}>
+              {showAll ? "Show less ↑" : `See all ${items.length} →`}
             </button>
           )}
         </>
