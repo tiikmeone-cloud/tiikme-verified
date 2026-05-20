@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { getOrgTypeConfig, isCreatorOrg } from "@/lib/orgTypes";
 import { ActivityScoreMini } from "@/components/profile/ActivityScoreCard";
 import { getDisplayFlags } from "@/utils/displayProfile";
-import { sanitizeIdentityText } from "@/lib/profileUtils";
+import { getProfileSubtitle, sanitizeIdentityText } from "@/lib/profileUtils";
 
 const clampTwoLines = {
   display: "-webkit-box",
@@ -47,8 +47,12 @@ export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonC
   const flags = getDisplayFlags(p);
   const name = flags.showName ? (p.full_name || p.username || "User") : "Tiikme member";
   const designation = sanitizeIdentityText(
-    p.designation || p.role_metadata?.jobTitle || (p.role ? p.role.charAt(0).toUpperCase() + p.role.slice(1).replace(/_/g, " ") : "")
+    p.designation ||
+    p.role_metadata?.jobTitle ||
+    getProfileSubtitle(p) ||
+    (p.role ? p.role.charAt(0).toUpperCase() + p.role.slice(1).replace(/_/g, " ") : "")
   );
+  const roleSubtype = sanitizeIdentityText(p.role_subtype || "");
   const company = p.currently_working_at || p.role_metadata?.company || p.institution_name || "";
 
   const isConnected = strandStatus === "accepted";
@@ -87,7 +91,7 @@ export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonC
         {flags.showRole && designation && (
           <span style={{ ...clampTwoLines, fontSize: 12, lineHeight: "16px", color: "var(--text-secondary)" }}>{designation}</span>
         )}
-        {flags.showRole && p.role_subtype && (
+        {flags.showRole && roleSubtype && roleSubtype.toLowerCase() !== designation.toLowerCase() && (
           <span
             style={{
               fontSize: 11, color: "var(--text-muted)",
@@ -96,7 +100,7 @@ export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonC
               alignSelf: "flex-start", marginTop: 1, maxWidth: "100%",
             }}
           >
-            {p.role_subtype}
+            {roleSubtype}
           </span>
         )}
         {flags.showCompany && company && (

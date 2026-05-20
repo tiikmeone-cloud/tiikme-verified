@@ -26,7 +26,7 @@ import PrimaryTabs from "@/components/filters/PrimaryTabs";
 import FilterBar, { useScrollPastThreshold } from "@/components/filters/FilterBar";
 import BottomSheet from "@/components/ui/BottomSheet";
 import { getDisplayFlags, formatRoleLine } from "@/utils/displayProfile";
-import { sanitizeIdentityText } from "@/lib/profileUtils";
+import { getProfileSubtitle, sanitizeIdentityText } from "@/lib/profileUtils";
 
 /* ─── HELPERS ─── */
 const roleColorMap: Record<string, string> = {
@@ -374,7 +374,7 @@ const SuggestedWidget = ({ connectionIds }: { connectionIds: Set<string> }) => {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("id, full_name, role, avatar_url, institution_name, designation, role_metadata")
+    supabase.from("profiles").select("id, full_name, role, role_subtype, headline, avatar_url, institution_name, currently_working_at, designation, role_metadata")
       .neq("id", user.id).order("activity_score", { ascending: false }).limit(20)
       .then(({ data }) => {
         const filtered = (data || []).filter(p => !connectionIds.has(p.id));
@@ -418,7 +418,13 @@ const SuggestedWidget = ({ connectionIds }: { connectionIds: Set<string> }) => {
               {s.full_name || "User"}
             </Link>
             <p style={{ fontSize: 12, color: "#9CA3C0", lineHeight: "16px", ...clampTwoLinesStyle }}>
-              {sanitizeIdentityText(s.designation || (s.role_metadata as any)?.jobTitle || "")}
+              {sanitizeIdentityText(
+                s.designation ||
+                (s.role_metadata as any)?.jobTitle ||
+                getProfileSubtitle(s) ||
+                s.role_subtype ||
+                ""
+              )}
             </p>
           </div>
           <button type="button" className="btn-glass-pill cursor-pointer" style={{ fontSize: 12, fontWeight: 500, padding: "4px 10px" }}

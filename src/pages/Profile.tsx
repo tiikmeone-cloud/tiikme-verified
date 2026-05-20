@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import { fixStorageUrl } from "@/components/ui/AvatarSquare";
 import { cleanUsername } from "@/lib/cleanUsername";
-import { sanitizeIdentityText } from "@/lib/profileUtils";
+import { getProfileSubtitle, sanitizeIdentityText } from "@/lib/profileUtils";
 import { SUBTYPE_OPTIONS, hasSubtypes } from "@/lib/roleSubtypes";
 import { getDisplayFlags, safeDisplayName } from "@/utils/displayProfile";
 import { PageSEO, profileSEO } from "@/hooks/usePageSEO";
@@ -374,7 +374,13 @@ const Profile = () => {
   const role = profileData.role || "student";
   const roleLabel = role.charAt(0).toUpperCase() + role.slice(1).replace(/_/g, " ");
   const compactRoleLine =
-    sanitizeIdentityText(profileData.role_subtype || profileData.designation || "") ||
+    sanitizeIdentityText(
+      profileData.role_subtype ||
+      profileData.designation ||
+      (profileData.role_metadata as any)?.jobTitle ||
+      getProfileSubtitle(profileData) ||
+      ""
+    ) ||
     (role !== "professional" ? roleLabel : "");
   const initials = displayName ? displayName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase() : authInitials || "U";
   const roleColor = ROLE_COLOR_MAP[role] || "#4F46E5";

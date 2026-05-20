@@ -1,5 +1,5 @@
 const GENERIC_ROLE_PREFIX_RE =
-  /^(student|professional|founder|doctor|faculty|researcher|creator|freelancer|investor|member)\s*[·•|-]\s*/i;
+  /^(student|professional|founder|doctor|faculty|researcher|creator|freelancer|investor|member)(?:\s*[·•|:/,@-]\s*|\s+)/i;
 
 export function sanitizeIdentityText(text?: string | null): string {
   const value = (text || "").trim();

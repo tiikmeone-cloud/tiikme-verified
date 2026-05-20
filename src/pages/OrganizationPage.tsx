@@ -19,6 +19,8 @@ import { CompanyBrain } from "@/components/org/CompanyBrain";
 
 const AVATAR_COLORS = ["#E8733A", "#4A90D9", "#34C759", "#FF6B9D", "#8B5CF6", "#FFB800"];
 const hashColor = (s: string) => AVATAR_COLORS[Math.abs([...s].reduce((a, c) => a + c.charCodeAt(0), 0)) % AVATAR_COLORS.length];
+const normalizeComparableToken = (value?: string | null) =>
+  (value || "").toLowerCase().replace(/[\s_-]+/g, "").trim();
 const normalizeWebsiteUrl = (url?: string | null) => {
   if (!url) return "";
   return /^https?:\/\//i.test(url) ? url : `https://${url}`;
@@ -122,7 +124,9 @@ export default function OrganizationPage() {
   const activeOpps = useMemo(() => opps.filter(o => o.is_open), [opps]);
   const typeLabel = org?.type?.charAt(0).toUpperCase() + org?.type?.slice(1).replace(/_/g, " ");
   const normalizedSubtype = typeof org?.subtype === "string" ? org.subtype.trim() : "";
-  const showSubtype = normalizedSubtype && normalizedSubtype.toLowerCase() !== (typeLabel || "").toLowerCase();
+  const showSubtype =
+    normalizedSubtype &&
+    normalizeComparableToken(normalizedSubtype) !== normalizeComparableToken(typeLabel || "");
   const websiteUrl = normalizeWebsiteUrl(org?.website_url);
   const websiteLabel = stripWebsiteProtocol(org?.website_url);
   const isCreator = isCreatorOrg(org?.type, org?.subtype);
