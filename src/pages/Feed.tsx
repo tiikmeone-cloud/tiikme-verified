@@ -3,7 +3,7 @@ import { PageSEO } from "@/hooks/usePageSEO";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import {
   Heart, MessageCircle, Repeat2, Send, SendHorizontal, MoreHorizontal,
-  Trash2, Pencil, Copy, Flag, Paperclip, Loader2, X,
+  Trash2, Pencil, Copy, Flag, Paperclip, Loader2, X, Settings2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
@@ -438,6 +438,11 @@ const Feed = () => {
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
   const [editedPosts, setEditedPosts] = useState<Record<string, any>>({});
   const [connectionIds, setConnectionIds] = useState<Set<string>>(new Set());
+  const [showPrefs, setShowPrefs] = useState(false);
+  const [feedPrefs, setFeedPrefs] = useState({
+    hideOrgPosts: false,
+    hideSharedPosts: false,
+  });
   const [searchParams] = useSearchParams();
   const targetPostId = searchParams.get("post");
   const scrolledRef = useRef(false);
@@ -459,9 +464,36 @@ const Feed = () => {
       });
   }, [user]);
 
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("tiikme-feed-preferences");
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      setFeedPrefs(prev => ({
+        hideOrgPosts: !!parsed.hideOrgPosts,
+        hideSharedPosts: !!parsed.hideSharedPosts,
+        ...prev,
+      }));
+    } catch {
+      // ignore malformed local state
+    }
+  }, []);
+
+  const updateFeedPref = (key: "hideOrgPosts" | "hideSharedPosts", value: boolean) => {
+    setFeedPrefs(prev => {
+      const next = { ...prev, [key]: value };
+      localStorage.setItem("tiikme-feed-preferences", JSON.stringify(next));
+      return next;
+    });
+  };
+
   const visiblePosts = useMemo(() =>
-    livePosts.filter((p: any) => !deletedIds.has(p.id)).map((p: any) => editedPosts[p.id] ? { ...p, ...editedPosts[p.id] } : p),
-    [livePosts, deletedIds, editedPosts]
+    livePosts
+      .filter((p: any) => !deletedIds.has(p.id))
+      .filter((p: any) => !feedPrefs.hideOrgPosts || !p.posted_by_org)
+      .filter((p: any) => !feedPrefs.hideSharedPosts || !(p.visibility === "workspace" || p.is_shared_to_feed))
+      .map((p: any) => editedPosts[p.id] ? { ...p, ...editedPosts[p.id] } : p),
+    [livePosts, deletedIds, editedPosts, feedPrefs]
   );
 
   const postIds = useMemo(() => visiblePosts.map((p: any) => p.id), [visiblePosts]);
@@ -513,6 +545,50 @@ const Feed = () => {
 
       <div className="flex" style={{ gap: 20 }}>
         <div style={{ flex: 1, minWidth: 0, maxWidth: 640 }}>
+          <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
+            <div>
+              <p style={{ fontSize: 22, fontWeight: 700, color: "#1A1A2E" }}>Feed</p>
+              <p style={{ fontSize: 13, color: "#6B7094" }}>Updates from people and organizations you care about.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowPrefs(v => !v)}
+              className="flex items-center gap-2 rounded-xl border border-[#E8E8E8] bg-white px-3 py-2 text-sm font-medium text-[#1A1A2E] hover:bg-[#F9FAFB]"
+            >
+              <Settings2 size={15} />
+              Feed settings
+            </button>
+          </div>
+
+          {showPrefs && (
+            <div style={{ background: "#FFFFFF", border: "1px solid #E8E8E8", borderRadius: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.04)", padding: 14, marginBottom: 12 }}>
+              <div className="space-y-3">
+                <label className="flex items-center justify-between gap-3">
+                  <div>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>Hide organization posts</p>
+                    <p style={{ fontSize: 12, color: "#6B7094" }}>Show only people-first posts in your main feed.</p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={feedPrefs.hideOrgPosts}
+                    onChange={(e) => updateFeedPref("hideOrgPosts", e.target.checked)}
+                  />
+                </label>
+                <label className="flex items-center justify-between gap-3">
+                  <div>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>Hide shared workspace posts</p>
+                    <p style={{ fontSize: 12, color: "#6B7094" }}>Reduce reposted team/workspace updates in this view.</p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={feedPrefs.hideSharedPosts}
+                    onChange={(e) => updateFeedPref("hideSharedPosts", e.target.checked)}
+                  />
+                </label>
+              </div>
+            </div>
+          )}
+
           <FeedComposer onPublished={refresh} />
 
           {loading && !visiblePosts.length && <SkeletonCard count={3} />}

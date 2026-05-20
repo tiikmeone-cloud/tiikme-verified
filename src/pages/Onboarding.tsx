@@ -1,32 +1,25 @@
 /**
- * Unified 7-step onboarding wizard. Replaces the legacy
- * /onboarding/role + /onboarding/details + /onboarding/welcome trio.
+ * Simplified 5-step onboarding wizard.
  *
  * Steps:
- *   1. Identity      — full name + username
- *   2. Role          — pick one of 9 roles
- *   3. Location      — country / state / city
- *   4. Subtype       — role-specific dropdown ("Other" → free-text)
- *   5. Role details  — years of experience / headline / sector / etc.
- *   6. Interests     — pick 3–8 tags
- *   7. Display pref  — what to show publicly + finish
- *
- * Every step (except 1, 2, 7) has a Skip button. State is persisted to
- * localStorage so a refresh never loses progress. Each Continue/Skip
- * dispatches a single supabase.from('profiles').update() with only the
- * keys the user actually filled — never null strings.
+ *   1. Identity
+ *   2. Work / study
+ *   3. Location
+ *   4. Interests
+ *   5. Display preference
  */
 import { PageSEO } from "@/hooks/usePageSEO";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { ArrowLeft, Check, Loader2 } from "lucide-react";
+import { ArrowLeft, Check, Loader2, Search, Building2, BriefcaseBusiness } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import OnboardingShell from "@/components/onboarding/OnboardingShell";
 import { consumePostAuthRedirect } from "@/lib/safeRedirect";
 import {
-  ROLES, ROLE_BY_ID, INTERESTS, YEARS_EXP_BUCKETS, SECTORS,
+  ROLES, ROLE_BY_ID, YEARS_EXP_BUCKETS, SECTORS,
+  INTERESTS,
   type Role,
 } from "@/lib/onboardingTaxonomy";
 import { COUNTRIES, loadIndiaStates } from "@/data/indiaStatesLazy";
@@ -36,12 +29,16 @@ import {
 } from "@/utils/displayProfile";
 
 const STORAGE_KEY = "ob_wizard_state_v2";
-const TOTAL = 7;
+const TOTAL = 5;
 
 interface WizardState {
   step: number;
   full_name: string;
   username: string;
+  work_type: "full_time" | "freelance" | "self_employed" | "student" | "";
+  work_org_name: string;
+  work_org_id: string;
+  job_title: string;
   role: Role | "";
   country: string;
   location_state: string;
@@ -59,6 +56,10 @@ const EMPTY: WizardState = {
   step: 1,
   full_name: "",
   username: "",
+  work_type: "",
+  work_org_name: "",
+  work_org_id: "",
+  job_title: "",
   role: "",
   country: "India",
   location_state: "",
@@ -120,6 +121,9 @@ export default function Onboarding() {
       step: Math.min(TOTAL, Math.max(1, resumeStep)),
       full_name: initial.full_name || profile?.full_name || (user.user_metadata as any)?.full_name || "",
       username: initial.username || profile?.username || "",
+      work_org_name: initial.work_org_name || profile?.currently_working_at || profile?.institution_name || "",
+      job_title: initial.job_title || profile?.designation || profile?.headline || "",
+      work_type: initial.work_type || (profile?.role === "student" ? "student" : profile?.role === "freelancer" ? "freelance" : profile?.role === "founder" ? "self_employed" : profile?.role ? "full_time" : ""),
     }));
     setLoaded(true);
   }, [user, profile]);
@@ -220,8 +224,32 @@ export default function Onboarding() {
           if (ok) goto(2);
         }} saving={saving} setSaving={setSaving} />}
 
-        {step === 2 && <StepRole state={state} set={set} onNext={async () => {
-          const ok = await savePatch({ role: state.role });
+        {step === 2 && <StepWork state={state} set={set} onNext={async () => {
+          const typeToRole: Record<string, Role> = {
+            full_time: "professional",
+            freelance: "freelancer",
+            self_employed: "founder",
+            student: "student",
+          };
+          const resolvedRole = typeToRole[state.work_type] || "professional";
+          const orgName = state.work_org_name.trim();
+          const jobTitle = state.job_title.trim();
+          const headline = orgName && jobTitle ? `${jobTitle} at ${orgName}` : jobTitle || orgName;
+          const ok = await supabase.from("profiles").update({
+            role: resolvedRole,
+            designation: jobTitle || null,
+            role_subtype: jobTitle || null,
+            headline: headline || null,
+            org_id: state.work_org_id || null,
+            currently_working_at: resolvedRole === "student" ? null : (orgName || null),
+            institution_name: resolvedRole === "student" ? (orgName || null) : null,
+          } as never).eq("id", user!.id).then(({ error }) => {
+            if (error) {
+              toast.error("Could not save work details. Try again.");
+              return false;
+            }
+            return true;
+          });
           if (ok) goto(3);
         }} />}
 
@@ -234,28 +262,12 @@ export default function Onboarding() {
           if (ok) goto(4);
         }} onSkip={() => goto(4)} />}
 
-        {step === 4 && <StepSubtype state={state} set={set} onNext={async () => {
-          const finalSubtype = state.role_subtype === "Other" && state.subtype_other.trim()
-            ? state.subtype_other.trim() : state.role_subtype;
-          const ok = await savePatch({ role_subtype: finalSubtype });
+        {step === 4 && <StepInterests state={state} set={set} onNext={async () => {
+          const ok = await savePatch({ interests: state.interests });
           if (ok) goto(5);
         }} onSkip={() => goto(5)} />}
 
-        {step === 5 && <StepRoleDetails state={state} set={set} onNext={async () => {
-          const ok = await savePatch({
-            years_exp: state.years_exp,
-            headline: state.headline.trim(),
-            sector: state.sector,
-          });
-          if (ok) goto(6);
-        }} onSkip={() => goto(6)} />}
-
-        {step === 6 && <StepInterests state={state} set={set} onNext={async () => {
-          const ok = await savePatch({ interests: state.interests });
-          if (ok) goto(7);
-        }} onSkip={() => goto(7)} />}
-
-        {step === 7 && <StepDisplayPref state={state} set={set} onFinish={finish} saving={saving} />}
+        {step === 5 && <StepDisplayPref state={state} set={set} onFinish={finish} saving={saving} />}
       </div>
     </OnboardingShell>
     </>
@@ -330,7 +342,133 @@ function StepIdentity({ state, set, onNext, saving, setSaving }: {
   );
 }
 
-/* ───────────────────────── Step 2: Role ───────────────────────── */
+/* ───────────────────────── Step 2: Work / study ───────────────────────── */
+
+function StepWork({ state, set, onNext }: { state: WizardState; set: any; onNext: () => Promise<void> }) {
+  const [orgResults, setOrgResults] = useState<any[]>([]);
+  const [searching, setSearching] = useState(false);
+  const orgQuery = state.work_org_name.trim();
+
+  useEffect(() => {
+    if (orgQuery.length < 2) {
+      setOrgResults([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setSearching(true);
+      const term = `%${orgQuery}%`;
+      const [orgRes, pageRes] = await Promise.all([
+        supabase.from("organizations").select("id, name").ilike("name", term).limit(5),
+        supabase.from("pages").select("id, name").ilike("name", term).limit(5),
+      ]);
+      const merged = [
+        ...(orgRes.data || []).map((row) => ({ ...row, source: "organization" })),
+        ...(pageRes.data || []).map((row) => ({ ...row, source: "page" })),
+      ];
+      const seen = new Set<string>();
+      setOrgResults(merged.filter((row) => {
+        const key = row.name.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      }));
+      setSearching(false);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [orgQuery]);
+
+  const canContinue = !!state.work_type && state.work_org_name.trim().length >= 2 && state.job_title.trim().length >= 2;
+
+  return (
+    <>
+      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: "#FAFAF7" }}>Tell us what you do</h1>
+      <p className="text-[14px] mb-6" style={{ color: "rgba(250,250,247,0.65)" }}>We'll use this to shape your profile, feed, and opportunities.</p>
+
+      <div className="space-y-4">
+        <div>
+          <label className={labelCls} style={labelStyle}>Work type</label>
+          <select
+            value={state.work_type}
+            onChange={e => set("work_type", e.target.value)}
+            style={{ ...inputStyle, cursor: "pointer" }}
+          >
+            <option value="">Select work type…</option>
+            <option value="full_time">Full-time / employed</option>
+            <option value="freelance">Freelance / contract</option>
+            <option value="self_employed">Self-employed / founder</option>
+            <option value="student">Student</option>
+          </select>
+        </div>
+
+        <div className="relative">
+          <label className={labelCls} style={labelStyle}>
+            {state.work_type === "student" ? "College / institution" : "Company / organization"}
+          </label>
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "rgba(250,250,247,0.45)" }} />
+            <input
+              type="text"
+              value={state.work_org_name}
+              onChange={e => { set("work_org_name", e.target.value); set("work_org_id", ""); }}
+              placeholder={state.work_type === "student" ? "Search your college or institution" : "Search your company or organization"}
+              style={{ ...inputStyle, paddingLeft: 38 }}
+            />
+          </div>
+          {searching && <p className="text-[12px] mt-1.5" style={{ color: "rgba(250,250,247,0.45)" }}>Searching…</p>}
+          {!searching && orgResults.length > 0 && (
+            <div style={{ marginTop: 8, borderRadius: 14, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
+              {orgResults.map((org) => (
+                <button
+                  key={`${org.source}-${org.id}`}
+                  type="button"
+                  onClick={() => {
+                    set("work_org_name", org.name);
+                    set("work_org_id", org.source === "organization" ? org.id : "");
+                    setOrgResults([]);
+                  }}
+                  className="w-full text-left flex items-center gap-3 px-3 py-3 cursor-pointer"
+                  style={{ borderBottom: "1px solid rgba(255,255,255,0.08)", background: "transparent" }}
+                >
+                  {org.source === "organization" ? <Building2 className="w-4 h-4" style={{ color: BRAND }} /> : <BriefcaseBusiness className="w-4 h-4" style={{ color: BRAND }} />}
+                  <div>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: "#FAFAF7" }}>{org.name}</p>
+                    <p style={{ fontSize: 11, color: "rgba(250,250,247,0.50)" }}>{org.source === "organization" ? "Organization" : "Page"}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div>
+          <label className={labelCls} style={labelStyle}>
+            {state.work_type === "student" ? "What are you studying?" : state.work_type === "self_employed" ? "What do you do?" : "Job title"}
+          </label>
+          <input
+            type="text"
+            value={state.job_title}
+            onChange={e => set("job_title", e.target.value)}
+            placeholder={state.work_type === "student" ? "e.g. BTech Computer Science" : "e.g. Backend Engineer"}
+            style={inputStyle}
+            maxLength={80}
+          />
+        </div>
+      </div>
+
+      <button
+        type="button"
+        disabled={!canContinue}
+        onClick={onNext}
+        className="mt-6 w-full h-12 rounded-2xl text-[15px] font-bold text-white cursor-pointer transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+        style={{ background: BRAND }}
+      >
+        Continue →
+      </button>
+    </>
+  );
+}
+
+/* ───────────────────────── Legacy role step retained for compatibility ───────────────────────── */
 
 function StepRole({ state, set, onNext }: { state: WizardState; set: any; onNext: () => Promise<void> }) {
   return (
@@ -651,7 +789,7 @@ function DisplayPreviewCard({ state }: { state: WizardState }) {
   const showRole = pref === "dp_name_profession" || pref === "dp_name_profession_company";
   const showCompany = pref === "dp_name_profession_company";
   const name = state.full_name.trim() || "Your Name";
-  const role = state.role_subtype || (state.role ? state.role.charAt(0).toUpperCase() + state.role.slice(1).replace(/_/g, " ") : "Your Role");
+  const role = state.job_title.trim() || state.role_subtype || (state.role ? state.role.charAt(0).toUpperCase() + state.role.slice(1).replace(/_/g, " ") : "Your Role");
 
   return (
     <div style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 12 }}>
@@ -661,7 +799,7 @@ function DisplayPreviewCard({ state }: { state: WizardState }) {
       <div style={{ minWidth: 0 }}>
         {showName && <p style={{ fontSize: 14, fontWeight: 700, color: "#FAFAF7", margin: 0, lineHeight: "20px" }}>{name}</p>}
         {showRole && <p style={{ fontSize: 12, color: "rgba(250,250,247,0.65)", margin: 0 }}>{role}</p>}
-        {showCompany && <p style={{ fontSize: 11, color: "rgba(250,250,247,0.45)", margin: 0 }}>Tiikme Inc.</p>}
+        {showCompany && <p style={{ fontSize: 11, color: "rgba(250,250,247,0.45)", margin: 0 }}>{state.work_org_name.trim() || "Your organization"}</p>}
         {!showName && <p style={{ fontSize: 12, color: "rgba(250,250,247,0.45)", margin: 0, fontStyle: "italic" }}>Name hidden</p>}
       </div>
     </div>

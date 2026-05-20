@@ -3,7 +3,7 @@
 // new conversation flow, read receipts, tabs for Chats/Applications/Requests
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Edit, Send, Loader2, Lock, Search, ArrowLeft, MessageCircle } from "lucide-react";
+import { Edit, Send, Loader2, Lock, Search, ArrowLeft, MessageCircle, Briefcase, Check, X } from "lucide-react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -37,6 +37,34 @@ interface Message {
   created_at: string;
 }
 
+interface ApplicationListItem {
+  id: string;
+  status: string;
+  created_at: string;
+  opportunity: {
+    id: string;
+    title: string | null;
+    org?: {
+      name: string | null;
+      logo_url: string | null;
+    } | null;
+  } | null;
+}
+
+interface RequestListItem {
+  id: string;
+  requester_id: string;
+  created_at: string;
+  requester: {
+    id: string;
+    full_name: string | null;
+    avatar_url: string | null;
+    username: string | null;
+    clean_username: string | null;
+    designation?: string | null;
+  } | null;
+}
+
 export default function Pings() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
@@ -53,6 +81,11 @@ export default function Pings() {
   const [showNewConv, setShowNewConv] = useState(false);
   const [newConvSearch, setNewConvSearch] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [applicationItems, setApplicationItems] = useState<ApplicationListItem[]>([]);
+  const [requestItems, setRequestItems] = useState<RequestListItem[]>([]);
+  const [loadingApplications, setLoadingApplications] = useState(true);
+  const [loadingRequests, setLoadingRequests] = useState(true);
+  const [requestActionId, setRequestActionId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Load conversations
@@ -137,6 +170,45 @@ export default function Pings() {
 
     return () => { cancelled = true; };
   }, [selectedConv?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+
+    supabase
+      .from("opportunity_applications")
+      .select("id, status, created_at, opportunity:opportunities(id, title, org:organizations!opportunities_org_id_fkey(name, logo_url))")
+      .eq("applicant_id", user.id)
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        if (!cancelled) {
+          setApplicationItems((data || []) as any);
+          setLoadingApplications(false);
+        }
+      });
+
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+
+    supabase
+      .from("strands")
+      .select("id, requester_id, created_at, requester:profiles!strands_requester_id_fkey(id, full_name, avatar_url, username, clean_username, designation)")
+      .eq("receiver_id", user.id)
+      .eq("status", "pending")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        if (!cancelled) {
+          setRequestItems((data || []) as any);
+          setLoadingRequests(false);
+        }
+      });
+
+    return () => { cancelled = true; };
+  }, [user?.id]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -249,12 +321,72 @@ export default function Pings() {
     !searchQ || (c.other.full_name || "").toLowerCase().includes(searchQ.toLowerCase())
   );
 
+  const filteredApplications = applicationItems.filter(app => {
+    if (!searchQ.trim()) return true;
+    const q = searchQ.toLowerCase();
+    return (
+      app.opportunity?.title?.toLowerCase().includes(q) ||
+      app.opportunity?.org?.name?.toLowerCase().includes(q)
+    );
+  });
+
+  const filteredRequests = requestItems.filter(request => {
+    if (!searchQ.trim()) return true;
+    const q = searchQ.toLowerCase();
+    return (
+      request.requester?.full_name?.toLowerCase().includes(q) ||
+      request.requester?.username?.toLowerCase().includes(q)
+    );
+  });
+
+  const handleRequestAction = async (request: RequestListItem, action: "accept" | "decline") => {
+    if (!user?.id) return;
+    setRequestActionId(request.id);
+    const nextStatus = action === "accept" ? "accepted" : "declined";
+    const { error } = await supabase.from("strands").update({ status: nextStatus }).eq("id", request.id);
+    if (error) {
+      toast.error(`Could not ${action} request`);
+      setRequestActionId(null);
+      return;
+    }
+    setRequestItems(prev => prev.filter(item => item.id !== request.id));
+    if (action === "accept") {
+      toast.success("Connection accepted");
+      if (request.requester_id && profile?.full_name) {
+        await supabase.from("alerts").insert({
+          user_id: request.requester_id,
+          type: "strand",
+          title: `${profile.full_name} accepted your connection request`,
+          body: "You are now connected on Tiikme.",
+          action_url: `/app/profile/${user.id}`,
+          data: { actor_id: user.id } as any,
+        } as any);
+      }
+    } else {
+      toast.success("Request declined");
+    }
+    setRequestActionId(null);
+  };
+
+  const statusMeta: Record<string, { label: string; color: string; bg: string }> = {
+    under_review: { label: "Under review", color: "#FFB800", bg: "rgba(255,184,0,0.12)" },
+    qualified: { label: "Qualified", color: "#10B981", bg: "rgba(16,185,129,0.12)" },
+    shortlisted: { label: "Shortlisted", color: "#3B82F6", bg: "rgba(59,130,246,0.12)" },
+    offered: { label: "Offered", color: "#34C759", bg: "rgba(52,199,89,0.12)" },
+    rejected: { label: "Not selected", color: "#EF4444", bg: "rgba(239,68,68,0.10)" },
+    submitted: { label: "Submitted", color: "#6B7280", bg: "rgba(107,114,128,0.10)" },
+  };
+
+  const showChats = tab === "chats";
+
   return (
     <div className="flex h-[calc(100vh-64px)] bg-white rounded-2xl border border-gray-100 overflow-hidden">
       {/* Left panel — conversation list */}
       <div
-        className={`flex flex-col border-r border-gray-100 ${
-          selectedConv ? "hidden md:flex w-80" : "flex w-full md:w-80"
+        className={`flex flex-col ${
+          showChats ? "border-r border-gray-100" : ""
+        } ${
+          showChats ? (selectedConv ? "hidden md:flex w-80" : "flex w-full md:w-80") : "flex w-full"
         }`}
       >
         {/* Header */}
@@ -293,7 +425,7 @@ export default function Pings() {
             <input
               value={searchQ}
               onChange={e => setSearchQ(e.target.value)}
-              placeholder="Search conversations..."
+              placeholder={tab === "chats" ? "Search conversations..." : tab === "applications" ? "Search applications..." : "Search requests..."}
               className="flex-1 text-sm bg-transparent outline-none text-gray-700 placeholder-gray-400"
             />
           </div>
@@ -301,7 +433,7 @@ export default function Pings() {
 
         {/* Conversation list */}
         <div className="flex-1 overflow-y-auto">
-          {loadingConvs ? (
+          {tab === "chats" && loadingConvs ? (
             <div className="space-y-0">
               {[1, 2, 3].map(i => (
                 <div key={i} className="flex gap-3 px-4 py-3 animate-pulse">
@@ -313,7 +445,7 @@ export default function Pings() {
                 </div>
               ))}
             </div>
-          ) : filteredConvs.length === 0 ? (
+          ) : tab === "chats" && filteredConvs.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-48 text-center px-6">
               <MessageCircle size={32} className="text-gray-200 mb-3" />
               <p className="text-sm font-medium text-gray-500">No conversations yet</p>
@@ -327,7 +459,7 @@ export default function Pings() {
                 Find people →
               </button>
             </div>
-          ) : (
+          ) : tab === "chats" ? (
             filteredConvs.map(conv => (
               <button
                 key={conv.id}
@@ -353,12 +485,101 @@ export default function Pings() {
                 </div>
               </button>
             ))
+          ) : tab === "applications" ? (
+            loadingApplications ? (
+              <div className="space-y-3 px-4 py-3">
+                {[1, 2, 3].map(i => <div key={i} className="h-20 rounded-2xl bg-gray-100 animate-pulse" />)}
+              </div>
+            ) : filteredApplications.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-56 text-center px-6">
+                <Briefcase size={32} className="text-gray-200 mb-3" />
+                <p className="text-sm font-medium text-gray-500">No applications yet</p>
+                <p className="text-xs text-gray-400 mt-1">Apply to opportunities and track them here.</p>
+                <button onClick={() => navigate("/app/opportunities")} className="mt-3 text-xs text-[#E8733A] hover:underline">
+                  Browse opportunities →
+                </button>
+              </div>
+            ) : (
+              <div className="p-3 space-y-2">
+                {filteredApplications.map(app => {
+                  const meta = statusMeta[app.status] || statusMeta.submitted;
+                  return (
+                    <button
+                      key={app.id}
+                      type="button"
+                      onClick={() => navigate("/app/opportunities?tab=applications")}
+                      className="w-full flex items-center gap-3 rounded-2xl border border-gray-100 px-3 py-3 text-left hover:bg-gray-50"
+                    >
+                      <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center bg-gray-50 border border-gray-100 shrink-0">
+                        {app.opportunity?.org?.logo_url ? (
+                          <img src={app.opportunity.org.logo_url} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <Briefcase size={16} className="text-gray-400" />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-gray-900">{app.opportunity?.title || "Opportunity"}</p>
+                        <p className="truncate text-xs text-gray-400">{app.opportunity?.org?.name || "Tiikme"}</p>
+                      </div>
+                      <span className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold" style={{ background: meta.bg, color: meta.color }}>
+                        {meta.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )
+          ) : loadingRequests ? (
+            <div className="space-y-3 px-4 py-3">
+              {[1, 2, 3].map(i => <div key={i} className="h-20 rounded-2xl bg-gray-100 animate-pulse" />)}
+            </div>
+          ) : filteredRequests.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-56 text-center px-6">
+              <MessageCircle size={32} className="text-gray-200 mb-3" />
+              <p className="text-sm font-medium text-gray-500">No pending requests</p>
+              <p className="text-xs text-gray-400 mt-1">New connection requests will show up here.</p>
+            </div>
+          ) : (
+            <div className="p-3 space-y-2">
+              {filteredRequests.map(request => (
+                <div key={request.id} className="rounded-2xl border border-gray-100 px-3 py-3">
+                  <div className="flex items-center gap-3">
+                    <button type="button" onClick={() => navigate(`/app/profile/${request.requester?.clean_username || request.requester?.username || request.requester?.id}`)}>
+                      <AvatarSquare src={request.requester?.avatar_url} name={request.requester?.full_name || "User"} size={40} />
+                    </button>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-gray-900">{request.requester?.full_name || "User"}</p>
+                      <p className="truncate text-xs text-gray-400">{request.requester?.designation || request.requester?.username || "Wants to connect"}</p>
+                    </div>
+                    <span className="shrink-0 text-[11px] text-gray-400">{formatRelativeTime(request.created_at)}</span>
+                  </div>
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      type="button"
+                      disabled={requestActionId === request.id}
+                      onClick={() => handleRequestAction(request, "decline")}
+                      className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      <span className="inline-flex items-center gap-1"><X size={12} /> Decline</span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={requestActionId === request.id}
+                      onClick={() => handleRequestAction(request, "accept")}
+                      className="flex-1 rounded-xl bg-[#E8733A] px-3 py-2 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50"
+                    >
+                      <span className="inline-flex items-center gap-1"><Check size={12} /> Accept</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </div>
 
       {/* Right panel — messages */}
-      <div className={`flex flex-col flex-1 ${!selectedConv ? "hidden md:flex" : "flex"}`}>
+      <div className={`flex flex-col flex-1 ${!showChats ? "hidden" : !selectedConv ? "hidden md:flex" : "flex"}`}>
         {!selectedConv ? (
           <div className="flex flex-col items-center justify-center h-full text-center px-8">
             <MessageCircle size={48} className="text-gray-200 mb-4" />

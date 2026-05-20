@@ -436,6 +436,7 @@ export type Database = {
           poll_options: Json | null
           poll_votes: Json | null
           post_type: string
+          posted_as_org_id: string | null
           reply_count: number
           signtype: string
           title: string | null
@@ -460,6 +461,7 @@ export type Database = {
           poll_options?: Json | null
           poll_votes?: Json | null
           post_type?: string
+          posted_as_org_id?: string | null
           reply_count?: number
           signtype?: string
           title?: string | null
@@ -484,6 +486,7 @@ export type Database = {
           poll_options?: Json | null
           poll_votes?: Json | null
           post_type?: string
+          posted_as_org_id?: string | null
           reply_count?: number
           signtype?: string
           title?: string | null
@@ -503,6 +506,13 @@ export type Database = {
             columns: ["circle_id"]
             isOneToOne: false
             referencedRelation: "circles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "circle_posts_posted_as_org_id_fkey"
+            columns: ["posted_as_org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]

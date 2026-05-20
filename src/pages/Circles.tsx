@@ -262,6 +262,7 @@ function CircleDetail({ slug }: { slug: string }) {
   const { user } = useAuth();
   const [circle, setCircle] = useState<any>(null);
   const [linkedOrg, setLinkedOrg] = useState<{ name: string; logo_url: string | null; slug: string | null } | null>(null);
+  const [canPostAsOrg, setCanPostAsOrg] = useState(false);
   const [posts, setPosts] = useState<any[]>([]);
   const [isMember, setIsMember] = useState(false);
   const [sort, setSort] = useState<"new" | "hot" | "top">("new");
@@ -279,12 +280,19 @@ function CircleDetail({ slug }: { slug: string }) {
       if (linkedId) {
         supabase.from("organizations").select("name, logo_url, slug").eq("id", linkedId).maybeSingle()
           .then(({ data }) => setLinkedOrg(data as any));
+        if (user?.id) {
+          supabase.from("org_members").select("role").eq("org_id", linkedId).eq("user_id", user.id).maybeSingle()
+            .then(({ data }) => setCanPostAsOrg(!!data && ["owner", "admin"].includes((data as any).role)));
+        } else {
+          setCanPostAsOrg(false);
+        }
       } else {
         setLinkedOrg(null);
+        setCanPostAsOrg(false);
       }
 
       const orderCol = sort === "hot" ? "hot_score" : sort === "top" ? "upvote_count" : "created_at";
-      let q = supabase.from("circle_posts").select("*, author:profiles!circle_posts_author_id_fkey(id, full_name, avatar_url, role)")
+      let q = supabase.from("circle_posts").select("*, author:profiles!circle_posts_author_id_fkey(id, full_name, avatar_url, role), posted_org:organizations!circle_posts_posted_as_org_id_fkey(id, name, logo_url, slug)")
         .eq("circle_id", c.id).eq("is_flagged", false)
         .order(orderCol, { ascending: false }).limit(50);
       if (sort === "top") {
@@ -506,6 +514,8 @@ function CircleDetail({ slug }: { slug: string }) {
       {showComposer && isMember && (
         <CircleComposer
           circle={circle}
+          linkedOrg={linkedOrg}
+          canPostAsOrg={canPostAsOrg}
           onClose={() => setShowComposer(false)}
           onPosted={(newPost: any) => { setPosts(prev => [newPost, ...prev]); setShowComposer(false); }}
         />
@@ -529,6 +539,7 @@ function CirclePostCard({
 }) {
   const { user } = useAuth();
   const author = post.author;
+  const postedOrg = post.posted_org;
   const showName = post.signtype === "full_profile";
   const label = (SIGNTYPE_CONFIG as any)[post.signtype]?.label || "User";
   const typeConf = (POST_TYPE_CONFIG as any)[post.post_type] || POST_TYPE_CONFIG.discussion;
@@ -607,17 +618,19 @@ function CirclePostCard({
   return (
     <article className="glass-card" style={{ padding: 14, borderRadius: 12, background: "rgba(255,255,255,0.55)", border: "1px solid rgba(255,255,255,0.30)" }}>
       <div className="flex items-center gap-2" style={{ marginBottom: 10 }}>
-        {showName && author ? (
+        {postedOrg ? (
+          <AvatarSquare src={postedOrg.logo_url} name={postedOrg.name || "?"} size={32} />
+        ) : showName && author ? (
           <AvatarSquare src={author.avatar_url} name={author.full_name || "?"} size={32} />
         ) : (
           <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(107,112,148,0.20)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#6B7094" }}>?</div>
         )}
         <div className="flex-1 min-w-0">
           <p style={{ fontSize: 13, fontWeight: 700, color: "#1A1A2E" }}>
-            {showName ? author?.full_name : label}
+            {postedOrg ? postedOrg.name : showName ? author?.full_name : label}
           </p>
           <p style={{ fontSize: 11, color: "#6B7094" }}>
-            {typeConf.icon} {typeConf.label} · {new Date(post.created_at).toLocaleDateString()}
+            {typeConf.icon} {typeConf.label}{postedOrg ? " · Organization" : ""} · {new Date(post.created_at).toLocaleDateString()}
           </p>
         </div>
         {canModerate && (
@@ -739,11 +752,12 @@ function CirclePostCard({
 // =================================================================
 // COMPOSER — fixed margins
 // =================================================================
-function CircleComposer({ circle, onClose, onPosted }: any) {
+function CircleComposer({ circle, linkedOrg, canPostAsOrg, onClose, onPosted }: any) {
   const { user } = useAuth();
   const [step, setStep] = useState<"type" | "form">("type");
   const [postType, setPostType] = useState("discussion");
   const [signtype, setSigntype] = useState("full_profile");
+  const [postAsOrg, setPostAsOrg] = useState(false);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [saving, setSaving] = useState(false);
@@ -755,9 +769,10 @@ function CircleComposer({ circle, onClose, onPosted }: any) {
     const { data, error } = await supabase.from("circle_posts").insert({
       circle_id: circle.id, author_id: user.id,
       signtype, post_type: postType,
+      posted_as_org_id: postAsOrg ? circle.linked_org_id : null,
       title: title.trim() || null, body: body.trim(),
       content: body.trim(),
-    }).select("*, author:profiles!circle_posts_author_id_fkey(id, full_name, avatar_url, role)").single();
+    }).select("*, author:profiles!circle_posts_author_id_fkey(id, full_name, avatar_url, role), posted_org:organizations!circle_posts_posted_as_org_id_fkey(id, name, logo_url, slug)").single();
     setSaving(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Posted");
@@ -865,6 +880,15 @@ function CircleComposer({ circle, onClose, onPosted }: any) {
             />
 
             <p style={{ fontSize: 11, fontWeight: 700, color: "#1A1A2E", marginBottom: 6 }}>Post as</p>
+            {canPostAsOrg && linkedOrg && (
+              <label className="flex items-center justify-between gap-3 mb-3" style={{ padding: 10, borderRadius: 10, background: "rgba(255,255,255,0.45)", border: "1px solid rgba(0,0,0,0.10)" }}>
+                <div>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: "#1A1A2E" }}>Post on behalf of {linkedOrg.name}</p>
+                  <p style={{ fontSize: 11, color: "#6B7094" }}>Publish this post using the linked organization identity.</p>
+                </div>
+                <input type="checkbox" checked={postAsOrg} onChange={(e) => setPostAsOrg(e.target.checked)} />
+              </label>
+            )}
             <select
               value={signtype}
               onChange={e => setSigntype(e.target.value)}
