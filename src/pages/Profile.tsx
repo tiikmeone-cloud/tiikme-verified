@@ -401,6 +401,13 @@ const Profile = () => {
     profileData.username?.replace(/-[0-9a-f]{6}$/i, "") ||
     "";
   const tiikmeProfilePath = cleanProfileUsername ? `https://tiikme.com/${cleanProfileUsername}` : "";
+  const normalizedTiikmeProfilePath = tiikmeProfilePath.replace(/\/+$/, "").toLowerCase();
+  const visibleCustomLinks = customLinks.filter((link: any) => {
+    const rawUrl = typeof link?.url === "string" ? link.url.trim() : "";
+    if (!rawUrl) return false;
+    const normalizedUrl = rawUrl.replace(/\/+$/, "").toLowerCase();
+    return normalizedUrl !== normalizedTiikmeProfilePath;
+  });
 
   const handleCopyLink = () => {
     const url = tiikmeProfilePath || `${window.location.origin}/${username}`;
@@ -1130,7 +1137,7 @@ const Profile = () => {
                   </button>
                 )}
               </div>
-              {customLinks.length > 0 ? (
+              {visibleCustomLinks.length > 0 ? (
                 <div className="flex flex-wrap" style={{ gap: 6, marginTop: 8 }}>
                   {cleanProfileUsername && (
                     <button
@@ -1148,7 +1155,7 @@ const Profile = () => {
                       </span>
                     </button>
                   )}
-                  {customLinks.map((link: any, i: number) => {
+                  {visibleCustomLinks.map((link: any, i: number) => {
                     const platform = detectPlatform(link.url);
                     const Icon = platform.icon;
                     return (
@@ -1271,9 +1278,10 @@ const Profile = () => {
                       <button
                         type="button"
                         onClick={() => {
-                          const url = `${window.location.origin}/${username || targetUserId}`;
+                          const publicPath = cleanProfileUsername || username || targetUserId;
+                          const url = `${window.location.origin}/${publicPath}`;
                           navigator.clipboard?.writeText(url);
-                          toast.success("Profile link copied");
+                          toast.success("Profile link copied!");
                         }}
                         className="cursor-pointer"
                         style={{
