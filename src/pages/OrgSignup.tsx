@@ -48,7 +48,7 @@ export default function OrgSignup() {
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) { toast.error("Logo max 2MB"); return; }
     setLogoFile(file);
-    setLogoPreview(URL.createObjectURL(file));
+    setLogoPreview(prev => { if (prev) URL.revokeObjectURL(prev); return URL.createObjectURL(file); });
   };
 
   const handleCreate = async () => {

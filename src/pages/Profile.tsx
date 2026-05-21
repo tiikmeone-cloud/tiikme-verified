@@ -767,7 +767,13 @@ const Profile = () => {
   const activityScore = profileData.activity_score || 0;
   const tier = getActivityTier(activityScore);
 
-  const handleReport = () => {
+  const handleReport = async () => {
+    if (!user || !targetUserId) return;
+    await supabase.from("profile_reports" as any).insert({
+      reporter_id: user.id,
+      reported_user_id: targetUserId,
+      reason: "user_report",
+    });
     toast.success("Report submitted. Our team will review.");
   };
 

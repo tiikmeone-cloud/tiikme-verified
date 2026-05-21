@@ -53,7 +53,7 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !consent) return;
+    if (!user || !consent || resumeUploading) return;
     setSubmitting(true);
     try {
       // Check eliminatory questions for auto-reject
@@ -92,12 +92,8 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
         setSubmitting(false);
         return;
       }
-      // Increment applicant count
-      try {
-        await supabase.from("opportunities")
-          .update({ responses_count: (opportunity.responses_count || 0) + 1 })
-          .eq("id", opportunity.id);
-      } catch {}
+      // Increment applicant count atomically via DB
+      await supabase.rpc("increment_opportunity_responses" as any, { opp_id: opportunity.id }).then(() => {});
       // Send alert to poster
       if (opportunity.poster_id) {
         await supabase.from("alerts").insert({

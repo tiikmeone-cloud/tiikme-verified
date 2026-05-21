@@ -86,13 +86,7 @@ const Opportunities = () => {
   useEffect(() => { const t = setTimeout(() => setDebouncedSearch(search), 300); return () => clearTimeout(t); }, [search]);
 
   const fetchOppsData = useCallback(async () => {
-    await supabase
-      .from("opportunities")
-      .update({ is_expired: true, is_open: false } as any)
-      .lt("expires_at", new Date().toISOString())
-      .eq("is_expired", false)
-      .not("expires_at", "is", null);
-
+    // NOTE: expiry is handled server-side via DB trigger/cron, not here.
     const today = new Date().toISOString().slice(0, 10);
     let query = supabase.from("opportunities")
       .select("*, org:organizations!opportunities_org_id_fkey(id, name, logo_url, type, slug, is_verified)")

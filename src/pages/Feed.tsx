@@ -187,9 +187,16 @@ const FeedComposer = ({ onPublished }: { onPublished: () => void }) => {
   };
 
   const removeAttach = (idx: number) => {
-    setAttachPreviews(prev => prev.filter((_, i) => i !== idx));
+    setAttachPreviews(prev => {
+      const item = prev[idx];
+      if (item?.url) URL.revokeObjectURL(item.url);
+      return prev.filter((_, i) => i !== idx);
+    });
     setAttachFiles(prev => prev.filter((_, i) => i !== idx));
   };
+
+  // Revoke all blob URLs on unmount
+  useEffect(() => () => { attachPreviews.forEach(a => { if (a.url) URL.revokeObjectURL(a.url); }); }, []);
 
   const handlePublish = async () => {
     if (!content.trim() && attachFiles.length === 0) return;
@@ -239,7 +246,7 @@ const FeedComposer = ({ onPublished }: { onPublished: () => void }) => {
             }}
             onFocus={e => { e.currentTarget.style.borderColor = "rgba(232,115,58,0.50)"; }}
             onBlur={e => { e.currentTarget.style.borderColor = "#E8E8E8"; }}
-            onKeyDown={(e) => { if (e.key === "Enter" && (content.trim() || attachFiles.length > 0)) handlePublish(); }}
+            onKeyDown={(e) => { if (e.key === "Enter" && !publishing && (content.trim() || attachFiles.length > 0)) handlePublish(); }}
           />
         </div>
         <button type="button" onClick={handleAttach} className="cursor-pointer shrink-0 flex items-center justify-center" style={{ width: 36, height: 36, color: "#9CA3C0" }}>
@@ -256,7 +263,7 @@ const FeedComposer = ({ onPublished }: { onPublished: () => void }) => {
       {attachPreviews.length > 0 && (
         <div className="flex flex-wrap gap-2" style={{ marginTop: 8 }}>
           {attachPreviews.map((att, i) => (
-            <div key={i} className="relative" style={{ borderRadius: 6, overflow: "hidden", border: "1px solid #E8E8E8" }}>
+            <div key={`${att.name}-${att.size}-${i}`} className="relative" style={{ borderRadius: 6, overflow: "hidden", border: "1px solid #E8E8E8" }}>
               {att.type.startsWith("image/") ? (
                 <img src={att.url} alt="" loading="lazy" style={{ height: 80, width: "auto", maxWidth: 120, objectFit: "cover", borderRadius: 6 }} />
               ) : (

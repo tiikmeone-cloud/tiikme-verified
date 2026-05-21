@@ -169,29 +169,12 @@ const Pings = () => {
       const toUserId = searchParams.get("to");
       if (toUserId) startConversation(toUserId);
     }
-  }, [loading, routeConvoId, searchParams.get("to")]);
+  }, [loading, routeConvoId, searchParams]);
 
-  // Mark all incoming pings as read when the page opens
+  // Dispatch pings-read event on mount so the nav badge clears;
+  // per-conversation mark-read is handled inside loadMessages.
   useEffect(() => {
-    if (!user?.id) return;
-    (async () => {
-      const { data: convos } = await supabase
-        .from("conversations")
-        .select("id")
-        .or(`participant_1.eq.${user.id},participant_2.eq.${user.id}`);
-      if (!convos?.length) {
-        window.dispatchEvent(new Event("pings-read"));
-        return;
-      }
-      const convIds = convos.map((c: any) => c.id);
-      await supabase
-        .from("pings")
-        .update({ is_read: true })
-        .in("conversation_id", convIds)
-        .neq("sender_id", user.id)
-        .eq("is_read", false);
-      window.dispatchEvent(new Event("pings-read"));
-    })();
+    if (user?.id) window.dispatchEvent(new Event("pings-read"));
   }, [user?.id]);
 
   // Auto-resize textarea
@@ -375,7 +358,6 @@ const Pings = () => {
                 <Link to={`/app/profile/${activeConvo.other_user.id}`} className="flex items-center gap-3 flex-1 min-w-0">
                   <div className="relative">
                     <AvatarSquare src={activeConvo.other_user.avatar_url} name={activeConvo.other_user.full_name || "U"} size={40} bgColor={ROLE_COLORS[activeConvo.other_user.role || ""] || "#6B7280"} />
-                    <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2" style={{ background: "#22C55E", borderColor: "var(--glass-bg)" }} />
                   </div>
                   <div className="min-w-0">
                     <span className="text-[14px] font-bold block" style={{ color: "var(--text-1)" }}>{activeConvo.other_user.full_name || activeConvo.other_user.username}</span>

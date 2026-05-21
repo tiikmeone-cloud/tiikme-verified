@@ -218,7 +218,7 @@ const Connections = () => {
       list = list.filter(s => (getOther(s)?.full_name || "").toLowerCase().includes(q));
     }
     if (verifiedOnly) list = list.filter(s => getOther(s)?.is_verified);
-    if (withCompany) list = list.filter(s => !!getOther(s)?.institution_name);
+    if (withCompany) list = list.filter(s => !!(getOther(s)?.institution_name || getOther(s)?.currently_working_at));
     if (activeRecent) {
       const week = Date.now() - 7 * 86400000;
       list = list.filter(s => {
