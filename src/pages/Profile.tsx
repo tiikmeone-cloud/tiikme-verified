@@ -402,11 +402,38 @@ const Profile = () => {
     "";
   const tiikmeProfilePath = cleanProfileUsername ? `https://tiikme.com/${cleanProfileUsername}` : "";
   const normalizedTiikmeProfilePath = tiikmeProfilePath.replace(/\/+$/, "").toLowerCase();
+  const tiikmeProfilePathnames = new Set(
+    [
+      cleanProfileUsername ? `/${cleanProfileUsername}` : "",
+      cleanProfileUsername ? `/app/${cleanProfileUsername}` : "",
+      isOwnProfile ? "/app/profile" : "",
+      targetUserId ? `/app/profile/${targetUserId}` : "",
+    ]
+      .map((value) => value.trim().replace(/\/+$/, "").toLowerCase())
+      .filter(Boolean),
+  );
   const visibleCustomLinks = customLinks.filter((link: any) => {
     const rawUrl = typeof link?.url === "string" ? link.url.trim() : "";
     if (!rawUrl) return false;
     const normalizedUrl = rawUrl.replace(/\/+$/, "").toLowerCase();
-    return normalizedUrl !== normalizedTiikmeProfilePath;
+    if (normalizedUrl === normalizedTiikmeProfilePath) return false;
+
+    try {
+      const parsedUrl = new URL(rawUrl, window.location.origin);
+      const normalizedHost = parsedUrl.hostname.replace(/^www\./, "").toLowerCase();
+      const normalizedPath = parsedUrl.pathname.replace(/\/+$/, "").toLowerCase() || "/";
+      const isTiikmeHost =
+        normalizedHost === "tiikme.com" ||
+        normalizedHost === "www.tiikme.com" ||
+        normalizedHost === window.location.hostname.replace(/^www\./, "").toLowerCase();
+      if (isTiikmeHost && tiikmeProfilePathnames.has(normalizedPath)) {
+        return false;
+      }
+    } catch {
+      // Ignore malformed links and let them render so the user can still edit/remove them.
+    }
+
+    return true;
   });
 
   const handleCopyLink = () => {
