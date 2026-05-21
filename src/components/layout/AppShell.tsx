@@ -172,7 +172,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
     { label: "Explore", icon: Compass, path: "/app/explore" },
   ];
   const mobileRightItems = [
-    { label: "Opps", icon: Briefcase, path: "/app/opportunities" },
+    { label: "Pings", icon: MessageCircle, path: "/app/pings", isBadge: true },
     { label: "Profile", icon: User, path: profilePath, isProfile: true },
   ];
 
@@ -464,10 +464,12 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             </span>
           </button>
 
-          {/* Tab 4 — Opportunities, Tab 5 — Profile */}
+          {/* Tab 4 — Pings (with badge), Tab 5 — Profile */}
           {mobileRightItems.map((item) => {
             const active = isActive(item.path);
             const isProfile = (item as any).isProfile;
+            const isBadge = (item as any).isBadge;
+            const badge = isBadge ? (unreadPings || 0) : 0;
             return (
               <Link
                 key={item.path}
@@ -508,10 +510,25 @@ const AppShell = ({ children }: { children: ReactNode }) => {
                     />
                   )
                 ) : (
-                  <item.icon
-                    style={{ width: 24, height: 24, color: active ? "#FF5A1F" : "#9CA3AF" }}
-                    strokeWidth={active ? 2.2 : 1.8}
-                  />
+                  <span className="relative">
+                    <item.icon
+                      style={{ width: 24, height: 24, color: active ? "#FF5A1F" : "#9CA3AF" }}
+                      strokeWidth={active ? 2.2 : 1.8}
+                    />
+                    {badge > 0 && (
+                      <span style={{
+                        position: "absolute", top: -4, right: -6,
+                        minWidth: 16, height: 16, borderRadius: 999,
+                        background: "#FF5A1F", color: "#fff",
+                        fontSize: 9, fontWeight: 700,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        padding: "0 3px", lineHeight: 1,
+                        border: "1.5px solid #fff",
+                      }}>
+                        {badge > 99 ? "99+" : badge}
+                      </span>
+                    )}
+                  </span>
                 )}
                 <span style={{
                   fontSize: 10, fontWeight: active ? 700 : 500,

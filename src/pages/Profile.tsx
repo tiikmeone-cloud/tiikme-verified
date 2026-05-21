@@ -270,6 +270,9 @@ const Profile = () => {
   const [connectionStatus, setConnectionStatus] = useState<{ status: string | null; direction: string | null; id: string | null }>({ status: null, direction: null, id: null });
   const [connectLoading, setConnectLoading] = useState(false);
   const [showScoreDetails, setShowScoreDetails] = useState(false);
+  const [followState, setFollowState] = useState<"following" | "none">("none");
+  const [followerCount, setFollowerCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
 
   const targetUserId = isOwnProfile ? user?.id : (effectiveId || undefined);
 
@@ -328,6 +331,39 @@ const Profile = () => {
         if (data) setConnectionStatus({ status: data.status, direction: data.requester_id === user.id ? "sent" : "received", id: data.id });
       });
   }, [user, targetUserId, isOwnProfile]);
+
+  // Load follow status + counts
+  useEffect(() => {
+    if (!targetUserId) return;
+    Promise.allSettled([
+      supabase.from("follows" as any).select("id", { count: "exact", head: true }).eq("following_id", targetUserId),
+      supabase.from("follows" as any).select("id", { count: "exact", head: true }).eq("follower_id", targetUserId),
+      user && !isOwnProfile
+        ? supabase.from("follows" as any).select("id").eq("follower_id", user.id).eq("following_id", targetUserId).maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]).then(([followersRes, followingRes, myFollowRes]) => {
+      if (followersRes.status === "fulfilled") setFollowerCount((followersRes.value as any).count || 0);
+      if (followingRes.status === "fulfilled") setFollowingCount((followingRes.value as any).count || 0);
+      if (myFollowRes.status === "fulfilled") setFollowState((myFollowRes.value as any).data ? "following" : "none");
+    });
+  }, [targetUserId, user, isOwnProfile]);
+
+  const handleToggleFollow = async () => {
+    if (!user || !targetUserId) return;
+    if (followState === "following") {
+      await supabase.from("follows" as any).delete().eq("follower_id", user.id).eq("following_id", targetUserId);
+      setFollowState("none");
+      setFollowerCount(c => Math.max(0, c - 1));
+    } else {
+      const { error } = await supabase.from("follows" as any).insert({ follower_id: user.id, following_id: targetUserId });
+      if (!error) {
+        setFollowState("following");
+        setFollowerCount(c => c + 1);
+        // Notify the followed user
+        sendNotification({ userId: targetUserId, actorId: user.id, type: "follow", title: "Someone started following you", body: "Check out their profile.", actionUrl: `/app/profile/${user.id}`, data: {} });
+      }
+    }
+  };
 
   useEffect(() => { if (!authLoading) loadProfile(); }, [authLoading, loadProfile]);
 
@@ -909,7 +945,7 @@ const Profile = () => {
               <div
                 className="relative w-full"
                 style={{
-                  height: 120,
+                  height: "clamp(90px, 20vw, 160px)",
                   background: coverUrl
                     ? `url(${coverUrl}) center/cover no-repeat`
                     : `linear-gradient(135deg, ${roleColor}22, ${roleColor}44)`,
@@ -1050,7 +1086,7 @@ const Profile = () => {
                 )}
               </div>
 
-              {/* ROW 4: Compact stats row — Posts · Connections · Score pill */}
+              {/* ROW 4: Compact stats row — Posts · Connections · Followers · Following · Score pill */}
               <div className="flex items-center flex-wrap" style={{ gap: 12, marginTop: 6 }}>
                 <div style={{ fontSize: 13 }}>
                   <span className="num" style={{ color: "#1A1A2E" }}>{stats.posts}</span>
@@ -1060,6 +1096,14 @@ const Profile = () => {
                   <span className="num" style={{ color: "#1A1A2E" }}>{stats.connections}</span>
                   <span style={{ fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Connections</span>
                 </Link>
+                <div style={{ fontSize: 13 }}>
+                  <span className="num" style={{ color: "#1A1A2E" }}>{followerCount}</span>
+                  <span style={{ fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Followers</span>
+                </div>
+                <div style={{ fontSize: 13 }}>
+                  <span className="num" style={{ color: "#1A1A2E" }}>{followingCount}</span>
+                  <span style={{ fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Following</span>
+                </div>
                 {(() => {
                   const score = (profileData as any).activity_score ?? 0;
                   const visible = shouldShowPublicScore({ id: profileData.id, activity_score: score }, authProfile ? { id: authProfile.id } : undefined);
@@ -1107,6 +1151,21 @@ const Profile = () => {
                 ) : (
                   <>
                     {renderConnectButton()}
+                    <button
+                      type="button"
+                      onClick={handleToggleFollow}
+                      className="cursor-pointer"
+                      style={{
+                        height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+                        display: "inline-flex", alignItems: "center", gap: 4,
+                        ...(followState === "following"
+                          ? { background: "rgba(20,184,166,0.10)", border: "1px solid rgba(20,184,166,0.30)", color: "#0D9488" }
+                          : { background: "rgba(232,115,58,0.08)", border: "1px solid rgba(232,115,58,0.25)", color: "#E8733A" }
+                        ),
+                      }}
+                    >
+                      {followState === "following" ? "Following ✓" : "+ Follow"}
+                    </button>
                     <button type="button" onClick={() => navigate(`/app/pings?to=${targetUserId}`)} className="cursor-pointer" style={{
                       height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 500,
                       background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.40)",

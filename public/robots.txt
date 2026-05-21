@@ -1,4 +1,19 @@
 User-agent: *
 Allow: /
+Allow: /tag/
+Allow: /post/
+Allow: /profile/
+Allow: /p/
+Allow: /org/
+Allow: /guides/
+Allow: /app/explore
+Allow: /app/opportunities
+
+Disallow: /app/settings
+Disallow: /app/pings
+Disallow: /app/workspace
+Disallow: /app/verification-inbox
+Disallow: /app/alerts
+Disallow: /onboarding
 
 Sitemap: https://tiikme.com/sitemap.xml

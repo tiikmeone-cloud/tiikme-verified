@@ -327,7 +327,21 @@ const Explore = () => {
 
   return (
     <main className="mx-auto max-w-6xl px-4 md:px-6 pt-4 pb-24 md:pb-12">
-      <PageSEO title="Explore | Tiikme" description="Discover verified professionals, organizations, circles, and opportunities on Tiikme." noIndex />
+      <PageSEO
+        title="Explore Verified Professionals & Organizations | Tiikme"
+        description="Discover verified professionals, organizations, trending opportunities, and circles on Tiikme — India's professional identity network."
+        canonical="https://tiikme.com/app/explore"
+        ogType="website"
+        twitterCard="summary_large_image"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "SearchResultsPage",
+          name: "Explore | Tiikme",
+          description: "Discover verified professionals and organizations on Tiikme",
+          url: "https://tiikme.com/app/explore",
+          isPartOf: { "@type": "WebSite", name: "Tiikme", url: "https://tiikme.com" },
+        }}
+      />
       {/* Sticky top bar */}
       <div style={{ position: "sticky", top: 0, zIndex: 20, background: "var(--bg-base)", paddingBottom: 12 }}>
         {/* Search */}
@@ -529,7 +543,7 @@ const Explore = () => {
                   key={h.tag}
                   tag={h.tag}
                   count={h.count}
-                  onClick={() => navigate(`/app/feed?hashtag=${encodeURIComponent(h.tag)}`)}
+                  onClick={() => navigate(`/tag/${encodeURIComponent(h.tag)}`)}
                 />
               ))}
             </div>

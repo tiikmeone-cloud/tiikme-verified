@@ -69,17 +69,20 @@ const MentionText = ({ text }: { text: string }) => {
           );
         }
 
-        // #hashtag
+        // #hashtag — clickable, navigates to /tag/:tag
         if (HASHTAG_REGEX.test(part)) {
           HASHTAG_REGEX.lastIndex = 0;
+          const tag = part.slice(1);
           return (
-            <span
+            <Link
               key={i}
-              className="font-semibold cursor-default"
+              to={`/tag/${tag}`}
+              className="font-semibold hover:underline"
               style={{ color: "var(--color-accent)" }}
+              onClick={e => e.stopPropagation()}
             >
               {part}
-            </span>
+            </Link>
           );
         }
 

@@ -61,6 +61,7 @@ const Academy = lazyWithRetry(() => import("./pages/Academy.tsx"), "Academy");
 const BuildLog = lazyWithRetry(() => import("./pages/BuildLog.tsx"), "BuildLog");
 const AcceptAdminInvite = lazyWithRetry(() => import("./pages/AcceptAdminInvite.tsx"), "AcceptAdminInvite");
 const OrgSignup = lazyWithRetry(() => import("./pages/OrgSignup.tsx"), "OrgSignup");
+const HashtagFeed = lazyWithRetry(() => import("./pages/HashtagFeed.tsx"), "HashtagFeed");
 
 // SEO guides hub
 const GuidesHub = lazyWithRetry(() => import("./pages/guides/GuidesHub.tsx"), "GuidesHub");
@@ -175,6 +176,9 @@ const AppRoutes = () => {
 
             {/* Pages (org profiles) */}
             <Route path="/p/:slug" element={<Shell><PageProfile /></Shell>} />
+
+            {/* Hashtag discovery — public, SEO-friendly */}
+            <Route path="/tag/:tag" element={<PageErrorBoundary><HashtagFeed /></PageErrorBoundary>} />
 
             {/* Feature routes */}
             <Route path="/app/academy" element={<Shell><Academy /></Shell>} />

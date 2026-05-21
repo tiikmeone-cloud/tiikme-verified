@@ -214,12 +214,34 @@ const FeedComposer = ({ onPublished }: { onPublished: () => void }) => {
         if (urlData?.publicUrl) uploadedUrls.push(urlData.publicUrl);
       }
 
-      const { error } = await supabase.from("posts").insert({
-        author_id: user.id, content: content.trim(), post_type: "thought", type: "thought",
+      const trimmed = content.trim();
+      const { data: newPost, error } = await supabase.from("posts").insert({
+        author_id: user.id, content: trimmed, post_type: "thought", type: "thought",
         visibility: "everyone", hashtags: extractHashtags(content),
         image_urls: uploadedUrls.length > 0 ? uploadedUrls : [],
-      } as any).select().single();
+      } as any).select("id").single();
       if (error) throw error;
+
+      // Process @mentions — notify mentioned users/pages
+      const mentionUsernames = (trimmed.match(/@(\w[\w.]*)/g) || []).map(m => m.slice(1));
+      if (mentionUsernames.length > 0 && newPost) {
+        const [{ data: mentionedUsers }, { data: mentionedPages }] = await Promise.all([
+          supabase.from("profiles").select("id, username").in("username", mentionUsernames),
+          supabase.from("pages").select("id, slug").in("slug", mentionUsernames),
+        ]);
+        const mentionInserts: any[] = [];
+        for (const mu of mentionedUsers || []) {
+          if (mu.id === user.id) continue;
+          mentionInserts.push({ post_id: newPost.id, mentioned_user_id: mu.id });
+          sendNotification({ userId: mu.id, actorId: user.id, type: "mention", title: "Mentioned you in a post", body: trimmed.slice(0, 80), actionUrl: `/post/${newPost.id}`, data: { post_id: newPost.id } });
+        }
+        for (const mp of mentionedPages || []) {
+          mentionInserts.push({ post_id: newPost.id, mentioned_page_id: mp.id });
+        }
+        if (mentionInserts.length > 0) await supabase.from("post_mentions").insert(mentionInserts);
+      }
+
+      await supabase.rpc("increment_score" as any, { uid: user.id, amount: 5 }).then(() => {});
       setContent(""); setAttachPreviews([]); setAttachFiles([]);
       toast.success("Posted");
       onPublished();
@@ -234,20 +256,38 @@ const FeedComposer = ({ onPublished }: { onPublished: () => void }) => {
       <div className="flex items-center" style={{ gap: 10 }}>
         <AvatarSquare src={profile?.avatar_url} name={profile?.full_name || "You"} size={36} />
         <div className="flex-1 min-w-0 relative">
-          <input
-            type="text"
+          <textarea
+            ref={textareaRef}
             value={content}
-            onChange={(e) => setContent(e.target.value.slice(0, 3000))}
-            placeholder="What's on your mind?"
-            className="w-full outline-none"
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            placeholder="What's on your mind? Use @ to mention"
+            className="w-full outline-none resize-none"
             style={{
-              height: 40, background: "#F5F5F5", border: "1px solid #E8E8E8", borderRadius: 10,
-              padding: "0 12px", fontSize: 14, color: "#1A1A2E",
+              minHeight: 40, maxHeight: 160, overflow: "hidden",
+              background: "#F5F5F5", border: "1px solid #E8E8E8", borderRadius: 10,
+              padding: "10px 12px", fontSize: 14, color: "#1A1A2E", lineHeight: "1.4",
             }}
             onFocus={e => { e.currentTarget.style.borderColor = "rgba(232,115,58,0.50)"; }}
             onBlur={e => { e.currentTarget.style.borderColor = "#E8E8E8"; }}
-            onKeyDown={(e) => { if (e.key === "Enter" && !publishing && (content.trim() || attachFiles.length > 0)) handlePublish(); }}
           />
+          {/* Mention suggestions dropdown */}
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="absolute left-0 right-0 z-20 rounded-xl overflow-hidden"
+              style={{ top: "100%", marginTop: 4, background: "#fff", border: "1px solid #E5E7EB", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
+              {suggestions.map((s, idx) => (
+                <button key={s.id} type="button" onClick={() => insertMention(s)}
+                  className="flex items-center gap-2.5 w-full px-3 py-2.5 text-left cursor-pointer"
+                  style={{ background: idx === selectedIdx ? "rgba(232,115,58,0.08)" : "transparent", borderBottom: idx < suggestions.length - 1 ? "1px solid #F0F0F0" : "none" }}>
+                  <AvatarSquare src={s.avatar_url} name={s.display} size={28} />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13px] font-semibold truncate" style={{ color: "#1A1A2E" }}>{s.display}</p>
+                    {s.username && <p className="text-[11px]" style={{ color: "#9CA3AF" }}>@{s.username} · {s.type === "page" ? "Page" : "User"}</p>}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <button type="button" onClick={handleAttach} className="cursor-pointer shrink-0 flex items-center justify-center" style={{ width: 36, height: 36, color: "#9CA3C0" }}>
           <Paperclip style={{ width: 18, height: 18 }} />
@@ -711,10 +751,15 @@ const SuggestedWidget = ({ connectionIds }: { connectionIds: Set<string> }) => {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("id, full_name, role, avatar_url, institution_name, designation, role_metadata")
-      .neq("id", user.id).order("activity_score", { ascending: false }).limit(20)
+    supabase.from("profiles").select("id, full_name, role, avatar_url, institution_name, designation, role_metadata, privacy")
+      .neq("id", user.id).order("activity_score", { ascending: false }).limit(30)
       .then(({ data }) => {
-        const filtered = (data || []).filter(p => !connectionIds.has(p.id));
+        const filtered = (data || []).filter(p => {
+          if (connectionIds.has(p.id)) return false;
+          const priv = (p.privacy as any) || {};
+          if (priv.show_in_explore === false) return false;
+          return true;
+        });
         setSuggested(filtered.slice(0, 3));
       });
   }, [user, connectionIds]);
