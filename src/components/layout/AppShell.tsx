@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutGrid, Compass, Users, Target, User,
   Link2, Bell, SlidersHorizontal, PencilLine, LogOut, Home,
-  Plus, Search, ClipboardList,
+  Plus, Search, ClipboardList, Bot,
 } from "lucide-react";
 import ThemeLogo from "@/components/ThemeLogo";
 import { toast } from "sonner";
@@ -41,6 +41,7 @@ const BASE_NAV_GROUPS = [
   {
     label: "MORE",
     items: [
+      { label: "Pilot AI", icon: Bot, path: "/app/pilot" },
       { label: "Settings", icon: SlidersHorizontal, path: "/app/settings" },
     ],
   },

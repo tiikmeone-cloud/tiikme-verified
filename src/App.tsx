@@ -62,6 +62,7 @@ const AcceptAdminInvite = lazyWithRetry(() => import("./pages/AcceptAdminInvite.
 const OrgSignup = lazyWithRetry(() => import("./pages/OrgSignup.tsx"), "OrgSignup");
 const HashtagFeed = lazyWithRetry(() => import("./pages/HashtagFeed.tsx"), "HashtagFeed");
 const MyApplications = lazyWithRetry(() => import("./pages/MyApplications.tsx"), "MyApplications");
+const TiikmePilot = lazyWithRetry(() => import("./pages/TiikmePilot.tsx"), "TiikmePilot");
 
 // SEO guides hub
 const GuidesHub = lazyWithRetry(() => import("./pages/guides/GuidesHub.tsx"), "GuidesHub");
@@ -158,6 +159,7 @@ const AppRoutes = () => {
             <Route path="/app/opportunities/create" element={<Shell><OpportunityCreate /></Shell>} />
             <Route path="/app/opportunities/:id/applications" element={<Shell><ApplicationsDashboard /></Shell>} />
             <Route path="/app/applications" element={<Shell><MyApplications /></Shell>} />
+            <Route path="/app/pilot" element={<Shell><TiikmePilot /></Shell>} />
             <Route path="/app/workspace" element={<Navigate to="/app/circles" replace />} />
             <Route path="/app/circles" element={<Shell><CirclesPage /></Shell>} />
             <Route path="/app/circles/create" element={<Shell><CircleCreate /></Shell>} />
