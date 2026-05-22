@@ -62,7 +62,7 @@ export function PersonCard({ p, strandStatus, onStrand, currentUserId, followSta
       <AvatarSquare src={p.avatar_url} name={name} size={80} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 2, minWidth: 0 }}>
         <div className="flex items-center flex-wrap gap-1.5">
-          <span className="line-clamp-2 break-words" style={{ fontWeight: 700, fontSize: 14, color: "var(--text-primary)" }}>{name}</span>
+          <span className="truncate" style={{ fontWeight: 700, fontSize: 14, color: "var(--text-primary)" }}>{name}</span>
           {p.is_verified && <VerifiedBadge size={14} />}
           {typeof p.activity_score === "number" && (
             <ActivityScoreMini score={p.activity_score} viewerIsOwner={currentUserId === p.id} />

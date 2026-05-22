@@ -10,7 +10,6 @@ const importers: Record<string, () => Promise<unknown>> = {
   "/app/opportunities": () => import("@/pages/Opportunities"),
   "/app/workspace": () => import("@/pages/Workspace"),
   "/app/connections": () => import("@/pages/Connections"),
-  "/app/pings": () => import("@/pages/Pings"),
   "/app/alerts": () => import("@/pages/Alerts"),
   "/app/settings": () => import("@/pages/Settings"),
   "/app/profile": () => import("@/pages/Profile"),
@@ -28,11 +27,10 @@ export function prefetchRoute(path: string) {
 
 /** Idle-time prefetch of common adjacent pages from a current route. */
 const adjacency: Record<string, string[]> = {
-  "/app/feed": ["/app/explore", "/app/pings"],
+  "/app/feed": ["/app/explore", "/app/alerts"],
   "/app/explore": ["/app/opportunities", "/app/feed"],
   "/app/opportunities": ["/app/explore", "/app/profile"],
   "/app/profile": ["/app/connections", "/app/workspace"],
-  "/app/pings": ["/app/feed", "/app/alerts"],
 };
 
 export function prefetchAdjacent(currentPath: string) {

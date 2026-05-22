@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { PageSEO } from "@/hooks/usePageSEO";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import AvatarSquare from "@/components/ui/AvatarSquare";
-import { Link2, Search, MessageCircle, Compass, MoreHorizontal, Clock, UserPlus, UserX, BellOff, Ban, Flag, ChevronDown, Eye } from "lucide-react";
+import { Link2, Search, Compass, MoreHorizontal, Clock, UserPlus, UserX, BellOff, Ban, Flag, ChevronDown, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { sendNotification } from "@/lib/notify";
 import { useNavigate } from "react-router-dom";
@@ -440,13 +440,6 @@ const Connections = () => {
                       )}
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
-                      <button type="button"
-                        onClick={e => { e.stopPropagation(); navigate("/app/pings?userId=" + other?.id); }}
-                        className="flex items-center gap-1 cursor-pointer transition-all"
-                        style={{ height: 34, padding: "0 12px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-                          background: "rgba(232,115,58,0.08)", color: "#E8733A", border: "1px solid rgba(232,115,58,0.20)" }}>
-                        <MessageCircle style={{ width: 13, height: 13 }} /> Ping
-                      </button>
                       <div className="relative" ref={openMenuId === s.id ? menuRef : undefined}>
                         <button type="button"
                           onClick={e => { e.stopPropagation(); setOpenMenuId(openMenuId === s.id ? null : s.id); }}
@@ -461,12 +454,6 @@ const Connections = () => {
                             style={{ minWidth: 220, borderRadius: 12,
                               background: "rgba(255,255,255,0.95)", backdropFilter: "blur(20px)",
                               border: "1px solid rgba(255,255,255,0.40)", boxShadow: "0 8px 24px rgba(0,0,0,0.12)", padding: "4px 0" }}>
-                            <button type="button"
-                              onClick={e => { e.stopPropagation(); setOpenMenuId(null); navigate("/app/pings?userId=" + other?.id); }}
-                              className="w-full text-left flex items-center gap-2.5 cursor-pointer hover:bg-black/5 transition-colors"
-                              style={{ padding: "9px 14px", fontSize: 13, color: "#1A1A2E" }}>
-                              <MessageCircle style={{ width: 14, height: 14, color: "#6B7094" }} /> Message
-                            </button>
                             <button type="button"
                               onClick={e => { e.stopPropagation(); setOpenMenuId(null); navigate(`/app/profile/${other?.id}`); }}
                               className="w-full text-left flex items-center gap-2.5 cursor-pointer hover:bg-black/5 transition-colors"

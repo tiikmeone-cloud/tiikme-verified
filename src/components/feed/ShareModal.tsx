@@ -84,23 +84,6 @@ const ShareModal = ({ open, onClose, postId }: ShareModalProps) => {
     setSending(receiverId);
     try {
       await supabase.from("post_shares").insert({ post_id: postId, sender_id: user.id, receiver_id: receiverId });
-
-      const { data: existingConv } = await supabase
-        .from("conversations").select("id")
-        .or(`and(participant_1.eq.${user.id},participant_2.eq.${receiverId}),and(participant_1.eq.${receiverId},participant_2.eq.${user.id})`)
-        .maybeSingle();
-
-      let convId = existingConv?.id;
-      if (!convId) {
-        const { data: newConv } = await supabase.from("conversations").insert({ participant_1: user.id, participant_2: receiverId }).select("id").single();
-        convId = newConv?.id;
-      }
-
-      if (convId) {
-        const postUrl = `${window.location.origin}/app/post/${postId}`;
-        await supabase.from("pings").insert({ conversation_id: convId, sender_id: user.id, content: `Shared a post: ${postUrl}` });
-      }
-
       sendNotification({ userId: receiverId, actorId: user.id, type: "share", title: `${profile?.full_name || "Someone"} shared a post with you`, actionUrl: `/app/post/${postId}` });
       setSentTo(prev => new Set(prev).add(receiverId));
       toast.success(`Shared with ${receiverName}`);

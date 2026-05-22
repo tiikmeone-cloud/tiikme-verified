@@ -261,16 +261,6 @@ export default function OrganizationPage() {
                   </button>
                 )}
 
-                {org.allow_messages && org.created_by && (
-                  <button type="button" onClick={() => navigate(`/app/pings?to=${org.created_by}`)} className="cursor-pointer" style={{
-                    height: 32, padding: "0 16px", borderRadius: 8, fontSize: 12, fontWeight: 500,
-                    background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.40)",
-                    color: "#1A1A2E", display: "inline-flex", alignItems: "center", gap: 4,
-                  }}>
-                    <MessageCircle style={{ width: 13, height: 13 }} /> Message
-                  </button>
-                )}
-
                 <button type="button" onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success("Link copied"); }} className="cursor-pointer" style={{
                   height: 32, width: 32, borderRadius: 8, fontSize: 12,
                   background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.40)",

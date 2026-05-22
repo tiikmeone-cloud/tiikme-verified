@@ -129,7 +129,7 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
               <CheckCircle className="w-6 h-6" style={{ color: "#16A34A" }} />
             </motion.div>
             <h3 className="text-[22px] font-bold mb-2" style={{ color: "#1A1A1A" }}>Application submitted! 🎉</h3>
-            <p className="text-[14px] mb-6" style={{ color: "#9CA3AF" }}>You'll hear back in your Alerts and Pings.</p>
+            <p className="text-[14px] mb-6" style={{ color: "#9CA3AF" }}>You'll hear back in your Alerts.</p>
             <Button type="button" variant="outline" onClick={onClose} style={{ borderRadius: 12, height: 44 }}>View Opportunity</Button>
           </div>
         ) : (

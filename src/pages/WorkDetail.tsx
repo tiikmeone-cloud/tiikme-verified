@@ -7,6 +7,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { PageSEO } from "@/hooks/usePageSEO";
+import { sendNotification } from "@/lib/notify";
 
 const WorkDetail = () => {
   const { user } = useAuth();
@@ -171,15 +172,14 @@ const WorkDetail = () => {
             <div className="space-y-2">
               <Button className="w-full" size="sm" onClick={async () => {
                 if (!user) { toast.error("Sign in to reach out"); return; }
-                try {
-                  const ownerId = work.owner_id;
-                  if (ownerId === user.id) { toast.info("This is your own work"); return; }
-                  const { data: existing } = await supabase.from("conversations").select("id").or(`and(participant_1.eq.${user.id},participant_2.eq.${ownerId}),and(participant_1.eq.${ownerId},participant_2.eq.${user.id})`).maybeSingle();
-                  if (existing) { navigate("/app/pings"); return; }
-                  const { data: conv } = await supabase.from("conversations").insert({ participant_1: user.id, participant_2: ownerId }).select().single();
-                  if (conv) { await supabase.from("pings").insert({ conversation_id: conv.id, sender_id: user.id, content: `Hi! I'm interested in your work: "${work.title}"`, is_opener: true }); }
-                  navigate("/app/pings");
-                } catch (e) { console.warn("[WorkDetail]", e); toast.error("Failed to start conversation"); }
+                const ownerId = work.owner_id;
+                if (ownerId === user.id) { toast.info("This is your own work"); return; }
+                await sendNotification({
+                  userId: ownerId, actorId: user.id, type: "mention",
+                  title: `${profile?.full_name || "Someone"} is interested in your work: "${work.title}"`,
+                  actionUrl: window.location.pathname,
+                });
+                toast.success("Owner notified via Alerts");
               }}>Reach out</Button>
               
             </div>

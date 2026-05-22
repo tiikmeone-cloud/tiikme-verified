@@ -191,7 +191,6 @@ const PrivacySection = ({ userId }: { userId: string | null }) => {
         <PrivacyRow label="Show my education" control={<ToggleCtl k="show_education" value={privacy.show_education} />} />
         <PrivacyRow label="Show my experience" control={<ToggleCtl k="show_experience" value={privacy.show_experience} />} />
         <PrivacyRow label="Show my email on profile" control={<ToggleCtl k="show_email" value={privacy.show_email} />} />
-        <PrivacyRow label="Show my phone on profile" control={<ToggleCtl k="show_phone" value={privacy.show_phone} />} />
       </div>
 
       <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>

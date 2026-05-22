@@ -9,7 +9,7 @@ import { getDisplayFlags, safeDisplayName } from "@/utils/displayProfile";
 import { getProfileSubtitle } from "@/lib/profileUtils";
 import { PageSEO, profileSEO } from "@/hooks/usePageSEO";
 import {
-  MapPin, Copy, Shield, X, MessageCircle, CheckCircle, Building2, Link2, Plus,
+  MapPin, Copy, Shield, X, CheckCircle, Building2, Link2, Plus,
   Pencil, Trash2, Briefcase, GraduationCap, Award, Code2, Eye, EyeOff,
   Heart, Rocket, Send, Share2, Users, Globe, ExternalLink, LinkIcon, TrendingUp,
   Mail, Settings, Camera, UserX, Layers, ChevronRight, LifeBuoy, MoreHorizontal,
@@ -882,9 +882,6 @@ const Profile = () => {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="bg-white">
-            <DropdownMenuItem onClick={() => navigate(`/app/pings?to=${targetUserId}`)}>
-              <MessageCircle className="w-3.5 h-3.5 mr-2" /> Message
-            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleDisconnect} className="text-red-500 focus:text-red-500">
               <UserX className="w-3.5 h-3.5 mr-2" /> Disconnect
@@ -938,66 +935,14 @@ const Profile = () => {
           border: "1px solid rgba(255,255,255,0.40)",
           boxShadow: "0 8px 32px rgba(26,26,78,0.08), inset 0 1px 0 rgba(255,255,255,0.60)",
         }}>
-          {/* Cover Photo Banner */}
-          {(() => {
-            const coverUrl = (profileData as any).cover_url || null;
-            return (
-              <div
-                className="relative w-full"
-                style={{
-                  height: "clamp(90px, 20vw, 160px)",
-                  background: coverUrl
-                    ? `url(${coverUrl}) center/cover no-repeat`
-                    : `linear-gradient(135deg, ${roleColor}22, ${roleColor}44)`,
-                  borderRadius: "16px 16px 0 0",
-                }}
-              >
-                {isOwnProfile && (
-                  <label
-                    className="absolute flex items-center justify-center cursor-pointer"
-                    style={{
-                      bottom: 8, right: 8, width: 32, height: 32, borderRadius: 8,
-                      background: "rgba(0,0,0,0.40)", color: "#fff", backdropFilter: "blur(4px)",
-                    }}
-                    title="Change cover photo"
-                  >
-                    <Camera style={{ width: 16, height: 16 }} />
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      className="hidden"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file || !user) return;
-                        if (file.size > 5 * 1024 * 1024) { toast.error("Cover photo max 5MB"); return; }
-                        const path = `${user.id}/cover.webp`;
-                        const canvas = document.createElement("canvas");
-                        canvas.width = 1200; canvas.height = 400;
-                        const ctx = canvas.getContext("2d")!;
-                        const img = new Image();
-                        img.src = URL.createObjectURL(file);
-                        await new Promise(r => { img.onload = r; });
-                        const ratio = img.width / img.height;
-                        const targetRatio = 3;
-                        let sx = 0, sy = 0, sw = img.width, sh = img.height;
-                        if (ratio > targetRatio) { sw = img.height * targetRatio; sx = (img.width - sw) / 2; }
-                        else { sh = img.width / targetRatio; sy = (img.height - sh) / 2; }
-                        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 1200, 400);
-                        const blob = await new Promise<Blob | null>(r => canvas.toBlob(r, "image/webp", 0.85));
-                        if (!blob) return;
-                        await supabase.storage.from("avatars").upload(path, blob, { upsert: true, contentType: "image/webp" });
-                        const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
-                        const coverUrl = urlData.publicUrl + "?t=" + Date.now();
-                        await supabase.from("profiles").update({ cover_url: coverUrl } as any).eq("id", user.id);
-                        toast.success("Cover photo updated");
-                        await refreshProfile(); loadProfile();
-                      }}
-                    />
-                  </label>
-                )}
-              </div>
-            );
-          })()}
+          {/* Profile gradient header — no cover photo */}
+          <div
+            style={{
+              height: 80,
+              background: `linear-gradient(135deg, ${roleColor}22, ${roleColor}55)`,
+              borderRadius: "16px 16px 0 0",
+            }}
+          />
 
           <div className="p-5 md:p-6 relative" style={{ marginTop: -24 }}>
           {isOwnProfile && (
@@ -1165,13 +1110,6 @@ const Profile = () => {
                       }}
                     >
                       {followState === "following" ? "Following ✓" : "+ Follow"}
-                    </button>
-                    <button type="button" onClick={() => navigate(`/app/pings?to=${targetUserId}`)} className="cursor-pointer" style={{
-                      height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 500,
-                      background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.40)",
-                      color: "#1A1A2E", display: "inline-flex", alignItems: "center", gap: 4,
-                    }}>
-                      <MessageCircle style={{ width: 13, height: 13 }} /> Message
                     </button>
                   </>
                 )}
@@ -1373,17 +1311,6 @@ const Profile = () => {
                       {displayName} is open to new roles.
                     </p>
                     <div className="flex items-center" style={{ gap: 6, marginTop: 10 }}>
-                      <button
-                        type="button"
-                        onClick={() => navigate(`/app/pings?to=${targetUserId}`)}
-                        className="cursor-pointer"
-                        style={{
-                          height: 30, padding: "0 12px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-                          background: "#10B981", color: "#fff", border: "none",
-                        }}
-                      >
-                        Message
-                      </button>
                       <button
                         type="button"
                         onClick={() => {

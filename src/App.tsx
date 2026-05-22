@@ -34,7 +34,6 @@ const ProjectHub = lazyWithRetry(() => import("./pages/ProjectHub.tsx"), "Projec
 const Opportunities = lazyWithRetry(() => import("./pages/Opportunities.tsx"), "Opportunities");
 const Strands = lazyWithRetry(() => import("./pages/Strands.tsx"), "Strands");
 const ConnectionsPage = lazyWithRetry(() => import("./pages/Connections.tsx"), "ConnectionsPage");
-const Pings = lazyWithRetry(() => import("./pages/Pings.tsx"), "Pings");
 const Alerts = lazyWithRetry(() => import("./pages/Alerts.tsx"), "Alerts");
 const SettingsPage = lazyWithRetry(() => import("./pages/Settings.tsx"), "SettingsPage");
 const WorkDetail = lazyWithRetry(() => import("./pages/WorkDetail.tsx"), "WorkDetail");
@@ -163,8 +162,6 @@ const AppRoutes = () => {
             <Route path="/app/circles/:circleSlug" element={<Shell><CirclesPage /></Shell>} />
             <Route path="/app/connections" element={<Shell><ConnectionsPage /></Shell>} />
             <Route path="/app/strands" element={<Shell><Strands /></Shell>} />
-            <Route path="/app/pings" element={<Shell><Pings /></Shell>} />
-            <Route path="/app/pings/:id" element={<Shell><Pings /></Shell>} />
             <Route path="/app/alerts" element={<Shell><Alerts /></Shell>} />
             <Route path="/app/verification-inbox" element={<Shell><VerificationInbox /></Shell>} />
             <Route path="/app/settings" element={<Shell><SettingsPage /></Shell>} />
@@ -189,7 +186,6 @@ const AppRoutes = () => {
             <Route path="/app/work" element={<Shell><MyWork /></Shell>} />
             <Route path="/app/my-work" element={<Shell><MyWork /></Shell>} />
             <Route path="/app/challenges" element={<Shell><Opportunities /></Shell>} />
-            <Route path="/app/messages" element={<Shell><Pings /></Shell>} />
 
             {/* Public profile */}
             <Route path="/:username/:slug" element={<PageErrorBoundary><WorkDetail /></PageErrorBoundary>} />

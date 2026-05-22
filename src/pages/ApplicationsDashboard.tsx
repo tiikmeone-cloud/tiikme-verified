@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import {
-  ArrowLeft, Search, User, FileText, MessageCircle, CheckCircle, XCircle,
+  ArrowLeft, Search, User, FileText, Bell, CheckCircle, XCircle,
   Clock, ChevronRight, Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -105,17 +105,15 @@ export default function ApplicationsDashboard() {
     toast.success("Notes saved");
   };
 
-  const contactViaPings = async (applicantId: string) => {
+  const inviteToInterview = async (applicantId: string, jobTitle: string) => {
     if (!user) return;
-    const { data: existing } = await supabase.from("conversations")
-      .select("id")
-      .or(`and(participant_1.eq.${user.id},participant_2.eq.${applicantId}),and(participant_1.eq.${applicantId},participant_2.eq.${user.id})`)
-      .maybeSingle();
-    if (existing) { navigate(`/app/pings/${existing.id}`); return; }
-    const { data: conv } = await supabase.from("conversations").insert({
-      participant_1: user.id, participant_2: applicantId,
-    }).select().single();
-    if (conv) navigate(`/app/pings/${conv.id}`);
+    const { sendNotification } = await import("@/lib/notify");
+    await sendNotification({
+      userId: applicantId, actorId: user.id, type: "opportunity",
+      title: `You've been invited to interview for: ${jobTitle}`,
+      actionUrl: window.location.pathname,
+    });
+    toast.success("Interview invite sent via Alerts");
   };
 
   const openResume = async (resumeUrl: string) => {
@@ -261,8 +259,8 @@ export default function ApplicationsDashboard() {
                       <FileText className="w-3.5 h-3.5" /> Resume
                     </button>
                   )}
-                  <Button variant="secondary" size="sm" onClick={() => contactViaPings(selectedApp.applicant_id)}>
-                    <MessageCircle className="w-3.5 h-3.5 mr-1" /> Ping
+                  <Button variant="secondary" size="sm" onClick={() => inviteToInterview(selectedApp.applicant_id, opp?.title || "this role")}>
+                    <Bell className="w-3.5 h-3.5 mr-1" /> Invite
                   </Button>
                   {selectedApp.status !== "shortlisted" && <Button size="sm" onClick={() => { updateStatus(selectedApp.id, "shortlisted"); setSelectedApp(null); }}><CheckCircle className="w-3.5 h-3.5 mr-1" /> Shortlist</Button>}
                   {selectedApp.status !== "selected" && <Button size="sm" onClick={() => { updateStatus(selectedApp.id, "selected"); setSelectedApp(null); }} style={{ background: "#059669" }}><Shield className="w-3.5 h-3.5 mr-1" /> Select</Button>}
@@ -365,8 +363,8 @@ export default function ApplicationsDashboard() {
 
                 {/* Actions */}
                 <div className="flex items-center gap-2 pt-3" style={{ borderTop: "1px solid #ECECEA" }}>
-                  <Button variant="secondary" size="sm" onClick={() => contactViaPings(selectedApp.applicant_id)}>
-                    <MessageCircle className="w-3.5 h-3.5 mr-1" /> Ping
+                  <Button variant="secondary" size="sm" onClick={() => inviteToInterview(selectedApp.applicant_id, opp?.title || "this role")}>
+                    <Bell className="w-3.5 h-3.5 mr-1" /> Invite
                   </Button>
                   {selectedApp.status !== "shortlisted" && (
                     <Button size="sm" onClick={() => updateStatus(selectedApp.id, "shortlisted")}>
