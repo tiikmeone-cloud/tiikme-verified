@@ -264,7 +264,7 @@ export default function Onboarding() {
             org_id: state.selectedOrgId || null,
           });
           if (ok) { set("role", derivedRole as any); goto(3); }
-        }} onSkip={() => goto(3)} />
+        }} onSkip={() => goto(3)} />}
 
         {step === 3 && <StepLocation state={state} set={set} onNext={async () => {
           const ok = await savePatch({

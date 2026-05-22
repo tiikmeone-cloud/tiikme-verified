@@ -311,8 +311,16 @@ const Explore = () => {
   const handleFollowUser = async (personId: string) => {
     if (!user) return;
     if (userFollowMap[personId]) {
-      await supabase.from("follows" as any).delete().eq("follower_id", user.id).eq("following_id", personId);
-      setUserFollowMap(prev => ({ ...prev, [personId]: false }));
+      const person = exploreData?.people.find(p => p.id === personId);
+      const name = person?.full_name || "this person";
+      toast(`Unfollow ${name}?`, {
+        action: { label: "Unfollow", onClick: async () => {
+          await supabase.from("follows" as any).delete().eq("follower_id", user.id).eq("following_id", personId);
+          setUserFollowMap(prev => ({ ...prev, [personId]: false }));
+        }},
+        cancel: { label: "Cancel", onClick: () => {} },
+        duration: 5000,
+      });
     } else {
       await supabase.from("follows" as any).insert({ follower_id: user.id, following_id: personId });
       setUserFollowMap(prev => ({ ...prev, [personId]: true }));
