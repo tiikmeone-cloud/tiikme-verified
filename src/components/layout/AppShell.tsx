@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutGrid, Compass, Users, Target, User,
   Link2, Bell, SlidersHorizontal, PencilLine, LogOut, Home,
-  Plus, Search,
+  Plus, Search, ClipboardList,
 } from "lucide-react";
 import ThemeLogo from "@/components/ThemeLogo";
 import { toast } from "sonner";
@@ -15,7 +15,7 @@ import { prefetchRoute, prefetchAdjacent } from "@/lib/prefetchRoutes";
 import { prefetchOnHover, prefetchAdjacentData } from "@/lib/prefetchData";
 import { getProfileSubtitle } from "@/lib/profileUtils";
 
-const navGroups = [
+const BASE_NAV_GROUPS = [
   {
     label: "MAIN",
     items: [
@@ -55,6 +55,15 @@ const AppShell = ({ children }: { children: ReactNode }) => {
   const [orgData, setOrgData] = useState<{ name: string; logo_url: string | null; type: string; slug: string } | null>(null);
 
   const isInstitution = profile?.account_type === "institution" && !!profile?.org_id;
+
+  const navGroups = BASE_NAV_GROUPS.map(group => {
+    if (group.label !== "WORK") return group;
+    const workItems = [...group.items];
+    if (!isInstitution) {
+      workItems.push({ label: "Applications", icon: ClipboardList, path: "/app/applications" });
+    }
+    return { ...group, items: workItems };
+  });
 
   useEffect(() => {
     if (!isInstitution || !profile?.org_id) { setOrgData(null); return; }

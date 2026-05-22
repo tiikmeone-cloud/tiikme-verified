@@ -82,9 +82,9 @@ export default function Privacy() {
       <LegalSection id="section-2" num="2" title="What Data We Collect">
         <Sub>2.1 Data You Give Us Directly</Sub>
         <List items={[
-          "Name, email address, phone number",
-          "Profile: role, designation, education, work history, skills, location, profile photo, cover image",
-          "Content: posts, comments, Circle discussions, Pings (messages)",
+          "Name and email address",
+          "Profile: role, designation, education, work history, skills, location, profile photo",
+          "Content: posts, comments, Circle discussions",
           "Verification documents: offer letters, student ID, certificates (used only for verification, deleted after 12 months)",
           "Your preferences: notification settings, display preferences, privacy settings, theme",
         ]} />
@@ -113,11 +113,11 @@ export default function Privacy() {
         <Table
           headers={["Purpose", "What data", "Legal basis"]}
           rows={[
-            ["Creating and maintaining your account", "Name, email, phone", "Contract performance"],
+            ["Creating and maintaining your account", "Name, email", "Contract performance"],
             ["Showing you relevant Feed, Circles, Opportunities", "Role, location, skills, activity", "Legitimate interest"],
-            ["Enabling networking, messaging, connections", "Profile, activity", "Contract performance"],
+            ["Enabling networking and connections", "Profile, activity", "Contract performance"],
             ["Processing verification requests", "Documents, profile data", "Consent"],
-            ["Sending notifications (alerts, pings)", "Email, in-app", "Consent"],
+            ["Sending in-app notifications and alerts", "In-app only", "Consent"],
             ["Platform safety, fraud prevention, moderation", "All data", "Legitimate interest / Legal obligation"],
             ["Legal compliance (court orders, law enforcement)", "As required", "Legal obligation"],
             ["Improving platform features (anonymised only)", "Aggregated behaviour", "Legitimate interest"],
@@ -148,7 +148,6 @@ export default function Privacy() {
         <Sub>5.6 What We Will Never Share</Sub>
         <List items={[
           "Your data with advertisers for targeted advertising",
-          "Your private messages (Pings) with anyone except upon a valid court order",
           "Your verification documents with your employer or any third party",
           "Your location or contact details beyond what you publicly display",
         ]} />
@@ -176,7 +175,7 @@ export default function Privacy() {
             ["Deleted account data", "Removed within 90 days of permanent deletion"],
             ["Verification documents", "12 months after verification, then permanently deleted"],
             ["Legal hold data", "As required by Indian law (court orders, tax)"],
-            ["Private messages (Pings)", "Deleted with your account (not retained after deletion)"],
+            ["Application history", "Retained 6 months after account deletion, then permanently removed"],
             ["Anonymised analytics", "Indefinitely (cannot identify you)"],
             ["Terms consent record", "5 years (legal requirement)"],
           ]}

@@ -27,16 +27,40 @@ import {
   type DisplayPreference,
 } from "@/utils/displayProfile";
 
-const STORAGE_KEY = "ob_wizard_state_v3";
+const STORAGE_KEY = "ob_wizard_state_v4";
 const TOTAL = 5;
 
-const WORK_TYPES = [
-  { value: "full_time",     label: "Full-time employee",   role: "professional" as Role },
-  { value: "part_time",     label: "Part-time / Contract", role: "professional" as Role },
-  { value: "freelance",     label: "Freelancer",           role: "freelancer"   as Role },
-  { value: "student",       label: "Student / Intern",     role: "student"      as Role },
-  { value: "self_employed", label: "Founder / Self-employed", role: "founder"   as Role },
+/* Professional status options → derive role & role_subtype */
+const STATUS_OPTIONS: { value: string; label: string; emoji: string; role: Role; subtype?: string }[] = [
+  { value: "working_professional", label: "Working professional", emoji: "💼", role: "professional" },
+  { value: "student",              label: "Student",              emoji: "🎓", role: "student" },
+  { value: "intern",               label: "Intern / Apprentice",  emoji: "📋", role: "student", subtype: "intern" },
+  { value: "freelancer",           label: "Freelancer / Gig",     emoji: "🔧", role: "freelancer" },
+  { value: "entrepreneur",         label: "Entrepreneur / Founder", emoji: "🚀", role: "founder" },
+  { value: "creator",              label: "Creator / Influencer", emoji: "🎨", role: "creator" as Role },
+  { value: "self_employed",        label: "Self-employed",        emoji: "🏪", role: "founder" },
+  { value: "job_seeking",          label: "Open to work",         emoji: "🔍", role: "professional", subtype: "open_to_work" },
+  { value: "other",                label: "Other",                emoji: "✨", role: "professional" },
 ];
+
+const INDUSTRIES = [
+  "Tech & Software", "Healthcare", "Media & Entertainment", "Finance & Banking",
+  "Education", "Manufacturing", "Retail & E-commerce", "Food & Restaurant",
+  "Government & Public Sector", "Agriculture", "Legal", "Non-profit & NGO",
+  "Real Estate", "Design & Creative", "Automobile", "Energy & Environment", "Other",
+];
+
+const ROLES_BY_INDUSTRY: Record<string, string[]> = {
+  "Tech & Software": ["Software Engineer", "Product Manager", "UX/UI Designer", "Data Analyst", "DevOps / SRE", "CTO / Tech Lead", "Sales / BD", "Marketing", "Other"],
+  "Healthcare": ["Doctor", "Nurse", "Surgeon", "Pharmacist", "Hospital Admin", "Researcher", "Lab Technician", "Other"],
+  "Media & Entertainment": ["Content Creator", "Video Editor", "Journalist", "Photographer", "Social Media Manager", "Producer / Director", "Actor / Performer", "Other"],
+  "Finance & Banking": ["Financial Analyst", "CA / CPA", "Investment Banker", "Trader", "Risk Manager", "CFO / Finance Head", "Relationship Manager", "Other"],
+  "Education": ["Teacher / Lecturer", "Professor", "Student", "School Principal", "Counselor", "Educational Researcher", "Other"],
+  "Manufacturing": ["Production Engineer", "Operations Manager", "Supply Chain", "Quality Control", "Plant Manager", "Other"],
+  "Design & Creative": ["Graphic Designer", "Brand Strategist", "Motion Designer", "Illustrator", "Art Director", "Other"],
+  "_default": ["Manager", "Engineer", "Designer", "Analyst", "Consultant", "Executive", "Intern", "Other"],
+};
+const getRoles = (industry: string) => ROLES_BY_INDUSTRY[industry] || ROLES_BY_INDUSTRY["_default"];
 
 interface WizardState {
   step: number;
@@ -48,12 +72,15 @@ interface WizardState {
   location_city: string;
   interests: string[];
   display_preference: DisplayPreference;
-  // Work step
+  // Work step (2a–2d)
+  professionalStatus: string;
+  industry: string;
+  selectedRole: string;
+  customRole: string;
+  workSubStep: number; // 0=status, 1=industry, 2=role, 3=org
   orgQuery: string;
   selectedOrgId: string;
   selectedOrgName: string;
-  jobTitle: string;
-  workType: string;
 }
 
 const EMPTY: WizardState = {
@@ -66,11 +93,14 @@ const EMPTY: WizardState = {
   location_city: "",
   interests: [],
   display_preference: DEFAULT_DISPLAY_PREFERENCE,
+  professionalStatus: "",
+  industry: "",
+  selectedRole: "",
+  customRole: "",
+  workSubStep: 0,
   orgQuery: "",
   selectedOrgId: "",
   selectedOrgName: "",
-  jobTitle: "",
-  workType: "",
 };
 
 // Glass-on-midnight input/select styling. Translucent fill, white text,
@@ -222,16 +252,19 @@ export default function Onboarding() {
         }} saving={saving} setSaving={setSaving} />}
 
         {step === 2 && <StepWork state={state} set={set} onNext={async () => {
-          const wt = WORK_TYPES.find(w => w.value === state.workType);
-          const derivedRole: Role | "" = wt ? wt.role : "";
+          const statusOpt = STATUS_OPTIONS.find(s => s.value === state.professionalStatus);
+          const derivedRole: Role | "" = statusOpt ? statusOpt.role : "professional";
+          const designation = state.selectedRole === "Other" ? state.customRole.trim() : state.selectedRole;
           const ok = await savePatch({
             role: derivedRole,
-            designation: state.jobTitle.trim(),
-            currently_working_at: state.selectedOrgName || state.orgQuery.trim(),
+            role_subtype: statusOpt?.subtype || null,
+            sector: state.industry || null,
+            designation: designation || null,
+            currently_working_at: state.selectedOrgName || state.orgQuery.trim() || null,
             org_id: state.selectedOrgId || null,
           });
           if (ok) { set("role", derivedRole as any); goto(3); }
-        }} onSkip={() => goto(3)} />}
+        }} onSkip={() => goto(3)} />
 
         {step === 3 && <StepLocation state={state} set={set} onNext={async () => {
           const ok = await savePatch({
@@ -322,13 +355,17 @@ function StepIdentity({ state, set, onNext, saving, setSaving }: {
   );
 }
 
-/* ───────────────────────── Step 2: Work ───────────────────────── */
+/* ───────────────────────── Step 2: Work (4 sub-steps) ───────────────────────── */
 
 function StepWork({ state, set, onNext, onSkip }: {
   state: WizardState; set: any; onNext: () => Promise<void>; onSkip: () => void;
 }) {
+  const sub = state.workSubStep ?? 0;
+  const goSub = (n: number) => set("workSubStep", n);
+
   const [orgResults, setOrgResults] = useState<{ id: string; name: string; logo_url: string | null }[]>([]);
   const [searching, setSearching] = useState(false);
+  const [industrySearch, setIndustrySearch] = useState("");
 
   const searchOrgs = useCallback(async (q: string) => {
     if (q.trim().length < 2) { setOrgResults([]); return; }
@@ -344,9 +381,10 @@ function StepWork({ state, set, onNext, onSkip }: {
   }, []);
 
   useEffect(() => {
+    if (sub !== 3) return;
     const t = setTimeout(() => searchOrgs(state.orgQuery), 300);
     return () => clearTimeout(t);
-  }, [state.orgQuery, searchOrgs]);
+  }, [state.orgQuery, searchOrgs, sub]);
 
   const selectOrg = (org: { id: string; name: string }) => {
     set("selectedOrgId", org.id);
@@ -362,94 +400,156 @@ function StepWork({ state, set, onNext, onSkip }: {
     setOrgResults([]);
   };
 
+  const filteredIndustries = industrySearch.trim()
+    ? INDUSTRIES.filter(i => i.toLowerCase().includes(industrySearch.toLowerCase()))
+    : INDUSTRIES;
+
+  const roles = getRoles(state.industry);
+
+  /* ── Sub-step 2a: Professional status ── */
+  if (sub === 0) return (
+    <>
+      <h1 className="text-[24px] font-extrabold mb-1" style={{ color: "#FAFAF7" }}>What describes you best?</h1>
+      <p className="text-[13px] mb-5" style={{ color: "rgba(250,250,247,0.65)" }}>We'll use this to personalise your experience.</p>
+      <div className="grid grid-cols-1 gap-2">
+        {STATUS_OPTIONS.map(opt => {
+          const selected = state.professionalStatus === opt.value;
+          return (
+            <button key={opt.value} type="button"
+              onClick={() => { set("professionalStatus", opt.value); goSub(1); }}
+              className="text-left px-4 py-3 rounded-xl cursor-pointer transition-all flex items-center gap-3"
+              style={{
+                border: selected ? `2px solid ${BRAND}` : "1.5px solid rgba(255,255,255,0.12)",
+                background: selected ? BRAND_DIM : "rgba(255,255,255,0.04)",
+              }}>
+              <span style={{ fontSize: 20 }}>{opt.emoji}</span>
+              <span className="text-[13px] font-semibold" style={{ color: "#FAFAF7" }}>{opt.label}</span>
+              {selected && <span style={{ color: BRAND, fontSize: 14, marginLeft: "auto" }}>✓</span>}
+            </button>
+          );
+        })}
+      </div>
+      <button type="button" onClick={onSkip}
+        className="mt-5 w-full h-11 rounded-2xl text-[13px] font-semibold cursor-pointer"
+        style={{ background: "rgba(255,255,255,0.04)", border: "1.5px solid rgba(255,255,255,0.12)", color: "rgba(250,250,247,0.55)" }}>
+        Skip for now
+      </button>
+    </>
+  );
+
+  /* ── Sub-step 2b: Industry ── */
+  if (sub === 1) return (
+    <>
+      <button type="button" onClick={() => goSub(0)}
+        className="flex items-center gap-1 text-[13px] font-medium mb-4 cursor-pointer hover:opacity-70"
+        style={{ color: "rgba(250,250,247,0.65)" }}>
+        <ArrowLeft className="w-4 h-4" /> Back
+      </button>
+      <h1 className="text-[24px] font-extrabold mb-1" style={{ color: "#FAFAF7" }}>What's your industry?</h1>
+      <p className="text-[13px] mb-4" style={{ color: "rgba(250,250,247,0.65)" }}>Helps connect you with the right people.</p>
+      <div className="relative mb-3">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "rgba(250,250,247,0.45)" }} />
+        <input type="text" value={industrySearch} onChange={e => setIndustrySearch(e.target.value)}
+          placeholder="Search industries…" style={{ ...inputStyle, paddingLeft: 36 }} />
+      </div>
+      <div className="grid grid-cols-1 gap-2 max-h-[340px] overflow-y-auto" style={{ scrollbarWidth: "none" }}>
+        {filteredIndustries.map(ind => {
+          const selected = state.industry === ind;
+          return (
+            <button key={ind} type="button"
+              onClick={() => { set("industry", ind); set("selectedRole", ""); goSub(2); }}
+              className="text-left px-4 py-2.5 rounded-xl cursor-pointer transition-all flex items-center justify-between"
+              style={{
+                border: selected ? `2px solid ${BRAND}` : "1.5px solid rgba(255,255,255,0.12)",
+                background: selected ? BRAND_DIM : "rgba(255,255,255,0.04)",
+              }}>
+              <span className="text-[13px] font-semibold" style={{ color: "#FAFAF7" }}>{ind}</span>
+              {selected && <span style={{ color: BRAND, fontSize: 14 }}>✓</span>}
+            </button>
+          );
+        })}
+      </div>
+    </>
+  );
+
+  /* ── Sub-step 2c: Role ── */
+  if (sub === 2) return (
+    <>
+      <button type="button" onClick={() => goSub(1)}
+        className="flex items-center gap-1 text-[13px] font-medium mb-4 cursor-pointer hover:opacity-70"
+        style={{ color: "rgba(250,250,247,0.65)" }}>
+        <ArrowLeft className="w-4 h-4" /> Back
+      </button>
+      <h1 className="text-[24px] font-extrabold mb-1" style={{ color: "#FAFAF7" }}>What's your role?</h1>
+      <p className="text-[13px] mb-4" style={{ color: "rgba(250,250,247,0.65)" }}>{state.industry || "Pick the closest match"}</p>
+      <div className="grid grid-cols-1 gap-2">
+        {roles.map(r => {
+          const selected = state.selectedRole === r;
+          return (
+            <button key={r} type="button"
+              onClick={() => { set("selectedRole", r); goSub(3); }}
+              className="text-left px-4 py-2.5 rounded-xl cursor-pointer transition-all flex items-center justify-between"
+              style={{
+                border: selected ? `2px solid ${BRAND}` : "1.5px solid rgba(255,255,255,0.12)",
+                background: selected ? BRAND_DIM : "rgba(255,255,255,0.04)",
+              }}>
+              <span className="text-[13px] font-semibold" style={{ color: "#FAFAF7" }}>{r}</span>
+              {selected && <span style={{ color: BRAND, fontSize: 14 }}>✓</span>}
+            </button>
+          );
+        })}
+      </div>
+      {state.selectedRole === "Other" && (
+        <input type="text" value={state.customRole} onChange={e => set("customRole", e.target.value)}
+          placeholder="Type your role…" style={{ ...inputStyle, marginTop: 10 }} maxLength={60} />
+      )}
+    </>
+  );
+
+  /* ── Sub-step 2d: Organization ── */
   return (
     <>
-      <h1 className="text-[26px] font-extrabold mb-1" style={{ color: "#FAFAF7" }}>Where do you work?</h1>
-      <p className="text-[14px] mb-6" style={{ color: "rgba(250,250,247,0.65)" }}>Help people find you in the right context.</p>
-
-      <div className="space-y-4">
-        {/* Org search */}
-        <div>
-          <label className={labelCls} style={labelStyle}>Organization</label>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "rgba(250,250,247,0.45)" }} />
-            <input
-              type="text"
-              value={state.orgQuery}
-              onChange={e => { set("orgQuery", e.target.value); set("selectedOrgId", ""); set("selectedOrgName", ""); }}
-              placeholder="Company, college, hospital…"
-              style={{ ...inputStyle, paddingLeft: 36, paddingRight: 36 }}
-            />
-            {state.orgQuery && (
-              <button type="button" onClick={clearOrg} className="absolute right-3 top-1/2 -translate-y-1/2">
-                <X className="w-4 h-4" style={{ color: "rgba(250,250,247,0.45)" }} />
-              </button>
-            )}
-          </div>
-          {/* Dropdown */}
-          {orgResults.length > 0 && !state.selectedOrgId && (
-            <div className="mt-1 rounded-xl overflow-hidden" style={{ background: "#1A1A2E", border: "1px solid rgba(255,255,255,0.12)" }}>
-              {orgResults.map(org => (
-                <button key={org.id} type="button" onClick={() => selectOrg(org)}
-                  className="w-full text-left px-3 py-2.5 flex items-center gap-2 hover:bg-white/[0.06] transition-colors">
-                  {org.logo_url
-                    ? <img src={org.logo_url} alt="" className="w-6 h-6 rounded object-cover flex-shrink-0" />
-                    : <div className="w-6 h-6 rounded flex-shrink-0 flex items-center justify-center text-[10px] font-bold" style={{ background: BRAND, color: "#fff" }}>{org.name.charAt(0)}</div>
-                  }
-                  <span className="text-[13px]" style={{ color: "#FAFAF7" }}>{org.name}</span>
-                </button>
-              ))}
-            </div>
-          )}
-          {searching && (
-            <p className="text-[12px] mt-1" style={{ color: "rgba(250,250,247,0.45)" }}>Searching…</p>
-          )}
-          {state.selectedOrgId && (
-            <p className="text-[12px] mt-1" style={{ color: "#059669" }}>✓ Linked to {state.selectedOrgName}</p>
-          )}
-          {!state.selectedOrgId && state.orgQuery.trim().length >= 2 && orgResults.length === 0 && !searching && (
-            <p className="text-[12px] mt-1" style={{ color: "rgba(250,250,247,0.45)" }}>Not found — we'll save the name anyway</p>
-          )}
-        </div>
-
-        {/* Job title */}
-        <div>
-          <label className={labelCls} style={labelStyle}>Your title / role</label>
-          <input
-            type="text"
-            value={state.jobTitle}
-            onChange={e => set("jobTitle", e.target.value)}
-            placeholder="e.g. Software Engineer, Marketing Manager"
-            style={inputStyle}
-            maxLength={80}
-          />
-        </div>
-
-        {/* Work type */}
-        <div>
-          <label className={labelCls} style={labelStyle}>Work type</label>
-          <div className="grid grid-cols-1 gap-2">
-            {WORK_TYPES.map(w => {
-              const selected = state.workType === w.value;
-              return (
-                <button key={w.value} type="button" onClick={() => set("workType", w.value)}
-                  className="text-left px-4 py-3 rounded-xl cursor-pointer transition-all flex items-center justify-between"
-                  style={{
-                    border: selected ? `2px solid ${BRAND}` : "1.5px solid rgba(255,255,255,0.12)",
-                    background: selected ? BRAND_DIM : "rgba(255,255,255,0.04)",
-                  }}>
-                  <span className="text-[13px] font-semibold" style={{ color: "#FAFAF7" }}>{w.label}</span>
-                  {selected && <span style={{ color: BRAND, fontSize: 14 }}>✓</span>}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+      <button type="button" onClick={() => goSub(2)}
+        className="flex items-center gap-1 text-[13px] font-medium mb-4 cursor-pointer hover:opacity-70"
+        style={{ color: "rgba(250,250,247,0.65)" }}>
+        <ArrowLeft className="w-4 h-4" /> Back
+      </button>
+      <h1 className="text-[24px] font-extrabold mb-1" style={{ color: "#FAFAF7" }}>Where do you work?</h1>
+      <p className="text-[13px] mb-5" style={{ color: "rgba(250,250,247,0.65)" }}>Optional — link to your org on Tiikme.</p>
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "rgba(250,250,247,0.45)" }} />
+        <input type="text" value={state.orgQuery}
+          onChange={e => { set("orgQuery", e.target.value); set("selectedOrgId", ""); set("selectedOrgName", ""); }}
+          placeholder="Company, college, hospital…"
+          style={{ ...inputStyle, paddingLeft: 36, paddingRight: 36 }} />
+        {state.orgQuery && (
+          <button type="button" onClick={clearOrg} className="absolute right-3 top-1/2 -translate-y-1/2">
+            <X className="w-4 h-4" style={{ color: "rgba(250,250,247,0.45)" }} />
+          </button>
+        )}
       </div>
-
+      {orgResults.length > 0 && !state.selectedOrgId && (
+        <div className="mt-1 rounded-xl overflow-hidden" style={{ background: "#1A1A2E", border: "1px solid rgba(255,255,255,0.12)" }}>
+          {orgResults.map(org => (
+            <button key={org.id} type="button" onClick={() => selectOrg(org)}
+              className="w-full text-left px-3 py-2.5 flex items-center gap-2 hover:bg-white/[0.06] transition-colors">
+              {org.logo_url
+                ? <img src={org.logo_url} alt="" className="w-6 h-6 rounded object-cover flex-shrink-0" />
+                : <div className="w-6 h-6 rounded flex-shrink-0 flex items-center justify-center text-[10px] font-bold" style={{ background: BRAND, color: "#fff" }}>{org.name.charAt(0)}</div>
+              }
+              <span className="text-[13px]" style={{ color: "#FAFAF7" }}>{org.name}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      {searching && <p className="text-[12px] mt-1" style={{ color: "rgba(250,250,247,0.45)" }}>Searching…</p>}
+      {state.selectedOrgId && <p className="text-[12px] mt-1" style={{ color: "#059669" }}>✓ Linked to {state.selectedOrgName}</p>}
+      {!state.selectedOrgId && state.orgQuery.trim().length >= 2 && orgResults.length === 0 && !searching && (
+        <p className="text-[12px] mt-1" style={{ color: "rgba(250,250,247,0.45)" }}>Not found — we'll save the name anyway</p>
+      )}
       <div className="flex gap-3 mt-6">
         <button type="button" onClick={onSkip}
-          className="h-12 px-5 rounded-2xl text-[14px] font-semibold cursor-pointer hover:bg-white/[0.10]"
+          className="h-12 px-5 rounded-2xl text-[14px] font-semibold cursor-pointer"
           style={{ background: "rgba(255,255,255,0.04)", border: "1.5px solid rgba(255,255,255,0.12)", color: "rgba(250,250,247,0.65)" }}>
           Skip
         </button>
@@ -611,7 +711,7 @@ function DisplayPreviewCard({ state }: { state: WizardState }) {
   const showRole = pref === "dp_name_profession" || pref === "dp_name_profession_company";
   const showCompany = pref === "dp_name_profession_company";
   const name = state.full_name.trim() || "Your Name";
-  const role = state.jobTitle || (state.workType ? WORK_TYPES.find(w => w.value === state.workType)?.label : "") || "Your Role";
+  const role = (state.selectedRole === "Other" ? state.customRole : state.selectedRole) || STATUS_OPTIONS.find(s => s.value === state.professionalStatus)?.label || "Your Role";
 
   return (
     <div style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 12 }}>
