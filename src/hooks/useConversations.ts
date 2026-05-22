@@ -301,7 +301,7 @@ export function useConversations(userId: string | undefined) {
           title: `New message from ${convo?.other_user?.full_name || "someone"}`,
           // Never include encrypted body in notification; for plaintext sends keep a short preview
           body: canEncrypt ? "Sent you an encrypted message" : plaintext.slice(0, 80),
-          actionUrl: "/app/pings",
+          actionUrl: "/app/alerts",
         });
       }
     }
