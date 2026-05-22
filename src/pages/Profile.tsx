@@ -37,7 +37,6 @@ import DeletePostDialog from "@/components/feed/DeletePostDialog";
 import { sendNotification } from "@/lib/notify";
 import VerificationRequest from "@/components/profile/VerificationRequest";
 import VerificationStatusCard from "@/components/verification/VerificationStatusCard";
-import CertificatesSection from "@/components/profile/CertificatesSection";
 import { getActivityTier } from "@/lib/algorithms";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle
@@ -243,7 +242,6 @@ const Profile = () => {
   const [workItems, setWorkItems] = useState<any[]>([]);
   const [userPosts, setUserPosts] = useState<any[]>([]);
   const [achievements, setAchievements] = useState<any[]>([]);
-  const [certificates, setCertificates] = useState<any[]>([]);
   const [stats, setStats] = useState({ connections: 0, posts: 0 });
   const [connectedAvatars, setConnectedAvatars] = useState<any[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
@@ -269,7 +267,6 @@ const Profile = () => {
 
   const [connectionStatus, setConnectionStatus] = useState<{ status: string | null; direction: string | null; id: string | null }>({ status: null, direction: null, id: null });
   const [connectLoading, setConnectLoading] = useState(false);
-  const [showScoreDetails, setShowScoreDetails] = useState(false);
   const [followState, setFollowState] = useState<"following" | "none">("none");
   const [followerCount, setFollowerCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
@@ -302,7 +299,6 @@ const Profile = () => {
     setWorkItems(itemsRes.status === "fulfilled" ? (itemsRes.value as any).data || [] : []);
     setUserPosts(postsRes.status === "fulfilled" ? (postsRes.value as any).data || [] : []);
     setAchievements(achvsRes.status === "fulfilled" ? (achvsRes.value as any).data || [] : []);
-    setCertificates(certsRes.status === "fulfilled" ? (certsRes.value as any).data || [] : []);
     const strandCount = strandCountRes.status === "fulfilled" ? (strandCountRes.value as any).count || 0 : 0;
     const postsCount = postsRes.status === "fulfilled" ? (postsRes.value as any).count || 0 : 0;
     setStats({ connections: strandCount, posts: postsCount });
@@ -351,16 +347,28 @@ const Profile = () => {
   const handleToggleFollow = async () => {
     if (!user || !targetUserId) return;
     if (followState === "following") {
-      await supabase.from("follows" as any).delete().eq("follower_id", user.id).eq("following_id", targetUserId);
-      setFollowState("none");
-      setFollowerCount(c => Math.max(0, c - 1));
+      const name = profileData?.full_name || "this person";
+      toast(`Unfollow ${name}?`, {
+        action: {
+          label: "Unfollow",
+          onClick: async () => {
+            const { error } = await supabase.from("follows" as any).delete().eq("follower_id", user.id).eq("following_id", targetUserId);
+            if (!error) { setFollowState("none"); setFollowerCount(c => Math.max(0, c - 1)); }
+            else toast.error("Couldn't unfollow. Try again.");
+          },
+        },
+        cancel: { label: "Cancel", onClick: () => {} },
+        duration: 5000,
+      });
     } else {
       const { error } = await supabase.from("follows" as any).insert({ follower_id: user.id, following_id: targetUserId });
       if (!error) {
         setFollowState("following");
         setFollowerCount(c => c + 1);
-        // Notify the followed user
         sendNotification({ userId: targetUserId, actorId: user.id, type: "follow", title: "Someone started following you", body: "Check out their profile.", actionUrl: `/app/profile/${user.id}`, data: {} });
+        toast.success("Following!");
+      } else {
+        toast.error("Couldn't follow. Try again.");
       }
     }
   };
@@ -438,7 +446,6 @@ const Profile = () => {
   const realName = profileData.full_name || authDisplayName || "";
   const displayName = dpFlags.showName ? realName : safeDisplayName(profileData, "Tiikme member");
   const username = cleanUsername(profileData.username || "");
-  const headline = profileData.headline || "";
   const city = showLocation || isOwnProfile ? (profileData.location_city || "") : "";
   const state = showLocation || isOwnProfile ? (profileData.location_state || "") : "";
   const role = profileData.role || "student";
@@ -1033,10 +1040,10 @@ const Profile = () => {
 
               {/* ROW 4: Compact stats row — Posts · Connections · Followers · Following · Score pill */}
               <div className="flex items-center flex-wrap" style={{ gap: 12, marginTop: 6 }}>
-                <div style={{ fontSize: 13 }}>
+                <Link to={`/app/u/${username}/posts`} className="hover:opacity-80" style={{ fontSize: 13 }}>
                   <span className="num" style={{ color: "#1A1A2E" }}>{stats.posts}</span>
                   <span style={{ fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Posts</span>
-                </div>
+                </Link>
                 <Link to="/app/connections" className="cursor-pointer hover:opacity-80" style={{ fontSize: 13 }}>
                   <span className="num" style={{ color: "#1A1A2E" }}>{stats.connections}</span>
                   <span style={{ fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Connections</span>
@@ -1179,7 +1186,7 @@ const Profile = () => {
                       display: "flex", alignItems: "center", justifyContent: "center",
                       color: "#fff", fontSize: 9, fontWeight: 700,
                     }}>
-                      {a.avatar_url ? <img src={fixStorageUrl(a.avatar_url) || ""} alt="" loading="lazy" className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : (a.full_name || "U")[0]}
+                      {a.avatar_url ? <img src={fixStorageUrl(a.avatar_url) || ""} alt={a.full_name || "Member"} loading="lazy" className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : (a.full_name || "U")[0]}
                     </div>
                   ))}
                 </div>

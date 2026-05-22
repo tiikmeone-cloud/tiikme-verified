@@ -227,7 +227,7 @@ export const ExperienceSection = ({ items, isOwnProfile, onAdd, onDelete, onTogg
               <ItemRow key={exp.id} isLast={idx === visible.length - 1}
                 logo={<CompanyLogo name={companyName} logoUrl={logo?.logo_url} />}
                 line1={exp.job_title || exp.title}
-                line2={companyName}
+                line2={[companyName, exp.employment_type].filter(Boolean).join(" · ")}
                 line3={getDuration(exp)}
                 line4={exp.work_location || undefined}
                 right={
