@@ -14,6 +14,7 @@ const STATUS_META: Record<string, { label: string; bg: string; color: string; ic
   selected:     { label: "Selected",     bg: "#ECFDF5", color: "#059669", icon: CheckCircle },
   rejected:     { label: "Not selected", bg: "#FEF2F2", color: "#DC2626", icon: XCircle },
   auto_rejected:{ label: "Not selected", bg: "#FEF2F2", color: "#9CA3AF", icon: XCircle },
+  withdrawn:    { label: "Withdrawn",    bg: "#F3F4F6", color: "#6B7280", icon: XCircle },
 };
 
 const TABS = ["All", "Active", "Shortlisted", "Selected", "Closed"] as const;
@@ -36,6 +37,7 @@ export default function MyApplications() {
   const [apps, setApps] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<typeof TABS[number]>("All");
+  const [withdrawingId, setWithdrawingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -56,13 +58,30 @@ export default function MyApplications() {
     })();
   }, [user]);
 
+  const handleWithdraw = async (appId: string) => {
+    setWithdrawingId(appId);
+    const { data, error } = await supabase.rpc("withdraw_application" as any, { p_app_id: appId });
+    setWithdrawingId(null);
+    if (error || !(data as any)?.ok) {
+      const msg = (data as any)?.error;
+      if (msg === "cannot_withdraw") {
+        toast.error("This application can't be withdrawn — it may already be selected or closed.");
+      } else {
+        toast.error("Could not withdraw application.");
+      }
+      return;
+    }
+    setApps(prev => prev.map(a => a.id === appId ? { ...a, status: "withdrawn" } : a));
+    toast.success("Application withdrawn. You can re-apply at any time.");
+  };
+
   const filtered = apps.filter(a => {
     const s = a.status || "applied";
     if (tab === "All") return true;
     if (tab === "Active") return s === "applied" || s === "reviewing";
     if (tab === "Shortlisted") return s === "shortlisted";
     if (tab === "Selected") return s === "selected";
-    if (tab === "Closed") return s === "rejected" || s === "auto_rejected";
+    if (tab === "Closed") return s === "rejected" || s === "auto_rejected" || s === "withdrawn";
     return true;
   });
 
@@ -71,7 +90,7 @@ export default function MyApplications() {
     Active: apps.filter(a => a.status === "applied" || a.status === "reviewing").length,
     Shortlisted: apps.filter(a => a.status === "shortlisted").length,
     Selected: apps.filter(a => a.status === "selected").length,
-    Closed: apps.filter(a => a.status === "rejected" || a.status === "auto_rejected").length,
+    Closed: apps.filter(a => a.status === "rejected" || a.status === "auto_rejected" || a.status === "withdrawn").length,
   };
 
   return (
@@ -245,12 +264,25 @@ export default function MyApplications() {
                         <span style={{ fontSize: 11, color: "#9CA3C0" }}>
                           Applied {app.created_at ? timeAgo(app.created_at) : ""}
                         </span>
-                        <Link
-                          to={opp?.id ? `/app/opportunities?opp=${opp.id}` : "/app/opportunities"}
-                          style={{ fontSize: 12, fontWeight: 600, color: "#E8733A" }}
-                        >
-                          View job →
-                        </Link>
+                        <div className="flex items-center gap-3">
+                          {["applied", "reviewing", "shortlisted"].includes(app.status) && (
+                            <button
+                              type="button"
+                              disabled={withdrawingId === app.id}
+                              onClick={() => handleWithdraw(app.id)}
+                              className="cursor-pointer"
+                              style={{ fontSize: 11, fontWeight: 600, color: "#9CA3C0", background: "none", border: "none", padding: 0 }}
+                            >
+                              {withdrawingId === app.id ? "Withdrawing…" : "Withdraw"}
+                            </button>
+                          )}
+                          <Link
+                            to={opp?.id ? `/app/opportunities?opp=${opp.id}` : "/app/opportunities"}
+                            style={{ fontSize: 12, fontWeight: 600, color: "#E8733A" }}
+                          >
+                            View job →
+                          </Link>
+                        </div>
                       </div>
 
                       {/* Submitted why_good_fit preview */}

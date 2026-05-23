@@ -56,53 +56,36 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
     if (!user || !consent || resumeUploading) return;
     setSubmitting(true);
     try {
-      // Check eliminatory questions for auto-reject
-      let autoRejected = false;
-      if (customQuestions.length > 0) {
-        for (let i = 0; i < customQuestions.length; i++) {
-          const q = customQuestions[i];
-          if (!q.is_eliminatory) continue;
-          const userAnswer = answers[i];
-          if (q.type === "yes_no" || q.type === "yesno" || q.type === "Yes or No") {
-            // For yes/no eliminatory: if correct answers specified, check match
-            if (q.correct?.length > 0 && !q.correct.includes(userAnswer)) {
-              autoRejected = true; break;
-            }
-          } else if (q.type === "multiple_choice") {
-            if (q.correct?.length > 0 && !q.correct.includes(userAnswer)) {
-              autoRejected = true; break;
-            }
-          }
-        }
-      }
-
-      const { error } = await supabase.from("opportunity_applications").insert({
-        opportunity_id: opportunity.id,
-        applicant_id: user.id,
-        why_good_fit: whyFit.trim() || null,
-        resume_url: resumeUrl.trim() || null,
-        portfolio_url: portfolioUrl.trim() || null,
-        cover_letter: coverLetter.trim() || null,
-        custom_answers: Object.keys(answers).length > 0 ? answers : null,
-        status: autoRejected ? "auto_rejected" : "applied",
+      // Call server-side RPC — server re-evaluates eliminatory questions
+      const { data, error } = await supabase.rpc("apply_to_opportunity" as any, {
+        p_opportunity_id: opportunity.id,
+        p_why_good_fit:   whyFit.trim() || null,
+        p_resume_url:     resumeUrl.trim() || null,
+        p_portfolio_url:  portfolioUrl.trim() || null,
+        p_cover_letter:   coverLetter.trim() || null,
+        p_custom_answers: Object.keys(answers).length > 0 ? answers : null,
       });
-      if (error) {
-        if (error.code === "23505") toast.error("You already applied");
-        else throw error;
+
+      if (error) throw error;
+
+      const result = data as { ok: boolean; error?: string; auto_rejected?: boolean };
+      if (!result.ok) {
+        if (result.error === "already_applied") toast.error("You already applied to this role");
+        else if (result.error === "cannot_apply_own") toast.error("You can't apply to your own posting");
+        else if (result.error === "account_restricted") toast.error("Your account is restricted");
+        else toast.error(result.error || "Failed to apply");
         setSubmitting(false);
         return;
       }
-      // Increment applicant count atomically via DB
-      await supabase.rpc("increment_opportunity_responses" as any, { opp_id: opportunity.id }).then(() => {});
-      // Send alert to poster
-      if (opportunity.poster_id) {
-        await supabase.from("alerts").insert({
-          user_id: opportunity.poster_id, type: "opportunity",
-          title: `New application for "${opportunity.title}"`,
-          body: `${profile?.full_name || "Someone"} applied.`,
-          action_url: `/app/opportunities/${opportunity.id}/applications`,
-        });
+
+      if (result.auto_rejected) {
+        // Inform user their answers didn't meet requirements — don't show generic success
+        toast.error("Your answers didn't meet the minimum requirements for this role.");
+        onApplied();
+        setSubmitting(false);
+        return;
       }
+
       setSuccess(true);
       onApplied();
     } catch (err: any) {

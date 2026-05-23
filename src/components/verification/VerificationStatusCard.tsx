@@ -178,8 +178,27 @@ export default function VerificationStatusCard() {
   }
 
   // Has request — determine state
+  const daysUntilExpiry = req ? (() => {
+    const created = new Date(req.created_at).getTime();
+    const expiresAt = created + 30 * 24 * 60 * 60 * 1000;
+    return Math.max(0, Math.ceil((expiresAt - Date.now()) / (24 * 60 * 60 * 1000)));
+  })() : null;
+
   const statusUI = (() => {
+    if (req.status === "expired") {
+      return {
+        bg: "rgba(107,114,128,0.08)", border: "rgba(107,114,128,0.30)", color: "#6B7280",
+        icon: Clock,
+        title: "Verification request expired",
+        body: "No response was received within 30 days. You can submit a new request at any time.",
+        nextStep: "",
+        showReapply: true,
+      };
+    }
     if (req.status === "pending") {
+      const expiryNote = daysUntilExpiry !== null && daysUntilExpiry <= 7
+        ? ` Expires in ${daysUntilExpiry} day${daysUntilExpiry !== 1 ? "s" : ""} if no response.`
+        : "";
       if (req.review_queue === "platform") {
         return {
           bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.30)", color: "#B45309",
@@ -188,7 +207,7 @@ export default function VerificationStatusCard() {
           body: req.org_name
             ? `We couldn't route this to an independent reviewer at ${req.org_name}, so Tiikme will review it.`
             : "Tiikme will review this request directly.",
-          nextStep: "No action needed. Check back here for updates.",
+          nextStep: `No action needed. Check back here for updates.${expiryNote}`,
           showReapply: false,
         };
       }
@@ -197,7 +216,7 @@ export default function VerificationStatusCard() {
         icon: Clock,
         title: "Pending organisation review",
         body: req.org_name ? `Sent to ${req.org_name} for review.` : "Awaiting organisation review.",
-        nextStep: "You'll be notified once the organisation responds.",
+        nextStep: `You'll be notified once the organisation responds.${expiryNote}`,
         showReapply: false,
       };
     }
