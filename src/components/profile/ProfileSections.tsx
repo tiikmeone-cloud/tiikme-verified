@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { fixStorageUrl } from "@/components/ui/AvatarSquare";
 import {
   Briefcase, GraduationCap, Rocket, Award, Code2, MessageCircle,
@@ -9,7 +8,6 @@ import {
 import { Link } from "react-router-dom";
 import VerificationRequest from "@/components/profile/VerificationRequest";
 import { useCompanyLogos } from "@/hooks/useCompanyLogos";
-import { supabase } from "@/integrations/supabase/client";
 
 /* ── Helpers ── */
 const LOGO_COLORS = ["#E8733A", "#4A90D9", "#34C759", "#FF6B9D", "#8B5CF6", "#FFB800"];
@@ -214,7 +212,16 @@ export const ExperienceSection = ({ items, isOwnProfile, onAdd, onDelete, onTogg
   return (
     <SectionBox title="Experience" icon={Briefcase} iconColor="#4A90D9" borderColor="#4A90D9" count={items.length} isOwnProfile={isOwnProfile} onAdd={onAdd}>
       {items.length === 0 ? (
-        <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "4px 0" }}>No experience added</p>
+        isOwnProfile ? (
+          <button type="button" onClick={onAdd}
+            className="flex items-center gap-2 cursor-pointer w-full text-left"
+            style={{ background: "rgba(74,144,217,0.05)", border: "1px dashed rgba(74,144,217,0.30)", borderRadius: 10, padding: "10px 12px", marginTop: 4 }}>
+            <Plus style={{ width: 14, height: 14, color: "#4A90D9", flexShrink: 0 }} />
+            <span style={{ fontSize: 13, color: "#4A90D9", fontWeight: 500 }}>Add your first experience</span>
+          </button>
+        ) : (
+          <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "4px 0" }}>No experience added</p>
+        )
       ) : (
         <>
           {visible.map((exp: any, idx: number) => {
@@ -276,7 +283,16 @@ export const EducationSection = ({ items, isOwnProfile, onAdd, onDelete, onToggl
   return (
     <SectionBox title="Education" icon={GraduationCap} iconColor="#34C759" borderColor="#34C759" count={items.length} isOwnProfile={isOwnProfile} onAdd={onAdd}>
       {items.length === 0 ? (
-        <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "4px 0" }}>No education added</p>
+        isOwnProfile ? (
+          <button type="button" onClick={onAdd}
+            className="flex items-center gap-2 cursor-pointer w-full text-left"
+            style={{ background: "rgba(52,199,89,0.05)", border: "1px dashed rgba(52,199,89,0.30)", borderRadius: 10, padding: "10px 12px", marginTop: 4 }}>
+            <Plus style={{ width: 14, height: 14, color: "#34C759", flexShrink: 0 }} />
+            <span style={{ fontSize: 13, color: "#34C759", fontWeight: 500 }}>Add your education</span>
+          </button>
+        ) : (
+          <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "4px 0" }}>No education added</p>
+        )
       ) : (
         <>
           {visible.map((edu: any, idx: number) => {
@@ -326,7 +342,16 @@ export const ProjectsSection = ({ items, isOwnProfile, onAdd, onDelete, onToggle
   return (
     <SectionBox title="Projects" icon={Rocket} iconColor="#FF6B9D" borderColor="#FF6B9D" count={items.length} isOwnProfile={isOwnProfile} onAdd={onAdd}>
       {items.length === 0 ? (
-        <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "4px 0" }}>No projects added</p>
+        isOwnProfile ? (
+          <button type="button" onClick={onAdd}
+            className="flex items-center gap-2 cursor-pointer w-full text-left"
+            style={{ background: "rgba(255,107,157,0.05)", border: "1px dashed rgba(255,107,157,0.30)", borderRadius: 10, padding: "10px 12px", marginTop: 4 }}>
+            <Plus style={{ width: 14, height: 14, color: "#FF6B9D", flexShrink: 0 }} />
+            <span style={{ fontSize: 13, color: "#FF6B9D", fontWeight: 500 }}>Add your first project</span>
+          </button>
+        ) : (
+          <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "4px 0" }}>No projects added</p>
+        )
       ) : (
         <>
           {visible.map((p: any, idx: number) => {
@@ -385,7 +410,16 @@ export const AchievementsSection = ({ items, isOwnProfile, onAdd, onDelete, onTo
   return (
     <SectionBox title="Achievements" icon={Award} iconColor="#FFB800" borderColor="#FFB800" count={items.length} isOwnProfile={isOwnProfile} onAdd={onAdd}>
       {items.length === 0 ? (
-        <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "4px 0" }}>No achievements added</p>
+        isOwnProfile ? (
+          <button type="button" onClick={onAdd}
+            className="flex items-center gap-2 cursor-pointer w-full text-left"
+            style={{ background: "rgba(255,184,0,0.05)", border: "1px dashed rgba(255,184,0,0.30)", borderRadius: 10, padding: "10px 12px", marginTop: 4 }}>
+            <Plus style={{ width: 14, height: 14, color: "#FFB800", flexShrink: 0 }} />
+            <span style={{ fontSize: 13, color: "#FFB800", fontWeight: 500 }}>Add your first achievement</span>
+          </button>
+        ) : (
+          <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "4px 0" }}>No achievements added</p>
+        )
       ) : (
         <>
           {visible.map((a: any, idx: number) => {
@@ -476,43 +510,106 @@ export const SkillsSection = ({ skills, isOwnProfile, onAdd, onRemoveSkill }: {
 
 /* ═══ POSTS ═══ */
 export const PostsSection = ({
-  posts, stats, username,
+  posts, stats, username, isOwnProfile,
 }: {
   posts: any[];
-  stats: { posts: number };
+  stats: { posts: number; reposts?: number };
   username?: string;
+  isOwnProfile?: boolean;
 }) => {
-  const { data: latestPosts = posts } = useQuery({
-    queryKey: ["profile-posts-preview-refresh", posts.map((p: any) => p.id).join(",")],
-    queryFn: async () => {
-      if (!posts.length) return [];
-      const { data, error } = await supabase
-        .from("posts")
-        .select("id, author_id, content, type, image_urls, comment_count, repost_count, reactions, is_edited, repost_of, created_at, updated_at, post_reactions(count), post_comments(count)")
-        .in("id", posts.map((p: any) => p.id))
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: posts.length > 0,
-    refetchInterval: 30_000,
-    initialData: posts,
-  });
+  const [selectedPost, setSelectedPost] = useState<any | null>(null);
+  const canOpen = posts.length > 0;
 
   return (
-    <SectionBox title="Posts" icon={MessageCircle} iconColor="#E8733A" borderColor="#E8733A" count={stats.posts} isOwnProfile={false}>
+    <SectionBox title="Posts" icon={MessageCircle} iconColor="#E8733A" borderColor="#E8733A" count={stats.posts} isOwnProfile={!!isOwnProfile} onAdd={isOwnProfile ? () => {} : undefined}>
+      {/* Stats row */}
+      <div className="flex items-center gap-4 mb-3">
+        <span className="text-sm text-muted-foreground">
+          <span className="num font-semibold text-foreground">{stats.posts}</span> Posts
+        </span>
+        {(stats.reposts ?? 0) > 0 && (
+          <span className="text-sm text-muted-foreground">
+            <span className="num font-semibold text-foreground">{stats.reposts}</span> Reposts
+          </span>
+        )}
+        {canOpen && username && (
+          <Link to={`/app/u/${username}/posts`} className="ml-auto text-xs font-medium text-primary hover:underline">
+            See all
+          </Link>
+        )}
+      </div>
+
       {posts.length === 0 ? (
-        <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "4px 0" }}>No posts yet</p>
+        isOwnProfile ? (
+          <Link to="/post/create" className="flex items-center gap-2 w-full text-left"
+            style={{ background: "rgba(232,115,58,0.05)", border: "1px dashed rgba(232,115,58,0.30)", borderRadius: 10, padding: "10px 12px" }}>
+            <Plus style={{ width: 14, height: 14, color: "#E8733A", flexShrink: 0 }} />
+            <span style={{ fontSize: 13, color: "#E8733A", fontWeight: 500 }}>Share your first post</span>
+          </Link>
+        ) : (
+          <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "4px 0" }}>No posts yet</p>
+        )
       ) : (
-        <div>
-          <div className="mb-3 flex items-center justify-between">
-            <span className="text-sm font-semibold text-foreground">Posts <span className="num ml-1 text-muted-foreground">{stats.posts}</span></span>
-            {stats.posts > 10 && username && <Link to={`/app/u/${username}/posts`} className="text-sm font-medium text-primary">See all</Link>}
+        <>
+          {/* Instagram-style 3-column grid */}
+          <div className="grid grid-cols-3 gap-1">
+            {posts.slice(0, 9).map((p: any) => {
+              const img = p.image_urls?.[0];
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setSelectedPost(p)}
+                  className="relative aspect-square overflow-hidden rounded-lg bg-black/5 hover:opacity-90 transition-opacity cursor-pointer"
+                >
+                  {img ? (
+                    <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center p-2"
+                      style={{ background: "rgba(232,115,58,0.06)" }}>
+                      <p className="text-[10px] text-center line-clamp-4 text-muted-foreground leading-tight">
+                        {p.content?.slice(0, 60)}
+                      </p>
+                    </div>
+                  )}
+                </button>
+              );
+            })}
           </div>
-          <div className="-mx-3 flex snap-x snap-mandatory gap-3 overflow-x-auto px-3 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {latestPosts.slice(0, 10).map((p: any) => <PostPreviewCard key={p.id} post={p} />)}
-          </div>
-        </div>
+
+          {/* Post detail sheet */}
+          {selectedPost && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
+              onClick={() => setSelectedPost(null)}
+            >
+              <div
+                className="bg-white rounded-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto shadow-2xl"
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between p-4 border-b">
+                  <span className="font-semibold text-sm">Post</span>
+                  <button type="button" onClick={() => setSelectedPost(null)} className="p-1 rounded-lg hover:bg-gray-100">
+                    <X className="w-4 h-4 text-gray-500" />
+                  </button>
+                </div>
+                {selectedPost.image_urls?.[0] && (
+                  <img src={selectedPost.image_urls[0]} alt="" className="w-full object-cover max-h-80" />
+                )}
+                <div className="p-4">
+                  <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">{selectedPost.content}</p>
+                  <div className="flex items-center gap-4 mt-3 text-xs text-gray-400">
+                    <span>❤️ {selectedPost.reactions ? Object.values(selectedPost.reactions).reduce((a: any, b: any) => a + b, 0) : 0}</span>
+                    <span>💬 {selectedPost.comment_count || 0}</span>
+                    <span>🔁 {selectedPost.repost_count || 0}</span>
+                    <span className="ml-auto">{new Date(selectedPost.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </SectionBox>
   );

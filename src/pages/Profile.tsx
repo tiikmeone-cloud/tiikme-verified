@@ -961,16 +961,7 @@ const Profile = () => {
           border: "1px solid rgba(255,255,255,0.40)",
           boxShadow: "0 8px 32px rgba(26,26,78,0.08), inset 0 1px 0 rgba(255,255,255,0.60)",
         }}>
-          {/* Profile gradient header — no cover photo */}
-          <div
-            style={{
-              height: 80,
-              background: `linear-gradient(135deg, ${roleColor}22, ${roleColor}55)`,
-              borderRadius: "16px 16px 0 0",
-            }}
-          />
-
-          <div className="p-5 md:p-6 relative" style={{ marginTop: -24 }}>
+          <div className="p-5 md:p-6 relative">
           {isOwnProfile && (
             <Link
               to="/app/settings"
@@ -1123,13 +1114,6 @@ const Profile = () => {
               {!isOwnProfile && (
                 <div className="flex items-center justify-center md:justify-start flex-wrap" style={{ gap: 8, marginTop: 10 }}>
                   {renderConnectButton()}
-                  <button type="button" onClick={() => navigate(`/app/pings?to=${targetUserId}`)} className="cursor-pointer" style={{
-                    height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 500,
-                    background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.40)",
-                    color: "#1A1A2E", display: "inline-flex", alignItems: "center", gap: 4,
-                  }}>
-                    <MessageCircle style={{ width: 13, height: 13 }} /> Message
-                  </button>
                 </div>
               )}
             </div>
@@ -1382,8 +1366,9 @@ const Profile = () => {
             <SkillsSection skills={skills} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("skills")} onRemoveSkill={removeSkill} />
             <PostsSection
               posts={userPosts}
-              stats={stats}
+              stats={{ posts: stats.posts, reposts: 0 }}
               username={username}
+              isOwnProfile={isOwnProfile}
             />
           </div>
         </div>
