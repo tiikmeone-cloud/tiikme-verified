@@ -60,15 +60,15 @@ const ProfilePosts = () => {
   }, [view]);
 
   const cleanUsername = username.replace(/^@/, "");
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanUsername);
 
   const { data, isLoading } = useQuery({
     queryKey: ["profile-posts-page", cleanUsername],
     queryFn: async () => {
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("id, full_name, username")
-        .eq("username", cleanUsername)
-        .maybeSingle();
+      const query = isUUID
+        ? supabase.from("profiles").select("id, full_name, username").eq("id", cleanUsername).maybeSingle()
+        : supabase.from("profiles").select("id, full_name, username").eq("username", cleanUsername).maybeSingle();
+      const { data: profile, error: profileError } = await query;
       if (profileError) throw profileError;
       if (!profile) return { profile: null, posts: [], total: 0 };
 

@@ -510,14 +510,16 @@ export const SkillsSection = ({ skills, isOwnProfile, onAdd, onRemoveSkill }: {
 
 /* ═══ POSTS ═══ */
 export const PostsSection = ({
-  posts, stats, username, isOwnProfile,
+  posts, stats, username, userId, isOwnProfile,
 }: {
   posts: any[];
   stats: { posts: number; reposts?: number };
   username?: string;
+  userId?: string;
   isOwnProfile?: boolean;
 }) => {
-  const postsLink = username ? `/app/u/${username}/posts` : "/app/feed";
+  const identifier = username || userId;
+  const postsLink = identifier ? `/app/u/${identifier}/posts` : "/app/feed";
   return (
     <SectionBox title="Posts" icon={MessageCircle} iconColor="#E8733A" borderColor="#E8733A" count={stats.posts} isOwnProfile={!!isOwnProfile} onAdd={isOwnProfile ? () => {} : undefined}>
       {stats.posts === 0 ? (

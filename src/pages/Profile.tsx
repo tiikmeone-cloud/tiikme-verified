@@ -151,55 +151,28 @@ const AboutSection = ({ about, isOwnProfile, userId }: { about: string; isOwnPro
 
 /* ═══════════ CONTACT SECTION ═══════════ */
 const ContactSection = ({ isOwnProfile, profile, userEmail }: { isOwnProfile: boolean; profile: any; userEmail: string | null }) => {
-  const [emailVisible, setEmailVisible] = useState(profile?.contact_email_visible ?? false);
-  const [toggling, setToggling] = useState(false);
+  // Use normalized privacy settings (set by applyPrivacyToProfile, or raw for own profile)
+  const showEmail = !!(profile?.privacy?.show_email ?? (profile?.privacy_settings as any)?.show_email ?? false);
 
-  const toggleEmailVisibility = async () => {
-    setToggling(true);
-    const newVal = !emailVisible;
-    await supabase.from("profiles").update({ contact_email_visible: newVal } as any).eq("id", profile.id);
-    setEmailVisible(newVal);
-    setToggling(false);
-    toast.success(newVal ? "Email now visible on profile" : "Email hidden from profile");
-  };
+  // For other people's profiles: hide entire section if show_email is off (email will also be null after applyPrivacy)
+  if (!isOwnProfile && !showEmail) return null;
 
-  // For other people's profiles: hide entire section if email not visible
-  if (!isOwnProfile && !profile?.contact_email_visible) return null;
+  const emailToShow = isOwnProfile ? userEmail : profile?.email;
 
   return (
-    <div className="glass-card" style={{ padding: 12, borderRadius: 16, marginTop: 8 }}>
-      <div className="flex items-center" style={{ gap: 8 }}>
-        <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", flex: 1 }}>Contact</span>
-      </div>
-      <div style={{ marginTop: 8 }}>
-        {isOwnProfile ? (
-          <>
-            <div className="flex items-center justify-between" style={{ marginBottom: emailVisible ? 8 : 0 }}>
-              <span style={{ fontSize: 12, color: "#6B7094" }}>Show email on profile</span>
-              <button
-                type="button"
-                onClick={toggleEmailVisibility}
-                disabled={toggling}
-                className="cursor-pointer"
-                style={{ width: 32, height: 18, borderRadius: 9, background: emailVisible ? "#34C759" : "#ddd", display: "flex", alignItems: "center", padding: 2, border: "none" }}
-              >
-                <div style={{ width: 14, height: 14, borderRadius: 7, background: "#fff", transform: emailVisible ? "translateX(14px)" : "translateX(0)", transition: "transform 0.2s" }} />
-              </button>
-            </div>
-            {emailVisible && (
-              <div className="flex items-center" style={{ gap: 6 }}>
-                <Mail style={{ width: 14, height: 14, color: "#4A90D9" }} />
-                <span style={{ fontSize: 13, fontWeight: 400, color: "#4A90D9" }}>{userEmail || "No email"}</span>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="flex items-center" style={{ gap: 6 }}>
-            <Mail style={{ width: 14, height: 14, color: "#4A90D9" }} />
-            <span style={{ fontSize: 13, fontWeight: 400, color: "#4A90D9" }}>{profile?.email || "Email"}</span>
-          </div>
-        )}
-      </div>
+    <div className="glass-card" style={{ padding: 12, borderRadius: 16 }}>
+      <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", display: "block", marginBottom: 8 }}>Contact</span>
+      {showEmail && emailToShow ? (
+        <div className="flex items-center" style={{ gap: 6 }}>
+          <Mail style={{ width: 14, height: 14, color: "#4A90D9", flexShrink: 0 }} />
+          <span style={{ fontSize: 13, color: "#4A90D9" }}>{emailToShow}</span>
+        </div>
+      ) : isOwnProfile ? (
+        <p style={{ fontSize: 12, color: "#9CA3C0" }}>
+          Email hidden.{" "}
+          <a href="/app/settings?tab=privacy" style={{ color: "#E8733A", fontWeight: 500 }}>Enable in Settings →</a>
+        </p>
+      ) : null}
     </div>
   );
 };
@@ -436,13 +409,17 @@ const Profile = () => {
   const customLinks: any[] = Array.isArray(profileData.custom_links) ? profileData.custom_links : [];
   const aboutText = profileData.bio || profileData.about || "";
 
-  const visFilter = (items: any[]) => isOwnProfile ? items : items.filter((w: any) => w.visibility === "public" || !w.visibility);
-  const experiences = visFilter(workItems.filter((w: any) => w.item_type === "experience")).sort((a: any, b: any) => {
+  const priv: any = profileData.privacy || {};
+  const visFilter = (items: any[], privKey?: string) => {
+    if (!isOwnProfile && privKey && priv[privKey] === false) return [];
+    return isOwnProfile ? items : items.filter((w: any) => w.visibility === "public" || !w.visibility);
+  };
+  const experiences = visFilter(workItems.filter((w: any) => w.item_type === "experience"), "show_experience").sort((a: any, b: any) => {
     if (a.is_current && !b.is_current) return -1;
     if (!a.is_current && b.is_current) return 1;
     return (b.start_year || 0) - (a.start_year || 0);
   });
-  const education = visFilter(workItems.filter((w: any) => w.item_type === "education"));
+  const education = visFilter(workItems.filter((w: any) => w.item_type === "education"), "show_education");
   const projects = visFilter(workItems.filter((w: any) => w.item_type === "project" || (!w.item_type && w.title)));
   const cleanProfileUsername =
     (profileData as any).clean_username ||
@@ -1060,7 +1037,7 @@ const Profile = () => {
 
               {/* ROW 4: Stats — Posts count only; Connections are in the box below */}
               <div className="flex items-center flex-wrap" style={{ gap: 12, marginTop: 6 }}>
-                <Link to={`/app/u/${username}/posts`} className="hover:opacity-80" style={{ fontSize: 13 }}>
+                <Link to={`/app/u/${username || targetUserId}/posts`} className="hover:opacity-80" style={{ fontSize: 13 }}>
                   <span className="num" style={{ fontWeight: 700, color: "#1A1A2E" }}>{stats.posts}</span>
                   <span style={{ fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Posts</span>
                 </Link>
@@ -1173,7 +1150,8 @@ const Profile = () => {
             {/* Verification status (own profile only, hidden if already verified) */}
             {isOwnProfile && <VerificationStatusCard />}
 
-            {/* Connections box */}
+            {/* Connections box — hidden if owner set show_connections = "nobody" and viewer isn't owner */}
+            {(isOwnProfile || priv.show_connections !== "nobody") && (
             <div className="glass-card" style={{ padding: 14, borderRadius: 16 }}>
               <div className="flex items-center justify-between" style={{ marginBottom: 10 }}>
                 <span style={{ fontSize: 14, fontWeight: 700, color: "#1A1A2E" }}>Connections</span>
@@ -1198,6 +1176,7 @@ const Profile = () => {
                 </p>
               )}
             </div>
+            )}
 
             {/* L3: Links */}
             <div className="glass-card" style={{ padding: 12, borderRadius: 16 }}>
@@ -1364,6 +1343,9 @@ const Profile = () => {
               }
               return null;
             })()}
+
+            {/* L5: Contact (email) — shown when show_email is on, or own profile */}
+            <ContactSection isOwnProfile={isOwnProfile} profile={profileData} userEmail={userEmail} />
           </div>
 
           {/* ═══ RIGHT COLUMN ═══ */}
@@ -1374,12 +1356,16 @@ const Profile = () => {
             <ProjectsSection items={projects} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("project")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
             <AchievementsSection items={achievements} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("achievement")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} />
             <SkillsSection skills={skills} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("skills")} onRemoveSkill={removeSkill} />
+            {/* Only show PostsSection if viewer is allowed to see posts */}
+            {(isOwnProfile || priv.who_can_see_posts === "everyone" || (priv.who_can_see_posts === "connections" && isConnected) || !priv.who_can_see_posts) && (
             <PostsSection
               posts={userPosts}
               stats={{ posts: stats.posts, reposts: 0 }}
               username={username}
+              userId={targetUserId}
               isOwnProfile={isOwnProfile}
             />
+            )}
           </div>
         </div>
       </div>
