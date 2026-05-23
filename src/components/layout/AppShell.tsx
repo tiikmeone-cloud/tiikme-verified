@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutGrid, Compass, Users, Target, User,
   Link2, Bell, SlidersHorizontal, PencilLine, LogOut, Home,
-  Plus, Search, ClipboardList, Bot,
+  Plus, Search, ClipboardList, Bot, ShieldCheck,
 } from "lucide-react";
 import ThemeLogo from "@/components/ThemeLogo";
 import { toast } from "sonner";
@@ -57,10 +57,25 @@ const AppShell = ({ children }: { children: ReactNode }) => {
 
   const isInstitution = profile?.account_type === "institution" && !!profile?.org_id;
 
+  // Non-institution users may be org admins (verifier/hiring_manager/admin role)
+  const [orgAdminRole, setOrgAdminRole] = useState<string | null>(null);
+  useEffect(() => {
+    if (isInstitution || !user?.id) { setOrgAdminRole(null); return; }
+    supabase.from("org_admins").select("role").eq("user_id", user.id).limit(1).maybeSingle()
+      .then(({ data }) => setOrgAdminRole(data?.role || null));
+  }, [isInstitution, user?.id]);
+
   const navGroups = BASE_NAV_GROUPS.map(group => {
     if (group.label !== "WORK") return group;
     const workItems = [...group.items];
-    if (!isInstitution) {
+    if (isInstitution || orgAdminRole === "owner" || orgAdminRole === "admin") {
+      workItems.push({ label: "Applicants", icon: ClipboardList, path: "/app/opportunities/applicants" });
+      workItems.push({ label: "Verification Inbox", icon: ShieldCheck, path: "/app/verification-inbox" });
+    } else if (orgAdminRole === "hiring_manager") {
+      workItems.push({ label: "Applicants", icon: ClipboardList, path: "/app/opportunities/applicants" });
+    } else if (orgAdminRole === "verifier") {
+      workItems.push({ label: "Verification Inbox", icon: ShieldCheck, path: "/app/verification-inbox" });
+    } else {
       workItems.push({ label: "Applications", icon: ClipboardList, path: "/app/applications" });
     }
     return { ...group, items: workItems };

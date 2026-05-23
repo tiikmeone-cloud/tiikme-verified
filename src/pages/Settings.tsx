@@ -872,8 +872,19 @@ const TeamAccessSection = ({ orgId, currentUserId }: { orgId: string; currentUse
     const { error } = await supabase.from("org_admins").insert({
       org_id: orgId, user_id: profile.id, role: inviteRole,
     });
-    if (error) { tiikToast("Couldn't add team member. They may already be an admin.", "error"); }
-    else { tiikToast(`${profile.full_name} added as ${ADMIN_ROLE_LABELS[inviteRole]}`, "success"); }
+    if (error) {
+      tiikToast("Couldn't add team member. They may already be an admin.", "error");
+    } else {
+      tiikToast(`${profile.full_name} added as ${ADMIN_ROLE_LABELS[inviteRole]}`, "success");
+      // Notify the newly added member in-app
+      await supabase.from("notifications").insert({
+        user_id: profile.id,
+        type: "org_admin_invite",
+        title: "You've been added to an organisation team",
+        body: `You now have ${ADMIN_ROLE_LABELS[inviteRole]} access. Check your verification inbox or applicants dashboard.`,
+        action_url: inviteRole === "verifier" ? "/app/verification-inbox" : "/app/opportunities/applicants",
+      });
+    }
     setInviteQuery(""); setInviteResults([]);
     await loadAdmins();
     setAdding(false);

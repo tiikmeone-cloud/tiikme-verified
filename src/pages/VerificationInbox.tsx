@@ -30,7 +30,7 @@ type Row = {
   status: string;
   created_at: string;
   rejection_reason: string | null;
-  requester?: { id: string; full_name: string | null; username: string | null; avatar_url: string | null };
+  requester?: { id: string; full_name: string | null; username: string | null; avatar_url: string | null; headline: string | null };
   org?: { id: string; name: string; slug: string; logo_url: string | null };
 };
 
@@ -64,13 +64,22 @@ export default function VerificationInbox() {
     if (!user) { setLoading(false); return; }
     setLoading(true);
 
-    // Org IDs this user admins
-    const { data: adminOrgs } = await supabase
+    // All org_admin rows for this user
+    const { data: myAdminRows } = await supabase
       .from("org_admins")
-      .select("org_id")
-      .eq("user_id", user.id)
-      .in("role", ["owner", "admin"]);
-    const orgIds = (adminOrgs || []).map(a => a.org_id);
+      .select("org_id, role")
+      .eq("user_id", user.id);
+    const myAdminRowsArr = myAdminRows || [];
+
+    // Owners/admins can see all requests for their org
+    const fullAccessOrgIds = myAdminRowsArr
+      .filter(a => ["owner", "admin"].includes(a.role))
+      .map(a => a.org_id);
+
+    // Verifiers: also see org requests, but only for categories routed to them
+    const verifierOrgIds = myAdminRowsArr
+      .filter(a => a.role === "verifier")
+      .map(a => a.org_id);
 
     // Pull requests where I'm assigned OR for an org I admin OR routed to
     // platform review for moderators.
@@ -82,7 +91,9 @@ export default function VerificationInbox() {
       .limit(50);
 
     const filters: string[] = [`assigned_to.eq.${user.id}`];
-    if (orgIds.length > 0) filters.push(`org_id.in.(${orgIds.join(",")})`);
+    if (fullAccessOrgIds.length > 0) filters.push(`org_id.in.(${fullAccessOrgIds.join(",")})`);
+    // Verifiers see requests where the org matches and they are the assigned reviewer
+    if (verifierOrgIds.length > 0) filters.push(`and(org_id.in.(${verifierOrgIds.join(",")}),assigned_to.eq.${user.id})`);
     if (profile?.is_moderator) filters.push(`review_queue.eq.platform`);
     query = query.or(filters.join(","));
 
@@ -100,7 +111,7 @@ export default function VerificationInbox() {
     const orgIdsSet = [...new Set(data.map(r => r.org_id).filter(Boolean) as string[])];
 
     const [profilesRes, orgsRes] = await Promise.all([
-      supabase.from("profiles").select("id, full_name, username, avatar_url").in("id", reqIds),
+      supabase.from("profiles").select("id, full_name, username, avatar_url, headline").in("id", reqIds),
       orgIdsSet.length > 0
         ? supabase.from("organizations").select("id, name, slug, logo_url").in("id", orgIdsSet)
         : Promise.resolve({ data: [] as any[] }),
@@ -221,24 +232,40 @@ export default function VerificationInbox() {
   const renderRow = (r: Row) => (
     <div key={r.id} className="p-4 rounded-xl" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
       <div className="flex items-start gap-3">
-        <AvatarSquare src={r.requester?.avatar_url} name={r.requester?.full_name || "U"} size={44} />
+        <Link to={`/app/profile/${r.requester_id}`}>
+          <AvatarSquare src={r.requester?.avatar_url} name={r.requester?.full_name || "U"} size={44} />
+        </Link>
         <div className="flex-1 min-w-0">
-          <p className="text-[13px]" style={{ color: "var(--text-1)" }}>
-            <Link to={`/app/profile/${r.requester_id}`} className="font-bold hover:underline">
-              {r.requester?.full_name || "Someone"}
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px]" style={{ color: "var(--text-1)" }}>
+                <Link to={`/app/profile/${r.requester_id}`} className="font-bold hover:underline">
+                  {r.requester?.full_name || "Someone"}
+                </Link>
+                <span style={{ color: "var(--text-2)" }}> wants to verify as </span>
+                <strong>{r.requested_role}</strong>
+                {r.org && (
+                  <>
+                    <span style={{ color: "var(--text-2)" }}> at </span>
+                    <strong className="inline-flex items-center gap-1">
+                      <Building2 className="w-3 h-3 inline" />
+                      {r.org.name}
+                    </strong>
+                  </>
+                )}
+              </p>
+              {r.requester?.headline && (
+                <p className="text-[11px] mt-0.5 truncate" style={{ color: "var(--text-3)" }}>{r.requester.headline}</p>
+              )}
+            </div>
+            <Link
+              to={`/app/profile/${r.requester_id}`}
+              className="shrink-0 text-[11px] font-semibold px-2 h-6 rounded-lg flex items-center"
+              style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-2)" }}
+            >
+              View profile
             </Link>
-            <span style={{ color: "var(--text-2)" }}> wants to verify as </span>
-            <strong>{r.requested_role}</strong>
-            {r.org && (
-              <>
-                <span style={{ color: "var(--text-2)" }}> at </span>
-                <strong className="inline-flex items-center gap-1">
-                  <Building2 className="w-3 h-3 inline" />
-                  {r.org.name}
-                </strong>
-              </>
-            )}
-          </p>
+          </div>
           <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-[11px]" style={{ color: "var(--text-3)" }}>
             <span>Department: <strong style={{ color: "var(--text-2)" }}>{roleCategoryLabel(r.role_category)}</strong></span>
             {r.review_queue === "platform"
