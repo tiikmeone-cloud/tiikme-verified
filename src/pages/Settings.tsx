@@ -7,7 +7,7 @@ import DeleteAccountModal from "@/components/legal/DeleteAccountModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { tiikToast } from "@/components/ui/tiik-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -200,11 +200,6 @@ const PrivacySection = ({ userId }: { userId: string | null }) => {
           desc="Turn off to hide from discovery feeds"
           control={<ToggleCtl k="show_in_explore" value={privacy.show_in_explore} />}
         />
-        <PrivacyRow
-          label="Let people find me by email"
-          desc="Allow searching for your profile via your email"
-          control={<ToggleCtl k="searchable_by_email" value={privacy.searchable_by_email} />}
-        />
       </div>
 
       <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
@@ -215,15 +210,6 @@ const PrivacySection = ({ userId }: { userId: string | null }) => {
             <div className="flex items-center">
               <Saved k="show_connections" />
               <span className="ml-2"><Segmented value={privacy.show_connections} options={SEGMENTED_CONN} onChange={v => save({ show_connections: v as any })} /></span>
-            </div>
-          }
-        />
-        <PrivacyRow
-          label="Who can send me Pings"
-          control={
-            <div className="flex items-center">
-              <Saved k="who_can_message" />
-              <span className="ml-2"><Segmented value={privacy.who_can_message} options={SEGMENTED_MSG} onChange={v => save({ who_can_message: v as any })} /></span>
             </div>
           }
         />
@@ -435,7 +421,12 @@ const SettingsPage = () => {
     ] : []),
   ];
 
-  const [activeTab, setActiveTab] = useState("profile");
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(() => {
+    const tab = searchParams.get("tab");
+    const validTabs = ["profile", "account", "display", "privacy", "invite", "legal", "help", "team", "subscription"];
+    return validTabs.includes(tab || "") ? tab! : "profile";
+  });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteText, setDeleteText] = useState("");
   const [loggingOut, setLoggingOut] = useState(false);
