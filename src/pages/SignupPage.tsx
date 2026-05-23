@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import OnboardingShell from "@/components/onboarding/OnboardingShell";
 import { checkPassword, MIN_PASSWORD_LENGTH } from "@/lib/passwordStrength";
 import { markRecentAuth } from "@/lib/idleLogout";
-import { PageSEO } from "@/hooks/usePageSEO";
+import { PageSEO, absoluteUrl } from "@/hooks/usePageSEO";
 import { AuthButton, AuthInput } from "@/components/layouts/AuthPrimitives";
 import { safeInternalRedirect, storePostAuthRedirect } from "@/lib/safeRedirect";
 
@@ -131,7 +131,7 @@ export default function SignupPage() {
       <PageSEO
         title="Sign Up — Tiikme"
         description="Create your free Tiikme profile. Join India's verified professional identity platform."
-        canonical="https://tiikme.com/signup"
+        canonical={absoluteUrl("/signup")}
       />
 
       <h1 className="mb-1 text-center text-[26px] font-bold tracking-[-0.02em] text-paper">Create your account</h1>

@@ -1,109 +1,89 @@
+## Goal
+Resolve the two remaining security findings:
 
-
-# Full Institution System Overhaul -- Implementation Plan
-
-This is a large initiative spanning 4 major areas. I will implement them in phases so each phase is testable before moving to the next.
-
----
-
-## Phase 1: Fix Institution Onboarding & Profile (Priority -- do first)
-
-### Problem
-- The onboarding flow already asks for org name in Step 3 (StepOrgType) -- this works correctly. But the org name field in StepEmail passes `full_name: ""` in signup metadata, so the profile's `full_name` stays blank. The profile trigger (`handle_new_user`) sets `full_name` from metadata, which is empty.
-- Institution profiles still show Experience/Education/Skills tabs when viewed at `/app/profile`.
-
-### Changes
-1. **StepEmail.tsx** -- After signup, store the email but do NOT set `full_name` from email. Already correct (passes `full_name: ""`). No change needed here.
-2. **StepPageSetup.tsx** -- After org creation, update `profiles.full_name` to the org name so sidebar displays correctly. Currently sets `institution_name` but not `full_name`.
-3. **Profile.tsx** -- The redirect logic already sends institution accounts to `/org/{slug}`. Verify this works end-to-end.
-4. **OrganizationPage.tsx** -- Ensure the institution profile tabs are: Posts, About, Team, Opportunities, Verified Members (remove "Home" duplicate with "Posts"). Already mostly correct.
+1. **Error**: `profiles.email` / `profiles.phone` still readable by any authenticated user that satisfies the row-level `profiles_select_public` policy.
+2. **Warn**: `realtime.messages` has no RLS policies, so any authenticated user can subscribe to any channel topic.
 
 ---
 
-## Phase 2: Workspace Access Delegation & Approval Chain
+## Why the previous fix didn't work
 
-### New Features
-1. **Role-based access in Workspace** -- Admins (CTO, CMO, CXO) can grant workspace access to team members
-2. **Team Leader delegation** -- Company admin grants "Team Lead" role; Team Lead can then approve within their scope, but only after the institution page admin approves the delegation
-3. **Invite link from Workspace** -- "Copy invite link" button that generates a shareable link for non-platform users
-4. **Approval notifications** -- When a Team Lead is granted access, notification goes to institution page admin for approval. Only after approval can the Team Lead act.
-5. **Ex-employee/student verification** -- Separate verification category for people who previously worked/studied there. Company can approve directly or delegate to a specific verifier. Notifications route to the assigned verifier.
+The earlier migration ran `REVOKE SELECT (email, phone) ON profiles FROM authenticated, anon`. In Postgres, column-level revokes are ignored when the role still holds **table-level** `SELECT` (or `ALL`). `pg_class.relacl` for `profiles` shows `authenticated=arwdDxtm` and `anon=arwdDxtm` (full privileges granted by Supabase by default), so `SELECT *` still returns every column for any row RLS allows.
 
-### Database Changes
-- Add `access_scope` column to `org_access_rules` (e.g., 'workspace', 'opportunities', 'verification')
-- Add `is_current` boolean to `org_members` to distinguish current vs ex-members
-- Add `delegated_by` and `delegation_approved` columns to `org_access_rules` for approval chains
+## Fix 1 — Column-level lockdown that actually works
 
-### Files to Create/Modify
-- `src/pages/Workspace.tsx` -- Add admin access panel, invite link UI, approval queue
-- `src/components/org/tabs/TeamTab.tsx` -- Add role delegation UI
-- New component: `src/components/workspace/AccessManager.tsx`
-- New component: `src/components/workspace/InviteLinkModal.tsx`
+Strategy: revoke broad `SELECT` on `profiles`, then re-grant `SELECT` on every column **except** `email` and `phone`. RLS continues to filter rows; the column grant filters columns. Owner access keeps working via the existing `get_my_contact()` RPC (`SECURITY DEFINER`).
 
----
+Migration sketch:
+```sql
+REVOKE SELECT ON public.profiles FROM anon, authenticated;
+GRANT SELECT (id, username, full_name, role, role_subtype, headline, bio,
+  avatar_url, designation, sector, institution_id, institution_name,
+  location_city, location_state, languages, status, open_to_work,
+  activity_score, phone_hash, theme_preference, is_public, created_at,
+  updated_at, custom_links, department, role_metadata, is_verified,
+  verified_by, verification_type, verification_badge_text, about_qa,
+  onboarding_complete, skills, section_order, referred_by, cover_url,
+  account_type, org_id, privacy_settings, about, contact_email_visible,
+  currently_working_at, open_to_work_preferences, otw_visibility,
+  interests, is_moderator, verified_at, public_key, key_created_at,
+  score_penalty, spam_flag_count, days_active, last_active_date,
+  activity_score_v2_live, display_preference, profession_type,
+  terms_accepted_at, terms_version, pending_deletion,
+  deletion_requested_at, location_district, country, years_exp,
+  last_onboarding_step, privacy, clean_username, follower_count,
+  following_count)
+ON public.profiles TO anon, authenticated;
+```
 
-## Phase 3: LinkedIn-style Opportunity Posting & Application Dashboard
+Insert/Update/Delete privileges (already gated by RLS) keep their table-level grants on the columns owners need.
 
-### Opportunity Form Enhancements
-The current `PostOpportunityModal.tsx` already has: title, department, location, employment type, experience, salary, skills, screening questions, visibility. 
+### App-code impact
+- `AuthContext.fetchProfile` does `select("*")` for the **logged-in owner's own row** — RLS allows it and the owner's row still has email/phone selectable because the column grant covers everyone, but column SELECT for `email`/`phone` is removed for **all** roles. To keep the owner's app fetch from breaking, switch the AuthContext fetch to an explicit column list **excluding** `email`/`phone`, and let the owner read those via `get_my_contact()` when needed (already the pattern used elsewhere).
+- Quick scan for other `.from("profiles").select("*")` call sites; tighten any that fail. Likely all rely on the typed `Database` shape, not actual `email`/`phone` access, so this should be a small change.
 
-**Add:**
-1. **Company/About section** -- Auto-populated from org data (name, type, size, location, website)
-2. **Role details** -- Responsibilities list, qualifications (education, certifications)
-3. **Screening questions** -- Already exists, enhance with required/optional flag
-4. **Profile attachment requirement** -- Toggle for "Require profile sharing"
-5. **Activity score minimum** -- Optional minimum activity score filter
-6. **Qualification criteria** -- Education level, specific degree, years of experience as hard filters
+## Fix 2 — Realtime channel authorization
 
-### Application Dashboard Enhancements
-Current `ApplicationsDashboard.tsx` has: status filters, profile/resume/answers tabs, notes, status management.
+Currently the app uses `supabase.channel("…")` for: post reactions/likes/comments, conversations, workspaces, verification inbox, alerts, AppShell presence. Without `realtime.messages` RLS, any authenticated user can join any topic.
 
-**Add:**
-1. **Named applications** -- Each opportunity shows as a named application (e.g., "Frontend Developer - April 2026")
-2. **Qualified vs Total count** -- Show "X applied, Y qualified" based on screening criteria
-3. **Resume attachment view** -- Already exists, improve PDF embed
-4. **Direct HR contact** -- "Contact via Pings" button that opens a conversation
-5. **Post attribution** -- Feed shows "[Company Name] posted by [HR Name]" format
+Add minimal authorization on `realtime.messages` that:
+- Allows authenticated users to receive broadcasts/presence on topics that **start with their own `auth.uid()`** (e.g. `user:<uid>:alerts`).
+- Allows authenticated users on `post:<id>` / `workspace:<id>` topics only if they can already read that resource (via existing `has_workspace_access`, public post visibility, etc.).
+- Falls back to deny.
 
-### Database Changes
-- Add `qualification_criteria` (JSONB) to `opportunities` table -- stores min education, min score, required skills
-- Add `is_qualified` boolean to `opportunity_applications` -- computed on submission
+Concrete policy:
+```sql
+ALTER TABLE realtime.messages ENABLE ROW LEVEL SECURITY;
 
-### Files to Modify
-- `src/components/opportunities/PostOpportunityModal.tsx` -- Add company info section, qualification criteria, enhanced questions
-- `src/pages/ApplicationsDashboard.tsx` -- Add qualified filter, application naming, HR contact button
-- `src/components/org/tabs/OpportunitiesTab.tsx` -- Show application counts per opportunity
+CREATE POLICY "realtime_authenticated_read"
+  ON realtime.messages FOR SELECT TO authenticated
+  USING (
+    -- own-user channels
+    (realtime.topic() LIKE 'user:' || auth.uid()::text || ':%')
+    OR (realtime.topic() LIKE 'profile:' || auth.uid()::text || ':%')
+    -- workspace channels gated by membership
+    OR (realtime.topic() LIKE 'workspace:%'
+        AND public.has_workspace_access(
+          (split_part(realtime.topic(), ':', 2))::uuid, auth.uid()))
+    -- public feed channels (posts/comments/likes) — already public reads
+    OR (realtime.topic() LIKE 'post:%')
+    OR (realtime.topic() LIKE 'feed:%')
+  );
+```
+We'll need to verify the actual topic names used by each hook and tighten the list before shipping. If a topic isn't matched, those subscribers will silently stop receiving events — so we audit `src/hooks/useConversations.ts`, `useFeedPosts.ts`, `useComments.ts`, `useLikes.ts`, `usePostReactions.ts`, `usePostInteractions.ts`, `usePostComments.ts`, `pages/Workspace.tsx`, `pages/Alerts.tsx`, `pages/VerificationInbox.tsx`, `components/layout/AppShell.tsx` first and normalize topic naming where needed.
 
----
+For **conversations / pings** the topic must be gated by `is_conversation_participant(conv_id, auth.uid())` so DMs stay private.
 
-## Phase 4: Notification Routing & Access Control
+## Steps
 
-### Changes
-1. **Verification request routing** -- When someone requests verification, check `org_verif_routes` for department-specific routing. Route notification to assigned verifier.
-2. **Delegation approval flow** -- When admin grants Team Lead access, create a pending `org_access_rules` record. Send notification to org page admin. On approval, activate the rule.
-3. **Ex-employee verification** -- New alert type `ex_member_verification`. Route to assigned verifier or default admin.
-4. **Opportunity access delegation** -- HR can be granted `post_jobs` access. Posts show as "Company Name -- posted by HR Name".
+1. Audit realtime topic strings across the listed files; standardize to `user:<uid>:…`, `conversation:<id>`, `workspace:<id>`, `post:<id>`, `feed:public`.
+2. Migration A: `profiles` column lockdown (REVOKE + GRANT explicit columns) for `anon` and `authenticated`.
+3. Migration B: enable RLS on `realtime.messages` and add the topic-gated policy using existing helper functions (`has_workspace_access`, `is_conversation_participant`).
+4. Update `src/contexts/AuthContext.tsx` to fetch profile with explicit column list excluding `email`/`phone`; expose owner contact via existing `get_my_contact()` consumers (no change to other call sites unless they break).
+5. Smoke-test: sign in, open a profile other than your own (no email/phone leaks via network tab), subscribe to alerts/feed/DM channels (still work), try to subscribe to another user's `user:<otherUid>:alerts` (denied).
+6. Mark both findings as fixed; update `@security-memory` to record the column-grant pattern and realtime topic-authz rules so future scans don't regress.
 
-### Files to Modify
-- `src/pages/Alerts.tsx` -- Handle new alert types (delegation_approval, ex_member_verification)
-- `src/components/org/OrgAdmin.tsx` -- Add access management UI
-
----
-
-## Implementation Order
-
-I will implement these in this exact sequence:
-1. Phase 1 first (fix onboarding profile creation) -- ~1 session
-2. Phase 3 next (opportunity form is user-facing and high impact) -- ~2 sessions  
-3. Phase 2 (workspace access delegation) -- ~2 sessions
-4. Phase 4 (notification routing) -- ~1 session
-
-Each phase will be independently testable.
-
-### Technical Notes
-- All Supabase queries will have `{ data, error }` destructuring with `console.warn` on error
-- All loading states use skeleton placeholders
-- Organization pages remain locked to Light Mode (#FFF8F2)
-- No emojis in UI (Lucide icons only, per brand guidelines)
-- Minimum 44px touch targets on all interactive elements
-
+## Technical notes
+- Postgres column-level REVOKE has no effect while a table-level SELECT/ALL grant is in place — must revoke table-level first, then re-grant per column. This is the actual root cause of the regression.
+- `realtime.messages` policies use `realtime.topic()` (a SECURITY DEFINER helper Supabase provides) to read the current subscription topic; safe to reference from RLS.
+- We are not modifying `auth`, `storage`, or `vault` schemas. Adding RLS to `realtime.messages` is the Supabase-documented authorization mechanism and is allowed.

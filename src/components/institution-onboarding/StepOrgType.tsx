@@ -3,6 +3,9 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { InstitutionFormData } from "@/pages/JoinAsInstitution";
 
+const TEXT_PRIMARY = "#FAFAF7";
+const TEXT_SECONDARY = "rgba(250,250,247,0.68)";
+
 // Flat category list — the value is what's stored in organizations.subtype.
 // `type` is the underlying organizations.type bucket. Grouped by section.
 const ORG_CATEGORIES: { value: string; type: string; label: string; group: string }[] = [
@@ -57,13 +60,13 @@ export default function StepOrgType({ form, update, onNext }: Props) {
           <Building2 className="w-5 h-5" style={{ color: "var(--brand)" }} />
         </div>
         <div>
-          <h1 className="text-[22px] font-extrabold" style={{ color: "var(--text-1)" }}>What type of organisation?</h1>
-          <p className="text-[13px]" style={{ color: "var(--text-3)" }}>This helps us customise your page and features</p>
+          <h1 className="text-[22px] font-extrabold" style={{ color: TEXT_PRIMARY }}>What type of organisation?</h1>
+          <p className="text-[13px]" style={{ color: TEXT_SECONDARY }}>This helps us customise your page and features</p>
         </div>
       </div>
 
       <div className="mt-6 mb-6">
-        <label className="text-[12px] font-bold mb-2 block" style={{ color: "var(--text-2)" }}>Organisation Category</label>
+        <label className="text-[12px] font-bold mb-2 block" style={{ color: TEXT_PRIMARY }}>Organisation Category</label>
         <select
           value={form.orgSubtype}
           onChange={e => handleSelect(e.target.value)}
@@ -89,7 +92,7 @@ export default function StepOrgType({ form, update, onNext }: Props) {
             );
           })}
         </select>
-        <p className="text-[11px] mt-2" style={{ color: "var(--text-3)" }}>
+        <p className="text-[11px] mt-2" style={{ color: TEXT_SECONDARY }}>
           Used to surface your page in the right discovery sections.
         </p>
       </div>
@@ -98,4 +101,3 @@ export default function StepOrgType({ form, update, onNext }: Props) {
     </div>
   );
 }
-

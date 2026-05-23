@@ -16,6 +16,9 @@ import AppShell from "./components/layout/AppShell.tsx";
 import Index from "./pages/Index.tsx";
 import SignIn from "./pages/SignIn.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import Opportunities from "./pages/Opportunities.tsx";
+import Profile from "./pages/Profile.tsx";
+import OrganizationPage from "./pages/OrganizationPage.tsx";
 
 // New onboarding pages (eager — critical path)
 import SignupPage from "./pages/SignupPage.tsx";
@@ -26,12 +29,10 @@ import AuthCallback from "./pages/AuthCallback.tsx";
 // Lazy load everything else
 const Welcome = lazyWithRetry(() => import("./pages/Welcome.tsx"), "Welcome");
 const Feed = lazyWithRetry(() => import("./pages/Feed.tsx"), "Feed");
-const Profile = lazyWithRetry(() => import("./pages/Profile.tsx"), "Profile");
 const ProfilePosts = lazyWithRetry(() => import("./pages/ProfilePosts.tsx"), "ProfilePosts");
 const Explore = lazyWithRetry(() => import("./pages/Explore.tsx"), "Explore");
 const MyWork = lazyWithRetry(() => import("./pages/MyWork.tsx"), "MyWork");
 const ProjectHub = lazyWithRetry(() => import("./pages/ProjectHub.tsx"), "ProjectHub");
-const Opportunities = lazyWithRetry(() => import("./pages/Opportunities.tsx"), "Opportunities");
 const Strands = lazyWithRetry(() => import("./pages/Strands.tsx"), "Strands");
 const ConnectionsPage = lazyWithRetry(() => import("./pages/Connections.tsx"), "ConnectionsPage");
 const Alerts = lazyWithRetry(() => import("./pages/Alerts.tsx"), "Alerts");
@@ -47,7 +48,6 @@ const PostCreate = lazyWithRetry(() => import("./pages/PostCreate.tsx"), "PostCr
 const CertificatePage = lazyWithRetry(() => import("./pages/CertificatePage.tsx"), "CertificatePage");
 const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword.tsx"), "ResetPassword");
 const PostDetail = lazyWithRetry(() => import("./pages/PostDetail.tsx"), "PostDetail");
-const OrganizationPage = lazyWithRetry(() => import("./pages/OrganizationPage.tsx"), "OrganizationPage");
 const JoinAsInstitution = lazyWithRetry(() => import("./pages/JoinAsInstitution.tsx"), "JoinAsInstitution");
 const OrganizationCreate = lazyWithRetry(() => import("./pages/OrganizationCreate.tsx"), "OrganizationCreate");
 const ApplicationsDashboard = lazyWithRetry(() => import("./pages/ApplicationsDashboard.tsx"), "ApplicationsDashboard");
@@ -157,6 +157,7 @@ const AppRoutes = () => {
             <Route path="/app/teams/:projectId" element={<Shell><ProjectHub /></Shell>} />
             <Route path="/app/opportunities" element={<Shell><Opportunities /></Shell>} />
             <Route path="/app/opportunities/create" element={<Shell><OpportunityCreate /></Shell>} />
+            <Route path="/app/opportunities/:id/edit" element={<Shell><OpportunityCreate /></Shell>} />
             <Route path="/app/opportunities/:id/applications" element={<Shell><ApplicationsDashboard /></Shell>} />
             <Route path="/app/applications" element={<Shell><MyApplications /></Shell>} />
             <Route path="/app/pilot" element={<Shell><TiikmePilot /></Shell>} />

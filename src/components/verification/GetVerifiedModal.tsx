@@ -123,7 +123,7 @@ export default function GetVerifiedModal({ open, onClose, onSubmitted }: Props) 
     <GlassModal
       open={open}
       onClose={handleClose}
-      title="Get verified"
+      title="Request verification"
       icon={ShieldCheck}
       accentColor="#E8733A"
       actions={

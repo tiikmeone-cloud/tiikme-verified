@@ -1,5 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { PROFILE_SELECT_COLUMNS } from "@/lib/profileColumns";
 
 /**
  * Tier 2/3 data prefetchers — keyed by route prefix (first 3 segments).
@@ -87,7 +88,7 @@ export const ROUTE_PREFETCHERS: Record<string, (qc: QueryClient, userId: string)
       staleTime: 5 * 60 * 1000,
       queryFn: async () => {
         const [profile, work] = await Promise.all([
-          supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
+          supabase.from("profiles").select(PROFILE_SELECT_COLUMNS).eq("id", uid).maybeSingle(),
           supabase.from("work_items").select("*").eq("owner_id", uid).order("start_date", { ascending: false }),
         ]);
         return { profile: profile.data, work: work.data || [] };

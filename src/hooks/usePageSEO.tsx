@@ -1,6 +1,5 @@
 import { Helmet } from "react-helmet-async";
-
-const BASE_URL = "https://tiikme.com";
+import { absoluteUrl, SITE_URL } from "@/lib/siteConfig";
 
 interface SEOProps {
   title?: string;
@@ -21,7 +20,7 @@ export const PageSEO = ({
   description = "Build your verified professional identity. Connect with verified professionals, organizations, and opportunities across India.",
   ogTitle,
   ogDescription,
-  ogImage = `${BASE_URL}/og-default.png`,
+  ogImage = absoluteUrl("/og-default.png"),
   ogType = "website",
   twitterCard = "summary",
   canonical,
@@ -79,7 +78,7 @@ export const profileSEO = (p: {
     p.bio ? p.bio.slice(0, 100) : "",
   ].filter(Boolean).join(" ");
   const loc = [p.location_city, p.location_state].filter(Boolean).join(", ");
-  const profileUrl = p.username ? `${BASE_URL}/profile/${p.username}` : undefined;
+  const profileUrl = p.username ? absoluteUrl(`/${p.username}`) : undefined;
 
   return {
     title: `${name}${p.headline ? ` - ${p.headline}` : ""} | Tiikme`,
@@ -89,13 +88,13 @@ export const profileSEO = (p: {
     ogImage: p.avatar_url || undefined,
     ogType: "profile" as const,
     twitterCard: "summary_large_image" as const,
-    canonical: profileUrl,
+    canonical: p.username ? absoluteUrl(`/${p.username}`) : undefined,
     dateModified: new Date().toISOString(),
     jsonLd: {
       "@context": "https://schema.org",
       "@type": "ProfilePage",
       name: `${name} on Tiikme`,
-      ...(profileUrl && { url: profileUrl }),
+      ...(p.username && { url: absoluteUrl(`/${p.username}`) }),
       ...(p.created_at && { dateCreated: p.created_at }),
       dateModified: new Date().toISOString(),
       mainEntity: {
@@ -105,16 +104,8 @@ export const profileSEO = (p: {
         ...(p.institution_name && { worksFor: { "@type": "Organization", name: p.institution_name } }),
         ...(loc && { address: { "@type": "PostalAddress", addressLocality: p.location_city, addressRegion: p.location_state, addressCountry: "IN" } }),
         ...(p.avatar_url && { image: p.avatar_url }),
-        ...(profileUrl && { url: profileUrl }),
+        ...(p.username && { url: absoluteUrl(`/${p.username}`) }),
         ...(p.is_verified && { identifier: { "@type": "PropertyValue", name: "Verified", value: "true" } }),
-      },
-      breadcrumb: {
-        "@type": "BreadcrumbList",
-        itemListElement: [
-          { "@type": "ListItem", position: 1, name: "Home", item: BASE_URL },
-          { "@type": "ListItem", position: 2, name: "Professionals", item: `${BASE_URL}/app/explore` },
-          { "@type": "ListItem", position: 3, name, item: profileUrl || `${BASE_URL}/app/explore` },
-        ],
       },
     },
   };
@@ -162,7 +153,7 @@ export const orgSEO = (o: {
     o.member_count ? `${o.member_count} members.` : "",
     "Verified on Tiikme.",
   ].filter(Boolean).join(" ");
-  const orgUrl = o.slug ? `${BASE_URL}/p/${o.slug}` : undefined;
+  const orgUrl = o.slug ? absoluteUrl(`/p/${o.slug}`) : undefined;
 
   return {
     title: `${o.name}${o.tagline ? ` - ${o.tagline}` : ""} | Tiikme`,
@@ -170,7 +161,7 @@ export const orgSEO = (o: {
     ogTitle: `${o.name} | Tiikme`,
     ogImage: o.logo_url || o.cover_url || undefined,
     twitterCard: "summary_large_image" as const,
-    canonical: orgUrl,
+    canonical: o.slug ? absoluteUrl(`/org/${o.slug}`) : undefined,
     dateModified: new Date().toISOString(),
     jsonLd: {
       "@context": "https://schema.org",
@@ -178,17 +169,10 @@ export const orgSEO = (o: {
       name: o.name,
       ...(o.tagline && { description: o.tagline }),
       ...(o.logo_url && { logo: o.logo_url }),
-      ...(orgUrl && { url: orgUrl }),
+      ...(o.slug && { url: absoluteUrl(`/org/${o.slug}`) }),
       ...(o.website_url && { sameAs: o.website_url }),
       ...(o.city && { address: { "@type": "PostalAddress", addressLocality: o.city, addressRegion: o.state, addressCountry: "IN" } }),
       ...(o.employee_count && { numberOfEmployees: { "@type": "QuantitativeValue", value: o.employee_count } }),
-      aggregateRating: {
-        "@type": "AggregateRating",
-        ratingValue: "4.0",
-        reviewCount: o.member_count || 1,
-        bestRating: "5",
-        worstRating: "1",
-      },
     },
   };
 };
@@ -217,7 +201,7 @@ export const opportunitySEO = (opp: {
   return {
     title: `${opp.title}${opp.company_name ? ` at ${opp.company_name}` : ""} | Tiikme Opportunities`,
     description: desc,
-    canonical: opp.id ? `${BASE_URL}/app/opportunities/${opp.id}` : undefined,
+    canonical: opp.id ? absoluteUrl(`/app/opportunities/${opp.id}`) : undefined,
     jsonLd: {
       "@context": "https://schema.org",
       "@type": "JobPosting",
@@ -229,3 +213,5 @@ export const opportunitySEO = (opp: {
     },
   };
 };
+
+export { SITE_URL, absoluteUrl };

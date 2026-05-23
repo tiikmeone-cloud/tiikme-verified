@@ -1,12 +1,10 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { trackPageView } from "@/lib/analytics";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import { fixStorageUrl } from "@/components/ui/AvatarSquare";
-import VerifiedBadge from "@/components/VerifiedBadge";
 import { cleanUsername } from "@/lib/cleanUsername";
+import { getPrimaryRoleLine, getProfileSubtitle, sanitizeIdentityText } from "@/lib/profileUtils";
 import { SUBTYPE_OPTIONS, hasSubtypes } from "@/lib/roleSubtypes";
 import { getDisplayFlags, safeDisplayName } from "@/utils/displayProfile";
-import { getProfileSubtitle } from "@/lib/profileUtils";
 import { PageSEO, profileSEO } from "@/hooks/usePageSEO";
 import {
   MapPin, Copy, Shield, X, CheckCircle, Building2, Link2, Plus,
@@ -22,7 +20,6 @@ import { detectPlatform } from "@/lib/platformDetect";
 import GlassModal, { glassInputDarkStyle as gInputStyle, glassSelectDarkStyle as gSelectStyle, glassTextareaDarkStyle as gTextareaStyle, labelStyle } from "@/components/ui/GlassModal";
 import ActivityScoreCard from "@/components/profile/ActivityScoreCard";
 import { shouldShowPublicScore } from "@/lib/activityTiers";
-import GetTiikedModal from "@/components/profile/GetTiikedModal";
 import { ExperienceSection, EducationSection, ProjectsSection, AchievementsSection, SkillsSection, PostsSection, RolesSection } from "@/components/profile/ProfileSections";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,8 +32,9 @@ import MentionText from "@/components/feed/MentionText";
 import EditPostModal from "@/components/feed/EditPostModal";
 import DeletePostDialog from "@/components/feed/DeletePostDialog";
 import { sendNotification } from "@/lib/notify";
-import VerificationRequest from "@/components/profile/VerificationRequest";
 import VerificationStatusCard from "@/components/verification/VerificationStatusCard";
+import CertificatesSection from "@/components/profile/CertificatesSection";
+import ActivityScoreRing from "@/components/ActivityScoreRing";
 import { getActivityTier } from "@/lib/algorithms";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle
@@ -208,27 +206,10 @@ const ContactSection = ({ isOwnProfile, profile, userEmail }: { isOwnProfile: bo
 
 /* ═══════════ MAIN PROFILE ═══════════ */
 const Profile = () => {
-  useEffect(() => { trackPageView("profile"); }, []);
-  // /app/profile/:id uses { id }, /:username uses { username }
-  const { id: urlUserId, username: urlUsername } = useParams<{ id?: string; username?: string }>();
+  const { id: urlUserId } = useParams<{ id: string }>();
   const { profile: authProfile, initials: authInitials, displayName: authDisplayName, refreshProfile, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const [resolvedUserId, setResolvedUserId] = useState<string | null>(null);
-
-  // Resolve username → uuid when visiting the public /:username route
-  useEffect(() => {
-    if (!urlUsername) { setResolvedUserId(null); return; }
-    setDataLoading(true);
-    setViewedProfile(null);
-    supabase.from("profiles").select("id").eq("username", urlUsername).maybeSingle()
-      .then(({ data }) => {
-        if (data?.id) setResolvedUserId(data.id);
-        else setResolvedUserId("not-found");
-      });
-  }, [urlUsername]);
-
-  const effectiveId = urlUserId || (urlUsername ? resolvedUserId : undefined);
-  const isOwnProfile = !effectiveId || effectiveId === user?.id;
+  const isOwnProfile = !urlUserId || urlUserId === user?.id;
 
   useEffect(() => {
     if (isOwnProfile && authProfile?.account_type === "institution" && authProfile?.org_id) {
@@ -245,7 +226,6 @@ const Profile = () => {
   const [stats, setStats] = useState({ connections: 0, posts: 0 });
   const [connectedAvatars, setConnectedAvatars] = useState<any[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
-  const [showGetTiiked, setShowGetTiiked] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [editingPost, setEditingPost] = useState<any | null>(null);
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
@@ -271,7 +251,7 @@ const Profile = () => {
   const [followerCount, setFollowerCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
 
-  const targetUserId = isOwnProfile ? user?.id : (effectiveId || undefined);
+  const targetUserId = isOwnProfile ? user?.id : urlUserId;
 
   // Get user email
   useEffect(() => {
@@ -375,7 +355,7 @@ const Profile = () => {
 
   useEffect(() => { if (!authLoading) loadProfile(); }, [authLoading, loadProfile]);
 
-  if (authLoading || dataLoading || (urlUsername && !resolvedUserId)) return (
+  if (authLoading || dataLoading) return (
     <div className="min-h-screen" style={{ background: "transparent" }}>
       <div style={{ maxWidth: 960, margin: "0 auto", padding: 16 }}>
         <div className="animate-pulse space-y-3">
@@ -390,14 +370,8 @@ const Profile = () => {
     </div>
   );
   if (!user && isOwnProfile) return null;
-  if (resolvedUserId === "not-found") return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
-      <p style={{ fontSize: 16, fontWeight: 700, color: "#1A1A2E" }}>Profile not found</p>
-      <button type="button" onClick={() => navigate("/app/explore")} className="cursor-pointer" style={{ fontSize: 13, marginTop: 8, color: "#E8733A", background: "none", border: "none" }}>Back to Explore</button>
-    </div>
-  );
 
-  const rawProfileData = viewedProfile ?? (isOwnProfile ? authProfile : null);
+  const rawProfileData = viewedProfile || authProfile;
   if (!rawProfileData) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
       <p style={{ fontSize: 16, fontWeight: 700, color: "#1A1A2E" }}>Profile not found</p>
@@ -446,10 +420,12 @@ const Profile = () => {
   const realName = profileData.full_name || authDisplayName || "";
   const displayName = dpFlags.showName ? realName : safeDisplayName(profileData, "Tiikme member");
   const username = cleanUsername(profileData.username || "");
+  const headline = sanitizeIdentityText(profileData.headline || "");
   const city = showLocation || isOwnProfile ? (profileData.location_city || "") : "";
   const state = showLocation || isOwnProfile ? (profileData.location_state || "") : "";
   const role = profileData.role || "student";
   const roleLabel = role.charAt(0).toUpperCase() + role.slice(1).replace(/_/g, " ");
+  const compactRoleLine = getPrimaryRoleLine(profileData) || (role !== "professional" ? roleLabel : "");
   const initials = displayName ? displayName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase() : authInitials || "U";
   const roleColor = ROLE_COLOR_MAP[role] || "#4F46E5";
   const isVerified = profileData.is_verified === true && (() => {
@@ -472,8 +448,51 @@ const Profile = () => {
   });
   const education = visFilter(workItems.filter((w: any) => w.item_type === "education"));
   const projects = visFilter(workItems.filter((w: any) => w.item_type === "project" || (!w.item_type && w.title)));
+  const cleanProfileUsername =
+    (profileData as any).clean_username ||
+    profileData.username?.replace(/-[0-9a-f]{6}$/i, "") ||
+    "";
+  const tiikmeProfilePath = cleanProfileUsername ? `https://tiikme.com/${cleanProfileUsername}` : "";
+  const normalizedTiikmeProfilePath = tiikmeProfilePath.replace(/\/+$/, "").toLowerCase();
+  const tiikmeProfilePathnames = new Set(
+    [
+      cleanProfileUsername ? `/${cleanProfileUsername}` : "",
+      cleanProfileUsername ? `/app/${cleanProfileUsername}` : "",
+      isOwnProfile ? "/app/profile" : "",
+      targetUserId ? `/app/profile/${targetUserId}` : "",
+    ]
+      .map((value) => value.trim().replace(/\/+$/, "").toLowerCase())
+      .filter(Boolean),
+  );
+  const visibleCustomLinks = customLinks.filter((link: any) => {
+    const rawUrl = typeof link?.url === "string" ? link.url.trim() : "";
+    if (!rawUrl) return false;
+    const normalizedUrl = rawUrl.replace(/\/+$/, "").toLowerCase();
+    if (normalizedUrl === normalizedTiikmeProfilePath) return false;
 
-  const handleCopyLink = () => { navigator.clipboard.writeText(window.location.origin + "/" + username); toast.success("Profile link copied"); };
+    try {
+      const parsedUrl = new URL(rawUrl, window.location.origin);
+      const normalizedHost = parsedUrl.hostname.replace(/^www\./, "").toLowerCase();
+      const normalizedPath = parsedUrl.pathname.replace(/\/+$/, "").toLowerCase() || "/";
+      const isTiikmeHost =
+        normalizedHost === "tiikme.com" ||
+        normalizedHost === "www.tiikme.com" ||
+        normalizedHost === window.location.hostname.replace(/^www\./, "").toLowerCase();
+      if (isTiikmeHost && tiikmeProfilePathnames.has(normalizedPath)) {
+        return false;
+      }
+    } catch {
+      // Ignore malformed links and let them render so the user can still edit/remove them.
+    }
+
+    return true;
+  });
+
+  const handleCopyLink = () => {
+    const url = tiikmeProfilePath || `${window.location.origin}/${username}`;
+    navigator.clipboard.writeText(url);
+    toast.success("Profile link copied!");
+  };
 
   const handleConnect = async () => {
     if (!user || !targetUserId || connectLoading) return;
@@ -984,29 +1003,15 @@ const Profile = () => {
             </div>
 
             {/* RIGHT COLUMN: Info */}
-            <div className="profile-info-body" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
-              {/* ROW 1: Name + verified badge + optional Open to work pill */}
-              <div className="flex items-center flex-wrap" style={{ gap: 8 }}>
-                <p style={{ fontSize: 20, fontWeight: 700, lineHeight: "28px", color: "#1A1A2E", wordBreak: "break-word" }} className="line-clamp-2">{displayName}</p>
-                {isVerified && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="cursor-default">
-                          <VerifiedBadge size={20} />
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent side="top">
-                        <span>{(profileData as any).verification_badge_text || "Tiiked — identity verified"}</span>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
+            <div className="profile-info-body w-full text-center md:text-left" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 5 }}>
+              {/* ROW 1: Name + optional Open to work pill */}
+              <div className="flex items-center md:items-start justify-center md:justify-start flex-wrap" style={{ gap: 8 }}>
+                <p style={{ flex: 1, minWidth: 0, fontSize: 20, fontWeight: 700, lineHeight: "28px", color: "#1A1A2E", whiteSpace: "normal", overflowWrap: "anywhere", wordBreak: "break-word" }}>{displayName}</p>
                 {showOTW && (
                   <span
                     style={{
                       display: "inline-flex", alignItems: "center", gap: 4,
-                      height: 22, padding: "0 8px", borderRadius: 999,
+                      minHeight: 22, padding: "2px 8px", borderRadius: 999,
                       fontSize: 11, fontWeight: 700,
                       background: "rgba(16,185,129,0.12)", color: "#059669",
                       border: "1px solid rgba(16,185,129,0.30)",
@@ -1018,17 +1023,41 @@ const Profile = () => {
                 )}
               </div>
 
-              {/* ROW 2: Single consolidated identity subtitle */}
-              {dpFlags.showRole && (
-                <p style={{ fontSize: 13, fontWeight: 500, color: "#6B7094" }}>
-                  {currentExp
-                    ? [currentExp.job_title || currentExp.title, currentExp.company_name].filter(Boolean).join(' @ ')
-                    : getProfileSubtitle(profileData)}
+              {/* ROW 1b: Role · Subtype */}
+              {dpFlags.showRole && compactRoleLine && (
+                <p style={{ fontSize: 12, fontWeight: 600, color: roleColor }}>
+                  {compactRoleLine}
+                </p>
+              )}
+
+              {/* ROW 1c: Currently working at / institution */}
+              {dpFlags.showCompany && (() => {
+                const m = (profileData as any).role_metadata as Record<string, any> | null;
+                let parts: string[] = [];
+                if (m && typeof m === "object") {
+                  const r = profileData.role;
+                  if (r === "student") parts = [m.institution, m.current_year].filter(Boolean);
+                  else if (r === "professional") parts = [m.company, m.years_experience ? `${m.years_experience} yrs` : ""].filter(Boolean);
+                  else if (r === "doctor") parts = [m.hospital, m.specialty === "Other" ? m.specialty_other : m.specialty].filter(Boolean);
+                  else if (r === "faculty") parts = [m.institution, m.department].filter(Boolean);
+                }
+                if (parts.length === 0) {
+                  const fallback = (profileData as any).currently_working_at || profileData.institution_name;
+                  if (!fallback) return null;
+                  return <p style={{ fontSize: 13, fontWeight: 500, lineHeight: "18px", color: "#E8733A", overflowWrap: "anywhere" }}>{fallback}</p>;
+                }
+                return <p style={{ fontSize: 13, fontWeight: 500, lineHeight: "18px", color: "#E8733A", overflowWrap: "anywhere" }}>{parts.join(" · ")}</p>;
+              })()}
+
+              {/* ROW 2: Headline */}
+              {dpFlags.showRole && (currentExp || headline) && (
+                <p style={{ fontSize: 13, fontWeight: 400, lineHeight: "18px", color: "#6B7094", overflowWrap: "anywhere" }}>
+                  {currentExp ? `${currentExp.job_title || currentExp.title} at ${currentExp.company_name || ""}` : headline}
                 </p>
               )}
 
               {/* ROW 3: @username + location */}
-              <div className="flex items-center flex-wrap" style={{ gap: 8 }}>
+              <div className="flex items-center justify-center md:justify-start flex-wrap" style={{ gap: 8 }}>
                 {username && <span style={{ fontSize: 12, fontWeight: 400, color: "#9CA3C0" }}>@{username}</span>}
                 {username && (city || state) && <span style={{ width: 3, height: 3, borderRadius: "50%", background: "#9CA3C0", flexShrink: 0 }} />}
                 {(city || state) && (
@@ -1090,37 +1119,19 @@ const Profile = () => {
                 })()}
               </div>
 
-              {/* ROW 5: Action buttons */}
-              <div className="flex items-center flex-wrap" style={{ gap: 8, marginTop: 10 }}>
-                {isOwnProfile ? (
-                  <Link to="/app/settings" style={{
-                    height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-                    background: "rgba(232,115,58,0.10)", border: "1px solid rgba(232,115,58,0.25)",
-                    color: "#E8733A", display: "inline-flex", alignItems: "center", gap: 4, textDecoration: "none",
+              {/* ROW 5: Action buttons (own profile shows nothing — edit happens inline / via Settings) */}
+              {!isOwnProfile && (
+                <div className="flex items-center justify-center md:justify-start flex-wrap" style={{ gap: 8, marginTop: 10 }}>
+                  {renderConnectButton()}
+                  <button type="button" onClick={() => navigate(`/app/pings?to=${targetUserId}`)} className="cursor-pointer" style={{
+                    height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 500,
+                    background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.40)",
+                    color: "#1A1A2E", display: "inline-flex", alignItems: "center", gap: 4,
                   }}>
-                    <Pencil style={{ width: 12, height: 12 }} /> Edit Profile
-                  </Link>
-                ) : (
-                  <>
-                    {renderConnectButton()}
-                    <button
-                      type="button"
-                      onClick={handleToggleFollow}
-                      className="cursor-pointer"
-                      style={{
-                        height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-                        display: "inline-flex", alignItems: "center", gap: 4,
-                        ...(followState === "following"
-                          ? { background: "rgba(20,184,166,0.10)", border: "1px solid rgba(20,184,166,0.30)", color: "#0D9488" }
-                          : { background: "rgba(232,115,58,0.08)", border: "1px solid rgba(232,115,58,0.25)", color: "#E8733A" }
-                        ),
-                      }}
-                    >
-                      {followState === "following" ? "Following ✓" : "+ Follow"}
-                    </button>
-                  </>
-                )}
-              </div>
+                    <MessageCircle style={{ width: 13, height: 13 }} /> Message
+                  </button>
+                </div>
+              )}
             </div>
           </div>
             );
@@ -1194,22 +1205,6 @@ const Profile = () => {
               <Link to="/app/connections" style={{ fontSize: 12, fontWeight: 400, color: "#E8733A" }}>See all &gt;</Link>
             </div>
 
-            {/* L2: Get Tiiked */}
-            {isOwnProfile && !isVerified && (
-              <div className="glass-glow" style={{ padding: 12, borderRadius: 16, display: "flex", alignItems: "center", gap: 10 }}>
-                <Shield style={{ width: 24, height: 24, color: "#E8733A", flexShrink: 0 }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>Get Tiiked</p>
-                  <p style={{ fontSize: 12, fontWeight: 400, color: "#9CA3C0" }}>Verify your profile</p>
-                </div>
-                <button type="button" onClick={() => setShowGetTiiked(true)} className="cursor-pointer" style={{
-                  height: 28, padding: "0 12px", borderRadius: 8, fontSize: 11, fontWeight: 600,
-                  background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none",
-                  boxShadow: "0 2px 12px rgba(232,115,58,0.25)", flexShrink: 0,
-                }}>Verify</button>
-              </div>
-            )}
-
             {/* L3: Links */}
             <div className="glass-card" style={{ padding: 12, borderRadius: 16 }}>
               <div className="flex items-center" style={{ gap: 8 }}>
@@ -1225,9 +1220,25 @@ const Profile = () => {
                   </button>
                 )}
               </div>
-              {customLinks.length > 0 ? (
+              {visibleCustomLinks.length > 0 ? (
                 <div className="flex flex-wrap" style={{ gap: 6, marginTop: 8 }}>
-                  {customLinks.map((link: any, i: number) => {
+                  {cleanProfileUsername && (
+                    <button
+                      type="button"
+                      onClick={handleCopyLink}
+                      className="flex items-center cursor-pointer"
+                      style={{
+                        height: 28, padding: "0 10px", borderRadius: 6, gap: 6,
+                        background: "rgba(255,255,255,0.12)", border: "1px solid rgba(0,0,0,0.06)",
+                      }}
+                    >
+                      <Globe style={{ width: 14, height: 14, color: "#4A90D9", flexShrink: 0 }} />
+                      <span style={{ fontSize: 12, fontWeight: 400, color: "#1A1A2E" }}>
+                        tiikme.com/{cleanProfileUsername}
+                      </span>
+                    </button>
+                  )}
+                  {visibleCustomLinks.map((link: any, i: number) => {
                     const platform = detectPlatform(link.url);
                     const Icon = platform.icon;
                     return (
@@ -1242,7 +1253,25 @@ const Profile = () => {
                   })}
                 </div>
               ) : (
-                <p style={{ fontSize: 12, fontWeight: 400, color: "#9CA3C0", marginTop: 8 }}>{isOwnProfile ? "Add your links" : "No links added"}</p>
+                <div style={{ marginTop: 8 }}>
+                  {cleanProfileUsername && (
+                    <button
+                      type="button"
+                      onClick={handleCopyLink}
+                      className="flex items-center cursor-pointer"
+                      style={{
+                        height: 28, padding: "0 10px", borderRadius: 6, gap: 6,
+                        background: "rgba(255,255,255,0.12)", border: "1px solid rgba(0,0,0,0.06)",
+                      }}
+                    >
+                      <Globe style={{ width: 14, height: 14, color: "#4A90D9", flexShrink: 0 }} />
+                      <span style={{ fontSize: 12, fontWeight: 400, color: "#1A1A2E" }}>
+                        tiikme.com/{cleanProfileUsername}
+                      </span>
+                    </button>
+                  )}
+                  <p style={{ fontSize: 12, fontWeight: 400, color: "#9CA3C0", marginTop: cleanProfileUsername ? 8 : 0 }}>{isOwnProfile ? "Add your links" : "No links added"}</p>
+                </div>
               )}
               {showAddLink && (
                 <div style={{ marginTop: 8 }} className="space-y-2">
@@ -1321,9 +1350,10 @@ const Profile = () => {
                       <button
                         type="button"
                         onClick={() => {
-                          const url = `${window.location.origin}/${username || targetUserId}`;
+                          const publicPath = cleanProfileUsername || username || targetUserId;
+                          const url = `${window.location.origin}/${publicPath}`;
                           navigator.clipboard?.writeText(url);
-                          toast.success("Profile link copied");
+                          toast.success("Profile link copied!");
                         }}
                         className="cursor-pointer"
                         style={{
@@ -1344,38 +1374,6 @@ const Profile = () => {
 
           {/* ═══ RIGHT COLUMN ═══ */}
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {profileData.role === "creator" && (() => {
-              const m = (profileData as any).role_metadata as Record<string, any> | null;
-              if (!m) return null;
-              const subs = m.subscribers;
-              const platform = m.platform;
-              const niche = m.content_niche || m.niche;
-              const channelUrl = m.channel_url;
-              if (!subs && !platform && !niche) return null;
-              return (
-                <div className="glass-card" style={{ padding: 14, borderRadius: 14 }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: "#1A1A2E", marginBottom: 10 }}>Creator Stats</p>
-                  <div className="flex flex-wrap gap-3">
-                    {platform && (
-                      <span style={{ fontSize: 12, fontWeight: 600, padding: "3px 10px", borderRadius: 999, background: "rgba(239,68,68,0.10)", color: "#B91C1C" }}>{platform}</span>
-                    )}
-                    {subs && (
-                      <span style={{ fontSize: 12, color: "#6B7094" }}>
-                        <span className="num" style={{ fontWeight: 700, color: "#1A1A2E" }}>{Number(subs).toLocaleString()}</span> subscribers
-                      </span>
-                    )}
-                    {niche && (
-                      <span style={{ fontSize: 12, color: "#6B7094" }}>· {niche}</span>
-                    )}
-                  </div>
-                  {channelUrl && (
-                    <a href={channelUrl} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 8, fontSize: 12, color: "#E8733A", fontWeight: 600, textDecoration: "none" }}>
-                      <ExternalLink style={{ width: 12, height: 12 }} /> View Channel
-                    </a>
-                  )}
-                </div>
-              );
-            })()}
             <ExperienceSection items={experiences} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("experience")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
             <EducationSection items={education} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("education")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
             <RolesSection items={profileRoles} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("role")} onDelete={deleteRole} />
@@ -1386,7 +1384,6 @@ const Profile = () => {
               posts={userPosts}
               stats={stats}
               username={username}
-              isOwnProfile={isOwnProfile}
             />
           </div>
         </div>
@@ -1505,7 +1502,6 @@ const Profile = () => {
         <div><label style={labelStyle}>Description</label><textarea value={roleForm.description} onChange={e => setRoleForm({ ...roleForm, description: e.target.value.slice(0, 300) })} style={gTextareaStyle} placeholder="Brief description..." maxLength={300} /></div>
       </GlassModal>
 
-      {user && <GetTiikedModal open={showGetTiiked} onClose={() => setShowGetTiiked(false)} userId={user.id} userRole={role} onVerified={loadProfile} />}
 
       {editingPost && (
         <EditPostModal

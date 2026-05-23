@@ -64,17 +64,19 @@ const Navbar = () => {
           </Link>
           <Link to="/signup">
             <button
+              type="button"
               className="h-[44px] px-6 rounded-xl font-bold text-[14px] text-white transition-colors cursor-pointer"
               style={{ backgroundColor: "#FF5A1F" }}
               onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#C94A07")}
               onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#FF5A1F")}
             >
-              Get Tiiked
+              Create profile
             </button>
           </Link>
         </div>
 
         <button
+          type="button"
           onClick={() => setMenuOpen(true)}
           aria-label="Open menu"
           className="flex md:hidden p-2 cursor-pointer"
@@ -133,6 +135,7 @@ const Navbar = () => {
             <div className="mt-auto flex flex-col gap-3">
               <Link to="/signin" onClick={() => setMenuOpen(false)}>
                 <button
+                  type="button"
                   className="w-full h-[52px] rounded-xl font-bold text-[16px] border-2 cursor-pointer"
                   style={{ borderColor: "#FF5A1F", color: "#FF5A1F", backgroundColor: "transparent" }}
                 >
@@ -141,10 +144,11 @@ const Navbar = () => {
               </Link>
               <Link to="/signup" onClick={() => setMenuOpen(false)}>
                 <button
+                  type="button"
                   className="w-full h-[52px] rounded-xl font-bold text-[16px] text-white cursor-pointer"
                   style={{ backgroundColor: "#FF5A1F" }}
                 >
-                  Get Tiiked
+                  Create profile
                 </button>
               </Link>
             </div>

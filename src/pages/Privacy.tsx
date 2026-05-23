@@ -1,5 +1,5 @@
 import LegalPageLayout, { LegalSection, Callout, type TocItem } from "@/components/legal/LegalPageLayout";
-import { PageSEO } from "@/hooks/usePageSEO";
+import { PageSEO, absoluteUrl } from "@/hooks/usePageSEO";
 
 const toc: TocItem[] = [
   { id: "section-1", label: "1. Who Is Responsible" },
@@ -64,9 +64,9 @@ export default function Privacy() {
         description="How Tiikme collects, uses, and protects your data. DPDP Act 2023 compliant. We will never sell your data."
         ogTitle="Privacy Policy — Tiikme"
         ogDescription="Built for the ones who build. Your privacy is the foundation."
-        ogImage="https://tiikme.com/og-image.png"
+        ogImage={absoluteUrl("/og-image.png")}
         twitterCard="summary_large_image"
-        canonical="https://tiikme.com/privacy"
+        canonical={absoluteUrl("/privacy")}
       />
       <Callout>
         Your privacy is not a feature. It is a foundation. This policy explains exactly what data we collect, why we collect it, what we will never do with it, and how you control it. We have written it in plain English because you deserve to understand it — not just agree to it.

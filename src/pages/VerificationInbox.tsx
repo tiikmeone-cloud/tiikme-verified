@@ -1,8 +1,10 @@
 /**
  * VerificationInbox page (/app/verification-inbox)
  * Replaces the old employer_endorsement_requests inbox.
- * Lists verification_requests assigned to the current user (or any pending requests
- * for orgs they own/admin), with Approve / Reject / Request more info actions.
+ * Lists verification requests for the current reviewer lane:
+ * - org-admin routed requests for org reviewers
+ * - platform-routed requests for moderators
+ * Review actions go through server-owned RPCs instead of direct row mutation.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ShieldCheck, Check, X, Info, Mail, Building2, Loader2 } from "lucide-react";
@@ -24,6 +26,7 @@ type Row = {
   document_url: string | null;
   document_type: string | null;
   context_note: string | null;
+  review_queue: string;
   status: string;
   created_at: string;
   rejection_reason: string | null;
@@ -34,7 +37,7 @@ type Row = {
 type Tab = "pending" | "resolved";
 
 export default function VerificationInbox() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -43,6 +46,19 @@ export default function VerificationInbox() {
   const [rejectReason, setRejectReason] = useState("");
   const [askingId, setAskingId] = useState<string | null>(null);
   const [askMessage, setAskMessage] = useState("");
+
+  const pendingOrgRows = useMemo(
+    () => rows.filter(r => tab === "pending" && r.review_queue !== "platform"),
+    [rows, tab],
+  );
+  const pendingPlatformRows = useMemo(
+    () => rows.filter(r => tab === "pending" && r.review_queue === "platform"),
+    [rows, tab],
+  );
+  const resolvedRows = useMemo(
+    () => rows.filter(r => tab === "resolved"),
+    [rows, tab],
+  );
 
   const fetchRows = useCallback(async () => {
     if (!user) { setLoading(false); return; }
@@ -56,16 +72,18 @@ export default function VerificationInbox() {
       .in("role", ["owner", "admin"]);
     const orgIds = (adminOrgs || []).map(a => a.org_id);
 
-    // Pull requests where I'm assigned OR for an org I admin
+    // Pull requests where I'm assigned OR for an org I admin OR routed to
+    // platform review for moderators.
     let query = supabase
       .from("verification_requests")
-      .select("id, requester_id, org_id, requested_role, role_category, document_url, document_type, context_note, status, created_at, rejection_reason")
+      .select("id, requester_id, org_id, requested_role, role_category, document_url, document_type, context_note, review_queue, status, created_at, rejection_reason")
       .eq("entity_type", "user_org")
       .order("created_at", { ascending: false })
       .limit(50);
 
     const filters: string[] = [`assigned_to.eq.${user.id}`];
     if (orgIds.length > 0) filters.push(`org_id.in.(${orgIds.join(",")})`);
+    if (profile?.is_moderator) filters.push(`review_queue.eq.platform`);
     query = query.or(filters.join(","));
 
     if (tab === "pending") {
@@ -99,7 +117,7 @@ export default function VerificationInbox() {
       })),
     );
     setLoading(false);
-  }, [user, tab]);
+  }, [user, profile?.is_moderator, tab]);
 
   useEffect(() => { fetchRows(); }, [fetchRows]);
 
@@ -115,10 +133,10 @@ export default function VerificationInbox() {
   const handleApprove = async (row: Row) => {
     if (!user) return;
     setBusyId(row.id);
-    const { error } = await supabase
-      .from("verification_requests")
-      .update({ status: "approved", reviewed_by: user.id })
-      .eq("id", row.id);
+    const { error } = await supabase.rpc("approve_verification_request", {
+      p_request_id: row.id,
+      p_review_note: null,
+    });
     if (error) { toast.error(error.message); setBusyId(null); return; }
 
     await supabase.from("notifications").insert({
@@ -139,10 +157,11 @@ export default function VerificationInbox() {
     if (!user) return;
     if (!rejectReason.trim()) { toast.error("Please provide a reason"); return; }
     setBusyId(row.id);
-    const { error } = await supabase
-      .from("verification_requests")
-      .update({ status: "rejected", reviewed_by: user.id, rejection_reason: rejectReason.trim() })
-      .eq("id", row.id);
+    const { error } = await supabase.rpc("reject_verification_request", {
+      p_request_id: row.id,
+      p_rejection_reason: rejectReason.trim(),
+      p_review_note: null,
+    });
     if (error) { toast.error(error.message); setBusyId(null); return; }
 
     await supabase.from("notifications").insert({
@@ -165,29 +184,10 @@ export default function VerificationInbox() {
     if (!user) return;
     if (!askMessage.trim()) { toast.error("Add a message"); return; }
     setBusyId(row.id);
-
-    const newEntry = {
-      by: user.id,
-      role: "reviewer",
-      message: askMessage.trim(),
-      at: new Date().toISOString(),
-    };
-    // Append to review_thread
-    const { data: existing } = await supabase
-      .from("verification_requests")
-      .select("review_thread")
-      .eq("id", row.id)
-      .maybeSingle();
-    const thread = Array.isArray((existing as any)?.review_thread) ? (existing as any).review_thread : [];
-
-    const { error } = await supabase
-      .from("verification_requests")
-      .update({
-        status: "more_info_requested",
-        requested_doc_message: askMessage.trim(),
-        review_thread: [...thread, newEntry],
-      })
-      .eq("id", row.id);
+    const { error } = await supabase.rpc("request_verification_more_info", {
+      p_request_id: row.id,
+      p_message: askMessage.trim(),
+    });
     if (error) { toast.error(error.message); setBusyId(null); return; }
 
     await supabase.from("notifications").insert({
@@ -204,6 +204,143 @@ export default function VerificationInbox() {
     setAskMessage("");
     toast.success("Asked for more info");
     fetchRows();
+  };
+
+  const renderQueueReason = (row: Row) => {
+    if (row.review_queue === "platform") {
+      return "Entered platform review because Tiikme could not safely assign an independent organization reviewer.";
+    }
+
+    if (!row.org) {
+      return "Routed through the organization review queue.";
+    }
+
+    return `Routed to ${row.org.name}'s verification queue.`;
+  };
+
+  const renderRow = (r: Row) => (
+    <div key={r.id} className="p-4 rounded-xl" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+      <div className="flex items-start gap-3">
+        <AvatarSquare src={r.requester?.avatar_url} name={r.requester?.full_name || "U"} size={44} />
+        <div className="flex-1 min-w-0">
+          <p className="text-[13px]" style={{ color: "var(--text-1)" }}>
+            <Link to={`/app/profile/${r.requester_id}`} className="font-bold hover:underline">
+              {r.requester?.full_name || "Someone"}
+            </Link>
+            <span style={{ color: "var(--text-2)" }}> wants to verify as </span>
+            <strong>{r.requested_role}</strong>
+            {r.org && (
+              <>
+                <span style={{ color: "var(--text-2)" }}> at </span>
+                <strong className="inline-flex items-center gap-1">
+                  <Building2 className="w-3 h-3 inline" />
+                  {r.org.name}
+                </strong>
+              </>
+            )}
+          </p>
+          <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-[11px]" style={{ color: "var(--text-3)" }}>
+            <span>Department: <strong style={{ color: "var(--text-2)" }}>{roleCategoryLabel(r.role_category)}</strong></span>
+            {r.review_queue === "platform"
+              ? <span>Queue: <strong style={{ color: "var(--brand)" }}>Platform review</strong></span>
+              : <span>Queue: <strong style={{ color: "var(--text-2)" }}>Organization review</strong></span>}
+            {r.document_type && <span>Type: <strong style={{ color: "var(--text-2)" }}>{r.document_type}</strong></span>}
+            <VerificationDocLink path={r.document_url} />
+          </div>
+          <p className="mt-2 text-[11px]" style={{ color: "var(--text-2)" }}>
+            {renderQueueReason(r)}
+          </p>
+          {r.context_note && (
+            <p className="mt-2 text-[12px] p-2 rounded-lg" style={{ background: "var(--surface-2)", color: "var(--text-2)" }}>
+              “{r.context_note}”
+            </p>
+          )}
+          {r.rejection_reason && tab === "resolved" && (
+            <p className="mt-2 text-[12px]" style={{ color: "#B91C1C" }}>Reason: {r.rejection_reason}</p>
+          )}
+
+          {tab === "pending" && (
+            <>
+              {rejectingId === r.id ? (
+                <div className="flex gap-2 mt-3">
+                  <input
+                    value={rejectReason}
+                    onChange={e => setRejectReason(e.target.value)}
+                    placeholder="Reason for rejection…"
+                    className="flex-1 h-9 rounded-lg px-3 text-[12px]"
+                    style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)", outline: "none" }}
+                  />
+                  <button type="button" onClick={() => handleReject(r)} disabled={busyId === r.id}
+                    className="h-9 px-3 rounded-lg text-[11px] font-bold cursor-pointer disabled:opacity-50"
+                    style={{ background: "#DC2626", color: "#fff", border: "none" }}>
+                    Confirm
+                  </button>
+                  <button type="button" onClick={() => { setRejectingId(null); setRejectReason(""); }}
+                    className="h-9 px-3 rounded-lg text-[11px] font-bold cursor-pointer"
+                    style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-2)" }}>
+                    Cancel
+                  </button>
+                </div>
+              ) : askingId === r.id ? (
+                <div className="flex gap-2 mt-3">
+                  <input
+                    value={askMessage}
+                    onChange={e => setAskMessage(e.target.value)}
+                    placeholder="What do you need from them?"
+                    className="flex-1 h-9 rounded-lg px-3 text-[12px]"
+                    style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)", outline: "none" }}
+                  />
+                  <button type="button" onClick={() => handleRequestInfo(r)} disabled={busyId === r.id}
+                    className="h-9 px-3 rounded-lg text-[11px] font-bold cursor-pointer disabled:opacity-50"
+                    style={{ background: "var(--brand)", color: "#fff", border: "none" }}>
+                    Send
+                  </button>
+                  <button type="button" onClick={() => { setAskingId(null); setAskMessage(""); }}
+                    className="h-9 px-3 rounded-lg text-[11px] font-bold cursor-pointer"
+                    style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-2)" }}>
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  <button type="button" disabled={busyId === r.id} onClick={() => handleApprove(r)}
+                    className="h-8 px-3 rounded-xl text-[11px] font-bold cursor-pointer disabled:opacity-50"
+                    style={{ background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none" }}>
+                    <Check className="w-3 h-3 inline mr-1" /> Approve
+                  </button>
+                  <button type="button" onClick={() => setAskingId(r.id)}
+                    className="h-8 px-3 rounded-xl text-[11px] font-bold cursor-pointer"
+                    style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }}>
+                    <Info className="w-3 h-3 inline mr-1" /> Request info
+                  </button>
+                  <button type="button" onClick={() => setRejectingId(r.id)}
+                    className="h-8 px-3 rounded-xl text-[11px] font-bold cursor-pointer"
+                    style={{ background: "transparent", border: "1px solid var(--border)", color: "var(--text-2)" }}>
+                    <X className="w-3 h-3 inline mr-1" /> Reject
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderSection = (title: string, description: string, sectionRows: Row[]) => {
+    if (sectionRows.length === 0) return null;
+
+    return (
+      <section className="space-y-3">
+        <div className="px-1">
+          <h2 className="text-[13px] font-bold" style={{ color: "var(--text-1)" }}>{title}</h2>
+          <p className="text-[11px] mt-1" style={{ color: "var(--text-2)" }}>{description}</p>
+        </div>
+        <div className="space-y-3">
+          {sectionRows.map(renderRow)}
+        </div>
+      </section>
+    );
   };
 
   return (
@@ -243,111 +380,22 @@ export default function VerificationInbox() {
             {tab === "pending" ? "No pending requests" : "No resolved requests yet"}
           </p>
         </div>
+      ) : tab === "pending" ? (
+        <div className="space-y-6">
+          {renderSection(
+            "Organization Review Queue",
+            "Requests that are currently expected to be reviewed by the organization side.",
+            pendingOrgRows,
+          )}
+          {renderSection(
+            "Platform Review Queue",
+            "Requests routed to Tiikme because there was no safe independent organization reviewer.",
+            pendingPlatformRows,
+          )}
+        </div>
       ) : (
         <div className="space-y-3">
-          {rows.map(r => (
-            <div key={r.id} className="p-4 rounded-xl" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-              <div className="flex items-start gap-3">
-                <AvatarSquare src={r.requester?.avatar_url} name={r.requester?.full_name || "U"} size={44} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px]" style={{ color: "var(--text-1)" }}>
-                    <Link to={`/app/profile/${r.requester_id}`} className="font-bold hover:underline">
-                      {r.requester?.full_name || "Someone"}
-                    </Link>
-                    <span style={{ color: "var(--text-2)" }}> wants to verify as </span>
-                    <strong>{r.requested_role}</strong>
-                    {r.org && (
-                      <>
-                        <span style={{ color: "var(--text-2)" }}> at </span>
-                        <strong className="inline-flex items-center gap-1">
-                          <Building2 className="w-3 h-3 inline" />
-                          {r.org.name}
-                        </strong>
-                      </>
-                    )}
-                  </p>
-                  <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-[11px]" style={{ color: "var(--text-3)" }}>
-                    <span>Department: <strong style={{ color: "var(--text-2)" }}>{roleCategoryLabel(r.role_category)}</strong></span>
-                    {r.document_type && <span>Type: <strong style={{ color: "var(--text-2)" }}>{r.document_type}</strong></span>}
-                    <VerificationDocLink path={r.document_url} />
-                  </div>
-                  {r.context_note && (
-                    <p className="mt-2 text-[12px] p-2 rounded-lg" style={{ background: "var(--surface-2)", color: "var(--text-2)" }}>
-                      “{r.context_note}”
-                    </p>
-                  )}
-                  {r.rejection_reason && tab === "resolved" && (
-                    <p className="mt-2 text-[12px]" style={{ color: "#B91C1C" }}>Reason: {r.rejection_reason}</p>
-                  )}
-
-                  {/* Inline actions */}
-                  {tab === "pending" && (
-                    <>
-                      {rejectingId === r.id ? (
-                        <div className="flex gap-2 mt-3">
-                          <input
-                            value={rejectReason}
-                            onChange={e => setRejectReason(e.target.value)}
-                            placeholder="Reason for rejection…"
-                            className="flex-1 h-9 rounded-lg px-3 text-[12px]"
-                            style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)", outline: "none" }}
-                          />
-                          <button type="button" onClick={() => handleReject(r)} disabled={busyId === r.id}
-                            className="h-9 px-3 rounded-lg text-[11px] font-bold cursor-pointer disabled:opacity-50"
-                            style={{ background: "#DC2626", color: "#fff", border: "none" }}>
-                            Confirm
-                          </button>
-                          <button type="button" onClick={() => { setRejectingId(null); setRejectReason(""); }}
-                            className="h-9 px-3 rounded-lg text-[11px] font-bold cursor-pointer"
-                            style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-2)" }}>
-                            Cancel
-                          </button>
-                        </div>
-                      ) : askingId === r.id ? (
-                        <div className="flex gap-2 mt-3">
-                          <input
-                            value={askMessage}
-                            onChange={e => setAskMessage(e.target.value)}
-                            placeholder="What do you need from them?"
-                            className="flex-1 h-9 rounded-lg px-3 text-[12px]"
-                            style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)", outline: "none" }}
-                          />
-                          <button type="button" onClick={() => handleRequestInfo(r)} disabled={busyId === r.id}
-                            className="h-9 px-3 rounded-lg text-[11px] font-bold cursor-pointer disabled:opacity-50"
-                            style={{ background: "var(--brand)", color: "#fff", border: "none" }}>
-                            Send
-                          </button>
-                          <button type="button" onClick={() => { setAskingId(null); setAskMessage(""); }}
-                            className="h-9 px-3 rounded-lg text-[11px] font-bold cursor-pointer"
-                            style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-2)" }}>
-                            Cancel
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex flex-wrap gap-2 mt-3">
-                          <button type="button" disabled={busyId === r.id} onClick={() => handleApprove(r)}
-                            className="h-8 px-3 rounded-xl text-[11px] font-bold cursor-pointer disabled:opacity-50"
-                            style={{ background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none" }}>
-                            <Check className="w-3 h-3 inline mr-1" /> Approve
-                          </button>
-                          <button type="button" onClick={() => setAskingId(r.id)}
-                            className="h-8 px-3 rounded-xl text-[11px] font-bold cursor-pointer"
-                            style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-1)" }}>
-                            <Info className="w-3 h-3 inline mr-1" /> Request info
-                          </button>
-                          <button type="button" onClick={() => setRejectingId(r.id)}
-                            className="h-8 px-3 rounded-xl text-[11px] font-bold cursor-pointer"
-                            style={{ background: "transparent", border: "1px solid var(--border)", color: "var(--text-2)" }}>
-                            <X className="w-3 h-3 inline mr-1" /> Reject
-                          </button>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
+          {resolvedRows.map(renderRow)}
         </div>
       )}
       </div>

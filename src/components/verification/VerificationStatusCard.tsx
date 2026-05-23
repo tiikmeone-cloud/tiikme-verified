@@ -1,9 +1,9 @@
 /**
  * VerificationStatusCard
- * Shows the current user's latest verification request status with a re-apply button if rejected.
+ * Shows the current user's verification state with clear next-step guidance.
  */
 import { useEffect, useState } from "react";
-import { ShieldCheck, Clock, XCircle, RefreshCw } from "lucide-react";
+import { ShieldCheck, Clock, XCircle, RefreshCw, CheckCircle2, Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import GetVerifiedModal from "./GetVerifiedModal";
@@ -13,8 +13,10 @@ type Req = {
   status: string;
   requested_role: string | null;
   rejection_reason: string | null;
+  requested_doc_message: string | null;
   created_at: string;
   org_id: string | null;
+  review_queue: string;
   org_name?: string | null;
 };
 
@@ -33,7 +35,7 @@ export default function VerificationStatusCard() {
       supabase.from("profiles").select("is_verified").eq("id", user.id).maybeSingle(),
       supabase
         .from("verification_requests")
-        .select("id, status, requested_role, rejection_reason, created_at, org_id")
+        .select("id, status, requested_role, rejection_reason, requested_doc_message, created_at, org_id, review_queue")
         .eq("requester_id", user.id)
         .eq("entity_type", "user_org")
         .order("created_at", { ascending: false })
@@ -56,10 +58,9 @@ export default function VerificationStatusCard() {
   useEffect(() => { refresh(); }, [user]);
 
   if (loading) return null;
-  if (isVerified) return null; // Hide card once verified
 
   // No request yet → CTA
-  if (!req) {
+  if (!req && !isVerified) {
     return (
       <>
         <button
@@ -75,8 +76,8 @@ export default function VerificationStatusCard() {
             <ShieldCheck className="w-5 h-5 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-bold" style={{ color: "var(--text-1)" }}>Get verified</p>
-            <p className="text-[11px]" style={{ color: "var(--text-2)" }}>Confirm your role at an organisation.</p>
+            <p className="text-[13px] font-bold" style={{ color: "var(--text-1)" }}>Verify your role</p>
+            <p className="text-[11px]" style={{ color: "var(--text-2)" }}>Request workplace or institution verification.</p>
           </div>
         </button>
         <GetVerifiedModal open={open} onClose={() => setOpen(false)} onSubmitted={refresh} />
@@ -85,27 +86,66 @@ export default function VerificationStatusCard() {
   }
 
   const statusUI = (() => {
-    if (req.status === "pending" || req.status === "more_info_requested") {
+    if (isVerified) {
+      return {
+        bg: "rgba(22,163,74,0.08)", border: "rgba(22,163,74,0.30)", color: "#15803D",
+        icon: CheckCircle2,
+        title: "Approved / Verified",
+        body: req?.org_name
+          ? `Your role at ${req.org_name} has been verified.`
+          : "Your professional identity is verified on Tiikme.",
+        nextStep: "Keep your profile current so future employers and collaborators see the latest trusted information.",
+      };
+    }
+    if (!req) return null;
+
+    if (req.status === "pending") {
+      if (req.review_queue === "platform") {
+        return {
+          bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.30)", color: "#B45309",
+          icon: Clock,
+          title: "Awaiting Tiikme platform review",
+          body: req.org_name
+            ? `We could not safely route this to an independent reviewer at ${req.org_name}, so Tiikme will review it.`
+            : "Tiikme will review this request directly.",
+          nextStep: "No action is needed right now. Keep an eye on this card in case Tiikme asks for supporting proof.",
+        };
+      }
       return {
         bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.30)", color: "#B45309",
         icon: Clock,
-        title: req.status === "more_info_requested" ? "More info requested" : "Pending review",
-        body: req.org_name ? `Sent to ${req.org_name}` : "Awaiting reviewer",
+        title: "Pending organization review",
+        body: req.org_name ? `Sent to ${req.org_name} for verification.` : "Awaiting organization review.",
+        nextStep: "No action is needed right now. You'll be notified as soon as the organization reviews it.",
       };
     }
+
+    if (req.status === "more_info_requested") {
+      return {
+        bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.30)", color: "#B45309",
+        icon: Info,
+        title: "More information requested",
+        body: req.requested_doc_message || "A reviewer asked for more supporting information.",
+        nextStep: "Open the verification request again and upload the proof or details they asked for so review can continue.",
+      };
+    }
+
     if (req.status === "rejected") {
       return {
         bg: "rgba(220,38,38,0.06)", border: "rgba(220,38,38,0.30)", color: "#B91C1C",
         icon: XCircle,
-        title: "Verification rejected",
-        body: req.rejection_reason || "You can re-apply with updated documents.",
+        title: "Rejected",
+        body: req.rejection_reason || "This request was not approved.",
+        nextStep: "Review the reason, update your documents or role details, and re-apply when you're ready.",
       };
     }
     return {
       bg: "var(--surface-2)", border: "var(--border)", color: "var(--text-2)",
-      icon: ShieldCheck, title: req.status, body: "",
+      icon: ShieldCheck, title: req.status, body: "", nextStep: "",
     };
   })();
+
+  if (!statusUI) return null;
 
   const Icon = statusUI.icon;
 
@@ -122,10 +162,13 @@ export default function VerificationStatusCard() {
             {statusUI.body && (
               <p className="text-[11px] mt-0.5" style={{ color: "var(--text-2)" }}>{statusUI.body}</p>
             )}
-            {req.requested_role && (
+            {req?.requested_role && (
               <p className="text-[11px] mt-0.5" style={{ color: "var(--text-3)" }}>Role: {req.requested_role}</p>
             )}
-            {req.status === "rejected" && (
+            {statusUI.nextStep && (
+              <p className="text-[11px] mt-2" style={{ color: "var(--text-2)" }}>{statusUI.nextStep}</p>
+            )}
+            {req?.status === "rejected" && (
               <button
                 type="button"
                 onClick={() => setOpen(true)}

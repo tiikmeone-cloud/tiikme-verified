@@ -66,6 +66,10 @@ interface WizardState {
   step: number;
   full_name: string;
   username: string;
+  work_type: "full_time" | "freelance" | "self_employed" | "student" | "";
+  work_org_name: string;
+  work_org_id: string;
+  job_title: string;
   role: Role | "";
   country: string;
   location_state: string;
@@ -87,6 +91,10 @@ const EMPTY: WizardState = {
   step: 1,
   full_name: "",
   username: "",
+  work_type: "",
+  work_org_name: "",
+  work_org_id: "",
+  job_title: "",
   role: "",
   country: "India",
   location_state: "",
@@ -151,6 +159,9 @@ export default function Onboarding() {
       step: Math.min(TOTAL, Math.max(1, resumeStep)),
       full_name: initial.full_name || profile?.full_name || (user.user_metadata as any)?.full_name || "",
       username: initial.username || profile?.username || "",
+      work_org_name: initial.work_org_name || profile?.currently_working_at || profile?.institution_name || "",
+      job_title: initial.job_title || profile?.designation || profile?.headline || "",
+      work_type: initial.work_type || (profile?.role === "student" ? "student" : profile?.role === "freelancer" ? "freelance" : profile?.role === "founder" ? "self_employed" : profile?.role ? "full_time" : ""),
     }));
     setLoaded(true);
   }, [user, profile]);
@@ -721,7 +732,7 @@ function DisplayPreviewCard({ state }: { state: WizardState }) {
       <div style={{ minWidth: 0 }}>
         {showName && <p style={{ fontSize: 14, fontWeight: 700, color: "#FAFAF7", margin: 0, lineHeight: "20px" }}>{name}</p>}
         {showRole && <p style={{ fontSize: 12, color: "rgba(250,250,247,0.65)", margin: 0 }}>{role}</p>}
-        {showCompany && <p style={{ fontSize: 11, color: "rgba(250,250,247,0.45)", margin: 0 }}>Tiikme Inc.</p>}
+        {showCompany && <p style={{ fontSize: 11, color: "rgba(250,250,247,0.45)", margin: 0 }}>{state.work_org_name.trim() || "Your organization"}</p>}
         {!showName && <p style={{ fontSize: 12, color: "rgba(250,250,247,0.45)", margin: 0, fontStyle: "italic" }}>Name hidden</p>}
       </div>
     </div>

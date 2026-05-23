@@ -243,7 +243,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             <AvatarSquare src={identityAvatar} name={identityName || "You"} size={32} />
             <div className="min-w-0 flex-1">
               <p className="truncate" style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{identityName || "Your Name"}</p>
-              {roleLabel && roleLabel !== "Member" && (
+              {roleLabel && !['professional','student','founder','doctor','faculty','researcher','creator','freelancer','investor','member'].includes(roleLabel.toLowerCase()) && (
                 <span className="truncate block" style={{
                   fontSize: 11, fontWeight: 500, padding: "0 6px", borderRadius: 4,
                   background: "rgba(232,115,58,0.12)", color: "#E8733A",

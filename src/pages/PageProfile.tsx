@@ -38,6 +38,10 @@ const detectPlatform = (url: string) => {
   return null;
 };
 
+function isOrgMembershipConfirmed(member: { is_verified?: boolean | null; approval_status?: string | null }) {
+  return !!member.is_verified && member.approval_status === "approved";
+}
+
 const pageTabs = ["About", "Members", "Awards", "Media", "Opportunities", "Posts"] as const;
 type Tab = typeof pageTabs[number];
 
@@ -444,7 +448,24 @@ const PageProfile = () => {
                       <p className="text-[13px] font-semibold truncate" style={{ color: "var(--color-text)" }}>{m.profile?.full_name || "Member"}</p>
                       <p className="text-[11px] truncate" style={{ color: "var(--color-text-muted)" }}>{m.title || m.role}{m.department ? ` · ${m.department}` : ""}</p>
                     </div>
-                    {m.is_verified && <Shield className="w-4 h-4 shrink-0" style={{ color: "#FFB800" }} />}
+                    {isOrgMembershipConfirmed(m) && (
+                      <span
+                        className="shrink-0"
+                        title="Organization-confirmed member"
+                        aria-label="Organization-confirmed member"
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 700,
+                          padding: "3px 6px",
+                          borderRadius: 999,
+                          background: "rgba(255,184,0,0.16)",
+                          color: "#B77900",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        Org confirmed
+                      </span>
+                    )}
                   </Link>
                 ))}
               </div>

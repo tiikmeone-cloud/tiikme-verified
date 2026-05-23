@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { PROFILE_SELECT_COLUMNS } from "@/lib/profileColumns";
 import type { User } from "@supabase/supabase-js";
 // NOTE: messageEncryption (libsodium ~50KB) is dynamically imported inside the
 // effect below so anonymous landing-page visitors never pay for it.
@@ -41,6 +42,7 @@ export interface UserProfile {
   display_preference: string | null;
   profession_type: string | null;
   currently_working_at: string | null;
+  is_moderator: boolean | null;
 }
 
 interface AuthContextValue {
@@ -48,6 +50,8 @@ interface AuthContextValue {
   profile: UserProfile | null;
   loading: boolean;
   isReady: boolean;
+  profileReady: boolean;
+  profileError: string | null;
   initials: string;
   displayName: string;
   refreshProfile: () => Promise<void>;
@@ -59,6 +63,8 @@ const AuthContext = createContext<AuthContextValue>({
   profile: null,
   loading: true,
   isReady: false,
+  profileReady: false,
+  profileError: null,
   initials: "",
   displayName: "",
   refreshProfile: async () => {},
@@ -67,7 +73,8 @@ const AuthContext = createContext<AuthContextValue>({
 
 export const useAuth = () => useContext(AuthContext);
 
-const PROFILE_CACHE_KEY = (id: string) => `tiikme-profile:${id}`;
+const PROFILE_CACHE_VERSION = 2;
+const PROFILE_CACHE_KEY = (id: string) => `tiikme-profile:v${PROFILE_CACHE_VERSION}:${id}`;
 
 const readCache = (id: string): UserProfile | null => {
   try {
@@ -80,13 +87,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const [profileReady, setProfileReady] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
   const mountedRef = useRef(true);
 
   const fetchProfile = useCallback(async (userId: string) => {
+    setProfileError(null);
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("*")
+        .select(PROFILE_SELECT_COLUMNS)
         .eq("id", userId)
         .maybeSingle();
 
@@ -94,16 +104,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) {
         console.error("Profile fetch error:", error);
-        setProfile(prev => prev || readCache(userId));
+        const cached = readCache(userId);
+        setProfile(prev => prev || cached);
+        if (!cached) {
+          setProfileError(error.message || "We could not load your profile.");
+        }
       } else {
         setProfile(data as any);
         if (data) localStorage.setItem(PROFILE_CACHE_KEY(userId), JSON.stringify(data));
         else localStorage.removeItem(PROFILE_CACHE_KEY(userId));
+        if (!data) {
+          setProfileError("We could not find a profile for this account.");
+        }
       }
     } catch (e) {
       if (!mountedRef.current) return;
       console.error("Profile fetch exception:", e);
-      setProfile(prev => prev || readCache(userId));
+      const cached = readCache(userId);
+      setProfile(prev => prev || cached);
+      if (!cached) {
+        setProfileError(e instanceof Error ? e.message : "We could not load your profile.");
+      }
+    } finally {
+      if (mountedRef.current) setProfileReady(true);
     }
   }, []);
 
@@ -120,11 +143,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (u) {
         // Show cached profile instantly, then refresh in background
         const cached = readCache(u.id);
+        setProfileReady(!!cached);
         if (cached) setProfile(cached);
         // Fire-and-forget — never block on this
         fetchProfile(u.id);
       } else {
         setProfile(null);
+        setProfileReady(true);
+        setProfileError(null);
       }
     });
 
@@ -138,11 +164,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         if (u) {
           const cached = readCache(u.id);
+          setProfileReady(!!cached);
           if (cached) setProfile(cached);
           // Non-blocking profile refresh
           fetchProfile(u.id);
         } else {
           setProfile(null);
+          setProfileReady(true);
+          setProfileError(null);
         }
       }
     );
@@ -203,6 +232,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       user, profile,
       loading: !isReady,
       isReady,
+      profileReady,
+      profileError,
       initials, displayName,
       refreshProfile, refetchProfile: refreshProfile,
     }}>

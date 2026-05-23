@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import type { InstitutionFormData } from "@/pages/JoinAsInstitution";
 
 const PERSONAL_DOMAINS = ["gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "rediffmail.com", "proton.me", "icloud.com", "live.com", "aol.com"];
+const TEXT_PRIMARY = "#FAFAF7";
+const TEXT_SECONDARY = "rgba(250,250,247,0.68)";
 
 const inputStyle: React.CSSProperties = {
   background: "rgba(255,255,255,0.04)", border: "1.5px solid rgba(255,255,255,0.15)", borderRadius: 14,
@@ -59,14 +61,14 @@ export default function StepAccount({ form, update, onNext }: Props) {
           <Building2 className="w-5 h-5" style={{ color: "var(--brand)" }} />
         </div>
         <div>
-          <h1 className="text-[22px] font-extrabold" style={{ color: "var(--text-1)" }}>Register your Organisation</h1>
-          <p className="text-[13px]" style={{ color: "var(--text-3)" }}>Create an official presence on Tiikme</p>
+          <h1 className="text-[22px] font-extrabold" style={{ color: TEXT_PRIMARY }}>Register your Organisation</h1>
+          <p className="text-[13px]" style={{ color: TEXT_SECONDARY }}>Create an official presence on Tiikme</p>
         </div>
       </div>
 
       <div className="space-y-4 mt-6">
         <div>
-          <label className="text-[12px] font-bold mb-1 block" style={{ color: "var(--text-2)" }}>Official Email</label>
+          <label className="text-[12px] font-bold mb-1 block" style={{ color: TEXT_PRIMARY }}>Official Email</label>
           <input
             type="email" placeholder="admin@company.com" value={form.email}
             onChange={e => update({ email: e.target.value })}
@@ -81,7 +83,7 @@ export default function StepAccount({ form, update, onNext }: Props) {
         </div>
 
         <div>
-          <label className="text-[12px] font-bold mb-1 block" style={{ color: "var(--text-2)" }}>Password</label>
+          <label className="text-[12px] font-bold mb-1 block" style={{ color: TEXT_PRIMARY }}>Password</label>
           <div className="relative">
             <input
               type={showPw ? "text" : "password"} placeholder="Min 8 characters" value={form.password}
@@ -96,13 +98,13 @@ export default function StepAccount({ form, update, onNext }: Props) {
 
         {isPersonal && (
           <div>
-            <label className="text-[12px] font-bold mb-1 block" style={{ color: "var(--text-2)" }}>Mobile Number</label>
+            <label className="text-[12px] font-bold mb-1 block" style={{ color: TEXT_PRIMARY }}>Mobile Number</label>
             <input
               type="tel" placeholder="+91 XXXXX XXXXX" value={form.phone}
               onChange={e => update({ phone: e.target.value })}
               style={inputStyle}
             />
-            <p className="text-[11px] mt-1" style={{ color: "var(--text-3)" }}>Required for personal email domains for identity verification</p>
+            <p className="text-[11px] mt-1" style={{ color: TEXT_SECONDARY }}>Required for personal email domains for identity verification</p>
           </div>
         )}
 

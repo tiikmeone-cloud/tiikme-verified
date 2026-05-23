@@ -5,7 +5,7 @@ import AvatarSquare from "@/components/ui/AvatarSquare";
 import { Link2, Search, Compass, MoreHorizontal, Clock, UserPlus, UserX, BellOff, Ban, Flag, ChevronDown, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { sendNotification } from "@/lib/notify";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { connectionButtonStyle } from "@/hooks/useConnectionStatus";
@@ -204,7 +204,7 @@ const Connections = () => {
   const handleMute = async (otherId: string) => {
     if (!user || !otherId) return;
     const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-    const { error } = await (supabase as any).from("user_mutes").upsert({
+    const { error } = await (supabase as any).frm("user_mutes").upsert({
       muter_id: user.id, muted_id: otherId, expires_at: expires,
     }, { onConflict: "muter_id,muted_id" });
     if (error) { toast.error("Could not mute"); return; }
@@ -263,7 +263,7 @@ const Connections = () => {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <Link2 style={{ width: 22, height: 22, color: "#E8733A" }} />
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: "#1A1A2E" }}>My Network</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: "#1A1A2E" }}>My Connections</h1>
         </div>
         <div className="flex items-center gap-1.5"
           style={{ height: 32, padding: "0 12px", borderRadius: 999,

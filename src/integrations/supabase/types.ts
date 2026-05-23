@@ -621,6 +621,13 @@ export type Database = {
             foreignKeyName: "campaigns_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "campaigns_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -680,6 +687,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificates_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
           },
           {
             foreignKeyName: "certificates_org_id_fkey"
@@ -867,6 +881,7 @@ export type Database = {
           flag_reason: string | null
           hot_score: number
           id: string
+          is_edited: boolean | null
           is_flagged: boolean
           is_pinned: boolean
           link_url: string | null
@@ -874,6 +889,7 @@ export type Database = {
           poll_options: Json | null
           poll_votes: Json | null
           post_type: string
+          posted_as_org_id: string | null
           reply_count: number
           signtype: string
           title: string | null
@@ -891,6 +907,7 @@ export type Database = {
           flag_reason?: string | null
           hot_score?: number
           id?: string
+          is_edited?: boolean | null
           is_flagged?: boolean
           is_pinned?: boolean
           link_url?: string | null
@@ -898,6 +915,7 @@ export type Database = {
           poll_options?: Json | null
           poll_votes?: Json | null
           post_type?: string
+          posted_as_org_id?: string | null
           reply_count?: number
           signtype?: string
           title?: string | null
@@ -915,6 +933,7 @@ export type Database = {
           flag_reason?: string | null
           hot_score?: number
           id?: string
+          is_edited?: boolean | null
           is_flagged?: boolean
           is_pinned?: boolean
           link_url?: string | null
@@ -922,6 +941,7 @@ export type Database = {
           poll_options?: Json | null
           poll_votes?: Json | null
           post_type?: string
+          posted_as_org_id?: string | null
           reply_count?: number
           signtype?: string
           title?: string | null
@@ -941,6 +961,20 @@ export type Database = {
             columns: ["circle_id"]
             isOneToOne: false
             referencedRelation: "circles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "circle_posts_posted_as_org_id_fkey"
+            columns: ["posted_as_org_id"]
+            isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "circle_posts_posted_as_org_id_fkey"
+            columns: ["posted_as_org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -1014,6 +1048,13 @@ export type Database = {
             foreignKeyName: "circles_linked_org_id_fkey"
             columns: ["linked_org_id"]
             isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "circles_linked_org_id_fkey"
+            columns: ["linked_org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -1053,6 +1094,8 @@ export type Database = {
       }
       conversations: {
         Row: {
+          context_id: string | null
+          context_type: string | null
           created_at: string | null
           id: string
           is_active: boolean | null
@@ -1061,6 +1104,8 @@ export type Database = {
           participant_2: string | null
         }
         Insert: {
+          context_id?: string | null
+          context_type?: string | null
           created_at?: string | null
           id?: string
           is_active?: boolean | null
@@ -1069,6 +1114,8 @@ export type Database = {
           participant_2?: string | null
         }
         Update: {
+          context_id?: string | null
+          context_type?: string | null
           created_at?: string | null
           id?: string
           is_active?: boolean | null
@@ -1181,6 +1228,13 @@ export type Database = {
             foreignKeyName: "domain_verification_challenges_subject_org_id_fkey"
             columns: ["subject_org_id"]
             isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "domain_verification_challenges_subject_org_id_fkey"
+            columns: ["subject_org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -1257,6 +1311,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employer_endorsement_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
           },
           {
             foreignKeyName: "employer_endorsement_requests_org_id_fkey"
@@ -1451,6 +1512,13 @@ export type Database = {
             foreignKeyName: "hiring_assessments_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "hiring_assessments_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -1610,6 +1678,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "opportunity_applications"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "interview_schedules_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
           },
           {
             foreignKeyName: "interview_schedules_org_id_fkey"
@@ -2395,6 +2470,13 @@ export type Database = {
             foreignKeyName: "offer_letters_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "offer_letters_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -2626,6 +2708,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "institutions_public"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunities_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
           },
           {
             foreignKeyName: "opportunities_org_id_fkey"
@@ -2921,6 +3010,13 @@ export type Database = {
             foreignKeyName: "org_access_rules_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "org_access_rules_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -2982,6 +3078,13 @@ export type Database = {
             foreignKeyName: "org_admin_invites_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "org_admin_invites_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -3019,6 +3122,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_admins_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
           },
           {
             foreignKeyName: "org_admins_org_id_fkey"
@@ -3078,6 +3188,208 @@ export type Database = {
             foreignKeyName: "org_contacts_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "org_contacts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_culture_ratings: {
+        Row: {
+          cons: string | null
+          created_at: string
+          employment_status: string | null
+          id: string
+          is_anonymous: boolean
+          is_verified_employee: boolean
+          job_title: string | null
+          org_id: string
+          pros: string | null
+          rater_id: string | null
+          rating_compensation: number | null
+          rating_culture: number | null
+          rating_growth: number | null
+          rating_management: number | null
+          rating_overall: number | null
+          rating_work_life: number | null
+          status: string
+          would_recommend: boolean | null
+        }
+        Insert: {
+          cons?: string | null
+          created_at?: string
+          employment_status?: string | null
+          id?: string
+          is_anonymous?: boolean
+          is_verified_employee?: boolean
+          job_title?: string | null
+          org_id: string
+          pros?: string | null
+          rater_id?: string | null
+          rating_compensation?: number | null
+          rating_culture?: number | null
+          rating_growth?: number | null
+          rating_management?: number | null
+          rating_overall?: number | null
+          rating_work_life?: number | null
+          status?: string
+          would_recommend?: boolean | null
+        }
+        Update: {
+          cons?: string | null
+          created_at?: string
+          employment_status?: string | null
+          id?: string
+          is_anonymous?: boolean
+          is_verified_employee?: boolean
+          job_title?: string | null
+          org_id?: string
+          pros?: string | null
+          rater_id?: string | null
+          rating_compensation?: number | null
+          rating_culture?: number | null
+          rating_growth?: number | null
+          rating_management?: number | null
+          rating_overall?: number | null
+          rating_work_life?: number | null
+          status?: string
+          would_recommend?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_culture_ratings_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "org_culture_ratings_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_culture_ratings_rater_id_fkey"
+            columns: ["rater_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_faq_upvotes: {
+        Row: {
+          created_at: string
+          faq_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          faq_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          faq_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_faq_upvotes_faq_id_fkey"
+            columns: ["faq_id"]
+            isOneToOne: false
+            referencedRelation: "org_faqs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_faq_upvotes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_faqs: {
+        Row: {
+          answer: string | null
+          answered_by: string | null
+          asked_by: string | null
+          created_at: string
+          id: string
+          is_anonymous: boolean
+          is_official_answer: boolean
+          org_id: string
+          question: string
+          status: string
+          updated_at: string
+          upvote_count: number
+        }
+        Insert: {
+          answer?: string | null
+          answered_by?: string | null
+          asked_by?: string | null
+          created_at?: string
+          id?: string
+          is_anonymous?: boolean
+          is_official_answer?: boolean
+          org_id: string
+          question: string
+          status?: string
+          updated_at?: string
+          upvote_count?: number
+        }
+        Update: {
+          answer?: string | null
+          answered_by?: string | null
+          asked_by?: string | null
+          created_at?: string
+          id?: string
+          is_anonymous?: boolean
+          is_official_answer?: boolean
+          org_id?: string
+          question?: string
+          status?: string
+          updated_at?: string
+          upvote_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_faqs_answered_by_fkey"
+            columns: ["answered_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_faqs_asked_by_fkey"
+            columns: ["asked_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_faqs_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "org_faqs_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -3107,6 +3419,13 @@ export type Database = {
             foreignKeyName: "org_followers_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "org_followers_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -3115,6 +3434,56 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_follows: {
+        Row: {
+          created_at: string | null
+          follower_org_id: string
+          following_org_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          follower_org_id: string
+          following_org_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string | null
+          follower_org_id?: string
+          following_org_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_follows_follower_org_id_fkey"
+            columns: ["follower_org_id"]
+            isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "org_follows_follower_org_id_fkey"
+            columns: ["follower_org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_follows_following_org_id_fkey"
+            columns: ["following_org_id"]
+            isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "org_follows_following_org_id_fkey"
+            columns: ["following_org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -3169,6 +3538,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_knowledge_items_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
           },
           {
             foreignKeyName: "org_knowledge_items_org_id_fkey"
@@ -3240,6 +3616,13 @@ export type Database = {
             foreignKeyName: "org_members_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "org_members_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -3307,6 +3690,13 @@ export type Database = {
             foreignKeyName: "org_memberships_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "org_memberships_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -3343,7 +3733,99 @@ export type Database = {
             foreignKeyName: "org_metadata_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "org_metadata_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_salary_insights: {
+        Row: {
+          benefits: string | null
+          created_at: string
+          employment_type: string | null
+          experience_years_max: number | null
+          experience_years_min: number | null
+          id: string
+          is_anonymous: boolean
+          is_verified_employee: boolean
+          job_title: string
+          location_city: string | null
+          org_id: string
+          salary_currency: string
+          salary_max: number | null
+          salary_min: number | null
+          salary_period: string
+          status: string
+          submitted_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          benefits?: string | null
+          created_at?: string
+          employment_type?: string | null
+          experience_years_max?: number | null
+          experience_years_min?: number | null
+          id?: string
+          is_anonymous?: boolean
+          is_verified_employee?: boolean
+          job_title: string
+          location_city?: string | null
+          org_id: string
+          salary_currency?: string
+          salary_max?: number | null
+          salary_min?: number | null
+          salary_period?: string
+          status?: string
+          submitted_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          benefits?: string | null
+          created_at?: string
+          employment_type?: string | null
+          experience_years_max?: number | null
+          experience_years_min?: number | null
+          id?: string
+          is_anonymous?: boolean
+          is_verified_employee?: boolean
+          job_title?: string
+          location_city?: string | null
+          org_id?: string
+          salary_currency?: string
+          salary_max?: number | null
+          salary_min?: number | null
+          salary_period?: string
+          status?: string
+          submitted_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_salary_insights_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "org_salary_insights_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_salary_insights_submitted_by_fkey"
+            columns: ["submitted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -3402,6 +3884,13 @@ export type Database = {
             foreignKeyName: "org_subscriptions_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: true
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "org_subscriptions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: true
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -3447,6 +3936,13 @@ export type Database = {
             foreignKeyName: "org_verif_routes_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "org_verif_routes_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -3470,6 +3966,7 @@ export type Database = {
           founded_year: number | null
           full_address: string | null
           id: string
+          industry: string | null
           is_verified: boolean | null
           logo_url: string | null
           maps_url: string | null
@@ -3507,6 +4004,7 @@ export type Database = {
           founded_year?: number | null
           full_address?: string | null
           id?: string
+          industry?: string | null
           is_verified?: boolean | null
           logo_url?: string | null
           maps_url?: string | null
@@ -3544,6 +4042,7 @@ export type Database = {
           founded_year?: number | null
           full_address?: string | null
           id?: string
+          industry?: string | null
           is_verified?: boolean | null
           logo_url?: string | null
           maps_url?: string | null
@@ -4025,6 +4524,13 @@ export type Database = {
             foreignKeyName: "post_mentions_mentioned_org_id_fkey"
             columns: ["mentioned_org_id"]
             isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "post_mentions_mentioned_org_id_fkey"
+            columns: ["mentioned_org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -4170,6 +4676,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_reposts_reposted_by_org_fkey"
+            columns: ["reposted_by_org"]
+            isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
           },
           {
             foreignKeyName: "post_reposts_reposted_by_org_fkey"
@@ -4324,6 +4837,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "posts_posted_by_org_fkey"
+            columns: ["posted_by_org"]
+            isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
           },
           {
             foreignKeyName: "posts_posted_by_org_fkey"
@@ -4495,6 +5015,13 @@ export type Database = {
             foreignKeyName: "profile_verification_state_issuer_org_id_fkey"
             columns: ["issuer_org_id"]
             isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "profile_verification_state_issuer_org_id_fkey"
+            columns: ["issuer_org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -4530,6 +5057,7 @@ export type Database = {
           activity_score_v2_live: boolean | null
           avatar_url: string | null
           bio: string | null
+          clean_username: string | null
           contact_email_visible: boolean | null
           country: string | null
           cover_url: string | null
@@ -4542,6 +5070,8 @@ export type Database = {
           designation: string | null
           display_preference: string | null
           email: string | null
+          follower_count: number | null
+          following_count: number | null
           full_name: string | null
           headline: string | null
           id: string
@@ -4599,6 +5129,7 @@ export type Database = {
           activity_score_v2_live?: boolean | null
           avatar_url?: string | null
           bio?: string | null
+          clean_username?: string | null
           contact_email_visible?: boolean | null
           country?: string | null
           cover_url?: string | null
@@ -4611,6 +5142,8 @@ export type Database = {
           designation?: string | null
           display_preference?: string | null
           email?: string | null
+          follower_count?: number | null
+          following_count?: number | null
           full_name?: string | null
           headline?: string | null
           id: string
@@ -4668,6 +5201,7 @@ export type Database = {
           activity_score_v2_live?: boolean | null
           avatar_url?: string | null
           bio?: string | null
+          clean_username?: string | null
           contact_email_visible?: boolean | null
           country?: string | null
           cover_url?: string | null
@@ -4680,6 +5214,8 @@ export type Database = {
           designation?: string | null
           display_preference?: string | null
           email?: string | null
+          follower_count?: number | null
+          following_count?: number | null
           full_name?: string | null
           headline?: string | null
           id?: string
@@ -4730,6 +5266,13 @@ export type Database = {
           years_exp?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
+          },
           {
             foreignKeyName: "profiles_org_id_fkey"
             columns: ["org_id"]
@@ -5026,6 +5569,13 @@ export type Database = {
             foreignKeyName: "trust_badges_issued_by_org_id_fkey"
             columns: ["issued_by_org_id"]
             isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "trust_badges_issued_by_org_id_fkey"
+            columns: ["issued_by_org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -5042,6 +5592,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "trust_scores"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_badges_subject_org_id_fkey"
+            columns: ["subject_org_id"]
+            isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
           },
           {
             foreignKeyName: "trust_badges_subject_org_id_fkey"
@@ -5148,6 +5705,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "trust_evidence"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_checks_subject_org_id_fkey"
+            columns: ["subject_org_id"]
+            isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
           },
           {
             foreignKeyName: "trust_checks_subject_org_id_fkey"
@@ -5265,6 +5829,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "trust_scores"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_events_subject_org_id_fkey"
+            columns: ["subject_org_id"]
+            isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
           },
           {
             foreignKeyName: "trust_events_subject_org_id_fkey"
@@ -5392,6 +5963,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_evidence_subject_org_id_fkey"
+            columns: ["subject_org_id"]
+            isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
           },
           {
             foreignKeyName: "trust_evidence_subject_org_id_fkey"
@@ -5527,6 +6105,13 @@ export type Database = {
             foreignKeyName: "trust_scores_subject_org_id_fkey"
             columns: ["subject_org_id"]
             isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "trust_scores_subject_org_id_fkey"
+            columns: ["subject_org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -5587,6 +6172,42 @@ export type Database = {
           {
             foreignKeyName: "user_additional_roles_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_follows: {
+        Row: {
+          created_at: string | null
+          follower_id: string
+          following_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          follower_id: string
+          following_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string | null
+          follower_id?: string
+          following_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_follows_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_follows_following_id_fkey"
+            columns: ["following_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -5918,6 +6539,13 @@ export type Database = {
             foreignKeyName: "verification_requests_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "verification_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -6013,8 +6641,22 @@ export type Database = {
             foreignKeyName: "verified_employment_claims_issuer_org_id_fkey"
             columns: ["issuer_org_id"]
             isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "verified_employment_claims_issuer_org_id_fkey"
+            columns: ["issuer_org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verified_employment_claims_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
           },
           {
             foreignKeyName: "verified_employment_claims_org_id_fkey"
@@ -6689,6 +7331,24 @@ export type Database = {
         }
         Relationships: []
       }
+      org_brain_summary: {
+        Row: {
+          faqs_answered: number | null
+          faqs_open: number | null
+          is_verified: boolean | null
+          org_id: string | null
+          org_name: string | null
+          org_type: string | null
+          rating_compensation: number | null
+          rating_growth: number | null
+          rating_management: number | null
+          rating_overall: number | null
+          rating_work_life: number | null
+          salary_summary: Json | null
+          total_ratings: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       apply_to_opportunity: {
@@ -6844,6 +7504,11 @@ export type Database = {
         Args: { p_full_name: string; p_user_id: string }
         Returns: string
       }
+      get_application_status: {
+        Args: { p_opportunity_id: string; p_user_id: string }
+        Returns: string
+      }
+      get_clean_username: { Args: { raw_username: string }; Returns: string }
       get_explore_profiles: {
         Args: { p_cursor?: number; p_limit?: number; p_role?: string }
         Returns: Json
@@ -6852,7 +7517,15 @@ export type Database = {
         Args: { p_cursor?: string; p_limit?: number }
         Returns: Json
       }
+      get_my_contact: {
+        Args: never
+        Returns: {
+          email: string
+          phone: string
+        }[]
+      }
       get_page_tracker_count: { Args: { p_page_id: string }; Returns: number }
+      get_profile_completion_score: { Args: { p_id: string }; Returns: number }
       get_user_list: {
         Args: { p_limit?: number; p_offset?: number; p_role?: string }
         Returns: {

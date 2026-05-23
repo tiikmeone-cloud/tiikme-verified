@@ -1,3 +1,5 @@
+import { getPrimaryRoleLine } from "@/lib/profileUtils";
+
 /**
  * Resolves a profile's `display_preference` into per-field render flags so
  * every card/header across the app shows exactly what the profile owner
@@ -48,8 +50,9 @@ export function getDisplayFlags(profile: DisplayInputProfile | null | undefined)
 /** Single composed string for cards that show role inline. Never returns raw role type. */
 export function formatRoleLine(profile: DisplayInputProfile | null | undefined): string {
   if (!profile) return "";
-  if (profile.role_subtype) return profile.role_subtype;
-  return profile.designation || profile.headline || "";
+  const primary = getPrimaryRoleLine(profile);
+  if (primary) return primary;
+  return profile.role ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1).replace(/_/g, " ") : "";
 }
 
 export function formatCompanyLine(profile: DisplayInputProfile | null | undefined): string {
