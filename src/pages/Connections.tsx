@@ -201,15 +201,20 @@ const Connections = () => {
     toast.info("Request withdrawn");
   };
 
-  const handleDisconnect = async (s: StrandRow) => {
+  const handleDisconnect = (s: StrandRow) => {
     const other = getOther(s);
-    const confirmed = window.confirm(`Disconnect from ${other?.full_name || "this user"}? They won't be notified.`);
-    if (!confirmed) return;
-    const prev = qc.getQueryData(queryKey);
-    patchCache((d) => ({ ...d, connected: d.connected.filter((x: any) => x.id !== s.id) }));
-    const { error } = await supabase.from("strands").delete().eq("id", s.id);
-    if (error) { qc.setQueryData(queryKey, prev); toast.error(error.message); return; }
-    toast.success("Disconnected from " + (other?.full_name || "user"));
+    const name = other?.full_name || "this user";
+    toast(`Disconnect from ${name}?`, {
+      action: { label: "Disconnect", onClick: async () => {
+        const prev = qc.getQueryData(queryKey);
+        patchCache((d) => ({ ...d, connected: d.connected.filter((x: any) => x.id !== s.id) }));
+        const { error } = await supabase.from("strands").delete().eq("id", s.id);
+        if (error) { qc.setQueryData(queryKey, prev); toast.error(error.message); return; }
+        toast.success(`Disconnected from ${name}`);
+      }},
+      cancel: { label: "Cancel", onClick: () => {} },
+      duration: 5000,
+    });
   };
 
   const handleMute = async (otherId: string) => {

@@ -127,7 +127,9 @@ export function PostCard({
   const isRepost = !!post.repost_of;
   const isEdited = post.is_edited;
   const isConnected = !isOrgPost && author?.id && connectionIds.has(author.id);
-  const showConnect = !isOrgPost && !isOwn && !isConnected && author?.id;
+  const [localDisconnected, setLocalDisconnected] = useState(false);
+  const effectivelyConnected = isConnected && !localDisconnected;
+  const showConnect = !isOrgPost && !isOwn && !effectivelyConnected && author?.id;
 
   const liked = myLikes[post.id] || false;
   const likeCount = likeCounts[post.id] || 0;
@@ -278,7 +280,7 @@ export function PostCard({
                     <VerifiedBadge size={14} />
                   </span>
                 )}
-                {isConnected && (
+                {effectivelyConnected && (
                   <span className="shrink-0" style={{ fontSize: 11, fontWeight: 600, color: "#34C759", background: "rgba(52,199,89,0.10)", border: "1px solid rgba(52,199,89,0.20)", borderRadius: 999, padding: "1px 7px" }}>
                     Connected
                   </span>
@@ -309,13 +311,20 @@ export function PostCard({
               </button>
               {showMenu && (
                 <div className="absolute right-0 top-8 z-[100]" style={{ width: 190, borderRadius: 12, padding: "8px 0", background: "#FFFFFF", border: "1px solid #E5E7EB", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
-                  {isConnected && (
+                  {effectivelyConnected && (
                     <button type="button" onClick={() => {
                       setShowMenu(false);
                       toast(`Disconnect from ${displayName}?`, {
                         action: { label: "Disconnect", onClick: async () => {
-                          await supabase.from("strands").delete().filter("requester_id", "in", `(${user?.id},${author?.id})`).filter("receiver_id", "in", `(${author?.id},${user?.id})`);
-                          toast.success(`Disconnected from ${displayName}`);
+                          if (!user?.id || !author?.id) return;
+                          const { error } = await supabase.from("strands").delete()
+                            .or(`and(requester_id.eq.${user.id},receiver_id.eq.${author.id}),and(requester_id.eq.${author.id},receiver_id.eq.${user.id})`);
+                          if (!error) {
+                            setLocalDisconnected(true);
+                            toast.success(`Disconnected from ${displayName}`);
+                          } else {
+                            toast.error("Could not disconnect. Try again.");
+                          }
                         }},
                         cancel: { label: "Cancel", onClick: () => {} },
                         duration: 5000,
