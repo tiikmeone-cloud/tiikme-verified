@@ -1,12 +1,18 @@
 /**
  * VerificationStatusCard
  * Shows the current user's verification state with clear next-step guidance.
+ * - If user has no experience/education → prompt to fill profile first
+ * - If has experience → CTA shows those orgs as quick-pick suggestions
+ * - While pending → shows status with org name
+ * - If verified → green "Verified" card
+ * - If rejected → red card with re-apply button
  */
 import { useEffect, useState } from "react";
-import { ShieldCheck, Clock, XCircle, RefreshCw, CheckCircle2, Info } from "lucide-react";
+import { ShieldCheck, Clock, XCircle, RefreshCw, CheckCircle2, Info, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import GetVerifiedModal from "./GetVerifiedModal";
+import { Link } from "react-router-dom";
 
 type Req = {
   id: string;
@@ -20,18 +26,26 @@ type Req = {
   org_name?: string | null;
 };
 
+export type ExpSuggestion = {
+  company_name: string;
+  job_title: string;
+  org?: { id: string; name: string; slug: string; logo_url: string | null } | null;
+};
+
 export default function VerificationStatusCard() {
   const { user } = useAuth();
   const [req, setReq] = useState<Req | null>(null);
   const [isVerified, setIsVerified] = useState(false);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [suggestions, setSuggestions] = useState<ExpSuggestion[]>([]);
+  const [hasProfileFields, setHasProfileFields] = useState(true);
 
   const refresh = async () => {
     if (!user) { setLoading(false); return; }
     setLoading(true);
 
-    const [{ data: prof }, { data: latest }] = await Promise.all([
+    const [{ data: prof }, { data: latest }, { data: workItems }] = await Promise.all([
       supabase.from("profiles").select("is_verified").eq("id", user.id).maybeSingle(),
       supabase
         .from("verification_requests")
@@ -41,9 +55,40 @@ export default function VerificationStatusCard() {
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle(),
+      supabase
+        .from("work_items")
+        .select("id, company_name, job_title, item_type, is_current")
+        .eq("owner_id", user.id)
+        .in("item_type", ["experience", "education"])
+        .order("is_current", { ascending: false })
+        .limit(5),
     ]);
 
     setIsVerified(!!prof?.is_verified);
+
+    // Check if user has any profile fields worth verifying
+    const expItems = (workItems || []).filter((w: any) => w.item_type === "experience");
+    const eduItems = (workItems || []).filter((w: any) => w.item_type === "education");
+    setHasProfileFields(expItems.length > 0 || eduItems.length > 0);
+
+    // Build suggestions: try to match each experience company to an org in DB
+    const rawSuggestions: ExpSuggestion[] = [];
+    for (const item of (workItems || [])) {
+      const name = item.company_name || "";
+      if (!name) continue;
+      const { data: org } = await supabase
+        .from("organizations")
+        .select("id, name, slug, logo_url")
+        .ilike("name", name)
+        .limit(1)
+        .maybeSingle();
+      rawSuggestions.push({
+        company_name: name,
+        job_title: item.job_title || "",
+        org: org || null,
+      });
+    }
+    setSuggestions(rawSuggestions);
 
     if (latest && latest.org_id) {
       const { data: org } = await supabase
@@ -59,8 +104,51 @@ export default function VerificationStatusCard() {
 
   if (loading) return null;
 
-  // No request yet → CTA
-  if (!req && !isVerified) {
+  // Already fully verified → green card, no CTA
+  if (isVerified) {
+    return (
+      <div className="p-3 rounded-xl" style={{ background: "rgba(22,163,74,0.08)", border: "1px solid rgba(22,163,74,0.30)" }}>
+        <div className="flex items-start gap-2.5">
+          <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "#15803D" }} />
+          <div className="flex-1 min-w-0">
+            <p className="text-[12px] font-bold" style={{ color: "#15803D" }}>Verified ✓</p>
+            <p className="text-[11px] mt-0.5" style={{ color: "var(--text-2)" }}>
+              {req?.org_name
+                ? `Your role at ${req.org_name} has been verified.`
+                : "Your professional identity is verified on Tiikme."}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // No request yet → check if profile has fields
+  if (!req) {
+    if (!hasProfileFields) {
+      return (
+        <div className="p-3 rounded-xl" style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.25)" }}>
+          <div className="flex items-start gap-2.5">
+            <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "#B45309" }} />
+            <div className="flex-1 min-w-0">
+              <p className="text-[12px] font-bold" style={{ color: "#B45309" }}>Add your role to get verified</p>
+              <p className="text-[11px] mt-0.5" style={{ color: "var(--text-2)" }}>
+                Add at least one experience or education entry so we know what to verify.
+              </p>
+              <Link
+                to="/app/profile"
+                className="mt-2 inline-block text-[11px] font-bold"
+                style={{ color: "var(--brand)" }}
+              >
+                Update your profile →
+              </Link>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Has profile fields → show CTA
     return (
       <>
         <button
@@ -77,28 +165,20 @@ export default function VerificationStatusCard() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[13px] font-bold" style={{ color: "var(--text-1)" }}>Verify your role</p>
-            <p className="text-[11px]" style={{ color: "var(--text-2)" }}>Request workplace or institution verification.</p>
+            <p className="text-[11px]" style={{ color: "var(--text-2)" }}>
+              {suggestions.length > 0
+                ? `Request verification at ${suggestions[0].company_name}${suggestions.length > 1 ? ` or ${suggestions.length - 1} other${suggestions.length > 2 ? "s" : ""}` : ""}.`
+                : "Request workplace or institution verification."}
+            </p>
           </div>
         </button>
-        <GetVerifiedModal open={open} onClose={() => setOpen(false)} onSubmitted={refresh} />
+        <GetVerifiedModal open={open} onClose={() => setOpen(false)} onSubmitted={refresh} suggestions={suggestions} />
       </>
     );
   }
 
+  // Has request — determine state
   const statusUI = (() => {
-    if (isVerified) {
-      return {
-        bg: "rgba(22,163,74,0.08)", border: "rgba(22,163,74,0.30)", color: "#15803D",
-        icon: CheckCircle2,
-        title: "Approved / Verified",
-        body: req?.org_name
-          ? `Your role at ${req.org_name} has been verified.`
-          : "Your professional identity is verified on Tiikme.",
-        nextStep: "Keep your profile current so future employers and collaborators see the latest trusted information.",
-      };
-    }
-    if (!req) return null;
-
     if (req.status === "pending") {
       if (req.review_queue === "platform") {
         return {
@@ -106,55 +186,52 @@ export default function VerificationStatusCard() {
           icon: Clock,
           title: "Awaiting Tiikme platform review",
           body: req.org_name
-            ? `We could not safely route this to an independent reviewer at ${req.org_name}, so Tiikme will review it.`
+            ? `We couldn't route this to an independent reviewer at ${req.org_name}, so Tiikme will review it.`
             : "Tiikme will review this request directly.",
-          nextStep: "No action is needed right now. Keep an eye on this card in case Tiikme asks for supporting proof.",
+          nextStep: "No action needed. Check back here for updates.",
+          showReapply: false,
         };
       }
       return {
         bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.30)", color: "#B45309",
         icon: Clock,
-        title: "Pending organization review",
-        body: req.org_name ? `Sent to ${req.org_name} for verification.` : "Awaiting organization review.",
-        nextStep: "No action is needed right now. You'll be notified as soon as the organization reviews it.",
+        title: "Pending organisation review",
+        body: req.org_name ? `Sent to ${req.org_name} for review.` : "Awaiting organisation review.",
+        nextStep: "You'll be notified once the organisation responds.",
+        showReapply: false,
       };
     }
-
     if (req.status === "more_info_requested") {
       return {
         bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.30)", color: "#B45309",
         icon: Info,
         title: "More information requested",
         body: req.requested_doc_message || "A reviewer asked for more supporting information.",
-        nextStep: "Open the verification request again and upload the proof or details they asked for so review can continue.",
+        nextStep: "Reopen the request and upload the proof or details asked for.",
+        showReapply: true,
       };
     }
-
     if (req.status === "rejected") {
       return {
         bg: "rgba(220,38,38,0.06)", border: "rgba(220,38,38,0.30)", color: "#B91C1C",
         icon: XCircle,
-        title: "Rejected",
+        title: "Not approved",
         body: req.rejection_reason || "This request was not approved.",
-        nextStep: "Review the reason, update your documents or role details, and re-apply when you're ready.",
+        nextStep: "Review the reason, update your documents or role details, and re-apply.",
+        showReapply: true,
       };
     }
     return {
       bg: "var(--surface-2)", border: "var(--border)", color: "var(--text-2)",
-      icon: ShieldCheck, title: req.status, body: "", nextStep: "",
+      icon: ShieldCheck, title: req.status, body: "", nextStep: "", showReapply: false,
     };
   })();
-
-  if (!statusUI) return null;
 
   const Icon = statusUI.icon;
 
   return (
     <>
-      <div
-        className="p-3 rounded-xl"
-        style={{ background: statusUI.bg, border: `1px solid ${statusUI.border}` }}
-      >
+      <div className="p-3 rounded-xl" style={{ background: statusUI.bg, border: `1px solid ${statusUI.border}` }}>
         <div className="flex items-start gap-2.5">
           <Icon className="w-4 h-4 mt-0.5 shrink-0" style={{ color: statusUI.color }} />
           <div className="flex-1 min-w-0">
@@ -162,13 +239,13 @@ export default function VerificationStatusCard() {
             {statusUI.body && (
               <p className="text-[11px] mt-0.5" style={{ color: "var(--text-2)" }}>{statusUI.body}</p>
             )}
-            {req?.requested_role && (
+            {req.requested_role && (
               <p className="text-[11px] mt-0.5" style={{ color: "var(--text-3)" }}>Role: {req.requested_role}</p>
             )}
             {statusUI.nextStep && (
               <p className="text-[11px] mt-2" style={{ color: "var(--text-2)" }}>{statusUI.nextStep}</p>
             )}
-            {req?.status === "rejected" && (
+            {statusUI.showReapply && (
               <button
                 type="button"
                 onClick={() => setOpen(true)}
@@ -181,7 +258,7 @@ export default function VerificationStatusCard() {
           </div>
         </div>
       </div>
-      <GetVerifiedModal open={open} onClose={() => setOpen(false)} onSubmitted={refresh} />
+      <GetVerifiedModal open={open} onClose={() => setOpen(false)} onSubmitted={refresh} suggestions={suggestions} />
     </>
   );
 }

@@ -102,7 +102,10 @@ const ProfilePosts = () => {
       />
       <header className="flex items-center justify-between gap-4">
         <div>
-          <Link to={`/${cleanUsername}`} className="text-sm text-muted-foreground hover:text-foreground">← {displayName}</Link>
+          <Link
+            to={data?.profile?.id ? `/app/profile/${data.profile.id}` : "/app/profile"}
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >← {displayName}</Link>
           <h1 className="mt-1 text-2xl font-semibold text-foreground">Posts <span className="num text-muted-foreground">{total}</span></h1>
         </div>
         <div className="flex rounded-lg border border-border bg-card p-1">

@@ -1,8 +1,10 @@
 /**
  * GetVerifiedModal
  * User-facing modal to request org-based verification.
- * - Search org -> pick role + role_category -> upload proof doc -> add note -> submit.
- * - Inserts into verification_requests with assigned_to resolved server-side via RPC.
+ * - Shows experience-based quick-pick orgs first
+ * - Search org → pick role + role_category → upload proof doc → add note → submit
+ * - Notifies ALL org admins (not just the routed assignee)
+ * - Falls back to org creator if no admins at all
  */
 import { useState, useEffect } from "react";
 import { ShieldCheck, Search, Upload, Loader2, X, Building2 } from "lucide-react";
@@ -12,17 +14,19 @@ import { useAuth } from "@/contexts/AuthContext";
 import GlassModal from "@/components/ui/GlassModal";
 import { ROLE_CATEGORIES } from "@/lib/verificationRoles";
 import AvatarSquare from "@/components/ui/AvatarSquare";
+import type { ExpSuggestion } from "./VerificationStatusCard";
 
 interface Props {
   open: boolean;
   onClose: () => void;
   onSubmitted?: () => void;
+  suggestions?: ExpSuggestion[];
 }
 
 type Org = { id: string; name: string; slug: string; logo_url: string | null };
 
-export default function GetVerifiedModal({ open, onClose, onSubmitted }: Props) {
-  const { user } = useAuth();
+export default function GetVerifiedModal({ open, onClose, onSubmitted, suggestions = [] }: Props) {
+  const { user, profile } = useAuth();
   const [orgQuery, setOrgQuery] = useState("");
   const [orgs, setOrgs] = useState<Org[]>([]);
   const [selectedOrg, setSelectedOrg] = useState<Org | null>(null);
@@ -54,6 +58,16 @@ export default function GetVerifiedModal({ open, onClose, onSubmitted }: Props) 
   };
   const handleClose = () => { reset(); onClose(); };
 
+  const pickSuggestion = (s: ExpSuggestion) => {
+    if (s.org) {
+      setSelectedOrg(s.org);
+    } else {
+      // Org not in DB — pre-fill search so user can confirm
+      setOrgQuery(s.company_name);
+    }
+    if (s.job_title) setRequestedRole(s.job_title);
+  };
+
   const handleSubmit = async () => {
     if (!user || !selectedOrg || !requestedRole.trim()) {
       toast.error("Fill organisation and role");
@@ -70,10 +84,10 @@ export default function GetVerifiedModal({ open, onClose, onSubmitted }: Props) 
           .from("verification-docs")
           .upload(path, docFile, { cacheControl: "3600", upsert: false });
         if (upErr) throw upErr;
-        documentUrl = path; // private bucket — store path, sign on read
+        documentUrl = path;
       }
 
-      // Resolve assignee
+      // Resolve routed assignee (specific admin based on role_category routing)
       const { data: assignee } = await supabase.rpc("resolve_verification_assignee", {
         _org_id: selectedOrg.id,
         _role_category: roleCategory,
@@ -97,16 +111,41 @@ export default function GetVerifiedModal({ open, onClose, onSubmitted }: Props) 
       });
       if (error) throw error;
 
-      // Notify assignee
-      if (assignee) {
-        await supabase.from("notifications").insert({
-          user_id: assignee,
-          type: "verification_request",
-          title: "New verification request",
-          body: `Someone requested verification as "${requestedRole}" at ${selectedOrg.name}.`,
-          action_url: "/app/verification-inbox",
-          data: { org_id: selectedOrg.id, requester_id: user.id },
-        });
+      // Notify ALL org admins — not just the routed assignee
+      const toNotify = new Set<string>();
+      if (assignee) toNotify.add(assignee as string);
+
+      const { data: orgAdmins } = await supabase
+        .from("org_admins")
+        .select("user_id")
+        .eq("org_id", selectedOrg.id);
+      (orgAdmins || []).forEach((a: any) => {
+        if (a.user_id && a.user_id !== user.id) toNotify.add(a.user_id);
+      });
+
+      // Fallback: if org has no admins at all, notify the org creator profile
+      if (toNotify.size === 0) {
+        const { data: orgCreator } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("org_id", selectedOrg.id)
+          .eq("account_type", "institution")
+          .limit(1)
+          .maybeSingle();
+        if (orgCreator?.id && orgCreator.id !== user.id) toNotify.add(orgCreator.id);
+      }
+
+      const senderName = profile?.full_name || "Someone";
+      const notifInserts = [...toNotify].map(userId => ({
+        user_id: userId,
+        type: "verification_request",
+        title: "New verification request",
+        body: `${senderName} requested verification as "${requestedRole}" at ${selectedOrg.name}.`,
+        action_url: "/app/verification-inbox",
+        data: { org_id: selectedOrg.id, requester_id: user.id },
+      }));
+      if (notifInserts.length > 0) {
+        await supabase.from("notifications").insert(notifInserts);
       }
 
       toast.success("Verification request sent");
@@ -150,12 +189,50 @@ export default function GetVerifiedModal({ open, onClose, onSubmitted }: Props) 
     >
       {/* Org picker */}
       {!selectedOrg ? (
-        <div>
+        <div className="space-y-3">
+          {/* Quick-pick from experience */}
+          {suggestions.length > 0 && (
+            <div>
+              <p className="text-[12px] font-medium mb-2" style={{ color: "rgba(255,255,255,0.50)" }}>From your profile</p>
+              <div className="space-y-1">
+                {suggestions.map((s, i) => (
+                  <button
+                    type="button"
+                    key={i}
+                    onClick={() => pickSuggestion(s)}
+                    className="w-full flex items-center gap-3 p-2 rounded-lg cursor-pointer text-left"
+                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
+                  >
+                    {s.org ? (
+                      <AvatarSquare src={s.org.logo_url} name={s.org.name} size={28} />
+                    ) : (
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.10)" }}>
+                        <Building2 className="w-3.5 h-3.5" style={{ color: "rgba(255,255,255,0.50)" }} />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12px] font-semibold text-white truncate">{s.company_name}</p>
+                      {s.job_title && <p className="text-[10px] truncate" style={{ color: "rgba(255,255,255,0.50)" }}>{s.job_title}</p>}
+                    </div>
+                    {!s.org && (
+                      <span className="text-[10px] shrink-0" style={{ color: "rgba(255,255,255,0.35)" }}>not on Tiikme</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 my-3">
+                <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.10)" }} />
+                <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>or search</span>
+                <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.10)" }} />
+              </div>
+            </div>
+          )}
+
           <label className="block text-[13px] font-medium mb-1.5" style={{ color: "rgba(255,255,255,0.70)" }}>Select organisation</label>
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "rgba(255,255,255,0.50)" }} />
             <input
-              autoFocus
+              autoFocus={suggestions.length === 0}
               value={orgQuery}
               onChange={e => setOrgQuery(e.target.value)}
               placeholder="Search organisations…"

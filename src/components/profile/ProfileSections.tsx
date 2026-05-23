@@ -280,6 +280,8 @@ export const EducationSection = ({ items, isOwnProfile, onAdd, onDelete, onToggl
   }, [items, lookupBatch]);
   const visible = items.slice(0, MAX);
 
+  if (items.length === 0 && !isOwnProfile) return null;
+
   return (
     <SectionBox title="Education" icon={GraduationCap} iconColor="#34C759" borderColor="#34C759" count={items.length} isOwnProfile={isOwnProfile} onAdd={onAdd}>
       {items.length === 0 ? (
@@ -338,6 +340,8 @@ export const EducationSection = ({ items, isOwnProfile, onAdd, onDelete, onToggl
 export const ProjectsSection = ({ items, isOwnProfile, onAdd, onDelete, onToggleVisibility, onStatusChange }: SectionProps) => {
   const MAX = 3;
   const visible = items.slice(0, MAX);
+
+  if (items.length === 0 && !isOwnProfile) return null;
 
   return (
     <SectionBox title="Projects" icon={Rocket} iconColor="#FF6B9D" borderColor="#FF6B9D" count={items.length} isOwnProfile={isOwnProfile} onAdd={onAdd}>
@@ -407,6 +411,8 @@ export const AchievementsSection = ({ items, isOwnProfile, onAdd, onDelete, onTo
   const MAX = 3;
   const visible = items.slice(0, MAX);
 
+  if (items.length === 0 && !isOwnProfile) return null;
+
   return (
     <SectionBox title="Achievements" icon={Award} iconColor="#FFB800" borderColor="#FFB800" count={items.length} isOwnProfile={isOwnProfile} onAdd={onAdd}>
       {items.length === 0 ? (
@@ -471,6 +477,8 @@ export const SkillsSection = ({ skills, isOwnProfile, onAdd, onRemoveSkill }: {
 }) => {
   const MAX = 8;
   const visible = skills.slice(0, MAX);
+
+  if (skills.length === 0 && !isOwnProfile) return null;
 
   return (
     <SectionBox title="Skills" icon={Star} iconColor="#8B5CF6" borderColor="#8B5CF6" count={skills.length} isOwnProfile={isOwnProfile} onAdd={onAdd}>
