@@ -168,23 +168,15 @@ const PageProfile = () => {
   return (
     <div className="max-w-[960px] mx-auto px-0 md:px-4 pb-8">
       <PageSEO {...seoProps} />
-      {/* ── COVER ── */}
-      <div className="w-full h-[200px] md:h-[240px] relative overflow-hidden" style={{
+      {/* ── HEADER GRADIENT BAR (no cover photo) ── */}
+      <div className="w-full h-[72px]" style={{
         borderRadius: "0 0 20px 20px",
-        background: page.cover_url
-          ? `url(${page.cover_url}) center/cover`
-          : "linear-gradient(135deg, var(--color-accent), #8B5CF6)",
-      }}>
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(13,13,30,0.6) 0%, transparent 60%)" }} />
-        {!page.cover_url && (
-          <div className="absolute inset-0 flex items-center justify-center opacity-15">
-            <Building2 className="w-24 h-24 text-white" />
-          </div>
-        )}
-      </div>
+        background: "linear-gradient(135deg, var(--color-accent, #E8733A), #8B5CF6)",
+        opacity: 0.18,
+      }} />
 
       {/* ── LOGO + IDENTITY ── */}
-      <div className="relative px-4 md:px-6 -mt-12 mb-4">
+      <div className="relative px-4 md:px-6 -mt-10 mb-4">
         <div className="flex items-end gap-4">
           <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-[22px] font-bold shrink-0 overflow-hidden"
             style={{

@@ -130,6 +130,21 @@ export function useFeedPosts() {
     staleTime: 10 * 60 * 1000,
   });
 
+  // For institution accounts: orgs their org follows (org→org) get a feed boost
+  const { data: orgFollowedOrgIds = new Set<string>() } = useQuery({
+    queryKey: ["feed-org-follows", profile?.org_id],
+    queryFn: async () => {
+      if (!profile?.org_id) return new Set<string>();
+      const { data } = await supabase.from("org_follows" as any).select("following_org_id").eq("follower_org_id", profile.org_id);
+      return new Set(((data || []) as any[]).map((f: any) => f.following_org_id));
+    },
+    enabled: isReady && !!profile?.org_id,
+    staleTime: 10 * 60 * 1000,
+  });
+
+  // Merge user→org follows and org→org follows into one set for feed scoring
+  const mergedFollowedOrgIds = new Set([...followedOrgIds, ...orgFollowedOrgIds]);
+
   const {
     data,
     isLoading: loading,
@@ -139,7 +154,7 @@ export function useFeedPosts() {
     refetch,
   } = useInfiniteQuery({
     queryKey: ["feed", user?.id],
-    queryFn: ({ pageParam = 0 }) => fetchFeedPage(pageParam, profile?.sector || null, connectionIds, followedOrgIds),
+    queryFn: ({ pageParam = 0 }) => fetchFeedPage(pageParam, profile?.sector || null, connectionIds, mergedFollowedOrgIds),
     getNextPageParam: (lastPage) => lastPage.hasMore ? lastPage.page + 1 : undefined,
     initialPageParam: 0,
     enabled: isReady,
