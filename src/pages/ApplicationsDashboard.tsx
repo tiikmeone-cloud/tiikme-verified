@@ -37,6 +37,8 @@ export default function ApplicationsDashboard() {
   const [search, setSearch] = useState("");
   const [notes, setNotes] = useState("");
   const [savingNotes, setSavingNotes] = useState(false);
+  const [rejectingAppId, setRejectingAppId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
 
   useEffect(() => {
     if (!oppId) return;
@@ -76,21 +78,26 @@ export default function ApplicationsDashboard() {
     rejected: applications.filter(a => a.status === "rejected" || a.status === "auto_rejected").length,
   };
 
-  const updateStatus = async (appId: string, status: string) => {
-    await supabase.from("opportunity_applications").update({ status }).eq("id", appId);
-    setApplications(prev => prev.map(a => a.id === appId ? { ...a, status } : a));
+  const updateStatus = async (appId: string, status: string, rejectionReason?: string) => {
+    const updatePayload: any = { status };
+    if (rejectionReason) updatePayload.recruiter_notes = rejectionReason;
+    await supabase.from("opportunity_applications").update(updatePayload).eq("id", appId);
+    setApplications(prev => prev.map(a => a.id === appId ? { ...a, status, ...(rejectionReason ? { recruiter_notes: rejectionReason } : {}) } : a));
     if (selectedApp?.id === appId) setSelectedApp((p: any) => ({ ...p, status }));
     toast.success(`Status updated to ${status}`);
     const app = applications.find(a => a.id === appId);
     if (app && user) {
       const { sendNotification } = await import("@/lib/notify");
+      const notifBody = status === "rejected" && rejectionReason
+        ? `Your application for "${opp?.title}" was not selected. Reason: ${rejectionReason.slice(0, 180)}`
+        : `Your application for "${opp?.title}" has been ${status}.`;
       sendNotification({
         userId: app.applicant_id,
         actorId: user.id,
         type: status === "selected" ? "offer" : "opportunity",
-        title: status === "selected" ? `You've been selected!` : `Application update`,
-        body: `Your application for "${opp?.title}" has been ${status}.`,
-        actionUrl: "/app/opportunities",
+        title: status === "selected" ? `You've been selected for ${opp?.title}!` : status === "shortlisted" ? `You've been shortlisted for ${opp?.title}` : `Application update for ${opp?.title}`,
+        body: notifBody,
+        actionUrl: "/app/applications",
         data: { opportunity_id: opp?.id, org_id: opp?.org_id, org_name: opp?.org?.name, role_title: opp?.title },
       });
     }
@@ -111,7 +118,7 @@ export default function ApplicationsDashboard() {
     await sendNotification({
       userId: applicantId, actorId: user.id, type: "opportunity",
       title: `You've been invited to interview for: ${jobTitle}`,
-      actionUrl: window.location.pathname,
+      actionUrl: "/app/applications",
     });
     toast.success("Interview invite sent via Alerts");
   };
@@ -264,7 +271,17 @@ export default function ApplicationsDashboard() {
                   </Button>
                   {selectedApp.status !== "shortlisted" && <Button size="sm" onClick={() => { updateStatus(selectedApp.id, "shortlisted"); setSelectedApp(null); }}><CheckCircle className="w-3.5 h-3.5 mr-1" /> Shortlist</Button>}
                   {selectedApp.status !== "selected" && <Button size="sm" onClick={() => { updateStatus(selectedApp.id, "selected"); setSelectedApp(null); }} style={{ background: "#059669" }}><Shield className="w-3.5 h-3.5 mr-1" /> Select</Button>}
-                  {selectedApp.status !== "rejected" && <Button variant="destructive" size="sm" onClick={() => { updateStatus(selectedApp.id, "rejected"); setSelectedApp(null); }}><XCircle className="w-3.5 h-3.5 mr-1" /> Reject</Button>}
+                  {selectedApp.status !== "rejected" && (
+                    rejectingAppId === selectedApp.id ? (
+                      <div className="flex gap-1">
+                        <input value={rejectReason} onChange={e => setRejectReason(e.target.value)} placeholder="Reason (optional)…" className="h-8 rounded-lg px-2 text-[11px] flex-1" style={{ background: "var(--surface-2)", border: "1px solid #DC2626", outline: "none" }} />
+                        <Button variant="destructive" size="sm" onClick={() => { updateStatus(selectedApp.id, "rejected", rejectReason); setRejectingAppId(null); setRejectReason(""); setSelectedApp(null); }}>Send</Button>
+                        <Button variant="secondary" size="sm" onClick={() => { setRejectingAppId(null); setRejectReason(""); }}>×</Button>
+                      </div>
+                    ) : (
+                      <Button variant="destructive" size="sm" onClick={() => setRejectingAppId(selectedApp.id)}><XCircle className="w-3.5 h-3.5 mr-1" /> Reject</Button>
+                    )
+                  )}
                 </div>
               </div>
             </div>
@@ -377,9 +394,17 @@ export default function ApplicationsDashboard() {
                     </Button>
                   )}
                   {selectedApp.status !== "rejected" && (
-                    <Button variant="destructive" size="sm" onClick={() => updateStatus(selectedApp.id, "rejected")}>
-                      <XCircle className="w-3.5 h-3.5 mr-1" /> Reject
-                    </Button>
+                    rejectingAppId === selectedApp.id ? (
+                      <div className="flex gap-1 flex-wrap">
+                        <input value={rejectReason} onChange={e => setRejectReason(e.target.value)} placeholder="Reason for rejection (optional)…" className="h-8 rounded-lg px-2 text-[11px] flex-1 min-w-[140px]" style={{ background: "#FEF2F2", border: "1px solid #DC2626", outline: "none" }} />
+                        <Button variant="destructive" size="sm" onClick={() => { updateStatus(selectedApp.id, "rejected", rejectReason); setRejectingAppId(null); setRejectReason(""); }}>Confirm</Button>
+                        <Button variant="secondary" size="sm" onClick={() => { setRejectingAppId(null); setRejectReason(""); }}>Cancel</Button>
+                      </div>
+                    ) : (
+                      <Button variant="destructive" size="sm" onClick={() => setRejectingAppId(selectedApp.id)}>
+                        <XCircle className="w-3.5 h-3.5 mr-1" /> Reject
+                      </Button>
+                    )
                   )}
                 </div>
                 <p className="text-[11px]" style={{ color: "#9CA3AF" }}>

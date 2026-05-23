@@ -69,10 +69,10 @@ const AppShell = ({ children }: { children: ReactNode }) => {
     if (group.label !== "WORK") return group;
     const workItems = [...group.items];
     if (isInstitution || orgAdminRole === "owner" || orgAdminRole === "admin") {
-      workItems.push({ label: "Applicants", icon: ClipboardList, path: "/app/opportunities/applicants" });
+      workItems.push({ label: "Applicants", icon: ClipboardList, path: "/app/opportunities" });
       workItems.push({ label: "Verification Inbox", icon: ShieldCheck, path: "/app/verification-inbox" });
     } else if (orgAdminRole === "hiring_manager") {
-      workItems.push({ label: "Applicants", icon: ClipboardList, path: "/app/opportunities/applicants" });
+      workItems.push({ label: "Applicants", icon: ClipboardList, path: "/app/opportunities" });
     } else if (orgAdminRole === "verifier") {
       workItems.push({ label: "Verification Inbox", icon: ShieldCheck, path: "/app/verification-inbox" });
     } else {

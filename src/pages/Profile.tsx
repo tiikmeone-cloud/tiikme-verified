@@ -33,6 +33,7 @@ import EditPostModal from "@/components/feed/EditPostModal";
 import DeletePostDialog from "@/components/feed/DeletePostDialog";
 import { sendNotification } from "@/lib/notify";
 import VerificationStatusCard from "@/components/verification/VerificationStatusCard";
+import VerifiedBadge from "@/components/VerifiedBadge";
 import CertificatesSection from "@/components/profile/CertificatesSection";
 import ActivityScoreRing from "@/components/ActivityScoreRing";
 import { getActivityTier } from "@/lib/algorithms";
@@ -974,7 +975,10 @@ const Profile = () => {
             <div className="profile-info-body w-full text-center md:text-left" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 5 }}>
               {/* ROW 1: Name + optional Open to work pill */}
               <div className="flex items-center md:items-start justify-center md:justify-start flex-wrap" style={{ gap: 8 }}>
-                <p style={{ flex: 1, minWidth: 0, fontSize: 20, fontWeight: 700, lineHeight: "28px", color: "#1A1A2E", whiteSpace: "normal", overflowWrap: "anywhere", wordBreak: "break-word" }}>{displayName}</p>
+                <p style={{ flex: 1, minWidth: 0, fontSize: 20, fontWeight: 700, lineHeight: "28px", color: "#1A1A2E", whiteSpace: "normal", overflowWrap: "anywhere", wordBreak: "break-word" }}>
+                  {displayName}
+                  {isVerified && <VerifiedBadge size={18} />}
+                </p>
                 {showOTW && (
                   <span
                     style={{

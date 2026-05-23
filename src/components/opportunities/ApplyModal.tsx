@@ -84,7 +84,7 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
         portfolio_url: portfolioUrl.trim() || null,
         cover_letter: coverLetter.trim() || null,
         custom_answers: Object.keys(answers).length > 0 ? answers : null,
-        status: autoRejected ? "rejected" : "applied",
+        status: autoRejected ? "auto_rejected" : "applied",
       });
       if (error) {
         if (error.code === "23505") toast.error("You already applied");
@@ -100,7 +100,7 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
           user_id: opportunity.poster_id, type: "opportunity",
           title: `New application for "${opportunity.title}"`,
           body: `${profile?.full_name || "Someone"} applied.`,
-          action_url: `/app/opportunities`,
+          action_url: `/app/opportunities/${opportunity.id}/applications`,
         });
       }
       setSuccess(true);

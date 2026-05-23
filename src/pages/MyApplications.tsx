@@ -43,7 +43,7 @@ export default function MyApplications() {
       const { data } = await supabase
         .from("opportunity_applications")
         .select(`
-          id, status, created_at, cover_note, portfolio_url,
+          id, status, created_at, cover_letter, portfolio_url, why_good_fit, recruiter_notes,
           opportunity:opportunities!opportunity_applications_opportunity_id_fkey(
             id, title, type, location, is_remote, is_open,
             org:organizations!opportunities_org_id_fkey(name, logo_url, slug)
@@ -246,12 +246,27 @@ export default function MyApplications() {
                           Applied {app.created_at ? timeAgo(app.created_at) : ""}
                         </span>
                         <Link
-                          to={`/app/opportunities`}
+                          to={opp?.id ? `/app/opportunities?opp=${opp.id}` : "/app/opportunities"}
                           style={{ fontSize: 12, fontWeight: 600, color: "#E8733A" }}
                         >
                           View job →
                         </Link>
                       </div>
+
+                      {/* Submitted why_good_fit preview */}
+                      {app.why_good_fit && (
+                        <p style={{ fontSize: 11, color: "#6B7094", marginTop: 6, fontStyle: "italic" }} className="line-clamp-2">
+                          "{app.why_good_fit}"
+                        </p>
+                      )}
+
+                      {/* Rejection reason (visible to applicant) */}
+                      {(app.status === "rejected" || app.status === "auto_rejected") && app.recruiter_notes && (
+                        <div className="flex items-start" style={{ gap: 6, marginTop: 6, padding: "6px 10px", borderRadius: 8, background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.15)" }}>
+                          <XCircle style={{ width: 13, height: 13, color: "#DC2626", flexShrink: 0, marginTop: 1 }} />
+                          <span style={{ fontSize: 12, color: "#DC2626" }}>{app.recruiter_notes}</span>
+                        </div>
+                      )}
 
                       {/* Alert for shortlisted/selected */}
                       {(app.status === "shortlisted" || app.status === "selected") && (

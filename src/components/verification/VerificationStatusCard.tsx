@@ -246,19 +246,38 @@ export default function VerificationStatusCard() {
               <p className="text-[11px] mt-2" style={{ color: "var(--text-2)" }}>{statusUI.nextStep}</p>
             )}
             {statusUI.showReapply && (
-              <button
-                type="button"
-                onClick={() => setOpen(true)}
-                className="mt-2 inline-flex items-center gap-1 h-7 px-2.5 rounded-lg text-[11px] font-bold cursor-pointer"
-                style={{ background: "var(--brand)", color: "#fff" }}
-              >
-                <RefreshCw className="w-3 h-3" /> Re-apply
-              </button>
+              <div className="flex gap-2 flex-wrap mt-2">
+                {req.status === "more_info_requested" ? (
+                  <button
+                    type="button"
+                    onClick={() => setOpen(true)}
+                    className="inline-flex items-center gap-1 h-7 px-2.5 rounded-lg text-[11px] font-bold cursor-pointer"
+                    style={{ background: "var(--brand)", color: "#fff" }}
+                  >
+                    <RefreshCw className="w-3 h-3" /> Add more info
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setOpen(true)}
+                    className="inline-flex items-center gap-1 h-7 px-2.5 rounded-lg text-[11px] font-bold cursor-pointer"
+                    style={{ background: "var(--brand)", color: "#fff" }}
+                  >
+                    <RefreshCw className="w-3 h-3" /> Re-apply
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </div>
       </div>
-      <GetVerifiedModal open={open} onClose={() => setOpen(false)} onSubmitted={refresh} suggestions={suggestions} />
+      <GetVerifiedModal
+        open={open}
+        onClose={() => setOpen(false)}
+        onSubmitted={refresh}
+        suggestions={suggestions}
+        amendRequestId={req?.status === "more_info_requested" ? req.id : undefined}
+      />
     </>
   );
 }

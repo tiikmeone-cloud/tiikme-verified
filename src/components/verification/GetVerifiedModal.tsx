@@ -21,11 +21,13 @@ interface Props {
   onClose: () => void;
   onSubmitted?: () => void;
   suggestions?: ExpSuggestion[];
+  /** When set, modal is in "add more info" mode — updates the existing request instead of creating a new one */
+  amendRequestId?: string;
 }
 
 type Org = { id: string; name: string; slug: string; logo_url: string | null };
 
-export default function GetVerifiedModal({ open, onClose, onSubmitted, suggestions = [] }: Props) {
+export default function GetVerifiedModal({ open, onClose, onSubmitted, suggestions = [], amendRequestId }: Props) {
   const { user, profile } = useAuth();
   const [orgQuery, setOrgQuery] = useState("");
   const [orgs, setOrgs] = useState<Org[]>([]);
@@ -69,22 +71,39 @@ export default function GetVerifiedModal({ open, onClose, onSubmitted, suggestio
   };
 
   const handleSubmit = async () => {
-    if (!user || !selectedOrg || !requestedRole.trim()) {
-      toast.error("Fill organisation and role");
-      return;
-    }
     setSubmitting(true);
     try {
       // Upload doc (optional)
       let documentUrl: string | null = null;
       if (docFile) {
         const ext = docFile.name.split(".").pop();
-        const path = `${user.id}/${Date.now()}.${ext}`;
+        const path = `${user!.id}/${Date.now()}.${ext}`;
         const { error: upErr } = await supabase.storage
           .from("verification-docs")
           .upload(path, docFile, { cacheControl: "3600", upsert: false });
         if (upErr) throw upErr;
         documentUrl = path;
+      }
+
+      // ── AMEND MODE: update existing more_info_requested row back to pending ──
+      if (amendRequestId) {
+        const { error } = await supabase.from("verification_requests").update({
+          status: "pending",
+          ...(documentUrl ? { document_url: documentUrl, document_type: docType } : {}),
+          ...(note ? { context_note: note } : {}),
+        }).eq("id", amendRequestId);
+        if (error) throw error;
+        toast.success("Additional info submitted");
+        onSubmitted?.();
+        handleClose();
+        return;
+      }
+
+      // ── NEW REQUEST MODE ──
+      if (!user || !selectedOrg || !requestedRole.trim()) {
+        toast.error("Fill organisation and role");
+        setSubmitting(false);
+        return;
       }
 
       // Resolve routed assignee (specific admin based on role_category routing)
@@ -157,6 +176,59 @@ export default function GetVerifiedModal({ open, onClose, onSubmitted, suggestio
       setSubmitting(false);
     }
   };
+
+  // Amend mode: simplified UI — just doc upload + note
+  if (amendRequestId) {
+    return (
+      <GlassModal
+        open={open}
+        onClose={handleClose}
+        title="Add more information"
+        icon={ShieldCheck}
+        accentColor="#E8733A"
+        actions={
+          <>
+            <button type="button" onClick={handleClose}
+              className="flex-1 h-11 rounded-xl text-[14px] font-semibold cursor-pointer"
+              style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.85)" }}>
+              Cancel
+            </button>
+            <button type="button" disabled={submitting} onClick={handleSubmit}
+              className="flex-1 h-11 rounded-xl text-[14px] font-bold cursor-pointer disabled:opacity-50"
+              style={{ background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none" }}>
+              {submitting ? <Loader2 className="w-4 h-4 animate-spin inline" /> : "Resubmit"}
+            </button>
+          </>
+        }
+      >
+        <p className="text-[12px]" style={{ color: "rgba(255,255,255,0.60)" }}>
+          The reviewer asked for more information. Upload an updated document and/or add a note, then resubmit.
+        </p>
+        <div className="grid grid-cols-[140px_1fr] gap-2">
+          <select value={docType} onChange={e => setDocType(e.target.value)}
+            style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 14, color: "#F0F2F7", height: 42, padding: "0 14px", fontSize: 13, outline: "none", cursor: "pointer" }}>
+            <option value="offer_letter" style={{ background: "#1A1A4E" }}>Offer letter</option>
+            <option value="employee_id" style={{ background: "#1A1A4E" }}>Employee ID</option>
+            <option value="student_id" style={{ background: "#1A1A4E" }}>Student ID</option>
+            <option value="appointment" style={{ background: "#1A1A4E" }}>Appointment letter</option>
+            <option value="other" style={{ background: "#1A1A4E" }}>Other</option>
+          </select>
+          <label className="flex items-center gap-2 cursor-pointer truncate"
+            style={{ background: "rgba(255,255,255,0.08)", border: "1px dashed rgba(255,255,255,0.20)", borderRadius: 14, color: "#F0F2F7", height: 42, padding: "0 14px", fontSize: 13 }}>
+            <Upload className="w-4 h-4 shrink-0" />
+            <span className="truncate">{docFile ? docFile.name : "Upload updated proof (PDF / image)"}</span>
+            <input type="file" accept="application/pdf,image/*" className="hidden" onChange={e => setDocFile(e.target.files?.[0] || null)} />
+          </label>
+        </div>
+        <div>
+          <label className="block text-[13px] font-medium mb-1.5" style={{ color: "rgba(255,255,255,0.70)" }}>Message to reviewer (optional)</label>
+          <textarea value={note} onChange={e => setNote(e.target.value.slice(0, 400))} rows={3}
+            placeholder="Explain what you've added or clarified…"
+            style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 14, color: "#F0F2F7", padding: "10px 14px", fontSize: 14, outline: "none", width: "100%", resize: "none" }} />
+        </div>
+      </GlassModal>
+    );
+  }
 
   return (
     <GlassModal

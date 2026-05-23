@@ -25,7 +25,7 @@ export default function OrgVerificationRouting({ orgId }: { orgId: string }) {
         .from("org_admins")
         .select("user_id, role")
         .eq("org_id", orgId)
-        .in("role", ["owner", "admin"]);
+        .in("role", ["owner", "admin", "verifier"]);
 
       const ids = (adminRows || []).map(a => a.user_id);
       const { data: profs } = ids.length > 0
