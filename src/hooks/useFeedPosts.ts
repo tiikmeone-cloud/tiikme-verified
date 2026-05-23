@@ -51,7 +51,7 @@ interface FeedPost {
 
 const FEED_SELECT = `*, repost_of, author:profiles!posts_author_id_fkey(id, username, full_name, role, role_subtype, headline, designation, avatar_url, institution_name, currently_working_at, display_preference, activity_score, sector, is_verified), org:organizations!posts_posted_by_org_fkey(id, name, logo_url, type, slug), poster_profile:profiles!posts_posted_by_user_id_fkey(id, full_name, display_preference)`;
 
-async function fetchFeedPage(pageParam: number, sector: string | null, connectionIds: Set<string>, followedOrgIds: Set<string>, followedUserIds: Set<string>) {
+async function fetchFeedPage(pageParam: number, sector: string | null, connectionIds: Set<string>, followedOrgIds: Set<string>) {
   const { data, error } = await supabase
     .from("posts")
     .select(FEED_SELECT)
@@ -76,7 +76,7 @@ async function fetchFeedPage(pageParam: number, sector: string | null, connectio
       currentUser: { sector: sector || null },
       connectionIds,
       followedOrgIds,
-      followedUserIds,
+      followedUserIds: new Set<string>(),
     });
     return { ...post, _score: score } as FeedPost;
   });
@@ -130,17 +130,6 @@ export function useFeedPosts() {
     staleTime: 10 * 60 * 1000,
   });
 
-  const { data: followedUserIds = new Set<string>() } = useQuery({
-    queryKey: ["feed-followed-users", user?.id],
-    queryFn: async () => {
-      if (!user) return new Set<string>();
-      const { data } = await supabase.from("follows" as any).select("following_id").eq("follower_id", user.id);
-      return new Set<string>((data || []).map((f: any) => f.following_id));
-    },
-    enabled: isReady && !!user,
-    staleTime: 10 * 60 * 1000,
-  });
-
   const {
     data,
     isLoading: loading,
@@ -150,7 +139,7 @@ export function useFeedPosts() {
     refetch,
   } = useInfiniteQuery({
     queryKey: ["feed", user?.id],
-    queryFn: ({ pageParam = 0 }) => fetchFeedPage(pageParam, profile?.sector || null, connectionIds, followedOrgIds, followedUserIds),
+    queryFn: ({ pageParam = 0 }) => fetchFeedPage(pageParam, profile?.sector || null, connectionIds, followedOrgIds),
     getNextPageParam: (lastPage) => lastPage.hasMore ? lastPage.page + 1 : undefined,
     initialPageParam: 0,
     enabled: isReady,

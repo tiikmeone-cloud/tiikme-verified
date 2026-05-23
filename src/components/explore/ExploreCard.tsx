@@ -45,11 +45,13 @@ interface PersonCardProps {
   strandStatus: string;
   onStrand: () => void;
   currentUserId?: string;
+  /** @deprecated removed — no asymmetric user→user following */
   followStatus?: "following" | "none";
+  /** @deprecated removed — no asymmetric user→user following */
   onFollow?: () => void;
 }
 
-export function PersonCard({ p, strandStatus, onStrand, currentUserId, followStatus = "none", onFollow }: PersonCardProps) {
+export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonCardProps) {
   const navigate = useNavigate();
   const flags = getDisplayFlags(p);
   const name = flags.showName ? (p.full_name || p.username || "User") : "Tiikme member";
@@ -131,26 +133,8 @@ export function PersonCard({ p, strandStatus, onStrand, currentUserId, followSta
               ),
             }}
           >
-            {isConnected ? "Connected" : isPending ? "Requested" : "+ Connect"}
+            {isConnected ? "Connected ✓" : isPending ? "Requested" : "+ Connect"}
           </button>
-          {!isConnected && onFollow && (
-            <button
-              type="button"
-              onClick={e => { e.stopPropagation(); onFollow(); }}
-              className="cursor-pointer"
-              style={{
-                padding: "5px 12px", borderRadius: 8,
-                fontSize: 12, fontWeight: 600, border: "1px solid",
-                whiteSpace: "nowrap",
-                ...(followStatus === "following"
-                  ? { background: "rgba(20,184,166,0.10)", color: "#0D9488", borderColor: "rgba(20,184,166,0.30)" }
-                  : { background: "transparent", color: "#6B7280", borderColor: "#E5E7EB" }
-                ),
-              }}
-            >
-              {followStatus === "following" ? "Following ✓" : "+ Follow"}
-            </button>
-          )}
         </div>
       )}
     </article>

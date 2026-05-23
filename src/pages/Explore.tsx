@@ -554,8 +554,6 @@ const Explore = () => {
                   strandStatus={strandMap[p.id] || "none"}
                   onStrand={() => handleStrand(p.id)}
                   currentUserId={user?.id}
-                  followStatus={userFollowMap[p.id] ? "following" : "none"}
-                  onFollow={() => handleFollowUser(p.id)}
                 />
               </GridCell>
             ))}

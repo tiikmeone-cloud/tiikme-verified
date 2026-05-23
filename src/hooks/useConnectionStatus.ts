@@ -1,28 +1,26 @@
 // src/hooks/useConnectionStatus.ts
-// Handles ALL social graph states: connect, follow, block
-// Works for user→user, user→org, and org→user
+// Social graph: Connect (user↔user, approval required) | Follow (user→org, instant) | Org follows (org→user, org→org)
+// NO asymmetric user→user following — Connect is the only user↔user action.
 
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { sendNotification } from "@/lib/notify";
 import { toast } from "sonner";
 
 export type ConnectionState =
-  | "none"           // no relationship
-  | "following"      // current user follows target (user follows)
-  | "connected"      // symmetric connection accepted
-  | "pending_sent"   // current user sent request
-  | "pending_received" // target sent request to current user
-  | "self"           // viewing own profile
-  | "org_following"  // following an org
+  | "none"              // no relationship
+  | "connected"         // symmetric connection accepted (strands)
+  | "pending_sent"      // current user sent connect request
+  | "pending_received"  // target sent request to current user
+  | "self"              // viewing own profile
+  | "org_following"     // following an org (user→org)
   | "blocked";
 
 export interface ConnectionActions {
   state: ConnectionState;
   isLoading: boolean;
   strandId: string | null;
-  follow: () => Promise<void>;
-  unfollow: () => Promise<void>;
   sendRequest: () => Promise<void>;
   acceptRequest: () => Promise<void>;
   declineRequest: () => Promise<void>;
@@ -30,6 +28,8 @@ export interface ConnectionActions {
   disconnect: () => Promise<void>;
   followOrg: (orgId: string) => Promise<void>;
   unfollowOrg: (orgId: string) => Promise<void>;
+  followUserAsOrg: (orgId: string, userId: string) => Promise<void>;
+  unfollowUserAsOrg: (orgId: string, userId: string) => Promise<void>;
 }
 
 export function useConnectionStatus(targetUserId?: string | null): ConnectionActions {
@@ -40,7 +40,6 @@ export function useConnectionStatus(targetUserId?: string | null): ConnectionAct
 
   const currentUserId = user?.id;
 
-  // Load initial state
   useEffect(() => {
     if (!currentUserId || !targetUserId) return;
     if (currentUserId === targetUserId) { setState("self"); return; }
@@ -48,7 +47,6 @@ export function useConnectionStatus(targetUserId?: string | null): ConnectionAct
     let cancelled = false;
 
     async function loadState() {
-      // Check strands (connect relationship)
       const { data: strand } = await supabase
         .from("strands")
         .select("id, status, requester_id, receiver_id")
@@ -59,70 +57,18 @@ export function useConnectionStatus(targetUserId?: string | null): ConnectionAct
 
       if (strand) {
         setStrandId(strand.id);
-        if (strand.status === "accepted") {
-          setState("connected");
-          return;
-        }
+        if (strand.status === "accepted") { setState("connected"); return; }
         if (strand.status === "pending") {
-          if (strand.requester_id === currentUserId) {
-            setState("pending_sent");
-          } else {
-            setState("pending_received");
-          }
+          setState(strand.requester_id === currentUserId ? "pending_sent" : "pending_received");
           return;
         }
       }
 
-      // Check user_follows
-      const { data: follow } = await supabase
-        .from("user_follows")
-        .select("id")
-        .eq("follower_id", currentUserId)
-        .eq("following_id", targetUserId)
-        .maybeSingle();
-
-      if (cancelled) return;
-      setState(follow ? "following" : "none");
+      setState("none");
     }
 
     loadState();
     return () => { cancelled = true; };
-  }, [currentUserId, targetUserId]);
-
-  const follow = useCallback(async () => {
-    if (!currentUserId || !targetUserId) return;
-    setIsLoading(true);
-    try {
-      const { error } = await supabase
-        .from("user_follows")
-        .insert({ follower_id: currentUserId, following_id: targetUserId });
-      if (error) throw error;
-      setState("following");
-      toast.success("Following!");
-    } catch (e: any) {
-      toast.error("Could not follow. Try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [currentUserId, targetUserId]);
-
-  const unfollow = useCallback(async () => {
-    if (!currentUserId || !targetUserId) return;
-    setIsLoading(true);
-    try {
-      const { error } = await supabase
-        .from("user_follows")
-        .delete()
-        .eq("follower_id", currentUserId)
-        .eq("following_id", targetUserId);
-      if (error) throw error;
-      setState("none");
-      toast.success("Unfollowed");
-    } catch (e: any) {
-      toast.error("Could not unfollow. Try again.");
-    } finally {
-      setIsLoading(false);
-    }
   }, [currentUserId, targetUserId]);
 
   const sendRequest = useCallback(async () => {
@@ -138,7 +84,15 @@ export function useConnectionStatus(targetUserId?: string | null): ConnectionAct
       setStrandId(data.id);
       setState("pending_sent");
       toast.success("Connection request sent!");
-    } catch (e: any) {
+      // Notify the receiver
+      sendNotification({
+        userId: targetUserId,
+        actorId: currentUserId,
+        type: "connection_request",
+        title: "Sent you a connection request",
+        actionUrl: `/app/profile/${currentUserId}`,
+      }).catch(() => {});
+    } catch {
       toast.error("Could not send request. Try again.");
     } finally {
       setIsLoading(false);
@@ -146,7 +100,7 @@ export function useConnectionStatus(targetUserId?: string | null): ConnectionAct
   }, [currentUserId, targetUserId]);
 
   const acceptRequest = useCallback(async () => {
-    if (!strandId) return;
+    if (!strandId || !currentUserId || !targetUserId) return;
     setIsLoading(true);
     try {
       const { error } = await supabase
@@ -156,25 +110,30 @@ export function useConnectionStatus(targetUserId?: string | null): ConnectionAct
       if (error) throw error;
       setState("connected");
       toast.success("Connected!");
-    } catch (e: any) {
+      // Notify the original requester
+      sendNotification({
+        userId: targetUserId,
+        actorId: currentUserId,
+        type: "connection_accepted",
+        title: "Accepted your connection request",
+        actionUrl: `/app/profile/${currentUserId}`,
+      }).catch(() => {});
+    } catch {
       toast.error("Could not accept. Try again.");
     } finally {
       setIsLoading(false);
     }
-  }, [strandId]);
+  }, [strandId, currentUserId, targetUserId]);
 
   const declineRequest = useCallback(async () => {
     if (!strandId) return;
     setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from("strands")
-        .delete()
-        .eq("id", strandId);
+      const { error } = await supabase.from("strands").delete().eq("id", strandId);
       if (error) throw error;
       setStrandId(null);
       setState("none");
-    } catch (e: any) {
+    } catch {
       toast.error("Could not decline. Try again.");
     } finally {
       setIsLoading(false);
@@ -185,15 +144,12 @@ export function useConnectionStatus(targetUserId?: string | null): ConnectionAct
     if (!strandId) return;
     setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from("strands")
-        .delete()
-        .eq("id", strandId);
+      const { error } = await supabase.from("strands").delete().eq("id", strandId);
       if (error) throw error;
       setStrandId(null);
       setState("none");
       toast.success("Request withdrawn");
-    } catch (e: any) {
+    } catch {
       toast.error("Could not withdraw. Try again.");
     } finally {
       setIsLoading(false);
@@ -202,19 +158,14 @@ export function useConnectionStatus(targetUserId?: string | null): ConnectionAct
 
   const disconnect = useCallback(async () => {
     if (!strandId) return;
-    const confirmed = window.confirm("Remove this connection? You can reconnect anytime.");
-    if (!confirmed) return;
     setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from("strands")
-        .delete()
-        .eq("id", strandId);
+      const { error } = await supabase.from("strands").delete().eq("id", strandId);
       if (error) throw error;
       setStrandId(null);
       setState("none");
       toast.success("Connection removed");
-    } catch (e: any) {
+    } catch {
       toast.error("Could not remove connection. Try again.");
     } finally {
       setIsLoading(false);
@@ -231,7 +182,7 @@ export function useConnectionStatus(targetUserId?: string | null): ConnectionAct
       if (error) throw error;
       setState("org_following");
       toast.success("Following organization!");
-    } catch (e: any) {
+    } catch {
       toast.error("Could not follow. Try again.");
     } finally {
       setIsLoading(false);
@@ -249,20 +200,56 @@ export function useConnectionStatus(targetUserId?: string | null): ConnectionAct
         .eq("user_id", currentUserId);
       if (error) throw error;
       setState("none");
-      toast.success("Unfollowed");
-    } catch (e: any) {
+    } catch {
       toast.error("Could not unfollow. Try again.");
     } finally {
       setIsLoading(false);
     }
   }, [currentUserId]);
 
+  const followUserAsOrg = useCallback(async (orgId: string, userId: string) => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from("org_user_follows" as any)
+        .insert({ org_id: orgId, user_id: userId });
+      if (error) throw error;
+      toast.success("Now following this user on behalf of your organization.");
+      sendNotification({
+        userId,
+        actorId: orgId,
+        type: "org_follow",
+        title: "Your organization is now following you",
+        actionUrl: `/app/profile/${userId}`,
+      }).catch(() => {});
+    } catch {
+      toast.error("Could not follow. Try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const unfollowUserAsOrg = useCallback(async (orgId: string, userId: string) => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from("org_user_follows" as any)
+        .delete()
+        .eq("org_id", orgId)
+        .eq("user_id", userId);
+      if (error) throw error;
+      toast.success("Unfollowed");
+    } catch {
+      toast.error("Could not unfollow. Try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   return {
     state,
     isLoading,
     strandId,
-    follow,
-    unfollow,
     sendRequest,
     acceptRequest,
     declineRequest,
@@ -270,6 +257,8 @@ export function useConnectionStatus(targetUserId?: string | null): ConnectionAct
     disconnect,
     followOrg,
     unfollowOrg,
+    followUserAsOrg,
+    unfollowUserAsOrg,
   };
 }
 
@@ -300,9 +289,13 @@ export async function sendConnectionRequest(
   } as any);
   if (error) throw error;
 
-  if (status === "accepted" && targetProfile?.org_id) {
-    await supabase.from("org_followers").insert({ org_id: targetProfile.org_id, user_id: currentUserId } as any).then(() => {});
-  }
+  sendNotification({
+    userId: targetUserId,
+    actorId: currentUserId,
+    type: "connection_request",
+    title: "Sent you a connection request",
+    actionUrl: `/app/profile/${currentUserId}`,
+  }).catch(() => {});
 
   return status;
 }

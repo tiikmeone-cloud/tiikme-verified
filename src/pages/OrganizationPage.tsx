@@ -92,9 +92,13 @@ export default function OrganizationPage() {
       if (circlesRes.status === "fulfilled") setCommunityCircles((circlesRes.value as any).data || []);
 
       if (user) {
+        const isInstitution = profile?.account_type === "institution";
+        const viewerOrgId = (profile as any)?.org_id;
         const [adminRes, folRes] = await Promise.allSettled([
           supabase.from("org_members").select("role").eq("org_id", data.id).eq("user_id", user.id).maybeSingle(),
-          supabase.from("org_followers").select("id").eq("org_id", data.id).eq("user_id", user.id).maybeSingle(),
+          isInstitution && viewerOrgId
+            ? supabase.from("org_follows" as any).select("id").eq("follower_org_id", viewerOrgId).eq("following_org_id", data.id).maybeSingle()
+            : supabase.from("org_followers").select("id").eq("org_id", data.id).eq("user_id", user.id).maybeSingle(),
         ]);
         if (adminRes.status === "fulfilled") {
           const r = (adminRes.value as any).data?.role;
@@ -108,22 +112,52 @@ export default function OrganizationPage() {
 
   const toggleFollow = async () => {
     if (!user || !org) return;
+    const isInstitution = profile?.account_type === "institution";
+    const viewerOrgId = (profile as any)?.org_id;
+
     if (isFollowing) {
-      await supabase.from("org_followers").delete().eq("org_id", org.id).eq("user_id", user.id);
+      if (isInstitution && viewerOrgId) {
+        await supabase.from("org_follows" as any).delete().eq("follower_org_id", viewerOrgId).eq("following_org_id", org.id);
+      } else {
+        const name = org.name || "this organization";
+        toast(`Unfollow ${name}?`, {
+          action: { label: "Unfollow", onClick: async () => {
+            await supabase.from("org_followers").delete().eq("org_id", org.id).eq("user_id", user.id);
+            setIsFollowing(false); setFollowerCount(p => Math.max(0, p - 1));
+            toast.success(`Unfollowed ${name}`);
+          }},
+          cancel: { label: "Cancel", onClick: () => {} },
+          duration: 5000,
+        });
+        return;
+      }
       setIsFollowing(false); setFollowerCount(p => Math.max(0, p - 1));
       setShowUnfollow(false);
     } else {
-      await supabase.from("org_followers").insert({ org_id: org.id, user_id: user.id });
-      setIsFollowing(true); setFollowerCount(p => p + 1);
-      if (org.created_by) {
-        sendNotification({
-          userId: org.created_by,
-          actorId: user.id,
-          type: "follow",
-          title: `${profile?.full_name || "Someone"} started following ${org.name}`,
-          actionUrl: `/org/${org.slug}`,
-        });
+      if (isInstitution && viewerOrgId) {
+        await supabase.from("org_follows" as any).insert({ follower_org_id: viewerOrgId, following_org_id: org.id });
+        if (org.created_by) {
+          sendNotification({
+            userId: org.created_by,
+            actorId: user.id,
+            type: "follow",
+            title: `An organization started following ${org.name}`,
+            actionUrl: `/org/${org.slug}`,
+          });
+        }
+      } else {
+        await supabase.from("org_followers").insert({ org_id: org.id, user_id: user.id });
+        if (org.created_by) {
+          sendNotification({
+            userId: org.created_by,
+            actorId: user.id,
+            type: "follow",
+            title: `${profile?.full_name || "Someone"} started following ${org.name}`,
+            actionUrl: `/org/${org.slug}`,
+          });
+        }
       }
+      setIsFollowing(true); setFollowerCount(p => p + 1);
     }
   };
 

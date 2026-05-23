@@ -10,6 +10,7 @@ import {
   Repeat2,
   Send,
   Trash2,
+  UserX,
 } from "lucide-react";
 import { toast } from "sonner";
 import AvatarSquare from "@/components/ui/AvatarSquare";
@@ -94,7 +95,7 @@ export function PostCard({
   const [showMenu, setShowMenu] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [likeAnimating, setLikeAnimating] = useState(false);
-  const [followState, setFollowState] = useState<"none" | "pending">("none");
+  const [connectState, setConnectState] = useState<"none" | "pending">("none");
   const [sharePostId, setSharePostId] = useState<string | null>(null);
   const { user, profile: authProfile } = useAuth();
   const menuRef = useRef<HTMLDivElement>(null);
@@ -126,7 +127,7 @@ export function PostCard({
   const isRepost = !!post.repost_of;
   const isEdited = post.is_edited;
   const isConnected = !isOrgPost && author?.id && connectionIds.has(author.id);
-  const showFollow = !isOrgPost && !isOwn && !isConnected && author?.id;
+  const showConnect = !isOrgPost && !isOwn && !isConnected && author?.id;
 
   const liked = myLikes[post.id] || false;
   const likeCount = likeCounts[post.id] || 0;
@@ -202,15 +203,12 @@ export function PostCard({
     toggleLike(post.id);
   };
 
-  const handleFollow = async () => {
+  const handleConnect = async () => {
     if (!user || !author?.id) return;
     const { sendConnectionRequest } = await import("@/hooks/useConnectionStatus");
     const result = await sendConnectionRequest(user.id, author.id, authProfile?.full_name || "Someone");
-    if (result === null) {
-      setFollowState("pending");
-      return;
-    }
-    setFollowState(result === "accepted" ? "none" : "pending");
+    if (result === null) { setConnectState("pending"); return; }
+    setConnectState(result === "accepted" ? "none" : "pending");
     if (result === "accepted") toast.success("Connected!");
   };
 
@@ -267,7 +265,7 @@ export function PostCard({
               <AvatarSquare src={displayAvatar} name={displayName} size={40} />
             </Link>
             <div className="min-w-0 flex-1">
-              <div className="flex items-start gap-1.5 min-w-0">
+              <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
                 <Link
                   to={profileLink}
                   className="hover:underline min-w-0"
@@ -276,8 +274,13 @@ export function PostCard({
                   {displayName}
                 </Link>
                 {(author?.is_verified || post.org?.is_verified) && (
-                  <span className="shrink-0" style={{ marginTop: 1 }}>
+                  <span className="shrink-0">
                     <VerifiedBadge size={14} />
+                  </span>
+                )}
+                {isConnected && (
+                  <span className="shrink-0" style={{ fontSize: 11, fontWeight: 600, color: "#34C759", background: "rgba(52,199,89,0.10)", border: "1px solid rgba(52,199,89,0.20)", borderRadius: 999, padding: "1px 7px" }}>
+                    Connected
                   </span>
                 )}
               </div>
@@ -305,7 +308,22 @@ export function PostCard({
                 <MoreHorizontal style={{ width: 16, height: 16 }} />
               </button>
               {showMenu && (
-                <div className="absolute right-0 top-8 z-[100]" style={{ width: 180, borderRadius: 12, padding: "8px 0", background: "#FFFFFF", border: "1px solid #E5E7EB", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
+                <div className="absolute right-0 top-8 z-[100]" style={{ width: 190, borderRadius: 12, padding: "8px 0", background: "#FFFFFF", border: "1px solid #E5E7EB", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
+                  {isConnected && (
+                    <button type="button" onClick={() => {
+                      setShowMenu(false);
+                      toast(`Disconnect from ${displayName}?`, {
+                        action: { label: "Disconnect", onClick: async () => {
+                          await supabase.from("strands").delete().filter("requester_id", "in", `(${user?.id},${author?.id})`).filter("receiver_id", "in", `(${author?.id},${user?.id})`);
+                          toast.success(`Disconnected from ${displayName}`);
+                        }},
+                        cancel: { label: "Cancel", onClick: () => {} },
+                        duration: 5000,
+                      });
+                    }} className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "10px 16px", fontSize: 14, color: "#EF4444" }}>
+                      <UserX style={{ width: 14, height: 14 }} /> Disconnect
+                    </button>
+                  )}
                   <button type="button" onClick={handleCopyLink} className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "10px 16px", fontSize: 14, color: "#1A1A2E" }}>
                     <Copy style={{ width: 14, height: 14 }} /> Copy Link
                   </button>
@@ -409,24 +427,25 @@ export function PostCard({
           <CommentPanel postId={post.id} table="post_comments" postAuthorId={post.author_id} postUrlPrefix="/app/post" />
         )}
 
-        {showFollow && followState !== "pending" && (
+        {showConnect && connectState !== "pending" && (
           <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end" }}>
             <button
               type="button"
-              onClick={handleFollow}
+              onClick={handleConnect}
               className="cursor-pointer"
               style={{
                 height: 32,
                 padding: "0 14px",
                 borderRadius: 999,
-                background: "rgba(232,115,58,0.10)",
-                color: "#E8733A",
-                border: "1px solid rgba(232,115,58,0.25)",
+                background: "linear-gradient(135deg, #E8733A, #FF6B9D)",
+                color: "#fff",
+                border: "none",
                 fontSize: 12,
                 fontWeight: 600,
+                boxShadow: "0 2px 8px rgba(232,115,58,0.25)",
               }}
             >
-              Follow
+              + Connect
             </button>
           </div>
         )}

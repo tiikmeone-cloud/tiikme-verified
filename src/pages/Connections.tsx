@@ -37,7 +37,7 @@ interface StrandRow {
   receiver?: ProfileLite;
 }
 
-type TabKey = "all" | "requests";
+type TabKey = "all" | "following" | "requests";
 type SortKey = "recent_activity" | "alphabetical" | "mutual" | "recently_connected";
 
 const roleLabel = (r: string) => r ? r.charAt(0).toUpperCase() + r.slice(1).replace(/_/g, " ") : "";
@@ -67,6 +67,7 @@ const Connections = () => {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const [tab, setTab] = useState<TabKey>("all");
+  const [followedOrgs, setFollowedOrgs] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortKey>("recent_activity");
   const [sortOpen, setSortOpen] = useState(false);
@@ -128,6 +129,16 @@ const Connections = () => {
       .order("activity_score", { ascending: false }).limit(12);
 
     return { connected: accepted, pendingIncoming: incomingData, pendingSent: sentData, suggested: suggestedData || [] };
+  }, [user]);
+
+  // Load orgs followed by current user
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("org_followers")
+      .select("org_id, followed_at, org:organizations(id, name, slug, logo_url, type, sub_type, followers_count)")
+      .eq("user_id", user.id)
+      .order("followed_at", { ascending: false })
+      .then(({ data }) => setFollowedOrgs(data || []));
   }, [user]);
 
   const qc = useQueryClient();
@@ -277,7 +288,8 @@ const Connections = () => {
       <div className="sticky z-30" style={{ top: 0, background: "rgba(255,255,255,0.78)", backdropFilter: "blur(14px)", marginInline: -16, paddingInline: 16, borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
         <PrimaryTabs<TabKey>
           tabs={[
-            { key: "all", label: "All", badge: totalConnections },
+            { key: "all", label: "Connected", badge: totalConnections },
+            { key: "following", label: "Following", badge: followedOrgs.length },
             { key: "requests", label: "Requests", badge: totalRequests },
           ]}
           active={tab}
@@ -540,6 +552,69 @@ const Connections = () => {
             </div>
           )}
         </>
+      )}
+
+      {/* FOLLOWING TAB — orgs the user follows */}
+      {tab === "following" && (
+        <div>
+          {followedOrgs.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "48px 0" }}>
+              <Compass style={{ width: 40, height: 40, margin: "0 auto 12px", color: "#6B7094" }} />
+              <p style={{ fontSize: 14, fontWeight: 700, color: "#1A1A2E" }}>Not following any organizations yet</p>
+              <button type="button" onClick={() => navigate("/app/explore")}
+                className="flex items-center gap-1.5 mx-auto mt-3 cursor-pointer"
+                style={{ height: 40, padding: "0 20px", borderRadius: 12, fontSize: 13, fontWeight: 600,
+                  background: "rgba(255,255,255,0.20)", backdropFilter: "blur(12px)",
+                  border: "1px solid rgba(255,255,255,0.25)", color: "#1A1A2E" }}>
+                <Compass style={{ width: 16, height: 16 }} /> Discover organizations
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {followedOrgs.map((row: any) => {
+                const org = row.org;
+                if (!org) return null;
+                return (
+                  <div key={row.org_id}
+                    className="glass-card flex items-center gap-3 cursor-pointer transition-all hover:shadow-sm"
+                    style={{ padding: 12, borderRadius: 12, minHeight: 72 }}
+                    onClick={() => navigate(`/org/${org.slug}`)}>
+                    <AvatarSquare src={org.logo_url} name={org.name || "Org"} size={44} />
+                    <div className="flex-1 min-w-0">
+                      <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{org.name}</p>
+                      {org.type && (
+                        <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>
+                          {org.type.charAt(0).toUpperCase() + org.type.slice(1).replace(/_/g, " ")}
+                          {org.followers_count != null && ` · ${org.followers_count} followers`}
+                        </p>
+                      )}
+                    </div>
+                    <button type="button"
+                      onClick={e => {
+                        e.stopPropagation();
+                        const name = org.name || "this organization";
+                        toast(`Unfollow ${name}?`, {
+                          action: { label: "Unfollow", onClick: async () => {
+                            await supabase.from("org_followers").delete().eq("org_id", row.org_id).eq("user_id", user!.id);
+                            setFollowedOrgs(prev => prev.filter(r => r.org_id !== row.org_id));
+                            toast.success(`Unfollowed ${name}`);
+                          }},
+                          cancel: { label: "Cancel", onClick: () => {} },
+                          duration: 5000,
+                        });
+                      }}
+                      className="cursor-pointer shrink-0 transition-all"
+                      style={{ height: 34, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+                        background: "rgba(20,184,166,0.10)", color: "#0D9488",
+                        border: "1px solid rgba(20,184,166,0.25)" }}>
+                      Following ✓
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       )}
 
       {/* REQUESTS TAB */}

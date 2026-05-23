@@ -247,9 +247,6 @@ const Profile = () => {
 
   const [connectionStatus, setConnectionStatus] = useState<{ status: string | null; direction: string | null; id: string | null }>({ status: null, direction: null, id: null });
   const [connectLoading, setConnectLoading] = useState(false);
-  const [followState, setFollowState] = useState<"following" | "none">("none");
-  const [followerCount, setFollowerCount] = useState(0);
-  const [followingCount, setFollowingCount] = useState(0);
 
   const targetUserId = isOwnProfile ? user?.id : urlUserId;
 
@@ -307,51 +304,6 @@ const Profile = () => {
         if (data) setConnectionStatus({ status: data.status, direction: data.requester_id === user.id ? "sent" : "received", id: data.id });
       });
   }, [user, targetUserId, isOwnProfile]);
-
-  // Load follow status + counts
-  useEffect(() => {
-    if (!targetUserId) return;
-    Promise.allSettled([
-      supabase.from("follows" as any).select("id", { count: "exact", head: true }).eq("following_id", targetUserId),
-      supabase.from("follows" as any).select("id", { count: "exact", head: true }).eq("follower_id", targetUserId),
-      user && !isOwnProfile
-        ? supabase.from("follows" as any).select("id").eq("follower_id", user.id).eq("following_id", targetUserId).maybeSingle()
-        : Promise.resolve({ data: null }),
-    ]).then(([followersRes, followingRes, myFollowRes]) => {
-      if (followersRes.status === "fulfilled") setFollowerCount((followersRes.value as any).count || 0);
-      if (followingRes.status === "fulfilled") setFollowingCount((followingRes.value as any).count || 0);
-      if (myFollowRes.status === "fulfilled") setFollowState((myFollowRes.value as any).data ? "following" : "none");
-    });
-  }, [targetUserId, user, isOwnProfile]);
-
-  const handleToggleFollow = async () => {
-    if (!user || !targetUserId) return;
-    if (followState === "following") {
-      const name = profileData?.full_name || "this person";
-      toast(`Unfollow ${name}?`, {
-        action: {
-          label: "Unfollow",
-          onClick: async () => {
-            const { error } = await supabase.from("follows" as any).delete().eq("follower_id", user.id).eq("following_id", targetUserId);
-            if (!error) { setFollowState("none"); setFollowerCount(c => Math.max(0, c - 1)); }
-            else toast.error("Couldn't unfollow. Try again.");
-          },
-        },
-        cancel: { label: "Cancel", onClick: () => {} },
-        duration: 5000,
-      });
-    } else {
-      const { error } = await supabase.from("follows" as any).insert({ follower_id: user.id, following_id: targetUserId });
-      if (!error) {
-        setFollowState("following");
-        setFollowerCount(c => c + 1);
-        sendNotification({ userId: targetUserId, actorId: user.id, type: "follow", title: "Someone started following you", body: "Check out their profile.", actionUrl: `/app/profile/${user.id}`, data: {} });
-        toast.success("Following!");
-      } else {
-        toast.error("Couldn't follow. Try again.");
-      }
-    }
-  };
 
   useEffect(() => { if (!authLoading) loadProfile(); }, [authLoading, loadProfile]);
 
@@ -855,28 +807,32 @@ const Profile = () => {
     toast.success("User blocked");
   };
 
-  const handleDisconnect = async () => {
+  const handleDisconnect = () => {
     if (!user || !targetUserId) return;
-    if (!confirm(`Disconnect from ${displayName}? You can reconnect anytime.`)) return;
-    const prev = connectionStatus;
-    // Optimistic
-    setConnectionStatus({ status: null, direction: null, id: null });
-    let strandId = connectionStatus.id;
-    if (!strandId) {
-      const { data } = await supabase.from("strands").select("id")
-        .or(`and(requester_id.eq.${user.id},receiver_id.eq.${targetUserId}),and(requester_id.eq.${targetUserId},receiver_id.eq.${user.id})`)
-        .eq("status", "accepted").maybeSingle();
-      strandId = data?.id || null;
-    }
-    if (strandId) {
-      const { error } = await supabase.from("strands").delete().eq("id", strandId);
-      if (error) {
-        setConnectionStatus(prev);
-        toast.error("Could not disconnect");
-        return;
-      }
-    }
-    toast.success("Disconnected");
+    const name = displayName || "this person";
+    toast(`Disconnect from ${name}?`, {
+      action: {
+        label: "Disconnect",
+        onClick: async () => {
+          const prev = connectionStatus;
+          setConnectionStatus({ status: null, direction: null, id: null });
+          let strandId = connectionStatus.id;
+          if (!strandId) {
+            const { data } = await supabase.from("strands").select("id")
+              .or(`and(requester_id.eq.${user.id},receiver_id.eq.${targetUserId}),and(requester_id.eq.${targetUserId},receiver_id.eq.${user.id})`)
+              .eq("status", "accepted").maybeSingle();
+            strandId = data?.id || null;
+          }
+          if (strandId) {
+            const { error } = await supabase.from("strands").delete().eq("id", strandId);
+            if (error) { setConnectionStatus(prev); toast.error("Could not disconnect"); return; }
+          }
+          toast.success(`Disconnected from ${name}`);
+        },
+      },
+      cancel: { label: "Cancel", onClick: () => {} },
+      duration: 5000,
+    });
   };
 
   const handleWithdraw = async () => {
@@ -1068,14 +1024,6 @@ const Profile = () => {
                   <span className="num" style={{ color: "#1A1A2E" }}>{stats.connections}</span>
                   <span style={{ fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Connections</span>
                 </Link>
-                <div style={{ fontSize: 13 }}>
-                  <span className="num" style={{ color: "#1A1A2E" }}>{followerCount}</span>
-                  <span style={{ fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Followers</span>
-                </div>
-                <div style={{ fontSize: 13 }}>
-                  <span className="num" style={{ color: "#1A1A2E" }}>{followingCount}</span>
-                  <span style={{ fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Following</span>
-                </div>
                 {(() => {
                   const score = (profileData as any).activity_score ?? 0;
                   const visible = shouldShowPublicScore({ id: profileData.id, activity_score: score }, authProfile ? { id: authProfile.id } : undefined);
@@ -1110,24 +1058,10 @@ const Profile = () => {
                 })()}
               </div>
 
-              {/* ROW 5: Action buttons */}
+              {/* ROW 5: Action buttons — Connect only for user→user */}
               {!isOwnProfile && (
                 <div className="flex items-center justify-center md:justify-start flex-wrap" style={{ gap: 8, marginTop: 10 }}>
                   {renderConnectButton()}
-                  <button
-                    type="button"
-                    onClick={handleToggleFollow}
-                    className="cursor-pointer"
-                    style={{
-                      height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-                      background: followState === "following" ? "rgba(16,185,129,0.10)" : "rgba(255,255,255,0.25)",
-                      border: followState === "following" ? "1px solid rgba(16,185,129,0.30)" : "1px solid rgba(0,0,0,0.10)",
-                      color: followState === "following" ? "#059669" : "#1A1A2E",
-                      display: "inline-flex", alignItems: "center", gap: 4,
-                    }}
-                  >
-                    {followState === "following" ? "Following ✓" : "+ Follow"}
-                  </button>
                 </div>
               )}
             </div>
