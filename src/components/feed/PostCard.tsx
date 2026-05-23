@@ -314,14 +314,14 @@ export function PostCard({
                   {effectivelyConnected && (
                     <button type="button" onClick={() => {
                       setShowMenu(false);
-                      toast(`Disconnect from ${displayName}?`, {
+                      toast(`Remove connection with ${displayName}?`, {
                         action: { label: "Disconnect", onClick: async () => {
                           if (!user?.id || !author?.id) return;
                           const { error } = await supabase.from("strands").delete()
                             .or(`and(requester_id.eq.${user.id},receiver_id.eq.${author.id}),and(requester_id.eq.${author.id},receiver_id.eq.${user.id})`);
                           if (!error) {
                             setLocalDisconnected(true);
-                            toast.success(`Disconnected from ${displayName}`);
+                            toast.success(`Connection with ${displayName} removed`);
                           } else {
                             toast.error("Could not disconnect. Try again.");
                           }
@@ -330,7 +330,7 @@ export function PostCard({
                         duration: 5000,
                       });
                     }} className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "10px 16px", fontSize: 14, color: "#EF4444" }}>
-                      <UserX style={{ width: 14, height: 14 }} /> Disconnect
+                      <UserX style={{ width: 14, height: 14 }} /> Remove Connection
                     </button>
                   )}
                   <button type="button" onClick={handleCopyLink} className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "10px 16px", fontSize: 14, color: "#1A1A2E" }}>
@@ -436,25 +436,27 @@ export function PostCard({
           <CommentPanel postId={post.id} table="post_comments" postAuthorId={post.author_id} postUrlPrefix="/app/post" />
         )}
 
-        {showConnect && connectState !== "pending" && (
+        {showConnect && (
           <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end" }}>
             <button
               type="button"
-              onClick={handleConnect}
+              onClick={connectState === "none" ? handleConnect : undefined}
+              disabled={connectState === "pending"}
               className="cursor-pointer"
               style={{
                 height: 32,
                 padding: "0 14px",
                 borderRadius: 999,
-                background: "linear-gradient(135deg, #E8733A, #FF6B9D)",
-                color: "#fff",
-                border: "none",
                 fontSize: 12,
                 fontWeight: 600,
-                boxShadow: "0 2px 8px rgba(232,115,58,0.25)",
+                border: "none",
+                ...(connectState === "pending"
+                  ? { background: "rgba(255,184,0,0.12)", color: "#B8860B", border: "1px solid rgba(255,184,0,0.30)", cursor: "default" }
+                  : { background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", boxShadow: "0 2px 8px rgba(232,115,58,0.25)" }
+                ),
               }}
             >
-              + Connect
+              {connectState === "pending" ? "Request Sent" : "+ Connect"}
             </button>
           </div>
         )}

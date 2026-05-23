@@ -204,13 +204,13 @@ const Connections = () => {
   const handleDisconnect = (s: StrandRow) => {
     const other = getOther(s);
     const name = other?.full_name || "this user";
-    toast(`Disconnect from ${name}?`, {
+    toast(`Remove connection with ${name}?`, {
       action: { label: "Disconnect", onClick: async () => {
         const prev = qc.getQueryData(queryKey);
         patchCache((d) => ({ ...d, connected: d.connected.filter((x: any) => x.id !== s.id) }));
         const { error } = await supabase.from("strands").delete().eq("id", s.id);
         if (error) { qc.setQueryData(queryKey, prev); toast.error(error.message); return; }
-        toast.success(`Disconnected from ${name}`);
+        toast.success(`Connection with ${name} removed`);
       }},
       cancel: { label: "Cancel", onClick: () => {} },
       duration: 5000,
@@ -488,7 +488,7 @@ const Connections = () => {
                               onClick={e => { e.stopPropagation(); setOpenMenuId(null); handleDisconnect(s); }}
                               className="w-full text-left flex items-center gap-2.5 cursor-pointer hover:bg-[#FFF5F5] transition-colors"
                               style={{ padding: "9px 14px", fontSize: 13, color: "#EF4444" }}>
-                              <UserX style={{ width: 14, height: 14 }} /> Disconnect
+                              <UserX style={{ width: 14, height: 14 }} /> Remove Connection
                             </button>
                             <button type="button"
                               onClick={e => { e.stopPropagation(); setOpenMenuId(null); toast.info("Block — coming soon"); }}

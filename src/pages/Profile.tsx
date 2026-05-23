@@ -810,7 +810,7 @@ const Profile = () => {
   const handleDisconnect = () => {
     if (!user || !targetUserId) return;
     const name = displayName || "this person";
-    toast(`Disconnect from ${name}?`, {
+    toast(`Remove connection with ${name}?`, {
       action: {
         label: "Disconnect",
         onClick: async () => {
@@ -827,7 +827,7 @@ const Profile = () => {
             const { error } = await supabase.from("strands").delete().eq("id", strandId);
             if (error) { setConnectionStatus(prev); toast.error("Could not disconnect"); return; }
           }
-          toast.success(`Disconnected from ${name}`);
+          toast.success(`Connection with ${name} removed`);
         },
       },
       cancel: { label: "Cancel", onClick: () => {} },
@@ -866,7 +866,7 @@ const Profile = () => {
           <DropdownMenuContent align="start" className="bg-white">
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleDisconnect} className="text-red-500 focus:text-red-500">
-              <UserX className="w-3.5 h-3.5 mr-2" /> Disconnect
+              <UserX className="w-3.5 h-3.5 mr-2" /> Remove Connection
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleBlock} className="text-red-500 focus:text-red-500">
               <Ban className="w-3.5 h-3.5 mr-2" /> Block
