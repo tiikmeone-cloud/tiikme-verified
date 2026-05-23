@@ -757,11 +757,25 @@ function CircleComposer({ circle, linkedOrg, canPostAsOrg, onClose, onPosted }: 
   const [step, setStep] = useState<"type" | "form">("type");
   const [postType, setPostType] = useState("discussion");
   const [signtype, setSigntype] = useState("full_profile");
+  const [postAsOrgId, setPostAsOrgId] = useState<string | null>(null);
+  const [adminOrgs, setAdminOrgs] = useState<{ id: string; name: string; logo_url: string | null }[]>([]);
   const [postAsOrg, setPostAsOrg] = useState(false);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [saving, setSaving] = useState(false);
   const [softWarn, setSoftWarn] = useState<{ open: boolean; category?: string; matchedTerm?: string }>({ open: false });
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("org_admins")
+      .select("org_id, organizations(id, name, logo_url)")
+      .eq("user_id", user.id)
+      .in("role", ["owner", "admin"])
+      .then(({ data }) => {
+        const orgs = (data || []).map((r: any) => r.organizations).filter(Boolean);
+        setAdminOrgs(orgs);
+      });
+  }, [user]);
 
   const proceedInsert = async () => {
     if (!user) return;
@@ -772,6 +786,7 @@ function CircleComposer({ circle, linkedOrg, canPostAsOrg, onClose, onPosted }: 
       posted_as_org_id: postAsOrg ? circle.linked_org_id : null,
       title: title.trim() || null, body: body.trim(),
       content: body.trim(),
+      ...(postAsOrgId ? { posted_as_org_id: postAsOrgId } : {}),
     }).select("*, author:profiles!circle_posts_author_id_fkey(id, full_name, avatar_url, role), posted_org:organizations!circle_posts_posted_as_org_id_fkey(id, name, logo_url, slug)").single();
     setSaving(false);
     if (error) { toast.error(error.message); return; }
@@ -902,6 +917,23 @@ function CircleComposer({ circle, linkedOrg, canPostAsOrg, onClose, onPosted }: 
                 <option key={key} value={key}>{(conf as any).label} — {(conf as any).hint}</option>
               ))}
             </select>
+            {adminOrgs.length > 0 && (
+              <div style={{ marginBottom: 12 }}>
+                <p style={{ fontSize: 11, fontWeight: 700, color: "#1A1A2E", marginBottom: 6 }}>Post on behalf of org (optional)</p>
+                <select
+                  value={postAsOrgId || ""}
+                  onChange={e => setPostAsOrgId(e.target.value || null)}
+                  className="w-full outline-none box-border"
+                  style={{
+                    height: 36, borderRadius: 10, padding: "0 12px", fontSize: 12,
+                    background: "rgba(255,255,255,0.4)", border: "1px solid rgba(0,0,0,0.10)",
+                  }}
+                >
+                  <option value="">— As myself —</option>
+                  {adminOrgs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+                </select>
+              </div>
+            )}
 
             {showRisk && (
               <div

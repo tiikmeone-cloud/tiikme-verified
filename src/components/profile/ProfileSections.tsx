@@ -203,11 +203,13 @@ interface SectionProps {
 export const ExperienceSection = ({ items, isOwnProfile, onAdd, onDelete, onToggleVisibility, onStatusChange }: SectionProps) => {
   const { lookupBatch, getLogo } = useCompanyLogos();
   const MAX = 3;
+  const [showAll, setShowAll] = useState(false);
   useEffect(() => {
     const names = items.map(e => e.company_name || e.institution_name || "").filter(Boolean);
     if (names.length > 0) lookupBatch(names);
   }, [items, lookupBatch]);
-  const visible = items.slice(0, MAX);
+  const visible = showAll ? items : items.slice(0, MAX);
+  if (items.length === 0 && !isOwnProfile) return null;
 
   return (
     <SectionBox title="Experience" icon={Briefcase} iconColor="#4A90D9" borderColor="#4A90D9" count={items.length} isOwnProfile={isOwnProfile} onAdd={onAdd}>
@@ -229,7 +231,7 @@ export const ExperienceSection = ({ items, isOwnProfile, onAdd, onDelete, onTogg
                     )}
                   </span>
                 }
-                line2={companyName}
+                line2={[companyName, exp.employment_type].filter(Boolean).join(" · ")}
                 line3={getDuration(exp)}
                 line4={exp.work_location || undefined}
                 right={
@@ -251,8 +253,8 @@ export const ExperienceSection = ({ items, isOwnProfile, onAdd, onDelete, onTogg
             );
           })}
           {items.length > MAX && (
-            <button type="button" className="cursor-pointer" style={{ fontSize: 12, fontWeight: 400, color: "#E8733A", marginTop: 4, background: "none", border: "none", padding: 0 }}>
-              See all {items.length} →
+            <button type="button" onClick={() => setShowAll(v => !v)} className="cursor-pointer" style={{ fontSize: 12, fontWeight: 400, color: "#E8733A", marginTop: 4, background: "none", border: "none", padding: 0 }}>
+              {showAll ? "Show less ↑" : `See all ${items.length} →`}
             </button>
           )}
         </>
@@ -439,7 +441,14 @@ export const SkillsSection = ({ skills, isOwnProfile, onAdd, onRemoveSkill }: {
   return (
     <SectionBox title="Skills" icon={Star} iconColor="#8B5CF6" borderColor="#8B5CF6" count={skills.length} isOwnProfile={isOwnProfile} onAdd={onAdd}>
       {skills.length === 0 ? (
-        <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "4px 0" }}>No skills added</p>
+        isOwnProfile ? (
+          <button type="button" onClick={onAdd}
+            className="flex items-center gap-2 cursor-pointer w-full text-left"
+            style={{ background: "rgba(139,92,246,0.05)", border: "1px dashed rgba(139,92,246,0.30)", borderRadius: 10, padding: "10px 12px", marginTop: 4 }}>
+            <Plus style={{ width: 14, height: 14, color: "#8B5CF6", flexShrink: 0 }} />
+            <span style={{ fontSize: 13, color: "#8B5CF6", fontWeight: 500 }}>Add your top skills</span>
+          </button>
+        ) : null
       ) : (
         <div className="flex flex-wrap" style={{ gap: 6, padding: "8px 0" }}>
           {visible.map((s: string) => (

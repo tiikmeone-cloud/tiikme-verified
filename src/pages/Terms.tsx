@@ -134,7 +134,7 @@ export default function Terms() {
         <List items={[
           "Your profile, photo, bio, and all personal details",
           "All posts you created (Feed and Circles)",
-          "All direct messages (Pings) you sent",
+          "Your message and conversation history",
           "Your connection history",
           "All verification documents you submitted",
           "Your notification history",

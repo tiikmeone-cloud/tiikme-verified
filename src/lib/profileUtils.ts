@@ -17,7 +17,8 @@ function stripCompanySuffix(text?: string | null): string {
 
 /**
  * getProfileSubtitle — canonical identity subtitle.
- * Priority: headline → "Title @ Company" → role-specific fields → role label
+ * Priority: headline → "Title @ Company" → role-specific fields → role_subtype
+ * NEVER returns a generic role name like "Professional", "Doctor", "Student"
  */
 export function getProfileSubtitle(profile: any): string {
   if (!profile) return '';
@@ -29,47 +30,48 @@ export function getProfileSubtitle(profile: any): string {
   const at = (title: string, place: string) =>
     title && place ? `${title} @ ${place}` : title || place;
 
+  const sub = (profile.role_subtype || '').replace(/_/g, ' ');
+
   if (r === 'student') {
     const parts = [rm.degree, profile.institution_name || profile.currently_working_at].filter(Boolean);
-    return sanitizeIdentityText(parts.join(' · ') || 'Student');
+    return sanitizeIdentityText(parts.join(' · ') || sub);
   }
   if (r === 'professional') {
     const title = profile.designation || rm.jobTitle || '';
     const company = profile.currently_working_at || rm.company || '';
-    return sanitizeIdentityText(at(title, company) || (profile.role_subtype ? profile.role_subtype.replace(/_/g,' ') : ''));
+    return sanitizeIdentityText(at(title, company) || (profile.role_subtype ? profile.role_subtype.replace(/_/g,' ') : '') || sub);
   }
   if (r === 'founder') {
     const company = rm.company || profile.currently_working_at || '';
-    return sanitizeIdentityText(company ? `Founder @ ${company}` : 'Founder');
+    return sanitizeIdentityText(company ? `Founder @ ${company}` : sub);
   }
   if (r === 'doctor') {
     const title = profile.designation || '';
     const place = rm.hospital || profile.institution_name || '';
-    return sanitizeIdentityText(at(title, place) || 'Doctor');
+    return sanitizeIdentityText(at(title, place) || sub);
   }
   if (r === 'faculty') {
     const title = profile.designation || '';
     const inst = profile.institution_name || rm.institution || '';
-    return sanitizeIdentityText(at(title, inst) || 'Faculty');
+    return sanitizeIdentityText(at(title, inst) || sub);
   }
   if (r === 'researcher') {
     const title = profile.designation || '';
     const inst = profile.institution_name || rm.institution || '';
-    return sanitizeIdentityText(at(title, inst) || 'Researcher');
+    return sanitizeIdentityText(at(title, inst) || sub);
   }
   if (r === 'creator') {
-    return sanitizeIdentityText(rm.platform || rm.channel || 'Creator');
+    return sanitizeIdentityText(rm.platform || rm.channel || sub);
   }
   if (r === 'freelancer') {
     const title = profile.designation || rm.specialty || '';
     const company = profile.currently_working_at || '';
-    return sanitizeIdentityText(at(title, company) || 'Freelancer');
+    return sanitizeIdentityText(at(title, company) || sub);
   }
   if (r === 'investor') {
-    return sanitizeIdentityText(rm.fund || rm.firm || profile.currently_working_at || 'Investor');
+    return sanitizeIdentityText(rm.fund || rm.firm || profile.currently_working_at || sub);
   }
 
-  const sub = profile.role_subtype ? profile.role_subtype.replace(/_/g,' ') : '';
   const desig = profile.designation || profile.currently_working_at || '';
   return sanitizeIdentityText(desig || sub || '');
 }

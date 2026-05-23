@@ -205,9 +205,16 @@ const FeedComposer = ({ onPublished }: { onPublished: () => void }) => {
   };
 
   const removeAttach = (idx: number) => {
-    setAttachPreviews(prev => prev.filter((_, i) => i !== idx));
+    setAttachPreviews(prev => {
+      const item = prev[idx];
+      if (item?.url) URL.revokeObjectURL(item.url);
+      return prev.filter((_, i) => i !== idx);
+    });
     setAttachFiles(prev => prev.filter((_, i) => i !== idx));
   };
+
+  // Revoke all blob URLs on unmount
+  useEffect(() => () => { attachPreviews.forEach(a => { if (a.url) URL.revokeObjectURL(a.url); }); }, []);
 
   const handlePublish = async () => {
     if (!content.trim() && attachFiles.length === 0) return;
@@ -225,12 +232,34 @@ const FeedComposer = ({ onPublished }: { onPublished: () => void }) => {
         if (urlData?.publicUrl) uploadedUrls.push(urlData.publicUrl);
       }
 
-      const { error } = await supabase.from("posts").insert({
-        author_id: user.id, content: content.trim(), post_type: "thought", type: "thought",
+      const trimmed = content.trim();
+      const { data: newPost, error } = await supabase.from("posts").insert({
+        author_id: user.id, content: trimmed, post_type: "thought", type: "thought",
         visibility: "everyone", hashtags: extractHashtags(content),
         image_urls: uploadedUrls.length > 0 ? uploadedUrls : [],
-      } as any).select().single();
+      } as any).select("id").single();
       if (error) throw error;
+
+      // Process @mentions — notify mentioned users/pages
+      const mentionUsernames = (trimmed.match(/@(\w[\w.]*)/g) || []).map(m => m.slice(1));
+      if (mentionUsernames.length > 0 && newPost) {
+        const [{ data: mentionedUsers }, { data: mentionedPages }] = await Promise.all([
+          supabase.from("profiles").select("id, username").in("username", mentionUsernames),
+          supabase.from("pages").select("id, slug").in("slug", mentionUsernames),
+        ]);
+        const mentionInserts: any[] = [];
+        for (const mu of mentionedUsers || []) {
+          if (mu.id === user.id) continue;
+          mentionInserts.push({ post_id: newPost.id, mentioned_user_id: mu.id });
+          sendNotification({ userId: mu.id, actorId: user.id, type: "mention", title: "Mentioned you in a post", body: trimmed.slice(0, 80), actionUrl: `/post/${newPost.id}`, data: { post_id: newPost.id } });
+        }
+        for (const mp of mentionedPages || []) {
+          mentionInserts.push({ post_id: newPost.id, mentioned_page_id: mp.id });
+        }
+        if (mentionInserts.length > 0) await supabase.from("post_mentions").insert(mentionInserts);
+      }
+
+      await supabase.rpc("increment_score" as any, { uid: user.id, amount: 5 }).then(() => {});
       setContent(""); setAttachPreviews([]); setAttachFiles([]);
       toast.success("Posted");
       onPublished();
@@ -245,20 +274,38 @@ const FeedComposer = ({ onPublished }: { onPublished: () => void }) => {
       <div className="flex items-center" style={{ gap: 10 }}>
         <AvatarSquare src={profile?.avatar_url} name={profile?.full_name || "You"} size={36} />
         <div className="flex-1 min-w-0 relative">
-          <input
-            type="text"
+          <textarea
+            ref={textareaRef}
             value={content}
-            onChange={(e) => setContent(e.target.value.slice(0, 3000))}
-            placeholder="What's on your mind?"
-            className="w-full outline-none"
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            placeholder="What's on your mind? Use @ to mention"
+            className="w-full outline-none resize-none"
             style={{
-              height: 40, background: "#F5F5F5", border: "1px solid #E8E8E8", borderRadius: 10,
-              padding: "0 12px", fontSize: 14, color: "#1A1A2E",
+              minHeight: 40, maxHeight: 160, overflow: "hidden",
+              background: "#F5F5F5", border: "1px solid #E8E8E8", borderRadius: 10,
+              padding: "10px 12px", fontSize: 14, color: "#1A1A2E", lineHeight: "1.4",
             }}
             onFocus={e => { e.currentTarget.style.borderColor = "rgba(232,115,58,0.50)"; }}
             onBlur={e => { e.currentTarget.style.borderColor = "#E8E8E8"; }}
-            onKeyDown={(e) => { if (e.key === "Enter" && (content.trim() || attachFiles.length > 0)) handlePublish(); }}
           />
+          {/* Mention suggestions dropdown */}
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="absolute left-0 right-0 z-20 rounded-xl overflow-hidden"
+              style={{ top: "100%", marginTop: 4, background: "#fff", border: "1px solid #E5E7EB", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
+              {suggestions.map((s, idx) => (
+                <button key={s.id} type="button" onClick={() => insertMention(s)}
+                  className="flex items-center gap-2.5 w-full px-3 py-2.5 text-left cursor-pointer"
+                  style={{ background: idx === selectedIdx ? "rgba(232,115,58,0.08)" : "transparent", borderBottom: idx < suggestions.length - 1 ? "1px solid #F0F0F0" : "none" }}>
+                  <AvatarSquare src={s.avatar_url} name={s.display} size={28} />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13px] font-semibold truncate" style={{ color: "#1A1A2E" }}>{s.display}</p>
+                    {s.username && <p className="text-[11px]" style={{ color: "#9CA3AF" }}>@{s.username} · {s.type === "page" ? "Page" : "User"}</p>}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <button type="button" onClick={handleAttach} className="cursor-pointer shrink-0 flex items-center justify-center" style={{ width: 36, height: 36, color: "#9CA3C0" }}>
           <Paperclip style={{ width: 18, height: 18 }} />
@@ -274,7 +321,7 @@ const FeedComposer = ({ onPublished }: { onPublished: () => void }) => {
       {attachPreviews.length > 0 && (
         <div className="flex flex-wrap gap-2" style={{ marginTop: 8 }}>
           {attachPreviews.map((att, i) => (
-            <div key={i} className="relative" style={{ borderRadius: 6, overflow: "hidden", border: "1px solid #E8E8E8" }}>
+            <div key={`${att.name}-${att.size}-${i}`} className="relative" style={{ borderRadius: 6, overflow: "hidden", border: "1px solid #E8E8E8" }}>
               {att.type.startsWith("image/") ? (
                 <img src={att.url} alt="" loading="lazy" style={{ height: 80, width: "auto", maxWidth: 120, objectFit: "cover", borderRadius: 6 }} />
               ) : (
@@ -377,7 +424,12 @@ const SuggestedWidget = ({ connectionIds }: { connectionIds: Set<string> }) => {
     supabase.from("profiles").select("id, full_name, role, role_subtype, headline, avatar_url, institution_name, currently_working_at, designation, role_metadata")
       .neq("id", user.id).order("activity_score", { ascending: false }).limit(20)
       .then(({ data }) => {
-        const filtered = (data || []).filter(p => !connectionIds.has(p.id));
+        const filtered = (data || []).filter(p => {
+          if (connectionIds.has(p.id)) return false;
+          const priv = (p.privacy as any) || {};
+          if (priv.show_in_explore === false) return false;
+          return true;
+        });
         setSuggested(filtered.slice(0, 3));
       });
   }, [user, connectionIds]);
@@ -429,6 +481,112 @@ const SuggestedWidget = ({ connectionIds }: { connectionIds: Set<string> }) => {
   );
 };
 
+/* ─── CIRCLES DISCOVERY WIDGET ─── */
+const CirclesWidget = () => {
+  const { user, profile } = useAuth();
+  const [circles, setCircles] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    // Find circles the user hasn't joined yet, filtered by their role/sector
+    supabase.from("circles")
+      .select("id, name, slug, description, member_count, category")
+      .eq("is_public", true)
+      .order("member_count", { ascending: false })
+      .limit(8)
+      .then(({ data }) => {
+        if (!data) return;
+        // Prefer circles matching user's role
+        const role = profile?.role || "";
+        const sorted = [...data].sort((a, b) => {
+          const aMatch = a.category?.toLowerCase().includes(role) ? 1 : 0;
+          const bMatch = b.category?.toLowerCase().includes(role) ? 1 : 0;
+          return bMatch - aMatch;
+        });
+        setCircles(sorted.slice(0, 3));
+      });
+  }, [user, profile?.role]);
+
+  if (!circles.length) return null;
+
+  return (
+    <div className="glass-card" style={{ padding: 12, borderRadius: 16, marginTop: 12 }}>
+      <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
+        <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>Discover Circles</span>
+        <Link to="/app/circles" style={{ fontSize: 12, color: "#E8733A" }}>See all</Link>
+      </div>
+      {circles.map((c, i) => (
+        <Link
+          key={c.id}
+          to={`/app/circles/${c.slug || c.id}`}
+          className="flex items-center hover:opacity-80 transition-opacity"
+          style={{ gap: 10, padding: "7px 0", borderBottom: i < circles.length - 1 ? "1px solid var(--border-subtle)" : "none", textDecoration: "none" }}
+        >
+          <div
+            className="flex items-center justify-center shrink-0"
+            style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(139,92,246,0.10)", border: "1px solid rgba(139,92,246,0.20)" }}
+          >
+            <span style={{ fontSize: 16 }}>
+              {c.category === "tech" ? "💻" : c.category === "finance" ? "📊" : c.category === "healthcare" ? "🏥" : c.category === "education" ? "🎓" : "💬"}
+            </span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="truncate" style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>{c.name}</p>
+            <p style={{ fontSize: 11, color: "#9CA3C0" }}>
+              <span className="num">{(c.member_count || 0).toLocaleString()}</span> members
+            </p>
+          </div>
+        </Link>
+      ))}
+    </div>
+  );
+};
+
+/* ─── OPPORTUNITIES TEASER WIDGET ─── */
+const OpportunitiesWidget = () => {
+  const { user, profile } = useAuth();
+  const [opps, setOpps] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("opportunities")
+      .select("id, title, company_name, location, type")
+      .eq("status", "open")
+      .order("created_at", { ascending: false })
+      .limit(3)
+      .then(({ data }) => setOpps(data || []));
+  }, [user]);
+
+  if (!opps.length) return null;
+
+  return (
+    <div className="glass-card" style={{ padding: 12, borderRadius: 16, marginTop: 12 }}>
+      <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
+        <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>Open Roles</span>
+        <Link to="/app/opportunities" style={{ fontSize: 12, color: "#E8733A" }}>See all</Link>
+      </div>
+      {opps.map((o, i) => (
+        <Link
+          key={o.id}
+          to={`/app/opportunities?opp=${o.id}`}
+          className="flex flex-col hover:opacity-80 transition-opacity"
+          style={{ padding: "7px 0", borderBottom: i < opps.length - 1 ? "1px solid var(--border-subtle)" : "none", textDecoration: "none" }}
+        >
+          <p className="truncate" style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>{o.title}</p>
+          <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>
+            {[o.company_name, o.location].filter(Boolean).join(" · ")}
+          </p>
+          {o.type && (
+            <span style={{ marginTop: 3, fontSize: 11, fontWeight: 500, padding: "1px 6px", borderRadius: 4, background: "rgba(232,115,58,0.10)", color: "#E8733A", alignSelf: "flex-start" }}>
+              {o.type}
+            </span>
+          )}
+        </Link>
+      ))}
+    </div>
+  );
+};
+
 /* ─── FEED PAGE ─── */
 const Feed = () => {
   const { posts: livePosts, loading, loadingMore, hasMore, loadMore, refresh } = useFeedPosts();
@@ -447,6 +605,9 @@ const Feed = () => {
   const [searchParams] = useSearchParams();
   const targetPostId = searchParams.get("post");
   const scrolledRef = useRef(false);
+  const [showFeedPrefs, setShowFeedPrefs] = useState(false);
+  const [hideOrgPosts, setHideOrgPosts] = useState(() => localStorage.getItem("feed_hide_org") === "1");
+  const [hideCirclePosts, setHideCirclePosts] = useState(() => localStorage.getItem("feed_hide_circle") === "1");
 
   // Load connection IDs
   useEffect(() => {
@@ -491,10 +652,12 @@ const Feed = () => {
   const visiblePosts = useMemo(() =>
     livePosts
       .filter((p: any) => !deletedIds.has(p.id))
+      .filter((p: any) => !(hideOrgPosts && p.posted_as_org_id))
+      .filter((p: any) => !(hideCirclePosts && p.circle_id))
       .filter((p: any) => !feedPrefs.hideOrgPosts || !p.posted_by_org)
       .filter((p: any) => !feedPrefs.hideSharedPosts || !(p.visibility === "workspace" || p.is_shared_to_feed))
       .map((p: any) => editedPosts[p.id] ? { ...p, ...editedPosts[p.id] } : p),
-    [livePosts, deletedIds, editedPosts, feedPrefs]
+    [livePosts, deletedIds, editedPosts, hideOrgPosts, hideCirclePosts, feedPrefs]
   );
 
   const postIds = useMemo(() => visiblePosts.map((p: any) => p.id), [visiblePosts]);
@@ -592,6 +755,27 @@ const Feed = () => {
 
           <FeedComposer onPublished={refresh} />
 
+          {/* Feed preferences */}
+          <div className="flex justify-end mb-2">
+            <button type="button" onClick={() => setShowFeedPrefs(v => !v)}
+              style={{ fontSize: 12, color: "var(--text-3)", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: "2px 6px" }}>
+              ⚙ Feed settings
+            </button>
+          </div>
+          {showFeedPrefs && (
+            <div style={{ background: "#fff", border: "1px solid #E8E8E8", borderRadius: 12, padding: "12px 16px", marginBottom: 12, fontSize: 13, color: "#1A1A2E" }}>
+              <p style={{ fontWeight: 600, marginBottom: 10 }}>Customize your feed</p>
+              <label className="flex items-center gap-2 cursor-pointer mb-2">
+                <input type="checkbox" checked={hideOrgPosts} onChange={e => { setHideOrgPosts(e.target.checked); localStorage.setItem("feed_hide_org", e.target.checked ? "1" : "0"); }} className="accent-orange-500" />
+                Hide posts from organizations
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={hideCirclePosts} onChange={e => { setHideCirclePosts(e.target.checked); localStorage.setItem("feed_hide_circle", e.target.checked ? "1" : "0"); }} className="accent-orange-500" />
+                Hide posts from circles
+              </label>
+            </div>
+          )}
+
           {loading && !visiblePosts.length && <SkeletonCard count={3} />}
           {feedItems.map((item) => item.kind === "post" ? (
             <SharedFeedPostCard
@@ -638,6 +822,8 @@ const Feed = () => {
         <aside className="hidden md:block shrink-0 sticky top-4 self-start" style={{ width: 280 }}>
           <ActivityWidget score={profile?.activity_score || 0} />
           <SuggestedWidget connectionIds={connectionIds} />
+          <CirclesWidget />
+          <OpportunitiesWidget />
         </aside>
       </div>
 

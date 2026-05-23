@@ -152,7 +152,7 @@ export function useComments() {
         ...p,
         [postId]: Math.max(0, (p[postId] || 0) - 1),
       }));
-      await supabase.from("post_comments").delete().eq("id", commentId);
+      await supabase.from("post_comments").delete().eq("id", commentId).eq("user_id", user?.id ?? "");
     },
     []
   );

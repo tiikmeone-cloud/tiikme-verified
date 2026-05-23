@@ -82,6 +82,7 @@ const Explore = () => {
 
   const [strandMap, setStrandMap] = useState<Record<string, string>>({});
   const [followMap, setFollowMap] = useState<Record<string, boolean>>({});
+  const [userFollowMap, setUserFollowMap] = useState<Record<string, boolean>>({});
   const [memberMap, setMemberMap] = useState<Record<string, boolean>>({});
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
@@ -154,14 +155,17 @@ const Explore = () => {
     );
 
     /* follows + circle membership */
-    const [followsRes, myCirclesRes] = await Promise.all([
+    const [followsRes, myCirclesRes, userFollowsRes] = await Promise.all([
       supabase.from("org_followers").select("org_id").eq("user_id", user.id),
       supabase.from("circle_members").select("circle_id").eq("user_id", user.id),
+      supabase.from("follows" as any).select("following_id").eq("follower_id", user.id),
     ]);
     const fMap: Record<string, boolean> = {};
     (followsRes.data || []).forEach((f: any) => { fMap[f.org_id] = true; });
     const mMap: Record<string, boolean> = {};
     (myCirclesRes.data || []).forEach((m: any) => { mMap[m.circle_id] = true; });
+    const ufMap: Record<string, boolean> = {};
+    ((userFollowsRes as any).data || []).forEach((f: any) => { ufMap[f.following_id] = true; });
 
     /* ─── PEOPLE (relevance filtered, backfill with top activity) ─── */
     const { data: peopleRaw } = await supabase
@@ -285,7 +289,7 @@ const Explore = () => {
       .slice(0, 10)
       .map(([tag, count]) => ({ tag, count }));
 
-    return { sMap, fMap, mMap, people, orgs, circles, posts, postAuthors, hashtags };
+    return { sMap, fMap, mMap, ufMap, people, orgs, circles, posts, postAuthors, hashtags };
   }, [user?.id, profile?.role, profile?.role_subtype, profile?.location_city, profile?.sector, profile?.account_type, viewerInterests.join(",")]);
 
   const { data: exploreData, isLoading } = useQuery({
@@ -300,6 +304,7 @@ const Explore = () => {
       setStrandMap(exploreData.sMap);
       setFollowMap(exploreData.fMap);
       setMemberMap(exploreData.mMap);
+      setUserFollowMap(exploreData.ufMap);
     }
   }, [exploreData]);
 
@@ -339,6 +344,30 @@ const Explore = () => {
     }
   };
 
+  const handleFollowUser = async (personId: string) => {
+    if (!user) return;
+    if (userFollowMap[personId]) {
+      const person = exploreData?.people.find(p => p.id === personId);
+      const name = person?.full_name || "this person";
+      toast(`Unfollow ${name}?`, {
+        action: { label: "Unfollow", onClick: async () => {
+          await supabase.from("follows" as any).delete().eq("follower_id", user.id).eq("following_id", personId);
+          setUserFollowMap(prev => ({ ...prev, [personId]: false }));
+        }},
+        cancel: { label: "Cancel", onClick: () => {} },
+        duration: 5000,
+      });
+    } else {
+      await supabase.from("follows" as any).insert({ follower_id: user.id, following_id: personId });
+      setUserFollowMap(prev => ({ ...prev, [personId]: true }));
+      sendNotification({
+        userId: personId, actorId: user.id, type: "follow",
+        title: `${profile?.full_name || "Someone"} started following you`,
+        actionUrl: `/app/profile/${user.id}`,
+      });
+    }
+  };
+
   const joinCircle = async (circleId: string) => {
     if (!user) return;
     const { error } = await supabase.from("circle_members").insert({ circle_id: circleId, user_id: user.id });
@@ -370,6 +399,21 @@ const Explore = () => {
 
   return (
     <main className="mx-auto max-w-6xl px-4 md:px-6 pt-4 pb-24 md:pb-12">
+      <PageSEO
+        title="Explore Verified Professionals & Organizations | Tiikme"
+        description="Discover verified professionals, organizations, trending opportunities, and circles on Tiikme — India's professional identity network."
+        canonical="https://tiikme.com/app/explore"
+        ogType="website"
+        twitterCard="summary_large_image"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "SearchResultsPage",
+          name: "Explore | Tiikme",
+          description: "Discover verified professionals and organizations on Tiikme",
+          url: "https://tiikme.com/app/explore",
+          isPartOf: { "@type": "WebSite", name: "Tiikme", url: "https://tiikme.com" },
+        }}
+      />
       {/* Sticky top bar */}
       <div style={{ position: "sticky", top: 0, zIndex: 20, background: "var(--bg-base)", paddingBottom: 12 }}>
         {/* Search */}
@@ -510,6 +554,8 @@ const Explore = () => {
                   strandStatus={strandMap[p.id] || "none"}
                   onStrand={() => handleStrand(p.id)}
                   currentUserId={user?.id}
+                  followStatus={userFollowMap[p.id] ? "following" : "none"}
+                  onFollow={() => handleFollowUser(p.id)}
                 />
               </GridCell>
             ))}
@@ -580,7 +626,7 @@ const Explore = () => {
                   key={h.tag}
                   tag={h.tag}
                   count={h.count}
-                  onClick={() => navigate(`/app/feed?hashtag=${encodeURIComponent(h.tag)}`)}
+                  onClick={() => navigate(`/tag/${encodeURIComponent(h.tag)}`)}
                 />
               ))}
             </div>

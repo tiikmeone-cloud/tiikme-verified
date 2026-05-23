@@ -12,6 +12,7 @@ interface SEOProps {
   canonical?: string;
   jsonLd?: Record<string, any>;
   noIndex?: boolean;
+  dateModified?: string;
 }
 
 export const PageSEO = ({
@@ -25,6 +26,7 @@ export const PageSEO = ({
   canonical,
   jsonLd,
   noIndex = false,
+  dateModified,
 }: SEOProps) => (
   <Helmet>
     <title>{title}</title>
@@ -38,12 +40,15 @@ export const PageSEO = ({
     <meta property="og:type" content={ogType} />
     {canonical && <meta property="og:url" content={canonical} />}
     <meta property="og:site_name" content="Tiikme" />
+    <meta property="og:locale" content="en_IN" />
 
     <meta name="twitter:card" content={twitterCard} />
     <meta name="twitter:site" content="@tiikme" />
     <meta name="twitter:title" content={ogTitle || title} />
     <meta name="twitter:description" content={ogDescription || description} />
     <meta name="twitter:image" content={ogImage} />
+
+    {dateModified && <meta property="article:modified_time" content={dateModified} />}
 
     {jsonLd && (
       <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
@@ -52,6 +57,7 @@ export const PageSEO = ({
 );
 
 // Helper builders
+
 export const profileSEO = (p: {
   full_name?: string | null;
   headline?: string | null;
@@ -62,14 +68,17 @@ export const profileSEO = (p: {
   location_city?: string | null;
   location_state?: string | null;
   username?: string | null;
+  is_verified?: boolean | null;
+  created_at?: string | null;
 }) => {
   const name = p.full_name || "User";
   const desc = [
     p.designation && p.institution_name ? `${name} is a ${p.designation} at ${p.institution_name}.` : "",
-    "Verified professional on Tiikme.",
+    p.is_verified ? "Verified professional on Tiikme." : "Professional on Tiikme.",
     p.bio ? p.bio.slice(0, 100) : "",
   ].filter(Boolean).join(" ");
   const loc = [p.location_city, p.location_state].filter(Boolean).join(", ");
+  const profileUrl = p.username ? absoluteUrl(`/${p.username}`) : undefined;
 
   return {
     title: `${name}${p.headline ? ` - ${p.headline}` : ""} | Tiikme`,
@@ -78,19 +87,50 @@ export const profileSEO = (p: {
     ogDescription: [p.headline, loc].filter(Boolean).join(". "),
     ogImage: p.avatar_url || undefined,
     ogType: "profile" as const,
+    twitterCard: "summary_large_image" as const,
     canonical: p.username ? absoluteUrl(`/${p.username}`) : undefined,
+    dateModified: new Date().toISOString(),
     jsonLd: {
       "@context": "https://schema.org",
-      "@type": "Person",
-      name,
-      ...(p.headline && { jobTitle: p.headline }),
-      ...(p.institution_name && { worksFor: { "@type": "Organization", name: p.institution_name } }),
-      ...(loc && { address: { "@type": "PostalAddress", addressLocality: p.location_city, addressRegion: p.location_state } }),
-      ...(p.avatar_url && { image: p.avatar_url }),
+      "@type": "ProfilePage",
+      name: `${name} on Tiikme`,
       ...(p.username && { url: absoluteUrl(`/${p.username}`) }),
+      ...(p.created_at && { dateCreated: p.created_at }),
+      dateModified: new Date().toISOString(),
+      mainEntity: {
+        "@type": "Person",
+        name,
+        ...(p.headline && { jobTitle: p.headline }),
+        ...(p.institution_name && { worksFor: { "@type": "Organization", name: p.institution_name } }),
+        ...(loc && { address: { "@type": "PostalAddress", addressLocality: p.location_city, addressRegion: p.location_state, addressCountry: "IN" } }),
+        ...(p.avatar_url && { image: p.avatar_url }),
+        ...(p.username && { url: absoluteUrl(`/${p.username}`) }),
+        ...(p.is_verified && { identifier: { "@type": "PropertyValue", name: "Verified", value: "true" } }),
+      },
     },
   };
 };
+
+export const breadcrumbSEO = (crumbs: Array<{ name: string; url?: string }>) => ({
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: crumbs.map((c, i) => ({
+    "@type": "ListItem",
+    position: i + 1,
+    name: c.name,
+    ...(c.url && { item: c.url }),
+  })),
+});
+
+export const faqSEO = (faqs: Array<{ question: string; answer: string }>) => ({
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map(f => ({
+    "@type": "Question",
+    name: f.question,
+    acceptedAnswer: { "@type": "Answer", text: f.answer },
+  })),
+});
 
 export const orgSEO = (o: {
   name?: string;
@@ -103,6 +143,8 @@ export const orgSEO = (o: {
   page_type?: string;
   slug?: string;
   member_count?: number | null;
+  employee_count?: number | null;
+  website_url?: string | null;
 }) => {
   const desc = [
     o.name,
@@ -111,13 +153,16 @@ export const orgSEO = (o: {
     o.member_count ? `${o.member_count} members.` : "",
     "Verified on Tiikme.",
   ].filter(Boolean).join(" ");
+  const orgUrl = o.slug ? absoluteUrl(`/p/${o.slug}`) : undefined;
 
   return {
     title: `${o.name}${o.tagline ? ` - ${o.tagline}` : ""} | Tiikme`,
     description: desc,
     ogTitle: `${o.name} | Tiikme`,
     ogImage: o.logo_url || o.cover_url || undefined,
+    twitterCard: "summary_large_image" as const,
     canonical: o.slug ? absoluteUrl(`/org/${o.slug}`) : undefined,
+    dateModified: new Date().toISOString(),
     jsonLd: {
       "@context": "https://schema.org",
       "@type": "Organization",
@@ -125,7 +170,9 @@ export const orgSEO = (o: {
       ...(o.tagline && { description: o.tagline }),
       ...(o.logo_url && { logo: o.logo_url }),
       ...(o.slug && { url: absoluteUrl(`/org/${o.slug}`) }),
-      ...(o.city && { address: { "@type": "PostalAddress", addressLocality: o.city, addressRegion: o.state } }),
+      ...(o.website_url && { sameAs: o.website_url }),
+      ...(o.city && { address: { "@type": "PostalAddress", addressLocality: o.city, addressRegion: o.state, addressCountry: "IN" } }),
+      ...(o.employee_count && { numberOfEmployees: { "@type": "QuantitativeValue", value: o.employee_count } }),
     },
   };
 };

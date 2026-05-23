@@ -3,8 +3,8 @@ import AvatarSquare from "@/components/ui/AvatarSquare";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutGrid, Compass, Users, Target, User,
-  Link2, MessageCircle, Bell, SlidersHorizontal, PencilLine, LogOut, Home,
-  Plus, Search, Briefcase,
+  Link2, Bell, SlidersHorizontal, PencilLine, LogOut, Home,
+  Plus, Search, ClipboardList, Bot,
 } from "lucide-react";
 import ThemeLogo from "@/components/ThemeLogo";
 import { toast } from "sonner";
@@ -15,7 +15,7 @@ import { prefetchRoute, prefetchAdjacent } from "@/lib/prefetchRoutes";
 import { prefetchOnHover, prefetchAdjacentData } from "@/lib/prefetchData";
 import { getProfileSubtitle } from "@/lib/profileUtils";
 
-const navGroups = [
+const BASE_NAV_GROUPS = [
   {
     label: "MAIN",
     items: [
@@ -35,13 +35,13 @@ const navGroups = [
     label: "CONNECT",
     items: [
       { label: "My Connections", icon: Link2, path: "/app/connections" },
-      { label: "Pings", icon: MessageCircle, path: "/app/pings" },
       { label: "Alerts", icon: Bell, path: "/app/alerts" },
     ],
   },
   {
     label: "MORE",
     items: [
+      { label: "Pilot AI", icon: Bot, path: "/app/pilot" },
       { label: "Settings", icon: SlidersHorizontal, path: "/app/settings" },
     ],
   },
@@ -57,6 +57,15 @@ const AppShell = ({ children }: { children: ReactNode }) => {
 
   const isInstitution = profile?.account_type === "institution" && !!profile?.org_id;
 
+  const navGroups = BASE_NAV_GROUPS.map(group => {
+    if (group.label !== "WORK") return group;
+    const workItems = [...group.items];
+    if (!isInstitution) {
+      workItems.push({ label: "Applications", icon: ClipboardList, path: "/app/applications" });
+    }
+    return { ...group, items: workItems };
+  });
+
   useEffect(() => {
     if (!isInstitution || !profile?.org_id) { setOrgData(null); return; }
     supabase.from("organizations").select("name, logo_url, type, slug").eq("id", profile.org_id).maybeSingle()
@@ -65,7 +74,6 @@ const AppShell = ({ children }: { children: ReactNode }) => {
 
   const profilePath = isInstitution && orgData?.slug ? `/org/${orgData.slug}` : "/app/profile";
   const [unreadAlerts, setUnreadAlerts] = useState(0);
-  const [unreadPings, setUnreadPings] = useState(0);
   const roleLabel = isInstitution && orgData?.type
     ? orgData.type.charAt(0).toUpperCase() + orgData.type.slice(1).replace(/_/g, " ")
     : getProfileSubtitle(profile) || "Member";
@@ -77,21 +85,6 @@ const AppShell = ({ children }: { children: ReactNode }) => {
     return pathname === path || pathname.startsWith(path + "/");
   };
 
-  const fetchUnreadPings = useCallback(async () => {
-    if (!user?.id) return;
-    const { data: convos } = await supabase.from("conversations").select("id")
-      .or(`participant_1.eq.${user.id},participant_2.eq.${user.id}`);
-    if (!convos?.length) { setUnreadPings(0); return; }
-    const convIds = convos.map(c => c.id);
-    const { count } = await supabase.from("pings")
-      .select("id", { count: "exact", head: true })
-      .in("conversation_id", convIds)
-      .eq("is_read", false)
-      .neq("sender_id", user.id)
-      .or("is_deleted.is.null,is_deleted.eq.false");
-    setUnreadPings(count || 0);
-  }, [user?.id]);
-
   useEffect(() => {
     if (!user?.id) return;
     Promise.allSettled([
@@ -102,14 +95,9 @@ const AppShell = ({ children }: { children: ReactNode }) => {
       const notifCount = notifsRes.status === "fulfilled" ? ((notifsRes.value as any).count || 0) : 0;
       setUnreadAlerts(alertCount + notifCount);
     });
-    fetchUnreadPings();
-
-    const onPingsRead = () => fetchUnreadPings();
-    window.addEventListener("pings-read", onPingsRead);
 
     let alertsCh: ReturnType<typeof supabase.channel> | null = null;
     let notifsCh: ReturnType<typeof supabase.channel> | null = null;
-    let pingsCh: ReturnType<typeof supabase.channel> | null = null;
     try {
       alertsCh = supabase.channel("unread-alerts-" + user.id)
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "alerts", filter: `user_id=eq.${user.id}` }, (payload) => {
@@ -125,20 +113,10 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           if (title) toast.info(title, { duration: 4000 });
         })
         .subscribe();
-      pingsCh = supabase.channel("unread-pings-" + user.id)
-        .on("postgres_changes", { event: "INSERT", schema: "public", table: "pings" }, payload => {
-          if ((payload.new as any).sender_id !== user.id) fetchUnreadPings();
-        })
-        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "pings" }, () => {
-          fetchUnreadPings();
-        })
-        .subscribe();
     } catch {}
     return () => {
-      window.removeEventListener("pings-read", onPingsRead);
       if (alertsCh) supabase.removeChannel(alertsCh);
       if (notifsCh) supabase.removeChannel(notifsCh);
-      if (pingsCh) supabase.removeChannel(pingsCh);
     };
   }, [user?.id]);
 
@@ -150,7 +128,6 @@ const AppShell = ({ children }: { children: ReactNode }) => {
 
   const getBadge = (path: string) => {
     if (path === "/app/alerts") return unreadAlerts || undefined;
-    if (path === "/app/pings") return unreadPings || undefined;
     return undefined;
   };
 
@@ -172,7 +149,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
     { label: "Explore", icon: Compass, path: "/app/explore" },
   ];
   const mobileRightItems = [
-    { label: "Opps", icon: Briefcase, path: "/app/opportunities" },
+    { label: "Alerts", icon: Bell, path: "/app/alerts" },
     { label: "Profile", icon: User, path: profilePath, isProfile: true },
   ];
 
@@ -266,7 +243,13 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             <AvatarSquare src={identityAvatar} name={identityName || "You"} size={32} />
             <div className="min-w-0 flex-1">
               <p className="truncate" style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{identityName || "Your Name"}</p>
-              {roleLabel && !['professional','student','founder','doctor','faculty','researcher','creator','freelancer','investor','member'].includes(roleLabel.toLowerCase()) ? <span style={{ fontSize: 11, color: "#6B7094", marginTop: 1, display: "block" }}>{roleLabel}</span> : null}
+              {roleLabel && !['professional','student','founder','doctor','faculty','researcher','creator','freelancer','investor','member'].includes(roleLabel.toLowerCase()) && (
+                <span className="truncate block" style={{
+                  fontSize: 11, fontWeight: 500, padding: "0 6px", borderRadius: 4,
+                  background: "rgba(232,115,58,0.12)", color: "#E8733A",
+                  lineHeight: "14px", display: "inline-block", maxWidth: "100%",
+                }}>{roleLabel}</span>
+              )}
             </div>
           </Link>
           <button
@@ -286,8 +269,8 @@ const AppShell = ({ children }: { children: ReactNode }) => {
       </aside>
 
       {/* ═══ MAIN CONTENT ═══ */}
-      <main className={`min-h-screen md:ml-[220px] ${/^\/app\/pings\/[^/]+$/.test(pathname) ? "pb-0" : "pb-[88px] md:pb-0"}`}>
-        {/* Mobile top header — Logo + Search + Bell + Pings */}
+      <main className={`min-h-screen md:ml-[220px] pb-[88px] md:pb-0`}>
+        {/* Mobile top header — Logo + Search + Bell */}
         <header
           className="md:hidden sticky top-0 z-50 flex items-center justify-between px-4"
           style={{
@@ -333,49 +316,13 @@ const AppShell = ({ children }: { children: ReactNode }) => {
                 </span>
               )}
             </Link>
-            {/* Pings — DOT ONLY on mobile (<640px), number badge ≥640px */}
-            <Link
-              to="/app/pings"
-              aria-label="Pings messages"
-              className="relative w-10 h-10 flex items-center justify-center rounded-full active:scale-95"
-            >
-              <MessageCircle style={{ width: 22, height: 22, color: "#374151" }} strokeWidth={1.8} />
-              {unreadPings > 0 && (
-                <>
-                  <span
-                    className="sm:hidden absolute rounded-full"
-                    style={{
-                      top: 8, right: 8,
-                      width: 8, height: 8,
-                      background: "#EF4444",
-                      border: "1.5px solid rgba(255,255,255,0.95)",
-                    }}
-                  />
-                  <span
-                    className="hidden sm:flex absolute items-center justify-center"
-                    style={{
-                      top: 4, right: 2,
-                      minWidth: 16, height: 16, padding: "0 4px",
-                      borderRadius: 8,
-                      background: "#EF4444", color: "white",
-                      fontSize: 10, fontWeight: 700, lineHeight: 1,
-                      border: "2px solid rgba(255,255,255,0.95)",
-                    }}
-                  >
-                    {unreadPings > 99 ? "99+" : unreadPings}
-                  </span>
-                </>
-              )}
-            </Link>
           </div>
         </header>
 
         <div key={pathname} className="page-enter">{children}</div>
       </main>
 
-      {/* ═══ MOBILE BOTTOM NAV — 5 items (Feed · Circles · Create · Opps · Profile) ═══ */}
-      {/* Hidden inside a Ping thread (e.g. /app/pings/:id) for full-screen mobile chat */}
-      {!/^\/app\/pings\/[^/]+$/.test(pathname) && (
+      {/* ═══ MOBILE BOTTOM NAV — 5 items (Feed · Explore · Create · Alerts · Profile) ═══ */}
       <nav
         className="md:hidden fixed left-0 right-0 z-50"
         style={{
@@ -458,10 +405,11 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             </span>
           </button>
 
-          {/* Tab 4 — Opportunities, Tab 5 — Profile */}
+          {/* Tab 4 — Alerts (with badge), Tab 5 — Profile */}
           {mobileRightItems.map((item) => {
             const active = isActive(item.path);
             const isProfile = (item as any).isProfile;
+            const badge = getBadge(item.path) || 0;
             return (
               <Link
                 key={item.path}
@@ -502,10 +450,25 @@ const AppShell = ({ children }: { children: ReactNode }) => {
                     />
                   )
                 ) : (
-                  <item.icon
-                    style={{ width: 24, height: 24, color: active ? "#FF5A1F" : "#9CA3AF" }}
-                    strokeWidth={active ? 2.2 : 1.8}
-                  />
+                  <span className="relative">
+                    <item.icon
+                      style={{ width: 24, height: 24, color: active ? "#FF5A1F" : "#9CA3AF" }}
+                      strokeWidth={active ? 2.2 : 1.8}
+                    />
+                    {badge > 0 && (
+                      <span style={{
+                        position: "absolute", top: -4, right: -6,
+                        minWidth: 16, height: 16, borderRadius: 999,
+                        background: "#FF5A1F", color: "#fff",
+                        fontSize: 9, fontWeight: 700,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        padding: "0 3px", lineHeight: 1,
+                        border: "1.5px solid #fff",
+                      }}>
+                        {badge > 99 ? "99+" : badge}
+                      </span>
+                    )}
+                  </span>
                 )}
                 <span style={{
                   fontSize: 10, fontWeight: active ? 700 : 500,
@@ -519,7 +482,6 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           })}
         </div>
       </nav>
-      )}
     </div>
   );
 };

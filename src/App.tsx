@@ -35,7 +35,6 @@ const MyWork = lazyWithRetry(() => import("./pages/MyWork.tsx"), "MyWork");
 const ProjectHub = lazyWithRetry(() => import("./pages/ProjectHub.tsx"), "ProjectHub");
 const Strands = lazyWithRetry(() => import("./pages/Strands.tsx"), "Strands");
 const ConnectionsPage = lazyWithRetry(() => import("./pages/Connections.tsx"), "ConnectionsPage");
-const Pings = lazyWithRetry(() => import("./pages/Pings.tsx"), "Pings");
 const Alerts = lazyWithRetry(() => import("./pages/Alerts.tsx"), "Alerts");
 const SettingsPage = lazyWithRetry(() => import("./pages/Settings.tsx"), "SettingsPage");
 const WorkDetail = lazyWithRetry(() => import("./pages/WorkDetail.tsx"), "WorkDetail");
@@ -60,6 +59,10 @@ const VerificationInbox = lazyWithRetry(() => import("./pages/VerificationInbox.
 const Academy = lazyWithRetry(() => import("./pages/Academy.tsx"), "Academy");
 const BuildLog = lazyWithRetry(() => import("./pages/BuildLog.tsx"), "BuildLog");
 const AcceptAdminInvite = lazyWithRetry(() => import("./pages/AcceptAdminInvite.tsx"), "AcceptAdminInvite");
+const OrgSignup = lazyWithRetry(() => import("./pages/OrgSignup.tsx"), "OrgSignup");
+const HashtagFeed = lazyWithRetry(() => import("./pages/HashtagFeed.tsx"), "HashtagFeed");
+const MyApplications = lazyWithRetry(() => import("./pages/MyApplications.tsx"), "MyApplications");
+const TiikmePilot = lazyWithRetry(() => import("./pages/TiikmePilot.tsx"), "TiikmePilot");
 
 // SEO guides hub
 const GuidesHub = lazyWithRetry(() => import("./pages/guides/GuidesHub.tsx"), "GuidesHub");
@@ -124,8 +127,8 @@ const AppRoutes = () => {
             
             <Route path="/reset-password" element={<PageErrorBoundary><ResetPassword /></PageErrorBoundary>} />
             <Route path="/join-as-institution" element={<PageErrorBoundary><JoinAsInstitution /></PageErrorBoundary>} />
-            <Route path="/org-signup" element={<PageErrorBoundary><JoinAsInstitution /></PageErrorBoundary>} />
-            <Route path="/institution-signup" element={<PageErrorBoundary><JoinAsInstitution /></PageErrorBoundary>} />
+            <Route path="/org-signup" element={<PageErrorBoundary><OrgSignup /></PageErrorBoundary>} />
+            <Route path="/institution-signup" element={<PageErrorBoundary><OrgSignup /></PageErrorBoundary>} />
             <Route path="/accept-admin-invite" element={<PageErrorBoundary><AcceptAdminInvite /></PageErrorBoundary>} />
 
             <Route path="/certificate/:id" element={<PageErrorBoundary><CertificatePage /></PageErrorBoundary>} />
@@ -156,14 +159,14 @@ const AppRoutes = () => {
             <Route path="/app/opportunities/create" element={<Shell><OpportunityCreate /></Shell>} />
             <Route path="/app/opportunities/:id/edit" element={<Shell><OpportunityCreate /></Shell>} />
             <Route path="/app/opportunities/:id/applications" element={<Shell><ApplicationsDashboard /></Shell>} />
+            <Route path="/app/applications" element={<Shell><MyApplications /></Shell>} />
+            <Route path="/app/pilot" element={<Shell><TiikmePilot /></Shell>} />
             <Route path="/app/workspace" element={<Navigate to="/app/circles" replace />} />
             <Route path="/app/circles" element={<Shell><CirclesPage /></Shell>} />
             <Route path="/app/circles/create" element={<Shell><CircleCreate /></Shell>} />
             <Route path="/app/circles/:circleSlug" element={<Shell><CirclesPage /></Shell>} />
             <Route path="/app/connections" element={<Shell><ConnectionsPage /></Shell>} />
             <Route path="/app/strands" element={<Shell><Strands /></Shell>} />
-            <Route path="/app/pings" element={<Shell><Pings /></Shell>} />
-            <Route path="/app/pings/:id" element={<Shell><Pings /></Shell>} />
             <Route path="/app/alerts" element={<Shell><Alerts /></Shell>} />
             <Route path="/app/verification-inbox" element={<Shell><VerificationInbox /></Shell>} />
             <Route path="/app/settings" element={<Shell><SettingsPage /></Shell>} />
@@ -176,6 +179,9 @@ const AppRoutes = () => {
             {/* Pages (org profiles) */}
             <Route path="/p/:slug" element={<Shell><PageProfile /></Shell>} />
 
+            {/* Hashtag discovery — public, SEO-friendly */}
+            <Route path="/tag/:tag" element={<PageErrorBoundary><HashtagFeed /></PageErrorBoundary>} />
+
             {/* Feature routes */}
             <Route path="/app/academy" element={<Shell><Academy /></Shell>} />
             <Route path="/app/build-log" element={<Shell><BuildLog /></Shell>} />
@@ -185,7 +191,6 @@ const AppRoutes = () => {
             <Route path="/app/work" element={<Shell><MyWork /></Shell>} />
             <Route path="/app/my-work" element={<Shell><MyWork /></Shell>} />
             <Route path="/app/challenges" element={<Shell><Opportunities /></Shell>} />
-            <Route path="/app/messages" element={<Shell><Pings /></Shell>} />
 
             {/* Public profile */}
             <Route path="/:username/:slug" element={<PageErrorBoundary><WorkDetail /></PageErrorBoundary>} />

@@ -82,21 +82,6 @@ export const ROUTE_PREFETCHERS: Record<string, (qc: QueryClient, userId: string)
       },
     });
   },
-  "/app/pings": async (qc, uid) => {
-    await qc.prefetchQuery({
-      queryKey: ["pings", "prefetch", uid],
-      staleTime: 2 * 60 * 1000,
-      queryFn: async () => {
-        const { data } = await supabase
-          .from("conversations")
-          .select("*, p1:profiles!conversations_participant_1_fkey(id, full_name, username, avatar_url), p2:profiles!conversations_participant_2_fkey(id, full_name, username, avatar_url)")
-          .or(`participant_1.eq.${uid},participant_2.eq.${uid}`)
-          .order("last_message_at", { ascending: false, nullsFirst: false })
-          .limit(30);
-        return data || [];
-      },
-    });
-  },
   "/app/profile": async (qc, uid) => {
     await qc.prefetchQuery({
       queryKey: ["profile", "prefetch", uid],
@@ -150,14 +135,13 @@ export async function prefetchOnHover(qc: QueryClient, path: string, userId?: st
 
 /** Idle-time prefetch of adjacent routes (Tier 3). */
 export const ADJACENT_ROUTES: Record<string, string[]> = {
-  "/app/feed":          ["/app/opportunities", "/app/circles", "/app/pings"],
+  "/app/feed":          ["/app/opportunities", "/app/circles", "/app/alerts"],
   "/app/profile":       ["/app/feed", "/app/opportunities"],
   "/app/opportunities": ["/app/feed", "/app/profile", "/app/connections"],
   "/app/circles":       ["/app/feed", "/app/connections"],
   "/app/explore":       ["/app/feed", "/app/connections"],
-  "/app/connections":   ["/app/pings", "/app/feed"],
-  "/app/pings":         ["/app/connections", "/app/feed"],
-  "/app/alerts":        ["/app/feed", "/app/pings"],
+  "/app/connections":   ["/app/alerts", "/app/feed"],
+  "/app/alerts":        ["/app/feed", "/app/connections"],
 };
 
 export function prefetchAdjacentData(qc: QueryClient, path: string, userId?: string): void {

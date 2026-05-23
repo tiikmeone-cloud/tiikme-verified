@@ -6,6 +6,11 @@ import { ActivityScoreMini } from "@/components/profile/ActivityScoreCard";
 import { getDisplayFlags } from "@/utils/displayProfile";
 import { getPrimaryRoleLine, sanitizeIdentityText } from "@/lib/profileUtils";
 
+/** @deprecated use getPrimaryRoleLine from @/lib/profileUtils */
+export function getSubtitle(profile: any): string {
+  return getPrimaryRoleLine(profile);
+}
+
 const clampTwoLines = {
   display: "-webkit-box",
   WebkitBoxOrient: "vertical" as const,
@@ -40,9 +45,11 @@ interface PersonCardProps {
   strandStatus: string;
   onStrand: () => void;
   currentUserId?: string;
+  followStatus?: "following" | "none";
+  onFollow?: () => void;
 }
 
-export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonCardProps) {
+export function PersonCard({ p, strandStatus, onStrand, currentUserId, followStatus = "none", onFollow }: PersonCardProps) {
   const navigate = useNavigate();
   const flags = getDisplayFlags(p);
   const name = flags.showName ? (p.full_name || p.username || "User") : "Tiikme member";
@@ -106,25 +113,45 @@ export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonC
         )}
       </div>
       {currentUserId !== p.id && (
-        <button
-          type="button"
-          disabled={strandStatus !== "none"}
-          onClick={e => { e.stopPropagation(); onStrand(); }}
-          className="cursor-pointer shrink-0 self-start"
-          style={{
-            padding: "6px 14px", borderRadius: 8, minWidth: 94,
-            fontSize: 12, fontWeight: 600, border: "none",
-            whiteSpace: "nowrap",
-            ...(isConnected
-              ? { background: "rgba(52,199,89,0.10)", color: "#34C759" }
-              : isPending
-              ? { background: "rgba(232,115,58,0.12)", color: "#E8733A" }
-              : { background: "#FF5A1F", color: "#fff" }
-            ),
-          }}
-        >
-          {isConnected ? "Connected" : isPending ? "Requested" : "+ Connect"}
-        </button>
+        <div className="flex flex-col gap-1.5 shrink-0 self-start">
+          <button
+            type="button"
+            disabled={strandStatus !== "none"}
+            onClick={e => { e.stopPropagation(); onStrand(); }}
+            className="cursor-pointer"
+            style={{
+              padding: "6px 14px", borderRadius: 8, minWidth: 94,
+              fontSize: 12, fontWeight: 600, border: "none",
+              whiteSpace: "nowrap",
+              ...(isConnected
+                ? { background: "rgba(52,199,89,0.10)", color: "#34C759" }
+                : isPending
+                ? { background: "rgba(232,115,58,0.12)", color: "#E8733A" }
+                : { background: "#FF5A1F", color: "#fff" }
+              ),
+            }}
+          >
+            {isConnected ? "Connected" : isPending ? "Requested" : "+ Connect"}
+          </button>
+          {!isConnected && onFollow && (
+            <button
+              type="button"
+              onClick={e => { e.stopPropagation(); onFollow(); }}
+              className="cursor-pointer"
+              style={{
+                padding: "5px 12px", borderRadius: 8,
+                fontSize: 12, fontWeight: 600, border: "1px solid",
+                whiteSpace: "nowrap",
+                ...(followStatus === "following"
+                  ? { background: "rgba(20,184,166,0.10)", color: "#0D9488", borderColor: "rgba(20,184,166,0.30)" }
+                  : { background: "transparent", color: "#6B7280", borderColor: "#E5E7EB" }
+                ),
+              }}
+            >
+              {followStatus === "following" ? "Following ✓" : "+ Follow"}
+            </button>
+          )}
+        </div>
       )}
     </article>
   );

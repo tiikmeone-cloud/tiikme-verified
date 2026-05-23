@@ -47,7 +47,7 @@ export function getDisplayFlags(profile: DisplayInputProfile | null | undefined)
   };
 }
 
-/** Single composed string for cards that show role inline. */
+/** Single composed string for cards that show role inline. Never returns raw role type. */
 export function formatRoleLine(profile: DisplayInputProfile | null | undefined): string {
   if (!profile) return "";
   const primary = getPrimaryRoleLine(profile);

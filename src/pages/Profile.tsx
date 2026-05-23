@@ -7,7 +7,7 @@ import { SUBTYPE_OPTIONS, hasSubtypes } from "@/lib/roleSubtypes";
 import { getDisplayFlags, safeDisplayName } from "@/utils/displayProfile";
 import { PageSEO, profileSEO } from "@/hooks/usePageSEO";
 import {
-  MapPin, Copy, Shield, X, MessageCircle, CheckCircle, Building2, Link2, Plus,
+  MapPin, Copy, Shield, X, CheckCircle, Building2, Link2, Plus,
   Pencil, Trash2, Briefcase, GraduationCap, Award, Code2, Eye, EyeOff,
   Heart, Rocket, Send, Share2, Users, Globe, ExternalLink, LinkIcon, TrendingUp,
   Mail, Settings, Camera, UserX, Layers, ChevronRight, LifeBuoy, MoreHorizontal,
@@ -132,9 +132,16 @@ const AboutSection = ({ about, isOwnProfile, userId }: { about: string; isOwnPro
               )}
             </>
           ) : (
-            <p style={{ fontSize: 13, fontWeight: 400, color: "#9CA3C0", fontStyle: "italic" }}>
-              {isOwnProfile ? "Tell people about yourself..." : "No about section"}
-            </p>
+            isOwnProfile ? (
+              <button type="button" onClick={() => setEditing(true)}
+                className="flex items-center gap-2 cursor-pointer w-full text-left"
+                style={{ background: "rgba(232,115,58,0.04)", border: "1px dashed rgba(232,115,58,0.30)", borderRadius: 10, padding: "10px 12px", marginTop: 4 }}>
+                <Pencil style={{ width: 14, height: 14, color: "#E8733A", flexShrink: 0 }} />
+                <span style={{ fontSize: 13, color: "#E8733A", fontWeight: 500 }}>Tell your story — add a bio</span>
+              </button>
+            ) : (
+              <p style={{ fontSize: 13, fontWeight: 400, color: "#9CA3C0", fontStyle: "italic" }}>No about section</p>
+            )
           )}
         </div>
       )}
@@ -216,7 +223,6 @@ const Profile = () => {
   const [workItems, setWorkItems] = useState<any[]>([]);
   const [userPosts, setUserPosts] = useState<any[]>([]);
   const [achievements, setAchievements] = useState<any[]>([]);
-  const [certificates, setCertificates] = useState<any[]>([]);
   const [stats, setStats] = useState({ connections: 0, posts: 0 });
   const [connectedAvatars, setConnectedAvatars] = useState<any[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
@@ -241,7 +247,9 @@ const Profile = () => {
 
   const [connectionStatus, setConnectionStatus] = useState<{ status: string | null; direction: string | null; id: string | null }>({ status: null, direction: null, id: null });
   const [connectLoading, setConnectLoading] = useState(false);
-  const [showScoreDetails, setShowScoreDetails] = useState(false);
+  const [followState, setFollowState] = useState<"following" | "none">("none");
+  const [followerCount, setFollowerCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
 
   const targetUserId = isOwnProfile ? user?.id : urlUserId;
 
@@ -271,7 +279,6 @@ const Profile = () => {
     setWorkItems(itemsRes.status === "fulfilled" ? (itemsRes.value as any).data || [] : []);
     setUserPosts(postsRes.status === "fulfilled" ? (postsRes.value as any).data || [] : []);
     setAchievements(achvsRes.status === "fulfilled" ? (achvsRes.value as any).data || [] : []);
-    setCertificates(certsRes.status === "fulfilled" ? (certsRes.value as any).data || [] : []);
     const strandCount = strandCountRes.status === "fulfilled" ? (strandCountRes.value as any).count || 0 : 0;
     const postsCount = postsRes.status === "fulfilled" ? (postsRes.value as any).count || 0 : 0;
     setStats({ connections: strandCount, posts: postsCount });
@@ -300,6 +307,51 @@ const Profile = () => {
         if (data) setConnectionStatus({ status: data.status, direction: data.requester_id === user.id ? "sent" : "received", id: data.id });
       });
   }, [user, targetUserId, isOwnProfile]);
+
+  // Load follow status + counts
+  useEffect(() => {
+    if (!targetUserId) return;
+    Promise.allSettled([
+      supabase.from("follows" as any).select("id", { count: "exact", head: true }).eq("following_id", targetUserId),
+      supabase.from("follows" as any).select("id", { count: "exact", head: true }).eq("follower_id", targetUserId),
+      user && !isOwnProfile
+        ? supabase.from("follows" as any).select("id").eq("follower_id", user.id).eq("following_id", targetUserId).maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]).then(([followersRes, followingRes, myFollowRes]) => {
+      if (followersRes.status === "fulfilled") setFollowerCount((followersRes.value as any).count || 0);
+      if (followingRes.status === "fulfilled") setFollowingCount((followingRes.value as any).count || 0);
+      if (myFollowRes.status === "fulfilled") setFollowState((myFollowRes.value as any).data ? "following" : "none");
+    });
+  }, [targetUserId, user, isOwnProfile]);
+
+  const handleToggleFollow = async () => {
+    if (!user || !targetUserId) return;
+    if (followState === "following") {
+      const name = profileData?.full_name || "this person";
+      toast(`Unfollow ${name}?`, {
+        action: {
+          label: "Unfollow",
+          onClick: async () => {
+            const { error } = await supabase.from("follows" as any).delete().eq("follower_id", user.id).eq("following_id", targetUserId);
+            if (!error) { setFollowState("none"); setFollowerCount(c => Math.max(0, c - 1)); }
+            else toast.error("Couldn't unfollow. Try again.");
+          },
+        },
+        cancel: { label: "Cancel", onClick: () => {} },
+        duration: 5000,
+      });
+    } else {
+      const { error } = await supabase.from("follows" as any).insert({ follower_id: user.id, following_id: targetUserId });
+      if (!error) {
+        setFollowState("following");
+        setFollowerCount(c => c + 1);
+        sendNotification({ userId: targetUserId, actorId: user.id, type: "follow", title: "Someone started following you", body: "Check out their profile.", actionUrl: `/app/profile/${user.id}`, data: {} });
+        toast.success("Following!");
+      } else {
+        toast.error("Couldn't follow. Try again.");
+      }
+    }
+  };
 
   useEffect(() => { if (!authLoading) loadProfile(); }, [authLoading, loadProfile]);
 
@@ -670,7 +722,12 @@ const Profile = () => {
 
   const addSkill = async () => {
     if (!newSkill.trim() || !user) return;
-    const updated = [...skills, newSkill.trim()];
+    const trimmed = newSkill.trim();
+    if (skills.some(s => s.toLowerCase() === trimmed.toLowerCase())) {
+      toast.error("Skill already added");
+      return;
+    }
+    const updated = [...skills, trimmed];
     await supabase.from("profiles").update({ skills: updated } as any).eq("id", user.id);
     toast.success("Skill added");
     setNewSkill(""); setModalSection(null);
@@ -703,7 +760,7 @@ const Profile = () => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
     const { validateUpload } = await import("@/lib/uploadValidation");
-    const err = validateUpload(file, { maxBytes: 2 * 1024 * 1024, allowImages: true });
+    const err = validateUpload(file, { maxBytes: 5 * 1024 * 1024, allowImages: true });
     if (err) { toast.error(err); return; }
     const canvas = document.createElement("canvas");
     canvas.width = 400; canvas.height = 400;
@@ -772,7 +829,13 @@ const Profile = () => {
   const activityScore = profileData.activity_score || 0;
   const tier = getActivityTier(activityScore);
 
-  const handleReport = () => {
+  const handleReport = async () => {
+    if (!user || !targetUserId) return;
+    await supabase.from("profile_reports" as any).insert({
+      reporter_id: user.id,
+      reported_user_id: targetUserId,
+      reason: "user_report",
+    });
     toast.success("Report submitted. Our team will review.");
   };
 
@@ -845,9 +908,6 @@ const Profile = () => {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="bg-white">
-            <DropdownMenuItem onClick={() => navigate(`/app/pings?to=${targetUserId}`)}>
-              <MessageCircle className="w-3.5 h-3.5 mr-2" /> Message
-            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleDisconnect} className="text-red-500 focus:text-red-500">
               <UserX className="w-3.5 h-3.5 mr-2" /> Disconnect
@@ -894,13 +954,23 @@ const Profile = () => {
       <PageSEO {...seoProps} />
 
       <div className="mx-auto p-3 md:p-4 space-y-3 md:space-y-5" style={{ maxWidth: 960 }}>
-        {/* ── PROFILE INFO CARD (no cover) ── */}
-        <div className="glass-card relative p-5 md:p-6" style={{
+        {/* ── PROFILE INFO CARD ── */}
+        <div className="glass-card relative overflow-hidden" style={{
           borderRadius: 16,
           background: "rgba(255,255,255,0.25)", backdropFilter: "blur(20px)",
           border: "1px solid rgba(255,255,255,0.40)",
           boxShadow: "0 8px 32px rgba(26,26,78,0.08), inset 0 1px 0 rgba(255,255,255,0.60)",
         }}>
+          {/* Profile gradient header — no cover photo */}
+          <div
+            style={{
+              height: 80,
+              background: `linear-gradient(135deg, ${roleColor}22, ${roleColor}55)`,
+              borderRadius: "16px 16px 0 0",
+            }}
+          />
+
+          <div className="p-5 md:p-6 relative" style={{ marginTop: -24 }}>
           {isOwnProfile && (
             <Link
               to="/app/settings"
@@ -908,7 +978,7 @@ const Profile = () => {
               className="absolute flex items-center justify-center cursor-pointer active:scale-95"
               style={{
                 top: 12, right: 12, width: 36, height: 36, borderRadius: 10,
-                background: "rgba(255,255,255,0.40)", border: "1px solid rgba(255,255,255,0.50)",
+                background: "rgba(255,255,255,0.85)", border: "1px solid rgba(0,0,0,0.08)",
                 color: "#1A1A2E", zIndex: 5,
               }}
             >
@@ -924,34 +994,11 @@ const Profile = () => {
               (otwVis === "recruiters" && viewerIsRecruiter)
             );
             return (
-          <div className="flex flex-col md:flex-row items-center md:items-start profile-info-flex" style={{ gap: 18, paddingRight: isOwnProfile ? 44 : 0 }}>
-            {/* LEFT COLUMN: Avatar only */}
-            <div className="profile-avatar-wrap shrink-0" style={{ width: 80, display: "flex", justifyContent: "center" }}>
-              <div
-                className="shadow-md overflow-hidden shrink-0"
-                style={{
-                  width: 80,
-                  height: 80,
-                  borderRadius: 0,
-                  border: "2px solid rgba(255,255,255,0.55)",
-                  background: roleColor,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                {fixStorageUrl(profileData.avatar_url) ? (
-                  <img
-                    src={fixStorageUrl(profileData.avatar_url) || ""}
-                    alt={displayName || "Profile"}
-                    loading="lazy"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <span style={{ color: "#fff", fontSize: 26, fontWeight: 700, lineHeight: 1 }}>
-                    {initials}
-                  </span>
-                )}
+          <div className="flex profile-info-flex" style={{ gap: 16, alignItems: "flex-start" }}>
+            {/* LEFT COLUMN: Avatar with ring for OTW */}
+            <div className="shrink-0" style={{ width: 96, marginTop: -8 }}>
+              <div style={{ padding: showOTW ? 3 : 0, borderRadius: showOTW ? "50%" : undefined, background: showOTW ? "rgba(16,185,129,0.25)" : undefined, display: "inline-block" }}>
+                <AvatarSquare src={profileData.avatar_url} name={displayName || "U"} size="profile" bgColor={roleColor} className="shadow-md" />
               </div>
             </div>
 
@@ -1020,16 +1067,24 @@ const Profile = () => {
                 )}
               </div>
 
-              {/* ROW 4: Compact stats row — Posts · Connections · Score pill */}
-              <div className="flex items-center justify-center md:justify-start flex-wrap" style={{ gap: 12, marginTop: 6 }}>
-                <div style={{ fontSize: 13 }}>
+              {/* ROW 4: Compact stats row — Posts · Connections · Followers · Following · Score pill */}
+              <div className="flex items-center flex-wrap" style={{ gap: 12, marginTop: 6 }}>
+                <Link to={`/app/u/${username}/posts`} className="hover:opacity-80" style={{ fontSize: 13 }}>
                   <span className="num" style={{ color: "#1A1A2E" }}>{stats.posts}</span>
                   <span style={{ fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Posts</span>
-                </div>
+                </Link>
                 <Link to="/app/connections" className="cursor-pointer hover:opacity-80" style={{ fontSize: 13 }}>
                   <span className="num" style={{ color: "#1A1A2E" }}>{stats.connections}</span>
                   <span style={{ fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Connections</span>
                 </Link>
+                <div style={{ fontSize: 13 }}>
+                  <span className="num" style={{ color: "#1A1A2E" }}>{followerCount}</span>
+                  <span style={{ fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Followers</span>
+                </div>
+                <div style={{ fontSize: 13 }}>
+                  <span className="num" style={{ color: "#1A1A2E" }}>{followingCount}</span>
+                  <span style={{ fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Following</span>
+                </div>
                 {(() => {
                   const score = (profileData as any).activity_score ?? 0;
                   const visible = shouldShowPublicScore({ id: profileData.id, activity_score: score }, authProfile ? { id: authProfile.id } : undefined);
@@ -1084,6 +1139,7 @@ const Profile = () => {
 
           {/* Activity Score details now render in the popover above */}
         </div>
+        </div>{/* end glass-card */}
 
         {/* ── MOBILE-ONLY QUICK NAV (own profile) ── */}
         {isOwnProfile && (
@@ -1141,7 +1197,7 @@ const Profile = () => {
                       display: "flex", alignItems: "center", justifyContent: "center",
                       color: "#fff", fontSize: 9, fontWeight: 700,
                     }}>
-                      {a.avatar_url ? <img src={fixStorageUrl(a.avatar_url) || ""} alt="" loading="lazy" className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : (a.full_name || "U")[0]}
+                      {a.avatar_url ? <img src={fixStorageUrl(a.avatar_url) || ""} alt={a.full_name || "Member"} loading="lazy" className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : (a.full_name || "U")[0]}
                     </div>
                   ))}
                 </div>
@@ -1291,17 +1347,6 @@ const Profile = () => {
                       {displayName} is open to new roles.
                     </p>
                     <div className="flex items-center" style={{ gap: 6, marginTop: 10 }}>
-                      <button
-                        type="button"
-                        onClick={() => navigate(`/app/pings?to=${targetUserId}`)}
-                        className="cursor-pointer"
-                        style={{
-                          height: 30, padding: "0 12px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-                          background: "#10B981", color: "#fff", border: "none",
-                        }}
-                      >
-                        Message
-                      </button>
                       <button
                         type="button"
                         onClick={() => {

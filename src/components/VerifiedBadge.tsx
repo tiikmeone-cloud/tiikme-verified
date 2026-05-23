@@ -1,16 +1,15 @@
 /**
- * Tiikme verified badge.
- * Orange shield shape so it reads as a trust marker rather than a generic reaction dot.
+ * TiikVerified badge — orange shield with checkmark.
+ * Sizes: 14 (explore/cards), 16 (feed), 18 (profile header), 20 (work items)
  */
 const VerifiedBadge = ({ size = 16 }: { size?: number }) => {
   const shieldWidth = size;
   const shieldHeight = Math.round(size * 1.08);
-  const checkSize = size * 0.56;
 
   return (
     <span
       className="inline-flex items-center justify-center shrink-0"
-      title="Verified"
+      title="TiikVerified"
       style={{
         width: shieldWidth,
         height: shieldHeight,

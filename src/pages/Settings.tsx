@@ -2,7 +2,7 @@ import AvatarSquare from "@/components/ui/AvatarSquare";
 import { storageImageUrl } from "@/lib/imageTransform";
 import { cleanUsername } from "@/lib/cleanUsername";
 import { useState, useEffect, useRef } from "react";
-import { Check, Camera, User, Eye, Lock, LogOut, Users, Copy, Share2, HelpCircle, MessageSquare, Send, CreditCard, Sparkles, FileText, Shield, Trash2, Mail } from "lucide-react";
+import { Check, Camera, User, Eye, Lock, LogOut, Users, Copy, Share2, HelpCircle, MessageSquare, Send, CreditCard, Sparkles, FileText, Shield, Trash2, Mail, UserPlus, X, Crown } from "lucide-react";
 import DeleteAccountModal from "@/components/legal/DeleteAccountModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -191,7 +191,6 @@ const PrivacySection = ({ userId }: { userId: string | null }) => {
         <PrivacyRow label="Show my education" control={<ToggleCtl k="show_education" value={privacy.show_education} />} />
         <PrivacyRow label="Show my experience" control={<ToggleCtl k="show_experience" value={privacy.show_experience} />} />
         <PrivacyRow label="Show my email on profile" control={<ToggleCtl k="show_email" value={privacy.show_email} />} />
-        <PrivacyRow label="Show my phone on profile" control={<ToggleCtl k="show_phone" value={privacy.show_phone} />} />
       </div>
 
       <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
@@ -430,7 +429,10 @@ const SettingsPage = () => {
 
   const settingsNavItems = [
     ...baseNavItems.filter(item => !(isInstitutionAccount && item.id === "display")),
-    ...(isInstitutionAccount ? [{ id: "subscription", label: "Subscription", icon: CreditCard }] : []),
+    ...(isInstitutionAccount ? [
+      { id: "team", label: "Team Access", icon: UserPlus },
+      { id: "subscription", label: "Subscription", icon: CreditCard },
+    ] : []),
   ];
 
   const [activeTab, setActiveTab] = useState("profile");
@@ -796,6 +798,11 @@ const SettingsPage = () => {
             </div>
           )}
 
+          {/* Team Access (institution only) */}
+          {activeTab === "team" && isInstitutionAccount && authProfile?.org_id && (
+            <TeamAccessSection orgId={authProfile.org_id} currentUserId={userId} />
+          )}
+
           {/* Subscription (institution only) */}
           {activeTab === "subscription" && (
             <SubscriptionSection userId={userId} />
@@ -824,6 +831,148 @@ const SettingsPage = () => {
       </div>
     </motion.div>
     </>
+  );
+};
+
+const ADMIN_ROLE_LABELS: Record<string, string> = {
+  owner: "Owner",
+  admin: "Admin",
+  hiring_manager: "Hiring Manager",
+  verifier: "Verifier",
+};
+
+const TeamAccessSection = ({ orgId, currentUserId }: { orgId: string; currentUserId: string | null }) => {
+  const [admins, setAdmins] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [inviteQuery, setInviteQuery] = useState("");
+  const [inviteResults, setInviteResults] = useState<any[]>([]);
+  const [inviteRole, setInviteRole] = useState("admin");
+  const [searching, setSearching] = useState(false);
+  const [adding, setAdding] = useState(false);
+
+  const loadAdmins = async () => {
+    const { data } = await supabase
+      .from("org_admins")
+      .select("*, profile:profiles!org_admins_user_id_fkey(id, full_name, avatar_url, headline)")
+      .eq("org_id", orgId)
+      .order("created_at", { ascending: true });
+    setAdmins(data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { loadAdmins(); }, [orgId]);
+
+  useEffect(() => {
+    if (inviteQuery.trim().length < 2) { setInviteResults([]); return; }
+    setSearching(true);
+    const t = setTimeout(async () => {
+      const { data } = await supabase.from("profiles")
+        .select("id, full_name, avatar_url, username, headline")
+        .or(`full_name.ilike.%${inviteQuery.trim()}%,username.ilike.%${inviteQuery.trim()}%`)
+        .limit(5);
+      setInviteResults((data || []).filter(p => !admins.some(a => a.user_id === p.id)));
+      setSearching(false);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [inviteQuery, admins]);
+
+  const addAdmin = async (profile: any) => {
+    setAdding(true);
+    const { error } = await supabase.from("org_admins").insert({
+      org_id: orgId, user_id: profile.id, role: inviteRole,
+    });
+    if (error) { tiikToast("Couldn't add team member. They may already be an admin.", "error"); }
+    else { tiikToast(`${profile.full_name} added as ${ADMIN_ROLE_LABELS[inviteRole]}`, "success"); }
+    setInviteQuery(""); setInviteResults([]);
+    await loadAdmins();
+    setAdding(false);
+  };
+
+  const revokeAdmin = async (adminId: string, name: string) => {
+    if (!window.confirm(`Remove ${name} from team?`)) return;
+    await supabase.from("org_admins").delete().eq("id", adminId);
+    setAdmins(prev => prev.filter(a => a.id !== adminId));
+    tiikToast(`${name} removed from team`, "success");
+  };
+
+  return (
+    <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
+      <h3 className="text-[16px] font-semibold mb-1" style={{ color: "#1A1A2E" }}>Team Access</h3>
+      <p className="text-[13px] mb-4" style={{ color: "#6B7094" }}>Manage who can access your organisation's workspace and manage applicants.</p>
+
+      {/* Current admins */}
+      <div className="space-y-2 mb-5">
+        {loading ? (
+          <div className="animate-pulse h-12 rounded-xl" style={{ background: "var(--surface-2)" }} />
+        ) : admins.map(a => {
+          const isOwner = a.role === "owner";
+          const isCurrentUser = a.user_id === currentUserId;
+          return (
+            <div key={a.id} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
+              <AvatarSquare src={a.profile?.avatar_url} name={a.profile?.full_name || "Member"} size={36} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p className="truncate text-[14px] font-semibold" style={{ color: "#1A1A2E" }}>{a.profile?.full_name || "Member"}</p>
+                <p className="truncate text-[12px]" style={{ color: "#9CA3C0" }}>{a.profile?.headline || ""}</p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {isOwner && <Crown style={{ width: 14, height: 14, color: "#FFB800" }} />}
+                <span style={{
+                  fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 6,
+                  background: isOwner ? "rgba(255,184,0,0.12)" : "rgba(232,115,58,0.10)",
+                  color: isOwner ? "#B45309" : "#E8733A",
+                }}>{ADMIN_ROLE_LABELS[a.role] || a.role}</span>
+                {!isOwner && !isCurrentUser && (
+                  <button type="button" onClick={() => revokeAdmin(a.id, a.profile?.full_name || "Member")}
+                    className="cursor-pointer flex items-center justify-center"
+                    style={{ width: 28, height: 28, borderRadius: 6, background: "rgba(239,68,68,0.08)", border: "none" }}>
+                    <X style={{ width: 13, height: 13, color: "#EF4444" }} />
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Add member */}
+      <div style={{ borderTop: "1px solid var(--border)", paddingTop: 16 }}>
+        <p className="text-[13px] font-semibold mb-3" style={{ color: "#1A1A2E" }}>Add team member</p>
+        <div className="flex gap-2 mb-2">
+          <div className="relative flex-1">
+            <input type="text" value={inviteQuery} onChange={e => setInviteQuery(e.target.value)}
+              placeholder="Search by name or username…"
+              className="w-full text-[13px] rounded-xl px-3 py-2.5"
+              style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "#1A1A2E", outline: "none" }} />
+            {inviteResults.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 rounded-xl overflow-hidden z-10" style={{ background: "#fff", border: "1px solid var(--border)", boxShadow: "0 8px 24px rgba(0,0,0,0.10)" }}>
+                {inviteResults.map(p => (
+                  <button key={p.id} type="button" disabled={adding}
+                    onClick={() => addAdmin(p)}
+                    className="w-full text-left flex items-center gap-2 px-3 py-2 hover:bg-gray-50 cursor-pointer">
+                    <AvatarSquare src={p.avatar_url} name={p.full_name || "User"} size={28} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p className="truncate text-[13px] font-semibold" style={{ color: "#1A1A2E" }}>{p.full_name}</p>
+                      <p className="truncate text-[11px]" style={{ color: "#9CA3C0" }}>@{p.username}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+            {searching && <p className="text-[11px] mt-1" style={{ color: "#9CA3C0" }}>Searching…</p>}
+          </div>
+          <select value={inviteRole} onChange={e => setInviteRole(e.target.value)}
+            className="text-[12px] rounded-xl px-2 py-2 cursor-pointer"
+            style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "#1A1A2E" }}>
+            <option value="admin">Admin</option>
+            <option value="hiring_manager">Hiring Manager</option>
+            <option value="verifier">Verifier</option>
+          </select>
+        </div>
+        <p className="text-[11px]" style={{ color: "#9CA3C0" }}>
+          Admin: full access · Hiring Manager: applicants only · Verifier: verification requests only
+        </p>
+      </div>
+    </div>
   );
 };
 

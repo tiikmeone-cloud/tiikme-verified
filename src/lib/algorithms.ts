@@ -62,6 +62,7 @@ export interface FeedRankingInput {
   };
   connectionIds: Set<string>;
   followedOrgIds: Set<string>;
+  followedUserIds?: Set<string>;
 }
 
 export function calculateFeedScore({
@@ -69,6 +70,7 @@ export function calculateFeedScore({
   currentUser,
   connectionIds,
   followedOrgIds,
+  followedUserIds,
 }: FeedRankingInput): number {
   // Freshness decay — 12-hour half-life for posts
   const ageHours = post.created_at
@@ -77,8 +79,9 @@ export function calculateFeedScore({
   const contentType = post.post_type === "achievement" ? "achievement" : "post";
   const decay = freshnessDecay(ageHours, contentType);
 
-  // Relationship score
+  // Relationship score — connection (3x) > followed user (2x) > followed org (2.5x org) > stranger (0)
   const isConnection = connectionIds.has(post.author_id || "") ? 3.0 : 0;
+  const isFollowedUser = !isConnection && followedUserIds?.has(post.author_id || "") ? 2.0 : 0;
   const isFollowedOrg = followedOrgIds.has(post.posted_by_org || "") ? 2.5 : 0;
   const sameSector =
     currentUser.sector && post.author_sector === currentUser.sector ? 1.5 : 0;
@@ -101,6 +104,7 @@ export function calculateFeedScore({
   // Master score
   const baseWeight =
     isConnection +
+    isFollowedUser +
     isFollowedOrg +
     sameSector +
     engagementVelocity +

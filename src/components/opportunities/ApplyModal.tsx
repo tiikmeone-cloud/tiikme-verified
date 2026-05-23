@@ -29,7 +29,7 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
   const [resumeUploading, setResumeUploading] = useState(false);
   const [portfolioUrl, setPortfolioUrl] = useState("");
   const [coverLetter, setCoverLetter] = useState("");
-  const [consent, setConsent] = useState(false);
+  const [consent, setConsent] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [answers, setAnswers] = useState<Record<number, string>>({});
@@ -53,7 +53,7 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !consent) return;
+    if (!user || !consent || resumeUploading) return;
     setSubmitting(true);
     try {
       // Check eliminatory questions for auto-reject
@@ -92,12 +92,8 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
         setSubmitting(false);
         return;
       }
-      // Increment applicant count
-      try {
-        await supabase.from("opportunities")
-          .update({ responses_count: (opportunity.responses_count || 0) + 1 })
-          .eq("id", opportunity.id);
-      } catch {}
+      // Increment applicant count atomically via DB
+      await supabase.rpc("increment_opportunity_responses" as any, { opp_id: opportunity.id }).then(() => {});
       // Send alert to poster
       if (opportunity.poster_id) {
         await supabase.from("alerts").insert({
@@ -120,7 +116,7 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
   const displayOrg = orgName || "this organization";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center" style={{ background: "rgba(0,0,0,0.5)" }} onClick={onClose}>
+    <div className="fixed inset-0 z-[9999] flex items-end md:items-center justify-center" style={{ background: "rgba(10,10,11,0.50)", backdropFilter: "blur(6px)" }} onClick={onClose}>
       <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
         className="w-full max-w-[600px] max-h-[85vh] flex flex-col rounded-t-2xl md:rounded-2xl"
         style={{ background: "#FFFFFF", boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06)" }}
@@ -133,7 +129,7 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
               <CheckCircle className="w-6 h-6" style={{ color: "#16A34A" }} />
             </motion.div>
             <h3 className="text-[22px] font-bold mb-2" style={{ color: "#1A1A1A" }}>Application submitted! 🎉</h3>
-            <p className="text-[14px] mb-6" style={{ color: "#9CA3AF" }}>You'll hear back in your Alerts and Pings.</p>
+            <p className="text-[14px] mb-6" style={{ color: "#9CA3AF" }}>You'll hear back in your Alerts.</p>
             <Button type="button" variant="outline" onClick={onClose} style={{ borderRadius: 12, height: 44 }}>View Opportunity</Button>
           </div>
         ) : (
@@ -244,15 +240,16 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
                 </div>
               )}
 
-              {/* Section 7: Consent */}
-              <label className="flex items-start gap-2 text-[13px] cursor-pointer" style={{ color: "#1A1A1A" }}>
-                <input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} className="mt-0.5" />
-                I agree that my Tiikme profile will be shared with {displayOrg}
-              </label>
               </div>{/* end scrollable area */}
 
-              {/* Sticky submit footer */}
-              <div className="px-6 py-4 shrink-0" style={{ borderTop: "1px solid #F0F0F0", background: "#FFFFFF" }}>
+              {/* Sticky submit footer — consent always visible */}
+              <div className="px-6 pt-3 pb-4 shrink-0" style={{ borderTop: "1px solid #F0F0F0", background: "#FFFFFF" }}>
+                <div className="rounded-xl p-3 mb-3" style={{ background: "rgba(232,115,58,0.06)", border: "1px solid rgba(232,115,58,0.20)" }}>
+                  <label className="flex items-start gap-2 text-[13px] cursor-pointer" style={{ color: "#1A1A1A" }}>
+                    <input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} className="mt-0.5 accent-orange-500" />
+                    <span>I agree that my Tiikme profile will be shared with <strong>{displayOrg}</strong></span>
+                  </label>
+                </div>
                 <Button type="submit" className="w-full" disabled={!consent || submitting || resumeUploading}
                   style={{ height: 52, borderRadius: 12, background: "#FF5A1F", color: "#FFFFFF" }}>
                   {submitting ? "Submitting..." : "Submit Application →"}

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
+import { getProfileSubtitle } from "@/lib/profileUtils";
 import { storageImageUrl } from "@/lib/imageTransform";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import {
@@ -41,6 +42,9 @@ function getTimeAgo(d: Date): string {
   return `${Math.floor(h / 24)}d ago`;
 }
 
+const ORG_TABS = ["Overview", "Posts", "Jobs", "Community", "Members"] as const;
+type OrgTab = typeof ORG_TABS[number];
+
 function isOrgMembershipConfirmed(member: { is_verified?: boolean | null; approval_status?: string | null }) {
   return !!member.is_verified && member.approval_status === "approved";
 }
@@ -49,6 +53,8 @@ export default function OrganizationPage() {
   const { slug } = useParams<{ slug: string }>();
   const { user, profile } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab: OrgTab = (searchParams.get("tab") as OrgTab) || "Overview";
   const [org, setOrg] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -59,7 +65,7 @@ export default function OrganizationPage() {
   const [posts, setPosts] = useState<any[]>([]);
   const [communityCircles, setCommunityCircles] = useState<any[]>([]);
   const [showUnfollow, setShowUnfollow] = useState(false);
-  const [activeTab, setActiveTab] = useState<"overview" | "brain">("overview");
+  const [overviewSubTab, setOverviewSubTab] = useState<"overview" | "brain">("overview");
 
   useEffect(() => {
     if (!slug) return;
@@ -275,16 +281,6 @@ export default function OrganizationPage() {
                   </button>
                 )}
 
-                {org.allow_messages && org.created_by && (
-                  <button type="button" onClick={() => navigate(`/app/pings?to=${org.created_by}`)} className="cursor-pointer" style={{
-                    height: 32, padding: "0 16px", borderRadius: 8, fontSize: 12, fontWeight: 500,
-                    background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.40)",
-                    color: "#1A1A2E", display: "inline-flex", alignItems: "center", gap: 4,
-                  }}>
-                    <MessageCircle style={{ width: 13, height: 13 }} /> Message
-                  </button>
-                )}
-
                 <button type="button" onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success("Link copied"); }} className="cursor-pointer" style={{
                   height: 32, width: 32, borderRadius: 8, fontSize: 12,
                   background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.40)",
@@ -308,36 +304,7 @@ export default function OrganizationPage() {
         </div>
 
         {/* ── COMPANY INFO CARDS ── */}
-        <div className="flex items-center gap-2 mt-12">
-          {[
-            { key: "overview", label: "Overview" },
-            { key: "brain", label: "Brain 🧠" },
-          ].map((tab) => {
-            const active = activeTab === tab.key;
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setActiveTab(tab.key as "overview" | "brain")}
-                className="cursor-pointer"
-                style={{
-                  height: 34,
-                  padding: "0 14px",
-                  borderRadius: 999,
-                  fontSize: 12,
-                  fontWeight: 700,
-                  border: active ? "1px solid #FF5A1F" : "1px solid rgba(0,0,0,0.08)",
-                  background: active ? "#FF5A1F" : "rgba(255,255,255,0.30)",
-                  color: active ? "#fff" : "#6B7094",
-                }}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {activeTab === "overview" && infoCards.length > 0 && (
+        {activeTab === "Overview" && infoCards.length > 0 && (
           <div className="flex flex-wrap" style={{ gap: 8, marginTop: 12 }}>
             {infoCards.map((card, i) => (
               <div key={i} className="glass-card" style={{
@@ -353,8 +320,31 @@ export default function OrganizationPage() {
           </div>
         )}
 
+        {/* ── TAB NAVIGATION ── */}
+        <div className="flex overflow-x-auto" style={{ gap: 4, marginTop: 12, scrollbarWidth: "none" }}>
+          {ORG_TABS.map(tab => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setSearchParams(tab === "Overview" ? {} : { tab })}
+              className="cursor-pointer whitespace-nowrap"
+              style={{
+                height: 34, padding: "0 16px", borderRadius: 8, fontSize: 13, fontWeight: 600,
+                background: activeTab === tab ? "#1A1A2E" : "rgba(255,255,255,0.25)",
+                color: activeTab === tab ? "#FFFFFF" : "#6B7094",
+                border: activeTab === tab ? "none" : "1px solid rgba(255,255,255,0.40)",
+                transition: "all 0.15s",
+              }}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        {activeTab !== "Overview" && null}
+
         {/* ── ADMIN: VERIFICATION ROUTING ── */}
-        {activeTab === "overview" && isAdmin && (
+        {activeTab === "Overview" && isAdmin && (
           <div className="glass-card" style={{
             padding: 16, borderRadius: 16, marginTop: 12,
             background: "rgba(255,255,255,0.25)", backdropFilter: "blur(20px)",
@@ -372,8 +362,11 @@ export default function OrganizationPage() {
           </div>
         )}
 
+        {/* ══════ OVERVIEW TAB ══════ */}
+        {activeTab === "Overview" && (
+        <>
         {/* ── ABOUT ── */}
-        {activeTab === "overview" && <div className="glass-card" style={{
+        <div className="glass-card" style={{
           padding: 16, borderRadius: 16, marginTop: 12,
           background: "rgba(255,255,255,0.25)", backdropFilter: "blur(20px)",
           border: "1px solid rgba(255,255,255,0.40)",
@@ -399,14 +392,9 @@ export default function OrganizationPage() {
               ))}
             </div>
           )}
-        </div>}
+        </div>
 
         {/* ── SECTION GRID ── */}
-        {activeTab === "brain" ? (
-          <div style={{ marginTop: 12 }}>
-            <CompanyBrain orgId={org.id} orgType={org.type} orgName={org.name} isAdmin={isAdmin} />
-          </div>
-        ) : (
         <div className="grid grid-cols-1 md:grid-cols-[280px_1fr]" style={{ marginTop: 12, gap: 12 }}>
 
           {/* ═══ LEFT COLUMN ═══ */}
@@ -422,7 +410,6 @@ export default function OrganizationPage() {
               <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", marginBottom: 8 }}>Details</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 {org.email && <DetailRow icon={Globe} label="Email" value={org.email} />}
-                {org.phone && <DetailRow icon={Globe} label="Phone" value={org.phone} />}
                 {org.founded_year && <DetailRow icon={Calendar} label="Founded" value={String(org.founded_year)} />}
                 {websiteUrl && (
                   <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center" style={{ gap: 6, fontSize: 12, color: "#E8733A" }}>
@@ -616,7 +603,160 @@ export default function OrganizationPage() {
             </SectionBox>
           </div>
         </div>
+        </>
         )}
+
+        {/* ══════ POSTS TAB ══════ */}
+        {activeTab === "Posts" && (
+          <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
+            {isAdmin && (
+              <button type="button" onClick={() => navigate("/post/create")} className="cursor-pointer" style={{
+                height: 40, padding: "0 16px", borderRadius: 10, fontSize: 13, fontWeight: 600,
+                background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none",
+                display: "inline-flex", alignItems: "center", gap: 6, alignSelf: "flex-start",
+              }}>
+                <Plus style={{ width: 14, height: 14 }} /> New Post
+              </button>
+            )}
+            {posts.length === 0 ? (
+              <p style={{ fontSize: 13, color: "#9CA3C0", padding: "32px 0", textAlign: "center" }}>No posts yet</p>
+            ) : posts.map((p, idx) => (
+              <Link key={p.id} to={`/app/post/${p.id}`} className="block glass-card" style={{
+                padding: 16, borderRadius: 14,
+                background: "rgba(255,255,255,0.25)", backdropFilter: "blur(20px)",
+                border: "1px solid rgba(255,255,255,0.40)",
+                boxShadow: "0 4px 16px rgba(26,26,78,0.05), inset 0 1px 0 rgba(255,255,255,0.60)",
+              }}>
+                <p style={{ fontSize: 14, color: "#1A1A2E", lineHeight: 1.6, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{p.content}</p>
+                {p.image_urls && p.image_urls.length > 0 && (
+                  <div className="flex gap-2 mt-2" style={{ borderRadius: 8, overflow: "hidden" }}>
+                    {p.image_urls.slice(0, 3).map((url: string, i: number) => (
+                      <img key={i} src={url} alt="" loading="lazy" className="object-cover" style={{ width: p.image_urls.length === 1 ? "100%" : 90, height: 64, borderRadius: 8 }} />
+                    ))}
+                  </div>
+                )}
+                <div className="flex items-center" style={{ gap: 16, marginTop: 10 }}>
+                  <span className="flex items-center" style={{ gap: 4, fontSize: 12, color: "#9CA3C0" }}><Star style={{ width: 12, height: 12 }} /> {getLikeCount(p)}</span>
+                  <span className="flex items-center" style={{ gap: 4, fontSize: 12, color: "#9CA3C0" }}><MessageCircle style={{ width: 12, height: 12 }} /> {getCommentCount(p)}</span>
+                  <span style={{ fontSize: 11, color: "#9CA3C0", marginLeft: "auto" }}>{p.created_at ? getTimeAgo(new Date(p.created_at)) : ""}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {/* ══════ JOBS TAB ══════ */}
+        {activeTab === "Jobs" && (
+          <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
+            {isAdmin && (
+              <button type="button" onClick={() => navigate("/app/opportunities/create")} className="cursor-pointer" style={{
+                height: 40, padding: "0 16px", borderRadius: 10, fontSize: 13, fontWeight: 600,
+                background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none",
+                display: "inline-flex", alignItems: "center", gap: 6, alignSelf: "flex-start",
+              }}>
+                <Plus style={{ width: 14, height: 14 }} /> Post a Job
+              </button>
+            )}
+            {opps.length === 0 ? (
+              <p style={{ fontSize: 13, color: "#9CA3C0", padding: "32px 0", textAlign: "center" }}>No opportunities posted yet</p>
+            ) : opps.map(o => (
+              <div key={o.id} onClick={() => navigate("/app/opportunities")} className="cursor-pointer glass-card" style={{
+                padding: 16, borderRadius: 14,
+                background: "rgba(255,255,255,0.25)", backdropFilter: "blur(20px)",
+                border: "1px solid rgba(255,255,255,0.40)",
+                boxShadow: "0 4px 16px rgba(26,26,78,0.05), inset 0 1px 0 rgba(255,255,255,0.60)",
+              }}>
+                <div className="flex items-start justify-between">
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 15, fontWeight: 600, color: "#1A1A2E" }}>{o.title}</p>
+                    <div className="flex items-center flex-wrap" style={{ gap: 6, marginTop: 4 }}>
+                      <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: "rgba(74,144,217,0.1)", color: "#4A90D9" }}>
+                        {(o.type || "job").replace(/[-_]/g, " ")}
+                      </span>
+                      {o.location && <span style={{ fontSize: 12, color: "#9CA3C0" }}>{o.location}</span>}
+                      {o.is_remote && <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: "rgba(52,199,89,0.1)", color: "#34C759" }}>Remote</span>}
+                    </div>
+                    {o.compensation && <p style={{ fontSize: 13, fontWeight: 600, color: "#E8733A", marginTop: 4 }}>{o.compensation}</p>}
+                  </div>
+                  <span style={{
+                    fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4, flexShrink: 0,
+                    background: o.is_open ? "rgba(52,199,89,0.1)" : "rgba(156,163,175,0.1)",
+                    color: o.is_open ? "#34C759" : "#9CA3C0",
+                  }}>{o.is_open ? "Active" : "Closed"}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ══════ COMMUNITY TAB ══════ */}
+        {activeTab === "Community" && (
+          <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
+            {isAdmin && (
+              <button type="button" onClick={() => navigate(`/app/circles/create?org=${org.id}`)} className="cursor-pointer" style={{
+                height: 40, padding: "0 16px", borderRadius: 10, fontSize: 13, fontWeight: 600,
+                background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none",
+                display: "inline-flex", alignItems: "center", gap: 6, alignSelf: "flex-start",
+              }}>
+                <Plus style={{ width: 14, height: 14 }} /> New Community Circle
+              </button>
+            )}
+            {communityCircles.length === 0 ? (
+              <p style={{ fontSize: 13, color: "#9CA3C0", padding: "32px 0", textAlign: "center" }}>
+                {isAdmin ? "Create a circle so your followers can connect with each other." : "No community circles yet."}
+              </p>
+            ) : communityCircles.map(c => (
+              <Link key={c.id} to={`/app/circles/${c.slug}`} className="flex items-center glass-card" style={{
+                gap: 14, padding: 16, borderRadius: 14,
+                background: "rgba(255,255,255,0.25)", backdropFilter: "blur(20px)",
+                border: "1px solid rgba(255,255,255,0.40)",
+                boxShadow: "0 4px 16px rgba(26,26,78,0.05), inset 0 1px 0 rgba(255,255,255,0.60)",
+              }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(14,116,144,0.10)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>
+                  {c.icon_url || "💬"}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{c.name}</p>
+                  {c.description && <p className="truncate" style={{ fontSize: 12, color: "#6B7094", marginTop: 2 }}>{c.description}</p>}
+                  <p style={{ fontSize: 12, color: "#9CA3C0", marginTop: 2 }}>
+                    {c.member_count || 0} member{(c.member_count || 0) === 1 ? "" : "s"}
+                    {c.active_7d ? ` · ${c.active_7d} active this week` : ""}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {/* ══════ MEMBERS TAB ══════ */}
+        {activeTab === "Members" && (
+          <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+            {members.length === 0 ? (
+              <p style={{ fontSize: 13, color: "#9CA3C0", padding: "32px 0", textAlign: "center" }}>No members listed yet</p>
+            ) : members.map(m => (
+              <Link key={m.id} to={`/app/profile/${m.user_id}`} className="flex items-center glass-card" style={{
+                gap: 12, padding: 14, borderRadius: 14,
+                background: "rgba(255,255,255,0.25)", backdropFilter: "blur(20px)",
+                border: "1px solid rgba(255,255,255,0.40)",
+                boxShadow: "0 4px 16px rgba(26,26,78,0.05), inset 0 1px 0 rgba(255,255,255,0.60)",
+              }}>
+                <AvatarSquare src={m.profile?.avatar_url} name={m.profile?.full_name || "Member"} size="sm" />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{m.profile?.full_name || "Member"}</p>
+                  <p className="truncate" style={{ fontSize: 12, color: "#9CA3C0" }}>
+                    {getProfileSubtitle(m.profile) || m.title || m.role || "Member"}{m.department ? ` · ${m.department}` : ""}
+                  </p>
+                </div>
+                {m.is_verified && (
+                  <div className="flex items-center justify-center shrink-0" style={{ width: 20, height: 20, borderRadius: 10, background: "#FFB800" }}>
+                    <Shield className="w-3 h-3 text-white" />
+                  </div>
+                )}
+              </Link>
+            ))}
+          </div>
+        )}
+
       </div>
     </div>
   );
