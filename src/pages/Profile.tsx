@@ -987,7 +987,7 @@ const Profile = () => {
             return (
           <div className="flex profile-info-flex" style={{ gap: 16, alignItems: "flex-start" }}>
             {/* LEFT COLUMN: Avatar with ring for OTW */}
-            <div className="shrink-0" style={{ width: 96, marginTop: -8 }}>
+            <div className="shrink-0" style={{ width: 96 }}>
               <div style={{ padding: showOTW ? 3 : 0, borderRadius: showOTW ? "50%" : undefined, background: showOTW ? "rgba(16,185,129,0.25)" : undefined, display: "inline-block" }}>
                 <AvatarSquare src={profileData.avatar_url} name={displayName || "U"} size="profile" bgColor={roleColor} className="shadow-md" />
               </div>
@@ -1110,10 +1110,24 @@ const Profile = () => {
                 })()}
               </div>
 
-              {/* ROW 5: Action buttons (own profile shows nothing — edit happens inline / via Settings) */}
+              {/* ROW 5: Action buttons */}
               {!isOwnProfile && (
                 <div className="flex items-center justify-center md:justify-start flex-wrap" style={{ gap: 8, marginTop: 10 }}>
                   {renderConnectButton()}
+                  <button
+                    type="button"
+                    onClick={handleToggleFollow}
+                    className="cursor-pointer"
+                    style={{
+                      height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+                      background: followState === "following" ? "rgba(16,185,129,0.10)" : "rgba(255,255,255,0.25)",
+                      border: followState === "following" ? "1px solid rgba(16,185,129,0.30)" : "1px solid rgba(0,0,0,0.10)",
+                      color: followState === "following" ? "#059669" : "#1A1A2E",
+                      display: "inline-flex", alignItems: "center", gap: 4,
+                    }}
+                  >
+                    {followState === "following" ? "Following ✓" : "+ Follow"}
+                  </button>
                 </div>
               )}
             </div>
@@ -1166,28 +1180,6 @@ const Profile = () => {
           <div className="flex flex-col gap-3">
             {/* Verification status (own profile only, hidden if already verified) */}
             {isOwnProfile && <VerificationStatusCard />}
-            {/* L1: Connections preview */}
-            <div className="glass-card" style={{ padding: 12, borderRadius: 16 }}>
-              <p style={{ fontSize: 11, fontWeight: 600, color: "#9CA3C0", textTransform: "uppercase", letterSpacing: "0.02em" }}>CONNECTIONS</p>
-              <p className="num" style={{ fontSize: 28, color: "#1A1A2E", margin: "4px 0", lineHeight: "36px" }}>{stats.connections}</p>
-              {/* Mini avatars */}
-              {connectedAvatars.length > 0 && (
-                <div className="flex items-center" style={{ marginBottom: 8 }}>
-                  {connectedAvatars.slice(0, 3).map((a, i) => (
-                    <div key={a.id} style={{
-                      width: 24, height: 24, borderRadius: 0, overflow: "hidden", border: "2px solid #fff",
-                      marginLeft: i > 0 ? -6 : 0, flexShrink: 0,
-                      background: ROLE_COLOR_MAP["student"] || "#4F46E5",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      color: "#fff", fontSize: 9, fontWeight: 700,
-                    }}>
-                      {a.avatar_url ? <img src={fixStorageUrl(a.avatar_url) || ""} alt={a.full_name || "Member"} loading="lazy" className="w-full h-full object-cover" style={{ borderRadius: 0 }} /> : (a.full_name || "U")[0]}
-                    </div>
-                  ))}
-                </div>
-              )}
-              <Link to="/app/connections" style={{ fontSize: 12, fontWeight: 400, color: "#E8733A" }}>See all &gt;</Link>
-            </div>
 
             {/* L3: Links */}
             <div className="glass-card" style={{ padding: 12, borderRadius: 16 }}>

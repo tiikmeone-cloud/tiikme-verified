@@ -517,28 +517,8 @@ export const PostsSection = ({
   username?: string;
   isOwnProfile?: boolean;
 }) => {
-  const [selectedPost, setSelectedPost] = useState<any | null>(null);
-  const canOpen = posts.length > 0;
-
   return (
     <SectionBox title="Posts" icon={MessageCircle} iconColor="#E8733A" borderColor="#E8733A" count={stats.posts} isOwnProfile={!!isOwnProfile} onAdd={isOwnProfile ? () => {} : undefined}>
-      {/* Stats row */}
-      <div className="flex items-center gap-4 mb-3">
-        <span className="text-sm text-muted-foreground">
-          <span className="num font-semibold text-foreground">{stats.posts}</span> Posts
-        </span>
-        {(stats.reposts ?? 0) > 0 && (
-          <span className="text-sm text-muted-foreground">
-            <span className="num font-semibold text-foreground">{stats.reposts}</span> Reposts
-          </span>
-        )}
-        {canOpen && username && (
-          <Link to={`/app/u/${username}/posts`} className="ml-auto text-xs font-medium text-primary hover:underline">
-            See all
-          </Link>
-        )}
-      </div>
-
       {posts.length === 0 ? (
         isOwnProfile ? (
           <Link to="/post/create" className="flex items-center gap-2 w-full text-left"
@@ -551,16 +531,15 @@ export const PostsSection = ({
         )
       ) : (
         <>
-          {/* Instagram-style 3-column grid */}
+          {/* Instagram-style 3-column grid — each cell navigates to posts page */}
           <div className="grid grid-cols-3 gap-1">
             {posts.slice(0, 9).map((p: any) => {
               const img = p.image_urls?.[0];
               return (
-                <button
+                <Link
                   key={p.id}
-                  type="button"
-                  onClick={() => setSelectedPost(p)}
-                  className="relative aspect-square overflow-hidden rounded-lg bg-black/5 hover:opacity-90 transition-opacity cursor-pointer"
+                  to={username ? `/app/u/${username}/posts` : "/app/feed"}
+                  className="relative aspect-square overflow-hidden rounded-lg bg-black/5 hover:opacity-90 transition-opacity block"
                 >
                   {img ? (
                     <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
@@ -572,42 +551,16 @@ export const PostsSection = ({
                       </p>
                     </div>
                   )}
-                </button>
+                </Link>
               );
             })}
           </div>
-
-          {/* Post detail sheet */}
-          {selectedPost && (
-            <div
-              className="fixed inset-0 z-50 flex items-center justify-center p-4"
-              style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
-              onClick={() => setSelectedPost(null)}
-            >
-              <div
-                className="bg-white rounded-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto shadow-2xl"
-                onClick={e => e.stopPropagation()}
-              >
-                <div className="flex items-center justify-between p-4 border-b">
-                  <span className="font-semibold text-sm">Post</span>
-                  <button type="button" onClick={() => setSelectedPost(null)} className="p-1 rounded-lg hover:bg-gray-100">
-                    <X className="w-4 h-4 text-gray-500" />
-                  </button>
-                </div>
-                {selectedPost.image_urls?.[0] && (
-                  <img src={selectedPost.image_urls[0]} alt="" className="w-full object-cover max-h-80" />
-                )}
-                <div className="p-4">
-                  <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">{selectedPost.content}</p>
-                  <div className="flex items-center gap-4 mt-3 text-xs text-gray-400">
-                    <span>❤️ {selectedPost.reactions ? Object.values(selectedPost.reactions).reduce((a: any, b: any) => a + b, 0) : 0}</span>
-                    <span>💬 {selectedPost.comment_count || 0}</span>
-                    <span>🔁 {selectedPost.repost_count || 0}</span>
-                    <span className="ml-auto">{new Date(selectedPost.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+          {username && (
+            <Link to={`/app/u/${username}/posts`}
+              className="flex items-center justify-center mt-2 text-xs font-medium hover:underline"
+              style={{ color: "#E8733A" }}>
+              See all posts
+            </Link>
           )}
         </>
       )}
