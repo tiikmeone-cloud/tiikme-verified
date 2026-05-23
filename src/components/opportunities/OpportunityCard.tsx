@@ -49,6 +49,7 @@ interface OpportunityCardProps {
   hasApplied: boolean;
   initialLikeCount?: number;
   initialCommentCount?: number;
+  isFollowingOrg?: boolean;
   onApply?: (opp: OpportunityCardProps["opp"]) => void;
   onRefer?: (opp: OpportunityCardProps["opp"]) => void;
   onDelete?: (oppId: string) => void;
@@ -61,6 +62,7 @@ export function OpportunityCard({
   hasApplied,
   initialLikeCount = 0,
   initialCommentCount = 0,
+  isFollowingOrg = false,
   onApply,
   onRefer,
   onDelete,
@@ -206,9 +208,16 @@ export function OpportunityCard({
               size={44}
             />
             <div className="min-w-0">
-              <p className="text-xs text-gray-500 font-medium">
-                {company?.name || "Unknown Company"}
-              </p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-xs text-gray-500 font-medium">
+                  {company?.name || "Unknown Company"}
+                </p>
+                {isFollowingOrg && (
+                  <span className="text-[10px] font-semibold bg-teal-50 text-teal-700 px-1.5 py-0.5 rounded-full">
+                    Following
+                  </span>
+                )}
+              </div>
               <h3 className="font-semibold text-[15px] text-gray-900 mt-0.5 leading-tight break-words">
                 {opp.title}
               </h3>

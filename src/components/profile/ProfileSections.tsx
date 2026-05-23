@@ -517,9 +517,10 @@ export const PostsSection = ({
   username?: string;
   isOwnProfile?: boolean;
 }) => {
+  const postsLink = username ? `/app/u/${username}/posts` : "/app/feed";
   return (
     <SectionBox title="Posts" icon={MessageCircle} iconColor="#E8733A" borderColor="#E8733A" count={stats.posts} isOwnProfile={!!isOwnProfile} onAdd={isOwnProfile ? () => {} : undefined}>
-      {posts.length === 0 ? (
+      {stats.posts === 0 ? (
         isOwnProfile ? (
           <Link to="/post/create" className="flex items-center gap-2 w-full text-left"
             style={{ background: "rgba(232,115,58,0.05)", border: "1px dashed rgba(232,115,58,0.30)", borderRadius: 10, padding: "10px 12px" }}>
@@ -530,39 +531,13 @@ export const PostsSection = ({
           <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "4px 0" }}>No posts yet</p>
         )
       ) : (
-        <>
-          {/* Instagram-style 3-column grid — each cell navigates to posts page */}
-          <div className="grid grid-cols-3 gap-1">
-            {posts.slice(0, 9).map((p: any) => {
-              const img = p.image_urls?.[0];
-              return (
-                <Link
-                  key={p.id}
-                  to={username ? `/app/u/${username}/posts` : "/app/feed"}
-                  className="relative aspect-square overflow-hidden rounded-lg bg-black/5 hover:opacity-90 transition-opacity block"
-                >
-                  {img ? (
-                    <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center p-2"
-                      style={{ background: "rgba(232,115,58,0.06)" }}>
-                      <p className="text-[10px] text-center line-clamp-4 text-muted-foreground leading-tight">
-                        {p.content?.slice(0, 60)}
-                      </p>
-                    </div>
-                  )}
-                </Link>
-              );
-            })}
+        <Link to={postsLink} className="flex items-center justify-between hover:opacity-80 transition-opacity" style={{ textDecoration: "none" }}>
+          <div>
+            <span style={{ fontSize: 36, fontWeight: 800, color: "#1A1A2E", lineHeight: 1 }} className="num">{stats.posts}</span>
+            <span style={{ fontSize: 13, fontWeight: 400, color: "#6B7094", marginLeft: 8 }}>Posts</span>
           </div>
-          {username && (
-            <Link to={`/app/u/${username}/posts`}
-              className="flex items-center justify-center mt-2 text-xs font-medium hover:underline"
-              style={{ color: "#E8733A" }}>
-              See all posts
-            </Link>
-          )}
-        </>
+          <span style={{ fontSize: 12, fontWeight: 600, color: "#E8733A" }}>View all →</span>
+        </Link>
       )}
     </SectionBox>
   );

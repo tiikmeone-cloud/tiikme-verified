@@ -225,6 +225,7 @@ const Profile = () => {
   const [achievements, setAchievements] = useState<any[]>([]);
   const [stats, setStats] = useState({ connections: 0, posts: 0 });
   const [connectedAvatars, setConnectedAvatars] = useState<any[]>([]);
+  const [mutualConnections, setMutualConnections] = useState<{ profiles: any[]; total: number }>({ profiles: [], total: 0 });
   const [dataLoading, setDataLoading] = useState(true);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [editingPost, setEditingPost] = useState<any | null>(null);
@@ -303,6 +304,49 @@ const Profile = () => {
       .maybeSingle().then(({ data }) => {
         if (data) setConnectionStatus({ status: data.status, direction: data.requester_id === user.id ? "sent" : "received", id: data.id });
       });
+  }, [user, targetUserId, isOwnProfile]);
+
+  // Load mutual connections when viewing someone else's profile
+  useEffect(() => {
+    if (!user || !targetUserId || isOwnProfile) return;
+    let cancelled = false;
+    (async () => {
+      // My connection IDs
+      const { data: myStrands } = await supabase.from("strands")
+        .select("requester_id, receiver_id")
+        .or(`requester_id.eq.${user.id},receiver_id.eq.${user.id}`)
+        .eq("status", "accepted");
+      if (cancelled) return;
+      const myIds = new Set<string>();
+      (myStrands || []).forEach((s: any) => {
+        if (s.requester_id !== user.id) myIds.add(s.requester_id);
+        if (s.receiver_id !== user.id) myIds.add(s.receiver_id);
+      });
+      if (myIds.size === 0) return;
+
+      // Target's connection IDs
+      const { data: theirStrands } = await supabase.from("strands")
+        .select("requester_id, receiver_id")
+        .or(`requester_id.eq.${targetUserId},receiver_id.eq.${targetUserId}`)
+        .eq("status", "accepted");
+      if (cancelled) return;
+      const theirIds = new Set<string>();
+      (theirStrands || []).forEach((s: any) => {
+        if (s.requester_id !== targetUserId) theirIds.add(s.requester_id);
+        if (s.receiver_id !== targetUserId) theirIds.add(s.receiver_id);
+      });
+
+      // Intersection (mutual connections, excluding self)
+      const mutual = [...myIds].filter(id => theirIds.has(id) && id !== user.id && id !== targetUserId);
+      if (mutual.length === 0) return;
+
+      const { data: profiles } = await supabase.from("profiles")
+        .select("id, full_name, avatar_url, display_preference")
+        .in("id", mutual.slice(0, 3));
+      if (cancelled) return;
+      setMutualConnections({ profiles: profiles || [], total: mutual.length });
+    })();
+    return () => { cancelled = true; };
   }, [user, targetUserId, isOwnProfile]);
 
   useEffect(() => { if (!authLoading) loadProfile(); }, [authLoading, loadProfile]);
@@ -943,8 +987,8 @@ const Profile = () => {
             return (
           <div className="flex profile-info-flex" style={{ gap: 16, alignItems: "flex-start" }}>
             {/* LEFT COLUMN: Avatar with ring for OTW */}
-            <div className="shrink-0" style={{ width: 96 }}>
-              <div style={{ padding: showOTW ? 3 : 0, borderRadius: showOTW ? "50%" : undefined, background: showOTW ? "rgba(16,185,129,0.25)" : undefined, display: "inline-block" }}>
+            <div className="profile-avatar-wrap shrink-0" style={{ width: 120 }}>
+              <div style={{ padding: showOTW ? 3 : 0, borderRadius: showOTW ? "50%" : undefined, background: showOTW ? "rgba(16,185,129,0.25)" : undefined }}>
                 <AvatarSquare src={profileData.avatar_url} name={displayName || "U"} size="profile" bgColor={roleColor} className="shadow-md" />
               </div>
             </div>
@@ -1014,15 +1058,11 @@ const Profile = () => {
                 )}
               </div>
 
-              {/* ROW 4: Compact stats row — Posts · Connections · Followers · Following · Score pill */}
+              {/* ROW 4: Stats — Posts count only; Connections are in the box below */}
               <div className="flex items-center flex-wrap" style={{ gap: 12, marginTop: 6 }}>
                 <Link to={`/app/u/${username}/posts`} className="hover:opacity-80" style={{ fontSize: 13 }}>
-                  <span className="num" style={{ color: "#1A1A2E" }}>{stats.posts}</span>
+                  <span className="num" style={{ fontWeight: 700, color: "#1A1A2E" }}>{stats.posts}</span>
                   <span style={{ fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Posts</span>
-                </Link>
-                <Link to="/app/connections" className="cursor-pointer hover:opacity-80" style={{ fontSize: 13 }}>
-                  <span className="num" style={{ color: "#1A1A2E" }}>{stats.connections}</span>
-                  <span style={{ fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Connections</span>
                 </Link>
                 {(() => {
                   const score = (profileData as any).activity_score ?? 0;
@@ -1062,6 +1102,24 @@ const Profile = () => {
               {!isOwnProfile && (
                 <div className="flex items-center justify-center md:justify-start flex-wrap" style={{ gap: 8, marginTop: 10 }}>
                   {renderConnectButton()}
+                </div>
+              )}
+
+              {/* ROW 6: Mutual connections — "Y and 21 others you know are connected" */}
+              {!isOwnProfile && mutualConnections.total > 0 && (
+                <div className="flex items-center justify-center md:justify-start flex-wrap" style={{ gap: 6, marginTop: 8 }}>
+                  <div className="flex" style={{ marginRight: 2 }}>
+                    {mutualConnections.profiles.slice(0, 3).map((p, i) => (
+                      <div key={p.id} style={{ marginLeft: i === 0 ? 0 : -8, zIndex: 3 - i }}>
+                        <AvatarSquare src={p.avatar_url} name={p.full_name || "?"} size={20} />
+                      </div>
+                    ))}
+                  </div>
+                  <span style={{ fontSize: 11, color: "#6B7094", lineHeight: "16px" }}>
+                    {mutualConnections.profiles[0]?.full_name || "Someone you know"}
+                    {mutualConnections.total > 1 && ` and ${mutualConnections.total - 1} other${mutualConnections.total > 2 ? "s" : ""} you know`}
+                    {" "}are connected
+                  </span>
                 </div>
               )}
             </div>
@@ -1114,6 +1172,32 @@ const Profile = () => {
           <div className="flex flex-col gap-3">
             {/* Verification status (own profile only, hidden if already verified) */}
             {isOwnProfile && <VerificationStatusCard />}
+
+            {/* Connections box */}
+            <div className="glass-card" style={{ padding: 14, borderRadius: 16 }}>
+              <div className="flex items-center justify-between" style={{ marginBottom: 10 }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: "#1A1A2E" }}>Connections</span>
+                <Link to="/app/connections" className="hover:opacity-80" style={{ fontSize: 12, fontWeight: 600, color: "#E8733A" }}>
+                  See all
+                </Link>
+              </div>
+              <div style={{ fontSize: 28, fontWeight: 800, color: "#1A1A2E", lineHeight: 1, marginBottom: 8 }}>
+                <span className="num">{stats.connections}</span>
+              </div>
+              {connectedAvatars.length > 0 ? (
+                <div className="flex items-center" style={{ gap: 6, flexWrap: "wrap" }}>
+                  {connectedAvatars.slice(0, 6).map((p: any) => (
+                    <Link key={p.id} to={`/app/profile/${p.id}`} title={p.full_name || "Connection"}>
+                      <AvatarSquare src={p.avatar_url} name={p.full_name || "?"} size={36} />
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p style={{ fontSize: 12, color: "#9CA3C0" }}>
+                  {isOwnProfile ? "Start connecting with people" : "No mutual connections yet"}
+                </p>
+              )}
+            </div>
 
             {/* L3: Links */}
             <div className="glass-card" style={{ padding: 12, borderRadius: 16 }}>

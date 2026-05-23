@@ -115,6 +115,17 @@ const Opportunities = () => {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: followedOrgIds = new Set<string>() } = useQuery({
+    queryKey: ["followed-orgs", user?.id],
+    queryFn: async () => {
+      if (!user) return new Set<string>();
+      const { data } = await supabase.from("org_followers").select("org_id").eq("user_id", user.id);
+      return new Set((data || []).map((r: any) => r.org_id));
+    },
+    enabled: !!user,
+    staleTime: 10 * 60 * 1000,
+  });
+
   const recommended = useMemo(() => {
     if (!profile?.skills?.length || isInstitution) return [];
     const userSkills = new Set((profile.skills as string[]).map(s => s.toLowerCase()));
@@ -187,6 +198,7 @@ const Opportunities = () => {
                       company={o.org ? { id: o.org.id, name: o.org.name, logo_url: o.org.logo_url } : null}
                       isLikedByMe={false}
                       hasApplied={appliedIds.has(o.id)}
+                      isFollowingOrg={!!(o.org?.id && followedOrgIds.has(o.org.id))}
                       initialLikeCount={0}
                       initialCommentCount={0}
                       onApply={(opp) => setShowApply(opp)}
@@ -217,6 +229,7 @@ const Opportunities = () => {
                     company={o.org ? { id: o.org.id, name: o.org.name, logo_url: o.org.logo_url } : null}
                     isLikedByMe={false}
                     hasApplied={appliedIds.has(o.id)}
+                    isFollowingOrg={!!(o.org?.id && followedOrgIds.has(o.org.id))}
                     initialLikeCount={0}
                     initialCommentCount={0}
                     onApply={(opp) => setShowApply(opp)}
