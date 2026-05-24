@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { PageSEO } from "@/hooks/usePageSEO";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import { storageImageUrl } from "@/lib/imageTransform";
+import { toast } from "sonner";
 
 const STATUS_META: Record<string, { label: string; bg: string; color: string; icon: React.ElementType }> = {
   applied:      { label: "Applied",      bg: "#EFF6FF", color: "#2563EB", icon: Clock },
