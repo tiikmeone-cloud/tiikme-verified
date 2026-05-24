@@ -1381,7 +1381,7 @@ const Profile = () => {
       <GlassModal open={modalSection === "experience"} onClose={() => setModalSection(null)} title="Add Experience" icon={Briefcase} accentColor="#4A90D9"
         actions={<>
           <button type="button" onClick={saveExperience} disabled={saving} className="cursor-pointer" style={{ padding: "10px 28px", borderRadius: 16, fontSize: 14, fontWeight: 600, background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 4px 20px rgba(232,115,58,0.35)" }}>{saving ? "Saving..." : "Save"}</button>
-          <button type="button" onClick={() => setModalSection(null)} className="cursor-pointer" style={{ padding: "10px 20px", borderRadius: 16, fontSize: 14, fontWeight: 500, background: "rgba(255,255,255,0.08)", color: "#fff", border: "1px solid rgba(255,255,255,0.25)" }}>Cancel</button>
+          <button type="button" onClick={() => setModalSection(null)} className="cursor-pointer" style={{ padding: "10px 20px", borderRadius: 16, fontSize: 14, fontWeight: 500, background: "rgba(107,112,148,0.10)", color: "#6B7094", border: "1px solid rgba(107,112,148,0.15)" }}>Cancel</button>
         </>}
       >
         <div><label style={labelStyle}>Company / Organisation *</label><input value={expForm.company} onChange={e => setExpForm({ ...expForm, company: e.target.value })} style={gInputStyle} placeholder="e.g. Google" /></div>
@@ -1395,7 +1395,7 @@ const Profile = () => {
           <div><label style={labelStyle}>Start Month</label><select value={expForm.startMonth} onChange={e => setExpForm({ ...expForm, startMonth: e.target.value })} style={gSelectStyle}><option value="">Month</option>{months.map(m => <option key={m}>{m}</option>)}</select></div>
           <div><label style={labelStyle}>Start Year</label><select value={expForm.startYear} onChange={e => setExpForm({ ...expForm, startYear: e.target.value })} style={gSelectStyle}><option value="">Year</option>{years.map(y => <option key={y}>{y}</option>)}</select></div>
         </div>
-        <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={expForm.isCurrent} onChange={e => setExpForm({ ...expForm, isCurrent: e.target.checked })} /><span style={{ fontSize: 13, color: "rgba(255,255,255,0.70)" }}>I currently work here</span></label>
+        <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={expForm.isCurrent} onChange={e => setExpForm({ ...expForm, isCurrent: e.target.checked })} /><span style={{ fontSize: 13, color: "#6B7094" }}>I currently work here</span></label>
         {!expForm.isCurrent && (
           <div className="grid grid-cols-2 gap-3">
             <div><label style={labelStyle}>End Month</label><select value={expForm.endMonth} onChange={e => setExpForm({ ...expForm, endMonth: e.target.value })} style={gSelectStyle}><option value="">Month</option>{months.map(m => <option key={m}>{m}</option>)}</select></div>
@@ -1404,13 +1404,13 @@ const Profile = () => {
         )}
         <div><label style={labelStyle}>Location</label><input value={expForm.city} onChange={e => setExpForm({ ...expForm, city: e.target.value })} style={gInputStyle} placeholder="City" /></div>
         <div><label style={labelStyle}>Description</label><textarea value={expForm.description} onChange={e => setExpForm({ ...expForm, description: e.target.value.slice(0, 500) })} style={gTextareaStyle} placeholder="What did you do?" maxLength={500} /></div>
-        <div><label style={labelStyle}>Skills (comma separated)</label><input value={expForm.skills} onChange={e => setExpForm({ ...expForm, skills: e.target.value })} style={gInputStyle} placeholder="React, TypeScript, Node.js" /></div>
+        <div><label style={labelStyle}>Skills (comma separated)</label><input value={expForm.skills} onChange={e => setExpForm({ ...expForm, skills: e.target.value })} style={gInputStyle} placeholder="e.g. Leadership, Python, Surgery" /></div>
       </GlassModal>
 
       <GlassModal open={modalSection === "education"} onClose={() => setModalSection(null)} title="Add Education" icon={GraduationCap} accentColor="#34C759"
         actions={<>
           <button type="button" onClick={saveEducation} disabled={saving} className="cursor-pointer" style={{ padding: "10px 28px", borderRadius: 16, fontSize: 14, fontWeight: 600, background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 4px 20px rgba(232,115,58,0.35)" }}>{saving ? "Saving..." : "Save"}</button>
-          <button type="button" onClick={() => setModalSection(null)} className="cursor-pointer" style={{ padding: "10px 20px", borderRadius: 16, fontSize: 14, fontWeight: 500, background: "rgba(255,255,255,0.08)", color: "#fff", border: "1px solid rgba(255,255,255,0.25)" }}>Cancel</button>
+          <button type="button" onClick={() => setModalSection(null)} className="cursor-pointer" style={{ padding: "10px 20px", borderRadius: 16, fontSize: 14, fontWeight: 500, background: "rgba(107,112,148,0.10)", color: "#6B7094", border: "1px solid rgba(107,112,148,0.15)" }}>Cancel</button>
         </>}
       >
         <div><label style={labelStyle}>Institution Name *</label><input value={eduForm.institution} onChange={e => setEduForm({ ...eduForm, institution: e.target.value })} style={gInputStyle} placeholder="e.g. IIT Delhi" /></div>
@@ -1418,29 +1418,29 @@ const Profile = () => {
         <div><label style={labelStyle}>Branch / Specialisation</label><input value={eduForm.branch} onChange={e => setEduForm({ ...eduForm, branch: e.target.value })} style={gInputStyle} placeholder="e.g. Computer Science" /></div>
         <div className="grid grid-cols-2 gap-3">
           <div><label style={labelStyle}>Start Year</label><select value={eduForm.startYear} onChange={e => setEduForm({ ...eduForm, startYear: e.target.value })} style={gSelectStyle}><option value="">Year</option>{years.map(y => <option key={y}>{y}</option>)}</select></div>
-          {!eduForm.isCurrent && <div><label style={labelStyle}>End Year</label><select value={eduForm.endYear} onChange={e => setEduForm({ ...eduForm, endYear: e.target.value })} style={gSelectStyle}><option value="">Year</option>{years.map(y => <option key={y}>{y}</option>)}</select></div>}
+          <div><label style={labelStyle}>{eduForm.isCurrent ? "Expected Grad Year" : "End Year"}</label><select value={eduForm.endYear} onChange={e => setEduForm({ ...eduForm, endYear: e.target.value })} style={gSelectStyle}><option value="">Year</option>{years.map(y => <option key={y}>{y}</option>)}</select></div>
         </div>
-        <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={eduForm.isCurrent} onChange={e => setEduForm({ ...eduForm, isCurrent: e.target.checked })} /><span style={{ fontSize: 13, color: "rgba(255,255,255,0.70)" }}>Currently studying here</span></label>
+        <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={eduForm.isCurrent} onChange={e => setEduForm({ ...eduForm, isCurrent: e.target.checked })} /><span style={{ fontSize: 13, color: "#6B7094" }}>Currently studying here</span></label>
         <div><label style={labelStyle}>Grade / CGPA</label><input value={eduForm.grade} onChange={e => setEduForm({ ...eduForm, grade: e.target.value })} style={gInputStyle} placeholder="e.g. 9.2" /></div>
       </GlassModal>
 
       <GlassModal open={modalSection === "project"} onClose={() => setModalSection(null)} title="Add Project" icon={Rocket} accentColor="#FF6B9D"
         actions={<>
           <button type="button" onClick={saveProject} disabled={saving} className="cursor-pointer" style={{ padding: "10px 28px", borderRadius: 16, fontSize: 14, fontWeight: 600, background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 4px 20px rgba(232,115,58,0.35)" }}>{saving ? "Saving..." : "Save"}</button>
-          <button type="button" onClick={() => setModalSection(null)} className="cursor-pointer" style={{ padding: "10px 20px", borderRadius: 16, fontSize: 14, fontWeight: 500, background: "rgba(255,255,255,0.08)", color: "#fff", border: "1px solid rgba(255,255,255,0.25)" }}>Cancel</button>
+          <button type="button" onClick={() => setModalSection(null)} className="cursor-pointer" style={{ padding: "10px 20px", borderRadius: 16, fontSize: 14, fontWeight: 500, background: "rgba(107,112,148,0.10)", color: "#6B7094", border: "1px solid rgba(107,112,148,0.15)" }}>Cancel</button>
         </>}
       >
         <div><label style={labelStyle}>Project Name *</label><input value={projForm.title} onChange={e => setProjForm({ ...projForm, title: e.target.value })} style={gInputStyle} placeholder="e.g. Portfolio Website" /></div>
         <div><label style={labelStyle}>Organisation (optional)</label><input value={projForm.org} onChange={e => setProjForm({ ...projForm, org: e.target.value })} style={gInputStyle} placeholder="e.g. Open source" /></div>
         <div><label style={labelStyle}>Description</label><textarea value={projForm.description} onChange={e => setProjForm({ ...projForm, description: e.target.value.slice(0, 500) })} style={gTextareaStyle} placeholder="What is this project about?" maxLength={500} /></div>
-        <div><label style={labelStyle}>Tech Stack (comma separated)</label><input value={projForm.techStack} onChange={e => setProjForm({ ...projForm, techStack: e.target.value })} style={gInputStyle} placeholder="React, Node.js, PostgreSQL" /></div>
-        <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={projForm.isCurrent} onChange={e => setProjForm({ ...projForm, isCurrent: e.target.checked })} /><span style={{ fontSize: 13, color: "rgba(255,255,255,0.70)" }}>Currently active</span></label>
+        <div><label style={labelStyle}>Tech Stack (comma separated)</label><input value={projForm.techStack} onChange={e => setProjForm({ ...projForm, techStack: e.target.value })} style={gInputStyle} placeholder="e.g. tools, languages, frameworks" /></div>
+        <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={projForm.isCurrent} onChange={e => setProjForm({ ...projForm, isCurrent: e.target.checked })} /><span style={{ fontSize: 13, color: "#6B7094" }}>Currently active</span></label>
       </GlassModal>
 
       <GlassModal open={modalSection === "achievement"} onClose={() => setModalSection(null)} title="Add Achievement" icon={Award} accentColor="#FFB800"
         actions={<>
           <button type="button" onClick={saveAchievement} disabled={saving} className="cursor-pointer" style={{ padding: "10px 28px", borderRadius: 16, fontSize: 14, fontWeight: 600, background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 4px 20px rgba(232,115,58,0.35)" }}>{saving ? "Saving..." : "Save"}</button>
-          <button type="button" onClick={() => setModalSection(null)} className="cursor-pointer" style={{ padding: "10px 20px", borderRadius: 16, fontSize: 14, fontWeight: 500, background: "rgba(255,255,255,0.08)", color: "#fff", border: "1px solid rgba(255,255,255,0.25)" }}>Cancel</button>
+          <button type="button" onClick={() => setModalSection(null)} className="cursor-pointer" style={{ padding: "10px 20px", borderRadius: 16, fontSize: 14, fontWeight: 500, background: "rgba(107,112,148,0.10)", color: "#6B7094", border: "1px solid rgba(107,112,148,0.15)" }}>Cancel</button>
         </>}
       >
         <div><label style={labelStyle}>Title *</label><input value={achForm.title} onChange={e => setAchForm({ ...achForm, title: e.target.value })} style={gInputStyle} placeholder="e.g. Best Paper Award" /></div>
@@ -1456,7 +1456,7 @@ const Profile = () => {
       <GlassModal open={modalSection === "skills"} onClose={() => setModalSection(null)} title="Add Skill" icon={Code2} accentColor="#8B5CF6"
         actions={<>
           <button type="button" onClick={addSkill} className="cursor-pointer" style={{ padding: "10px 28px", borderRadius: 16, fontSize: 14, fontWeight: 600, background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 4px 20px rgba(232,115,58,0.35)" }}>Add</button>
-          <button type="button" onClick={() => setModalSection(null)} className="cursor-pointer" style={{ padding: "10px 20px", borderRadius: 16, fontSize: 14, fontWeight: 500, background: "rgba(255,255,255,0.08)", color: "#fff", border: "1px solid rgba(255,255,255,0.25)" }}>Cancel</button>
+          <button type="button" onClick={() => setModalSection(null)} className="cursor-pointer" style={{ padding: "10px 20px", borderRadius: 16, fontSize: 14, fontWeight: 500, background: "rgba(107,112,148,0.10)", color: "#6B7094", border: "1px solid rgba(107,112,148,0.15)" }}>Cancel</button>
         </>}
       >
         <div><label style={labelStyle}>Skill Name</label><input value={newSkill} onChange={e => setNewSkill(e.target.value)} style={gInputStyle} placeholder="e.g. React" onKeyDown={e => { if (e.key === "Enter") addSkill(); }} /></div>
@@ -1478,7 +1478,7 @@ const Profile = () => {
       <GlassModal open={modalSection === "role"} onClose={() => setModalSection(null)} title="Add Moonlighting" icon={Layers} accentColor="#0369A1"
         actions={<>
           <button type="button" onClick={saveRole} disabled={saving} className="cursor-pointer" style={{ padding: "10px 28px", borderRadius: 16, fontSize: 14, fontWeight: 600, background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 4px 20px rgba(232,115,58,0.35)" }}>{saving ? "Saving..." : "Save"}</button>
-          <button type="button" onClick={() => setModalSection(null)} className="cursor-pointer" style={{ padding: "10px 20px", borderRadius: 16, fontSize: 14, fontWeight: 500, background: "rgba(255,255,255,0.08)", color: "#fff", border: "1px solid rgba(255,255,255,0.25)" }}>Cancel</button>
+          <button type="button" onClick={() => setModalSection(null)} className="cursor-pointer" style={{ padding: "10px 20px", borderRadius: 16, fontSize: 14, fontWeight: 500, background: "rgba(107,112,148,0.10)", color: "#6B7094", border: "1px solid rgba(107,112,148,0.15)" }}>Cancel</button>
         </>}
       >
         <div><label style={labelStyle}>Role Type *</label>
