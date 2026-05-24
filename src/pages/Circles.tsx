@@ -408,7 +408,7 @@ function CircleDetail({ slug }: { slug: string }) {
           <div className="flex-1 min-w-0">
             <h1 style={{ fontSize: 18, fontWeight: 800, color: "#1A1A2E" }}>{circle.name}</h1>
             <p style={{ fontSize: 12, color: "#6B7094", marginTop: 2 }}>
-              {circle.member_count || 0} members · {circle.post_count || 0} posts
+              {circle.member_count || 0} {circle.member_count === 1 ? "member" : "members"} · {circle.post_count || 0} {circle.post_count === 1 ? "post" : "posts"}
             </p>
             {linkedOrg && (
               <button

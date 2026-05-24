@@ -130,11 +130,6 @@ function AssistantBubble({
           >
             <ThumbsDown size={13} />
           </button>
-          {reply?.answerPath && (
-            <span className="text-[10px] text-white/20 ml-1">
-              {reply.answerPath === "deterministic" ? "instant" : reply.answerPath === "fallback" ? "fallback" : "ai"}
-            </span>
-          )}
         </div>
       </div>
     </div>

@@ -228,7 +228,7 @@ const Connections = () => {
   };
 
   const filteredConnected = useMemo(() => {
-    let list = connected.slice();
+    let list = connected.filter(s => getOther(s)?.id !== user?.id);
     if (search) {
       const q = search.toLowerCase();
       list = list.filter(s => (getOther(s)?.full_name || "").toLowerCase().includes(q));

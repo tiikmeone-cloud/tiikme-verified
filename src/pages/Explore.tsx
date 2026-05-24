@@ -13,6 +13,7 @@ import HorizontalCarousel from "@/components/explore/HorizontalCarousel";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import { getOrgTypeConfig } from "@/lib/orgTypes";
 import { sendConnectionRequest } from "@/hooks/useConnectionStatus";
+import { PageSEO } from "@/hooks/usePageSEO";
 
 /* ─────────── Helpers ─────────── */
 const HASHTAG_RE = /#([\p{L}0-9_]{2,40})/gu;

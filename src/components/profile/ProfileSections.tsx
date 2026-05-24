@@ -245,7 +245,7 @@ export const ExperienceSection = ({ items, isOwnProfile, onAdd, onDelete, onTogg
                   <div className="flex items-center gap-1">
                     <VerifBadge item={exp} isOwn={isOwnProfile} onStatusChange={onStatusChange} />
                     {isOwnProfile && (
-                      <div className="flex flex-col gap-0.5 opacity-0 hover:opacity-100" style={{ transition: "opacity 150ms" }}>
+                      <div className="flex flex-col gap-0.5 opacity-40 hover:opacity-100" style={{ transition: "opacity 150ms" }}>
                         <button type="button" onClick={() => onToggleVisibility(exp.id, "work_items", exp.visibility || "public")} className="p-0.5 cursor-pointer" style={{ color: "var(--text-muted)" }}>
                           {exp.visibility === "public" ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
                         </button>
@@ -300,7 +300,11 @@ export const EducationSection = ({ items, isOwnProfile, onAdd, onDelete, onToggl
           {visible.map((edu: any, idx: number) => {
             const instName = edu.institution_name_edu || edu.institution_name || "";
             const logo = getLogo(instName);
-            const degree = [edu.degree_type || edu.title, edu.field_of_study].filter(Boolean).join(" in ");
+            const degreeType = edu.degree_type || edu.title || "";
+            const fieldOfStudy = edu.field_of_study || "";
+            const degree = degreeType && fieldOfStudy && fieldOfStudy !== degreeType
+              ? `${degreeType} in ${fieldOfStudy}`
+              : degreeType || fieldOfStudy;
             const years = [edu.start_year, edu.is_current ? "Present" : edu.end_year].filter(Boolean).join(" – ");
             return (
               <ItemRow key={edu.id} isLast={idx === visible.length - 1}
@@ -313,7 +317,7 @@ export const EducationSection = ({ items, isOwnProfile, onAdd, onDelete, onToggl
                   <div className="flex items-center gap-1">
                     <VerifBadge item={{ ...edu, item_type: "education" }} isOwn={isOwnProfile} onStatusChange={onStatusChange} />
                     {isOwnProfile && (
-                      <div className="flex flex-col gap-0.5 opacity-0 hover:opacity-100" style={{ transition: "opacity 150ms" }}>
+                      <div className="flex flex-col gap-0.5 opacity-40 hover:opacity-100" style={{ transition: "opacity 150ms" }}>
                         <button type="button" onClick={() => onToggleVisibility(edu.id, "work_items", edu.visibility || "public")} className="p-0.5 cursor-pointer" style={{ color: "var(--text-muted)" }}>
                           {edu.visibility === "public" ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
                         </button>
@@ -383,7 +387,7 @@ export const ProjectsSection = ({ items, isOwnProfile, onAdd, onDelete, onToggle
                   <div className="flex items-center gap-1">
                     <VerifBadge item={{ ...p, item_type: "project" }} isOwn={isOwnProfile} onStatusChange={onStatusChange} />
                     {isOwnProfile && (
-                      <div className="flex flex-col gap-0.5 opacity-0 hover:opacity-100" style={{ transition: "opacity 150ms" }}>
+                      <div className="flex flex-col gap-0.5 opacity-40 hover:opacity-100" style={{ transition: "opacity 150ms" }}>
                         <button type="button" onClick={() => onToggleVisibility(p.id, "work_items", p.visibility || "public")} className="p-0.5 cursor-pointer" style={{ color: "var(--text-muted)" }}>
                           {p.visibility === "public" ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
                         </button>
@@ -448,7 +452,7 @@ export const AchievementsSection = ({ items, isOwnProfile, onAdd, onDelete, onTo
                       </a>
                     )}
                     {isOwnProfile && (
-                      <div className="flex flex-col gap-0.5 opacity-0 hover:opacity-100" style={{ transition: "opacity 150ms" }}>
+                      <div className="flex flex-col gap-0.5 opacity-40 hover:opacity-100" style={{ transition: "opacity 150ms" }}>
                         <button type="button" onClick={() => onToggleVisibility(a.id, "achievements", a.visibility || "public")} className="p-0.5 cursor-pointer" style={{ color: "var(--text-muted)" }}>
                           {a.visibility === "public" ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
                         </button>

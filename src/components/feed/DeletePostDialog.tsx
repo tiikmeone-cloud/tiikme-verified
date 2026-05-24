@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { Loader2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -56,7 +57,7 @@ const DeletePostDialog = ({ postId, onClose, onDeleted }: DeletePostDialogProps)
     onClose();
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[90] flex items-center justify-center" onClick={onClose}>
       <div className="absolute inset-0" style={{ background: "rgba(26,26,78,0.40)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }} />
       <div className="relative glass-dark rounded-2xl w-full max-w-[380px] mx-4 p-6 text-center" onClick={e => e.stopPropagation()}>
@@ -71,7 +72,8 @@ const DeletePostDialog = ({ postId, onClose, onDeleted }: DeletePostDialogProps)
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

@@ -431,8 +431,19 @@ const SettingsPage = () => {
   const [deleteText, setDeleteText] = useState("");
   const [loggingOut, setLoggingOut] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [profile, setProfile] = useState({ name: "", headline: "", bio: "", institution: "", city: "", state: "", slug: "", avatar_url: "", org_type: "" });
-  const [originalProfile, setOriginalProfile] = useState({ name: "", headline: "", bio: "", institution: "", city: "", state: "", slug: "", avatar_url: "", org_type: "" });
+  const seedProfile = () => ({
+    name: authProfile?.full_name || "",
+    headline: (authProfile as any)?.headline || "",
+    bio: (authProfile as any)?.bio || "",
+    institution: (authProfile as any)?.institution_name || "",
+    city: (authProfile as any)?.location_city || "",
+    state: (authProfile as any)?.location_state || "",
+    slug: (authProfile as any)?.username || "",
+    avatar_url: authProfile?.avatar_url || "",
+    org_type: "",
+  });
+  const [profile, setProfile] = useState(seedProfile);
+  const [originalProfile, setOriginalProfile] = useState(seedProfile);
   const [userId, setUserId] = useState<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [inviteCount, setInviteCount] = useState(0);

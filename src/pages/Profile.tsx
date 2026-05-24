@@ -69,20 +69,22 @@ const formatDuration = (start: string | null, end: string | null, isCurrent: boo
 const AboutSection = ({ about, isOwnProfile, userId }: { about: string; isOwnProfile: boolean; userId: string }) => {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(about || "");
+  const [savedText, setSavedText] = useState(about || "");
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
-  useEffect(() => { setText(about || ""); }, [about]);
+  useEffect(() => { setText(about || ""); setSavedText(about || ""); }, [about]);
 
   const handleSave = async () => {
     setSaving(true);
     await supabase.from("profiles").update({ about: text.slice(0, 500) } as any).eq("id", userId);
     setSaving(false);
+    setSavedText(text.slice(0, 500));
     setEditing(false);
     toast.success("About updated");
   };
 
-  const displayText = about || "";
+  const displayText = savedText;
   const lines = displayText.split("\n");
   const needsTruncate = lines.length > 4 || displayText.length > 280;
   const showFull = expanded || !needsTruncate;
@@ -577,7 +579,7 @@ const Profile = () => {
       }
       const payload = {
         owner_id: authUser.id, // REQUIRED — RLS checks this
-        title: (eduForm.degree + (eduForm.branch ? ` - ${eduForm.branch}` : "")).trim() || eduForm.institution.trim() || "Untitled",
+        title: eduForm.degree.trim() || eduForm.institution.trim() || "Untitled",
         degree_type: eduForm.degree.trim() || null, field_of_study: eduForm.branch.trim() || null,
         institution_name_edu: eduForm.institution.trim(), institution_name: eduForm.institution.trim(),
         grade_score: eduForm.grade.trim() || null, item_type: "education", type: "education",
@@ -983,13 +985,14 @@ const Profile = () => {
                   <span
                     style={{
                       display: "inline-flex", alignItems: "center", gap: 4,
+                      flexShrink: 0, minWidth: "fit-content",
                       minHeight: 22, padding: "2px 8px", borderRadius: 999,
-                      fontSize: 11, fontWeight: 700,
+                      fontSize: 11, fontWeight: 700, whiteSpace: "nowrap",
                       background: "rgba(16,185,129,0.12)", color: "#059669",
                       border: "1px solid rgba(16,185,129,0.30)",
                     }}
                   >
-                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981" }} />
+                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981", flexShrink: 0 }} />
                     Open to work
                   </span>
                 )}
