@@ -140,7 +140,7 @@ export default function Privacy() {
         <Sub>5.2 Organisations You Engage With</Sub>
         <P>When you apply to an opportunity or connect with an organisation, the profile information you have set to "visible to recruiters" is shared with that organisation for the purpose of that specific engagement only.</P>
         <Sub>5.3 Technology Service Providers (Processors)</Sub>
-        <P>We use Supabase (database and storage) and limited other providers for email delivery. These providers act under our strict instructions, are bound by data processing agreements, and are prohibited from using your data for their own purposes.</P>
+        <P>We use Supabase (database and storage) as our primary infrastructure provider. Any technology service provider we use acts under our strict instructions, is bound by data processing agreements, and is prohibited from using your data for their own purposes.</P>
         <Sub>5.4 Legal Obligations</Sub>
         <P>We may disclose data when compelled by a valid court order, subpoena, or statutory requirement under Indian law. We will notify you before such disclosure where legally permitted.</P>
         <Sub>5.5 Business Transfer</Sub>
@@ -217,7 +217,7 @@ export default function Privacy() {
       </LegalSection>
 
       <LegalSection id="section-11" num="11" title="Changes to This Policy">
-        <P>We will update this policy as needed. For material changes — meaning changes that significantly affect how we use your data — we will notify you by email and in-app notification at least 15 days before the changes take effect. The "Last Updated" date at the top of this page will always reflect the most recent revision.</P>
+        <P>We will update this policy as needed. For material changes — meaning changes that significantly affect how we use your data — we will notify you by in-app notification at least 15 days before the changes take effect. The "Last Updated" date at the top of this page will always reflect the most recent revision.</P>
       </LegalSection>
 
       <LegalSection id="section-12" num="12" title="Contact">
