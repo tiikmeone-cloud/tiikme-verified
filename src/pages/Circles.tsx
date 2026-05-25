@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { trackPageView } from "@/lib/analytics";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Search, TrendingUp, Clock, Award, MessageCircle, MoreHorizontal,
@@ -520,6 +520,7 @@ function CircleDetail({ slug }: { slug: string }) {
           <CirclePostCard
             key={p.id}
             post={p}
+            circleSlug={slug}
             isMod={!!user && (user.id === circle.created_by)}
             onUpvote={() => toggleUpvote(p.id, !!p.viewer_upvoted)}
             onDeleted={(id) => setPosts(prev => prev.filter(x => x.id !== id))}
@@ -546,9 +547,10 @@ function CircleDetail({ slug }: { slug: string }) {
 // POST CARD (with edit/delete for owner — already implemented)
 // =================================================================
 function CirclePostCard({
-  post, isMod, onUpvote, onDeleted, onEdited, onPinToggled,
+  post, circleSlug, isMod, onUpvote, onDeleted, onEdited, onPinToggled,
 }: {
   post: any;
+  circleSlug?: string;
   isMod?: boolean;
   onUpvote?: () => void;
   onDeleted?: (id: string) => void;
@@ -648,7 +650,14 @@ function CirclePostCard({
             {postedOrg ? postedOrg.name : showName ? author?.full_name : label}
           </p>
           <p style={{ fontSize: 11, color: "#6B7094" }}>
-            {typeConf.icon} {typeConf.label}{postedOrg ? " · Organization" : ""} · {new Date(post.created_at).toLocaleDateString()}
+            {typeConf.icon} {typeConf.label}{postedOrg ? " · Organization" : ""}
+            {circleSlug ? (
+              <> · <Link to={`/app/circles/${circleSlug}/${post.id}`} style={{ color: "#9CA3C0", textDecoration: "none" }} onClick={e => e.stopPropagation()}>
+                {new Date(post.created_at).toLocaleDateString()}
+              </Link></>
+            ) : (
+              <> · {new Date(post.created_at).toLocaleDateString()}</>
+            )}
           </p>
         </div>
         {canModerate && (

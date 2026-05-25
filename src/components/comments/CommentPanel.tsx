@@ -256,7 +256,9 @@ const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post"
 
   /* ----- Delete ----- */
   const remove = useCallback(async (c: CommentRow) => {
-    if (!user || c.user_id !== user.id) return;
+    if (!user) return;
+    const isPostAuthor = postAuthorId && user.id === postAuthorId;
+    if (c.user_id !== user.id && !isPostAuthor) return;
     const isReply = !!c.parent_id;
     if (isReply) {
       setExpandedReplies(prev => ({ ...prev, [c.parent_id!]: (prev[c.parent_id!] || []).filter(r => r.id !== c.id) }));
@@ -266,7 +268,9 @@ const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post"
       setTotalCount(n => Math.max(0, n - 1));
       onCountChange?.(-1);
     }
-    const { error } = await supabase.from(table).delete().eq("id", c.id).eq("user_id", user.id);
+    const isPostAuthor = postAuthorId && user.id === postAuthorId;
+    const query = supabase.from(table).delete().eq("id", c.id);
+    const { error } = isPostAuthor ? await query : await query.eq("user_id", user.id);
     if (error) toast.error("Failed to delete");
   }, [user, table, onCountChange]);
 
@@ -286,9 +290,11 @@ const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post"
   }, [editText, user, table]);
 
   /* ----- UI ----- */
-  const renderRow = (c: CommentRow, isReply = false) => {
+  const renderRow = (c: CommentRow, isReply = false, threadRootId?: string) => {
     const isOwn = user?.id === c.user_id;
     const isEditing = editingId === c.id;
+    // For replies-to-replies, we flatten under the top-level thread root
+    const rootId = threadRootId || c.id;
     return (
       <div key={c.id} className="flex group" style={{ gap: 8, padding: "6px 0", paddingLeft: isReply ? 36 : 0, alignItems: "flex-start" }}>
         <div className="shrink-0" style={{ marginTop: 2 }}>
@@ -302,6 +308,11 @@ const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post"
             <span style={{ fontSize: 11, color: "#9CA3C0" }}>·</span>
             <span style={{ fontSize: 11, color: "#9CA3C0" }}>{timeAgo(c.created_at)}</span>
           </div>
+          {isReply && /^@\S+/.test(c.content) && (
+            <p style={{ fontSize: 10, color: "#9CA3C0", marginBottom: 1 }}>
+              Replying to <span style={{ fontWeight: 600 }}>{c.content.match(/^(@\S+)/)?.[1]}</span>
+            </p>
+          )}
           {isEditing ? (
             <div className="flex items-center gap-2 mt-1">
               <textarea value={editText} onChange={e => setEditText(e.target.value.slice(0, 1000))}
@@ -328,29 +339,43 @@ const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post"
               {table === "post_comments" && (
                 <CommentLoveButton commentId={c.id} userId={user?.id} />
               )}
-              {!isReply && (
-                <button type="button" onClick={() => { setReplyingTo(replyingTo === c.id ? null : c.id); setReplyText(""); }}
-                  className="cursor-pointer" style={{ fontSize: 11, fontWeight: 600, color: "#6B7094", background: "none", border: "none", padding: 0, minWidth: 38, textAlign: "left" }}>
-                  Reply
-                </button>
-              )}
+              <button type="button" onClick={() => {
+                  // Replies to replies flatten under the top-level thread root
+                  const targetId = isReply ? rootId : c.id;
+                  const prefix = isReply ? `@${safeDisplayName(c.author)} ` : "";
+                  if (replyingTo === targetId && replyText === prefix) {
+                    setReplyingTo(null); setReplyText("");
+                  } else {
+                    setReplyingTo(targetId); setReplyText(prefix);
+                  }
+                }}
+                className="cursor-pointer" style={{ fontSize: 11, fontWeight: 600, color: "#6B7094", background: "none", border: "none", padding: 0, minWidth: 38, textAlign: "left" }}>
+                Reply
+              </button>
             </div>
           )}
 
-          {/* Reply composer */}
-          {!isReply && replyingTo === c.id && user && (
-            <div className="flex items-center mt-1" style={{ gap: 6 }}>
-              <AvatarSquare src={profile?.avatar_url} name={profile?.full_name || "You"} size={22} />
-              <input value={replyText} onChange={e => setReplyText(e.target.value.slice(0, 1000))}
-                placeholder="Write a reply..." autoFocus
-                className="flex-1 outline-none"
-                style={{ height: 30, borderRadius: 14, padding: "0 10px", fontSize: 12, background: "#F5F5F5", border: "1px solid #E8E8E8" }}
-                onKeyDown={e => { if (e.key === "Enter" && replyText.trim()) submit(c.id, replyText); }} />
-              <button type="button" onClick={() => submit(c.id, replyText)} disabled={!replyText.trim()}
-                className="cursor-pointer disabled:opacity-50"
-                style={{ color: replyText.trim() ? "#E8733A" : "#9CA3C0", background: "none", border: "none" }}>
-                <SendHorizontal style={{ width: 14, height: 14 }} />
-              </button>
+          {/* Reply composer — shown on top-level when replyingTo === c.id, or on replies when replyingTo === rootId */}
+          {replyingTo === (isReply ? rootId : c.id) && !isReply && user && (
+            <div className="mt-1" style={{ paddingLeft: 0 }}>
+              {replyText.startsWith("@") && (
+                <p style={{ fontSize: 10, color: "#9CA3C0", marginBottom: 4 }}>
+                  Replying to <span style={{ fontWeight: 600, color: "#6B7094" }}>{replyText.split(" ")[0]}</span>
+                </p>
+              )}
+              <div className="flex items-center" style={{ gap: 6 }}>
+                <AvatarSquare src={profile?.avatar_url} name={profile?.full_name || "You"} size={22} />
+                <input value={replyText} onChange={e => setReplyText(e.target.value.slice(0, 1000))}
+                  placeholder="Write a reply..." autoFocus
+                  className="flex-1 outline-none"
+                  style={{ height: 30, borderRadius: 14, padding: "0 10px", fontSize: 12, background: "#F5F5F5", border: "1px solid #E8E8E8" }}
+                  onKeyDown={e => { if (e.key === "Enter" && replyText.trim()) submit(isReply ? rootId : c.id, replyText); }} />
+                <button type="button" onClick={() => submit(isReply ? rootId : c.id, replyText)} disabled={!replyText.trim()}
+                  className="cursor-pointer disabled:opacity-50"
+                  style={{ color: replyText.trim() ? "#E8733A" : "#9CA3C0", background: "none", border: "none" }}>
+                  <SendHorizontal style={{ width: 14, height: 14 }} />
+                </button>
+              </div>
             </div>
           )}
 
@@ -371,7 +396,7 @@ const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post"
               const shown = replies.slice(0, visible);
               return (
                 <div style={{ marginTop: 4 }}>
-                  {shown.map(r => renderRow(r, true))}
+                  {shown.map(r => renderRow(r, true, c.id))}
                   {replies.length > visible && (
                     <button type="button" onClick={() => setReplyVisibleCount(p => ({ ...p, [c.id]: visible + REPLY_PAGE_SIZE }))}
                       className="cursor-pointer" style={{ fontSize: 11, fontWeight: 600, color: "#E8733A", background: "none", border: "none", paddingLeft: 36 }}>
@@ -389,8 +414,8 @@ const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post"
           })()}
         </div>
 
-        {/* Owner menu */}
-        {isOwn && !isEditing && !c.__optimistic && (
+        {/* Owner menu — own comments can edit+delete; post author can delete any comment */}
+        {(isOwn || (postAuthorId && user?.id === postAuthorId)) && !isEditing && !c.__optimistic && (
           <div className="relative shrink-0" ref={openMenuId === c.id ? menuRef : null}>
             <button type="button" onClick={() => setOpenMenuId(openMenuId === c.id ? null : c.id)}
               className="opacity-0 group-hover:opacity-100 cursor-pointer flex items-center justify-center"
@@ -399,10 +424,12 @@ const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post"
             </button>
             {openMenuId === c.id && (
               <div className="absolute right-0 z-[60]" style={{ top: 26, width: 140, borderRadius: 10, padding: "6px 0", background: "#FFFFFF", border: "1px solid #E5E7EB", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
-                <button type="button" onClick={() => { setEditingId(c.id); setEditText(c.content); setOpenMenuId(null); }}
-                  className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "8px 12px", fontSize: 13, color: "#1A1A2E", background: "none", border: "none" }}>
-                  <Pencil style={{ width: 12, height: 12 }} /> Edit
-                </button>
+                {isOwn && (
+                  <button type="button" onClick={() => { setEditingId(c.id); setEditText(c.content); setOpenMenuId(null); }}
+                    className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "8px 12px", fontSize: 13, color: "#1A1A2E", background: "none", border: "none" }}>
+                    <Pencil style={{ width: 12, height: 12 }} /> Edit
+                  </button>
+                )}
                 <button type="button" onClick={() => { remove(c); setOpenMenuId(null); }}
                   className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "8px 12px", fontSize: 13, color: "#EF4444", background: "none", border: "none" }}>
                   <Trash2 style={{ width: 12, height: 12 }} /> Delete
