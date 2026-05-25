@@ -30,8 +30,9 @@ import { getPrimaryRoleLine, sanitizeIdentityText } from "@/lib/profileUtils";
 
 /* ─── HELPERS ─── */
 const roleColorMap: Record<string, string> = {
-  student: "#4F46E5", professional: "#0369A1", doctor: "#0E7490",
-  government: "#166534", skilled_trade: "#C2410C", hr: "#6B21A8", faculty: "#92400E",
+  student: "#4F46E5", working: "#0369A1", professional: "#0369A1",
+  healthcare: "#0E7490", doctor: "#0E7490", educator: "#166534",
+  government: "#166534", gig_worker: "#C2410C", founder: "#92400E", creator: "#7E22CE",
 };
 
 function getTimeAgo(date: Date): string {

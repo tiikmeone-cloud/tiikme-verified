@@ -92,11 +92,15 @@ export function OpportunityCard({
   };
 
   const typeColor: Record<string, string> = {
-    job: "bg-blue-50 text-blue-700",
-    internship: "bg-purple-50 text-purple-700",
-    freelance: "bg-green-50 text-green-700",
-    hackathon: "bg-orange-50 text-orange-700",
-    volunteer: "bg-pink-50 text-pink-700",
+    job: "bg-[#FFF7ED] text-[#C44A1F]",
+    full_time: "bg-[#FFF7ED] text-[#C44A1F]",
+    internship: "bg-[#F0FDF4] text-[#166534]",
+    freelance: "bg-[#F0F9FF] text-[#0369A1]",
+    gig: "bg-[#F0F9FF] text-[#0369A1]",
+    contract: "bg-[#FFF7ED] text-[#92400E]",
+    hackathon: "bg-[#FDF4FF] text-[#7E22CE]",
+    volunteer: "bg-[#FFF1F2] text-[#9F1239]",
+    fellowship: "bg-[#F0FDF4] text-[#14532D]",
   };
 
   const handleLike = async () => {

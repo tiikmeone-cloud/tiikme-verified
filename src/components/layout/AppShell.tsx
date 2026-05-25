@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutGrid, Compass, Users, Target, User,
   Link2, Bell, SlidersHorizontal, PencilLine, LogOut, Home,
-  Plus, Search, ClipboardList, Bot, ShieldCheck,
+  Plus, Search, ClipboardList, Bot, ShieldCheck, Building2,
 } from "lucide-react";
 import ThemeLogo from "@/components/ThemeLogo";
 import { toast } from "sonner";
@@ -69,6 +69,9 @@ const AppShell = ({ children }: { children: ReactNode }) => {
     if (group.label !== "WORK") return group;
     const workItems = [...group.items];
     if (isInstitution || orgAdminRole === "owner" || orgAdminRole === "admin") {
+      if (isInstitution && orgData?.slug) {
+        workItems.splice(0, 0, { label: "Org Page", icon: Building2, path: `/org/${orgData.slug}` });
+      }
       workItems.push({ label: "Applicants", icon: ClipboardList, path: "/app/opportunities" });
       workItems.push({ label: "Verification Inbox", icon: ShieldCheck, path: "/app/verification-inbox" });
     } else if (orgAdminRole === "hiring_manager") {
@@ -87,7 +90,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
       .then(({ data }) => setOrgData(data || null));
   }, [isInstitution, profile?.org_id]);
 
-  const profilePath = isInstitution && orgData?.slug ? `/org/${orgData.slug}` : "/app/profile";
+  const profilePath = "/app/profile";
   const [unreadAlerts, setUnreadAlerts] = useState(0);
   const roleLabel = isInstitution && orgData?.type
     ? orgData.type.charAt(0).toUpperCase() + orgData.type.slice(1).replace(/_/g, " ")
@@ -258,7 +261,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             <AvatarSquare src={identityAvatar} name={identityName || "You"} size={32} />
             <div className="min-w-0 flex-1">
               <p className="truncate" style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{identityName || "Your Name"}</p>
-              {roleLabel && !['professional','student','founder','doctor','faculty','researcher','creator','freelancer','investor','member'].includes(roleLabel.toLowerCase()) && (
+              {roleLabel && !['professional','working','student','founder','doctor','healthcare','faculty','researcher','educator','creator','gig_worker','freelancer','investor','government','member'].includes(roleLabel.toLowerCase()) && (
                 <span className="truncate block" style={{
                   fontSize: 11, fontWeight: 500, padding: "0 6px", borderRadius: 4,
                   background: "rgba(232,115,58,0.12)", color: "#E8733A",

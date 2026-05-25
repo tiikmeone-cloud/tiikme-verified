@@ -90,7 +90,7 @@ export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonC
             <ActivityScoreMini score={p.activity_score} viewerIsOwner={currentUserId === p.id} />
           )}
           {p.account_type === "institution" && (
-            <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 999, background: "rgba(37,99,235,0.10)", color: "#2563EB" }}>
+            <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 999, background: "rgba(232,115,58,0.12)", color: "#E8733A" }}>
               Company
             </span>
           )}

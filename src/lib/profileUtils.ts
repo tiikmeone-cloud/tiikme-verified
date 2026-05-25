@@ -36,7 +36,7 @@ export function getProfileSubtitle(profile: any): string {
     const parts = [rm.degree, profile.institution_name || profile.currently_working_at].filter(Boolean);
     return sanitizeIdentityText(parts.join(' · ') || sub);
   }
-  if (r === 'professional') {
+  if (r === 'professional' || r === 'working') {
     const title = profile.designation || rm.jobTitle || '';
     const company = profile.currently_working_at || rm.company || '';
     return sanitizeIdentityText(at(title, company) || (profile.role_subtype ? profile.role_subtype.replace(/_/g,' ') : '') || sub);
@@ -55,10 +55,20 @@ export function getProfileSubtitle(profile: any): string {
     const inst = profile.institution_name || rm.institution || '';
     return sanitizeIdentityText(at(title, inst) || sub);
   }
-  if (r === 'researcher') {
+  if (r === 'researcher' || r === 'educator') {
     const title = profile.designation || '';
     const inst = profile.institution_name || rm.institution || '';
     return sanitizeIdentityText(at(title, inst) || sub);
+  }
+  if (r === 'healthcare') {
+    const title = profile.designation || '';
+    const place = rm.hospital || profile.institution_name || profile.currently_working_at || '';
+    return sanitizeIdentityText(at(title, place) || sub);
+  }
+  if (r === 'gig_worker') {
+    const title = profile.designation || '';
+    const city = (profile as any).location_city || '';
+    return sanitizeIdentityText(at(title, city) || sub);
   }
   if (r === 'creator') {
     return sanitizeIdentityText(rm.platform || rm.channel || sub);

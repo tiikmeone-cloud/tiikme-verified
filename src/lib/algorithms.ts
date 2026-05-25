@@ -49,6 +49,8 @@ export interface FeedRankingInput {
     author_id: string | null;
     posted_by_org: string | null;
     author_sector?: string | null;
+    author_profession_type?: string | null;
+    author_role_subtype?: string | null;
     author_is_verified?: boolean;
     image_urls?: string[] | null;
     mention_count?: number;
@@ -59,6 +61,8 @@ export interface FeedRankingInput {
   };
   currentUser: {
     sector: string | null;
+    profession_type?: string | null;
+    role_subtype?: string | null;
   };
   connectionIds: Set<string>;
   followedOrgIds: Set<string>;
@@ -86,6 +90,16 @@ export function calculateFeedScore({
   const sameSector =
     currentUser.sector && post.author_sector === currentUser.sector ? 1.5 : 0;
 
+  // Profession type match — same profession_type gives a relevance boost
+  const sameProfession =
+    currentUser.profession_type && post.author_profession_type &&
+    post.author_profession_type === currentUser.profession_type ? 2.0 : 0;
+
+  // Role subtype match — same specific role (e.g. "Software Engineering") is even more relevant
+  const sameRole =
+    currentUser.role_subtype && post.author_role_subtype &&
+    post.author_role_subtype === currentUser.role_subtype ? 1.5 : 0;
+
   // Engagement velocity
   const engagementCount =
     (post.reaction_count || 0) +
@@ -107,6 +121,8 @@ export function calculateFeedScore({
     isFollowedUser +
     isFollowedOrg +
     sameSector +
+    sameProfession +
+    sameRole +
     engagementVelocity +
     isVerifiedAuthor +
     hasImages +
@@ -181,8 +197,21 @@ export function applyFeedDiversity(
 
 /* ─── OPPORTUNITY MATCHING (client-side fallback) ─── */
 
+/* Profession-type → job title keyword mapping */
+export const PROFESSION_JOB_KEYWORDS: Record<string, string[]> = {
+  working: [],
+  healthcare: ['doctor','physician','nurse','medical','hospital','clinic','health','pharma','nursing','compounder'],
+  student: ['intern','internship','fellowship','trainee','campus','graduate','fresher'],
+  gig_worker: ['delivery','driver','freelance','gig','technician','plumber','electrician','photographer'],
+  creator: ['content','creator','influencer','social media','youtube','video','media','blogger'],
+  educator: ['teacher','tutor','faculty','lecturer','trainer','education','teaching','coach'],
+  government: ['government','public sector','psu','ias','defence','civil services','municipal'],
+  founder: ['ceo','cto','cfo','coo','cpo','vp ','director','head of','chief','c-level','managing director'],
+};
+
 export interface OpportunityMatchInput {
   opportunity: {
+    title?: string | null;
     skills_required?: string[] | null;
     experience_min?: number | null;
     location?: string | null;
@@ -197,6 +226,8 @@ export interface OpportunityMatchInput {
     sector?: string | null;
     activity_score?: number | null;
     is_verified?: boolean | null;
+    profession_type?: string | null;
+    role_subtype?: string | null;
   };
   userExperienceYears?: number;
 }
@@ -206,12 +237,19 @@ export function calculateOpportunityMatch({
   userProfile: p,
   userExperienceYears = 0,
 }: OpportunityMatchInput): number {
-  // Skill overlap (25%)
+  // Skill overlap (20%)
   const requiredSkills = o.skills_required || [];
   const userSkills = new Set(p.skills || []);
   const skillOverlap = requiredSkills.length > 0
     ? requiredSkills.filter(s => userSkills.has(s)).length / requiredSkills.length
     : 0.5;
+
+  // Profession type keyword match (10%)
+  const titleLower = (o.title || '').toLowerCase();
+  const keywords = p.profession_type ? (PROFESSION_JOB_KEYWORDS[p.profession_type] || []) : [];
+  const roleKeywords = p.role_subtype ? p.role_subtype.toLowerCase().split(/[\s/&]+/) : [];
+  const allKeywords = [...keywords, ...roleKeywords];
+  const professionMatch = allKeywords.length > 0 && allKeywords.some(k => titleLower.includes(k)) ? 1.0 : 0.3;
 
   // Experience match (20%)
   let expScore = 0.5;
@@ -247,10 +285,11 @@ export function calculateOpportunityMatch({
   const fresh = freshnessDecay(ageHours, "opportunity");
 
   return (
-    0.25 * skillOverlap +
-    0.20 * expScore +
+    0.20 * skillOverlap +
+    0.10 * professionMatch +
+    0.18 * expScore +
     0.15 * locScore +
-    0.15 * sectorMatch +
+    0.12 * sectorMatch +
     0.10 * actScore +
     0.10 * verifiedScore +
     0.05 * fresh

@@ -49,9 +49,18 @@ interface FeedPost {
   _score?: number;
 }
 
-const FEED_SELECT = `*, repost_of, author:profiles!posts_author_id_fkey(id, username, full_name, role, role_subtype, headline, designation, avatar_url, institution_name, currently_working_at, display_preference, activity_score, sector, is_verified), org:organizations!posts_posted_by_org_fkey(id, name, logo_url, type, slug), poster_profile:profiles!posts_posted_by_user_id_fkey(id, full_name, display_preference)`;
+const FEED_SELECT = `*, repost_of, author:profiles!posts_author_id_fkey(id, username, full_name, role, role_subtype, profession_type, headline, designation, avatar_url, institution_name, currently_working_at, display_preference, activity_score, sector, is_verified), org:organizations!posts_posted_by_org_fkey(id, name, logo_url, type, slug), poster_profile:profiles!posts_posted_by_user_id_fkey(id, full_name, display_preference)`;
 
-async function fetchFeedPage(pageParam: number, sector: string | null, connectionIds: Set<string>, followedOrgIds: Set<string>) {
+interface FeedPageOptions {
+  sector: string | null;
+  professionType: string | null;
+  roleSubtype: string | null;
+  connectionIds: Set<string>;
+  followedOrgIds: Set<string>;
+}
+
+async function fetchFeedPage(pageParam: number, opts: FeedPageOptions) {
+  const { sector, professionType, roleSubtype, connectionIds, followedOrgIds } = opts;
   const { data, error } = await supabase
     .from("posts")
     .select(FEED_SELECT)
@@ -68,12 +77,14 @@ async function fetchFeedPage(pageParam: number, sector: string | null, connectio
       post: {
         id: post.id, created_at: post.created_at, author_id: post.author_id,
         posted_by_org: post.posted_by_org, author_sector: post.author?.sector || null,
+        author_profession_type: post.author?.profession_type || null,
+        author_role_subtype: post.author?.role_subtype || null,
         author_is_verified: post.author?.is_verified || false,
         image_urls: post.image_urls, mention_count: 0,
         reaction_count: reactionCount, comment_count: post.comment_count || 0,
         repost_count: post.repost_count || 0, post_type: post.post_type,
       },
-      currentUser: { sector: sector || null },
+      currentUser: { sector: sector || null, profession_type: professionType, role_subtype: roleSubtype },
       connectionIds,
       followedOrgIds,
       followedUserIds: new Set<string>(),
@@ -154,7 +165,13 @@ export function useFeedPosts() {
     refetch,
   } = useInfiniteQuery({
     queryKey: ["feed", user?.id],
-    queryFn: ({ pageParam = 0 }) => fetchFeedPage(pageParam, profile?.sector || null, connectionIds, mergedFollowedOrgIds),
+    queryFn: ({ pageParam = 0 }) => fetchFeedPage(pageParam, {
+      sector: profile?.sector || null,
+      professionType: (profile as any)?.profession_type || null,
+      roleSubtype: (profile as any)?.role_subtype || null,
+      connectionIds,
+      followedOrgIds: mergedFollowedOrgIds,
+    }),
     getNextPageParam: (lastPage) => lastPage.hasMore ? lastPage.page + 1 : undefined,
     initialPageParam: 0,
     enabled: isReady,

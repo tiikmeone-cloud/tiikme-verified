@@ -46,62 +46,122 @@ interface ProfessionCard {
 }
 
 const PROFESSION_CARDS: ProfessionCard[] = [
-  { value: "professional", label: "Professional",           desc: "Working in a company or organisation",       Icon: Briefcase      },
-  { value: "student",      label: "Student",                desc: "Currently studying at college or university", Icon: GraduationCap  },
-  { value: "gig_worker",   label: "Gig Worker",             desc: "Freelancer, contractor, or daily wage worker", Icon: Wrench        },
-  { value: "creator",      label: "Creator",                desc: "YouTuber, podcaster, blogger, influencer",   Icon: Video          },
-  { value: "teacher",      label: "Teacher / Educator",     desc: "School or college teacher, trainer, coach",  Icon: BookOpen       },
-  { value: "doctor",       label: "Doctor / Healthcare",    desc: "Physician, nurse, medical professional",     Icon: Stethoscope    },
-  { value: "government",   label: "Government / Public Sector", desc: "Govt employee, IAS, IPS, PSU",          Icon: Building2      },
-  { value: "researcher",   label: "Researcher / Academic",  desc: "PhD, postdoc, scientist, researcher",       Icon: Microscope     },
+  { value: "working",    label: "Working",              desc: "Employed at a company or organisation",       Icon: Briefcase      },
+  { value: "healthcare", label: "Healthcare",           desc: "Doctor, nurse, compounder, pharmacist",       Icon: Stethoscope    },
+  { value: "student",    label: "Student",              desc: "Currently studying at college or university", Icon: GraduationCap  },
+  { value: "gig_worker", label: "Gig Worker",           desc: "Delivery, trades, freelance services",        Icon: Wrench         },
+  { value: "creator",    label: "Creator",              desc: "YouTube, podcast, Instagram, newsletter",     Icon: Video          },
+  { value: "educator",   label: "Educator",             desc: "School, college, or training teacher",        Icon: BookOpen       },
+  { value: "government", label: "Government",           desc: "Public sector, PSU, defence, IAS / IPS",     Icon: Building2      },
+  { value: "founder",    label: "Founder / Executive",  desc: "CEO, CTO, CFO, VP, or co-founder",           Icon: Microscope     },
 ];
 
 /* ─── Role chips map ─── */
 const ROLE_CHIPS_MAP: Record<string, { title: string; chips: string[] }> = {
-  professional: {
-    title: "What's your area of work?",
-    chips: ["Software Engineering","Product Management","Design & Creative","Marketing","Sales","Operations","Finance & Accounts","HR / People","Legal","Data & Analytics","Consulting","Other"],
+  working: {
+    title: "What do you do?",
+    chips: [
+      "Software Engineering","Product Management","Design & UX","Digital Marketing",
+      "SEO / SEM","Social Media","Content Marketing","Sales","Business Development",
+      "Operations","Finance & Accounts","HR & Recruiting","Legal","Data & Analytics",
+      "Consulting","AI / Machine Learning","Supply Chain","Architecture",
+      "Civil Engineering","Mechanical Engineering","Electrical Engineering","Other",
+    ],
+  },
+  healthcare: {
+    title: "Your healthcare role?",
+    chips: [
+      "Compounder","Nurse","Nursing Officer","ASHA Worker","ANM",
+      "General Physician","Doctor (MBBS)","Surgeon","Cardiologist","Neurologist",
+      "Psychiatrist","Paediatrician","Orthopaedic","Dermatologist","Radiologist",
+      "Gynaecologist","ENT","Ophthalmologist","Dentist","Dental Technician",
+      "Pharmacist","Medical Lab Technician","Physiotherapist","Ayurvedic Practitioner",
+      "Medical Intern","Other Healthcare",
+    ],
   },
   student: {
     title: "What are you studying?",
-    chips: ["Engineering","Medicine / MBBS","Business / MBA","Law","Arts & Humanities","Science","Commerce","Computer Science","Architecture","Other"],
-  },
-  doctor: {
-    title: "Your medical specialisation?",
-    chips: ["General Physician","Surgeon","Paediatrician","Cardiologist","Psychiatrist","Dentist","Physiotherapist","Nurse / Nursing","Pharmacist","Radiologist","Other Medical"],
-  },
-  teacher: {
-    title: "Where do you teach?",
-    chips: ["School (K-12)","College / University","Coaching & Tutoring","Corporate Training","Online / EdTech","Skill Training","Other"],
+    chips: [
+      "Engineering (B.Tech/B.E.)","Computer Science","Medicine (MBBS)",
+      "Nursing / Paramedical","Business (BBA/MBA)","Commerce","Law (LLB)",
+      "Science (BSc)","Arts & Humanities","Architecture","Fine Arts",
+      "Polytechnic / ITI","Vocational Training","Other",
+    ],
   },
   gig_worker: {
-    title: "What kind of gigs do you take?",
-    chips: ["Delivery & Logistics","Design & Creative","Tech & IT Support","Photography & Video","Writing & Content","Driver / Transport","Home Services","Fitness & Wellness","Teaching & Tutoring","Other"],
+    title: "What services do you offer?",
+    chips: [
+      "Delivery (Swiggy/Zomato/Amazon)","Auto / Cab Driver","Plumber",
+      "Electrician","AC Technician","Painter","Carpenter","Welder",
+      "Photography","Videography","Graphic Design","Web Development",
+      "Home Cleaning","Laundry","Cooking & Catering","Tailoring",
+      "Tutoring / Home Tuition","Fitness Trainer","Yoga Instructor",
+      "Security Guard","Construction Worker","Other",
+    ],
   },
   creator: {
     title: "What do you create?",
-    chips: ["YouTube","Podcasting","Instagram / Reels","Newsletter","Blogging / Writing","Tech Content","Finance Content","Comedy / Entertainment","Education","Other"],
+    chips: [
+      "YouTube Videos","YouTube Shorts","Instagram Reels","Podcasting",
+      "Newsletter / Substack","Blog / Website","Twitter / X Threads",
+      "Finance & Investing","Tech & Gadgets","Comedy & Entertainment",
+      "Education & Teaching","Fitness & Health","Food & Cooking",
+      "Travel","Fashion & Lifestyle","Gaming","Music","Other",
+    ],
+  },
+  educator: {
+    title: "Where do you teach?",
+    chips: [
+      "Government School","Private School","College / University",
+      "Coaching Centre","Online Teaching","Corporate Training",
+      "Skill Development / Vocational","Competitive Exam Coaching",
+      "Arts / Music / Dance","Physical Education","Other",
+    ],
   },
   government: {
-    title: "Which sector?",
-    chips: ["IAS / IPS / IFS","Defence Forces","PSU (ONGC/BHEL etc.)","Indian Railways","Municipal Corporation","State Government","Government Education","Government Healthcare","Other"],
+    title: "Your government role?",
+    chips: [
+      "IAS / IFS / IPS","State Civil Services","Defence (Army/Navy/Air Force)",
+      "Police / Paramilitary","Indian Railways","ONGC / BHEL / PSU",
+      "ISRO / DRDO / BARC","Municipal Corporation","Panchayat / Gram Sabha",
+      "Post Office / Banking","Government Healthcare","Government Teaching",
+      "High Court / Judiciary","Election Commission","Other",
+    ],
   },
-  researcher: {
-    title: "Your research field?",
-    chips: ["Engineering & Technology","Medicine & Life Sciences","Social Sciences","Physics / Chemistry","Computer Science / AI","Economics","Education Research","Other"],
+  founder: {
+    title: "Your leadership role?",
+    chips: [
+      "CEO & Co-Founder","CTO (Chief Technology Officer)","CFO (Chief Financial Officer)",
+      "COO (Chief Operating Officer)","CPO (Chief Product Officer)",
+      "CMO (Chief Marketing Officer)","VP Engineering","VP Product","VP Sales","VP Marketing",
+      "Director of Engineering","Head of Product","General Manager",
+      "Managing Director","Board Member","Investor / Angel","Other C-Level",
+    ],
   },
 };
 
 /* ─── Headline placeholders ─── */
 const HEADLINE_PLACEHOLDERS: Record<string, string> = {
-  professional: "e.g. Senior Engineer at Infosys",
-  student:      "e.g. B.Tech CSE Student, IIT Delhi",
-  gig_worker:   "e.g. Plumber & Electrician, Hyderabad",
-  creator:      "e.g. Tech YouTuber, 50K subscribers",
-  doctor:       "e.g. Cardiologist at Apollo Hospitals",
-  teacher:      "e.g. Mathematics Teacher, DPS",
+  working:      "e.g. Digital Marketing Manager at Swiggy",
+  healthcare:   "e.g. Staff Nurse, ICU, AIIMS Delhi",
+  student:      "e.g. 3rd Year B.Tech CSE, IIT Hyderabad",
+  gig_worker:   "e.g. Electrician & AC Repair, Hyderabad",
+  creator:      "e.g. Tech YouTuber | 80K subscribers",
+  educator:     "e.g. Mathematics Teacher, Delhi Public School",
   government:   "e.g. Deputy Collector, Telangana",
-  researcher:   "e.g. PhD Researcher, IISc Bangalore",
+  founder:      "e.g. CEO & Co-Founder at tiikme",
+};
+
+/* ─── Done screen welcome messages ─── */
+const DONE_MESSAGES: Record<string, string> = {
+  working:      "Your feed is ready. See what your industry is talking about.",
+  healthcare:   "Connect with verified doctors and nurses. Find healthcare jobs.",
+  student:      "Discover internships, projects, and student communities.",
+  gig_worker:   "List your services and find new clients nearby.",
+  creator:      "Connect with brands, fellow creators, and your audience.",
+  educator:     "Connect with fellow teachers and find teaching opportunities.",
+  government:   "Connect with colleagues across departments and PSUs.",
+  founder:      "Connect with investors, C-level peers, and build your team.",
 };
 
 /* ─── Indian States ─── */
@@ -182,13 +242,13 @@ export default function Onboarding() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }, [state, loaded]);
 
-  /* Already finished? Bounce to feed */
+  /* Already finished AND has profession_type? Bounce to feed */
   useEffect(() => {
-    if (profile?.onboarding_complete) {
+    if (profile?.onboarding_complete && (profile as any)?.profession_type) {
       const dest = consumePostAuthRedirect();
       navigate(dest, { replace: true });
     }
-  }, [profile?.onboarding_complete, navigate]);
+  }, [profile?.onboarding_complete, (profile as any)?.profession_type, navigate]);
 
   const set = <K extends keyof WizardState>(k: K, v: WizardState[K]) =>
     setState(s => ({ ...s, [k]: v }));
@@ -509,9 +569,13 @@ function StepBasicInfo({
 
   const canContinue = state.full_name.trim().length >= 2;
 
-  const initials = state.full_name.trim()
-    ? state.full_name.trim().split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)
-    : "?";
+  const initials = (() => {
+    const n = state.full_name.trim();
+    if (!n) return "?";
+    const parts = n.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    return n.substring(0, 2).toUpperCase();
+  })();
 
   return (
     <>
@@ -660,9 +724,13 @@ function StepDone({
   navigate: ReturnType<typeof useNavigate>;
 }) {
   const displayName = state.full_name.trim() || "there";
-  const initials = state.full_name.trim()
-    ? state.full_name.trim().split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)
-    : "?";
+  const initials = (() => {
+    const n = state.full_name.trim();
+    if (!n) return "?";
+    const parts = n.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    return n.substring(0, 2).toUpperCase();
+  })();
 
   const professionCard = PROFESSION_CARDS.find(c => c.value === state.profession_type);
   const roleLabel = professionCard?.label ?? state.profession_type;
@@ -675,7 +743,7 @@ function StepDone({
         Welcome to Tiikme, {displayName}!
       </h1>
       <p className="text-[14px] mb-6" style={{ color: SECONDARY_TEXT }}>
-        Your profile is ready.
+        {DONE_MESSAGES[state.profession_type] || "Your profile is ready. Start exploring."}
       </p>
 
       {/* Avatar + role badge */}

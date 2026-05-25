@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const FALLBACK_COLORS = ["#E8733A", "#4A90D9", "#34C759", "#FF6B9D", "#8B5CF6", "#FFB800"];
+const FALLBACK_COLORS = ["#E8733A", "#2D7A4F", "#C44A1F", "#7E22CE", "#166534", "#B7640A", "#9F1239", "#0369A1"];
 
 function hashColor(name: string): string {
   const hash = name.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);

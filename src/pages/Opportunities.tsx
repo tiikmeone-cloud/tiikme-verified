@@ -71,13 +71,15 @@ const Opportunities = () => {
     const scored = (data || []).map((opp: any) => ({
       ...opp,
       _matchScore: profile ? calculateOpportunityMatch({
-        opportunity: opp,
+        opportunity: { title: opp.title, ...opp },
         userProfile: {
           skills: profile.skills,
           location_city: profile.location_city,
           sector: profile.sector,
           activity_score: profile.activity_score,
           is_verified: profile.is_verified,
+          profession_type: (profile as any).profession_type || null,
+          role_subtype: (profile as any).role_subtype || null,
         },
       }) : 0,
     }));
