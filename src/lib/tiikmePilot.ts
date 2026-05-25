@@ -5,6 +5,9 @@ const SUPABASE_URL = "https://fpyprwenlqpuspskewgq.supabase.co";
 export type TiikmePilotMode =
   | "discover"
   | "jobs"
+  | "people"
+  | "circles"
+  // legacy values kept for historical thread data
   | "profile"
   | "hiring"
   | "verification";
