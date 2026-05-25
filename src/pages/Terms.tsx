@@ -323,7 +323,7 @@ export default function Terms() {
       </LegalSection>
 
       <LegalSection id="section-18" num="18" title="Changes to These Terms">
-        <P>Tiikme may update these Terms. For material changes, we will notify you via email and in-app notification at least 15 days before they take effect. Continued use after that date constitutes acceptance. For minor clarifications, we will update the "Last Updated" date without separate notice.</P>
+        <P>Tiikme may update these Terms. For material changes, we will notify you via in-app notification at least 15 days before they take effect. Continued use after that date constitutes acceptance. For minor clarifications, we will update the "Last Updated" date without separate notice.</P>
       </LegalSection>
 
       <LegalSection id="section-19" num="19" title="Contact">
