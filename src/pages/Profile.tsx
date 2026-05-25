@@ -405,7 +405,7 @@ const Profile = () => {
   const state = showLocation || isOwnProfile ? (profileData.location_state || "") : "";
   const role = profileData.role || "student";
   const roleLabel = role.charAt(0).toUpperCase() + role.slice(1).replace(/_/g, " ");
-  const compactRoleLine = getPrimaryRoleLine(profileData) || (role !== "professional" ? roleLabel : "");
+  const compactRoleLine = getPrimaryRoleLine(profileData) || (role !== "professional" && role !== "working" ? roleLabel : "");
   const initials = displayName ? displayName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase() : authInitials || "U";
   const roleColor = ROLE_COLOR_MAP[role] || "#4F46E5";
   const isVerified = profileData.is_verified === true && (() => {
@@ -1020,8 +1020,8 @@ const Profile = () => {
                 if (m && typeof m === "object") {
                   const r = profileData.role;
                   if (r === "student") parts = [m.institution, m.current_year].filter(Boolean);
-                  else if (r === "professional") parts = [m.company, m.years_experience ? `${m.years_experience} yrs` : ""].filter(Boolean);
-                  else if (r === "doctor") parts = [m.hospital, m.specialty === "Other" ? m.specialty_other : m.specialty].filter(Boolean);
+                  else if (r === "professional" || r === "working") parts = [m.company, m.years_experience ? `${m.years_experience} yrs` : ""].filter(Boolean);
+                  else if (r === "doctor" || r === "healthcare") parts = [m.hospital, m.specialty === "Other" ? m.specialty_other : m.specialty].filter(Boolean);
                   else if (r === "faculty") parts = [m.institution, m.department].filter(Boolean);
                 }
                 if (parts.length === 0) {
