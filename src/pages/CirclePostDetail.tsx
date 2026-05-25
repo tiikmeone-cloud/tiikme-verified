@@ -116,6 +116,7 @@ export default function CirclePostDetail() {
             table="circle_post_comments"
             postAuthorId={post.author_id}
             postUrlPrefix={`/app/circles/${circleSlug}`}
+            treeMode
           />
         </div>
       </div>
