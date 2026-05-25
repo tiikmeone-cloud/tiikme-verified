@@ -129,7 +129,7 @@ export default function ReferralsTab() {
                     </span>
                   )}
                   {o.is_remote && (
-                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ background: "#EFF6FF", color: "#2563EB" }}>Remote</span>
+                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ background: "rgba(232,115,58,0.08)", color: "#E8733A" }}>Remote</span>
                   )}
                   {o.deadline && (
                     <span className="text-[11px] font-medium px-2 py-0.5 rounded-full flex items-center gap-1" style={{ background: "var(--surface-2)", color: "var(--text-2)" }}>

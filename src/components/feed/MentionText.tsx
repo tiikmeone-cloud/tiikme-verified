@@ -42,7 +42,7 @@ const MentionText = ({ text }: { text: string }) => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-medium hover:underline"
-                style={{ color: "#4A90D9" }}
+                style={{ color: "#E8733A" }}
               >
                 {url.replace(/^https?:\/\/(www\.)?/, "").slice(0, 40)}
                 {url.replace(/^https?:\/\/(www\.)?/, "").length > 40 ? "..." : ""}
