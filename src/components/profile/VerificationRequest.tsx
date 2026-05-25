@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   ArrowLeft,
@@ -65,6 +65,9 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
   const [submittingRequest, setSubmittingRequest] = useState(false);
   const [note, setNote] = useState("");
 
+  // Captured before OTP send — restored if magic-link click changes session
+  const savedSessionRef = useRef<{ access_token: string; refresh_token: string } | null>(null);
+
   const companyName =
     item.company_name ||
     item.institution_name ||
@@ -107,11 +110,32 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
     return () => { document.removeEventListener("keydown", handler); document.body.style.overflow = ""; };
   }, [open]);
 
+  // Guard: if the user clicks the magic link in the OTP email, Supabase changes
+  // the active session to the work-email user, causing a page re-render.
+  // We detect that and immediately restore the original session.
+  useEffect(() => {
+    if (step !== "otp_code" || !savedSessionRef.current) return;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const saved = savedSessionRef.current;
+      if (!saved) return;
+      // If the session user changed, restore the original session immediately
+      if (session && session.user?.id !== user?.id) {
+        supabase.auth.setSession({
+          access_token: saved.access_token,
+          refresh_token: saved.refresh_token,
+        }).catch(() => {});
+        toast.error("Don't click the link in the email — enter the 6-digit code here instead.");
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [step, user?.id]);
+
   const resetAndClose = () => {
     setOpen(false);
     setStep("ask_current");
     setWorkEmail(""); setOtp("");
     setNote("");
+    savedSessionRef.current = null;
   };
 
   const updateVerifiedState = async (status: "verified" | "pending") => {
@@ -142,6 +166,14 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
       return;
     }
     setSendingOtp(true);
+    // Capture current session BEFORE sending OTP — guards against magic-link click
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (sessionData.session) {
+      savedSessionRef.current = {
+        access_token: sessionData.session.access_token,
+        refresh_token: sessionData.session.refresh_token,
+      };
+    }
     const result = await sendWorkEmailOtp(workEmail.trim().toLowerCase());
     setSendingOtp(false);
     if (!result.ok) { toast.error(result.error || "Could not send code"); return; }
@@ -347,9 +379,16 @@ export default function VerificationRequest({ item, itemType, onStatusChange }: 
               {step === "otp_code" && (
                 <div>
                   <p className="text-[14px] font-semibold mb-1" style={{ color: "#1A1A2E" }}>Enter the 6-digit code</p>
-                  <p className="text-[12px] mb-4" style={{ color: "#9CA3C0" }}>
+                  <p className="text-[12px] mb-3" style={{ color: "#9CA3C0" }}>
                     Code sent to <strong>{workEmail}</strong>. Check your inbox.
                   </p>
+                  <div className="rounded-xl px-3 py-2 mb-4 flex items-start gap-2"
+                    style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)" }}>
+                    <span style={{ fontSize: 14 }}>⚠️</span>
+                    <p className="text-[11px] leading-snug" style={{ color: "#92400E" }}>
+                      Open the email on your <strong>phone or another browser tab</strong>. Enter the <strong>6-digit code</strong> here — do <strong>not</strong> click any link in the email or you'll be signed out.
+                    </p>
+                  </div>
                   <input
                     value={otp}
                     onChange={e => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}

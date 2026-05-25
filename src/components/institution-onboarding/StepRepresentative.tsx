@@ -1,5 +1,7 @@
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 import type { InstitutionFormData } from "@/pages/JoinAsInstitution";
 
 const TEXT_PRIMARY = "#FAFAF7";
@@ -31,18 +33,26 @@ interface Props {
 }
 
 export default function StepRepresentative({ form, update, onNext }: Props) {
+  const { profile } = useAuth();
   const roles = ROLES_BY_TYPE[form.orgType] || ROLES_BY_TYPE.company;
+
+  // Pre-fill name from existing logged-in profile
+  useEffect(() => {
+    if (profile?.full_name && !form.repName) {
+      update({ repName: profile.full_name });
+    }
+  }, [profile?.full_name]);
 
   const handleNext = () => {
     if (!form.repName.trim()) { toast.info("Enter your name"); return; }
-    if (!form.repRole) { toast.info("Select your role"); return; }
+    if (!form.repRole) { toast.info("Select your role in the organisation"); return; }
     onNext();
   };
 
   return (
     <div>
-      <h1 className="text-[22px] font-extrabold mb-1" style={{ color: TEXT_PRIMARY }}>Who are you?</h1>
-      <p className="text-[13px] mb-6" style={{ color: TEXT_SECONDARY }}>Tell us about yourself - you'll be the primary admin</p>
+      <h1 className="text-[22px] font-extrabold mb-1" style={{ color: TEXT_PRIMARY }}>About you</h1>
+      <p className="text-[13px] mb-6" style={{ color: TEXT_SECONDARY }}>You'll be the owner of this organisation page</p>
 
       <div className="space-y-4">
         <div>
