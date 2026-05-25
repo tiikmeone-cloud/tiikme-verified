@@ -56,7 +56,7 @@ const EditPostModal = ({ post, onClose, onSaved }: EditPostModalProps) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 md:pl-[230px]" onClick={onClose}>
       <div className="absolute inset-0" style={{ background: "rgba(26,26,78,0.40)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }} />
       <div
         className="relative w-full max-w-[560px] mx-auto flex flex-col"

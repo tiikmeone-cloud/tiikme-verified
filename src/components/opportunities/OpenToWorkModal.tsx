@@ -96,7 +96,7 @@ export default function OpenToWorkModal({ open, onClose, existing, onSaved }: Pr
   const StepIcon = currentStep.icon;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)" }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center md:pl-[230px]" style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)" }}>
       <div className="w-full max-w-[420px] mx-4 rounded-2xl overflow-hidden" style={{ background: "#fff", boxShadow: "0 24px 64px rgba(0,0,0,0.18)" }}>
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-5 pb-3">

@@ -42,7 +42,54 @@ const platformFAQ = [
     patterns: [/open to work/i, /job seeking.*visible/i, /current.*employer.*see/i],
     answer: `Open to Work on Tiikme is private by default. Your current employer cannot see that you're looking for new opportunities.\n\nYou can control visibility in Settings → Privacy → Open to Work visibility.\n\nRecruiters can see it. Your current employer's employees cannot.`
   },
+  {
+    patterns: [/api key/i, /tiikme.*api/i, /developer.*access/i],
+    answer: `The Tiikme API is currently in private beta for verified organisations. It is not publicly available yet. Apply for early access at developers@tiikme.com`
+  },
 ];
+
+const CONTENT_SUGGESTIONS: Record<string, string[]> = {
+  professional: [
+    "Share a problem you solved at work this week and how you approached it",
+    "Ask your network: what tool has saved you the most time this year?",
+    "Write about the biggest lesson from your career so far",
+  ],
+  student: [
+    "Share a concept you just learned and found surprising",
+    "Ask: what's one thing you wish you knew before starting college?",
+    "Write about your internship or project experience",
+  ],
+  doctor: [
+    "Explain a common health myth in simple language",
+    "Share what a day in your specialty actually looks like",
+    "Write about why you chose your specialty",
+  ],
+  teacher: [
+    "Share a teaching technique that worked unexpectedly well",
+    "Ask your network: what was your best teacher like?",
+    "Write about a student moment that changed how you teach",
+  ],
+  gig_worker: [
+    "Show a before/after of your recent work",
+    "Share a tip from your trade that most people don't know",
+    "Write about how you found your first gig client",
+  ],
+  creator: [
+    "Share the biggest mistake you made growing your channel",
+    "Ask: what content topic should I cover next?",
+    "Write about your content creation process",
+  ],
+  government: [
+    "Explain a government scheme that not enough people know about",
+    "Share what surprised you about your department when you joined",
+    "Write about a public service initiative you're proud of",
+  ],
+  researcher: [
+    "Explain your research area in plain English (no jargon)",
+    "Share the most counter-intuitive finding in your field",
+    "Write about why your research matters in real life",
+  ],
+};
 
 const MODES: { value: TiikmePilotMode; label: string; icon: typeof Search }[] = [
   { value: "discover", label: "Discover", icon: Search },
@@ -313,6 +360,22 @@ export default function TiikmePilotPage() {
         created_at: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, faqAnswerMsg]);
+      setSending(false);
+      return;
+    }
+
+    // Check content suggestions shortcut
+    if (/what.*post|content.*ideas|suggest.*post|what should i (write|share)/i.test(text) && userId) {
+      const { data: prof } = await supabase.from('profiles').select('profession_type').eq('id', userId).single();
+      const profType = prof?.profession_type || 'professional';
+      const suggestions = CONTENT_SUGGESTIONS[profType] || CONTENT_SUGGESTIONS['professional'];
+      const suggestionsMsg: ChatMessage = {
+        id: `suggestions-${Date.now()}`,
+        role: "assistant",
+        content: `Here are 3 content ideas for you:\n\n1. ${suggestions[0]}\n2. ${suggestions[1]}\n3. ${suggestions[2]}\n\nPick one and I can help you write it — just say "Help me write #1" or #2 or #3.`,
+        created_at: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, suggestionsMsg]);
       setSending(false);
       return;
     }

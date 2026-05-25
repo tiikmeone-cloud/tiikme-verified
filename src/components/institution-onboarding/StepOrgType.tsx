@@ -13,27 +13,38 @@ const ORG_CATEGORIES: { value: string; type: string; label: string; group: strin
   { group: "Companies",       value: "Product Company",          type: "company",    label: "Product Company" },
   { group: "Companies",       value: "SaaS",                     type: "company",    label: "SaaS" },
   { group: "Companies",       value: "Service Company",          type: "company",    label: "Service Company" },
-  { group: "Companies",       value: "Ad Agency",                type: "company",    label: "Ad Agency" },
-  { group: "Companies",       value: "E-commerce",               type: "company",    label: "E-commerce" },
+  { group: "Companies",       value: "Ad Agency",                type: "agency",     label: "Ad Agency / Creative Agency" },
+  { group: "Companies",       value: "E-commerce",               type: "smb",        label: "E-commerce" },
+  { group: "Companies",       value: "Enterprise",               type: "enterprise", label: "Enterprise" },
   // Startups
   { group: "Startups",        value: "Startup",                  type: "startup",    label: "Startup" },
+  { group: "Startups",        value: "Investor/VC",              type: "investor",   label: "Investor / VC / Fund" },
   // Creators
   { group: "Creators",        value: "YouTube Channel",          type: "creator",    label: "YouTube Channel" },
   { group: "Creators",        value: "Podcast",                  type: "creator",    label: "Podcast" },
   { group: "Creators",        value: "Newsletter",               type: "creator",    label: "Newsletter" },
-  { group: "Creators",        value: "Other Creator",            type: "creator",    label: "Other Creator" },
+  { group: "Creators",        value: "Media & News",             type: "media",      label: "Media & News" },
+  { group: "Creators",        value: "Other Creator",            type: "creator",    label: "Other Creator Brand" },
   // Communities (informal, user-run)
   { group: "Communities",     value: "Community",                type: "community",  label: "Community / User Group" },
   // Education / Healthcare / Public sector
-  { group: "Institutions",    value: "Educational Institution",  type: "education",  label: "Educational Institution" },
-  { group: "Institutions",    value: "Hospital/Healthcare",      type: "hospital",   label: "Hospital / Healthcare" },
+  { group: "Institutions",    value: "College/University",       type: "college",    label: "College / University" },
+  { group: "Institutions",    value: "School",                   type: "school",     label: "School (K-12)" },
+  { group: "Institutions",    value: "Educational Institution",  type: "education",  label: "Other Educational Institution" },
+  { group: "Institutions",    value: "Hospital",                 type: "hospital",   label: "Hospital" },
+  { group: "Institutions",    value: "Clinic",                   type: "clinic",     label: "Clinic" },
   { group: "Institutions",    value: "Government",               type: "government", label: "Government Body" },
   { group: "Institutions",    value: "Non-Profit/NGO",           type: "ngo",        label: "Non-Profit / NGO" },
   // Fallback
-  { group: "Other",           value: "Other",                    type: "company",    label: "Other" },
+  { group: "Other",           value: "Other",                    type: "other",      label: "Other" },
 ];
 
 const GROUP_ORDER = ["Companies", "Startups", "Creators", "Communities", "Institutions", "Other"];
+
+// DB-valid values for organizations.type:
+// startup | company | creator | community | education | college | university |
+// school | hospital | clinic | ngo | government | investor | media |
+// enterprise | smb | nonprofit | agency | freelance | other
 
 interface Props {
   form: InstitutionFormData;

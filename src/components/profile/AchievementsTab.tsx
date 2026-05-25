@@ -77,7 +77,7 @@ export default function AchievementsTab({ isOwnProfile, achievements = [], userI
   const renderModal = () => createPortal(
     <AnimatePresence>
       {showAddModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} onClick={() => setShowAddModal(false)}>
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4 md:pl-[230px]" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} onClick={() => setShowAddModal(false)}>
           <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
             className="p-6 max-w-md w-full" style={{ background: "#FFFFFF", borderRadius: 20, boxShadow: "0 25px 80px rgba(0,0,0,0.25)" }} onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">

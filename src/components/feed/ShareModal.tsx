@@ -113,7 +113,7 @@ const ShareModal = ({ open, onClose, postId }: ShareModalProps) => {
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center" style={{ background: "rgba(0,0,0,0.40)" }} onClick={onClose} onKeyDown={e => { if (e.key === "Escape") onClose(); }}>
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center md:pl-[230px]" style={{ background: "rgba(0,0,0,0.40)" }} onClick={onClose} onKeyDown={e => { if (e.key === "Escape") onClose(); }}>
       <div className="w-[90vw] max-w-[480px] max-h-[70vh] flex flex-col" style={{ background: "#FFFFFF", borderRadius: 20, border: "1px solid #E5E7EB", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }} onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between" style={{ padding: "14px 16px", borderBottom: "1px solid var(--border-subtle)" }}>

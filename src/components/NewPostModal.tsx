@@ -145,7 +145,7 @@ const NewPostModal = ({ open, onClose, onPublished }: NewPostModalProps) => {
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center px-0 sm:px-4" style={{ background: "rgba(4,6,26,0.7)", backdropFilter: "blur(12px)" }} onClick={onClose}>
+    <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center px-0 sm:px-4 md:pl-[230px]" style={{ background: "rgba(4,6,26,0.7)", backdropFilter: "blur(12px)" }} onClick={onClose}>
       <div className="w-full sm:max-w-[560px] max-h-[85vh] overflow-y-auto rounded-t-[20px] sm:rounded-2xl border border-border/30" style={{ background: "var(--surface)" }} onClick={e => e.stopPropagation()}>
         <div className="sm:hidden flex justify-center pt-2"><div className="w-9 h-[5px] rounded-full" style={{ background: "var(--border-2)" }} /></div>
         <div className="flex items-center justify-between px-5 py-4 border-b border-border/30">

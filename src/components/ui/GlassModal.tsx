@@ -41,7 +41,7 @@ const GlassModal = ({ open, onClose, title, icon: Icon, accentColor, children, a
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 md:pl-[246px]"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 md:pl-[230px]"
           style={{
             background: "rgba(26, 26, 78, 0.35)",
             backdropFilter: "blur(8px)",

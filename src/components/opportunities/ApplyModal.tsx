@@ -99,7 +99,7 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
   const displayOrg = orgName || "this organization";
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-end md:items-center justify-center" style={{ background: "rgba(10,10,11,0.50)", backdropFilter: "blur(6px)" }} onClick={onClose}>
+    <div className="fixed inset-0 z-[9999] flex items-end md:items-center justify-center md:pl-[230px]" style={{ background: "rgba(10,10,11,0.50)", backdropFilter: "blur(6px)" }} onClick={onClose}>
       <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
         className="w-full max-w-[600px] max-h-[85vh] flex flex-col rounded-t-2xl md:rounded-2xl"
         style={{ background: "#FFFFFF", boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06)" }}

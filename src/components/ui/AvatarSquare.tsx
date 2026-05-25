@@ -8,12 +8,12 @@ function hashColor(name: string): string {
 }
 
 function getInitials(name: string, maxLen = 2): string {
-  return name
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .slice(0, maxLen)
-    .toUpperCase();
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return parts.map((w) => w[0]).join("").slice(0, maxLen).toUpperCase();
+  }
+  // Single word — return first 2 characters
+  return (parts[0] || "U").substring(0, maxLen).toUpperCase();
 }
 
 const NAMED_SIZES: Record<string, number> = {
