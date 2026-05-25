@@ -15,6 +15,34 @@ import {
   type TiikmePilotSource,
   type TiikmePilotReply,
 } from "@/lib/tiikmePilot";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+
+const DAILY_LIMIT = 5;
+const CHAR_LIMIT = 500;
+
+const platformFAQ = [
+  {
+    patterns: [/privacy policy/i, /employer.*see/i, /can.*see.*my.*profile/i, /who can see/i],
+    answer: `Your profile visibility is controlled in Settings → Privacy.\n\nBy default:\n• Your connections see your full profile\n• Your Open to Work status is hidden from your current employer\n• You can turn off location, education, or experience visibility individually\n\nYour employer cannot see your profile activity on Tiikme unless you have connected with them.`
+  },
+  {
+    patterns: [/activity score/i, /how.*points/i, /what.*score/i, /points.*work/i],
+    answer: `Activity Score tracks your contributions on Tiikme:\n• Post on feed: +5 points\n• Get a role verified: +20 points\n• Connect with someone: +2 points\n• Reply in a Circle: +3 points\n• Complete your profile: +10 points\n\nYou need 50 points to create a Circle!`
+  },
+  {
+    patterns: [/what is tiikme/i, /about tiikme/i, /how.*tiikme.*work/i],
+    answer: `Tiikme is India's verified professional identity platform. Unlike other networks where anyone can claim any job title, Tiikme verifies your work history through your employer, work email, or manager reference.\n\nWhen you see a verified badge on Tiikme, you know that person actually works (or worked) where they say they do.`
+  },
+  {
+    patterns: [/how.*verify/i, /get.*verified/i, /verification.*work/i, /blue.*tick/i],
+    answer: `Verification on Tiikme works in 3 ways:\n1. Work Email — if your company's domain is in our system, we send a verification link to your work email\n2. Upload Document — upload your offer letter, salary slip, or ID card; our team reviews it\n3. Manager Reference — your manager receives an email and confirms your employment\n\nPast employment? Use Manager Reference or document upload — work email only works for current jobs.`
+  },
+  {
+    patterns: [/open to work/i, /job seeking.*visible/i, /current.*employer.*see/i],
+    answer: `Open to Work on Tiikme is private by default. Your current employer cannot see that you're looking for new opportunities.\n\nYou can control visibility in Settings → Privacy → Open to Work visibility.\n\nRecruiters can see it. Your current employer's employees cannot.`
+  },
+];
 
 const MODES: { value: TiikmePilotMode; label: string; icon: typeof Search }[] = [
   { value: "discover", label: "Discover", icon: Search },
@@ -137,6 +165,7 @@ function AssistantBubble({
 }
 
 export default function TiikmePilotPage() {
+  const { user } = useAuth();
   const [threads, setThreads] = useState<TiikmePilotThread[]>([]);
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -149,6 +178,7 @@ export default function TiikmePilotPage() {
   const [remainingChats, setRemainingChats] = useState(MAX_PILOT_CHATS);
   const [remainingDaily, setRemainingDaily] = useState<number | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [dailyUsed, setDailyUsed] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -162,6 +192,20 @@ export default function TiikmePilotPage() {
       .catch(() => toast.error("Could not load conversations"))
       .finally(() => setLoadingThreads(false));
   }, []);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const today = new Date().toISOString().split('T')[0];
+    supabase
+      .from('pilot_usage')
+      .select('message_count')
+      .eq('user_id', user.id)
+      .eq('date', today)
+      .single()
+      .then(({ data }) => {
+        setDailyUsed(data?.message_count ?? 0);
+      });
+  }, [user?.id]);
 
   useEffect(() => {
     scrollToBottom();
@@ -222,6 +266,29 @@ export default function TiikmePilotPage() {
     const text = input.trim();
     if (!text || sending) return;
 
+    const userId = user?.id;
+
+    // Daily rate limit check
+    if (userId) {
+      const today = new Date().toISOString().split('T')[0];
+      const { data: usage } = await supabase
+        .from('pilot_usage')
+        .select('message_count')
+        .eq('user_id', userId)
+        .eq('date', today)
+        .single();
+      const count = usage?.message_count ?? 0;
+      if (count >= DAILY_LIMIT) {
+        return;
+      }
+      // Increment usage
+      await supabase.from('pilot_usage').upsert(
+        { user_id: userId, date: today, message_count: count + 1 },
+        { onConflict: 'user_id,date' }
+      );
+      setDailyUsed(count + 1);
+    }
+
     setInput("");
     setSending(true);
 
@@ -232,6 +299,44 @@ export default function TiikmePilotPage() {
       created_at: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, tempUserMsg]);
+
+    // Check platform FAQ first (no AI tokens)
+    const faqMatch = platformFAQ.find((faq) =>
+      faq.patterns.some((pattern) => pattern.test(text))
+    );
+    if (faqMatch) {
+      const faqAnswerId = `faq-${Date.now()}`;
+      const faqAnswerMsg: ChatMessage = {
+        id: faqAnswerId,
+        role: "assistant",
+        content: faqMatch.answer,
+        created_at: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, faqAnswerMsg]);
+      setSending(false);
+      return;
+    }
+
+    // Check analytics shortcut
+    if (/my analytics|my stats|how am i doing|my score|my posts|my activity/i.test(text) && userId) {
+      const [profResult, postResult, connResult] = await Promise.all([
+        supabase.from('profiles').select('full_name, activity_score, follower_count, following_count').eq('id', userId).single(),
+        supabase.from('posts').select('*', { count: 'exact', head: true }).eq('author_id', userId),
+        supabase.from('strands').select('*', { count: 'exact', head: true }).or(`requester_id.eq.${userId},receiver_id.eq.${userId}`).eq('status', 'accepted'),
+      ]);
+      const prof = profResult.data;
+      const postCount = postResult.count ?? 0;
+      const connCount = connResult.count ?? 0;
+      const analyticsMsg: ChatMessage = {
+        id: `analytics-${Date.now()}`,
+        role: "assistant",
+        content: `Here's your Tiikme snapshot:\n\n📊 Activity Score: ${prof?.activity_score ?? 0} pts\n📝 Posts: ${postCount}\n🤝 Connections: ${connCount}\n👥 Followers: ${prof?.follower_count ?? 0}`,
+        created_at: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, analyticsMsg]);
+      setSending(false);
+      return;
+    }
 
     const tempAssistantId = `temp-assistant-${Date.now()}`;
     const thinkingMsg: ChatMessage = {
@@ -288,7 +393,8 @@ export default function TiikmePilotPage() {
     }
   };
 
-  const canSend = input.trim().length > 0 && !sending && remainingChats > 0;
+  const dailyRemaining = DAILY_LIMIT - dailyUsed;
+  const canSend = input.trim().length > 0 && !sending && remainingChats > 0 && dailyRemaining > 0;
 
   return (
     <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-[#0e0e12]">
@@ -472,6 +578,11 @@ export default function TiikmePilotPage() {
               Thread limit reached. Archive existing conversations to start new ones.
             </p>
           )}
+          {remainingChats > 0 && dailyRemaining <= 0 && (
+            <p className="text-xs text-red-400/80 text-center mb-2">
+              Daily limit reached — resets at midnight
+            </p>
+          )}
           <div className="flex items-end gap-3 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 focus-within:border-orange-500/40 transition-colors">
             <textarea
               ref={inputRef}
@@ -480,7 +591,8 @@ export default function TiikmePilotPage() {
               onKeyDown={handleKeyDown}
               placeholder={`Ask Pilot anything… (${mode} mode)`}
               rows={1}
-              disabled={sending || remainingChats === 0}
+              maxLength={CHAR_LIMIT}
+              disabled={sending || remainingChats === 0 || dailyRemaining <= 0}
               className="flex-1 resize-none bg-transparent text-sm text-white/90 placeholder:text-white/30 outline-none leading-relaxed max-h-32 overflow-y-auto disabled:opacity-50"
               style={{ fieldSizing: "content" } as any}
             />
@@ -497,7 +609,33 @@ export default function TiikmePilotPage() {
               {sending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
             </button>
           </div>
-          <p className="text-[10px] text-white/20 text-center mt-2">
+          <div className="flex items-center justify-between mt-1.5 px-1">
+            <p
+              className={cn(
+                "text-[10px]",
+                dailyRemaining <= 0
+                  ? "text-red-400"
+                  : "text-white/30"
+              )}
+            >
+              {dailyRemaining > 0
+                ? `${dailyRemaining} message${dailyRemaining !== 1 ? "s" : ""} left today`
+                : "Daily limit reached — resets at midnight"}
+            </p>
+            <p
+              className={cn(
+                "text-[10px]",
+                CHAR_LIMIT - input.length < 20
+                  ? "text-red-400"
+                  : CHAR_LIMIT - input.length < 100
+                  ? "text-orange-400"
+                  : "text-white/30"
+              )}
+            >
+              {CHAR_LIMIT - input.length} characters remaining
+            </p>
+          </div>
+          <p className="text-[10px] text-white/20 text-center mt-1">
             Tiikme Pilot may make mistakes. Verify important information.
           </p>
         </div>
