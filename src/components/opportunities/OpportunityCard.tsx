@@ -191,6 +191,18 @@ export function OpportunityCard({
 
   const applicantCount = opp.responses_count ?? opp.applications_count ?? 0;
   const salary = salaryLabel();
+
+  const expiryBadge = (() => {
+    if (!opp.is_open) return { label: "Closed", urgent: false, closed: true };
+    const exp = opp.expires_at || (opp.deadline ? opp.deadline + "T23:59:59Z" : null);
+    if (!exp) return null;
+    const days = Math.ceil((new Date(exp).getTime() - Date.now()) / 86400000);
+    if (days < 0) return { label: "Expired", urgent: false, closed: true };
+    if (days === 0) return { label: "Closes today", urgent: true, closed: false };
+    if (days <= 3) return { label: `${days}d left`, urgent: true, closed: false };
+    if (days <= 14) return { label: `${days}d left`, urgent: false, closed: false };
+    return null;
+  })();
   const handleRefer = () => {
     if (onRefer) {
       onRefer(opp);
@@ -315,6 +327,14 @@ export function OpportunityCard({
           {salary && (
             <span className="text-xs font-medium text-green-700 bg-green-50 px-2.5 py-1 rounded-full">
               {salary}
+            </span>
+          )}
+          {expiryBadge && (
+            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1 ${
+              expiryBadge.closed ? "bg-gray-100 text-gray-500" :
+              expiryBadge.urgent ? "bg-red-50 text-red-600" : "bg-amber-50 text-amber-700"
+            }`}>
+              <Clock size={9} /> {expiryBadge.label}
             </span>
           )}
         </div>
