@@ -137,12 +137,14 @@ const Opportunities = () => {
         const oppSkills = (o.skills_required || []).map((s: string) => s.toLowerCase());
         const matchCount = oppSkills.filter((s: string) => userSkills.has(s)).length;
         const scoreOk = !o.activity_score_min || (profile.activity_score || 0) >= o.activity_score_min;
-        return { ...o, _matchScore: matchCount, _scoreOk: scoreOk };
+        // Boost score for orgs the user follows
+        const followBoost = o.org_id && followedOrgIds.has(o.org_id) ? 2 : 0;
+        return { ...o, _matchScore: matchCount + followBoost, _scoreOk: scoreOk };
       })
       .filter(o => o._matchScore > 0 || o._scoreOk)
       .sort((a, b) => b._matchScore - a._matchScore)
       .slice(0, 5);
-  }, [opps, profile, user, isInstitution]);
+  }, [opps, profile, user, isInstitution, followedOrgIds]);
 
   // Show all jobs from this org (any admin) OR posted by this user.
   // Using org_id is more robust than poster_id for institution accounts,

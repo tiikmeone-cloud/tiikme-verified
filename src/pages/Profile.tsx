@@ -219,6 +219,8 @@ const Profile = () => {
   const [achForm, setAchForm] = useState({ title: "", issuedBy: "", dateMonth: "", dateYear: "", description: "", url: "" });
   const [profileRoles, setProfileRoles] = useState<any[]>([]);
   const [roleForm, setRoleForm] = useState({ roleType: "Side Hustle", title: "", description: "" });
+  const [creatorChannels, setCreatorChannels] = useState<any[]>([]);
+  const [gigServices, setGigServices] = useState<any[]>([]);
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
   const avatarFileRef = useRef<HTMLInputElement>(null);
 
@@ -269,6 +271,12 @@ const Profile = () => {
     // Load profile roles (parallel with avatar fetch above — already awaited)
     supabase.from("profile_roles").select("*").eq("user_id", targetUserId).order("created_at", { ascending: false })
       .then(({ data: rolesData }) => setProfileRoles(rolesData || []));
+
+    // Load role-specific sections
+    supabase.from("creator_channels" as any).select("*").eq("user_id", targetUserId).order("created_at", { ascending: false })
+      .then(({ data }) => setCreatorChannels((data as any[]) || []));
+    supabase.from("gig_services" as any).select("*").eq("user_id", targetUserId).order("created_at", { ascending: false })
+      .then(({ data }) => setGigServices((data as any[]) || []));
 
     setDataLoading(false);
   }, [targetUserId, isOwnProfile, authProfile]);
@@ -1357,6 +1365,49 @@ const Profile = () => {
 
           {/* ═══ RIGHT COLUMN ═══ */}
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {/* Role-specific sections for creators */}
+            {(profileData as any).profession_type === "creator" && (creatorChannels.length > 0 || isOwnProfile) && (
+              <div className="glass-card" style={{ padding: 16, borderRadius: 14, border: "1px solid rgba(126,34,206,0.18)" }}>
+                <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
+                  <span style={{ fontWeight: 700, fontSize: 14, color: "#7E22CE" }}>Channels</span>
+                  {isOwnProfile && <span style={{ fontSize: 12, color: "#9CA3C0" }}>via Settings → Channels</span>}
+                </div>
+                {creatorChannels.length === 0 ? (
+                  <p style={{ fontSize: 13, color: "var(--text-muted)" }}>No channels added yet.</p>
+                ) : creatorChannels.map((ch: any) => (
+                  <div key={ch.id} style={{ display: "flex", gap: 10, alignItems: "flex-start", paddingBottom: 10, marginBottom: 10, borderBottom: "1px solid var(--border-subtle)" }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{ch.channel_name}</p>
+                      <p style={{ fontSize: 12, color: "var(--text-muted)" }}>{ch.platform}{ch.content_niche ? ` · ${ch.content_niche}` : ""}</p>
+                      {ch.subscriber_count != null && <p style={{ fontSize: 11, color: "var(--text-muted)" }}>{ch.subscriber_count.toLocaleString()} subscribers</p>}
+                      {ch.channel_url && <a href={ch.channel_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#E8733A" }}>Visit channel ↗</a>}
+                    </div>
+                    {ch.is_monetized && <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 999, background: "rgba(126,34,206,0.10)", color: "#7E22CE", fontWeight: 600, flexShrink: 0 }}>Monetized</span>}
+                  </div>
+                ))}
+              </div>
+            )}
+            {/* Role-specific sections for gig workers */}
+            {(profileData as any).profession_type === "gig_worker" && (gigServices.length > 0 || isOwnProfile) && (
+              <div className="glass-card" style={{ padding: 16, borderRadius: 14, border: "1px solid rgba(194,65,12,0.18)" }}>
+                <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
+                  <span style={{ fontWeight: 700, fontSize: 14, color: "#C2410C" }}>Services</span>
+                  {isOwnProfile && <span style={{ fontSize: 12, color: "#9CA3C0" }}>via Settings → Services</span>}
+                </div>
+                {gigServices.length === 0 ? (
+                  <p style={{ fontSize: 13, color: "var(--text-muted)" }}>No services listed yet.</p>
+                ) : gigServices.map((svc: any) => (
+                  <div key={svc.id} style={{ display: "flex", gap: 10, alignItems: "flex-start", paddingBottom: 10, marginBottom: 10, borderBottom: "1px solid var(--border-subtle)" }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{svc.service_name}</p>
+                      <p style={{ fontSize: 12, color: "var(--text-muted)" }}>{svc.category}{svc.service_area_city ? ` · ${svc.service_area_city}` : ""}</p>
+                      {svc.rate_amount != null && <p style={{ fontSize: 12, color: "#C2410C", fontWeight: 500 }}>₹{svc.rate_amount.toLocaleString()} / {svc.rate_type}</p>}
+                    </div>
+                    <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 999, background: svc.is_available ? "rgba(22,101,52,0.10)" : "rgba(156,163,192,0.15)", color: svc.is_available ? "#166534" : "#9CA3C0", fontWeight: 600, flexShrink: 0 }}>{svc.is_available ? "Available" : "Unavailable"}</span>
+                  </div>
+                ))}
+              </div>
+            )}
             <ExperienceSection items={experiences} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("experience")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
             <EducationSection items={education} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("education")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
             <RolesSection items={profileRoles} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("role")} onDelete={deleteRole} />
