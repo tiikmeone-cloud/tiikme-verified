@@ -320,7 +320,6 @@ const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post"
       setTotalCount(n => Math.max(0, n - 1));
       onCountChange?.(-1);
     }
-    const isPostAuthor = postAuthorId && user.id === postAuthorId;
     const query = supabase.from(table).delete().eq("id", c.id);
     const { error } = isPostAuthor ? await query : await query.eq("user_id", user.id);
     if (error) toast.error("Failed to delete");
