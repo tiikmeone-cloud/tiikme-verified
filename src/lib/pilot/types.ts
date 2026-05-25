@@ -1,0 +1,117 @@
+export type IntentType =
+  | 'SEARCH_PROFILE'
+  | 'SEARCH_ORG'
+  | 'SEARCH_JOB'
+  | 'SEARCH_CIRCLE'
+  | 'MY_ANALYTICS'
+  | 'MY_APPLICATIONS'
+  | 'TRENDING'
+  | 'PLATFORM_FAQ'
+  | 'PRIVACY_QUESTION'
+  | 'AI_QUERY';
+
+export interface IntentResult {
+  type: IntentType;
+  confidence: number;
+  extractedEntities: {
+    name?: string;
+    location?: string;
+    role?: string;
+    jobKeyword?: string;
+    faqKey?: string;
+  };
+}
+
+export type PilotResponseType =
+  | 'text'
+  | 'profile_results'
+  | 'job_results'
+  | 'circle_results'
+  | 'analytics_card'
+  | 'trending_card'
+  | 'applications_list'
+  | 'navigation'
+  | 'limit_reached'
+  | 'faq';
+
+export interface PilotAction {
+  label: string;
+  url: string;
+}
+
+export interface ProfileCard {
+  id: string;
+  full_name: string;
+  headline?: string | null;
+  avatar_url?: string | null;
+  location_city?: string | null;
+  is_verified?: boolean;
+  activity_score?: number;
+  profession_type?: string;
+  connectionStatus?: 'none' | 'pending' | 'accepted';
+}
+
+export interface JobCard {
+  id: string;
+  title: string;
+  org_name?: string;
+  org_logo?: string | null;
+  type?: string;
+  location?: string | null;
+  salary_min?: number | null;
+  salary_max?: number | null;
+  is_remote?: boolean;
+  created_at?: string;
+}
+
+export interface ApplicationItem {
+  id: string;
+  jobTitle?: string;
+  orgName?: string;
+  orgLogo?: string | null;
+  status: string;
+  statusLabel: string;
+  appliedAt: string;
+  jobId?: string;
+}
+
+export interface AnalyticsData {
+  name?: string;
+  score: number;
+  tier: string;
+  nextTier: number | null;
+  postCount: number;
+  connCount: number;
+  followerCount: number;
+  appCount: number;
+  pendingApps: number;
+  isVerified: boolean;
+  tips: string[];
+}
+
+export interface TrendingHashtag {
+  tag: string;
+  count: number;
+  url: string;
+}
+
+export interface CircleCard {
+  id: string;
+  name: string;
+  slug: string;
+  member_count?: number;
+  description?: string | null;
+  post_count?: number;
+}
+
+export interface PilotResponse {
+  type: PilotResponseType;
+  content?: string;
+  cards?: ProfileCard[] | JobCard[] | CircleCard[];
+  applications?: ApplicationItem[];
+  data?: AnalyticsData;
+  hashtags?: TrendingHashtag[];
+  action?: PilotAction;
+  isAiGenerated?: boolean;
+  thinkingLabel?: string;
+}

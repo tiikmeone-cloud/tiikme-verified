@@ -1,5 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Bot, Send, ThumbsUp, ThumbsDown, Archive, Plus, ChevronRight, Briefcase, Search, User, Building2, ShieldCheck, Loader2 } from "lucide-react";
+import {
+  Bot, Send, ThumbsUp, ThumbsDown, Archive, Plus, ChevronRight,
+  Briefcase, Search, Users, MessageCircle, Loader2, ShieldCheck,
+  TrendingUp, BarChart2, Flame, ArrowUpRight, CheckCircle2,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -18,95 +22,69 @@ import {
 } from "@/lib/tiikmePilot";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { classifyIntent } from "@/lib/pilot/intent-classifier";
+import { handlePlatformFaq } from "@/lib/pilot/faq-map";
+import {
+  handleSearchProfile, handleSearchJob, handleSearchOrg, handleSearchCircle,
+  handleMyAnalytics, handleMyApplications, handleTrending, handlePrivacyQuestion,
+} from "@/lib/pilot/handlers";
+import { checkQuota, incrementQuota } from "@/lib/pilot/rate-limiter";
+import type { PilotResponse, ProfileCard, JobCard, ApplicationItem, AnalyticsData, TrendingHashtag, CircleCard } from "@/lib/pilot/types";
+import AvatarSquare from "@/components/ui/AvatarSquare";
 
-const DAILY_LIMIT = 5;
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const AI_DAILY_LIMIT = 3;
 const CHAR_LIMIT = 500;
-
-const platformFAQ = [
-  {
-    patterns: [/privacy policy/i, /employer.*see/i, /can.*see.*my.*profile/i, /who can see/i],
-    answer: `Your profile visibility is controlled in Settings → Privacy.\n\nBy default:\n• Your connections see your full profile\n• Your Open to Work status is hidden from your current employer\n• You can turn off location, education, or experience visibility individually\n\nYour employer cannot see your profile activity on Tiikme unless you have connected with them.`
-  },
-  {
-    patterns: [/activity score/i, /how.*points/i, /what.*score/i, /points.*work/i],
-    answer: `Activity Score tracks your contributions on Tiikme:\n• Post on feed: +5 points\n• Get a role verified: +20 points\n• Connect with someone: +2 points\n• Reply in a Circle: +3 points\n• Complete your profile: +10 points\n\nYou need 50 points to create a Circle!`
-  },
-  {
-    patterns: [/what is tiikme/i, /about tiikme/i, /how.*tiikme.*work/i],
-    answer: `Tiikme is India's verified professional identity platform. Unlike other networks where anyone can claim any job title, Tiikme verifies your work history through your employer, work email, or manager reference.\n\nWhen you see a verified badge on Tiikme, you know that person actually works (or worked) where they say they do.`
-  },
-  {
-    patterns: [/how.*verify/i, /get.*verified/i, /verification.*work/i, /blue.*tick/i],
-    answer: `Verification on Tiikme works in 3 ways:\n1. Work Email — if your company's domain is in our system, we send a verification link to your work email\n2. Upload Document — upload your offer letter, salary slip, or ID card; our team reviews it\n3. Manager Reference — your manager receives an email and confirms your employment\n\nPast employment? Use Manager Reference or document upload — work email only works for current jobs.`
-  },
-  {
-    patterns: [/open to work/i, /job seeking.*visible/i, /current.*employer.*see/i],
-    answer: `Open to Work on Tiikme is private by default. Your current employer cannot see that you're looking for new opportunities.\n\nYou can control visibility in Settings → Privacy → Open to Work visibility.\n\nRecruiters can see it. Your current employer's employees cannot.`
-  },
-  {
-    patterns: [/api key/i, /tiikme.*api/i, /developer.*access/i],
-    answer: `The Tiikme API is currently in private beta for verified organisations. It is not publicly available yet. Apply for early access at developers@tiikme.com`
-  },
-];
-
-const CONTENT_SUGGESTIONS: Record<string, string[]> = {
-  professional: [
-    "Share a problem you solved at work this week and how you approached it",
-    "Ask your network: what tool has saved you the most time this year?",
-    "Write about the biggest lesson from your career so far",
-  ],
-  student: [
-    "Share a concept you just learned and found surprising",
-    "Ask: what's one thing you wish you knew before starting college?",
-    "Write about your internship or project experience",
-  ],
-  doctor: [
-    "Explain a common health myth in simple language",
-    "Share what a day in your specialty actually looks like",
-    "Write about why you chose your specialty",
-  ],
-  teacher: [
-    "Share a teaching technique that worked unexpectedly well",
-    "Ask your network: what was your best teacher like?",
-    "Write about a student moment that changed how you teach",
-  ],
-  gig_worker: [
-    "Show a before/after of your recent work",
-    "Share a tip from your trade that most people don't know",
-    "Write about how you found your first gig client",
-  ],
-  creator: [
-    "Share the biggest mistake you made growing your channel",
-    "Ask: what content topic should I cover next?",
-    "Write about your content creation process",
-  ],
-  government: [
-    "Explain a government scheme that not enough people know about",
-    "Share what surprised you about your department when you joined",
-    "Write about a public service initiative you're proud of",
-  ],
-  researcher: [
-    "Explain your research area in plain English (no jargon)",
-    "Share the most counter-intuitive finding in your field",
-    "Write about why your research matters in real life",
-  ],
-};
 
 const MODES: { value: TiikmePilotMode; label: string; icon: typeof Search }[] = [
   { value: "discover", label: "Discover", icon: Search },
-  { value: "jobs", label: "Jobs", icon: Briefcase },
-  { value: "profile", label: "People", icon: User },
-  { value: "hiring", label: "Hiring", icon: Building2 },
-  { value: "verification", label: "Verify", icon: ShieldCheck },
+  { value: "jobs",     label: "Jobs",     icon: Briefcase },
+  { value: "people",   label: "People",   icon: Users },
+  { value: "circles",  label: "Circles",  icon: MessageCircle },
 ];
 
-const SOURCE_TYPE_LABEL: Record<TiikmePilotSource["type"], string> = {
-  organization: "Org",
-  opportunity: "Job",
-  post: "Post",
-  circle: "Circle",
-  profile: "Person",
+const QUICK_ACTIONS: Record<string, string[]> = {
+  discover: [
+    "What's trending today?",
+    "How does the feed work?",
+    "What is Tiikme?",
+    "My activity score",
+  ],
+  jobs: [
+    "Find software jobs in Bangalore",
+    "Remote jobs available",
+    "Internships in healthcare",
+    "Top paying roles",
+  ],
+  people: [
+    "Find doctors in Mumbai",
+    "Search for engineers",
+    "Find teachers in Delhi",
+    "Designers in Hyderabad",
+  ],
+  circles: [
+    "Show me tech communities",
+    "Healthcare circles",
+    "Circles for students",
+    "How do I create a circle?",
+  ],
 };
+
+const THINKING_LABELS: Record<string, string> = {
+  SEARCH_PROFILE: "Searching profiles…",
+  SEARCH_JOB: "Finding open roles…",
+  SEARCH_ORG: "Looking up organizations…",
+  SEARCH_CIRCLE: "Searching communities…",
+  MY_ANALYTICS: "Loading your stats…",
+  MY_APPLICATIONS: "Fetching your applications…",
+  TRENDING: "Getting trending data…",
+  PLATFORM_FAQ: "Looking that up…",
+  PRIVACY_QUESTION: "Checking privacy info…",
+  AI_QUERY: "Thinking…",
+};
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface ChatMessage {
   id: string;
@@ -115,7 +93,352 @@ interface ChatMessage {
   metadata?: Record<string, any> | null;
   created_at: string;
   reply?: TiikmePilotReply;
+  pilotResponse?: PilotResponse;
+  thinkingLabel?: string;
 }
+
+// ─── Response card components ─────────────────────────────────────────────────
+
+function VerifiedBadge() {
+  return (
+    <ShieldCheck
+      style={{ width: 12, height: 12, color: "#3B82F6", flexShrink: 0 }}
+    />
+  );
+}
+
+function ProfileResultsCard({ cards }: { cards: ProfileCard[] }) {
+  return (
+    <div className="grid grid-cols-1 gap-2 mt-2">
+      {cards.map((p) => (
+        <Link
+          key={p.id}
+          to={`/app/profile/${p.id}`}
+          className="flex items-center gap-3 rounded-xl p-3 border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
+        >
+          <AvatarSquare
+            src={p.avatar_url}
+            name={p.full_name}
+            size={40}
+            style={{ borderRadius: 10, flexShrink: 0 }}
+          />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[13px] font-semibold text-white truncate">{p.full_name}</span>
+              {p.is_verified && <VerifiedBadge />}
+            </div>
+            {p.headline && (
+              <p className="text-[11px] text-white/50 truncate mt-0.5">{p.headline}</p>
+            )}
+            {p.location_city && (
+              <p className="text-[11px] text-white/35 mt-0.5">{p.location_city}</p>
+            )}
+          </div>
+          <ArrowUpRight style={{ width: 14, height: 14, color: "rgba(255,255,255,0.3)", flexShrink: 0 }} />
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+function JobResultsCard({ cards }: { cards: JobCard[] }) {
+  const TYPE_COLORS: Record<string, string> = {
+    full_time: "#22C55E", part_time: "#F59E0B",
+    internship: "#3B82F6", contract: "#A855F7",
+    freelance: "#F97316",
+  };
+
+  return (
+    <div className="grid grid-cols-1 gap-2 mt-2">
+      {cards.map((j) => {
+        const salaryLabel = j.salary_max
+          ? j.salary_max >= 100000
+            ? `₹${(j.salary_max / 100000).toFixed(0)} LPA`
+            : `₹${(j.salary_max / 1000).toFixed(0)}K`
+          : null;
+        const typeColor = TYPE_COLORS[j.type || ""] || "#9CA3AF";
+        return (
+          <Link
+            key={j.id}
+            to={`/app/opportunities?opp=${j.id}`}
+            className="flex items-start gap-3 rounded-xl p-3 border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
+          >
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 overflow-hidden"
+              style={{ background: "rgba(255,255,255,0.08)" }}
+            >
+              {j.org_logo ? (
+                <img src={j.org_logo} alt={j.org_name || ""} className="w-full h-full object-cover" />
+              ) : (
+                <Briefcase style={{ width: 16, height: 16, color: "rgba(255,255,255,0.4)" }} />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-semibold text-white truncate">{j.title}</p>
+              <p className="text-[11px] text-white/50 truncate">{j.org_name || "Unknown org"}</p>
+              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                {j.type && (
+                  <span
+                    className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+                    style={{ background: `${typeColor}20`, color: typeColor }}
+                  >
+                    {j.type.replace(/_/g, " ")}
+                  </span>
+                )}
+                {j.is_remote && (
+                  <span className="text-[10px] text-white/40">Remote</span>
+                )}
+                {j.location && !j.is_remote && (
+                  <span className="text-[10px] text-white/40 truncate">{j.location}</span>
+                )}
+                {salaryLabel && (
+                  <span className="text-[10px] text-green-400 font-semibold">{salaryLabel}</span>
+                )}
+              </div>
+            </div>
+            <ArrowUpRight style={{ width: 14, height: 14, color: "rgba(255,255,255,0.3)", flexShrink: 0, marginTop: 2 }} />
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
+function AnalyticsCard({ data }: { data: AnalyticsData }) {
+  const TIER_COLORS: Record<string, { bg: string; color: string }> = {
+    Newcomer: { bg: "#6B728020", color: "#9CA3AF" },
+    Explorer: { bg: "#3B82F620", color: "#60A5FA" },
+    Contributor: { bg: "#F59E0B20", color: "#FBBF24" },
+    Expert: { bg: "#10B98120", color: "#34D399" },
+  };
+  const tierStyle = TIER_COLORS[data.tier] || TIER_COLORS.Newcomer;
+  const pct = data.nextTier ? Math.min(100, Math.round((data.score / data.nextTier) * 100)) : 100;
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-4 mt-2 space-y-4">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div
+          className="w-10 h-10 rounded-xl flex items-center justify-center"
+          style={{ background: tierStyle.bg }}
+        >
+          <BarChart2 style={{ width: 18, height: 18, color: tierStyle.color }} />
+        </div>
+        <div>
+          <p className="text-[13px] font-bold text-white">
+            {data.name ? `${data.name}'s Stats` : "Your Stats"}
+          </p>
+          <div className="flex items-center gap-1.5">
+            <span
+              className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+              style={{ background: tierStyle.bg, color: tierStyle.color }}
+            >
+              {data.tier}
+            </span>
+            {data.isVerified && (
+              <span className="flex items-center gap-0.5 text-[10px] text-blue-400">
+                <ShieldCheck style={{ width: 10, height: 10 }} /> Verified
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Score bar */}
+      <div>
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-[11px] text-white/50">Activity Score</span>
+          <span className="text-[13px] font-bold" style={{ color: tierStyle.color }}>{data.score} pts</span>
+        </div>
+        <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all"
+            style={{ width: `${pct}%`, background: tierStyle.color }}
+          />
+        </div>
+        {data.nextTier && (
+          <p className="text-[10px] text-white/30 mt-1">{data.score} / {data.nextTier} to next tier</p>
+        )}
+      </div>
+
+      {/* Stats grid */}
+      <div className="grid grid-cols-3 gap-2">
+        {[
+          { label: "Posts", value: data.postCount },
+          { label: "Connections", value: data.connCount },
+          { label: "Followers", value: data.followerCount },
+        ].map(({ label, value }) => (
+          <div key={label} className="text-center rounded-xl py-2.5" style={{ background: "rgba(255,255,255,0.05)" }}>
+            <p className="text-[16px] font-bold text-white">{value}</p>
+            <p className="text-[10px] text-white/40">{label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Tips */}
+      {data.tips.length > 0 && (
+        <div className="space-y-1.5">
+          <p className="text-[11px] font-semibold text-white/50 uppercase tracking-wide">Tips to grow</p>
+          {data.tips.map((tip, i) => (
+            <div key={i} className="flex items-start gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-orange-400 mt-1.5 shrink-0" />
+              <p className="text-[12px] text-white/60 leading-snug">{tip}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TrendingCard({ hashtags }: { hashtags: TrendingHashtag[] }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-4 mt-2">
+      <div className="flex items-center gap-2 mb-3">
+        <Flame style={{ width: 14, height: 14, color: "#F97316" }} />
+        <span className="text-[12px] font-semibold text-white/70">Trending on Tiikme</span>
+      </div>
+      <div className="space-y-1.5">
+        {hashtags.map((h, i) => (
+          <Link
+            key={h.tag}
+            to={h.url}
+            className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors"
+          >
+            <span className="text-[11px] font-bold text-white/30 w-5 text-center">{i + 1}</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-semibold text-orange-400">{h.tag}</p>
+              <p className="text-[10px] text-white/35">{h.count} post{h.count !== 1 ? "s" : ""}</p>
+            </div>
+            <TrendingUp style={{ width: 12, height: 12, color: "rgba(255,255,255,0.2)" }} />
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ApplicationsListCard({ applications }: { applications: ApplicationItem[] }) {
+  const STATUS_STYLES: Record<string, { bg: string; color: string }> = {
+    applied: { bg: "#3B82F620", color: "#60A5FA" },
+    pending: { bg: "#3B82F620", color: "#60A5FA" },
+    reviewing: { bg: "#F59E0B20", color: "#FBBF24" },
+    shortlisted: { bg: "#F59E0B20", color: "#FBBF24" },
+    selected: { bg: "#10B98120", color: "#34D399" },
+    approved: { bg: "#10B98120", color: "#34D399" },
+    completed: { bg: "#10B98120", color: "#34D399" },
+    rejected: { bg: "#EF444420", color: "#F87171" },
+    withdrawn: { bg: "#6B728020", color: "#9CA3AF" },
+  };
+
+  return (
+    <div className="space-y-2 mt-2">
+      {applications.map((app) => {
+        const style = STATUS_STYLES[app.status] || STATUS_STYLES.applied;
+        return (
+          <Link
+            key={app.id}
+            to={app.jobId ? `/app/opportunities?opp=${app.jobId}` : "/app/opportunities"}
+            className="flex items-center gap-3 rounded-xl p-3 border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
+          >
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 overflow-hidden"
+              style={{ background: "rgba(255,255,255,0.08)" }}
+            >
+              {app.orgLogo ? (
+                <img src={app.orgLogo} alt={app.orgName || ""} className="w-full h-full object-cover" />
+              ) : (
+                <Briefcase style={{ width: 14, height: 14, color: "rgba(255,255,255,0.4)" }} />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[12px] font-semibold text-white truncate">{app.jobTitle || "Job"}</p>
+              <p className="text-[11px] text-white/40 truncate">{app.orgName || "Unknown"}</p>
+            </div>
+            <span
+              className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0"
+              style={{ background: style.bg, color: style.color }}
+            >
+              {app.statusLabel}
+            </span>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
+function CircleResultsCard({ cards }: { cards: CircleCard[] }) {
+  return (
+    <div className="grid grid-cols-1 gap-2 mt-2">
+      {cards.map((c) => (
+        <Link
+          key={c.id}
+          to={`/app/circles/${c.slug}`}
+          className="flex items-center gap-3 rounded-xl p-3 border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
+        >
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: "rgba(249,115,22,0.12)" }}
+          >
+            <MessageCircle style={{ width: 16, height: 16, color: "#F97316" }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[13px] font-semibold text-white truncate">{c.name}</p>
+            {c.description && (
+              <p className="text-[11px] text-white/40 truncate">{c.description}</p>
+            )}
+            {c.member_count !== undefined && (
+              <p className="text-[10px] text-white/30 mt-0.5">
+                {c.member_count} member{c.member_count !== 1 ? "s" : ""}
+                {c.post_count ? ` · ${c.post_count} posts` : ""}
+              </p>
+            )}
+          </div>
+          <ArrowUpRight style={{ width: 14, height: 14, color: "rgba(255,255,255,0.3)", flexShrink: 0 }} />
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+function FaqCard({ content, action }: { content: string; action?: { label: string; url: string } }) {
+  const lines = content.split("\n");
+  return (
+    <div className="space-y-3">
+      <div className="rounded-2xl rounded-tl-sm bg-white/8 border border-white/10 px-4 py-3">
+        <div className="text-sm text-white/90 leading-relaxed whitespace-pre-wrap">
+          {lines.map((line, i) => {
+            if (!line.trim()) return <br key={i} />;
+            // Bold text between **
+            const parts = line.split(/\*\*([^*]+)\*\*/g);
+            return (
+              <p key={i} className="mb-0.5">
+                {parts.map((part, j) =>
+                  j % 2 === 1 ? <strong key={j} className="text-white font-semibold">{part}</strong> : part
+                )}
+              </p>
+            );
+          })}
+        </div>
+      </div>
+      {action && (
+        <Link
+          to={action.url}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-400 hover:text-orange-300 transition-colors"
+        >
+          {action.label} <ArrowUpRight style={{ width: 12, height: 12 }} />
+        </Link>
+      )}
+    </div>
+  );
+}
+
+// ─── Source card (for AI replies) ─────────────────────────────────────────────
+
+const SOURCE_TYPE_LABEL: Record<TiikmePilotSource["type"], string> = {
+  organization: "Org", opportunity: "Job", post: "Post", circle: "Circle", profile: "Person",
+};
 
 function SourceCard({ source }: { source: TiikmePilotSource }) {
   const inner = (
@@ -124,37 +447,33 @@ function SourceCard({ source }: { source: TiikmePilotSource }) {
         <span className="text-[10px] font-semibold uppercase tracking-wide text-orange-400/80 shrink-0">
           {SOURCE_TYPE_LABEL[source.type]}
         </span>
-        {source.meta && (
-          <span className="text-[10px] text-white/40 truncate">{source.meta}</span>
-        )}
+        {source.meta && <span className="text-[10px] text-white/40 truncate">{source.meta}</span>}
       </div>
       <p className="text-sm font-medium text-white truncate leading-snug">{source.title}</p>
-      {source.subtitle && (
-        <p className="text-xs text-white/50 truncate">{source.subtitle}</p>
-      )}
+      {source.subtitle && <p className="text-xs text-white/50 truncate">{source.subtitle}</p>}
     </div>
   );
 
   if (source.href) {
     const isExternal = /^https?:\/\//.test(source.href);
-    if (isExternal) {
-      return <a href={source.href} target="_blank" rel="noopener noreferrer" className="block">{inner}</a>;
-    }
+    if (isExternal) return <a href={source.href} target="_blank" rel="noopener noreferrer" className="block">{inner}</a>;
     return <Link to={source.href} className="block">{inner}</Link>;
   }
   return inner;
 }
 
+// ─── AssistantBubble ──────────────────────────────────────────────────────────
+
 function AssistantBubble({
   msg,
-  reply,
   onRate,
 }: {
   msg: ChatMessage;
-  reply?: TiikmePilotReply;
   onRate: (messageId: string, rating: "up" | "down") => void;
 }) {
   const [rated, setRated] = useState<"up" | "down" | null>(null);
+  const pr = msg.pilotResponse;
+  const reply = msg.reply;
   const sources = reply?.sourceCards ?? [];
 
   const handleRate = (r: "up" | "down") => {
@@ -163,33 +482,132 @@ function AssistantBubble({
     onRate(msg.id, r);
   };
 
+  // Thinking indicator
+  if (msg.content === "…") {
+    return (
+      <div className="flex gap-3 items-start">
+        <div className="shrink-0 mt-1 w-7 h-7 rounded-full bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center">
+          <Bot size={14} className="text-white" />
+        </div>
+        <div className="rounded-2xl rounded-tl-sm bg-white/8 border border-white/10 px-4 py-3 flex items-center gap-3">
+          <div className="flex gap-1">
+            <span className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce [animation-delay:0ms]" />
+            <span className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce [animation-delay:150ms]" />
+            <span className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce [animation-delay:300ms]" />
+          </div>
+          {msg.thinkingLabel && (
+            <span className="text-[12px] text-white/30">{msg.thinkingLabel}</span>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex gap-3 items-start">
       <div className="shrink-0 mt-1 w-7 h-7 rounded-full bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center">
         <Bot size={14} className="text-white" />
       </div>
-      <div className="flex-1 min-w-0 space-y-3">
-        <div className="rounded-2xl rounded-tl-sm bg-white/8 border border-white/10 px-4 py-3">
-          <p className="text-sm text-white/90 leading-relaxed whitespace-pre-wrap">{msg.content}</p>
-        </div>
 
-        {sources.length > 0 && (
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {sources.slice(0, 6).map((s) => (
-              <SourceCard key={s.id} source={s} />
-            ))}
+      <div className="flex-1 min-w-0 space-y-3">
+        {/* Render based on response type */}
+        {!pr && (
+          <div className="rounded-2xl rounded-tl-sm bg-white/8 border border-white/10 px-4 py-3">
+            <p className="text-sm text-white/90 leading-relaxed whitespace-pre-wrap">{msg.content}</p>
           </div>
         )}
 
+        {pr?.type === "faq" && pr.content && (
+          <FaqCard content={pr.content} action={pr.action} />
+        )}
+
+        {pr?.type === "text" && pr.content && (
+          <div className="space-y-2">
+            <div className="rounded-2xl rounded-tl-sm bg-white/8 border border-white/10 px-4 py-3">
+              <p className="text-sm text-white/90 leading-relaxed whitespace-pre-wrap">{pr.content}</p>
+            </div>
+            {pr.action && (
+              <Link
+                to={pr.action.url}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-400 hover:text-orange-300 transition-colors"
+              >
+                {pr.action.label} <ArrowUpRight style={{ width: 12, height: 12 }} />
+              </Link>
+            )}
+          </div>
+        )}
+
+        {pr?.type === "profile_results" && (
+          <div>
+            {pr.content && (
+              <p className="text-[12px] text-white/50 mb-2">{pr.content}</p>
+            )}
+            <ProfileResultsCard cards={pr.cards as ProfileCard[]} />
+            {pr.action && (
+              <Link
+                to={pr.action.url}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-400 hover:text-orange-300 transition-colors mt-2"
+              >
+                {pr.action.label} <ArrowUpRight style={{ width: 12, height: 12 }} />
+              </Link>
+            )}
+          </div>
+        )}
+
+        {pr?.type === "job_results" && (
+          <div>
+            {pr.content && (
+              <p className="text-[12px] text-white/50 mb-2">{pr.content}</p>
+            )}
+            <JobResultsCard cards={pr.cards as JobCard[]} />
+          </div>
+        )}
+
+        {pr?.type === "analytics_card" && pr.data && (
+          <AnalyticsCard data={pr.data} />
+        )}
+
+        {pr?.type === "trending_card" && pr.hashtags && (
+          <TrendingCard hashtags={pr.hashtags} />
+        )}
+
+        {pr?.type === "applications_list" && pr.applications && (
+          <div>
+            <p className="text-[12px] text-white/50 mb-2">Your recent applications:</p>
+            <ApplicationsListCard applications={pr.applications} />
+            <Link
+              to="/app/opportunities?tab=applications"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-400 hover:text-orange-300 transition-colors mt-2"
+            >
+              View all applications <ArrowUpRight style={{ width: 12, height: 12 }} />
+            </Link>
+          </div>
+        )}
+
+        {pr?.type === "circle_results" && (
+          <div>
+            {pr.content && (
+              <p className="text-[12px] text-white/50 mb-2">{pr.content}</p>
+            )}
+            <CircleResultsCard cards={pr.cards as CircleCard[]} />
+          </div>
+        )}
+
+        {/* AI reply source cards */}
+        {sources.length > 0 && (
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {sources.slice(0, 6).map((s) => <SourceCard key={s.id} source={s} />)}
+          </div>
+        )}
+
+        {/* Rating */}
         <div className="flex items-center gap-2">
           <button
             onClick={() => handleRate("up")}
             disabled={!!rated}
             className={cn(
               "p-1.5 rounded-lg transition-colors",
-              rated === "up"
-                ? "text-green-400 bg-green-400/10"
-                : "text-white/30 hover:text-white/60 hover:bg-white/5"
+              rated === "up" ? "text-green-400 bg-green-400/10" : "text-white/30 hover:text-white/60 hover:bg-white/5"
             )}
           >
             <ThumbsUp size={13} />
@@ -199,9 +617,7 @@ function AssistantBubble({
             disabled={!!rated}
             className={cn(
               "p-1.5 rounded-lg transition-colors",
-              rated === "down"
-                ? "text-red-400 bg-red-400/10"
-                : "text-white/30 hover:text-white/60 hover:bg-white/5"
+              rated === "down" ? "text-red-400 bg-red-400/10" : "text-white/30 hover:text-white/60 hover:bg-white/5"
             )}
           >
             <ThumbsDown size={13} />
@@ -212,21 +628,21 @@ function AssistantBubble({
   );
 }
 
+// ─── Main page ────────────────────────────────────────────────────────────────
+
 export default function TiikmePilotPage() {
   const { user } = useAuth();
   const [threads, setThreads] = useState<TiikmePilotThread[]>([]);
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [replyMap, setReplyMap] = useState<Record<string, TiikmePilotReply>>({});
   const [mode, setMode] = useState<TiikmePilotMode>("discover");
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [loadingThreads, setLoadingThreads] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [remainingChats, setRemainingChats] = useState(MAX_PILOT_CHATS);
-  const [remainingDaily, setRemainingDaily] = useState<number | null>(null);
+  const [aiRemaining, setAiRemaining] = useState(AI_DAILY_LIMIT);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [dailyUsed, setDailyUsed] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -236,28 +652,27 @@ export default function TiikmePilotPage() {
 
   useEffect(() => {
     loadPilotThreads()
-      .then((t) => setThreads(t))
+      .then(setThreads)
       .catch(() => toast.error("Could not load conversations"))
       .finally(() => setLoadingThreads(false));
   }, []);
 
   useEffect(() => {
     if (!user?.id) return;
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split("T")[0];
     supabase
-      .from('pilot_usage')
-      .select('message_count')
-      .eq('user_id', user.id)
-      .eq('date', today)
-      .single()
+      .from("pilot_usage" as any)
+      .select("ai_count")
+      .eq("user_id", user.id)
+      .eq("date", today)
+      .maybeSingle()
       .then(({ data }) => {
-        setDailyUsed(data?.message_count ?? 0);
+        const used = (data as any)?.ai_count ?? 0;
+        setAiRemaining(Math.max(0, AI_DAILY_LIMIT - used));
       });
   }, [user?.id]);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, scrollToBottom]);
+  useEffect(() => { scrollToBottom(); }, [messages, scrollToBottom]);
 
   const openThread = async (threadId: string) => {
     setActiveThreadId(threadId);
@@ -265,7 +680,7 @@ export default function TiikmePilotPage() {
     setLoadingMessages(true);
     try {
       const msgs = await loadPilotMessages(threadId);
-      const chatMsgs: ChatMessage[] = msgs.map((m) => ({
+      const chatMsgs: ChatMessage[] = msgs.map((m: TiikmePilotMessageRecord) => ({
         id: m.id,
         role: m.role,
         content: m.content,
@@ -285,7 +700,6 @@ export default function TiikmePilotPage() {
   const newConversation = () => {
     setActiveThreadId(null);
     setMessages([]);
-    setReplyMap({});
     setSidebarOpen(false);
     inputRef.current?.focus();
   };
@@ -294,34 +708,25 @@ export default function TiikmePilotPage() {
     e.stopPropagation();
     await archivePilotThread(threadId);
     setThreads((prev) => prev.filter((t) => t.id !== threadId));
-    if (activeThreadId === threadId) {
-      setActiveThreadId(null);
-      setMessages([]);
-      setReplyMap({});
-    }
+    if (activeThreadId === threadId) { setActiveThreadId(null); setMessages([]); }
     toast.success("Conversation archived");
   };
 
   const handleRate = async (messageId: string, rating: "up" | "down") => {
-    try {
-      await ratePilotAnswer(messageId, rating);
-    } catch {
-      // silent
-    }
+    try { await ratePilotAnswer(messageId, rating); } catch { /* silent */ }
   };
 
-  // Helper: post a local (no-AI-token) reply
-  const localReply = useCallback((content: string, sources?: TiikmePilotSource[]) => {
+  const addLocalReply = useCallback((pilotResponse: PilotResponse) => {
     const msg: ChatMessage = {
       id: `local-${Date.now()}`,
       role: "assistant",
-      content,
+      content: pilotResponse.content || "",
       created_at: new Date().toISOString(),
-      reply: sources ? { threadId: "", answer: content, sourceCards: sources, remainingChats, mode } : undefined,
+      pilotResponse,
     };
-    setMessages((prev) => [...prev, msg]);
+    setMessages((prev) => prev.filter((m) => m.content !== "…").concat(msg));
     setSending(false);
-  }, [remainingChats, mode]);
+  }, []);
 
   const sendMessage = async () => {
     const text = input.trim();
@@ -331,246 +736,103 @@ export default function TiikmePilotPage() {
     setInput("");
     setSending(true);
 
-    const tempUserMsg: ChatMessage = {
-      id: `temp-user-${Date.now()}`,
+    const userMsg: ChatMessage = {
+      id: `user-${Date.now()}`,
       role: "user",
       content: text,
       created_at: new Date().toISOString(),
     };
-    setMessages((prev) => [...prev, tempUserMsg]);
+    setMessages((prev) => [...prev, userMsg]);
 
-    // ── ZERO-TOKEN local handlers (don't consume daily limit) ──
+    // Classify intent
+    const intent = classifyIntent(text);
+    const thinkingLabel = THINKING_LABELS[intent.type] || "Thinking…";
+    const tempId = `thinking-${Date.now()}`;
 
-    // 1. Platform FAQ
-    const faqMatch = platformFAQ.find((faq) =>
-      faq.patterns.some((pattern) => pattern.test(text))
-    );
-    if (faqMatch) { localReply(faqMatch.answer); return; }
-
-    // 2. Content suggestions
-    if (/what.*post|content.*ideas|suggest.*post|what should i (write|share)/i.test(text) && userId) {
-      const { data: prof } = await supabase.from('profiles').select('profession_type').eq('id', userId).single();
-      const profType = prof?.profession_type || 'professional';
-      const suggestions = CONTENT_SUGGESTIONS[profType] || CONTENT_SUGGESTIONS['professional'];
-      localReply(`Here are 3 content ideas for you:\n\n1. ${suggestions[0]}\n2. ${suggestions[1]}\n3. ${suggestions[2]}\n\nPick one and I can help you write it — just say "Help me write #1".`);
-      return;
-    }
-
-    // 3. My analytics
-    if (/my analytics|my stats|how am i doing|my score|my posts|my activity/i.test(text) && userId) {
-      const [profResult, postResult, connResult] = await Promise.all([
-        supabase.from('profiles').select('full_name, activity_score, follower_count, following_count').eq('id', userId).single(),
-        supabase.from('posts').select('*', { count: 'exact', head: true }).eq('author_id', userId),
-        supabase.from('strands').select('*', { count: 'exact', head: true }).or(`requester_id.eq.${userId},receiver_id.eq.${userId}`).eq('status', 'accepted'),
-      ]);
-      const prof = profResult.data;
-      const postCount = postResult.count ?? 0;
-      const connCount = connResult.count ?? 0;
-      localReply(`Here's your Tiikme snapshot:\n\n📊 Activity Score: ${prof?.activity_score ?? 0} pts\n📝 Posts: ${postCount}\n🤝 Connections: ${connCount}\n👥 Followers: ${prof?.follower_count ?? 0}\n\nKeep posting and connecting to boost your score!`);
-      return;
-    }
-
-    // 4. Application status check
-    if (/my application|applied.*job|selected.*job|shortlisted|check.*application|application.*status/i.test(text) && userId) {
-      const { data: apps } = await supabase
-        .from('opportunity_applications')
-        .select('status, applied_at, opportunity:opportunities(title, org:organizations(name))')
-        .eq('applicant_id', userId)
-        .order('applied_at', { ascending: false })
-        .limit(5);
-      if (!apps || apps.length === 0) {
-        localReply("You haven't applied to any jobs yet. Go to Opportunities to browse and apply!");
-      } else {
-        const lines = apps.map((a: any) => {
-          const statusEmoji: Record<string, string> = { applied: "🔵", shortlisted: "🟡", selected: "🟢", rejected: "🔴", withdrawn: "⚫" };
-          const s = a.status || "applied";
-          return `${statusEmoji[s] || "🔵"} ${a.opportunity?.title || "Job"} @ ${a.opportunity?.org?.name || "Unknown"} — ${s.charAt(0).toUpperCase() + s.slice(1)}`;
-        });
-        localReply(`Your recent applications:\n\n${lines.join("\n")}\n\nGo to Opportunities → Applications tab to see details.`);
-      }
-      return;
-    }
-
-    // 5. Search for a person by name (with privacy check)
-    const personSearchMatch = text.match(/(?:find|search|is there|show me|look for).*(?:user|person|profile|people)?.*named?\s+([A-Za-z\s]{2,30})/i)
-      || text.match(/^(?:find|search)\s+([A-Za-z\s]{2,30})$/i);
-    if (personSearchMatch) {
-      const searchName = personSearchMatch[1].trim();
-      const { data: people } = await supabase
-        .from('profiles')
-        .select('id, full_name, username, role, designation, currently_working_at, location_city, is_verified, show_in_explore')
-        .ilike('full_name', `%${searchName}%`)
-        .eq('show_in_explore', true)
-        .limit(5);
-      if (!people || people.length === 0) {
-        localReply(`No public profiles found for "${searchName}".\n\nThis could mean they haven't joined Tiikme yet, or their profile is set to private.`);
-      } else {
-        const count = people.length;
-        const sources: TiikmePilotSource[] = people.map((p: any) => ({
-          type: "profile" as const,
-          id: p.id,
-          title: p.full_name || p.username || "User",
-          subtitle: [p.designation || p.role, p.currently_working_at || p.location_city].filter(Boolean).join(" · "),
-          href: `/app/profile/${p.id}`,
-          meta: p.is_verified ? "Verified" : null,
-        }));
-        localReply(`Found ${count} profile${count !== 1 ? "s" : ""} matching "${searchName}". Click to view their profile, or search on the Explore page for more results.`, sources);
-      }
-      return;
-    }
-
-    // 6. Find jobs / opportunities
-    if (/(?:find|search|show|looking for).*jobs?|jobs?.*in\s+([a-z\s]+)|(?:hiring|openings?|roles?|positions?).*(?:for|in)\s+([a-z\s]+)/i.test(text)) {
-      const jobQuery = text.replace(/find|search|show me|looking for|jobs?|openings?/gi, "").trim();
-      localReply(`Looking for jobs? Head to the Opportunities page where you can:\n• Filter by Full-time, Internship, Freelance, Remote\n• Search by role or company\n• See jobs matched to your profile\n\nI'll take you there now — tap the link below.`, [{
-        type: "opportunity" as const,
-        id: "browse",
-        title: "Browse All Opportunities",
-        subtitle: "Search jobs, internships, hackathons",
-        href: `/app/opportunities${jobQuery ? `?search=${encodeURIComponent(jobQuery)}` : ""}`,
-        meta: "Jobs",
-      }]);
-      return;
-    }
-
-    // 7. Find circles / communities
-    if (/(?:find|search|show|join).*circles?|communities?.*about|groups?.*for/i.test(text)) {
-      localReply("Looking for a community to join? Explore Circles on Tiikme — groups for every profession, interest, and city.", [{
-        type: "circle" as const,
-        id: "browse",
-        title: "Browse Circles",
-        subtitle: "Find your community",
-        href: "/app/circles",
-        meta: "Circles",
-      }]);
-      return;
-    }
-
-    // 8. Trending hashtags / top posts
-    if (/trending|top posts?|popular|what.*hashtag|top.*hashtag/i.test(text)) {
-      const { data: posts } = await supabase
-        .from('posts')
-        .select('hashtags, content')
-        .not('hashtags', 'is', null)
-        .order('created_at', { ascending: false })
-        .limit(100);
-      const tagCounts: Record<string, number> = {};
-      (posts || []).forEach((p: any) => {
-        (p.hashtags || []).forEach((t: string) => { tagCounts[t] = (tagCounts[t] || 0) + 1; });
-      });
-      const sorted = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).slice(0, 8);
-      if (sorted.length === 0) {
-        localReply("No trending hashtags right now. Be the first to start a conversation!");
-      } else {
-        const lines = sorted.map(([tag, count]) => `#${tag} (${count} post${count !== 1 ? "s" : ""})`);
-        localReply(`🔥 Trending on Tiikme right now:\n\n${lines.join("\n")}\n\nClick any hashtag in the feed to explore posts.`);
-      }
-      return;
-    }
-
-    // 9. Refer a friend
-    if (/refer.*friend|my friend.*job|friend.*looking.*job|refer.*someone/i.test(text)) {
-      localReply("Want to refer a friend to a job on Tiikme?\n\nGo to Opportunities → Referrals tab. You can share a job link directly with your friend or tag a manager in the referral flow.", [{
-        type: "opportunity" as const,
-        id: "refer",
-        title: "Referrals",
-        subtitle: "Refer friends to open roles",
-        href: "/app/opportunities?tab=referrals",
-        meta: "Refer",
-      }]);
-      return;
-    }
-
-    // 10. Find organizations / companies
-    const orgSearchMatch = text.match(/(?:find|search|show).*(?:organization|company|org|company).*named?\s+([A-Za-z\s]{2,30})/i)
-      || text.match(/(?:what does|about|tell me about)\s+([A-Za-z\s]{2,30})\s+(?:company|org|organization)/i);
-    if (orgSearchMatch) {
-      const orgName = orgSearchMatch[1].trim();
-      const { data: orgs } = await supabase
-        .from('organizations')
-        .select('id, name, slug, type, city, state, is_verified, followers_count')
-        .ilike('name', `%${orgName}%`)
-        .limit(5);
-      if (!orgs || orgs.length === 0) {
-        localReply(`No organization found for "${orgName}" on Tiikme yet.`);
-      } else {
-        const sources: TiikmePilotSource[] = orgs.map((o: any) => ({
-          type: "organization" as const,
-          id: o.id,
-          title: o.name,
-          subtitle: [o.type, o.city, o.state].filter(Boolean).join(" · "),
-          href: `/org/${o.slug}`,
-          meta: o.is_verified ? "Verified" : null,
-        }));
-        localReply(`Found ${orgs.length} organization${orgs.length !== 1 ? "s" : ""} matching "${orgName}":`, sources);
-      }
-      return;
-    }
-
-    // 11. Top paying jobs
-    if (/top.*paying|highest.*salary|best.*salary|most.*pay|highest.*pay/i.test(text)) {
-      const { data: topJobs } = await supabase
-        .from('opportunities')
-        .select('id, title, salary_max, salary_min, salary_currency, org:organizations(name, slug)')
-        .eq('is_open', true)
-        .not('salary_max', 'is', null)
-        .order('salary_max', { ascending: false })
-        .limit(5);
-      if (!topJobs || topJobs.length === 0) {
-        localReply("No salary data available right now. Browse all opportunities to see what's posted.");
-      } else {
-        const sources: TiikmePilotSource[] = topJobs.map((j: any) => {
-          const max = j.salary_max;
-          const label = max >= 100000 ? `₹${(max / 100000).toFixed(0)} LPA` : `₹${(max / 1000).toFixed(0)}K`;
-          return {
-            type: "opportunity" as const,
-            id: j.id,
-            title: j.title,
-            subtitle: `${(j.org as any)?.name || "Unknown"} · Up to ${label}`,
-            href: `/app/opportunities?opp=${j.id}`,
-            meta: "Top Pay",
-          };
-        });
-        localReply("Here are the top-paying roles on Tiikme right now:", sources);
-      }
-      return;
-    }
-
-    // ── RATE-LIMITED AI query ──
-
-    // Daily rate limit check
-    if (userId) {
-      const today = new Date().toISOString().split('T')[0];
-      const { data: usage } = await supabase
-        .from('pilot_usage')
-        .select('message_count')
-        .eq('user_id', userId)
-        .eq('date', today)
-        .single();
-      const count = usage?.message_count ?? 0;
-      if (count >= DAILY_LIMIT) {
-        setMessages((prev) => prev.filter((m) => m.id !== tempUserMsg.id));
-        toast.error("Daily limit reached — resets at midnight");
-        setSending(false);
-        return;
-      }
-      await supabase.from('pilot_usage').upsert(
-        { user_id: userId, date: today, message_count: count + 1 },
-        { onConflict: 'user_id,date' }
-      );
-      setDailyUsed(count + 1);
-    }
-
-    const tempAssistantId = `temp-assistant-${Date.now()}`;
+    // Show thinking bubble
     const thinkingMsg: ChatMessage = {
-      id: tempAssistantId,
+      id: tempId,
       role: "assistant",
       content: "…",
       created_at: new Date().toISOString(),
+      thinkingLabel,
     };
     setMessages((prev) => [...prev, thinkingMsg]);
 
+    const removeThinking = () =>
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
+
     try {
+      // ── FAQ / Privacy → zero-token, no rate limit ──
+      if (intent.type === "PLATFORM_FAQ") {
+        const faqResult = handlePlatformFaq(text);
+        if (faqResult) { removeThinking(); addLocalReply(faqResult); return; }
+      }
+
+      if (intent.type === "PRIVACY_QUESTION" && userId) {
+        const result = await handlePrivacyQuestion(userId);
+        removeThinking(); addLocalReply(result); return;
+      }
+
+      // ── Search queries ──
+      if (intent.type === "SEARCH_PROFILE" && userId) {
+        const result = await handleSearchProfile(intent.extractedEntities, userId);
+        removeThinking(); addLocalReply(result); return;
+      }
+
+      if (intent.type === "SEARCH_JOB" && userId) {
+        const result = await handleSearchJob(intent.extractedEntities, userId);
+        removeThinking(); addLocalReply(result); return;
+      }
+
+      if (intent.type === "SEARCH_ORG" && userId) {
+        const result = await handleSearchOrg(intent.extractedEntities, userId);
+        removeThinking(); addLocalReply(result); return;
+      }
+
+      if (intent.type === "SEARCH_CIRCLE") {
+        const result = await handleSearchCircle(intent.extractedEntities);
+        removeThinking(); addLocalReply(result); return;
+      }
+
+      if (intent.type === "TRENDING") {
+        const result = await handleTrending();
+        removeThinking(); addLocalReply(result); return;
+      }
+
+      // ── Personal data (requires login) ──
+      if (intent.type === "MY_ANALYTICS" && userId) {
+        const result = await handleMyAnalytics(userId);
+        removeThinking(); addLocalReply(result); return;
+      }
+
+      if (intent.type === "MY_APPLICATIONS" && userId) {
+        const result = await handleMyApplications(userId);
+        removeThinking(); addLocalReply(result); return;
+      }
+
+      // ── AI_QUERY → rate-limited, goes to Edge Function ──
+      if (!userId) {
+        removeThinking();
+        addLocalReply({ type: "text", content: "Please sign in to use Pilot AI." });
+        return;
+      }
+
+      const quota = await checkQuota(userId, "AI_QUERY");
+      if (!quota.allowed) {
+        removeThinking();
+        addLocalReply({
+          type: "limit_reached",
+          content: `You've used all ${AI_DAILY_LIMIT} AI questions for today. Resets at midnight.\n\nYou can still search for people, jobs, circles, and check your stats for free!`,
+        });
+        setSending(false);
+        return;
+      }
+
+      // Increment before calling (prevent double-sends)
+      await incrementQuota(userId, "AI_QUERY");
+      setAiRemaining((prev) => Math.max(0, prev - 1));
+
       const reply = await askPilot({ message: text, mode, threadId: activeThreadId ?? undefined });
 
       if (!activeThreadId) {
@@ -578,30 +840,22 @@ export default function TiikmePilotPage() {
         const refreshed = await loadPilotThreads();
         setThreads(refreshed);
       }
-
       setRemainingChats(reply.remainingChats);
-      if (reply.remainingDailyRequests !== undefined) {
-        setRemainingDaily(reply.remainingDailyRequests);
-      }
 
-      setMessages((prev) => {
-        const withoutThinking = prev.filter((m) => m.id !== tempAssistantId);
-        const realAssistantId = reply.assistantMessageId ?? tempAssistantId;
-        const assistantMsg: ChatMessage = {
-          id: realAssistantId,
-          role: "assistant",
+      removeThinking();
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: reply.assistantMessageId ?? `ai-${Date.now()}`,
+          role: "assistant" as const,
           content: reply.answer,
           created_at: new Date().toISOString(),
           reply,
-        };
-        return [...withoutThinking, assistantMsg];
-      });
-
-      if (reply.assistantMessageId) {
-        setReplyMap((prev) => ({ ...prev, [reply.assistantMessageId!]: reply }));
-      }
+        },
+      ]);
     } catch (err: any) {
-      setMessages((prev) => prev.filter((m) => m.id !== tempAssistantId && m.id !== tempUserMsg.id));
+      removeThinking();
+      setMessages((prev) => prev.filter((m) => m.id !== userMsg.id));
       setInput(text);
       toast.error(err?.message || "Something went wrong");
     } finally {
@@ -610,14 +864,11 @@ export default function TiikmePilotPage() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   };
 
-  const dailyRemaining = DAILY_LIMIT - dailyUsed;
-  const canSend = input.trim().length > 0 && !sending && remainingChats > 0 && dailyRemaining > 0;
+  const canSend = input.trim().length > 0 && !sending && remainingChats > 0;
+  const currentQuickActions = QUICK_ACTIONS[mode] || QUICK_ACTIONS.discover;
 
   return (
     <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-[#0e0e12]">
@@ -635,8 +886,7 @@ export default function TiikmePilotPage() {
             onClick={newConversation}
             className="flex items-center gap-1 text-xs text-orange-400 hover:text-orange-300 transition-colors"
           >
-            <Plus size={14} />
-            New
+            <Plus size={14} /> New
           </button>
         </div>
 
@@ -675,18 +925,19 @@ export default function TiikmePilotPage() {
           ))}
         </div>
 
-        <div className="px-4 py-3 border-t border-white/8 text-xs text-white/30">
-          {remainingChats} thread{remainingChats !== 1 ? "s" : ""} remaining
-          {remainingDaily !== null && ` · ${remainingDaily} requests today`}
+        <div className="px-4 py-3 border-t border-white/8 space-y-1">
+          <div className="flex items-center justify-between text-[11px] text-white/30">
+            <span>{remainingChats} thread{remainingChats !== 1 ? "s" : ""} left</span>
+            <span className={cn(aiRemaining <= 1 ? "text-orange-400" : "")}>
+              {aiRemaining} AI question{aiRemaining !== 1 ? "s" : ""} today
+            </span>
+          </div>
         </div>
       </aside>
 
-      {/* Overlay for mobile sidebar */}
+      {/* Mobile overlay */}
       {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-20 bg-black/60 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
+        <div className="fixed inset-0 z-20 bg-black/60 md:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
       {/* Main chat area */}
@@ -700,7 +951,6 @@ export default function TiikmePilotPage() {
             <ChevronRight size={18} />
           </button>
 
-          {/* Mode tabs */}
           <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
             {MODES.map((m) => {
               const Icon = m.icon;
@@ -721,37 +971,46 @@ export default function TiikmePilotPage() {
               );
             })}
           </div>
+
+          {/* AI remaining counter (mobile/desktop) */}
+          <div className="ml-auto shrink-0 hidden sm:flex items-center gap-1.5">
+            <CheckCircle2
+              size={12}
+              className={aiRemaining > 0 ? "text-green-400" : "text-red-400"}
+            />
+            <span className={cn("text-[11px] font-medium", aiRemaining > 0 ? "text-white/40" : "text-red-400")}>
+              {aiRemaining} AI question{aiRemaining !== 1 ? "s" : ""} left
+            </span>
+          </div>
         </div>
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
           {!activeThreadId && messages.length === 0 && (
-            <div className="flex flex-col items-center justify-center h-full text-center gap-4 py-16">
+            <div className="flex flex-col items-center justify-center h-full text-center gap-5 py-12">
               <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center shadow-lg shadow-orange-500/20">
                 <Bot size={28} className="text-white" />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-white">Tiikme Pilot</h2>
                 <p className="text-sm text-white/40 mt-1 max-w-xs">
-                  Your AI assistant for finding people, jobs, orgs, and verifying credentials on Tiikme.
+                  Search people, jobs, and communities — or ask anything about the platform.
                 </p>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 max-w-sm w-full">
-                {[
-                  "Find software jobs in Bangalore",
-                  "Show me healthcare professionals",
-                  "Find NGOs working in education",
-                  "What's my application status?",
-                ].map((q) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-sm">
+                {currentQuickActions.map((q) => (
                   <button
                     key={q}
-                    onClick={() => setInput(q)}
+                    onClick={() => { setInput(q); inputRef.current?.focus(); }}
                     className="text-left text-xs text-white/60 hover:text-white/90 bg-white/5 hover:bg-white/10 border border-white/8 rounded-xl px-3 py-2.5 transition-colors"
                   >
                     {q}
                   </button>
                 ))}
               </div>
+              <p className="text-[11px] text-white/25">
+                Most searches are free · {aiRemaining} AI question{aiRemaining !== 1 ? "s" : ""} left today
+              </p>
             </div>
           )}
 
@@ -768,26 +1027,8 @@ export default function TiikmePilotPage() {
                   <p className="text-sm text-white/90 whitespace-pre-wrap">{msg.content}</p>
                 </div>
               </div>
-            ) : msg.content === "…" ? (
-              <div key={msg.id} className="flex gap-3 items-start">
-                <div className="shrink-0 mt-1 w-7 h-7 rounded-full bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center">
-                  <Bot size={14} className="text-white" />
-                </div>
-                <div className="rounded-2xl rounded-tl-sm bg-white/8 border border-white/10 px-4 py-3">
-                  <div className="flex gap-1 items-center">
-                    <span className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce [animation-delay:0ms]" />
-                    <span className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce [animation-delay:150ms]" />
-                    <span className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce [animation-delay:300ms]" />
-                  </div>
-                </div>
-              </div>
             ) : (
-              <AssistantBubble
-                key={msg.id}
-                msg={msg}
-                reply={msg.reply ?? replyMap[msg.id]}
-                onRate={handleRate}
-              />
+              <AssistantBubble key={msg.id} msg={msg} onRate={handleRate} />
             )
           )}
 
@@ -796,26 +1037,16 @@ export default function TiikmePilotPage() {
 
         {/* Input area */}
         <div className="shrink-0 px-4 py-3 border-t border-white/8 bg-[#0e0e12]">
-          {remainingChats === 0 && (
-            <p className="text-xs text-red-400/80 text-center mb-2">
-              Thread limit reached. Archive existing conversations to start new ones.
-            </p>
-          )}
-          {remainingChats > 0 && dailyRemaining <= 0 && (
-            <p className="text-xs text-red-400/80 text-center mb-2">
-              Daily limit reached — resets at midnight
-            </p>
-          )}
           <div className="flex items-end gap-3 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 focus-within:border-orange-500/40 transition-colors">
             <textarea
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={`Ask Pilot anything… (${mode} mode)`}
+              placeholder={`Ask Pilot — search people, jobs, circles, or ask anything…`}
               rows={1}
               maxLength={CHAR_LIMIT}
-              disabled={sending || remainingChats === 0 || dailyRemaining <= 0}
+              disabled={sending || remainingChats === 0}
               className="flex-1 resize-none bg-transparent text-sm text-white/90 placeholder:text-white/30 outline-none leading-relaxed max-h-32 overflow-y-auto disabled:opacity-50"
               style={{ fieldSizing: "content" } as any}
             />
@@ -833,34 +1064,18 @@ export default function TiikmePilotPage() {
             </button>
           </div>
           <div className="flex items-center justify-between mt-1.5 px-1">
-            <p
-              className={cn(
-                "text-[10px]",
-                dailyRemaining <= 0
-                  ? "text-red-400"
-                  : "text-white/30"
-              )}
-            >
-              {dailyRemaining > 0
-                ? `${dailyRemaining} message${dailyRemaining !== 1 ? "s" : ""} left today`
-                : "Daily limit reached — resets at midnight"}
+            <p className="text-[10px] text-white/25">
+              Searches free · AI questions rate-limited
             </p>
-            <p
-              className={cn(
-                "text-[10px]",
-                CHAR_LIMIT - input.length < 20
-                  ? "text-red-400"
-                  : CHAR_LIMIT - input.length < 100
-                  ? "text-orange-400"
-                  : "text-white/30"
-              )}
-            >
-              {CHAR_LIMIT - input.length} characters remaining
+            <p className={cn(
+              "text-[10px]",
+              CHAR_LIMIT - input.length < 20 ? "text-red-400"
+                : CHAR_LIMIT - input.length < 100 ? "text-orange-400"
+                : "text-white/30"
+            )}>
+              {CHAR_LIMIT - input.length}
             </p>
           </div>
-          <p className="text-[10px] text-white/20 text-center mt-1">
-            Tiikme Pilot may make mistakes. Verify important information.
-          </p>
         </div>
       </div>
     </div>
