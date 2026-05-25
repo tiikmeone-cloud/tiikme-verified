@@ -498,8 +498,8 @@ function OrgCampaignsTab() {
 
   useEffect(() => {
     if (!orgId) { setLoading(false); return; }
-    supabase.from("brand_campaigns")
-      .select("*, _apps:brand_campaign_applications(id)")
+    supabase.from("campaigns")
+      .select("*, _apps:opportunity_applications!opportunity_applications_campaign_id_fkey(id)")
       .eq("org_id", orgId)
       .order("created_at", { ascending: false })
       .limit(30)
@@ -509,16 +509,15 @@ function OrgCampaignsTab() {
   const handleCreate = async () => {
     if (!orgId || !form.title.trim()) { toast.error("Campaign title is required"); return; }
     setCreating(true);
-    const { data, error } = await supabase.from("brand_campaigns").insert({
+    const { data, error } = await supabase.from("campaigns").insert({
       org_id: orgId,
       title: form.title.trim(),
       description: form.description.trim() || null,
       campaign_type: form.campaign_type,
       deliverable_platforms: form.deliverable_platforms,
       budget_per_creator: form.budget_per_creator ? parseInt(form.budget_per_creator) : null,
-      creator_slots: parseInt(form.creator_slots) || 5,
+      slots_available: parseInt(form.creator_slots) || 5,
       min_followers: parseInt(form.min_followers) || 0,
-      deliverable_description: form.deliverable_description.trim() || null,
       application_deadline: form.application_deadline || null,
       status: "active",
     }).select().single();
@@ -571,7 +570,7 @@ function OrgCampaignsTab() {
                 <div className="flex items-center gap-3 mt-2 text-[11px]" style={{ color: "#9CA3C0" }}>
                   <span>{appCount} applicant{appCount !== 1 ? "s" : ""}</span>
                   {c.budget_per_creator && <span>₹{c.budget_per_creator.toLocaleString()}/creator</span>}
-                  {c.creator_slots && <span>{c.creator_slots} slots</span>}
+                  {c.slots_available && <span>{c.slots_available} slots</span>}
                 </div>
               </div>
               <button type="button"
@@ -691,13 +690,13 @@ function CampaignsTab() {
   useEffect(() => {
     (async () => {
       const [{ data: camps }, { data: myApps }] = await Promise.all([
-        supabase.from("brand_campaigns")
-          .select("*, org:organizations!brand_campaigns_org_id_fkey(id, name, logo_url, slug)")
+        supabase.from("campaigns")
+          .select("*, org:organizations!campaigns_org_id_fkey(id, name, logo_url, slug)")
           .eq("status", "active")
           .order("created_at", { ascending: false })
           .limit(50),
-        user ? supabase.from("brand_campaign_applications")
-          .select("campaign_id").eq("applicant_id", user.id) : Promise.resolve({ data: [] }),
+        user ? supabase.from("opportunity_applications")
+          .select("campaign_id").eq("applicant_id", user.id).not("campaign_id", "is", null) : Promise.resolve({ data: [] }),
       ]);
       setCampaigns(camps || []);
       setApplied(new Set((myApps || []).map((a: any) => a.campaign_id)));
@@ -708,7 +707,7 @@ function CampaignsTab() {
   const handleApply = async () => {
     if (!user || !openPitch) return;
     setSubmitting(true);
-    const { error } = await supabase.from("brand_campaign_applications").insert({
+    const { error } = await supabase.from("opportunity_applications").insert({
       campaign_id: openPitch.id,
       applicant_id: user.id,
       pitch_text: pitchText.trim() || null,
@@ -764,8 +763,8 @@ function CampaignsTab() {
               {c.budget_per_creator && (
                 <span className="text-[11px] font-semibold bg-green-50 text-green-700 px-2 py-0.5 rounded-full">₹{c.budget_per_creator.toLocaleString()} per creator</span>
               )}
-              {c.creator_slots && (
-                <span className="text-[11px] text-gray-500">{c.creator_slots} slots</span>
+              {c.slots_available && (
+                <span className="text-[11px] text-gray-500">{c.slots_available} slots</span>
               )}
               {c.min_followers > 0 && (
                 <span className="text-[11px] text-gray-500">{c.min_followers.toLocaleString()}+ followers</span>

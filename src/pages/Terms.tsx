@@ -14,6 +14,8 @@ const toc: TocItem[] = [
   { id: "section-10", label: "10. Confidentiality" },
   { id: "section-11", label: "11. Circles" },
   { id: "section-12", label: "12. Organisations" },
+  { id: "section-campaigns", label: "Campaigns & Creator Deals" },
+  { id: "section-pilot", label: "Pilot AI" },
   { id: "section-13", label: "13. Intermediary Status" },
   { id: "section-14", label: "14. Disclaimers" },
   { id: "section-15", label: "15. Liability" },
@@ -39,7 +41,7 @@ export default function Terms() {
   return (
     <LegalPageLayout
       title="Terms of Service"
-      lastUpdated="April 20, 2025"
+      lastUpdated="June 1, 2026"
       jurisdictionLine="Governed by Laws of India | Jurisdiction: Hyderabad, Telangana"
       toc={toc}
     >
@@ -280,6 +282,44 @@ export default function Terms() {
         <P>Verified organisations may create community Circles linked to their organisation. These Circles must remain professionally relevant. Circles used for spam, promotion outside Tiikme's guidelines, or misleading recruitment will be permanently removed.</P>
         <Sub>12.8 Organisation Termination</Sub>
         <P>Tiikme may terminate an organisation's account if it: posts fraudulent opportunities, requests money from applicants, repeatedly violates Terms, misrepresents its registration status, or receives sustained user complaints.</P>
+      </LegalSection>
+
+      <LegalSection id="section-campaigns" num="" title="Campaigns and Creator Deals">
+        <P>Tiikme enables brands to post creator and gig-worker campaigns and enables creators and gig workers to apply to them.</P>
+        <Sub>Organisations</Sub>
+        <P>Organisation accounts may post campaigns targeting creators (profession_type = 'creator') or gig workers. Campaign agreements, payments, deliverables, and disputes are solely between the brand and the creator. Tiikme is not a party to any campaign agreement and accepts no liability for payment failures, content disputes, or unmet deliverables.</P>
+        <Sub>Creators and Gig Workers</Sub>
+        <P>By applying to a campaign, you represent that your follower count, platform, and content capabilities are accurately stated. Misrepresentation will result in account suspension. You are responsible for disclosing paid partnerships as required by ASCI guidelines and applicable advertising regulations.</P>
+        <Sub>Campaign Applications</Sub>
+        <List items={[
+          "Organisations may not request payment from creators or gig workers at any stage",
+          "Campaign slot limits and deadlines are set by the brand; Tiikme does not guarantee selection",
+          "Status notifications (shortlisted, approved, rejected) are sent in-app only",
+          "Completed campaigns may be listed on both the creator's and brand's public profile",
+        ]} />
+      </LegalSection>
+
+      <LegalSection id="section-pilot" num="" title="Pilot AI">
+        <P>Pilot is Tiikme's AI assistant. It is powered by large language models and may produce inaccurate, incomplete, or outdated information.</P>
+        <Sub>What Pilot Can Do</Sub>
+        <List items={[
+          "Search for people and organisations on the platform",
+          "Surface relevant job and campaign opportunities",
+          "Answer questions about how Tiikme works",
+          "Show your own activity statistics",
+        ]} />
+        <Sub>What Pilot Cannot Do</Sub>
+        <List items={[
+          "Guarantee accuracy of any information it provides",
+          "Provide legal, medical, financial, or investment advice",
+          "Act on your behalf (send messages, apply for jobs, etc.)",
+          "Access information you have set to private in your privacy settings",
+        ]} />
+        <Callout>Do not rely on Pilot for decisions affecting your health, finances, career, or legal rights. Always verify important information from authoritative sources.</Callout>
+        <Sub>Usage Limits</Sub>
+        <P>Tiikme reserves the right to limit Pilot usage per user per day to manage infrastructure costs. Limits are shown in the Pilot interface. Profile searches and platform FAQs do not count toward daily limits.</P>
+        <Sub>Privacy in Pilot</Sub>
+        <P>You can opt out of appearing in Pilot search results at any time via Settings → Privacy → "Allow Pilot AI to find me". When disabled, your profile will not appear in any Pilot search result. Your query logs are stored anonymously for quality improvement and are not linked to your identity.</P>
       </LegalSection>
 
       <LegalSection id="section-13" num="13" title="Tiikme's Intermediary Status — Section 79, IT Act 2000">

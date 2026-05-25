@@ -5,6 +5,8 @@ const toc: TocItem[] = [
   { id: "section-1", label: "1. Who Is Responsible" },
   { id: "section-2", label: "2. What We Collect" },
   { id: "section-3", label: "3. Why We Use It" },
+  { id: "section-pilot-privacy", label: "Pilot AI & Your Privacy" },
+  { id: "section-open-to-work", label: "Open to Work Visibility" },
   { id: "section-4", label: "4. We Will Never Sell" },
   { id: "section-5", label: "5. Who We Share With" },
   { id: "section-6", label: "6. Your Rights (DPDP)" },
@@ -55,7 +57,7 @@ export default function Privacy() {
   return (
     <LegalPageLayout
       title="Privacy Policy"
-      lastUpdated="April 20, 2025"
+      lastUpdated="June 1, 2026"
       jurisdictionLine="Applicable Law: DPDP Act 2023 | IT Act 2000 | IT (SPDI) Rules 2011"
       toc={toc}
     >
@@ -100,6 +102,12 @@ export default function Privacy() {
           "If you sign in with Google or another provider, we receive your name and email from that provider only",
           "Organisation admins may submit basic team member information for verification",
         ]} />
+        <Sub>2.3b Creator and Campaign Data (if applicable)</Sub>
+        <List items={[
+          "Connected channel information: platform (YouTube, Instagram, etc.), channel URL, subscriber/follower count, content niche",
+          "Campaign applications: pitch text, proposed rate, media kit (if uploaded)",
+          "This data is only collected if you actively connect a creator channel or apply to a campaign",
+        ]} />
         <Sub>2.4 What We Do NOT Collect</Sub>
         <List items={[
           "Precise GPS location (we use IP-based approximate location only unless you explicitly share it)",
@@ -123,6 +131,39 @@ export default function Privacy() {
             ["Improving platform features (anonymised only)", "Aggregated behaviour", "Legitimate interest"],
           ]}
         />
+      </LegalSection>
+
+      <LegalSection id="section-pilot-privacy" num="" title="Pilot AI and Your Privacy">
+        <P>Pilot is Tiikme's AI assistant. By default, your public profile is discoverable via Pilot searches.</P>
+        <Sub>What Pilot Can See</Sub>
+        <List items={[
+          "Your public profile: name, role, location, skills, verification status",
+          "Your publicly visible work history and education",
+          "Your professional posts (if visibility is set to 'everyone')",
+        ]} />
+        <Sub>What Pilot Cannot See</Sub>
+        <List items={[
+          "Your email address (unless you explicitly enable 'Share my email with connections')",
+          "Your private privacy settings or account preferences",
+          "Your application history or verification documents",
+          "Any data you have restricted via privacy settings",
+        ]} />
+        <Sub>Opting Out</Sub>
+        <P>You can turn off Pilot visibility at any time: Settings → Privacy → "Allow Pilot AI to find me". When disabled, your profile will not appear in any Pilot search result for any user.</P>
+        <Sub>Query Logs</Sub>
+        <P>Pilot AI queries are logged for 90 days for quality improvement and abuse prevention. Logs are anonymised — your identity is not linked to query logs.</P>
+      </LegalSection>
+
+      <LegalSection id="section-open-to-work" num="" title="Open to Work Visibility">
+        <P>When you enable "Open to Work" on your profile, it is visible to other users — with one important exception.</P>
+        <Callout>If your current employer is on Tiikme as a verified organisation and their team members search for you via Explore or Pilot, your "Open to Work" badge is hidden from them by default.</Callout>
+        <P>This protects you from your employer learning about your job search through the platform.</P>
+        <P>You can change this behaviour in Settings → Privacy → Open to Work visibility. Options are:</P>
+        <List items={[
+          "Hidden from my employer only (default)",
+          "Visible to everyone",
+          "Hidden from everyone (disable Open to Work entirely)",
+        ]} />
       </LegalSection>
 
       <LegalSection id="section-4" num="4" title="We Will Never Sell Your Data — Ever">
