@@ -42,7 +42,7 @@ function getTimeAgo(d: Date): string {
   return `${Math.floor(h / 24)}d ago`;
 }
 
-const ORG_TABS = ["Overview", "Posts", "Jobs", "Community", "Members"] as const;
+const ORG_TABS = ["Overview", "Posts", "Jobs", "Brain", "Community", "Members"] as const;
 type OrgTab = typeof ORG_TABS[number];
 
 function isOrgMembershipConfirmed(member: { is_verified?: boolean | null; approval_status?: string | null }) {
@@ -65,7 +65,6 @@ export default function OrganizationPage() {
   const [posts, setPosts] = useState<any[]>([]);
   const [communityCircles, setCommunityCircles] = useState<any[]>([]);
   const [showUnfollow, setShowUnfollow] = useState(false);
-  const [overviewSubTab, setOverviewSubTab] = useState<"overview" | "brain">("overview");
 
   useEffect(() => {
     if (!slug) return;
@@ -377,25 +376,6 @@ export default function OrganizationPage() {
 
         {activeTab !== "Overview" && null}
 
-        {/* ── ADMIN: VERIFICATION ROUTING ── */}
-        {activeTab === "Overview" && isAdmin && (
-          <div className="glass-card" style={{
-            padding: 16, borderRadius: 16, marginTop: 12,
-            background: "rgba(255,255,255,0.25)", backdropFilter: "blur(20px)",
-            border: "1px solid rgba(255,255,255,0.40)",
-            boxShadow: "0 4px 16px rgba(26,26,78,0.05), inset 0 1px 0 rgba(255,255,255,0.60)",
-          }}>
-            <div className="flex items-center justify-between mb-1">
-              <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>Verification Routing</p>
-              <button type="button" onClick={() => navigate("/app/verification-inbox")} className="cursor-pointer text-[12px] font-semibold" style={{ color: "#E8733A" }}>
-                Open inbox →
-              </button>
-            </div>
-            <p style={{ fontSize: 12, color: "#6B7094", marginBottom: 10 }}>Choose which admin handles verification requests for each department.</p>
-            <OrgVerificationRouting orgId={org.id} />
-          </div>
-        )}
-
         {/* ══════ OVERVIEW TAB ══════ */}
         {activeTab === "Overview" && (
         <>
@@ -704,7 +684,7 @@ export default function OrganizationPage() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontSize: 15, fontWeight: 600, color: "#1A1A2E" }}>{o.title}</p>
                     <div className="flex items-center flex-wrap" style={{ gap: 6, marginTop: 4 }}>
-                      <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: "rgba(74,144,217,0.1)", color: "#4A90D9" }}>
+                      <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: "rgba(232,115,58,0.10)", color: "#E8733A" }}>
                         {(o.type || "job").replace(/[-_]/g, " ")}
                       </span>
                       {o.location && <span style={{ fontSize: 12, color: "#9CA3C0" }}>{o.location}</span>}
@@ -720,6 +700,13 @@ export default function OrganizationPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* ══════ BRAIN TAB ══════ */}
+        {activeTab === "Brain" && (
+          <div style={{ marginTop: 12 }}>
+            <CompanyBrain orgId={org.id} orgName={org.name} isAdmin={isAdmin} />
           </div>
         )}
 

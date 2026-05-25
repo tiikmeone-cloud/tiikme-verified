@@ -167,7 +167,7 @@ const Explore = () => {
     /* ─── PEOPLE (relevance filtered, backfill with top activity) ─── */
     const { data: peopleRaw } = await supabase
       .from("profiles")
-      .select("id, full_name, username, avatar_url, role, role_subtype, headline, designation, institution_name, currently_working_at, display_preference, location_city, is_verified, activity_score, privacy_settings, privacy, sector, skills, interests, role_metadata, account_type")
+      .select("id, full_name, username, avatar_url, role, role_subtype, headline, designation, institution_name, currently_working_at, display_preference, location_city, is_verified, activity_score, privacy_settings, privacy, sector, skills, interests, role_metadata, account_type, profession_type")
       .eq("is_public", true)
       .not("full_name", "is", null)
       .neq("id", user.id)
@@ -184,12 +184,14 @@ const Explore = () => {
       return !excluded.has(p.id);
     });
 
+    const viewerProfType = (profile as any)?.profession_type;
     const matchedPeople = peopleSafe.filter((p: any) => {
+      const sameProfType = viewerProfType && p.profession_type && p.profession_type === viewerProfType;
       const sameRole = profile?.role && (p.role === profile.role || (p.role_subtype && p.role_subtype === profile.role_subtype));
       const sameCity = profile?.location_city && lower(p.location_city) === lower(profile.location_city);
       const tagMatch = overlap(viewerInterests, [...(p.skills || []), ...(p.interests || []), p.sector].filter(Boolean) as string[]);
       const sameAccountType = !profile?.role && profile?.account_type && p.account_type === profile.account_type;
-      return sameRole || sameCity || tagMatch || sameAccountType;
+      return sameProfType || sameRole || sameCity || tagMatch || sameAccountType;
     });
 
     /* backfill so the carousel never feels dead */
@@ -287,10 +289,10 @@ const Explore = () => {
       .map(([tag, count]) => ({ tag, count }));
 
     return { sMap, fMap, mMap, people, orgs, circles, posts, postAuthors, hashtags };
-  }, [user?.id, profile?.role, profile?.role_subtype, profile?.location_city, profile?.sector, profile?.account_type, viewerInterests.join(",")]);
+  }, [user?.id, profile?.role, profile?.role_subtype, profile?.location_city, profile?.sector, profile?.account_type, (profile as any)?.profession_type, viewerInterests.join(",")]);
 
   const { data: exploreData, isLoading } = useQuery({
-    queryKey: ["explore-sectioned", user?.id],
+    queryKey: ["explore-sectioned", user?.id, (profile as any)?.profession_type],
     queryFn: fetchAll,
     enabled: !!user,
     staleTime: 5 * 60 * 1000,

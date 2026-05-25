@@ -74,6 +74,19 @@ function CirclesDiscovery() {
 
   const userCity = (profile?.location_city || "").toLowerCase();
   const userRole = (profile?.role || "").toLowerCase();
+  const userProfType = ((profile as any)?.profession_type || "").toLowerCase();
+
+  // Keyword map for profession_type → circle name matching
+  const PROF_KEYWORDS: Record<string, string[]> = {
+    healthcare: ["health", "medical", "doctor", "nurse", "pharma", "hospital", "clinic"],
+    student: ["student", "campus", "college", "university", "intern", "fresher"],
+    gig_worker: ["freelance", "gig", "delivery", "driver", "self-employed"],
+    creator: ["creator", "content", "youtube", "influencer", "media", "blog"],
+    educator: ["teacher", "education", "tutor", "faculty", "training", "coaching"],
+    government: ["government", "civil", "public sector", "ias", "defence"],
+    founder: ["startup", "founder", "entrepreneur", "ceo", "venture"],
+    working: [],
+  };
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -98,10 +111,15 @@ function CirclesDiscovery() {
     }
 
     const role: CircleRecord[] = [];
-    if (userRole) {
+    const profKeywords = userProfType ? (PROF_KEYWORDS[userProfType] || []) : [];
+    const roleKeywords = userRole ? [userRole] : [];
+    const allKeywords = [...new Set([...profKeywords, ...roleKeywords])];
+
+    if (allKeywords.length > 0) {
       for (const c of notJoined) {
-        if (!seen.has(c.id) && (c.type === "role" || c.type === "sector") &&
-          (c.name?.toLowerCase().includes(userRole) || c.type === "role" || c.type === "sector")) {
+        if (seen.has(c.id)) continue;
+        const haystack = `${c.name || ""} ${c.description || ""} ${c.type || ""}`.toLowerCase();
+        if (allKeywords.some(kw => haystack.includes(kw))) {
           role.push(c); seen.add(c.id);
         }
       }
@@ -119,7 +137,7 @@ function CirclesDiscovery() {
     }
 
     return { yourCircles: yours, cityCircles: city, roleCircles: role, trendingCircles: trending };
-  }, [filtered, joined, userCity, userRole]);
+  }, [filtered, joined, userCity, userRole, userProfType]);
 
   return (
     <div className="mx-auto max-w-6xl px-4 md:px-6 pt-6 pb-24 md:pb-12">
@@ -165,7 +183,7 @@ function CirclesDiscovery() {
           )}
 
           {roleCircles.length > 0 && (
-            <HorizontalCarousel title="Role & Career" count={roleCircles.length}>
+            <HorizontalCarousel title="Recommended for you" count={roleCircles.length}>
               {roleCircles.map(c => (
                 <CircleCarouselCard key={c.id} circle={c} isMember={joined.includes(c.id)} joined={joined} onJoin={join} />
               ))}

@@ -598,6 +598,8 @@ const Feed = () => {
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
   const [editedPosts, setEditedPosts] = useState<Record<string, any>>({});
   const [connectionIds, setConnectionIds] = useState<Set<string>>(new Set());
+  const [followedOrgIds, setFollowedOrgIds] = useState<Set<string>>(new Set());
+  const [feedMode, setFeedMode] = useState<"for_you" | "following">("for_you");
   const [showPrefs, setShowPrefs] = useState(false);
   const [feedPrefs, setFeedPrefs] = useState({
     hideOrgPosts: false,
@@ -606,11 +608,10 @@ const Feed = () => {
   const [searchParams] = useSearchParams();
   const targetPostId = searchParams.get("post");
   const scrolledRef = useRef(false);
-  const [showFeedPrefs, setShowFeedPrefs] = useState(false);
   const [hideOrgPosts, setHideOrgPosts] = useState(() => localStorage.getItem("feed_hide_org") === "1");
   const [hideCirclePosts, setHideCirclePosts] = useState(() => localStorage.getItem("feed_hide_circle") === "1");
 
-  // Load connection IDs
+  // Load connection IDs and followed org IDs for "Following" tab filter
   useEffect(() => {
     if (!user) return;
     supabase.from("strands")
@@ -624,6 +625,10 @@ const Feed = () => {
           if (s.receiver_id !== user.id) ids.add(s.receiver_id!);
         });
         setConnectionIds(ids);
+      });
+    supabase.from("org_followers").select("org_id").eq("user_id", user.id)
+      .then(({ data }) => {
+        setFollowedOrgIds(new Set((data || []).map((r: any) => r.org_id)));
       });
   }, [user]);
 
@@ -650,16 +655,28 @@ const Feed = () => {
     });
   };
 
-  const visiblePosts = useMemo(() =>
-    livePosts
+  const visiblePosts = useMemo(() => {
+    let posts = livePosts
       .filter((p: any) => !deletedIds.has(p.id))
       .filter((p: any) => !(hideOrgPosts && p.posted_as_org_id))
       .filter((p: any) => !(hideCirclePosts && p.circle_id))
       .filter((p: any) => !feedPrefs.hideOrgPosts || !p.posted_by_org)
       .filter((p: any) => !feedPrefs.hideSharedPosts || !(p.visibility === "workspace" || p.is_shared_to_feed))
-      .map((p: any) => editedPosts[p.id] ? { ...p, ...editedPosts[p.id] } : p),
-    [livePosts, deletedIds, editedPosts, hideOrgPosts, hideCirclePosts, feedPrefs]
-  );
+      .map((p: any) => editedPosts[p.id] ? { ...p, ...editedPosts[p.id] } : p);
+
+    if (feedMode === "following") {
+      posts = posts.filter((p: any) =>
+        connectionIds.has(p.author_id) ||
+        (p.posted_by_org && followedOrgIds.has(p.posted_by_org))
+      );
+      // Chronological for "Following" tab
+      posts = [...posts].sort((a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+    }
+
+    return posts;
+  }, [livePosts, deletedIds, editedPosts, hideOrgPosts, hideCirclePosts, feedPrefs, feedMode, connectionIds, followedOrgIds]);
 
   const postIds = useMemo(() => visiblePosts.map((p: any) => p.id), [visiblePosts]);
   const feedItems = useMemo(() => groupConsecutivePosts(visiblePosts), [visiblePosts]);
@@ -710,20 +727,26 @@ const Feed = () => {
 
       <div className="flex" style={{ gap: 20 }}>
         <div style={{ flex: 1, minWidth: 0, maxWidth: 640 }}>
-          <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-            <div>
-              <p style={{ fontSize: 22, fontWeight: 700, color: "#1A1A2E" }}>Feed</p>
-              <p style={{ fontSize: 13, color: "#6B7094" }}>Updates from people and organizations you care about.</p>
-            </div>
+          <div className="flex items-center justify-between" style={{ marginBottom: 4 }}>
+            <p style={{ fontSize: 22, fontWeight: 700, color: "#1A1A2E" }}>Feed</p>
             <button
               type="button"
               onClick={() => setShowPrefs(v => !v)}
               className="flex items-center gap-2 rounded-xl border border-[#E8E8E8] bg-white px-3 py-2 text-sm font-medium text-[#1A1A2E] hover:bg-[#F9FAFB]"
             >
               <Settings2 size={15} />
-              Feed settings
+              Settings
             </button>
           </div>
+
+          <PrimaryTabs
+            tabs={[
+              { key: "for_you", label: "For you" },
+              { key: "following", label: "Following" },
+            ]}
+            active={feedMode}
+            onChange={setFeedMode}
+          />
 
           {showPrefs && (
             <div style={{ background: "#FFFFFF", border: "1px solid #E8E8E8", borderRadius: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.04)", padding: 14, marginBottom: 12 }}>
@@ -733,49 +756,20 @@ const Feed = () => {
                     <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>Hide organization posts</p>
                     <p style={{ fontSize: 12, color: "#6B7094" }}>Show only people-first posts in your main feed.</p>
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={feedPrefs.hideOrgPosts}
-                    onChange={(e) => updateFeedPref("hideOrgPosts", e.target.checked)}
-                  />
+                  <input type="checkbox" checked={feedPrefs.hideOrgPosts} onChange={(e) => updateFeedPref("hideOrgPosts", e.target.checked)} />
                 </label>
                 <label className="flex items-center justify-between gap-3">
                   <div>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>Hide shared workspace posts</p>
-                    <p style={{ fontSize: 12, color: "#6B7094" }}>Reduce reposted team/workspace updates in this view.</p>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>Hide posts from circles</p>
+                    <p style={{ fontSize: 12, color: "#6B7094" }}>Keep circle discussions separate from your main feed.</p>
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={feedPrefs.hideSharedPosts}
-                    onChange={(e) => updateFeedPref("hideSharedPosts", e.target.checked)}
-                  />
+                  <input type="checkbox" checked={hideCirclePosts} onChange={e => { setHideCirclePosts(e.target.checked); localStorage.setItem("feed_hide_circle", e.target.checked ? "1" : "0"); }} />
                 </label>
               </div>
             </div>
           )}
 
           <FeedComposer onPublished={refresh} />
-
-          {/* Feed preferences */}
-          <div className="flex justify-end mb-2">
-            <button type="button" onClick={() => setShowFeedPrefs(v => !v)}
-              style={{ fontSize: 12, color: "var(--text-3)", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: "2px 6px" }}>
-              ⚙ Feed settings
-            </button>
-          </div>
-          {showFeedPrefs && (
-            <div style={{ background: "#fff", border: "1px solid #E8E8E8", borderRadius: 12, padding: "12px 16px", marginBottom: 12, fontSize: 13, color: "#1A1A2E" }}>
-              <p style={{ fontWeight: 600, marginBottom: 10 }}>Customize your feed</p>
-              <label className="flex items-center gap-2 cursor-pointer mb-2">
-                <input type="checkbox" checked={hideOrgPosts} onChange={e => { setHideOrgPosts(e.target.checked); localStorage.setItem("feed_hide_org", e.target.checked ? "1" : "0"); }} className="accent-orange-500" />
-                Hide posts from organizations
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={hideCirclePosts} onChange={e => { setHideCirclePosts(e.target.checked); localStorage.setItem("feed_hide_circle", e.target.checked ? "1" : "0"); }} className="accent-orange-500" />
-                Hide posts from circles
-              </label>
-            </div>
-          )}
 
           {loading && !visiblePosts.length && <SkeletonCard count={3} />}
           {feedItems.map((item) => item.kind === "post" ? (
@@ -801,9 +795,18 @@ const Feed = () => {
           ))}
 
           {!loading && !visiblePosts.length && (
-            <div className="text-center" style={{ padding: 20, borderRadius: 16, background: "#FFFFFF", border: "1px solid #E8E8E8" }}>
-              <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", marginBottom: 4 }}>Nothing here yet</p>
-              <p style={{ fontSize: 13, color: "#9CA3C0" }}>Be the first to post something.</p>
+            <div className="text-center" style={{ padding: 32, borderRadius: 16, background: "#FFFFFF", border: "1px solid #E8E8E8" }}>
+              {feedMode === "following" ? (
+                <>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", marginBottom: 6 }}>Nothing from your network yet</p>
+                  <p style={{ fontSize: 13, color: "#9CA3C0" }}>Connect with people and follow organizations to see their posts here.</p>
+                </>
+              ) : (
+                <>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", marginBottom: 4 }}>Nothing here yet</p>
+                  <p style={{ fontSize: 13, color: "#9CA3C0" }}>Be the first to post something.</p>
+                </>
+              )}
             </div>
           )}
 
