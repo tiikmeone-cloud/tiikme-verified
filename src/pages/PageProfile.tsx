@@ -19,7 +19,7 @@ const daysAgo = (d: string) => {
   const diff = Math.floor((Date.now() - new Date(d).getTime()) / 86400000);
   return diff === 0 ? "Today" : diff === 1 ? "1d ago" : `${diff}d ago`;
 };
-const AVATAR_COLORS = ["#E8733A", "#4A90D9", "#34C759", "#FF6B9D", "#8B5CF6", "#FFB800"];
+const AVATAR_COLORS = ["#E8733A", "#2D7A4F", "#C44A1F", "#7E22CE", "#166534", "#B7640A"];
 const hashColor = (s: string) => AVATAR_COLORS[Math.abs([...s].reduce((a, c) => a + c.charCodeAt(0), 0)) % AVATAR_COLORS.length];
 const initials = (name: string) => name?.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "?";
 
@@ -344,7 +344,7 @@ const PageProfile = () => {
             {page.page_type === "government" && (page.govt_level || page.jurisdiction || page.service_hours) && (
               <div className="glass-light rounded-2xl p-4" style={{ boxShadow: "inset 0 1px 0 var(--glass-highlight)" }}>
                 <div className="flex items-center gap-2 mb-3">
-                  <Landmark className="w-4 h-4" style={{ color: "#4A90D9" }} />
+                  <Landmark className="w-4 h-4" style={{ color: "#E8733A" }} />
                   <h3 className="text-[14px] font-bold" style={{ color: "var(--color-text)" }}>Government Info</h3>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -550,7 +550,7 @@ const PageProfile = () => {
                     <div className="min-w-0 flex-1">
                       <h4 className="text-[14px] font-semibold" style={{ color: "var(--color-text)" }}>{o.title}</h4>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg" style={{ background: "rgba(74,144,217,0.1)", color: "#4A90D9" }}>{(o.type || "job").replace(/[-_]/g, " ")}</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg" style={{ background: "rgba(74,144,217,0.1)", color: "#E8733A" }}>{(o.type || "job").replace(/[-_]/g, " ")}</span>
                         {o.location && <span className="text-[11px] flex items-center gap-0.5" style={{ color: "var(--color-text-muted)" }}><MapPin className="w-3 h-3" />{o.location}</span>}
                         {o.is_remote && <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg" style={{ background: "rgba(52,199,89,0.1)", color: "#34C759" }}>Remote</span>}
                       </div>

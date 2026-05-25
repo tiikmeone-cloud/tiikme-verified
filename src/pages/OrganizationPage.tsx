@@ -18,7 +18,7 @@ import { isCreatorOrg } from "@/lib/orgTypes";
 import { PageSEO, orgSEO } from "@/hooks/usePageSEO";
 import { CompanyBrain } from "@/components/org/CompanyBrain";
 
-const AVATAR_COLORS = ["#E8733A", "#4A90D9", "#34C759", "#FF6B9D", "#8B5CF6", "#FFB800"];
+const AVATAR_COLORS = ["#E8733A", "#2D7A4F", "#C44A1F", "#7E22CE", "#166534", "#B7640A"];
 const hashColor = (s: string) => AVATAR_COLORS[Math.abs([...s].reduce((a, c) => a + c.charCodeAt(0), 0)) % AVATAR_COLORS.length];
 const normalizeComparableToken = (value?: string | null) =>
   (value || "").toLowerCase().replace(/[\s_-]+/g, "").trim();
@@ -438,7 +438,7 @@ export default function OrganizationPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
 
             {/* Members section */}
-            <SectionBox title="Members" icon={Users} iconColor="#4A90D9" borderColor="#4A90D9" count={members.length}>
+            <SectionBox title="Members" icon={Users} iconColor="#9CA3C0" borderColor="#9CA3C0" count={members.length}>
               {members.length === 0 ? (
                 <p style={{ fontSize: 13, color: "#9CA3C0", padding: "4px 0" }}>No members yet</p>
               ) : (
@@ -492,7 +492,7 @@ export default function OrganizationPage() {
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>{o.title}</p>
                           <div className="flex items-center flex-wrap" style={{ gap: 6, marginTop: 3 }}>
-                            <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 4, background: "rgba(74,144,217,0.1)", color: "#4A90D9" }}>
+                            <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 4, background: "rgba(232,115,58,0.08)", color: "#E8733A" }}>
                               {(o.type || "job").replace(/[-_]/g, " ")}
                             </span>
                             {o.location && <span style={{ fontSize: 11, color: "#9CA3C0" }}>{o.location}</span>}

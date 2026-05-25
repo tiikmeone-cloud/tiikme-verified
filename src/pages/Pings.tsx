@@ -371,7 +371,7 @@ export default function Pings() {
   const statusMeta: Record<string, { label: string; color: string; bg: string }> = {
     under_review: { label: "Under review", color: "#FFB800", bg: "rgba(255,184,0,0.12)" },
     qualified: { label: "Qualified", color: "#10B981", bg: "rgba(16,185,129,0.12)" },
-    shortlisted: { label: "Shortlisted", color: "#3B82F6", bg: "rgba(59,130,246,0.12)" },
+    shortlisted: { label: "Shortlisted", color: "#166534", bg: "rgba(22,101,52,0.10)" },
     offered: { label: "Offered", color: "#34C759", bg: "rgba(52,199,89,0.12)" },
     rejected: { label: "Not selected", color: "#EF4444", bg: "rgba(239,68,68,0.10)" },
     submitted: { label: "Submitted", color: "#6B7280", bg: "rgba(107,114,128,0.10)" },

@@ -12,7 +12,7 @@ import GlassBox from "@/components/ui/GlassBox";
 
 /* ─── Type definitions ─── */
 const OPP_TYPES = [
-  { value: "full_time", label: "Full-time", icon: Briefcase, color: "#2563EB", desc: "Permanent full-time position" },
+  { value: "full_time", label: "Full-time", icon: Briefcase, color: "#E8733A", desc: "Permanent full-time position" },
   { value: "part_time", label: "Part-time", icon: Clock, color: "#7C3AED", desc: "Part-time or flexible hours" },
   { value: "internship", label: "Internship", icon: GraduationCap, color: "#10B981", desc: "Internship opportunity" },
   { value: "freelance", label: "Freelance", icon: Code, color: "#F59E0B", desc: "Freelance project-based work" },

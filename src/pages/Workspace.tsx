@@ -16,7 +16,7 @@ import { cleanUsername } from "@/lib/cleanUsername";
 import { resolveMessageAttachmentUrl, safeAttachmentPath } from "@/lib/privateAttachments";
 
 /* ── Helpers ── */
-const AVATAR_COLORS = ["#E8733A", "#4A90D9", "#34C759", "#FF6B9D", "#8B5CF6", "#FFB800"];
+const AVATAR_COLORS = ["#E8733A", "#2D7A4F", "#C44A1F", "#7E22CE", "#166534", "#B7640A"];
 const hashColor = (s: string) => AVATAR_COLORS[Math.abs([...s].reduce((a, c) => a + c.charCodeAt(0), 0)) % AVATAR_COLORS.length];
 const initials = (name: string) => name?.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "?";
 const formatTime = (d: string) => {
@@ -54,7 +54,7 @@ const ChatMessageContent = ({ text }: { text: string }) => {
           return (
             <span key={i}>
               <a href={url} target="_blank" rel="noopener noreferrer"
-                className="font-medium hover:underline" style={{ color: "#4A90D9" }}>
+                className="font-medium hover:underline" style={{ color: "#E8733A" }}>
                 {url.replace(/^https?:\/\/(www\.)?/, "").slice(0, 40)}
                 {url.replace(/^https?:\/\/(www\.)?/, "").length > 40 ? "..." : ""}
               </a>
@@ -100,7 +100,7 @@ const WorkspaceAttachment = ({ msg }: { msg: GroupMessage }) => {
       target="_blank"
       rel="noopener noreferrer"
       className="flex items-center gap-1 mt-1 text-[11px] font-semibold"
-      style={{ color: "#4A90D9" }}
+      style={{ color: "#E8733A" }}
       onClick={(event) => { if (!url) event.preventDefault(); }}
     >
       <Paperclip className="w-3 h-3" /> {msg.attachment_name || "Download"}

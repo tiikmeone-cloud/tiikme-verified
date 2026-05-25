@@ -391,7 +391,7 @@ function MyApplicationsTab({ userId }: { userId: string | undefined }) {
   const statusColors: Record<string, { bg: string; color: string; label: string }> = {
     under_review: { bg: "rgba(255,184,0,0.12)", color: "#FFB800", label: "Under Review" },
     qualified: { bg: "rgba(16,185,129,0.12)", color: "#10B981", label: "Qualified" },
-    shortlisted: { bg: "rgba(59,130,246,0.12)", color: "#3B82F6", label: "Shortlisted" },
+    shortlisted: { bg: "rgba(22,101,52,0.10)", color: "#166534", label: "Shortlisted" },
     offered: { bg: "rgba(52,199,89,0.12)", color: "#34C759", label: "Offered" },
     rejected: { bg: "rgba(239,68,68,0.10)", color: "#EF4444", label: "Not Selected" },
   };

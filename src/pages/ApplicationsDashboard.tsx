@@ -17,7 +17,7 @@ import { resolveResumeUrl } from "@/lib/privateAttachments";
 
 const STATUS_TABS = ["All", "Reviewing", "Shortlisted", "Selected", "Rejected", "Auto-rejected"] as const;
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
-  applied: { bg: "#EFF6FF", text: "#2563EB" },
+  applied: { bg: "rgba(232,115,58,0.08)", text: "#E8733A" },
   reviewing: { bg: "#FFF7ED", text: "#EA580C" },
   shortlisted: { bg: "#F0FDF4", text: "#16A34A" },
   selected: { bg: "#ECFDF5", text: "#059669" },

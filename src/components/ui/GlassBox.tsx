@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 const ACCENT_COLORS: Record<string, string> = {
   identity: "#FF5A1F",
-  experience: "#4A90D9",
+  experience: "#E8733A",
   education: "#34C759",
   projects: "#FF6B9D",
   achievements: "#FFB800",
@@ -15,7 +15,7 @@ const ACCENT_COLORS: Record<string, string> = {
   leadership: "#F59E0B",
   stats: "#10B981",
   team: "#8B5CF6",
-  opportunities: "#3B82F6",
+  opportunities: "#E8733A",
   verified: "#F59E0B",
   feed: "#FF5A1F",
 };

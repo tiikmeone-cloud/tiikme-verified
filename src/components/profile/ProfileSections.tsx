@@ -10,7 +10,7 @@ import VerificationRequest from "@/components/profile/VerificationRequest";
 import { useCompanyLogos } from "@/hooks/useCompanyLogos";
 
 /* ── Helpers ── */
-const LOGO_COLORS = ["#E8733A", "#4A90D9", "#34C759", "#FF6B9D", "#8B5CF6", "#FFB800"];
+const LOGO_COLORS = ["#E8733A", "#0369A1", "#34C759", "#FF6B9D", "#8B5CF6", "#FFB800"];
 const hashColor = (name: string) => LOGO_COLORS[name.split("").reduce((a, c) => a + c.charCodeAt(0), 0) % LOGO_COLORS.length];
 
 const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -210,14 +210,14 @@ export const ExperienceSection = ({ items, isOwnProfile, onAdd, onDelete, onTogg
   if (items.length === 0 && !isOwnProfile) return null;
 
   return (
-    <SectionBox title="Experience" icon={Briefcase} iconColor="#4A90D9" borderColor="#4A90D9" count={items.length} isOwnProfile={isOwnProfile} onAdd={onAdd}>
+    <SectionBox title="Experience" icon={Briefcase} iconColor="#0369A1" borderColor="#0369A1" count={items.length} isOwnProfile={isOwnProfile} onAdd={onAdd}>
       {items.length === 0 ? (
         isOwnProfile ? (
           <button type="button" onClick={onAdd}
             className="flex items-center gap-2 cursor-pointer w-full text-left"
             style={{ background: "rgba(74,144,217,0.05)", border: "1px dashed rgba(74,144,217,0.30)", borderRadius: 10, padding: "10px 12px", marginTop: 4 }}>
-            <Plus style={{ width: 14, height: 14, color: "#4A90D9", flexShrink: 0 }} />
-            <span style={{ fontSize: 13, color: "#4A90D9", fontWeight: 500 }}>Add your first experience</span>
+            <Plus style={{ width: 14, height: 14, color: "#0369A1", flexShrink: 0 }} />
+            <span style={{ fontSize: 13, color: "#0369A1", fontWeight: 500 }}>Add your first experience</span>
           </button>
         ) : (
           <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "4px 0" }}>No experience added</p>
@@ -564,7 +564,7 @@ export const RolesSection = ({ items, isOwnProfile, onAdd, onDelete }: {
   const ROLE_TYPE_COLORS: Record<string, string> = {
     "Side Hustle": "#E8733A",
     "Freelance": "#8B5CF6",
-    "Dual Employment": "#4A90D9",
+    "Dual Employment": "#0369A1",
     "Moonlighting": "#34C759",
   };
 

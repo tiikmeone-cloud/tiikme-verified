@@ -167,8 +167,8 @@ const ContactSection = ({ isOwnProfile, profile, userEmail }: { isOwnProfile: bo
       <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", display: "block", marginBottom: 8 }}>Contact</span>
       {showEmail && emailToShow ? (
         <div className="flex items-center" style={{ gap: 6 }}>
-          <Mail style={{ width: 14, height: 14, color: "#4A90D9", flexShrink: 0 }} />
-          <span style={{ fontSize: 13, color: "#4A90D9" }}>{emailToShow}</span>
+          <Mail style={{ width: 14, height: 14, color: "#E8733A", flexShrink: 0 }} />
+          <span style={{ fontSize: 13, color: "#E8733A" }}>{emailToShow}</span>
         </div>
       ) : isOwnProfile ? (
         <p style={{ fontSize: 12, color: "#9CA3C0" }}>
@@ -1220,7 +1220,7 @@ const Profile = () => {
                         background: "rgba(255,255,255,0.12)", border: "1px solid rgba(0,0,0,0.06)",
                       }}
                     >
-                      <Globe style={{ width: 14, height: 14, color: "#4A90D9", flexShrink: 0 }} />
+                      <Globe style={{ width: 14, height: 14, color: "#E8733A", flexShrink: 0 }} />
                       <span style={{ fontSize: 12, fontWeight: 400, color: "#1A1A2E" }}>
                         tiikme.com/{cleanProfileUsername}
                       </span>
@@ -1252,7 +1252,7 @@ const Profile = () => {
                         background: "rgba(255,255,255,0.12)", border: "1px solid rgba(0,0,0,0.06)",
                       }}
                     >
-                      <Globe style={{ width: 14, height: 14, color: "#4A90D9", flexShrink: 0 }} />
+                      <Globe style={{ width: 14, height: 14, color: "#E8733A", flexShrink: 0 }} />
                       <span style={{ fontSize: 12, fontWeight: 400, color: "#1A1A2E" }}>
                         tiikme.com/{cleanProfileUsername}
                       </span>
@@ -1429,7 +1429,7 @@ const Profile = () => {
       </div>
 
       {/* ═══ GLASS MODALS ═══ */}
-      <GlassModal open={modalSection === "experience"} onClose={() => setModalSection(null)} title="Add Experience" icon={Briefcase} accentColor="#4A90D9"
+      <GlassModal open={modalSection === "experience"} onClose={() => setModalSection(null)} title="Add Experience" icon={Briefcase} accentColor="#E8733A"
         actions={<>
           <button type="button" onClick={saveExperience} disabled={saving} className="cursor-pointer" style={{ padding: "10px 28px", borderRadius: 16, fontSize: 14, fontWeight: 600, background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 4px 20px rgba(232,115,58,0.35)" }}>{saving ? "Saving..." : "Save"}</button>
           <button type="button" onClick={() => setModalSection(null)} className="cursor-pointer" style={{ padding: "10px 20px", borderRadius: 16, fontSize: 14, fontWeight: 500, background: "rgba(107,112,148,0.10)", color: "#6B7094", border: "1px solid rgba(107,112,148,0.15)" }}>Cancel</button>

@@ -9,7 +9,7 @@ import { storageImageUrl } from "@/lib/imageTransform";
 import { toast } from "sonner";
 
 const STATUS_META: Record<string, { label: string; bg: string; color: string; icon: React.ElementType }> = {
-  applied:      { label: "Applied",      bg: "#EFF6FF", color: "#2563EB", icon: Clock },
+  applied:      { label: "Applied",      bg: "rgba(232,115,58,0.08)", color: "#E8733A", icon: Clock },
   reviewing:    { label: "Reviewing",    bg: "#FFF7ED", color: "#EA580C", icon: Clock },
   shortlisted:  { label: "Shortlisted",  bg: "#F0FDF4", color: "#16A34A", icon: CheckCircle },
   selected:     { label: "Selected",     bg: "#ECFDF5", color: "#059669", icon: CheckCircle },
@@ -123,7 +123,7 @@ export default function MyApplications() {
         {apps.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-4" style={{ gap: 8, marginBottom: 16 }}>
             {[
-              { label: "Applied", count: counts.Active, color: "#2563EB", bg: "#EFF6FF" },
+              { label: "Applied", count: counts.Active, color: "#E8733A", bg: "rgba(232,115,58,0.08)" },
               { label: "Shortlisted", count: counts.Shortlisted, color: "#16A34A", bg: "#F0FDF4" },
               { label: "Selected", count: counts.Selected, color: "#059669", bg: "#ECFDF5" },
               { label: "Not selected", count: counts.Closed, color: "#DC2626", bg: "#FEF2F2" },
@@ -238,7 +238,7 @@ export default function MyApplications() {
                           )}
                           <div className="flex items-center flex-wrap" style={{ gap: 6, marginTop: 4 }}>
                             {opp?.type && (
-                              <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 4, background: "rgba(74,144,217,0.1)", color: "#4A90D9" }}>
+                              <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 4, background: "rgba(74,144,217,0.1)", color: "#E8733A" }}>
                                 {opp.type.replace(/[-_]/g, " ")}
                               </span>
                             )}
