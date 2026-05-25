@@ -451,6 +451,15 @@ const SettingsPage = () => {
 
   const hasChanges = JSON.stringify(profile) !== JSON.stringify(originalProfile);
 
+  // Re-seed local state when authProfile becomes available (handles cold load timing)
+  useEffect(() => {
+    if (authProfile && !profile.name && authProfile.full_name) {
+      const seeded = seedProfile();
+      setProfile(seeded);
+      setOriginalProfile(seeded);
+    }
+  }, [authProfile?.full_name]);
+
   useEffect(() => {
     const loadProfile = async () => {
       const { data: { user: u } } = await supabase.auth.getUser();
@@ -647,7 +656,7 @@ const SettingsPage = () => {
                 <h3 className="text-[16px] font-semibold mb-5" style={{ color: "#1A1A2E" }}>Edit Profile</h3>
                 <div className="flex items-center gap-5 mb-5">
                   <div className="relative group cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
-                    <AvatarSquare src={profile.avatar_url} name={profile.name || "U"} size="xl" />
+                    <AvatarSquare src={profile.avatar_url || authProfile?.avatar_url} name={profile.name || authProfile?.full_name || "?"} size="xl" />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center" style={{ transition: "opacity 0.2s", borderRadius: 0 }}>
                       <Camera className="w-5 h-5 text-white" />
                     </div>
