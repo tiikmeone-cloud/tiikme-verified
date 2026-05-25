@@ -1,19 +1,19 @@
 User-agent: *
 Allow: /
+Allow: /profile/
+Allow: /org/
 Allow: /tag/
 Allow: /post/
-Allow: /profile/
-Allow: /p/
-Allow: /org/
+Allow: /help/
+Allow: /about
+Allow: /privacy
+Allow: /terms
 Allow: /guides/
-Allow: /app/explore
-Allow: /app/opportunities
-
-Disallow: /app/settings
-Disallow: /app/workspace
-Disallow: /app/verification-inbox
-Disallow: /app/alerts
-Disallow: /app/applications
+Disallow: /app/
+Disallow: /auth/
 Disallow: /onboarding
+Disallow: /verify-email
+Disallow: /reset-password
+Disallow: /accept-admin-invite
 
 Sitemap: https://tiikme.com/sitemap.xml

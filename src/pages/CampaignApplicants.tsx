@@ -34,14 +34,14 @@ export default function CampaignApplicants() {
     if (!campaignId) return;
     (async () => {
       const [{ data: c }, { data: apps }] = await Promise.all([
-        supabase.from("brand_campaigns")
-          .select("*, org:organizations!brand_campaigns_org_id_fkey(id, name, logo_url)")
+        supabase.from("campaigns")
+          .select("*, org:organizations!campaigns_org_id_fkey(id, name, logo_url)")
           .eq("id", campaignId)
           .maybeSingle(),
-        supabase.from("brand_campaign_applications")
-          .select("*, applicant:profiles!brand_campaign_applications_applicant_id_fkey(id, full_name, avatar_url, role, headline, location_city)")
+        supabase.from("opportunity_applications")
+          .select("*, applicant:profiles!opportunity_applications_applicant_id_fkey(id, full_name, avatar_url, role, headline, location_city)")
           .eq("campaign_id", campaignId)
-          .order("applied_at", { ascending: false }),
+          .order("created_at", { ascending: false }),
       ]);
       setCampaign(c);
       setApplicants(apps || []);
@@ -51,8 +51,8 @@ export default function CampaignApplicants() {
 
   const updateStatus = async (appId: string, applicantId: string, newStatus: string, appTitle: string) => {
     setUpdating(appId);
-    const { error } = await supabase.from("brand_campaign_applications")
-      .update({ status: newStatus, reviewed_at: new Date().toISOString() })
+    const { error } = await supabase.from("opportunity_applications")
+      .update({ status: newStatus })
       .eq("id", appId);
     setUpdating(null);
     if (error) { toast.error("Failed to update"); return; }
@@ -203,7 +203,7 @@ export default function CampaignApplicants() {
                   )}
 
                   <p className="text-[10px] mt-2" style={{ color: "#9CA3C0" }}>
-                    Applied {new Date(app.applied_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                    Applied {new Date(app.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                   </p>
                 </div>
               );
