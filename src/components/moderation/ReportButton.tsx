@@ -74,7 +74,7 @@ export default function ReportButton({ contentType, contentId, className }: Prop
       {open &&
         createPortal(
           <div
-            className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center px-0 sm:px-4"
+            className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center px-0 sm:px-4 md:pl-[220px]"
             style={{ background: "rgba(4,6,26,0.7)", backdropFilter: "blur(12px)" }}
             onClick={() => !submitting && setOpen(false)}
           >

@@ -75,7 +75,7 @@ export default function DeleteAccountModal({ open, onClose, userId }: DeleteAcco
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+      className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:pl-[220px]"
       style={{ background: "rgba(15, 23, 42, 0.55)" }}
       onClick={(e) => e.target === e.currentTarget && handleClose()}
     >
