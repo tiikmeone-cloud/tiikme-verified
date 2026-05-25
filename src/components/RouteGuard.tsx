@@ -60,8 +60,11 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   // Institution accounts skip the personal onboarding flow entirely.
+  // Also send users with null profession_type through onboarding even if they
+  // previously marked complete (old 1-step onboarding didn't save profession_type).
   const needsOnboarding =
-    profile.account_type !== "institution" && !profile.onboarding_complete;
+    profile.account_type !== "institution" &&
+    (!profile.onboarding_complete || !(profile as any).profession_type);
 
   if (needsOnboarding && !location.pathname.startsWith("/onboarding")) {
     return <Navigate to="/onboarding" replace />;

@@ -90,7 +90,8 @@ const AppShell = ({ children }: { children: ReactNode }) => {
       .then(({ data }) => setOrgData(data || null));
   }, [isInstitution, profile?.org_id]);
 
-  const profilePath = "/app/profile";
+  // Institution accounts go to their org page; personal accounts go to /app/profile
+  const profilePath = isInstitution && orgData?.slug ? `/org/${orgData.slug}` : "/app/profile";
   const [unreadAlerts, setUnreadAlerts] = useState(0);
   const roleLabel = isInstitution && orgData?.type
     ? orgData.type.charAt(0).toUpperCase() + orgData.type.slice(1).replace(/_/g, " ")
@@ -99,7 +100,8 @@ const AppShell = ({ children }: { children: ReactNode }) => {
   const identityAvatar = isInstitution && orgData?.logo_url ? orgData.logo_url : (profile?.avatar_url || null);
 
   const isActive = (path: string) => {
-    if (path === "/app/profile") return pathname === profilePath || pathname.startsWith(profilePath + "/") || pathname === "/app/profile";
+    if (path === "/app/profile" || (isInstitution && path === profilePath))
+      return pathname === profilePath || pathname.startsWith(profilePath + "/") || pathname === "/app/profile";
     return pathname === path || pathname.startsWith(path + "/");
   };
 
@@ -168,7 +170,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
   ];
   const mobileRightItems = [
     { label: "Alerts", icon: Bell, path: "/app/alerts" },
-    { label: "Profile", icon: User, path: profilePath, isProfile: true },
+    { label: isInstitution ? "Org" : "Profile", icon: User, path: profilePath, isProfile: true },
   ];
 
   return (
@@ -231,7 +233,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
                           }} />
                         )}
                       </div>
-                      <span>{item.label}</span>
+                      <span>{item.path === "/app/profile" && isInstitution ? "Organisation" : item.label}</span>
                     </Link>
                   );
                 })}
