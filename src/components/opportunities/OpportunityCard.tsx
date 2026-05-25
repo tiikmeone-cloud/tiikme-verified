@@ -204,15 +204,15 @@ export function OpportunityCard({
       {/* Header */}
       <div className="p-4 pb-3">
         <div className="flex items-start justify-between gap-3">
-          <div className="flex items-start gap-3">
+          <div className="flex items-start gap-3 min-w-0 flex-1">
             {/* Company logo */}
             <AvatarSquare
               src={company?.logo_url}
               name={company?.name || "Company"}
               size={44}
             />
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 <p className="text-xs text-gray-500 font-medium">
                   {company?.name || "Unknown Company"}
                 </p>
@@ -222,13 +222,38 @@ export function OpportunityCard({
                   </span>
                 )}
               </div>
-              <h3 className="font-semibold text-[15px] text-gray-900 mt-0.5 leading-tight break-words">
+              <h3 className="font-semibold text-[15px] text-gray-900 mt-0.5 leading-snug break-words">
                 {opp.title}
               </h3>
             </div>
           </div>
+          {/* Apply button prominently in header + 3-dot menu */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            <span className="text-xs text-gray-400">{formatRelativeTime(opp.created_at)}</span>
+            {/* Apply Now — top-right, always visible */}
+            {!isOwn && (
+              <button
+                type="button"
+                onClick={handleApply}
+                disabled={applying || applied || !opp.is_open}
+                className={`flex items-center gap-1 px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
+                  applied
+                    ? "bg-green-50 text-green-700 border border-green-200 cursor-default"
+                    : !opp.is_open
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-[#E8733A] text-white hover:bg-[#d4632e] active:scale-95"
+                }`}
+              >
+                {applying ? (
+                  <Loader2 size={13} className="animate-spin" />
+                ) : applied ? (
+                  <><CheckCircle size={13} /> Applied</>
+                ) : !opp.is_open ? (
+                  "Closed"
+                ) : (
+                  "Apply →"
+                )}
+              </button>
+            )}
             {/* Three-dot menu */}
             {(isOwn || user?.id === opp.poster_id) && (
               <div className="relative">
@@ -365,44 +390,31 @@ export function OpportunityCard({
         />
       )}
 
-      {/* Bottom: applicant count + Apply button */}
-      <div className="border-t border-gray-100 px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-1.5 text-xs text-gray-400">
-          <Users size={13} />
-          <span>
-            {applicantCount} applicant{applicantCount !== 1 ? "s" : ""}
-            {opp.positions_available ? ` · ${opp.positions_available} position${opp.positions_available !== 1 ? "s" : ""}` : ""}
-          </span>
-          {opp.deadline && (
-            <>
-              <span>·</span>
+      {/* Bottom: applicant count + deadline only */}
+      <div className="border-t border-gray-100 px-4 py-2.5 flex items-center gap-3 text-xs text-gray-400">
+        <span className="flex items-center gap-1">
+          <Users size={12} />
+          {applicantCount} applicant{applicantCount !== 1 ? "s" : ""}
+          {opp.positions_available ? ` · ${opp.positions_available} open` : ""}
+        </span>
+        {opp.deadline && (
+          <>
+            <span>·</span>
+            <span className="flex items-center gap-1">
               <Clock size={12} />
-              <span>Deadline: {new Date(opp.deadline).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
-            </>
-          )}
-        </div>
-        <button
-          type="button"
-          onClick={handleApply}
-          disabled={applying || applied || !opp.is_open}
-          className={`flex items-center gap-1.5 px-5 py-2 rounded-xl font-semibold text-sm transition-all ${
-            applied
-              ? "bg-green-50 text-green-700 border border-green-200 cursor-default"
-              : !opp.is_open
-              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-              : "bg-[#E8733A] text-white hover:bg-[#d4632e] active:scale-95"
-          }`}
-        >
-          {applying ? (
-            <Loader2 size={14} className="animate-spin" />
-          ) : applied ? (
-            <><CheckCircle size={14} /> Applied</>
-          ) : !opp.is_open ? (
-            "Closed"
-          ) : (
-            "Apply Now →"
-          )}
-        </button>
+              Due {new Date(opp.deadline).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+            </span>
+          </>
+        )}
+        {opp.expires_at && !opp.deadline && (
+          <>
+            <span>·</span>
+            <span className="flex items-center gap-1">
+              <Clock size={12} />
+              Expires {new Date(opp.expires_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+            </span>
+          </>
+        )}
       </div>
 
       {showRefer && (

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Bot, Send, ThumbsUp, ThumbsDown, Archive, Plus, ChevronRight, Briefcase, Search, User, Building2, ShieldCheck, Loader2 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -135,11 +136,11 @@ function SourceCard({ source }: { source: TiikmePilotSource }) {
   );
 
   if (source.href) {
-    return (
-      <a href={source.href} className="block">
-        {inner}
-      </a>
-    );
+    const isExternal = /^https?:\/\//.test(source.href);
+    if (isExternal) {
+      return <a href={source.href} target="_blank" rel="noopener noreferrer" className="block">{inner}</a>;
+    }
+    return <Link to={source.href} className="block">{inner}</Link>;
   }
   return inner;
 }
@@ -309,11 +310,233 @@ export default function TiikmePilotPage() {
     }
   };
 
+  // Helper: post a local (no-AI-token) reply
+  const localReply = useCallback((content: string, sources?: TiikmePilotSource[]) => {
+    const msg: ChatMessage = {
+      id: `local-${Date.now()}`,
+      role: "assistant",
+      content,
+      created_at: new Date().toISOString(),
+      reply: sources ? { threadId: "", answer: content, sourceCards: sources, remainingChats, mode } : undefined,
+    };
+    setMessages((prev) => [...prev, msg]);
+    setSending(false);
+  }, [remainingChats, mode]);
+
   const sendMessage = async () => {
     const text = input.trim();
     if (!text || sending) return;
 
     const userId = user?.id;
+    setInput("");
+    setSending(true);
+
+    const tempUserMsg: ChatMessage = {
+      id: `temp-user-${Date.now()}`,
+      role: "user",
+      content: text,
+      created_at: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, tempUserMsg]);
+
+    // ── ZERO-TOKEN local handlers (don't consume daily limit) ──
+
+    // 1. Platform FAQ
+    const faqMatch = platformFAQ.find((faq) =>
+      faq.patterns.some((pattern) => pattern.test(text))
+    );
+    if (faqMatch) { localReply(faqMatch.answer); return; }
+
+    // 2. Content suggestions
+    if (/what.*post|content.*ideas|suggest.*post|what should i (write|share)/i.test(text) && userId) {
+      const { data: prof } = await supabase.from('profiles').select('profession_type').eq('id', userId).single();
+      const profType = prof?.profession_type || 'professional';
+      const suggestions = CONTENT_SUGGESTIONS[profType] || CONTENT_SUGGESTIONS['professional'];
+      localReply(`Here are 3 content ideas for you:\n\n1. ${suggestions[0]}\n2. ${suggestions[1]}\n3. ${suggestions[2]}\n\nPick one and I can help you write it — just say "Help me write #1".`);
+      return;
+    }
+
+    // 3. My analytics
+    if (/my analytics|my stats|how am i doing|my score|my posts|my activity/i.test(text) && userId) {
+      const [profResult, postResult, connResult] = await Promise.all([
+        supabase.from('profiles').select('full_name, activity_score, follower_count, following_count').eq('id', userId).single(),
+        supabase.from('posts').select('*', { count: 'exact', head: true }).eq('author_id', userId),
+        supabase.from('strands').select('*', { count: 'exact', head: true }).or(`requester_id.eq.${userId},receiver_id.eq.${userId}`).eq('status', 'accepted'),
+      ]);
+      const prof = profResult.data;
+      const postCount = postResult.count ?? 0;
+      const connCount = connResult.count ?? 0;
+      localReply(`Here's your Tiikme snapshot:\n\n📊 Activity Score: ${prof?.activity_score ?? 0} pts\n📝 Posts: ${postCount}\n🤝 Connections: ${connCount}\n👥 Followers: ${prof?.follower_count ?? 0}\n\nKeep posting and connecting to boost your score!`);
+      return;
+    }
+
+    // 4. Application status check
+    if (/my application|applied.*job|selected.*job|shortlisted|check.*application|application.*status/i.test(text) && userId) {
+      const { data: apps } = await supabase
+        .from('opportunity_applications')
+        .select('status, applied_at, opportunity:opportunities(title, org:organizations(name))')
+        .eq('applicant_id', userId)
+        .order('applied_at', { ascending: false })
+        .limit(5);
+      if (!apps || apps.length === 0) {
+        localReply("You haven't applied to any jobs yet. Go to Opportunities to browse and apply!");
+      } else {
+        const lines = apps.map((a: any) => {
+          const statusEmoji: Record<string, string> = { applied: "🔵", shortlisted: "🟡", selected: "🟢", rejected: "🔴", withdrawn: "⚫" };
+          const s = a.status || "applied";
+          return `${statusEmoji[s] || "🔵"} ${a.opportunity?.title || "Job"} @ ${a.opportunity?.org?.name || "Unknown"} — ${s.charAt(0).toUpperCase() + s.slice(1)}`;
+        });
+        localReply(`Your recent applications:\n\n${lines.join("\n")}\n\nGo to Opportunities → Applications tab to see details.`);
+      }
+      return;
+    }
+
+    // 5. Search for a person by name (with privacy check)
+    const personSearchMatch = text.match(/(?:find|search|is there|show me|look for).*(?:user|person|profile|people)?.*named?\s+([A-Za-z\s]{2,30})/i)
+      || text.match(/^(?:find|search)\s+([A-Za-z\s]{2,30})$/i);
+    if (personSearchMatch) {
+      const searchName = personSearchMatch[1].trim();
+      const { data: people } = await supabase
+        .from('profiles')
+        .select('id, full_name, username, role, designation, currently_working_at, location_city, is_verified, show_in_explore')
+        .ilike('full_name', `%${searchName}%`)
+        .eq('show_in_explore', true)
+        .limit(5);
+      if (!people || people.length === 0) {
+        localReply(`No public profiles found for "${searchName}".\n\nThis could mean they haven't joined Tiikme yet, or their profile is set to private.`);
+      } else {
+        const count = people.length;
+        const sources: TiikmePilotSource[] = people.map((p: any) => ({
+          type: "profile" as const,
+          id: p.id,
+          title: p.full_name || p.username || "User",
+          subtitle: [p.designation || p.role, p.currently_working_at || p.location_city].filter(Boolean).join(" · "),
+          href: `/app/profile/${p.id}`,
+          meta: p.is_verified ? "Verified" : null,
+        }));
+        localReply(`Found ${count} profile${count !== 1 ? "s" : ""} matching "${searchName}". Click to view their profile, or search on the Explore page for more results.`, sources);
+      }
+      return;
+    }
+
+    // 6. Find jobs / opportunities
+    if (/(?:find|search|show|looking for).*jobs?|jobs?.*in\s+([a-z\s]+)|(?:hiring|openings?|roles?|positions?).*(?:for|in)\s+([a-z\s]+)/i.test(text)) {
+      const jobQuery = text.replace(/find|search|show me|looking for|jobs?|openings?/gi, "").trim();
+      localReply(`Looking for jobs? Head to the Opportunities page where you can:\n• Filter by Full-time, Internship, Freelance, Remote\n• Search by role or company\n• See jobs matched to your profile\n\nI'll take you there now — tap the link below.`, [{
+        type: "opportunity" as const,
+        id: "browse",
+        title: "Browse All Opportunities",
+        subtitle: "Search jobs, internships, hackathons",
+        href: `/app/opportunities${jobQuery ? `?search=${encodeURIComponent(jobQuery)}` : ""}`,
+        meta: "Jobs",
+      }]);
+      return;
+    }
+
+    // 7. Find circles / communities
+    if (/(?:find|search|show|join).*circles?|communities?.*about|groups?.*for/i.test(text)) {
+      localReply("Looking for a community to join? Explore Circles on Tiikme — groups for every profession, interest, and city.", [{
+        type: "circle" as const,
+        id: "browse",
+        title: "Browse Circles",
+        subtitle: "Find your community",
+        href: "/app/circles",
+        meta: "Circles",
+      }]);
+      return;
+    }
+
+    // 8. Trending hashtags / top posts
+    if (/trending|top posts?|popular|what.*hashtag|top.*hashtag/i.test(text)) {
+      const { data: posts } = await supabase
+        .from('posts')
+        .select('hashtags, content')
+        .not('hashtags', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(100);
+      const tagCounts: Record<string, number> = {};
+      (posts || []).forEach((p: any) => {
+        (p.hashtags || []).forEach((t: string) => { tagCounts[t] = (tagCounts[t] || 0) + 1; });
+      });
+      const sorted = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).slice(0, 8);
+      if (sorted.length === 0) {
+        localReply("No trending hashtags right now. Be the first to start a conversation!");
+      } else {
+        const lines = sorted.map(([tag, count]) => `#${tag} (${count} post${count !== 1 ? "s" : ""})`);
+        localReply(`🔥 Trending on Tiikme right now:\n\n${lines.join("\n")}\n\nClick any hashtag in the feed to explore posts.`);
+      }
+      return;
+    }
+
+    // 9. Refer a friend
+    if (/refer.*friend|my friend.*job|friend.*looking.*job|refer.*someone/i.test(text)) {
+      localReply("Want to refer a friend to a job on Tiikme?\n\nGo to Opportunities → Referrals tab. You can share a job link directly with your friend or tag a manager in the referral flow.", [{
+        type: "opportunity" as const,
+        id: "refer",
+        title: "Referrals",
+        subtitle: "Refer friends to open roles",
+        href: "/app/opportunities?tab=referrals",
+        meta: "Refer",
+      }]);
+      return;
+    }
+
+    // 10. Find organizations / companies
+    const orgSearchMatch = text.match(/(?:find|search|show).*(?:organization|company|org|company).*named?\s+([A-Za-z\s]{2,30})/i)
+      || text.match(/(?:what does|about|tell me about)\s+([A-Za-z\s]{2,30})\s+(?:company|org|organization)/i);
+    if (orgSearchMatch) {
+      const orgName = orgSearchMatch[1].trim();
+      const { data: orgs } = await supabase
+        .from('organizations')
+        .select('id, name, slug, type, city, state, is_verified, followers_count')
+        .ilike('name', `%${orgName}%`)
+        .limit(5);
+      if (!orgs || orgs.length === 0) {
+        localReply(`No organization found for "${orgName}" on Tiikme yet.`);
+      } else {
+        const sources: TiikmePilotSource[] = orgs.map((o: any) => ({
+          type: "organization" as const,
+          id: o.id,
+          title: o.name,
+          subtitle: [o.type, o.city, o.state].filter(Boolean).join(" · "),
+          href: `/org/${o.slug}`,
+          meta: o.is_verified ? "Verified" : null,
+        }));
+        localReply(`Found ${orgs.length} organization${orgs.length !== 1 ? "s" : ""} matching "${orgName}":`, sources);
+      }
+      return;
+    }
+
+    // 11. Top paying jobs
+    if (/top.*paying|highest.*salary|best.*salary|most.*pay|highest.*pay/i.test(text)) {
+      const { data: topJobs } = await supabase
+        .from('opportunities')
+        .select('id, title, salary_max, salary_min, salary_currency, org:organizations(name, slug)')
+        .eq('is_open', true)
+        .not('salary_max', 'is', null)
+        .order('salary_max', { ascending: false })
+        .limit(5);
+      if (!topJobs || topJobs.length === 0) {
+        localReply("No salary data available right now. Browse all opportunities to see what's posted.");
+      } else {
+        const sources: TiikmePilotSource[] = topJobs.map((j: any) => {
+          const max = j.salary_max;
+          const label = max >= 100000 ? `₹${(max / 100000).toFixed(0)} LPA` : `₹${(max / 1000).toFixed(0)}K`;
+          return {
+            type: "opportunity" as const,
+            id: j.id,
+            title: j.title,
+            subtitle: `${(j.org as any)?.name || "Unknown"} · Up to ${label}`,
+            href: `/app/opportunities?opp=${j.id}`,
+            meta: "Top Pay",
+          };
+        });
+        localReply("Here are the top-paying roles on Tiikme right now:", sources);
+      }
+      return;
+    }
+
+    // ── RATE-LIMITED AI query ──
 
     // Daily rate limit check
     if (userId) {
@@ -326,79 +549,16 @@ export default function TiikmePilotPage() {
         .single();
       const count = usage?.message_count ?? 0;
       if (count >= DAILY_LIMIT) {
+        setMessages((prev) => prev.filter((m) => m.id !== tempUserMsg.id));
+        toast.error("Daily limit reached — resets at midnight");
+        setSending(false);
         return;
       }
-      // Increment usage
       await supabase.from('pilot_usage').upsert(
         { user_id: userId, date: today, message_count: count + 1 },
         { onConflict: 'user_id,date' }
       );
       setDailyUsed(count + 1);
-    }
-
-    setInput("");
-    setSending(true);
-
-    const tempUserMsg: ChatMessage = {
-      id: `temp-user-${Date.now()}`,
-      role: "user",
-      content: text,
-      created_at: new Date().toISOString(),
-    };
-    setMessages((prev) => [...prev, tempUserMsg]);
-
-    // Check platform FAQ first (no AI tokens)
-    const faqMatch = platformFAQ.find((faq) =>
-      faq.patterns.some((pattern) => pattern.test(text))
-    );
-    if (faqMatch) {
-      const faqAnswerId = `faq-${Date.now()}`;
-      const faqAnswerMsg: ChatMessage = {
-        id: faqAnswerId,
-        role: "assistant",
-        content: faqMatch.answer,
-        created_at: new Date().toISOString(),
-      };
-      setMessages((prev) => [...prev, faqAnswerMsg]);
-      setSending(false);
-      return;
-    }
-
-    // Check content suggestions shortcut
-    if (/what.*post|content.*ideas|suggest.*post|what should i (write|share)/i.test(text) && userId) {
-      const { data: prof } = await supabase.from('profiles').select('profession_type').eq('id', userId).single();
-      const profType = prof?.profession_type || 'professional';
-      const suggestions = CONTENT_SUGGESTIONS[profType] || CONTENT_SUGGESTIONS['professional'];
-      const suggestionsMsg: ChatMessage = {
-        id: `suggestions-${Date.now()}`,
-        role: "assistant",
-        content: `Here are 3 content ideas for you:\n\n1. ${suggestions[0]}\n2. ${suggestions[1]}\n3. ${suggestions[2]}\n\nPick one and I can help you write it — just say "Help me write #1" or #2 or #3.`,
-        created_at: new Date().toISOString(),
-      };
-      setMessages((prev) => [...prev, suggestionsMsg]);
-      setSending(false);
-      return;
-    }
-
-    // Check analytics shortcut
-    if (/my analytics|my stats|how am i doing|my score|my posts|my activity/i.test(text) && userId) {
-      const [profResult, postResult, connResult] = await Promise.all([
-        supabase.from('profiles').select('full_name, activity_score, follower_count, following_count').eq('id', userId).single(),
-        supabase.from('posts').select('*', { count: 'exact', head: true }).eq('author_id', userId),
-        supabase.from('strands').select('*', { count: 'exact', head: true }).or(`requester_id.eq.${userId},receiver_id.eq.${userId}`).eq('status', 'accepted'),
-      ]);
-      const prof = profResult.data;
-      const postCount = postResult.count ?? 0;
-      const connCount = connResult.count ?? 0;
-      const analyticsMsg: ChatMessage = {
-        id: `analytics-${Date.now()}`,
-        role: "assistant",
-        content: `Here's your Tiikme snapshot:\n\n📊 Activity Score: ${prof?.activity_score ?? 0} pts\n📝 Posts: ${postCount}\n🤝 Connections: ${connCount}\n👥 Followers: ${prof?.follower_count ?? 0}`,
-        created_at: new Date().toISOString(),
-      };
-      setMessages((prev) => [...prev, analyticsMsg]);
-      setSending(false);
-      return;
     }
 
     const tempAssistantId = `temp-assistant-${Date.now()}`;

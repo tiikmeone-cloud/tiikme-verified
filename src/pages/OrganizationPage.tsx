@@ -751,9 +751,42 @@ export default function OrganizationPage() {
 
         {/* ══════ MEMBERS TAB ══════ */}
         {activeTab === "Members" && (
-          <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
+
+            {/* Admin shortcut for org owners */}
+            {isAdmin && (
+              <div className="glass-card flex items-center justify-between" style={{
+                padding: "12px 16px", borderRadius: 14,
+                background: "rgba(232,115,58,0.06)", border: "1px solid rgba(232,115,58,0.20)",
+              }}>
+                <div>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>Team & Admin Access</p>
+                  <p style={{ fontSize: 11, color: "#9CA3C0", marginTop: 1 }}>Add team members, assign roles and manage verification routing</p>
+                </div>
+                <button type="button" onClick={() => navigate("/app/settings?tab=team")} className="cursor-pointer shrink-0" style={{
+                  height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+                  background: "#E8733A", color: "#fff", border: "none",
+                  display: "inline-flex", alignItems: "center", gap: 4,
+                }}>
+                  <Settings style={{ width: 12, height: 12 }} /> Manage Team
+                </button>
+              </div>
+            )}
+
+            {/* How to become a member — non-admin info */}
+            {!isAdmin && (
+              <div className="glass-card" style={{
+                padding: "10px 14px", borderRadius: 12,
+                background: "rgba(255,255,255,0.20)", border: "1px solid rgba(255,255,255,0.35)",
+              }}>
+                <p style={{ fontSize: 12, color: "#6B7094" }}>
+                  Members are verified employees or affiliates of this organisation. To appear here, add this organisation to your profile experience and get it verified.
+                </p>
+              </div>
+            )}
+
             {members.length === 0 ? (
-              <p style={{ fontSize: 13, color: "#9CA3C0", padding: "32px 0", textAlign: "center" }}>No members listed yet</p>
+              <p style={{ fontSize: 13, color: "#9CA3C0", padding: "16px 0", textAlign: "center" }}>No verified members listed yet</p>
             ) : members.map(m => (
               <Link key={m.id} to={`/app/profile/${m.user_id}`} className="flex items-center glass-card" style={{
                 gap: 12, padding: 14, borderRadius: 14,
@@ -768,11 +801,19 @@ export default function OrganizationPage() {
                     {getProfileSubtitle(m.profile) || m.title || m.role || "Member"}{m.department ? ` · ${m.department}` : ""}
                   </p>
                 </div>
-                {m.is_verified && (
-                  <div className="flex items-center justify-center shrink-0" style={{ width: 20, height: 20, borderRadius: 10, background: "#FFB800" }}>
-                    <Shield className="w-3 h-3 text-white" />
-                  </div>
-                )}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {isOrgMembershipConfirmed(m) && (
+                    <span style={{
+                      fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 999,
+                      background: "rgba(255,184,0,0.16)", color: "#B77900",
+                    }}>Verified</span>
+                  )}
+                  {m.is_verified && (
+                    <div className="flex items-center justify-center" style={{ width: 18, height: 18, borderRadius: 9, background: "#FFB800" }}>
+                      <Shield className="w-2.5 h-2.5 text-white" />
+                    </div>
+                  )}
+                </div>
               </Link>
             ))}
           </div>

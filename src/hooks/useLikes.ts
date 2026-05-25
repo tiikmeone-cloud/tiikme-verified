@@ -53,17 +53,17 @@ export function useLikes(postIds: string[]) {
             const pid = (payload.new as any)?.post_id || (payload.old as any)?.post_id;
             if (!pid) return;
 
+            // Skip own events — handled optimistically in toggle()
+            const eventUserId = (payload.new as any)?.user_id || (payload.old as any)?.user_id;
+            if (eventUserId === user.id) return;
+
             if (payload.eventType === "INSERT") {
               setCounts((prev) => ({ ...prev, [pid]: (prev[pid] || 0) + 1 }));
-              if ((payload.new as any).user_id === user.id)
-                setMyLikes((prev) => ({ ...prev, [pid]: true }));
             } else if (payload.eventType === "DELETE") {
               setCounts((prev) => ({
                 ...prev,
                 [pid]: Math.max(0, (prev[pid] || 0) - 1),
               }));
-              if ((payload.old as any).user_id === user.id)
-                setMyLikes((prev) => ({ ...prev, [pid]: false }));
             }
           }
         )

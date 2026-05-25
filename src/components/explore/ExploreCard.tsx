@@ -70,16 +70,17 @@ export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonC
       className="glass-card cursor-pointer"
       style={{
         display: "flex", gap: 12, padding: 14, borderRadius: 12,
-        width: 280, minWidth: 180,
-        scrollSnapAlign: "start", flexShrink: 0,
+        width: "100%", minWidth: 0,
+        scrollSnapAlign: "start",
         transition: "transform 200ms, box-shadow 200ms",
         alignItems: "flex-start",
+        boxSizing: "border-box",
       }}
       onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(26,26,78,0.12)"; }}
       onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
       onClick={() => navigate(`/app/profile/${p.id}`)}
     >
-      <AvatarSquare src={p.avatar_url} name={name} size={80} />
+      <AvatarSquare src={p.avatar_url} name={name} size={60} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-start", gap: 4, minWidth: 0, paddingTop: 1 }}>
         <div className="flex items-center gap-1.5 min-w-0">
           <span style={{ ...singleLineClamp, fontWeight: 700, fontSize: 14, lineHeight: "18px", color: "var(--text-primary)", flex: 1, minWidth: 0 }}>{name}</span>
@@ -169,16 +170,17 @@ export function OrgCard({ org, following, onToggleFollow, navigateTo }: OrgCardP
       className="glass-card cursor-pointer"
       style={{
         display: "flex", gap: 12, padding: 14, borderRadius: 12,
-        width: 280, minWidth: 180,
-        scrollSnapAlign: "start", flexShrink: 0,
+        width: "100%", minWidth: 0,
+        scrollSnapAlign: "start",
         transition: "transform 200ms, box-shadow 200ms",
         alignItems: "flex-start",
+        boxSizing: "border-box",
       }}
       onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(26,26,78,0.12)"; }}
       onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
       onClick={() => navigate(navigateTo)}
     >
-      <AvatarSquare src={org.logo_url} name={org.name || "?"} size={80} />
+      <AvatarSquare src={org.logo_url} name={org.name || "?"} size={60} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-start", gap: 4, minWidth: 0, paddingTop: 1 }}>
         <span style={{ ...singleLineClamp, fontWeight: 700, fontSize: 14, lineHeight: "18px", color: "var(--text-primary)" }}>{org.name}</span>
         {(() => {

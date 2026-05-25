@@ -77,7 +77,8 @@ export default function OrgVerificationRouting({ orgId }: { orgId: string }) {
     return (
       <div className="p-4 rounded-xl text-center" style={{ background: "var(--surface-2)", border: "1px dashed var(--border)" }}>
         <Users className="w-5 h-5 mx-auto mb-1" style={{ color: "var(--text-3)" }} />
-        <p className="text-[12px]" style={{ color: "var(--text-2)" }}>Invite admins first to set up verification routing.</p>
+        <p className="text-[12px] font-semibold mb-1" style={{ color: "var(--text-1)" }}>No verifiers assigned yet</p>
+        <p className="text-[11px]" style={{ color: "var(--text-3)" }}>Add team members as Admins or Verifiers in Settings → Team Access, then return here to route verification requests.</p>
       </div>
     );
   }
