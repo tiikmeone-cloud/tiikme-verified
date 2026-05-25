@@ -238,7 +238,11 @@ export const ExperienceSection = ({ items, isOwnProfile, onAdd, onDelete, onTogg
                     )}
                   </span>
                 }
-                line2={[companyName, exp.employment_type].filter(Boolean).join(" · ")}
+                line2={
+                  logo?.slug
+                    ? <><Link to={`/org/${logo.slug}`} onClick={e => e.stopPropagation()} style={{ color: "var(--text-secondary)", textDecoration: "underline", textDecorationColor: "transparent", transition: "text-decoration-color 150ms" }} onMouseEnter={e => { (e.target as HTMLElement).style.textDecorationColor = "currentColor"; }} onMouseLeave={e => { (e.target as HTMLElement).style.textDecorationColor = "transparent"; }}>{companyName}</Link>{exp.employment_type ? ` · ${exp.employment_type}` : ""}</>
+                    : [companyName, exp.employment_type].filter(Boolean).join(" · ")
+                }
                 line3={getDuration(exp)}
                 line4={exp.work_location || undefined}
                 right={
