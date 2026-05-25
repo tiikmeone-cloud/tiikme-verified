@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { Link } from "react-router-dom";
 import {
   Copy,
+  Eye,
   Flag,
   Heart,
   MessageCircle,
@@ -99,6 +100,32 @@ export function PostCard({
   const [sharePostId, setSharePostId] = useState<string | null>(null);
   const { user, profile: authProfile } = useAuth();
   const menuRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLElement>(null);
+  const viewTrackedRef = useRef(false);
+
+  // Track view once: post visible in viewport for ≥1s
+  useEffect(() => {
+    if (viewTrackedRef.current || !post.id || !user || user.id === post.author_id) return;
+    const el = cardRef.current;
+    if (!el) return;
+    let timer: ReturnType<typeof setTimeout>;
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        timer = setTimeout(() => {
+          if (viewTrackedRef.current) return;
+          viewTrackedRef.current = true;
+          supabase.rpc("increment_post_views" as any, { post_id: post.id }).catch(() => {
+            // Fallback: direct update (less accurate under concurrent writes, but safe)
+            supabase.from("posts").update({ view_count: (post.view_count || 0) + 1 } as any).eq("id", post.id);
+          });
+        }, 1000);
+      } else {
+        clearTimeout(timer);
+      }
+    }, { threshold: 0.5 });
+    obs.observe(el);
+    return () => { obs.disconnect(); clearTimeout(timer); };
+  }, [post.id, user]);
 
   useEffect(() => {
     if (!showMenu) return;
@@ -243,6 +270,7 @@ export function PostCard({
   return (
     <>
       <article
+        ref={cardRef}
         id={`post-${post.id}`}
         style={{
           background: "#FFFFFF",
@@ -430,6 +458,13 @@ export function PostCard({
             <Send style={{ width: 15, height: 15, color: "#9CA3C0" }} />
             <span style={{ fontSize: 12, fontWeight: 500, color: "#9CA3C0" }}>Share</span>
           </button>
+
+          {(post.view_count || 0) > 0 && (
+            <span className="flex items-center ml-auto shrink-0" style={{ gap: 4, fontSize: 11, color: "#C0C4D8", padding: "8px 4px" }}>
+              <Eye style={{ width: 12, height: 12 }} />
+              {formatCompactCount(post.view_count)}
+            </span>
+          )}
         </div>
 
         {isOpen && (
