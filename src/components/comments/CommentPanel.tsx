@@ -36,6 +36,7 @@ interface CommentRow {
   reply_count?: number;
   author?: Author | null;
   __optimistic?: boolean;
+  children?: CommentRow[];
 }
 
 interface CommentPanelProps {
@@ -46,6 +47,8 @@ interface CommentPanelProps {
   postUrlPrefix?: string;
   /** Called whenever total count changes (delta) so parent can update its badge */
   onCountChange?: (delta: number) => void;
+  /** When true: load all comments at once and build a recursive tree (for circle post detail pages) */
+  treeMode?: boolean;
 }
 
 const PAGE_SIZE = 20;
@@ -87,7 +90,25 @@ async function attachReplyCounts(table: CommentTable, postId: string, rows: Comm
   return rows.map(row => ({ ...row, reply_count: counts.get(row.id) || 0 }));
 }
 
-const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post", onCountChange }: CommentPanelProps) => {
+function buildCommentTree(rows: CommentRow[]): CommentRow[] {
+  const map = new Map<string, CommentRow>();
+  const roots: CommentRow[] = [];
+  for (const r of rows) map.set(r.id, { ...r, children: [] });
+  for (const r of rows) {
+    const node = map.get(r.id)!;
+    if (r.parent_id && map.has(r.parent_id)) {
+      map.get(r.parent_id)!.children!.push(node);
+    } else {
+      roots.push(node);
+    }
+  }
+  return roots;
+}
+
+const DEPTH_BORDER = ["rgba(255,90,31,0.35)", "rgba(107,112,148,0.30)", "rgba(107,112,148,0.20)"];
+const MAX_VISUAL_DEPTH = 3;
+
+const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post", onCountChange, treeMode = false }: CommentPanelProps) => {
   const { user, profile } = useAuth();
   const [comments, setComments] = useState<CommentRow[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -103,6 +124,8 @@ const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post"
   const [replyVisibleCount, setReplyVisibleCount] = useState<Record<string, number>>({});
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
+  const [collapsedThreads, setCollapsedThreads] = useState<Set<string>>(new Set());
+  const [treeRoots, setTreeRoots] = useState<CommentRow[]>([]);
   const [sortMode, setSortMode] = useState<"top" | "newest">("top");
   const taRef = useRef<HTMLTextAreaElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -145,6 +168,28 @@ const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post"
     })();
     return () => { alive = false; };
   }, [postId, table]);
+
+  /* ----- Tree mode: load ALL comments and build recursive tree ----- */
+  useEffect(() => {
+    if (!treeMode) return;
+    let alive = true;
+    (async () => {
+      setLoading(true);
+      const { data, count } = await supabase.from(table)
+        .select("id, post_id, user_id, content, parent_id, created_at", { count: "exact" })
+        .eq("post_id", postId)
+        .order("created_at", { ascending: true })
+        .limit(500);
+      if (!alive) return;
+      const rows = ((data as any[]) || []) as CommentRow[];
+      const enriched = await attachAuthors(rows);
+      if (!alive) return;
+      setTotalCount(count || 0);
+      setTreeRoots(buildCommentTree(enriched));
+      setLoading(false);
+    })();
+    return () => { alive = false; };
+  }, [postId, table, treeMode]);
 
   /* ----- Click-outside menu ----- */
   useEffect(() => {
@@ -209,6 +254,11 @@ const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post"
       setExpandedReplies(prev => ({ ...prev, [parentId]: [...(prev[parentId] || []), optimistic] }));
       setComments(prev => prev.map(comment => comment.id === parentId ? { ...comment, reply_count: (comment.reply_count || 0) + 1 } : comment));
       setReplyText(""); setReplyingTo(null);
+    } else if (treeMode) {
+      setTreeRoots(prev => [...prev, { ...optimistic, children: [] }]);
+      setInput("");
+      setTotalCount(c => c + 1);
+      onCountChange?.(1);
     } else {
       setComments(prev => [...prev, optimistic]);
       setInput("");
@@ -236,9 +286,11 @@ const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post"
       return;
     }
 
-    const enriched: CommentRow = { ...(data as any), author: optimistic.author };
+    const enriched: CommentRow = { ...(data as any), author: optimistic.author, children: [] };
     if (parentId) {
       setExpandedReplies(prev => ({ ...prev, [parentId]: (prev[parentId] || []).map(c => c.id === tempId ? enriched : c) }));
+    } else if (treeMode) {
+      setTreeRoots(prev => [...prev, enriched]);
     } else {
       setComments(prev => prev.map(c => c.id === tempId ? enriched : c));
     }
@@ -288,6 +340,165 @@ const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post"
     setEditingId(null);
     setEditText("");
   }, [editText, user, table]);
+
+  /* ----- Tree-mode: recursive comment node ----- */
+  const renderTreeNode = (c: CommentRow, depth = 0): React.ReactNode => {
+    const isOwn = user?.id === c.user_id;
+    const isPostAuthor = postAuthorId && user?.id === postAuthorId;
+    const isEditing = editingId === c.id;
+    const collapsed = collapsedThreads.has(c.id);
+    const visualDepth = Math.min(depth, MAX_VISUAL_DEPTH);
+    const borderColor = DEPTH_BORDER[Math.max(0, visualDepth - 1)];
+    const replyingHere = replyingTo === c.id;
+
+    return (
+      <div key={c.id} style={{ position: "relative" }}>
+        {depth > 0 && (
+          <div
+            style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 2, background: borderColor, borderRadius: 1, cursor: "pointer" }}
+            title={collapsed ? "Expand thread" : "Collapse thread"}
+            onClick={() => setCollapsedThreads(prev => {
+              const s = new Set(prev);
+              s.has(c.id) ? s.delete(c.id) : s.add(c.id);
+              return s;
+            })}
+          />
+        )}
+        <div style={{ paddingLeft: depth > 0 ? 14 : 0 }}>
+          <div className="flex group" style={{ gap: 8, padding: "6px 0", alignItems: "flex-start" }}>
+            <div className="shrink-0" style={{ marginTop: 2 }}>
+              <AvatarSquare src={c.author?.avatar_url} name={safeDisplayName(c.author)} size={depth === 0 ? 28 : 24} />
+            </div>
+            <div className="flex-1 min-w-0">
+              {depth > 0 && c.content && /^@\S+/.test(c.content) && (
+                <p style={{ fontSize: 10, color: "#9CA3C0", marginBottom: 1 }}>
+                  Replying to <span style={{ fontWeight: 600 }}>{c.content.match(/^(@\S+)/)?.[1]}</span>
+                </p>
+              )}
+              <div className="flex items-center" style={{ gap: 6 }}>
+                <Link to={`/app/profile/${c.user_id}`} className="hover:underline" style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>
+                  {safeDisplayName(c.author, "Tiikme member")}
+                </Link>
+                <span style={{ fontSize: 11, color: "#9CA3C0" }}>·</span>
+                <span style={{ fontSize: 11, color: "#9CA3C0" }}>{timeAgo(c.created_at)}</span>
+              </div>
+              {!collapsed && (isEditing ? (
+                <div className="flex items-center gap-2 mt-1">
+                  <textarea value={editText} onChange={e => setEditText(e.target.value.slice(0, 1000))} rows={2} autoFocus
+                    className="flex-1 outline-none"
+                    style={{ fontSize: 13, padding: "6px 10px", borderRadius: 10, background: "#F5F5F5", border: "1px solid #E8E8E8", resize: "vertical" }} />
+                  <button type="button" onClick={() => saveEdit(c)} disabled={!editText.trim()} className="cursor-pointer disabled:opacity-50"
+                    style={{ fontSize: 12, fontWeight: 600, padding: "4px 10px", borderRadius: 8, background: "#E8733A", color: "#fff", border: "none" }}>Save</button>
+                  <button type="button" onClick={() => { setEditingId(null); setEditText(""); }} className="cursor-pointer"
+                    style={{ fontSize: 12, fontWeight: 500, padding: "4px 8px", color: "#6B7094", background: "none", border: "none" }}>Cancel</button>
+                </div>
+              ) : (
+                <p style={{ fontSize: 13, lineHeight: "18px", color: "#1A1A2E", marginTop: 2, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                  <MentionText text={c.content} />
+                </p>
+              ))}
+              {collapsed && (
+                <button type="button" onClick={() => setCollapsedThreads(prev => { const s = new Set(prev); s.delete(c.id); return s; })}
+                  style={{ fontSize: 11, color: "#9CA3C0", background: "none", border: "none", cursor: "pointer", padding: "2px 0" }}>
+                  [{(c.children?.length || 0)} {(c.children?.length || 0) === 1 ? "reply" : "replies"} hidden] click to expand
+                </button>
+              )}
+              {!isEditing && !collapsed && (
+                <div className="flex items-center" style={{ gap: 12, marginTop: 4 }}>
+                  <button type="button"
+                    onClick={() => { setReplyingTo(replyingTo === c.id ? null : c.id); setReplyText(`@${safeDisplayName(c.author)} `); }}
+                    className="cursor-pointer" style={{ fontSize: 11, fontWeight: 600, color: "#6B7094", background: "none", border: "none", padding: 0 }}>
+                    Reply
+                  </button>
+                </div>
+              )}
+              {!collapsed && replyingHere && user && (
+                <div className="mt-1">
+                  <p style={{ fontSize: 10, color: "#9CA3C0", marginBottom: 3 }}>
+                    Replying to <span style={{ fontWeight: 600 }}>{replyText.split(" ")[0]}</span>
+                  </p>
+                  <div className="flex items-center" style={{ gap: 6 }}>
+                    <AvatarSquare src={profile?.avatar_url} name={profile?.full_name || "You"} size={22} />
+                    <input value={replyText} onChange={e => setReplyText(e.target.value.slice(0, 1000))}
+                      placeholder="Write a reply..." autoFocus className="flex-1 outline-none"
+                      style={{ height: 30, borderRadius: 14, padding: "0 10px", fontSize: 12, background: "#F5F5F5", border: "1px solid #E8E8E8" }}
+                      onKeyDown={e => { if (e.key === "Enter" && replyText.trim()) { submitTreeReply(c.id, replyText); } }} />
+                    <button type="button" onClick={() => submitTreeReply(c.id, replyText)} disabled={!replyText.trim()}
+                      className="cursor-pointer disabled:opacity-50"
+                      style={{ color: replyText.trim() ? "#E8733A" : "#9CA3C0", background: "none", border: "none" }}>
+                      <SendHorizontal style={{ width: 14, height: 14 }} />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+            {(isOwn || isPostAuthor) && !isEditing && !c.__optimistic && (
+              <div className="relative shrink-0" ref={openMenuId === c.id ? menuRef : null}>
+                <button type="button" onClick={() => setOpenMenuId(openMenuId === c.id ? null : c.id)}
+                  className="opacity-0 group-hover:opacity-100 cursor-pointer flex items-center justify-center"
+                  style={{ width: 24, height: 24, color: "#9CA3C0", background: "none", border: "none" }}>
+                  <MoreHorizontal style={{ width: 14, height: 14 }} />
+                </button>
+                {openMenuId === c.id && (
+                  <div className="absolute right-0 z-[60]" style={{ top: 26, width: 140, borderRadius: 10, padding: "6px 0", background: "#FFFFFF", border: "1px solid #E5E7EB", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
+                    {isOwn && (
+                      <button type="button" onClick={() => { setEditingId(c.id); setEditText(c.content); setOpenMenuId(null); }}
+                        className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "8px 12px", fontSize: 13, color: "#1A1A2E", background: "none", border: "none" }}>
+                        <Pencil style={{ width: 12, height: 12 }} /> Edit
+                      </button>
+                    )}
+                    <button type="button" onClick={() => { removeTreeNode(c); setOpenMenuId(null); }}
+                      className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "8px 12px", fontSize: 13, color: "#EF4444", background: "none", border: "none" }}>
+                      <Trash2 style={{ width: 12, height: 12 }} /> Delete
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          {!collapsed && c.children?.map(child => renderTreeNode(child, depth + 1))}
+        </div>
+      </div>
+    );
+  };
+
+  const submitTreeReply = useCallback(async (parentId: string, text: string) => {
+    const content = text.trim();
+    if (!content || !user || submitting) return;
+    setSubmitting(true);
+    const { data, error } = await supabase.from(table)
+      .insert({ post_id: postId, user_id: user.id, content, parent_id: parentId } as any)
+      .select("id, post_id, user_id, content, parent_id, created_at")
+      .single();
+    setSubmitting(false);
+    if (error || !data) { toast.error("Failed to post reply"); return; }
+    const enriched: CommentRow = { ...(data as any), author: { id: user.id, full_name: profile?.full_name || "You", avatar_url: profile?.avatar_url || null, role: profile?.role || null }, children: [] };
+    setTreeRoots(prev => {
+      const addToParent = (nodes: CommentRow[]): CommentRow[] =>
+        nodes.map(n => n.id === parentId
+          ? { ...n, children: [...(n.children || []), enriched] }
+          : { ...n, children: addToParent(n.children || []) });
+      return addToParent(prev);
+    });
+    setTotalCount(c => c + 1);
+    onCountChange?.(1);
+    setReplyingTo(null);
+    setReplyText("");
+  }, [user, profile, postId, table, submitting, onCountChange]);
+
+  const removeTreeNode = useCallback(async (c: CommentRow) => {
+    if (!user) return;
+    const isPostAuthor = postAuthorId && user.id === postAuthorId;
+    if (c.user_id !== user.id && !isPostAuthor) return;
+    const removeFromTree = (nodes: CommentRow[]): CommentRow[] =>
+      nodes.filter(n => n.id !== c.id).map(n => ({ ...n, children: removeFromTree(n.children || []) }));
+    setTreeRoots(prev => removeFromTree(prev));
+    setTotalCount(prev => Math.max(0, prev - 1));
+    onCountChange?.(-1);
+    const query = supabase.from(table).delete().eq("id", c.id);
+    const { error } = isPostAuthor ? await query : await query.eq("user_id", user.id);
+    if (error) toast.error("Failed to delete");
+  }, [user, postAuthorId, table, onCountChange]);
 
   /* ----- UI ----- */
   const renderRow = (c: CommentRow, isReply = false, threadRootId?: string) => {
@@ -507,7 +718,9 @@ const CommentPanel = ({ postId, table, postAuthorId, postUrlPrefix = "/app/post"
                 {loadingMore ? "Loading..." : `Show ${Math.min(PAGE_SIZE, totalCount - comments.length)} more comments`}
               </button>
             )}
-            {orderedComments.map(c => renderRow(c))}
+            {treeMode
+              ? treeRoots.map(c => renderTreeNode(c, 0))
+              : orderedComments.map(c => renderRow(c))}
           </>
         )}
       </div>

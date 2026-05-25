@@ -544,6 +544,78 @@ function CircleDetail({ slug }: { slug: string }) {
 }
 
 // =================================================================
+// POLL CARD — interactive voting
+// =================================================================
+function PollCard({ post }: { post: any }) {
+  const { user } = useAuth();
+  const [votes, setVotes] = useState<Record<string, string>>(post.poll_votes || {});
+  const [voting, setVoting] = useState(false);
+
+  const options: Array<{ id: string; text: string }> = Array.isArray(post.poll_options)
+    ? post.poll_options
+    : [];
+  const myVote = user ? votes[user.id] : null;
+  const totalVotes = Object.keys(votes).length;
+  const pollEnded = post.poll_ends_at ? new Date(post.poll_ends_at) < new Date() : false;
+  const showResults = !!myVote || pollEnded;
+
+  const handleVote = async (optionId: string) => {
+    if (!user || voting || myVote || pollEnded) return;
+    setVoting(true);
+    const newVotes = { ...votes, [user.id]: optionId };
+    setVotes(newVotes);
+    const { error } = await supabase.from("circle_posts")
+      .update({ poll_votes: newVotes } as any)
+      .eq("id", post.id);
+    if (error) {
+      setVotes(votes);
+      toast.error("Vote failed");
+    }
+    setVoting(false);
+  };
+
+  const getCount = (optId: string) => Object.values(votes).filter(v => v === optId).length;
+  const getPct = (optId: string) => totalVotes > 0 ? Math.round((getCount(optId) / totalVotes) * 100) : 0;
+
+  return (
+    <div style={{ marginTop: 6 }}>
+      {post.body && <p style={{ fontSize: 13, color: "#374151", lineHeight: 1.55, marginBottom: 10 }}>{post.body}</p>}
+      <div className="space-y-2">
+        {options.map(opt => {
+          const pct = getPct(opt.id);
+          const isMyVote = myVote === opt.id;
+          return (
+            <button
+              key={opt.id}
+              type="button"
+              disabled={!!myVote || pollEnded || voting}
+              onClick={() => handleVote(opt.id)}
+              className="w-full text-left cursor-pointer disabled:cursor-default relative overflow-hidden"
+              style={{ borderRadius: 10, border: `1.5px solid ${isMyVote ? "#FF5A1F" : "#E8E8E8"}`, padding: "9px 12px", background: "transparent", transition: "border-color 0.15s" }}
+            >
+              {showResults && (
+                <div style={{ position: "absolute", inset: 0, background: isMyVote ? "rgba(255,90,31,0.10)" : "rgba(0,0,0,0.04)", width: `${pct}%`, borderRadius: 8, transition: "width 0.4s ease" }} />
+              )}
+              <div className="relative flex items-center justify-between gap-2">
+                <span style={{ fontSize: 13, fontWeight: isMyVote ? 700 : 400, color: isMyVote ? "#FF5A1F" : "#1A1A2E" }}>{opt.text}</span>
+                {showResults && (
+                  <span style={{ fontSize: 12, fontWeight: 600, color: isMyVote ? "#FF5A1F" : "#6B7094", whiteSpace: "nowrap" }}>{pct}%</span>
+                )}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+      <p style={{ fontSize: 11, color: "#9CA3C0", marginTop: 8 }}>
+        {totalVotes} vote{totalVotes !== 1 ? "s" : ""}
+        {pollEnded ? " · Poll ended" : post.poll_ends_at ? ` · Ends ${new Date(post.poll_ends_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}` : ""}
+        {!myVote && !pollEnded && !user ? " · Sign in to vote" : ""}
+      </p>
+    </div>
+  );
+}
+
+// =================================================================
 // POST CARD (with edit/delete for owner — already implemented)
 // =================================================================
 function CirclePostCard({
@@ -710,6 +782,8 @@ function CirclePostCard({
             </button>
           </div>
         </div>
+      ) : post.post_type === "poll" && post.poll_options ? (
+        <PollCard post={post} />
       ) : (
         <p style={{ fontSize: 13, color: "#374151", lineHeight: 1.55, whiteSpace: "pre-wrap" }}>{post.body || post.content}</p>
       )}
