@@ -40,8 +40,8 @@ const systems = [
     icon: Briefcase,
     name: "Hiring Pipeline",
     tagline: "Schedule interviews, receive offers, track every application",
-    accent: "#2563EB",
-    bg: "#EFF6FF",
+    accent: "#E8733A",
+    bg: "rgba(232,115,58,0.08)",
   },
   {
     icon: Users,
