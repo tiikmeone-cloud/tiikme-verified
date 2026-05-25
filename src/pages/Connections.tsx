@@ -103,13 +103,13 @@ const Connections = () => {
     if (!user) return { connected: [], pendingIncoming: [], pendingSent: [], suggested: [] };
     const [acceptedRes, incomingRes, sentRes] = await Promise.allSettled([
       supabase.from("strands")
-        .select("id, requester_id, receiver_id, status, created_at, requester:profiles!strands_requester_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified, last_active_date, updated_at, display_preference, currently_working_at, designation, headline), receiver:profiles!strands_receiver_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified, last_active_date, updated_at, display_preference, currently_working_at, designation, headline)")
+        .select("id, requester_id, receiver_id, status, created_at, requester:profiles!strands_requester_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified, last_active_date, updated_at, display_preference, currently_working_at, designation, headline, profession_type), receiver:profiles!strands_receiver_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified, last_active_date, updated_at, display_preference, currently_working_at, designation, headline, profession_type)")
         .or(`requester_id.eq.${user.id},receiver_id.eq.${user.id}`).eq("status", "accepted"),
       supabase.from("strands")
-        .select("id, requester_id, receiver_id, status, created_at, requester:profiles!strands_requester_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified, display_preference, currently_working_at, designation, headline)")
+        .select("id, requester_id, receiver_id, status, created_at, requester:profiles!strands_requester_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified, display_preference, currently_working_at, designation, headline, profession_type)")
         .eq("receiver_id", user.id).eq("status", "pending"),
       supabase.from("strands")
-        .select("id, requester_id, receiver_id, status, created_at, receiver:profiles!strands_receiver_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified, display_preference, currently_working_at, designation, headline)")
+        .select("id, requester_id, receiver_id, status, created_at, receiver:profiles!strands_receiver_id_fkey(id, full_name, avatar_url, role, role_subtype, institution_name, is_verified, display_preference, currently_working_at, designation, headline, profession_type)")
         .eq("requester_id", user.id).eq("status", "pending"),
     ]);
     const accepted = acceptedRes.status === "fulfilled" ? (acceptedRes.value as any).data || [] : [];
@@ -242,7 +242,10 @@ const Connections = () => {
         return ts && new Date(ts).getTime() > week;
       });
     }
-    if (roleFilter) list = list.filter(s => getOther(s)?.role === roleFilter);
+    if (roleFilter) list = list.filter(s => {
+      const other = getOther(s);
+      return other?.role === roleFilter || (other as any)?.profession_type === roleFilter;
+    });
     list.sort((a, b) => {
       const oa = getOther(a), ob = getOther(b);
       switch (sortBy) {
@@ -311,9 +314,10 @@ const Connections = () => {
               { key: "with_company", label: "With company", active: withCompany, onToggle: () => setWithCompany(!withCompany) },
               { key: "recent", label: "Active this week", active: activeRecent, onToggle: () => setActiveRecent(!activeRecent) },
               { key: "role_student", label: "Students", active: roleFilter === "student", onToggle: () => setRoleFilter(roleFilter === "student" ? null : "student") },
-              { key: "role_pro", label: "Professionals", active: roleFilter === "professional", onToggle: () => setRoleFilter(roleFilter === "professional" ? null : "professional") },
-              { key: "role_doctor", label: "Doctors", active: roleFilter === "doctor", onToggle: () => setRoleFilter(roleFilter === "doctor" ? null : "doctor") },
-              { key: "role_faculty", label: "Faculty", active: roleFilter === "faculty", onToggle: () => setRoleFilter(roleFilter === "faculty" ? null : "faculty") },
+              { key: "role_working", label: "Working", active: roleFilter === "working", onToggle: () => setRoleFilter(roleFilter === "working" ? null : "working") },
+              { key: "role_healthcare", label: "Healthcare", active: roleFilter === "healthcare", onToggle: () => setRoleFilter(roleFilter === "healthcare" ? null : "healthcare") },
+              { key: "role_creator", label: "Creators", active: roleFilter === "creator", onToggle: () => setRoleFilter(roleFilter === "creator" ? null : "creator") },
+              { key: "role_founder", label: "Founders", active: roleFilter === "founder", onToggle: () => setRoleFilter(roleFilter === "founder" ? null : "founder") },
               { key: "role_government", label: "Government", active: roleFilter === "government", onToggle: () => setRoleFilter(roleFilter === "government" ? null : "government") },
             ]}
           />
