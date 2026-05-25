@@ -142,7 +142,13 @@ const Opportunities = () => {
       .slice(0, 5);
   }, [opps, profile, user, isInstitution]);
 
-  const myOpps = opps.filter(o => o.poster_id === user?.id);
+  // Show all jobs from this org (any admin) OR posted by this user.
+  // Using org_id is more robust than poster_id for institution accounts,
+  // and avoids the race where user?.id is null when opps data first arrives.
+  const myOpps = opps.filter(o =>
+    (isInstitution && profile?.org_id && o.org_id === profile.org_id) ||
+    (user?.id && o.poster_id === user.id)
+  );
   return (
     <SubscriptionGate feature="opportunities">
     <main className="max-w-[960px] mx-auto px-4 md:px-6 py-6">
