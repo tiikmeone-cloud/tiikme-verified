@@ -129,7 +129,7 @@ export default function PostOpportunityModal({ open, onClose, onCreated }: Props
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center px-0 md:px-4 md:pl-[230px]" style={{ background: "rgba(0,0,0,0.5)" }} onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center px-0 md:px-4 md:pl-[230px]" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }} onClick={onClose}>
       <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
         className="w-full md:max-w-[640px] max-h-[90vh] md:max-h-[85vh] overflow-y-auto rounded-t-2xl md:rounded-2xl p-6"
         style={{ background: "#FFFFFF", boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06)" }}

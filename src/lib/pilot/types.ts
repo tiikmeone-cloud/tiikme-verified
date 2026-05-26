@@ -6,6 +6,9 @@ export type IntentType =
   | 'SEARCH_CAMPAIGN'
   | 'MY_ANALYTICS'
   | 'MY_APPLICATIONS'
+  | 'MY_PROFILE'
+  | 'MY_EXPERIENCE'
+  | 'MY_SKILLS'
   | 'TRENDING'
   | 'PLATFORM_FAQ'
   | 'PRIVACY_QUESTION'
@@ -33,6 +36,7 @@ export type PilotResponseType =
   | 'analytics_card'
   | 'trending_card'
   | 'applications_list'
+  | 'my_profile_card'
   | 'navigation'
   | 'limit_reached'
   | 'faq';
@@ -120,12 +124,39 @@ export interface CampaignCard {
   created_at?: string;
 }
 
+export interface ExperienceItem {
+  role?: string | null;
+  company?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  is_current?: boolean;
+  description?: string | null;
+  location?: string | null;
+}
+
+export interface MyProfileData {
+  full_name?: string | null;
+  headline?: string | null;
+  about?: string | null;
+  bio?: string | null;
+  skills?: string[];
+  designation?: string | null;
+  department?: string | null;
+  location_city?: string | null;
+  location_state?: string | null;
+  is_verified?: boolean;
+  currently_working_at?: string | null;
+  profession_type?: string | null;
+  experience?: ExperienceItem[];
+}
+
 export interface PilotResponse {
   type: PilotResponseType;
   content?: string;
   cards?: ProfileCard[] | JobCard[] | CircleCard[] | CampaignCard[];
   applications?: ApplicationItem[];
   data?: AnalyticsData;
+  myProfile?: MyProfileData;
   hashtags?: TrendingHashtag[];
   action?: PilotAction;
   isAiGenerated?: boolean;

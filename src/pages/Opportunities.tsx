@@ -302,6 +302,9 @@ const Opportunities = () => {
       {/* ORG: CAMPAIGNS */}
       {isInstitution && orgTab === "campaigns" && <OrgCampaignsTab />}
 
+      {/* ORG: CAMPAIGNS */}
+      {isInstitution && orgTab === "campaigns" && <OrgCampaignsTab />}
+
       <AnimatePresence>
         {showApply && <ApplyModal open={!!showApply} onClose={() => setShowApply(null)} opportunity={showApply} orgName={showApply?.org?.name} onApplied={() => { queryClient.invalidateQueries({ queryKey: ["applied-opportunities"] }); queryClient.invalidateQueries({ queryKey: ["opportunities"] }); setShowApply(null); }} />}
       </AnimatePresence>
@@ -688,6 +691,361 @@ function FindTalentTab({ currentUserId, orgId }: { currentUserId?: string; orgId
         </div>
       )}
     </>
+  );
+}
+
+/* ─── Org Campaigns Tab ─── */
+function OrgCampaignsTab() {
+  const { profile } = useAuth();
+  const navigate = useNavigate();
+  const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreate, setShowCreate] = useState(false);
+  const [form, setForm] = useState({ title: "", description: "", campaign_type: "ugc", deliverable_platforms: [] as string[], budget_per_creator: "", creator_slots: "5", min_followers: "0", deliverable_description: "", application_deadline: "" });
+  const [creating, setCreating] = useState(false);
+
+  const orgId = (profile as any)?.org_id;
+
+  useEffect(() => {
+    if (!orgId) { setLoading(false); return; }
+    supabase.from("campaigns")
+      .select("*, _apps:opportunity_applications!opportunity_applications_campaign_id_fkey(id)")
+      .eq("org_id", orgId)
+      .order("created_at", { ascending: false })
+      .limit(30)
+      .then(({ data }) => { setCampaigns(data || []); setLoading(false); });
+  }, [orgId]);
+
+  const handleCreate = async () => {
+    if (!orgId || !form.title.trim()) { toast.error("Campaign title is required"); return; }
+    setCreating(true);
+    const { data, error } = await supabase.from("campaigns").insert({
+      org_id: orgId,
+      title: form.title.trim(),
+      description: form.description.trim() || null,
+      campaign_type: form.campaign_type,
+      deliverable_platforms: form.deliverable_platforms,
+      budget_per_creator: form.budget_per_creator ? parseInt(form.budget_per_creator) : null,
+      slots_available: parseInt(form.creator_slots) || 5,
+      min_followers: parseInt(form.min_followers) || 0,
+      application_deadline: form.application_deadline || null,
+      status: "active",
+    }).select().single();
+    setCreating(false);
+    if (error) { toast.error("Failed to create campaign"); return; }
+    setCampaigns(prev => [{ ...data, _apps: [] }, ...prev]);
+    toast.success("Campaign published!");
+    setShowCreate(false);
+    setForm({ title: "", description: "", campaign_type: "ugc", deliverable_platforms: [], budget_per_creator: "", creator_slots: "5", min_followers: "0", deliverable_description: "", application_deadline: "" });
+  };
+
+  const togglePlatform = (p: string) => {
+    setForm(f => ({ ...f, deliverable_platforms: f.deliverable_platforms.includes(p) ? f.deliverable_platforms.filter(x => x !== p) : [...f.deliverable_platforms, p] }));
+  };
+
+  const inputStyle = { padding: "10px 12px", borderRadius: 12, border: "1.5px solid #E8E8E8", background: "#FAFAFA", fontSize: 13, width: "100%", outline: "none" } as React.CSSProperties;
+
+  if (loading) return <div className="animate-pulse" style={{ height: 80, borderRadius: 12, background: "#F5F5F5" }} />;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-[12px] font-semibold" style={{ color: "#6B7094" }}>Creator campaigns you've posted</p>
+        <button type="button" onClick={() => setShowCreate(true)}
+          className="flex items-center gap-1 cursor-pointer px-3 py-1.5 rounded-xl text-[12px] font-bold"
+          style={{ background: "#FF5A1F", color: "#fff", border: "none" }}>
+          <Plus className="w-3 h-3" /> New campaign
+        </button>
+      </div>
+
+      {campaigns.length === 0 ? (
+        <div className="text-center py-12">
+          <Zap className="w-10 h-10 mx-auto mb-2" style={{ color: "var(--text-3)" }} />
+          <p className="text-[14px] font-semibold mb-1" style={{ color: "#1A1A2E" }}>No campaigns yet</p>
+          <p className="text-[13px]" style={{ color: "#6B7094" }}>Create your first creator campaign to find influencers and UGC creators.</p>
+        </div>
+      ) : campaigns.map(c => {
+        const typeConf = CAMPAIGN_TYPE_LABELS[c.campaign_type] || CAMPAIGN_TYPE_LABELS.ugc;
+        const appCount = Array.isArray(c._apps) ? c._apps.length : 0;
+        return (
+          <div key={c.id} className="bg-white border border-gray-100 rounded-2xl p-4">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="font-bold text-[14px]" style={{ color: "#1A1A2E" }}>{c.title}</p>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: typeConf.bg, color: typeConf.color }}>{typeConf.label}</span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${c.status === "active" ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-500"}`}>{c.status}</span>
+                </div>
+                {c.description && <p className="text-[12px] mt-1 line-clamp-1" style={{ color: "#6B7094" }}>{c.description}</p>}
+                <div className="flex items-center gap-3 mt-2 text-[11px]" style={{ color: "#9CA3C0" }}>
+                  <span>{appCount} applicant{appCount !== 1 ? "s" : ""}</span>
+                  {c.budget_per_creator && <span>₹{c.budget_per_creator.toLocaleString()}/creator</span>}
+                  {c.slots_available && <span>{c.slots_available} slots</span>}
+                </div>
+              </div>
+              <button type="button"
+                onClick={() => navigate(`/app/opportunities/campaign/${c.id}/applicants`)}
+                className="shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-bold cursor-pointer"
+                style={{ background: "#F5F5F5", color: "#1A1A2E", border: "none" }}>
+                Review →
+              </button>
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Create campaign modal */}
+      {showCreate && (
+        <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center" style={{ background: "rgba(0,0,0,0.45)" }} onClick={() => setShowCreate(false)}>
+          <div className="w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl p-5 bg-white" onClick={e => e.stopPropagation()} style={{ maxHeight: "90vh", overflowY: "auto" }}>
+            <h3 className="font-bold text-[16px] mb-4" style={{ color: "#1A1A2E" }}>Create creator campaign</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-[12px] font-bold mb-1" style={{ color: "#1A1A2E" }}>Campaign title *</label>
+                <input style={inputStyle} placeholder="e.g. Unboxing campaign for new product" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value.slice(0, 100) }))} />
+              </div>
+              <div>
+                <label className="block text-[12px] font-bold mb-1" style={{ color: "#1A1A2E" }}>Campaign type</label>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(CAMPAIGN_TYPE_LABELS).map(([k, v]) => (
+                    <button key={k} type="button" onClick={() => setForm(f => ({ ...f, campaign_type: k }))}
+                      className="cursor-pointer px-3 py-1 rounded-full text-[11px] font-bold"
+                      style={{ background: form.campaign_type === k ? v.bg : "#F5F5F5", color: form.campaign_type === k ? v.color : "#6B7094", border: form.campaign_type === k ? `1.5px solid ${v.color}` : "1.5px solid transparent" }}>
+                      {v.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-[12px] font-bold mb-1" style={{ color: "#1A1A2E" }}>Platforms</label>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(PLATFORM_LABELS).map(([k, v]) => (
+                    <button key={k} type="button" onClick={() => togglePlatform(k)}
+                      className="cursor-pointer px-2.5 py-1 rounded-full text-[11px] font-semibold"
+                      style={{ background: form.deliverable_platforms.includes(k) ? "#FF5A1F" : "#F5F5F5", color: form.deliverable_platforms.includes(k) ? "#fff" : "#6B7094", border: "none" }}>
+                      {v}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-[12px] font-bold mb-1" style={{ color: "#1A1A2E" }}>What creators must deliver</label>
+                <textarea value={form.deliverable_description} onChange={e => setForm(f => ({ ...f, deliverable_description: e.target.value.slice(0, 500) }))}
+                  rows={2} placeholder="e.g. 1 Instagram Reel (30–60s) with product mention"
+                  className="w-full outline-none" style={{ ...inputStyle, resize: "none" }} />
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="block text-[12px] font-bold mb-1" style={{ color: "#1A1A2E" }}>Budget/creator (₹)</label>
+                  <input type="number" style={inputStyle} placeholder="e.g. 5000" value={form.budget_per_creator} onChange={e => setForm(f => ({ ...f, budget_per_creator: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="block text-[12px] font-bold mb-1" style={{ color: "#1A1A2E" }}>Slots</label>
+                  <input type="number" style={inputStyle} value={form.creator_slots} onChange={e => setForm(f => ({ ...f, creator_slots: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="block text-[12px] font-bold mb-1" style={{ color: "#1A1A2E" }}>Min followers</label>
+                  <input type="number" style={inputStyle} value={form.min_followers} onChange={e => setForm(f => ({ ...f, min_followers: e.target.value }))} />
+                </div>
+              </div>
+              <div>
+                <label className="block text-[12px] font-bold mb-1" style={{ color: "#1A1A2E" }}>Application deadline</label>
+                <input type="date" style={inputStyle} value={form.application_deadline} onChange={e => setForm(f => ({ ...f, application_deadline: e.target.value }))} />
+              </div>
+              <div className="flex gap-2 pt-1">
+                <button type="button" onClick={() => setShowCreate(false)}
+                  className="flex-1 cursor-pointer py-2.5 rounded-xl text-[13px] font-semibold"
+                  style={{ background: "#F5F5F5", color: "#1A1A2E", border: "none" }}>Cancel</button>
+                <button type="button" onClick={handleCreate} disabled={creating || !form.title.trim()}
+                  className="flex-1 cursor-pointer py-2.5 rounded-xl text-[13px] font-bold disabled:opacity-50"
+                  style={{ background: "#FF5A1F", color: "#fff", border: "none" }}>
+                  {creating ? "Publishing..." : "Publish campaign"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Campaigns Tab ─── */
+const PLATFORM_LABELS: Record<string, string> = {
+  instagram: "Instagram", youtube: "YouTube", linkedin: "LinkedIn",
+  twitter: "Twitter/X", reels: "Reels", shorts: "Shorts", blog: "Blog/Article",
+};
+const CAMPAIGN_TYPE_LABELS: Record<string, { label: string; color: string; bg: string }> = {
+  ugc: { label: "UGC", color: "#7E22CE", bg: "#FDF4FF" },
+  awareness: { label: "Awareness", color: "#0369A1", bg: "#F0F9FF" },
+  review: { label: "Review", color: "#166534", bg: "#F0FDF4" },
+  event: { label: "Event", color: "#92400E", bg: "#FFF7ED" },
+  affiliate: { label: "Affiliate", color: "#C44A1F", bg: "#FFF7ED" },
+  sponsored: { label: "Sponsored", color: "#1A1A2E", bg: "#F5F5F5" },
+};
+
+function CampaignsTab() {
+  const { user, profile } = useAuth();
+  const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [applying, setApplying] = useState<string | null>(null);
+  const [applied, setApplied] = useState<Set<string>>(new Set());
+  const [openPitch, setOpenPitch] = useState<any>(null);
+  const [pitchText, setPitchText] = useState("");
+  const [pitchPlatform, setPitchPlatform] = useState("");
+  const [pitchFollowers, setPitchFollowers] = useState("");
+  const [pitchPortfolio, setPitchPortfolio] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const [{ data: camps }, { data: myApps }] = await Promise.all([
+        supabase.from("campaigns")
+          .select("*, org:organizations!campaigns_org_id_fkey(id, name, logo_url, slug)")
+          .eq("status", "active")
+          .order("created_at", { ascending: false })
+          .limit(50),
+        user ? supabase.from("opportunity_applications")
+          .select("campaign_id").eq("applicant_id", user.id).not("campaign_id", "is", null) : Promise.resolve({ data: [] }),
+      ]);
+      setCampaigns(camps || []);
+      setApplied(new Set((myApps || []).map((a: any) => a.campaign_id)));
+      setLoading(false);
+    })();
+  }, [user?.id]);
+
+  const handleApply = async () => {
+    if (!user || !openPitch) return;
+    setSubmitting(true);
+    const { error } = await supabase.from("opportunity_applications").insert({
+      campaign_id: openPitch.id,
+      applicant_id: user.id,
+      pitch_text: pitchText.trim() || null,
+      platform: pitchPlatform || null,
+      follower_count: pitchFollowers ? parseInt(pitchFollowers) : null,
+      portfolio_url: pitchPortfolio.trim() || null,
+    });
+    setSubmitting(false);
+    if (error) { toast.error("Failed to apply"); return; }
+    setApplied(prev => new Set([...prev, openPitch.id]));
+    toast.success("Application sent to brand!");
+    setOpenPitch(null); setPitchText(""); setPitchPlatform(""); setPitchFollowers(""); setPitchPortfolio("");
+  };
+
+  if (loading) return <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="animate-pulse glass-light rounded-xl" style={{ height: 120 }} />)}</div>;
+  if (campaigns.length === 0) return (
+    <div className="text-center py-16">
+      <Zap className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
+      <p className="font-semibold mb-1" style={{ fontSize: 15, color: "#1A1A2E" }}>No active campaigns</p>
+      <p className="text-[13px]" style={{ color: "#6B7094" }}>Brands will post creator campaigns here. Check back soon.</p>
+    </div>
+  );
+
+  return (
+    <div className="space-y-3">
+      <p className="text-[12px] font-semibold" style={{ color: "#6B7094" }}>Brand campaigns open for creators and gig workers</p>
+      {campaigns.map(c => {
+        const typeConf = CAMPAIGN_TYPE_LABELS[c.campaign_type] || CAMPAIGN_TYPE_LABELS.ugc;
+        const isApplied = applied.has(c.id);
+        const platforms = (c.deliverable_platforms || []).map((p: string) => PLATFORM_LABELS[p] || p);
+        return (
+          <div key={c.id} className="bg-white border border-gray-100 rounded-2xl p-4" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+            <div className="flex items-start gap-3">
+              <AvatarSquare src={c.org?.logo_url} name={c.org?.name || "Brand"} size={40} />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="font-bold text-[14px]" style={{ color: "#1A1A2E" }}>{c.title}</p>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: typeConf.bg, color: typeConf.color }}>{typeConf.label}</span>
+                </div>
+                <p className="text-[12px]" style={{ color: "#6B7094" }}>{c.org?.name}</p>
+              </div>
+              <button
+                type="button"
+                disabled={isApplied || applying === c.id}
+                onClick={() => { setOpenPitch(c); setPitchText(""); setPitchPlatform(""); setPitchFollowers(""); setPitchPortfolio(""); }}
+                className="shrink-0 px-3 py-1.5 rounded-xl text-[12px] font-bold cursor-pointer disabled:opacity-60 disabled:cursor-default"
+                style={{ background: isApplied ? "#F0FDF4" : "#FF5A1F", color: isApplied ? "#166534" : "#fff", border: "none" }}>
+                {isApplied ? "Applied ✓" : "Apply"}
+              </button>
+            </div>
+            {c.description && <p className="text-[13px] mt-2 line-clamp-2" style={{ color: "#374151" }}>{c.description}</p>}
+            <div className="flex items-center flex-wrap gap-2 mt-2">
+              {c.budget_per_creator && (
+                <span className="text-[11px] font-semibold bg-green-50 text-green-700 px-2 py-0.5 rounded-full">₹{c.budget_per_creator.toLocaleString()} per creator</span>
+              )}
+              {c.slots_available && (
+                <span className="text-[11px] text-gray-500">{c.slots_available} slots</span>
+              )}
+              {c.min_followers > 0 && (
+                <span className="text-[11px] text-gray-500">{c.min_followers.toLocaleString()}+ followers</span>
+              )}
+              {platforms.slice(0, 3).map((p: string) => (
+                <span key={p} className="text-[11px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{p}</span>
+              ))}
+              {c.application_deadline && (
+                <span className="text-[11px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
+                  Deadline: {new Date(c.application_deadline).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                </span>
+              )}
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Apply pitch modal */}
+      {openPitch && (
+        <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center" style={{ background: "rgba(0,0,0,0.45)" }} onClick={() => setOpenPitch(null)}>
+          <div className="w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl p-5 bg-white" onClick={e => e.stopPropagation()} style={{ maxHeight: "90vh", overflowY: "auto" }}>
+            <h3 className="font-bold text-[15px] mb-1" style={{ color: "#1A1A2E" }}>Apply to: {openPitch.title}</h3>
+            <p className="text-[12px] mb-4" style={{ color: "#6B7094" }}>{openPitch.org?.name}</p>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-[12px] font-bold mb-1" style={{ color: "#1A1A2E" }}>Your pitch <span style={{ color: "#9CA3C0", fontWeight: 400 }}>(optional)</span></label>
+                <textarea value={pitchText} onChange={e => setPitchText(e.target.value.slice(0, 500))}
+                  rows={3} placeholder="Why are you a good fit for this campaign?"
+                  className="w-full outline-none text-[13px]"
+                  style={{ padding: "10px 12px", borderRadius: 12, border: "1.5px solid #E8E8E8", background: "#FAFAFA", resize: "none" }} />
+              </div>
+              <div>
+                <label className="block text-[12px] font-bold mb-1" style={{ color: "#1A1A2E" }}>Primary platform</label>
+                <select value={pitchPlatform} onChange={e => setPitchPlatform(e.target.value)}
+                  className="w-full outline-none text-[13px] cursor-pointer"
+                  style={{ padding: "10px 12px", borderRadius: 12, border: "1.5px solid #E8E8E8", background: "#FAFAFA" }}>
+                  <option value="">Select platform</option>
+                  {Object.entries(PLATFORM_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                </select>
+              </div>
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <label className="block text-[12px] font-bold mb-1" style={{ color: "#1A1A2E" }}>Followers / subscribers</label>
+                  <input type="number" value={pitchFollowers} onChange={e => setPitchFollowers(e.target.value)}
+                    placeholder="e.g. 5000"
+                    className="w-full outline-none text-[13px]"
+                    style={{ padding: "10px 12px", borderRadius: 12, border: "1.5px solid #E8E8E8", background: "#FAFAFA" }} />
+                </div>
+              </div>
+              <div>
+                <label className="block text-[12px] font-bold mb-1" style={{ color: "#1A1A2E" }}>Portfolio / profile link <span style={{ color: "#9CA3C0", fontWeight: 400 }}>(optional)</span></label>
+                <input type="url" value={pitchPortfolio} onChange={e => setPitchPortfolio(e.target.value)}
+                  placeholder="https://..."
+                  className="w-full outline-none text-[13px]"
+                  style={{ padding: "10px 12px", borderRadius: 12, border: "1.5px solid #E8E8E8", background: "#FAFAFA" }} />
+              </div>
+              <div className="flex gap-2 pt-1">
+                <button type="button" onClick={() => setOpenPitch(null)}
+                  className="flex-1 cursor-pointer py-2.5 rounded-xl text-[13px] font-semibold"
+                  style={{ background: "#F5F5F5", color: "#1A1A2E", border: "none" }}>Cancel</button>
+                <button type="button" onClick={handleApply} disabled={submitting}
+                  className="flex-1 cursor-pointer py-2.5 rounded-xl text-[13px] font-bold disabled:opacity-50"
+                  style={{ background: "#FF5A1F", color: "#fff", border: "none" }}>
+                  {submitting ? "Sending..." : "Send application"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

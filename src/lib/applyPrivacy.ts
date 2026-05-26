@@ -26,6 +26,7 @@ export interface PrivacySettings {
   searchable_by_email: boolean;
   show_online_status: boolean;
   show_activity: boolean;
+  show_in_pilot_search: boolean;
 }
 
 export const DEFAULT_PRIVACY: PrivacySettings = {
@@ -42,6 +43,7 @@ export const DEFAULT_PRIVACY: PrivacySettings = {
   searchable_by_email: false,
   show_online_status: true,
   show_activity: true,
+  show_in_pilot_search: true,
 };
 
 /** Normalize whatever the DB stored into a fully-populated PrivacySettings object. */
@@ -81,6 +83,7 @@ export function normalizePrivacy(raw: any): PrivacySettings {
     searchable_by_email: raw.searchable_by_email ?? false,
     show_online_status: raw.show_online_status ?? true,
     show_activity: raw.show_activity ?? true,
+    show_in_pilot_search: raw.show_in_pilot_search ?? true,
   };
 }
 

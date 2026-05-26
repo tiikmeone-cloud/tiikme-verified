@@ -29,6 +29,7 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
   const [resumeUploading, setResumeUploading] = useState(false);
   const [portfolioUrl, setPortfolioUrl] = useState("");
   const [coverLetter, setCoverLetter] = useState("");
+  const [contactEmail, setContactEmail] = useState((profile as any)?.email ?? "");
   const [consent, setConsent] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -64,6 +65,7 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
         p_portfolio_url:  portfolioUrl.trim() || null,
         p_cover_letter:   coverLetter.trim() || null,
         p_custom_answers: Object.keys(answers).length > 0 ? answers : null,
+        p_contact_email:  contactEmail.trim() || null,
       });
 
       if (error) throw error;
@@ -170,7 +172,21 @@ export default function ApplyModal({ open, onClose, opportunity, orgName, onAppl
                   style={{ height: 48, background: "#FFFFFF", border: "1.5px solid #E5E7EB", borderRadius: 8 }} />
               </div>
 
-              {/* Section 4: Portfolio */}
+              {/* Section 4: Contact email */}
+              <div>
+                <label className="text-[13px] font-semibold block mb-1.5" style={{ color: "#1A1A1A" }}>Contact email <span style={{ color: "#EF4444" }}>*</span></label>
+                <Input
+                  type="email"
+                  value={contactEmail}
+                  onChange={e => setContactEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  required
+                  style={{ height: 48, background: "#FFFFFF", border: "1.5px solid #E5E7EB", borderRadius: 8 }}
+                />
+                <p className="text-[11px] mt-1" style={{ color: "#9CA3AF" }}>This is how the employer will contact you.</p>
+              </div>
+
+              {/* Section 5: Portfolio */}
               <div>
                 <label className="text-[13px] font-semibold block mb-1.5" style={{ color: "#1A1A1A" }}>Portfolio (optional)</label>
                 <Input value={portfolioUrl} onChange={e => setPortfolioUrl(e.target.value)} placeholder="Your portfolio, GitHub, Behance, or work samples link"

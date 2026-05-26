@@ -7,9 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { sendNotification } from "@/lib/notify";
-import { PersonCard, OrgCard, TrendingPostCard, TopicPill } from "@/components/explore/ExploreCard";
-import CircleCard from "@/components/explore/CircleCard";
-import HorizontalCarousel from "@/components/explore/HorizontalCarousel";
+import type { ReactNode } from "react";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import { getOrgTypeConfig } from "@/lib/orgTypes";
 import { sendConnectionRequest } from "@/hooks/useConnectionStatus";
@@ -33,35 +31,300 @@ const SECTIONS: { key: SectionKey; label: string }[] = [
   { key: "hashtags", label: "Hashtags" },
 ];
 
-/* ─────────── Section helpers (responsive grid w/ section header) ─────────── */
-const SectionGrid = ({
-  sectionRef, title, count, cols, children,
+/* ─────────── Fixed-size carousel card wrappers ─────────── */
+/* PersonCard fixed-size wrapper: 200×240px */
+const PersonCarouselCard = ({
+  p, strandStatus, onStrand, currentUserId,
 }: {
-  sectionRef: (el: HTMLDivElement | null) => void;
-  title: string;
-  count: number;
-  cols: string;
-  children: React.ReactNode;
-}) => (
-  <section ref={sectionRef} style={{ marginBottom: 28 }}>
-    <div className="flex items-center" style={{ marginBottom: 12 }}>
-      <div style={{ width: 3, height: 18, borderRadius: 2, background: "#E8733A", marginRight: 8, flexShrink: 0 }} />
-      <h2 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)", flex: 1, margin: 0 }}>{title}</h2>
-      <span className="num" style={{ fontSize: 12, color: "var(--text-muted)", marginLeft: 8 }}>{count}</span>
-    </div>
-    <div className={`grid gap-3 md:gap-4 ${cols}`}>
-      {children}
-    </div>
-  </section>
+  p: any; strandStatus: string; onStrand: () => void; currentUserId?: string;
+}) => {
+  const navigate = useNavigate();
+  const isConnected = strandStatus === "accepted";
+  const isPending = strandStatus === "pending";
+  const name = p.full_name || p.username || "User";
+  const headline = p.headline || p.designation || (p.role ? p.role.charAt(0).toUpperCase() + p.role.slice(1).replace(/_/g, " ") : "");
+  return (
+    <article
+      className="glass-card cursor-pointer"
+      style={{
+        width: 200, minWidth: 200, height: 240, flexShrink: 0,
+        display: "flex", flexDirection: "column", alignItems: "center",
+        padding: "16px 12px 12px", borderRadius: 14,
+        scrollSnapAlign: "start",
+        transition: "transform 200ms, box-shadow 200ms",
+        boxSizing: "border-box", overflow: "hidden",
+      }}
+      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(26,26,78,0.12)"; }}
+      onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
+      onClick={() => navigate(`/app/profile/${p.id}`)}
+    >
+      <AvatarSquare src={p.avatar_url} name={name} size={48} style={{ borderRadius: "50%", flexShrink: 0 }} />
+      <p style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)", marginTop: 8, textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "100%", lineHeight: "18px" }}>
+        {name}
+      </p>
+      {headline && (
+        <p style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 3, textAlign: "center", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: "15px", width: "100%" }}>
+          {headline}
+        </p>
+      )}
+      {p.location_city && (
+        <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2, textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "100%" }}>
+          {p.location_city}
+        </p>
+      )}
+      <div style={{ flex: 1 }} />
+      {currentUserId !== p.id && (
+        <button
+          type="button"
+          disabled={strandStatus !== "none"}
+          onClick={e => { e.stopPropagation(); onStrand(); }}
+          className="cursor-pointer"
+          style={{
+            marginTop: 8, padding: "6px 14px", borderRadius: 8, width: "100%",
+            fontSize: 12, fontWeight: 600, border: "none", whiteSpace: "nowrap",
+            ...(isConnected
+              ? { background: "rgba(52,199,89,0.10)", color: "#34C759" }
+              : isPending
+              ? { background: "rgba(232,115,58,0.12)", color: "#E8733A" }
+              : { background: "#FF5A1F", color: "#fff" }
+            ),
+          }}
+        >
+          {isConnected ? "Connected ✓" : isPending ? "Requested" : "+ Connect"}
+        </button>
+      )}
+    </article>
+  );
+};
+
+/* OrgCard fixed-size wrapper: 200×220px */
+const OrgCarouselCard = ({
+  org, following, onToggleFollow, navigateTo,
+}: {
+  org: any; following: boolean; onToggleFollow: () => void; navigateTo: string;
+}) => {
+  const navigate = useNavigate();
+  const { isCreatorOrg } = require("@/lib/orgTypes");
+  const subtype = org.subtype || org.sub_type;
+  const isCreator = isCreatorOrg(org.type, subtype);
+  const followLabel = isCreator ? (following ? "Subscribed" : "+ Subscribe") : (following ? "Following" : "+ Follow");
+  const audience = org.followers_count != null ? org.followers_count : null;
+  const audienceLabel = isCreator ? "subscribers" : "followers";
+  const formatCount = (n: number) => n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : n >= 1_000 ? `${(n / 1_000).toFixed(1)}K` : String(n);
+  const location = [org.city, org.state].filter(Boolean).join(", ");
+  return (
+    <article
+      className="glass-card cursor-pointer"
+      style={{
+        width: 200, minWidth: 200, height: 220, flexShrink: 0,
+        display: "flex", flexDirection: "column", alignItems: "center",
+        padding: "16px 12px 12px", borderRadius: 14,
+        scrollSnapAlign: "start",
+        transition: "transform 200ms, box-shadow 200ms",
+        boxSizing: "border-box", overflow: "hidden",
+      }}
+      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(26,26,78,0.12)"; }}
+      onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
+      onClick={() => navigate(navigateTo)}
+    >
+      <AvatarSquare src={org.logo_url} name={org.name || "?"} size={48} style={{ borderRadius: 10, flexShrink: 0 }} />
+      <p style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)", marginTop: 8, textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "100%", lineHeight: "17px" }}>
+        {org.name}
+      </p>
+      {(subtype || location) && (
+        <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2, textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "100%" }}>
+          {[subtype, location].filter(Boolean).join(" · ")}
+        </p>
+      )}
+      {audience != null && audience > 0 && (
+        <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2, textAlign: "center" }}>
+          <span className="num">{formatCount(audience)}</span> {audienceLabel}
+        </p>
+      )}
+      <div style={{ flex: 1 }} />
+      <button
+        type="button"
+        onClick={e => { e.stopPropagation(); onToggleFollow(); }}
+        className="cursor-pointer"
+        style={{
+          marginTop: 8, padding: "6px 14px", borderRadius: 8, width: "100%",
+          fontSize: 12, fontWeight: 600, border: "none", whiteSpace: "nowrap",
+          ...(following
+            ? { background: "rgba(52,199,89,0.10)", color: "#34C759" }
+            : isCreator
+              ? { background: "#EF4444", color: "#fff" }
+              : { background: "#FF5A1F", color: "#fff" }
+          ),
+        }}
+      >
+        {followLabel}
+      </button>
+    </article>
+  );
+};
+
+/* CircleCard fixed-size wrapper: 200×200px */
+const CircleCarouselCard = ({
+  circle, isMember, onJoin,
+}: {
+  circle: any; isMember: boolean; onJoin: (e: React.MouseEvent) => void;
+}) => {
+  const navigate = useNavigate();
+  const memberCount = circle.member_count ?? 0;
+  return (
+    <article
+      className="glass-card cursor-pointer"
+      style={{
+        width: 200, minWidth: 200, height: 200, flexShrink: 0,
+        display: "flex", flexDirection: "column",
+        padding: "14px 12px 12px", borderRadius: 14,
+        scrollSnapAlign: "start",
+        transition: "transform 200ms, box-shadow 200ms",
+        boxSizing: "border-box", overflow: "hidden",
+      }}
+      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(26,26,78,0.12)"; }}
+      onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
+      onClick={() => navigate(`/app/circles/${circle.slug}`)}
+    >
+      <p style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)", lineHeight: "18px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", wordBreak: "break-word" }}>
+        {circle.name}
+      </p>
+      <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 3, lineHeight: "15px" }}>
+        {memberCount.toLocaleString()} members
+      </p>
+      {circle.description && (
+        <p style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 4, lineHeight: "15px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+          {circle.description}
+        </p>
+      )}
+      <div style={{ flex: 1 }} />
+      <button
+        type="button"
+        onClick={onJoin}
+        className="cursor-pointer"
+        style={{
+          marginTop: 8, padding: "7px 14px", borderRadius: 8, width: "100%",
+          fontSize: 12, fontWeight: 600, border: "none",
+          background: isMember ? "rgba(52,199,89,0.10)" : "linear-gradient(135deg, #7C3AED, #A855F7)",
+          color: isMember ? "#34C759" : "#fff",
+        }}
+      >
+        {isMember ? "Joined" : "Join Circle"}
+      </button>
+    </article>
+  );
+};
+
+/* PostCarouselCard fixed-size wrapper: 200×220px */
+const PostCarouselCard = ({ post, authorProfile }: { post: any; authorProfile?: any }) => {
+  const navigate = useNavigate();
+  const name = authorProfile?.full_name || "User";
+  const reactionTotal = (post.reactions?.useful || 0) + (post.reactions?.inspiring || 0) + (post.reactions?.insightful || 0) + (post.reactions?.like || 0);
+  const timeAgo = (() => {
+    const diff = Date.now() - new Date(post.created_at).getTime();
+    const h = Math.floor(diff / 3600000);
+    if (h < 1) return `${Math.max(1, Math.floor(diff / 60000))}m`;
+    if (h < 24) return `${h}h`;
+    return `${Math.floor(h / 24)}d`;
+  })();
+  return (
+    <article
+      className="glass-card cursor-pointer"
+      style={{
+        width: 200, minWidth: 200, height: 220, flexShrink: 0,
+        display: "flex", flexDirection: "column",
+        padding: "12px", borderRadius: 14,
+        scrollSnapAlign: "start",
+        transition: "transform 200ms, box-shadow 200ms",
+        boxSizing: "border-box", overflow: "hidden",
+      }}
+      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(26,26,78,0.12)"; }}
+      onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
+      onClick={() => navigate(`/app/feed?post=${post.id}`)}
+    >
+      <div className="flex items-center" style={{ gap: 6, marginBottom: 8 }}>
+        <AvatarSquare src={authorProfile?.avatar_url} name={name} size={26} style={{ borderRadius: "50%", flexShrink: 0 }} />
+        <p style={{ fontSize: 12, fontWeight: 600, color: "var(--text-primary)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</p>
+        <span style={{ fontSize: 10, color: "var(--text-muted)", flexShrink: 0 }}>{timeAgo}</span>
+      </div>
+      <p style={{ fontSize: 12, lineHeight: "17px", color: "var(--text-secondary)", flex: 1, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+        {post.content}
+      </p>
+      <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 8 }}>
+        <span className="num">{reactionTotal}</span> likes · <span className="num">{post.comment_count || 0}</span> comments
+      </p>
+    </article>
+  );
+};
+
+/* HashtagCarouselCard fixed-size: 160×100px */
+const HashtagCarouselCard = ({ tag, count, onClick }: { tag: string; count: number; onClick: () => void }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    style={{
+      width: 160, minWidth: 160, height: 100, flexShrink: 0,
+      display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center",
+      padding: "0 16px", borderRadius: 14,
+      scrollSnapAlign: "start",
+      cursor: "pointer", background: "var(--bg-card)", border: "1px solid var(--border-glass)",
+      transition: "transform 150ms, box-shadow 150ms",
+      boxSizing: "border-box",
+    }}
+    onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(26,26,78,0.10)"; }}
+    onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
+  >
+    <p style={{ fontSize: 18, fontWeight: 700, color: "#E8733A", lineHeight: "22px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "100%" }}>#{tag}</p>
+    <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}><span className="num">{count}</span> posts</p>
+  </button>
 );
 
-/* GridCell breaks the 280px hardcoded width on the inner card so it
- * fills the grid track instead of overflowing. */
-const GridCell = ({ children }: { children: React.ReactNode }) => (
-  <div className="min-w-0 [&>article]:!w-full [&>article]:!min-w-0">
-    {children}
-  </div>
-);
+/* ─────────── CarouselSection — reusable horizontal scroll section ─────────── */
+const CarouselSection = ({
+  sectionRef, title, count, seeAllHref, children,
+}: {
+  sectionRef?: (el: HTMLDivElement | null) => void;
+  title: string;
+  count: number;
+  seeAllHref?: string;
+  children: ReactNode;
+}) => {
+  const navigate = useNavigate();
+  return (
+    <div ref={sectionRef} style={{ marginBottom: 28 }}>
+      {/* Section header */}
+      <div className="flex items-center" style={{ marginBottom: 10 }}>
+        <div style={{ width: 3, height: 18, borderRadius: 2, background: "#E8733A", marginRight: 8, flexShrink: 0 }} />
+        <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)", flex: 1, margin: 0 }}>{title}</h2>
+        <span style={{ fontSize: 12, fontWeight: 600, color: "#fff", background: "#E8733A", borderRadius: 10, padding: "1px 8px", marginLeft: 8 }}>{count}</span>
+        {seeAllHref && (
+          <button
+            type="button"
+            onClick={() => navigate(seeAllHref)}
+            className="cursor-pointer"
+            style={{ marginLeft: 12, fontSize: 12, fontWeight: 600, color: "#E8733A", background: "none", border: "none", whiteSpace: "nowrap" }}
+          >
+            See all →
+          </button>
+        )}
+      </div>
+      {/* Horizontal scrollable row */}
+      <div
+        className="flex"
+        style={{
+          overflowX: "auto",
+          gap: 12,
+          paddingBottom: 12,
+          scrollSnapType: "x mandatory",
+          scrollbarWidth: "none",
+          msOverflowStyle: "none",
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+};
 
 const clampTwoLinesStyle = {
   display: "-webkit-box",
@@ -512,97 +775,97 @@ const Explore = () => {
         </div>
       )}
 
-      {/* Sections */}
+      {/* Sections — horizontal carousels */}
       <div style={{ marginTop: 18 }}>
         {showPeople && (!activeFilter || activeFilter === "people") && (
-          <SectionGrid
+          <CarouselSection
             sectionRef={el => { sectionRefs.current.people = el; }}
             title="People you may know"
             count={exploreData!.people.length}
-            cols="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+            seeAllHref="/app/explore?filter=people"
           >
-            {exploreData!.people.slice(0, 12).map(p => (
-              <GridCell key={p.id}>
-                <PersonCard
-                  p={p}
-                  strandStatus={strandMap[p.id] || "none"}
-                  onStrand={() => handleStrand(p.id)}
-                  currentUserId={user?.id}
-                />
-              </GridCell>
+            {exploreData!.people.slice(0, 20).map(p => (
+              <PersonCarouselCard
+                key={p.id}
+                p={p}
+                strandStatus={strandMap[p.id] || "none"}
+                onStrand={() => handleStrand(p.id)}
+                currentUserId={user?.id}
+              />
             ))}
-          </SectionGrid>
+          </CarouselSection>
         )}
 
         {showCircles && (!activeFilter || activeFilter === "circles") && (
-          <SectionGrid
+          <CarouselSection
             sectionRef={el => { sectionRefs.current.circles = el; }}
             title="Circles for you"
             count={exploreData!.circles.length}
-            cols="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+            seeAllHref="/app/circles"
           >
-            {exploreData!.circles.slice(0, 9).map(c => (
-              <GridCell key={c.id}>
-                <CircleCard
-                  circle={c}
-                  isMember={!!memberMap[c.id]}
-                  onJoin={(e) => { e.stopPropagation(); joinCircle(c.id); }}
-                />
-              </GridCell>
+            {exploreData!.circles.slice(0, 20).map(c => (
+              <CircleCarouselCard
+                key={c.id}
+                circle={c}
+                isMember={!!memberMap[c.id]}
+                onJoin={(e) => { e.stopPropagation(); joinCircle(c.id); }}
+              />
             ))}
-          </SectionGrid>
+          </CarouselSection>
         )}
 
         {showOrgs && (!activeFilter || activeFilter === "orgs") && (
-          <SectionGrid
+          <CarouselSection
             sectionRef={el => { sectionRefs.current.orgs = el; }}
             title="Organizations to discover"
             count={exploreData!.orgs.length}
-            cols="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+            seeAllHref="/app/explore?filter=orgs"
           >
-            {exploreData!.orgs.slice(0, 9).map(o => (
-              <GridCell key={o.id}>
-                <OrgCard
-                  org={o}
-                  following={!!followMap[o.id]}
-                  onToggleFollow={() => toggleFollow(o.id, o.created_by)}
-                  navigateTo={getOrgNavigateTo(o)}
-                />
-              </GridCell>
+            {exploreData!.orgs.slice(0, 10).map(o => (
+              <OrgCarouselCard
+                key={o.id}
+                org={o}
+                following={!!followMap[o.id]}
+                onToggleFollow={() => toggleFollow(o.id, o.created_by)}
+                navigateTo={getOrgNavigateTo(o)}
+              />
             ))}
-          </SectionGrid>
+          </CarouselSection>
         )}
 
         {showPosts && (!activeFilter || activeFilter === "posts") && (
-          <div ref={el => { sectionRefs.current.posts = el; }}>
-            <HorizontalCarousel title="Top posts" count={exploreData!.posts.length}>
-              {exploreData!.posts.map(p => (
-                <div key={p.id} style={{ scrollSnapAlign: "start", flexShrink: 0, width: "min(320px, calc(100vw - 48px))" }}>
-                  <TrendingPostCard post={p} authorProfile={exploreData!.postAuthors[p.author_id]} />
-                </div>
-              ))}
-            </HorizontalCarousel>
-          </div>
+          <CarouselSection
+            sectionRef={el => { sectionRefs.current.posts = el; }}
+            title="Top posts"
+            count={exploreData!.posts.length}
+            seeAllHref="/app/feed"
+          >
+            {exploreData!.posts.map(p => (
+              <PostCarouselCard
+                key={p.id}
+                post={p}
+                authorProfile={exploreData!.postAuthors[p.author_id]}
+              />
+            ))}
+          </CarouselSection>
         )}
 
         {showHashtags && (!activeFilter || activeFilter === "hashtags") && (
-          <div ref={el => { sectionRefs.current.hashtags = el; }} style={{ marginBottom: 24 }}>
-            <div className="flex items-center" style={{ marginBottom: 10 }}>
-              <div style={{ width: 3, height: 18, borderRadius: 2, background: "#E8733A", marginRight: 8, flexShrink: 0 }} />
-              <h2 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)", flex: 1, margin: 0 }}>Trending hashtags</h2>
-              <span style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)", marginLeft: 8 }}>{exploreData!.hashtags.length}</span>
-            </div>
-            <div className="flex overflow-x-auto" style={{ gap: 8, paddingBottom: 4, scrollbarWidth: "none" }}>
-              {exploreData!.hashtags.map(h => (
-                <TopicPill
-                  key={h.tag}
-                  tag={h.tag}
-                  count={h.count}
-                  onClick={() => navigate(`/tag/${encodeURIComponent(h.tag)}`)}
-                />
-              ))}
-            </div>
-          </div>
+          <CarouselSection
+            sectionRef={el => { sectionRefs.current.hashtags = el; }}
+            title="Trending hashtags"
+            count={exploreData!.hashtags.length}
+            seeAllHref="/app/explore?filter=hashtags"
+          >
+            {exploreData!.hashtags.map(h => (
+              <HashtagCarouselCard
+                key={h.tag}
+                tag={h.tag}
+                count={h.count}
+                onClick={() => navigate(`/tag/${encodeURIComponent(h.tag)}`)}
+              />
+            ))}
+          </CarouselSection>
         )}
       </div>
 
