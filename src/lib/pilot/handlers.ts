@@ -7,6 +7,8 @@ import type {
   AnalyticsData,
   TrendingHashtag,
   CircleCard,
+  MyProfileData,
+  ExperienceItem,
 } from './types';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -479,6 +481,145 @@ function buildTrendingFromPosts(rows: any[]): PilotResponse {
   return {
     type: 'trending_card',
     hashtags,
+  };
+}
+
+// ─── handleMyProfile ──────────────────────────────────────────────────────────
+
+export async function handleMyProfile(currentUserId: string): Promise<PilotResponse> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select(
+      'full_name, headline, about, bio, skills, designation, department, location_city, location_state, is_verified, currently_working_at, profession_type'
+    )
+    .eq('id', currentUserId)
+    .single();
+
+  if (error || !data) {
+    return {
+      type: 'text',
+      content: 'I could not load your profile. Please try again.',
+    };
+  }
+
+  const profile = data as any;
+  const myProfile: MyProfileData = {
+    full_name: profile.full_name,
+    headline: profile.headline,
+    about: profile.about ?? profile.bio,
+    bio: profile.bio,
+    skills: Array.isArray(profile.skills) ? profile.skills : [],
+    designation: profile.designation,
+    department: profile.department,
+    location_city: profile.location_city,
+    location_state: profile.location_state,
+    is_verified: profile.is_verified ?? false,
+    currently_working_at: profile.currently_working_at,
+    profession_type: profile.profession_type,
+  };
+
+  return {
+    type: 'my_profile_card',
+    myProfile,
+    action: { label: 'Edit your profile →', url: '/app/settings?tab=profile' },
+  };
+}
+
+// ─── handleMyExperience ───────────────────────────────────────────────────────
+
+export async function handleMyExperience(currentUserId: string): Promise<PilotResponse> {
+  // Try work_experience table first, then experience
+  let rows: any[] | null = null;
+
+  const { data: weData } = await supabase
+    .from('work_experience' as any)
+    .select('role, company, start_date, end_date, is_current, description, location')
+    .eq('user_id', currentUserId)
+    .order('start_date', { ascending: false });
+
+  if (weData && weData.length > 0) {
+    rows = weData as any[];
+  } else {
+    const { data: expData } = await supabase
+      .from('experience' as any)
+      .select('role, company, start_date, end_date, is_current, description, location')
+      .eq('user_id', currentUserId)
+      .order('start_date', { ascending: false });
+    rows = expData as any[] | null;
+  }
+
+  // Also fetch currently_working_at from profiles as fallback
+  const { data: profileData } = await supabase
+    .from('profiles')
+    .select('full_name, currently_working_at, headline')
+    .eq('id', currentUserId)
+    .single();
+
+  if (!rows || rows.length === 0) {
+    const workingAt = (profileData as any)?.currently_working_at;
+    if (workingAt) {
+      return {
+        type: 'faq',
+        content: `**Current workplace:** ${workingAt}\n\nNo detailed work history found. Add your experience from your profile settings to show a full history here.`,
+        action: { label: 'Add experience →', url: '/app/settings?tab=profile' },
+      };
+    }
+    return {
+      type: 'text',
+      content: "No work experience found on your profile yet. Add your experience to help others discover you and improve your Pilot results.",
+      action: { label: 'Add experience →', url: '/app/settings?tab=profile' },
+    };
+  }
+
+  const experience: ExperienceItem[] = rows.map((r: any) => ({
+    role: r.role ?? r.title ?? r.position,
+    company: r.company ?? r.company_name ?? r.organisation,
+    start_date: r.start_date,
+    end_date: r.end_date,
+    is_current: r.is_current ?? false,
+    description: r.description,
+    location: r.location,
+  }));
+
+  return {
+    type: 'my_profile_card',
+    myProfile: { experience, full_name: (profileData as any)?.full_name },
+    action: { label: 'Edit experience →', url: '/app/settings?tab=profile' },
+  };
+}
+
+// ─── handleMySkills ───────────────────────────────────────────────────────────
+
+export async function handleMySkills(currentUserId: string): Promise<PilotResponse> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('full_name, skills, headline, designation')
+    .eq('id', currentUserId)
+    .single();
+
+  if (error || !data) {
+    return {
+      type: 'text',
+      content: 'Could not load your skills. Please try again.',
+    };
+  }
+
+  const profile = data as any;
+  const skills: string[] = Array.isArray(profile.skills) ? profile.skills : [];
+
+  if (skills.length === 0) {
+    return {
+      type: 'faq',
+      content: `**${profile.full_name || 'You'} — Skills**\n\nYou haven't added any skills to your profile yet.\n\nAdding skills helps employers find you and improves how Pilot matches you to opportunities.`,
+      action: { label: 'Add skills →', url: '/app/settings?tab=profile' },
+    };
+  }
+
+  const skillLines = skills.map((s: string) => `• ${s}`).join('\n');
+  return {
+    type: 'faq',
+    content: `**${profile.full_name || 'Your'} Skills** (${skills.length} listed)\n\n${skillLines}`,
+    action: { label: 'Edit skills →', url: '/app/settings?tab=profile' },
   };
 }
 

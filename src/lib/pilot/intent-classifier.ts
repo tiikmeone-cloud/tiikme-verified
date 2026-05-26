@@ -63,6 +63,43 @@ const SEARCH_CIRCLE_PATTERNS: RegExp[] = [
   /\bshow\s+(?:me\s+)?(?:circle|community|group)/i,
 ];
 
+const MY_PROFILE_PATTERNS: RegExp[] = [
+  /\bmy\s+profile\b/i,
+  /\bshow\s+my\s+profile\b/i,
+  /\bmy\s+bio\b/i,
+  /\bmy\s+about\b/i,
+  /\bmy\s+headline\b/i,
+  /\bmy\s+summary\b/i,
+  /\btell\s+me\s+about\s+myself\b/i,
+  /\bwhat(?:'s|'s|\s+is)\s+(?:in\s+)?my\s+profile\b/i,
+  /\bmy\s+(?:professional\s+)?(?:info|information|details)\b/i,
+  /\bshow\s+(?:me\s+)?my\s+(?:info|details|data)\b/i,
+];
+
+const MY_EXPERIENCE_PATTERNS: RegExp[] = [
+  /\bmy\s+experience\b/i,
+  /\bmy\s+work\s+(?:history|experience)\b/i,
+  /\bwhere\s+(?:have\s+i|did\s+i)\s+worked\b/i,
+  /\bjobs?\s+(?:i'?ve?\s+)?had\b/i,
+  /\bprevious\s+(?:jobs?|companies|employers?|work)\b/i,
+  /\bmy\s+(?:career|work)\s+history\b/i,
+  /\bwhere\s+(?:have\s+i|did\s+i)\s+work(?:ed)?\b/i,
+  /\bmy\s+(?:past|previous)\s+(?:employer|company|companies|job)\b/i,
+  /\bmy\s+employment\b/i,
+];
+
+const MY_SKILLS_PATTERNS: RegExp[] = [
+  /\bmy\s+skills?\b/i,
+  /\bwhat\s+skills?\s+(?:do\s+i\s+have|i\s+have)\b/i,
+  /\bmy\s+expertise\b/i,
+  /\bmy\s+skill\s*set\b/i,
+  /\bmy\s+(?:tech|technical)\s+skills?\b/i,
+  /\bmy\s+abilities\b/i,
+  /\bwhat\s+can\s+i\s+do\b/i,
+  /\blist\s+my\s+skills?\b/i,
+  /\bshow\s+(?:me\s+)?my\s+skills?\b/i,
+];
+
 const MY_ANALYTICS_PATTERNS: RegExp[] = [
   /\bmy\s+analytics\b/i,
   /\bmy\s+stats?\b/i,
@@ -264,6 +301,30 @@ export function classifyIntent(message: string): IntentResult {
   if (matchesAny(msg, MY_APPLICATIONS_PATTERNS)) {
     return {
       type: 'MY_APPLICATIONS',
+      confidence: 0.9,
+      extractedEntities: {},
+    };
+  }
+
+  if (matchesAny(msg, MY_EXPERIENCE_PATTERNS)) {
+    return {
+      type: 'MY_EXPERIENCE',
+      confidence: 0.9,
+      extractedEntities: {},
+    };
+  }
+
+  if (matchesAny(msg, MY_SKILLS_PATTERNS)) {
+    return {
+      type: 'MY_SKILLS',
+      confidence: 0.9,
+      extractedEntities: {},
+    };
+  }
+
+  if (matchesAny(msg, MY_PROFILE_PATTERNS)) {
+    return {
+      type: 'MY_PROFILE',
       confidence: 0.9,
       extractedEntities: {},
     };

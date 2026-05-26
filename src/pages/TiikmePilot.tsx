@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Bot, Send, ThumbsUp, ThumbsDown, Archive, Plus, ChevronRight,
-  Briefcase, Search, Users, MessageCircle, Loader2, ShieldCheck,
+  Briefcase, Users, MessageCircle, Loader2, ShieldCheck,
   TrendingUp, BarChart2, Flame, ArrowUpRight, CheckCircle2,
 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -27,9 +27,10 @@ import { handlePlatformFaq } from "@/lib/pilot/faq-map";
 import {
   handleSearchProfile, handleSearchJob, handleSearchOrg, handleSearchCircle,
   handleMyAnalytics, handleMyApplications, handleTrending, handlePrivacyQuestion,
+  handleMyProfile, handleMyExperience, handleMySkills,
 } from "@/lib/pilot/handlers";
 import { checkQuota, incrementQuota } from "@/lib/pilot/rate-limiter";
-import type { PilotResponse, ProfileCard, JobCard, ApplicationItem, AnalyticsData, TrendingHashtag, CircleCard } from "@/lib/pilot/types";
+import type { PilotResponse, ProfileCard, JobCard, ApplicationItem, AnalyticsData, TrendingHashtag, CircleCard, MyProfileData, ExperienceItem } from "@/lib/pilot/types";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -37,39 +38,16 @@ import AvatarSquare from "@/components/ui/AvatarSquare";
 const AI_DAILY_LIMIT = 3;
 const CHAR_LIMIT = 500;
 
-const MODES: { value: TiikmePilotMode; label: string; icon: typeof Search }[] = [
-  { value: "discover", label: "Discover", icon: Search },
-  { value: "jobs",     label: "Jobs",     icon: Briefcase },
-  { value: "people",   label: "People",   icon: Users },
-  { value: "circles",  label: "Circles",  icon: MessageCircle },
+const QUICK_ACTIONS = [
+  "My profile",
+  "My experience",
+  "My skills",
+  "My activity score",
+  "My applications",
+  "Find jobs in Bangalore",
+  "What's trending today?",
+  "Show me tech communities",
 ];
-
-const QUICK_ACTIONS: Record<string, string[]> = {
-  discover: [
-    "What's trending today?",
-    "How does the feed work?",
-    "What is Tiikme?",
-    "My activity score",
-  ],
-  jobs: [
-    "Find software jobs in Bangalore",
-    "Remote jobs available",
-    "Internships in healthcare",
-    "Top paying roles",
-  ],
-  people: [
-    "Find doctors in Mumbai",
-    "Search for engineers",
-    "Find teachers in Delhi",
-    "Designers in Hyderabad",
-  ],
-  circles: [
-    "Show me tech communities",
-    "Healthcare circles",
-    "Circles for students",
-    "How do I create a circle?",
-  ],
-};
 
 const THINKING_LABELS: Record<string, string> = {
   SEARCH_PROFILE: "Searching profiles…",
@@ -78,6 +56,9 @@ const THINKING_LABELS: Record<string, string> = {
   SEARCH_CIRCLE: "Searching communities…",
   MY_ANALYTICS: "Loading your stats…",
   MY_APPLICATIONS: "Fetching your applications…",
+  MY_PROFILE: "Loading your profile…",
+  MY_EXPERIENCE: "Fetching your work history…",
+  MY_SKILLS: "Loading your skills…",
   TRENDING: "Getting trending data…",
   PLATFORM_FAQ: "Looking that up…",
   PRIVACY_QUESTION: "Checking privacy info…",
@@ -402,6 +383,120 @@ function CircleResultsCard({ cards }: { cards: CircleCard[] }) {
   );
 }
 
+function MyProfileCard({ data, action }: { data: MyProfileData; action?: { label: string; url: string } }) {
+  const hasExperience = data.experience && data.experience.length > 0;
+
+  const formatDate = (d: string | null | undefined) => {
+    if (!d) return null;
+    try {
+      return new Date(d).toLocaleDateString("en-IN", { month: "short", year: "numeric" });
+    } catch { return d; }
+  };
+
+  // Experience-only view
+  if (hasExperience) {
+    return (
+      <div className="space-y-3">
+        <div className="rounded-2xl rounded-tl-sm bg-white/8 border border-white/10 p-4 space-y-3">
+          <p className="text-[12px] font-semibold text-white/50 uppercase tracking-wide">Work History</p>
+          {data.experience!.map((exp, i) => (
+            <div key={i} className="flex gap-3">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(249,115,22,0.12)" }}>
+                <Briefcase style={{ width: 14, height: 14, color: "#F97316" }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-semibold text-white">{exp.role || "Role"}</p>
+                <p className="text-[11px] text-white/60">{exp.company}</p>
+                <p className="text-[10px] text-white/35 mt-0.5">
+                  {formatDate(exp.start_date)}
+                  {" – "}
+                  {exp.is_current ? "Present" : formatDate(exp.end_date) || "—"}
+                </p>
+                {exp.description && (
+                  <p className="text-[11px] text-white/45 mt-1 leading-snug line-clamp-2">{exp.description}</p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+        {action && (
+          <Link to={action.url} className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-400 hover:text-orange-300 transition-colors">
+            {action.label} <ArrowUpRight style={{ width: 12, height: 12 }} />
+          </Link>
+        )}
+      </div>
+    );
+  }
+
+  // Full profile view
+  return (
+    <div className="space-y-3">
+      <div className="rounded-2xl rounded-tl-sm bg-white/8 border border-white/10 p-4 space-y-4">
+        {/* Header */}
+        <div className="flex items-start gap-3">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(249,115,22,0.12)" }}>
+            <Users style={{ width: 20, height: 20, color: "#F97316" }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[15px] font-bold text-white">{data.full_name || "Your Profile"}</span>
+              {data.is_verified && (
+                <span className="flex items-center gap-0.5 text-[10px] text-blue-400">
+                  <ShieldCheck style={{ width: 10, height: 10 }} /> Verified
+                </span>
+              )}
+            </div>
+            {data.headline && <p className="text-[12px] text-white/60 mt-0.5 leading-snug">{data.headline}</p>}
+            {(data.location_city || data.location_state) && (
+              <p className="text-[11px] text-white/35 mt-0.5">
+                {[data.location_city, data.location_state].filter(Boolean).join(", ")}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Current workplace */}
+        {data.currently_working_at && (
+          <div className="flex items-center gap-2">
+            <Briefcase style={{ width: 12, height: 12, color: "rgba(255,255,255,0.3)", flexShrink: 0 }} />
+            <span className="text-[12px] text-white/60">{data.currently_working_at}</span>
+          </div>
+        )}
+
+        {/* About/Bio */}
+        {data.about && (
+          <div>
+            <p className="text-[11px] font-semibold text-white/40 uppercase tracking-wide mb-1">About</p>
+            <p className="text-[13px] text-white/75 leading-relaxed line-clamp-4">{data.about}</p>
+          </div>
+        )}
+
+        {/* Skills */}
+        {data.skills && data.skills.length > 0 && (
+          <div>
+            <p className="text-[11px] font-semibold text-white/40 uppercase tracking-wide mb-2">Skills</p>
+            <div className="flex flex-wrap gap-1.5">
+              {data.skills.slice(0, 8).map((s, i) => (
+                <span key={i} className="text-[11px] px-2 py-0.5 rounded-full" style={{ background: "rgba(249,115,22,0.12)", color: "#FB923C" }}>
+                  {s}
+                </span>
+              ))}
+              {data.skills.length > 8 && (
+                <span className="text-[11px] text-white/35">+{data.skills.length - 8} more</span>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+      {action && (
+        <Link to={action.url} className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-400 hover:text-orange-300 transition-colors">
+          {action.label} <ArrowUpRight style={{ width: 12, height: 12 }} />
+        </Link>
+      )}
+    </div>
+  );
+}
+
 function FaqCard({ content, action }: { content: string; action?: { label: string; url: string } }) {
   const lines = content.split("\n");
   return (
@@ -617,6 +712,10 @@ function AssistantBubble({
           </div>
         )}
 
+        {pr?.type === "my_profile_card" && pr.myProfile && (
+          <MyProfileCard data={pr.myProfile} action={pr.action} />
+        )}
+
         {/* AI reply source cards */}
         {sources.length > 0 && (
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -825,6 +924,21 @@ export default function TiikmePilotPage() {
       }
 
       // ── Personal data (requires login) ──
+      if (intent.type === "MY_PROFILE" && userId) {
+        const result = await handleMyProfile(userId);
+        removeThinking(); addLocalReply(result); return;
+      }
+
+      if (intent.type === "MY_EXPERIENCE" && userId) {
+        const result = await handleMyExperience(userId);
+        removeThinking(); addLocalReply(result); return;
+      }
+
+      if (intent.type === "MY_SKILLS" && userId) {
+        const result = await handleMySkills(userId);
+        removeThinking(); addLocalReply(result); return;
+      }
+
       if (intent.type === "MY_ANALYTICS" && userId) {
         const result = await handleMyAnalytics(userId);
         removeThinking(); addLocalReply(result); return;
@@ -892,7 +1006,6 @@ export default function TiikmePilotPage() {
   };
 
   const canSend = input.trim().length > 0 && !sending && remainingChats > 0;
-  const currentQuickActions = QUICK_ACTIONS[mode] || QUICK_ACTIONS.discover;
 
   return (
     <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-[#0e0e12]">
@@ -975,35 +1088,20 @@ export default function TiikmePilotPage() {
             <ChevronRight size={18} />
           </button>
 
-          <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
-            {MODES.map((m) => {
-              const Icon = m.icon;
-              return (
-                <button
-                  key={m.value}
-                  onClick={() => setMode(m.value)}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors shrink-0",
-                    mode === m.value
-                      ? "bg-orange-500 text-white"
-                      : "text-white/50 hover:text-white/80 hover:bg-white/8"
-                  )}
-                >
-                  <Icon size={12} />
-                  {m.label}
-                </button>
-              );
-            })}
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center">
+              <Bot size={13} className="text-white" />
+            </div>
+            <span className="text-sm font-semibold text-white/80">Pilot</span>
           </div>
 
-          {/* AI remaining counter (mobile/desktop) */}
-          <div className="ml-auto shrink-0 hidden sm:flex items-center gap-1.5">
+          <div className="ml-auto shrink-0 flex items-center gap-1.5">
             <CheckCircle2
               size={12}
               className={aiRemaining > 0 ? "text-green-400" : "text-red-400"}
             />
             <span className={cn("text-[11px] font-medium", aiRemaining > 0 ? "text-white/40" : "text-red-400")}>
-              {aiRemaining} AI question{aiRemaining !== 1 ? "s" : ""} left
+              {aiRemaining} AI left today
             </span>
           </div>
         </div>
@@ -1011,18 +1109,18 @@ export default function TiikmePilotPage() {
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
           {!activeThreadId && messages.length === 0 && (
-            <div className="flex flex-col items-center justify-center h-full text-center gap-5 py-12">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center shadow-lg shadow-orange-500/20">
-                <Bot size={28} className="text-white" />
+            <div className="flex flex-col items-center justify-center h-full text-center gap-6 py-12 px-4">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center shadow-xl shadow-orange-500/25">
+                <Bot size={30} className="text-white" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-white">Tiikme Pilot</h2>
-                <p className="text-sm text-white/40 mt-1 max-w-xs">
-                  Search people, jobs, and communities — or ask anything about the platform.
+                <h2 className="text-xl font-bold text-white">How can I help?</h2>
+                <p className="text-sm text-white/40 mt-1.5 max-w-xs leading-relaxed">
+                  Ask about your profile, search people and jobs, explore communities, or ask anything about Tiikme.
                 </p>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-sm">
-                {currentQuickActions.map((q) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-md">
+                {QUICK_ACTIONS.map((q) => (
                   <button
                     key={q}
                     onClick={() => { setInput(q); inputRef.current?.focus(); }}
@@ -1033,7 +1131,7 @@ export default function TiikmePilotPage() {
                 ))}
               </div>
               <p className="text-[11px] text-white/25">
-                Most searches are free · {aiRemaining} AI question{aiRemaining !== 1 ? "s" : ""} left today
+                Searches are free · {aiRemaining} AI question{aiRemaining !== 1 ? "s" : ""} remaining today
               </p>
             </div>
           )}
@@ -1067,7 +1165,7 @@ export default function TiikmePilotPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={`Ask Pilot — search people, jobs, circles, or ask anything…`}
+              placeholder="Ask me anything — my profile, jobs, people, communities…"
               rows={1}
               maxLength={CHAR_LIMIT}
               disabled={sending || remainingChats === 0}
