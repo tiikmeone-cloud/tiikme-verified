@@ -229,6 +229,31 @@ const PrivacySection = ({ userId }: { userId: string | null }) => {
         <PrivacyRow label="Show when I'm online" control={<ToggleCtl k="show_online_status" value={privacy.show_online_status} />} />
         <PrivacyRow label="Show my recent activity" control={<ToggleCtl k="show_activity" value={privacy.show_activity} />} />
       </div>
+
+      <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
+        <h3 className="text-[13px] font-bold uppercase tracking-wider mb-1" style={{ color: "#6B7094" }}>Pilot AI</h3>
+        <p className="text-[12px] mb-3" style={{ color: "#9CA3AF" }}>Control what Pilot can see and share about you.</p>
+        <PrivacyRow
+          label="Appear in Pilot searches"
+          desc="When off, your profile won't show up in any Pilot search result for any user"
+          control={<ToggleCtl k="show_in_pilot_search" value={privacy.show_in_pilot_search} />}
+        />
+        <PrivacyRow
+          label="Share my email with connections via Pilot"
+          desc="When on, Pilot may reveal your email to users you're connected with"
+          control={<ToggleCtl k="show_email" value={privacy.show_email} />}
+        />
+        <PrivacyRow
+          label="Show my location in Pilot results"
+          desc="Controls whether your city appears in Pilot profile cards"
+          control={<ToggleCtl k="show_location" value={privacy.show_location} />}
+        />
+        <PrivacyRow
+          label="Show my current company in Pilot"
+          desc="Controls whether your employer appears in Pilot search results"
+          control={<ToggleCtl k="show_company" value={privacy.show_company} />}
+        />
+      </div>
     </div>
   );
 };

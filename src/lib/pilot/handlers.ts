@@ -56,6 +56,8 @@ export async function handleSearchProfile(
       'id, full_name, headline, avatar_url, location_city, is_verified, activity_score, profession_type'
     )
     .neq('id', currentUserId)
+    // Respect show_in_pilot_search privacy setting
+    .or('privacy->show_in_pilot_search.is.null,privacy->show_in_pilot_search.eq.true')
     .order('activity_score', { ascending: false })
     .limit(5);
 
