@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Briefcase, Clock, Code, GraduationCap, Hammer, Trophy, Users, MapPin, Zap, ChevronDown, ChevronUp, Plus, X, DollarSign, CalendarDays } from "lucide-react";
+import { ArrowLeft, Briefcase, Clock, Code, GraduationCap, Hammer, Trophy, Users, Zap, ChevronDown, ChevronUp, Plus, X, DollarSign, CalendarDays, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,11 +21,12 @@ const OPP_TYPES = [
   { value: "hackathon", label: "Hackathon", icon: Trophy, color: "#8B5CF6", desc: "Competition or hackathon event" },
   { value: "walk_in_interview", label: "Walk-in Interview", icon: Users, color: "#EF4444", desc: "Walk-in interview event" },
   { value: "campus_recruitment", label: "Campus Drive", icon: GraduationCap, color: "#14B8A6", desc: "Campus recruitment drive" },
+  { value: "certificate", label: "Certificate", icon: BookOpen, color: "#0EA5E9", desc: "Online course or certification" },
   { value: "apprenticeship", label: "Apprenticeship", icon: Hammer, color: "#6366F1", desc: "Apprenticeship or training" },
 ];
 
 const isJobType = (t: string) => ["full_time", "part_time", "contract"].includes(t);
-const isFreelanceType = (t: string) => ["freelance", "gig"].includes(t);
+const isFreelanceType = (t: string) => t === "freelance";
 
 export default function OpportunityCreate() {
   const navigate = useNavigate();
@@ -83,6 +84,32 @@ export default function OpportunityCreate() {
   const [docsInput, setDocsInput] = useState("");
   const [documents, setDocuments] = useState<string[]>([]);
   const [positionsAvailable, setPositionsAvailable] = useState("");
+
+  // Gig-specific (beyond shared freelance/gig fields)
+  const [gigDeliverables, setGigDeliverables] = useState("");
+  const [gigPlatforms, setGigPlatforms] = useState<string[]>([]);
+  const [gigTimeline, setGigTimeline] = useState("");
+
+  // Hackathon-specific (enhanced)
+  const [hackathonTheme, setHackathonTheme] = useState("");
+  const [hackathonPrizes, setHackathonPrizes] = useState("");
+  const [hackathonTeamSize, setHackathonTeamSize] = useState("");
+
+  // Certificate
+  const [certDurationWeeks, setCertDurationWeeks] = useState("");
+  const [certPrerequisites, setCertPrerequisites] = useState("");
+  const [certProvider, setCertProvider] = useState("");
+  const [certMode, setCertMode] = useState("");
+
+  // Campus-specific (enhanced)
+  const [campusCollege, setCampusCollege] = useState("");
+  const [campusBatch, setCampusBatch] = useState("");
+  const [campusPackage, setCampusPackage] = useState("");
+  const [campusDriveDate, setCampusDriveDate] = useState("");
+  const [campusDriveMode, setCampusDriveMode] = useState("");
+
+  // Walk-in enhanced
+  const [walkInWhatToBring, setWalkInWhatToBring] = useState("");
 
   // Screening
   const [showScreening, setShowScreening] = useState(false);
@@ -169,6 +196,24 @@ export default function OpportunityCreate() {
       setAskPortfolio(!!data.ask_portfolio);
       setCustomAttachmentLabel(data.custom_attachment_label || "");
       setHrContactId(data.hr_contact_id || "");
+      // Load extra type-specific fields from qualification_criteria
+      const qc = (data.qualification_criteria as Record<string, any>) || {};
+      setGigDeliverables(qc.gig_deliverables || "");
+      setGigPlatforms(Array.isArray(qc.gig_platforms) ? qc.gig_platforms : []);
+      setGigTimeline(qc.gig_timeline ? String(qc.gig_timeline) : "");
+      setHackathonTheme(qc.hackathon_theme || "");
+      setHackathonPrizes(qc.hackathon_prizes || "");
+      setHackathonTeamSize(qc.hackathon_team_size || "");
+      setCertDurationWeeks(qc.cert_duration_weeks ? String(qc.cert_duration_weeks) : "");
+      setCertPrerequisites(qc.cert_prerequisites || "");
+      setCertProvider(qc.cert_provider || "");
+      setCertMode(qc.cert_mode || "");
+      setCampusCollege(qc.campus_college || "");
+      setCampusBatch(qc.campus_batch || "");
+      setCampusPackage(qc.campus_package || "");
+      setCampusDriveDate(qc.campus_drive_date || "");
+      setCampusDriveMode(qc.campus_drive_mode || "");
+      setWalkInWhatToBring(qc.walk_in_what_to_bring || "");
       setStep(2);
       setLoadingExisting(false);
     })();
@@ -184,6 +229,33 @@ export default function OpportunityCreate() {
       const qualCriteria: Record<string, any> = {};
       if (activityScoreMin) qualCriteria.min_activity_score = parseInt(activityScoreMin);
       if (experienceMin) qualCriteria.min_experience = parseInt(experienceMin);
+      // Type-specific extras stored in qualification_criteria
+      if (oppType === "gig") {
+        if (gigDeliverables) qualCriteria.gig_deliverables = gigDeliverables;
+        if (gigPlatforms.length) qualCriteria.gig_platforms = gigPlatforms;
+        if (gigTimeline) qualCriteria.gig_timeline = parseInt(gigTimeline);
+      }
+      if (oppType === "hackathon") {
+        if (hackathonTheme) qualCriteria.hackathon_theme = hackathonTheme;
+        if (hackathonPrizes) qualCriteria.hackathon_prizes = hackathonPrizes;
+        if (hackathonTeamSize) qualCriteria.hackathon_team_size = hackathonTeamSize;
+      }
+      if (oppType === "certificate") {
+        if (certDurationWeeks) qualCriteria.cert_duration_weeks = parseInt(certDurationWeeks);
+        if (certPrerequisites) qualCriteria.cert_prerequisites = certPrerequisites;
+        if (certProvider) qualCriteria.cert_provider = certProvider;
+        if (certMode) qualCriteria.cert_mode = certMode;
+      }
+      if (oppType === "campus_recruitment") {
+        if (campusCollege) qualCriteria.campus_college = campusCollege;
+        if (campusBatch) qualCriteria.campus_batch = campusBatch;
+        if (campusPackage) qualCriteria.campus_package = campusPackage;
+        if (campusDriveDate) qualCriteria.campus_drive_date = campusDriveDate;
+        if (campusDriveMode) qualCriteria.campus_drive_mode = campusDriveMode;
+      }
+      if (oppType === "walk_in_interview") {
+        if (walkInWhatToBring) qualCriteria.walk_in_what_to_bring = walkInWhatToBring;
+      }
 
       const insertData: Record<string, any> = {
         title: title.trim(),
@@ -217,7 +289,7 @@ export default function OpportunityCreate() {
         insertData.stipend = stipend || null;
         insertData.can_convert_fulltime = canConvert;
       }
-      if (isFreelanceType(oppType)) {
+      if (isFreelanceType(oppType) || oppType === "gig") {
         insertData.project_duration = projectDuration || null;
         insertData.budget_min = budgetMin ? parseInt(budgetMin) : null;
         insertData.budget_max = budgetMax ? parseInt(budgetMax) : null;

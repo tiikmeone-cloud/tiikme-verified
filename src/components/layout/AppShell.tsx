@@ -72,10 +72,10 @@ const AppShell = ({ children }: { children: ReactNode }) => {
       if (isInstitution && orgData?.slug) {
         workItems.splice(0, 0, { label: "Org Page", icon: Building2, path: `/org/${orgData.slug}` });
       }
-      workItems.push({ label: "Applicants", icon: ClipboardList, path: "/app/opportunities" });
+      workItems.push({ label: "Applicants", icon: ClipboardList, path: "/app/opportunities/applicants" });
       workItems.push({ label: "Verification Inbox", icon: ShieldCheck, path: "/app/verification-inbox" });
     } else if (orgAdminRole === "hiring_manager") {
-      workItems.push({ label: "Applicants", icon: ClipboardList, path: "/app/opportunities" });
+      workItems.push({ label: "Applicants", icon: ClipboardList, path: "/app/opportunities/applicants" });
     } else if (orgAdminRole === "verifier") {
       workItems.push({ label: "Verification Inbox", icon: ShieldCheck, path: "/app/verification-inbox" });
     } else {

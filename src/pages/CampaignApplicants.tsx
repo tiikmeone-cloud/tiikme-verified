@@ -7,10 +7,13 @@ import AvatarSquare from "@/components/ui/AvatarSquare";
 import { toast } from "sonner";
 import { sendNotification } from "@/lib/notify";
 
-const STATUS_CONFIG = {
+const STATUS_CONFIG: Record<string, { label: string; bg: string; color: string }> = {
   pending: { label: "Pending", bg: "#FFF7ED", color: "#92400E" },
-  approved: { label: "Approved", bg: "#F0FDF4", color: "#166534" },
+  shortlisted: { label: "Shortlisted", bg: "#EDE9FE", color: "#6D28D9" },
+  accepted: { label: "Accepted", bg: "#F0FDF4", color: "#166534" },
   rejected: { label: "Rejected", bg: "#FFF1F2", color: "#9F1239" },
+  // legacy values from opportunity_applications
+  approved: { label: "Approved", bg: "#F0FDF4", color: "#166534" },
   completed: { label: "Completed", bg: "#F0F9FF", color: "#0369A1" },
 };
 
@@ -33,45 +36,63 @@ export default function CampaignApplicants() {
   useEffect(() => {
     if (!campaignId) return;
     (async () => {
-      const [{ data: c }, { data: apps }] = await Promise.all([
+      const [{ data: c }, newApps, legacyApps] = await Promise.all([
         supabase.from("campaigns")
           .select("*, org:organizations!campaigns_org_id_fkey(id, name, logo_url)")
           .eq("id", campaignId)
           .maybeSingle(),
+        supabase.from("campaign_applications" as any)
+          .select("*, applicant:profiles!campaign_applications_creator_id_fkey(id, full_name, avatar_url, role, headline, location_city)")
+          .eq("campaign_id", campaignId)
+          .order("applied_at", { ascending: false }),
         supabase.from("opportunity_applications")
           .select("*, applicant:profiles!opportunity_applications_applicant_id_fkey(id, full_name, avatar_url, role, headline, location_city)")
           .eq("campaign_id", campaignId)
           .order("created_at", { ascending: false }),
       ]);
       setCampaign(c);
-      setApplicants(apps || []);
+      // Merge: new table rows + legacy rows, deduplicate by applicant id
+      const newRows = ((newApps.data || []) as any[]).map((r: any) => ({ ...r, _source: "new", applicant_id: r.creator_id }));
+      const legacyRows = ((legacyApps.data || []) as any[]).map((r: any) => ({ ...r, _source: "legacy" }));
+      const seenApplicants = new Set<string>();
+      const merged: any[] = [];
+      for (const r of [...newRows, ...legacyRows]) {
+        const aid = r.applicant_id || r.creator_id;
+        if (!seenApplicants.has(aid)) { seenApplicants.add(aid); merged.push(r); }
+      }
+      setApplicants(merged);
       setLoading(false);
     })();
   }, [campaignId]);
 
-  const updateStatus = async (appId: string, applicantId: string, newStatus: string, appTitle: string) => {
+  const updateStatus = async (appId: string, applicantId: string, newStatus: string, appTitle: string, source?: string) => {
     setUpdating(appId);
-    const { error } = await supabase.from("opportunity_applications")
+    const table = source === "new" ? "campaign_applications" : "opportunity_applications";
+    const { error } = await supabase.from(table as any)
       .update({ status: newStatus })
       .eq("id", appId);
     setUpdating(null);
     if (error) { toast.error("Failed to update"); return; }
     setApplicants(prev => prev.map(a => a.id === appId ? { ...a, status: newStatus } : a));
-    const notifTitle = newStatus === "approved"
-      ? `Your campaign application was approved!`
-      : `Update on your campaign application`;
-    const notifBody = newStatus === "approved"
+    const notifTitle = newStatus === "accepted" || newStatus === "approved"
+      ? `Your campaign application was accepted!`
+      : newStatus === "shortlisted"
+        ? `You've been shortlisted for "${campaign?.title}"!`
+        : `Update on your campaign application`;
+    const notifBody = newStatus === "accepted" || newStatus === "approved"
       ? `You've been selected for "${campaign?.title}". The brand will reach out with next steps.`
-      : `Thank you for applying to "${campaign?.title}". Unfortunately you weren't selected this time.`;
+      : newStatus === "shortlisted"
+        ? `Great news! You've been shortlisted for "${campaign?.title}".`
+        : `Thank you for applying to "${campaign?.title}". Unfortunately you weren't selected this time.`;
     sendNotification({
       userId: applicantId,
       actorId: user!.id,
       type: "opportunity",
       title: notifTitle,
       body: notifBody,
-      actionUrl: "/app/opportunities?tab=campaigns",
+      actionUrl: "/app/opportunities",
     });
-    toast.success(newStatus === "approved" ? "Creator approved!" : "Application rejected");
+    toast.success(newStatus === "accepted" || newStatus === "approved" ? "Creator accepted!" : newStatus === "shortlisted" ? "Shortlisted!" : "Status updated");
   };
 
   if (loading) return (
@@ -159,41 +180,49 @@ export default function CampaignApplicants() {
                     </div>
                   </div>
 
-                  {app.pitch_text && (
+                  {(app.pitch_text || app.message) && (
                     <p className="text-[13px] mt-3 p-3 rounded-xl" style={{ background: "#FAFAFA", color: "var(--text-2)", lineHeight: "20px" }}>
-                      {app.pitch_text}
+                      {app.pitch_text || app.message}
                     </p>
                   )}
+                  {app.portfolio_url && (
+                    <a href={app.portfolio_url} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 mt-2 text-[12px] font-semibold"
+                      style={{ color: "#FF5A1F", textDecoration: "none" }}>
+                      <ExternalLink style={{ width: 12, height: 12 }} /> View Portfolio
+                    </a>
+                  )}
 
-                  {app.status === "pending" && (
-                    <div className="flex items-center gap-2 mt-3">
+                  {(app.status === "pending" || app.status === "shortlisted") && (
+                    <div className="flex items-center gap-2 mt-3 flex-wrap">
+                      {app.status === "pending" && (
+                        <button type="button" disabled={updating === app.id}
+                          onClick={() => updateStatus(app.id, app.applicant_id || app.creator_id, "shortlisted", campaign.title, app._source)}
+                          className="flex items-center gap-1.5 cursor-pointer disabled:opacity-50 px-4 py-2 rounded-xl text-[12px] font-bold"
+                          style={{ background: "#EDE9FE", color: "#6D28D9", border: "1.5px solid #DDD6FE" }}>
+                          {updating === app.id ? <Loader2 className="animate-spin" style={{ width: 12, height: 12 }} /> : <Clock style={{ width: 12, height: 12 }} />}
+                          Shortlist
+                        </button>
+                      )}
                       <button type="button" disabled={updating === app.id}
-                        onClick={() => updateStatus(app.id, app.applicant_id, "approved", campaign.title)}
+                        onClick={() => updateStatus(app.id, app.applicant_id || app.creator_id, "accepted", campaign.title, app._source)}
                         className="flex items-center gap-1.5 cursor-pointer disabled:opacity-50 px-4 py-2 rounded-xl text-[12px] font-bold"
                         style={{ background: "#F0FDF4", color: "#166534", border: "1.5px solid #BBF7D0" }}>
                         {updating === app.id ? <Loader2 className="animate-spin" style={{ width: 12, height: 12 }} /> : <CheckCircle style={{ width: 12, height: 12 }} />}
-                        Approve
+                        Accept
                       </button>
                       <button type="button" disabled={updating === app.id}
-                        onClick={() => updateStatus(app.id, app.applicant_id, "rejected", campaign.title)}
+                        onClick={() => updateStatus(app.id, app.applicant_id || app.creator_id, "rejected", campaign.title, app._source)}
                         className="flex items-center gap-1.5 cursor-pointer disabled:opacity-50 px-4 py-2 rounded-xl text-[12px] font-bold"
                         style={{ background: "#FFF1F2", color: "#9F1239", border: "1.5px solid #FECDD3" }}>
                         <XCircle style={{ width: 12, height: 12 }} /> Reject
                       </button>
-                      {app.status === "approved" && (
-                        <button type="button" disabled={updating === app.id}
-                          onClick={() => updateStatus(app.id, app.applicant_id, "completed", campaign.title)}
-                          className="flex items-center gap-1.5 cursor-pointer disabled:opacity-50 px-4 py-2 rounded-xl text-[12px] font-bold"
-                          style={{ background: "#F0F9FF", color: "#0369A1", border: "1.5px solid #BAE6FD" }}>
-                          <Clock style={{ width: 12, height: 12 }} /> Mark complete
-                        </button>
-                      )}
                     </div>
                   )}
-                  {app.status === "approved" && (
+                  {(app.status === "accepted" || app.status === "approved") && (
                     <div className="flex items-center gap-2 mt-3">
                       <button type="button" disabled={updating === app.id}
-                        onClick={() => updateStatus(app.id, app.applicant_id, "completed", campaign.title)}
+                        onClick={() => updateStatus(app.id, app.applicant_id || app.creator_id, "completed", campaign.title, app._source)}
                         className="flex items-center gap-1.5 cursor-pointer disabled:opacity-50 px-4 py-2 rounded-xl text-[12px] font-bold"
                         style={{ background: "#F0F9FF", color: "#0369A1", border: "1.5px solid #BAE6FD" }}>
                         {updating === app.id ? <Loader2 className="animate-spin" style={{ width: 12, height: 12 }} /> : <Clock style={{ width: 12, height: 12 }} />}
