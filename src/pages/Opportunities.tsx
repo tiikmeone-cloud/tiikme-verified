@@ -20,13 +20,14 @@ import PrimaryTabs from "@/components/filters/PrimaryTabs";
 import FilterBar, { useScrollPastThreshold } from "@/components/filters/FilterBar";
 import BottomSheet from "@/components/ui/BottomSheet";
 
-const FILTER_TABS = ["All", "Full-time", "Internship", "Freelance", "Hackathon", "Remote"];
+const FILTER_TABS = ["All", "Full-time", "Part-time", "Internship", "Freelance", "Gig", "Hackathon"];
 const filterMap: Record<string, (q: any) => any> = {
   "Full-time": q => q.or("type.eq.full_time,type.eq.fulltime,type.eq.full-time,type.eq.job"),
+  "Part-time": q => q.or("type.eq.part_time,type.eq.parttime,type.eq.part-time"),
   "Internship": q => q.eq("type", "internship"),
-  "Freelance": q => q.or("type.eq.freelance,type.eq.gig"),
+  "Freelance": q => q.eq("type", "freelance"),
+  "Gig": q => q.eq("type", "gig"),
   "Hackathon": q => q.eq("type", "hackathon"),
-  "Remote": q => q.eq("is_remote", true),
 };
 
 type UserTab = "jobs" | "find" | "referrals" | "applications" | "campaigns";
@@ -303,6 +304,36 @@ const Opportunities = () => {
       <AnimatePresence>
         {showApply && <ApplyModal open={!!showApply} onClose={() => setShowApply(null)} opportunity={showApply} orgName={showApply?.org?.name} onApplied={() => { queryClient.invalidateQueries({ queryKey: ["applied-opportunities"] }); queryClient.invalidateQueries({ queryKey: ["opportunities"] }); setShowApply(null); }} />}
       </AnimatePresence>
+
+      {/* FAB — only for institution accounts */}
+      {isInstitution && (
+        <button
+          type="button"
+          onClick={() => navigate("/app/opportunities/create")}
+          aria-label="Create new job posting"
+          className="cursor-pointer"
+          style={{
+            position: "fixed",
+            bottom: 24,
+            right: 24,
+            width: 56,
+            height: 56,
+            borderRadius: "50%",
+            background: "#FF5A1F",
+            border: "none",
+            boxShadow: "0 4px 20px rgba(255,90,31,0.4)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 50,
+            transition: "transform 150ms, box-shadow 150ms",
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.08)"; (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 6px 28px rgba(255,90,31,0.55)"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = ""; (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 20px rgba(255,90,31,0.4)"; }}
+        >
+          <Plus className="w-7 h-7 text-white" />
+        </button>
+      )}
     </main>
     </SubscriptionGate>
   );
