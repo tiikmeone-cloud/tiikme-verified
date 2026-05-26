@@ -521,6 +521,14 @@ function AssistantBubble({
           <FaqCard content={pr.content} action={pr.action} />
         )}
 
+        {pr?.type === "limit_reached" && pr.content && (
+          <div className="space-y-2">
+            <div className="rounded-2xl rounded-tl-sm px-4 py-3" style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.25)" }}>
+              <p className="text-sm text-red-300 leading-relaxed whitespace-pre-wrap">{pr.content}</p>
+            </div>
+          </div>
+        )}
+
         {pr?.type === "text" && pr.content && (
           <div className="space-y-2">
             <div className="rounded-2xl rounded-tl-sm bg-white/8 border border-white/10 px-4 py-3">
@@ -560,6 +568,14 @@ function AssistantBubble({
               <p className="text-[12px] text-white/50 mb-2">{pr.content}</p>
             )}
             <JobResultsCard cards={pr.cards as JobCard[]} />
+            {pr.action && (
+              <Link
+                to={pr.action.url}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-400 hover:text-orange-300 transition-colors mt-2"
+              >
+                {pr.action.label} <ArrowUpRight style={{ width: 12, height: 12 }} />
+              </Link>
+            )}
           </div>
         )}
 
@@ -590,6 +606,14 @@ function AssistantBubble({
               <p className="text-[12px] text-white/50 mb-2">{pr.content}</p>
             )}
             <CircleResultsCard cards={pr.cards as CircleCard[]} />
+            {pr.action && (
+              <Link
+                to={pr.action.url}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-400 hover:text-orange-300 transition-colors mt-2"
+              >
+                {pr.action.label} <ArrowUpRight style={{ width: 12, height: 12 }} />
+              </Link>
+            )}
           </div>
         )}
 

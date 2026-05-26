@@ -21,13 +21,18 @@ type Entities = {
 
 function getStatusLabel(status: string): string {
   const map: Record<string, string> = {
-    applied: '⏳ Applied',
-    reviewing: '👀 Under Review',
+    applied:     '⏳ Applied',
+    pending:     '⏳ Under Review',
+    reviewing:   '👀 Under Review',
     shortlisted: '⭐ Shortlisted',
-    rejected: '❌ Not selected',
-    hired: '🎉 Offer Extended',
+    selected:    '🎉 Selected',
+    approved:    '🎉 Approved',
+    completed:   '✅ Completed',
+    rejected:    '❌ Not selected',
+    withdrawn:   '🔙 Withdrawn',
+    hired:       '🎉 Offer Extended',
   };
-  return map[status] ?? status;
+  return map[status] ?? status.charAt(0).toUpperCase() + status.slice(1);
 }
 
 function getTier(score: number): string {
@@ -50,16 +55,16 @@ export async function handleSearchProfile(
   entities: Entities,
   currentUserId: string
 ): Promise<PilotResponse> {
+  // Select privacy field so we can filter show_in_pilot_search in JS
   let query = supabase
     .from('profiles')
     .select(
-      'id, full_name, headline, avatar_url, location_city, is_verified, activity_score, profession_type'
+      'id, full_name, headline, avatar_url, location_city, is_verified, activity_score, profession_type, show_in_explore, privacy'
     )
     .neq('id', currentUserId)
-    // Respect show_in_pilot_search privacy setting
-    .or('privacy->show_in_pilot_search.is.null,privacy->show_in_pilot_search.eq.true')
+    .eq('show_in_explore', true)
     .order('activity_score', { ascending: false })
-    .limit(5);
+    .limit(20); // fetch more, then filter by pilot privacy in JS
 
   if (entities.name) {
     query = query.ilike('full_name', `%${entities.name}%`);
@@ -68,7 +73,6 @@ export async function handleSearchProfile(
     query = query.ilike('location_city', `%${entities.location}%`);
   }
   if (entities.role) {
-    // Filter by headline or profession_type
     query = query.or(
       `headline.ilike.%${entities.role}%,profession_type.ilike.%${entities.role}%`
     );
@@ -83,7 +87,22 @@ export async function handleSearchProfile(
     };
   }
 
-  const cards: ProfileCard[] = (data || []).map((p: any) => ({
+  // Filter out users who have opted out of Pilot search
+  const visible = (data || []).filter((p: any) => {
+    const priv = p.privacy;
+    if (!priv || typeof priv !== 'object') return true;
+    return priv.show_in_pilot_search !== false;
+  }).slice(0, 5);
+
+  if (visible.length === 0) {
+    return {
+      type: 'text',
+      content: `No profiles found${entities.name ? ` for "${entities.name}"` : ''}${entities.location ? ` in ${entities.location}` : ''}. Try broader terms or explore the community.`,
+      action: { label: 'Explore profiles →', url: '/app/explore' },
+    };
+  }
+
+  const cards: ProfileCard[] = visible.map((p: any) => ({
     id: p.id,
     full_name: p.full_name ?? 'Unknown',
     headline: p.headline,
@@ -95,16 +114,9 @@ export async function handleSearchProfile(
     connectionStatus: 'none',
   }));
 
-  if (cards.length === 0) {
-    return {
-      type: 'text',
-      content: `I couldn't find any profiles matching your search${entities.name ? ` for "${entities.name}"` : ''}${entities.location ? ` in ${entities.location}` : ''}. Try broader terms or explore the community.`,
-      action: { label: 'Explore profiles →', url: '/app/explore' },
-    };
-  }
-
   return {
     type: 'profile_results',
+    content: `Found ${cards.length} profile${cards.length !== 1 ? 's' : ''}${entities.role ? ` matching "${entities.role}"` : ''}${entities.location ? ` in ${entities.location}` : ''}`,
     cards,
   };
 }
@@ -115,14 +127,15 @@ export async function handleSearchJob(
   entities: Entities,
   _currentUserId: string
 ): Promise<PilotResponse> {
+  // Use named FK so PostgREST knows which relationship to use
   let query = supabase
     .from('opportunities')
     .select(
-      'id, title, type, location, salary_min, salary_max, is_remote, created_at, org_id, organizations!left(name, logo_url)'
+      'id, title, type, location, salary_min, salary_max, is_remote, created_at, org:organizations!opportunities_org_id_fkey(name, logo_url)'
     )
     .eq('is_open', true)
     .order('created_at', { ascending: false })
-    .limit(5);
+    .limit(6);
 
   const keyword = entities.jobKeyword || entities.role;
   if (keyword) {
@@ -141,33 +154,32 @@ export async function handleSearchJob(
     };
   }
 
-  const cards: JobCard[] = (data || []).map((j: any) => {
-    const org = Array.isArray(j.organizations) ? j.organizations[0] : j.organizations;
-    return {
-      id: j.id,
-      title: j.title,
-      org_name: org?.name,
-      org_logo: org?.logo_url ?? null,
-      type: j.type,
-      location: j.location,
-      salary_min: j.salary_min,
-      salary_max: j.salary_max,
-      is_remote: j.is_remote ?? false,
-      created_at: j.created_at,
-    };
-  });
+  const cards: JobCard[] = (data || []).map((j: any) => ({
+    id: j.id,
+    title: j.title,
+    org_name: j.org?.name,
+    org_logo: j.org?.logo_url ?? null,
+    type: j.type,
+    location: j.location,
+    salary_min: j.salary_min,
+    salary_max: j.salary_max,
+    is_remote: j.is_remote ?? false,
+    created_at: j.created_at,
+  }));
 
   if (cards.length === 0) {
     return {
       type: 'text',
       content: `No open jobs found${keyword ? ` for "${keyword}"` : ''}${entities.location ? ` in ${entities.location}` : ''}. Check back later or browse all opportunities.`,
-      action: { label: 'Browse jobs →', url: '/app/jobs' },
+      action: { label: 'Browse jobs →', url: '/app/opportunities' },
     };
   }
 
   return {
     type: 'job_results',
+    content: `Found ${cards.length} open role${cards.length !== 1 ? 's' : ''}${keyword ? ` for "${keyword}"` : ''}`,
     cards,
+    action: { label: 'See all opportunities →', url: '/app/opportunities' },
   };
 }
 
@@ -179,16 +191,16 @@ export async function handleSearchOrg(
 ): Promise<PilotResponse> {
   let query = supabase
     .from('organizations')
-    .select('id, name, logo_url, city, type, industry, tagline, slug')
+    .select('id, name, logo_url, city, state, type, industry, tagline, slug, is_verified, followers_count')
     .eq('status', 'active')
-    .order('followers_count', { ascending: false })
-    .limit(5);
+    .order('followers_count', { ascending: false, nullsFirst: false })
+    .limit(6);
 
   if (entities.name) {
     query = query.ilike('name', `%${entities.name}%`);
   }
   if (entities.location) {
-    query = query.ilike('city', `%${entities.location}%`);
+    query = query.or(`city.ilike.%${entities.location}%,state.ilike.%${entities.location}%`);
   }
 
   const { data, error } = await query;
@@ -204,26 +216,26 @@ export async function handleSearchOrg(
     return {
       type: 'text',
       content: `No organizations found${entities.name ? ` matching "${entities.name}"` : ''}${entities.location ? ` in ${entities.location}` : ''}. Try different keywords.`,
-      action: { label: 'Browse orgs →', url: '/app/explore?tab=orgs' },
+      action: { label: 'Browse orgs →', url: '/app/explore' },
     };
   }
 
-  // Return as profile_results with org data shaped as ProfileCard for display flexibility
-  const cards: ProfileCard[] = (data || []).map((o: any) => ({
+  const cards: ProfileCard[] = data.map((o: any) => ({
     id: o.id,
     full_name: o.name,
-    headline: o.tagline ?? o.industry ?? o.type,
+    headline: o.tagline ?? [o.type, o.city].filter(Boolean).join(' · '),
     avatar_url: o.logo_url ?? null,
     location_city: o.city ?? null,
-    is_verified: false,
-    activity_score: 0,
+    is_verified: o.is_verified ?? false,
+    activity_score: o.followers_count ?? 0,
     profession_type: o.type,
   }));
 
   return {
     type: 'profile_results',
+    content: `Found ${cards.length} organization${cards.length !== 1 ? 's' : ''}`,
     cards,
-    content: 'Here are some organizations that match your search:',
+    action: { label: 'Explore all orgs →', url: '/app/explore' },
   };
 }
 
@@ -232,13 +244,17 @@ export async function handleSearchOrg(
 export async function handleSearchCircle(entities: Entities): Promise<PilotResponse> {
   let query = supabase
     .from('circles')
-    .select('id, name, slug, member_count, description, post_count')
+    .select('id, name, slug, member_count, description, post_count, visibility')
     .eq('status', 'active')
+    .eq('visibility', 'public')
     .order('member_count', { ascending: false })
-    .limit(5);
+    .limit(6);
 
   if (entities.name) {
     query = query.ilike('name', `%${entities.name}%`);
+  }
+  if (entities.role) {
+    query = query.or(`name.ilike.%${entities.role}%,description.ilike.%${entities.role}%`);
   }
 
   const { data, error } = await query;
@@ -253,12 +269,12 @@ export async function handleSearchCircle(entities: Entities): Promise<PilotRespo
   if (!data || data.length === 0) {
     return {
       type: 'text',
-      content: 'No active circles found. Be the first to start one!',
+      content: 'No public circles found. Try browsing all communities.',
       action: { label: 'Browse circles →', url: '/app/circles' },
     };
   }
 
-  const cards: CircleCard[] = (data || []).map((c: any) => ({
+  const cards: CircleCard[] = data.map((c: any) => ({
     id: c.id,
     name: c.name,
     slug: c.slug,
@@ -269,7 +285,9 @@ export async function handleSearchCircle(entities: Entities): Promise<PilotRespo
 
   return {
     type: 'circle_results',
+    content: `Found ${cards.length} community circle${cards.length !== 1 ? 's' : ''}`,
     cards,
+    action: { label: 'Browse all circles →', url: '/app/circles' },
   };
 }
 
@@ -284,11 +302,11 @@ export async function handleMyAnalytics(currentUserId: string): Promise<PilotRes
       .single(),
     supabase
       .from('posts')
-      .select('*', { count: 'exact', head: true })
+      .select('id', { count: 'exact', head: true })
       .eq('author_id', currentUserId),
     supabase
       .from('strands')
-      .select('*', { count: 'exact', head: true })
+      .select('id', { count: 'exact', head: true })
       .or(`requester_id.eq.${currentUserId},receiver_id.eq.${currentUserId}`)
       .eq('status', 'accepted'),
     supabase
@@ -306,7 +324,7 @@ export async function handleMyAnalytics(currentUserId: string): Promise<PilotRes
   const applications = appsRes.data ?? [];
   const appCount = applications.length;
   const pendingApps = applications.filter(
-    (a: any) => a.status === 'applied' || a.status === 'reviewing'
+    (a: any) => a.status === 'applied' || a.status === 'pending' || a.status === 'reviewing'
   ).length;
 
   const tier = getTier(score);
@@ -314,16 +332,19 @@ export async function handleMyAnalytics(currentUserId: string): Promise<PilotRes
 
   const tips: string[] = [];
   if (!isVerified) {
-    tips.push('Get verified to unlock Circle creation and more trust signals.');
+    tips.push('Get verified to unlock Circle creation and build more trust.');
   }
-  if (postCount < 5) {
-    tips.push('Post more often — content creation is one of the fastest ways to earn points.');
+  if (postCount < 3) {
+    tips.push('Post more — each post earns points and boosts your visibility.');
   }
-  if (connCount < 10) {
-    tips.push('Connect with more professionals in your field to grow your network.');
+  if (connCount < 5) {
+    tips.push('Connect with more professionals in your field (+2 pts each).');
   }
-  if (nextTier !== null) {
-    tips.push(`You need ${nextTier - score} more points to reach the next tier (${getTier(nextTier)}).`);
+  if (nextTier !== null && nextTier - score <= 30) {
+    tips.push(`Only ${nextTier - score} more points to reach ${getTier(nextTier)} tier!`);
+  }
+  if (tips.length === 0) {
+    tips.push('Keep engaging — you\'re doing great!');
   }
 
   const analyticsData: AnalyticsData = {
@@ -349,43 +370,46 @@ export async function handleMyAnalytics(currentUserId: string): Promise<PilotRes
 // ─── handleMyApplications ─────────────────────────────────────────────────────
 
 export async function handleMyApplications(currentUserId: string): Promise<PilotResponse> {
-  const { data, error } = await supabase
+  // Step 1: get applications with opportunity IDs
+  const { data: appData, error: appError } = await supabase
     .from('opportunity_applications')
-    .select(
-      'id, status, created_at, opportunity_id, opportunities!left(id, title, org_id, organizations!left(name, logo_url))'
-    )
+    .select('id, status, created_at, opportunity_id')
     .eq('applicant_id', currentUserId)
     .order('created_at', { ascending: false })
-    .limit(5);
+    .limit(6);
 
-  if (error) {
+  if (appError) {
     return {
       type: 'text',
       content: 'Sorry, I had trouble fetching your applications. Please try again.',
     };
   }
 
-  if (!data || data.length === 0) {
+  if (!appData || appData.length === 0) {
     return {
       type: 'text',
       content: "You haven't applied to any opportunities yet. Explore open roles and take the first step!",
-      action: { label: 'Browse jobs →', url: '/app/jobs' },
+      action: { label: 'Browse opportunities →', url: '/app/opportunities' },
     };
   }
 
-  const applications: ApplicationItem[] = (data || []).map((a: any) => {
-    const opp = Array.isArray(a.opportunities) ? a.opportunities[0] : a.opportunities;
-    const org = opp
-      ? Array.isArray(opp.organizations)
-        ? opp.organizations[0]
-        : opp.organizations
-      : null;
+  // Step 2: fetch opportunity details for each application
+  const oppIds = appData.map((a: any) => a.opportunity_id).filter(Boolean);
+  const { data: oppData } = await supabase
+    .from('opportunities')
+    .select('id, title, org:organizations!opportunities_org_id_fkey(name, logo_url)')
+    .in('id', oppIds);
+
+  const oppMap = new Map((oppData || []).map((o: any) => [o.id, o]));
+
+  const applications: ApplicationItem[] = appData.map((a: any) => {
+    const opp = oppMap.get(a.opportunity_id);
     const status = a.status ?? 'applied';
     return {
       id: a.id,
       jobTitle: opp?.title,
-      orgName: org?.name,
-      orgLogo: org?.logo_url ?? null,
+      orgName: opp?.org?.name,
+      orgLogo: opp?.org?.logo_url ?? null,
       status,
       statusLabel: getStatusLabel(status),
       appliedAt: a.created_at ?? '',
@@ -402,28 +426,25 @@ export async function handleMyApplications(currentUserId: string): Promise<Pilot
 // ─── handleTrending ───────────────────────────────────────────────────────────
 
 export async function handleTrending(): Promise<PilotResponse> {
-  const since = new Date(Date.now() - 86400000).toISOString();
+  const since = new Date(Date.now() - 7 * 86400000).toISOString(); // last 7 days
 
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from('posts')
     .select('hashtags')
     .gte('created_at', since)
     .not('hashtags', 'is', null)
-    .limit(200);
+    .limit(300);
 
-  if (error || !data) {
-    // Fallback: grab most recent posts
-    const { data: fallback } = await supabase
-      .from('posts')
-      .select('hashtags')
-      .not('hashtags', 'is', null)
-      .order('created_at', { ascending: false })
-      .limit(100);
+  // Fall back to all-time if no recent posts
+  const rows = data && data.length > 0 ? data : await supabase
+    .from('posts')
+    .select('hashtags')
+    .not('hashtags', 'is', null)
+    .order('created_at', { ascending: false })
+    .limit(200)
+    .then(r => r.data ?? []);
 
-    return buildTrendingFromPosts(fallback ?? []);
-  }
-
-  return buildTrendingFromPosts(data);
+  return buildTrendingFromPosts(Array.isArray(rows) ? rows : []);
 }
 
 function buildTrendingFromPosts(rows: any[]): PilotResponse {
@@ -431,7 +452,7 @@ function buildTrendingFromPosts(rows: any[]): PilotResponse {
   for (const row of rows) {
     const tags: string[] = Array.isArray(row.hashtags) ? row.hashtags : [];
     for (const tag of tags) {
-      const normalized = tag.toLowerCase().replace(/^#/, '');
+      const normalized = tag.toLowerCase().replace(/^#/, '').trim();
       if (normalized) {
         counts[normalized] = (counts[normalized] ?? 0) + 1;
       }
@@ -444,13 +465,13 @@ function buildTrendingFromPosts(rows: any[]): PilotResponse {
     .map(([tag, count]) => ({
       tag: `#${tag}`,
       count,
-      url: `/app/explore?hashtag=${encodeURIComponent(tag)}`,
+      url: `/tag/${encodeURIComponent(tag)}`,
     }));
 
   if (hashtags.length === 0) {
     return {
       type: 'text',
-      content: 'No trending hashtags in the last 24 hours. Check back soon!',
+      content: 'No trending hashtags right now. Be the first to start a conversation!',
       action: { label: 'Browse feed →', url: '/app/feed' },
     };
   }
@@ -467,9 +488,14 @@ export async function handlePrivacyQuestion(
   _currentUserId: string
 ): Promise<PilotResponse> {
   return {
-    type: 'text',
+    type: 'faq',
     content:
-      'Your privacy on Tiikme is in your hands. Here\'s a quick overview:\n\n- **Profile visibility** — You can set your profile to Public or Private.\n- **Email / Phone** — Hidden by default; you opt-in to show them.\n- **Open to Work** — Hidden from your current employer automatically (matched by work email domain).\n- **Search visibility** — You can opt out of appearing in Pilot AI search.\n- **Data requests** — You can export or delete your data from Account Settings.\n\nVisit Privacy Settings to fine-tune who can see what.',
+      'Your privacy on Tiikme is fully in your hands. Here\'s what you control:\n\n' +
+      '**Profile visibility** — Show or hide your location, company, education, and experience individually.\n\n' +
+      '**Open to Work** — Hidden from your current employer by default (matched by company email domain).\n\n' +
+      '**Pilot AI search** — Turn off "Appear in Pilot searches" and your profile won\'t show in any Pilot result.\n\n' +
+      '**Email / Phone** — Hidden by default; you opt-in to share with connections.\n\n' +
+      '**Data export or deletion** — Available from Account Settings any time.',
     action: { label: 'Privacy settings →', url: '/app/settings?tab=privacy' },
   };
 }
