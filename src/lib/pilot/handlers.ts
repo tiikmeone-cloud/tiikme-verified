@@ -57,16 +57,17 @@ export async function handleSearchProfile(
   entities: Entities,
   currentUserId: string
 ): Promise<PilotResponse> {
-  // Select privacy field so we can filter show_in_pilot_search in JS
+  // Use is_public (the real column). Fetch privacy JSONB so we can check
+  // show_in_pilot_search and show_in_explore in JS.
   let query = supabase
     .from('profiles')
     .select(
-      'id, full_name, headline, avatar_url, location_city, is_verified, activity_score, profession_type, show_in_explore, privacy'
+      'id, full_name, headline, avatar_url, location_city, is_verified, activity_score, profession_type, privacy'
     )
     .neq('id', currentUserId)
-    .eq('show_in_explore', true)
+    .eq('is_public', true)
     .order('activity_score', { ascending: false })
-    .limit(20); // fetch more, then filter by pilot privacy in JS
+    .limit(30); // fetch more, then JS-filter by privacy settings
 
   if (entities.name) {
     query = query.ilike('full_name', `%${entities.name}%`);
@@ -89,11 +90,13 @@ export async function handleSearchProfile(
     };
   }
 
-  // Filter out users who have opted out of Pilot search
+  // Filter out users who have opted out of Pilot search or Explore
   const visible = (data || []).filter((p: any) => {
     const priv = p.privacy;
     if (!priv || typeof priv !== 'object') return true;
-    return priv.show_in_pilot_search !== false;
+    if (priv.show_in_explore === false) return false;
+    if (priv.show_in_pilot_search === false) return false;
+    return true;
   }).slice(0, 5);
 
   if (visible.length === 0) {
@@ -194,7 +197,6 @@ export async function handleSearchOrg(
   let query = supabase
     .from('organizations')
     .select('id, name, logo_url, city, state, type, industry, tagline, slug, is_verified, followers_count')
-    .eq('status', 'active')
     .order('followers_count', { ascending: false, nullsFirst: false })
     .limit(6);
 
@@ -247,7 +249,6 @@ export async function handleSearchCircle(entities: Entities): Promise<PilotRespo
   let query = supabase
     .from('circles')
     .select('id, name, slug, member_count, description, post_count, visibility')
-    .eq('status', 'active')
     .eq('visibility', 'public')
     .order('member_count', { ascending: false })
     .limit(6);
