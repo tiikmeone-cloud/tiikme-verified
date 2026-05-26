@@ -171,7 +171,7 @@ const SectionBox = ({ title, icon: Icon, iconColor, count, isOwnProfile, onAdd, 
 
 /* ── Item Row ── */
 const ItemRow = ({ logo, line1, line2, line3, line4, right, isLast, extra }: {
-  logo: React.ReactNode; line1: React.ReactNode; line2?: string; line3?: string; line4?: string;
+  logo: React.ReactNode; line1: React.ReactNode; line2?: React.ReactNode; line3?: string; line4?: string;
   right?: React.ReactNode; isLast: boolean; extra?: React.ReactNode;
 }) => (
   <div className="flex" style={{ alignItems: "flex-start", gap: 10, padding: "8px 0", borderBottom: isLast ? "none" : "1px solid var(--border-subtle)" }}>

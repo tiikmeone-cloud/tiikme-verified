@@ -422,10 +422,10 @@ const SuggestedWidget = ({ connectionIds }: { connectionIds: Set<string> }) => {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("id, full_name, role, role_subtype, headline, avatar_url, institution_name, currently_working_at, designation, role_metadata")
+    supabase.from("profiles").select("id, full_name, role, role_subtype, headline, avatar_url, institution_name, currently_working_at, designation, role_metadata, privacy")
       .neq("id", user.id).order("activity_score", { ascending: false }).limit(20)
       .then(({ data }) => {
-        const filtered = (data || []).filter(p => {
+        const filtered = (data || []).filter((p: any) => {
           if (connectionIds.has(p.id)) return false;
           const priv = (p.privacy as any) || {};
           if (priv.show_in_explore === false) return false;
@@ -490,18 +490,18 @@ const CirclesWidget = () => {
   useEffect(() => {
     if (!user) return;
     // Find circles the user hasn't joined yet, filtered by their role/sector
-    supabase.from("circles")
-      .select("id, name, slug, description, member_count, category")
-      .eq("is_public", true)
+    (supabase.from("circles") as any)
+      .select("id, name, slug, description, member_count, type")
+      .eq("visibility", "public")
       .order("member_count", { ascending: false })
       .limit(8)
-      .then(({ data }) => {
+      .then(({ data }: { data: any[] | null }) => {
         if (!data) return;
         // Prefer circles matching user's role
         const role = profile?.role || "";
         const sorted = [...data].sort((a, b) => {
-          const aMatch = a.category?.toLowerCase().includes(role) ? 1 : 0;
-          const bMatch = b.category?.toLowerCase().includes(role) ? 1 : 0;
+          const aMatch = a.type?.toLowerCase().includes(role) ? 1 : 0;
+          const bMatch = b.type?.toLowerCase().includes(role) ? 1 : 0;
           return bMatch - aMatch;
         });
         setCircles(sorted.slice(0, 3));
@@ -745,7 +745,7 @@ const Feed = () => {
               { key: "following", label: "Following" },
             ]}
             active={feedMode}
-            onChange={setFeedMode}
+            onChange={(k) => setFeedMode(k as "for_you" | "following")}
           />
 
           {showPrefs && (

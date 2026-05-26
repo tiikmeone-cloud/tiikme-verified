@@ -114,7 +114,7 @@ export function PostCard({
         timer = setTimeout(() => {
           if (viewTrackedRef.current) return;
           viewTrackedRef.current = true;
-          supabase.rpc("increment_post_views" as any, { post_id: post.id }).catch(() => {
+          (supabase.rpc("increment_post_views" as any, { post_id: post.id }) as any).then(undefined, () => {
             // Fallback: direct update (less accurate under concurrent writes, but safe)
             supabase.from("posts").update({ view_count: (post.view_count || 0) + 1 } as any).eq("id", post.id);
           });

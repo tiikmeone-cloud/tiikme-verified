@@ -543,6 +543,8 @@ function OrgCampaignsTab() {
     const { data, error } = await supabase.from("campaigns").insert({
       org_id: orgId,
       title: form.title.trim(),
+      name: form.title.trim(),
+      created_by: (profile as any)?.id,
       description: form.description.trim() || null,
       campaign_type: form.campaign_type,
       deliverable_platforms: form.deliverable_platforms,
@@ -551,7 +553,7 @@ function OrgCampaignsTab() {
       min_followers: parseInt(form.min_followers) || 0,
       application_deadline: form.application_deadline || null,
       status: "active",
-    }).select().single();
+    } as any).select().single();
     setCreating(false);
     if (error) { toast.error("Failed to create campaign"); return; }
     setCampaigns(prev => [{ ...data, _apps: [] }, ...prev]);
@@ -740,12 +742,13 @@ function CampaignsTab() {
     setSubmitting(true);
     const { error } = await supabase.from("opportunity_applications").insert({
       campaign_id: openPitch.id,
+      opportunity_id: openPitch.id,
       applicant_id: user.id,
       pitch_text: pitchText.trim() || null,
       platform: pitchPlatform || null,
       follower_count: pitchFollowers ? parseInt(pitchFollowers) : null,
       portfolio_url: pitchPortfolio.trim() || null,
-    });
+    } as any);
     setSubmitting(false);
     if (error) { toast.error("Failed to apply"); return; }
     setApplied(prev => new Set([...prev, openPitch.id]));
