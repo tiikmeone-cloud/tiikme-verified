@@ -39,6 +39,7 @@ interface AvatarSquareProps {
   className?: string;
   /** Override background color for fallback */
   bgColor?: string;
+  style?: React.CSSProperties;
 }
 
 const AvatarSquare = ({
@@ -47,6 +48,7 @@ const AvatarSquare = ({
   size = "md",
   className = "",
   bgColor,
+  style,
 }: AvatarSquareProps) => {
   const [imgError, setImgError] = useState(false);
   const px = typeof size === "number" ? size : (NAMED_SIZES[size] || 40);
