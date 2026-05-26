@@ -205,6 +205,202 @@ export type Database = {
           },
         ]
       }
+      ai_audit_logs: {
+        Row: {
+          action: string | null
+          actor_user_id: string | null
+          created_at: string | null
+          decision: string | null
+          id: string
+          mode: string | null
+          org_id: string | null
+          query_text: string | null
+          result_summary: Json | null
+          thread_id: string | null
+        }
+        Insert: {
+          action?: string | null
+          actor_user_id?: string | null
+          created_at?: string | null
+          decision?: string | null
+          id?: string
+          mode?: string | null
+          org_id?: string | null
+          query_text?: string | null
+          result_summary?: Json | null
+          thread_id?: string | null
+        }
+        Update: {
+          action?: string | null
+          actor_user_id?: string | null
+          created_at?: string | null
+          decision?: string | null
+          id?: string
+          mode?: string | null
+          org_id?: string | null
+          query_text?: string | null
+          result_summary?: Json | null
+          thread_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_audit_logs_actor_user_id_fkey"
+            columns: ["actor_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_audit_logs_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "ai_audit_logs_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_audit_logs_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "ai_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_message_feedback: {
+        Row: {
+          created_at: string | null
+          id: string
+          message_id: string
+          rating: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message_id: string
+          rating: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message_id?: string
+          rating?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_message_feedback_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "ai_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_message_feedback_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_messages: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          role: string
+          thread_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          role: string
+          thread_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          role?: string
+          thread_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "ai_threads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_threads: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_archived: boolean
+          last_message_at: string | null
+          last_mode: string | null
+          mode: string
+          title: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_archived?: boolean
+          last_message_at?: string | null
+          last_mode?: string | null
+          mode?: string
+          title?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_archived?: boolean
+          last_message_at?: string | null
+          last_mode?: string | null
+          mode?: string
+          title?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_threads_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alerts: {
         Row: {
           action_url: string | null
@@ -306,6 +502,61 @@ export type Database = {
           },
         ]
       }
+      application_referrals: {
+        Row: {
+          created_at: string | null
+          id: string
+          note: string | null
+          opportunity_id: string
+          referred_email: string | null
+          referred_user_id: string | null
+          referrer_id: string
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          note?: string | null
+          opportunity_id: string
+          referred_email?: string | null
+          referred_user_id?: string | null
+          referrer_id: string
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          note?: string | null
+          opportunity_id?: string
+          referred_email?: string | null
+          referred_user_id?: string | null
+          referrer_id?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "application_referrals_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "application_referrals_referred_user_id_fkey"
+            columns: ["referred_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "application_referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       application_stage_history: {
         Row: {
           application_id: string
@@ -393,6 +644,187 @@ export type Database = {
           {
             foreignKeyName: "assessment_attempts_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      brand_campaign_applications: {
+        Row: {
+          applicant_id: string
+          applied_at: string | null
+          brand_notes: string | null
+          campaign_id: string
+          follower_count: number | null
+          id: string
+          pitch_text: string | null
+          platform: string | null
+          portfolio_url: string | null
+          reviewed_at: string | null
+          status: string
+        }
+        Insert: {
+          applicant_id: string
+          applied_at?: string | null
+          brand_notes?: string | null
+          campaign_id: string
+          follower_count?: number | null
+          id?: string
+          pitch_text?: string | null
+          platform?: string | null
+          portfolio_url?: string | null
+          reviewed_at?: string | null
+          status?: string
+        }
+        Update: {
+          applicant_id?: string
+          applied_at?: string | null
+          brand_notes?: string | null
+          campaign_id?: string
+          follower_count?: number | null
+          id?: string
+          pitch_text?: string | null
+          platform?: string | null
+          portfolio_url?: string | null
+          reviewed_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_campaign_applications_applicant_id_fkey"
+            columns: ["applicant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "brand_campaign_applications_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "brand_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      brand_campaigns: {
+        Row: {
+          application_deadline: string | null
+          budget_per_creator: number | null
+          campaign_type: string
+          created_at: string | null
+          created_by: string | null
+          creator_slots: number | null
+          deliverable_description: string | null
+          deliverable_platforms: string[] | null
+          description: string | null
+          id: string
+          min_followers: number | null
+          org_id: string
+          status: string
+          target_profession_types: string[] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          application_deadline?: string | null
+          budget_per_creator?: number | null
+          campaign_type?: string
+          created_at?: string | null
+          created_by?: string | null
+          creator_slots?: number | null
+          deliverable_description?: string | null
+          deliverable_platforms?: string[] | null
+          description?: string | null
+          id?: string
+          min_followers?: number | null
+          org_id: string
+          status?: string
+          target_profession_types?: string[] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          application_deadline?: string | null
+          budget_per_creator?: number | null
+          campaign_type?: string
+          created_at?: string | null
+          created_by?: string | null
+          creator_slots?: number | null
+          deliverable_description?: string | null
+          deliverable_platforms?: string[] | null
+          description?: string | null
+          id?: string
+          min_followers?: number | null
+          org_id?: string
+          status?: string
+          target_profession_types?: string[] | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_campaigns_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "brand_campaigns_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "brand_campaigns_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_applications: {
+        Row: {
+          applied_at: string | null
+          campaign_id: string
+          creator_id: string
+          id: string
+          message: string | null
+          portfolio_url: string | null
+          status: string | null
+        }
+        Insert: {
+          applied_at?: string | null
+          campaign_id: string
+          creator_id: string
+          id?: string
+          message?: string | null
+          portfolio_url?: string | null
+          status?: string | null
+        }
+        Update: {
+          applied_at?: string | null
+          campaign_id?: string
+          creator_id?: string
+          id?: string
+          message?: string | null
+          portfolio_url?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_applications_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_applications_creator_id_fkey"
+            columns: ["creator_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -556,57 +988,108 @@ export type Database = {
       }
       campaigns: {
         Row: {
+          application_deadline: string | null
+          brand_kit_url: string | null
           budget_daily: number | null
+          budget_per_creator: number | null
           budget_total: number | null
+          campaign_type: string | null
           content_id: string | null
           content_type: string
           created_at: string
           created_by: string
+          deliverable_count: number | null
+          deliverable_platform: string | null
+          deliverable_platforms: string[] | null
+          deliverable_type: string | null
+          description: string | null
+          dont_rules: string | null
+          eligible_profession_types: string[] | null
           end_date: string | null
           id: string
+          min_followers: number | null
           name: string
           objective: string
           org_id: string
+          reference_urls: string[] | null
+          required_niches: string[] | null
+          slots_available: number | null
+          slots_filled: number | null
           spent_total: number
           start_date: string | null
           status: string
           targeting: Json
+          title: string | null
           updated_at: string
         }
         Insert: {
+          application_deadline?: string | null
+          brand_kit_url?: string | null
           budget_daily?: number | null
+          budget_per_creator?: number | null
           budget_total?: number | null
+          campaign_type?: string | null
           content_id?: string | null
           content_type?: string
           created_at?: string
           created_by: string
+          deliverable_count?: number | null
+          deliverable_platform?: string | null
+          deliverable_platforms?: string[] | null
+          deliverable_type?: string | null
+          description?: string | null
+          dont_rules?: string | null
+          eligible_profession_types?: string[] | null
           end_date?: string | null
           id?: string
+          min_followers?: number | null
           name: string
           objective?: string
           org_id: string
+          reference_urls?: string[] | null
+          required_niches?: string[] | null
+          slots_available?: number | null
+          slots_filled?: number | null
           spent_total?: number
           start_date?: string | null
           status?: string
           targeting?: Json
+          title?: string | null
           updated_at?: string
         }
         Update: {
+          application_deadline?: string | null
+          brand_kit_url?: string | null
           budget_daily?: number | null
+          budget_per_creator?: number | null
           budget_total?: number | null
+          campaign_type?: string | null
           content_id?: string | null
           content_type?: string
           created_at?: string
           created_by?: string
+          deliverable_count?: number | null
+          deliverable_platform?: string | null
+          deliverable_platforms?: string[] | null
+          deliverable_type?: string | null
+          description?: string | null
+          dont_rules?: string | null
+          eligible_profession_types?: string[] | null
           end_date?: string | null
           id?: string
+          min_followers?: number | null
           name?: string
           objective?: string
           org_id?: string
+          reference_urls?: string[] | null
+          required_niches?: string[] | null
+          slots_available?: number | null
+          slots_filled?: number | null
           spent_total?: number
           start_date?: string | null
           status?: string
           targeting?: Json
+          title?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -700,6 +1183,65 @@ export type Database = {
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      certifications: {
+        Row: {
+          certificate_file_url: string | null
+          created_at: string | null
+          credential_id: string | null
+          credential_url: string | null
+          expiry_month: string | null
+          expiry_year: number | null
+          id: string
+          is_verified: boolean | null
+          issue_month: string | null
+          issue_year: number | null
+          issuing_org: string
+          name: string
+          no_expiry: boolean | null
+          user_id: string
+        }
+        Insert: {
+          certificate_file_url?: string | null
+          created_at?: string | null
+          credential_id?: string | null
+          credential_url?: string | null
+          expiry_month?: string | null
+          expiry_year?: number | null
+          id?: string
+          is_verified?: boolean | null
+          issue_month?: string | null
+          issue_year?: number | null
+          issuing_org: string
+          name: string
+          no_expiry?: boolean | null
+          user_id: string
+        }
+        Update: {
+          certificate_file_url?: string | null
+          created_at?: string | null
+          credential_id?: string | null
+          credential_url?: string | null
+          expiry_month?: string | null
+          expiry_year?: number | null
+          id?: string
+          is_verified?: boolean | null
+          issue_month?: string | null
+          issue_year?: number | null
+          issuing_org?: string
+          name?: string
+          no_expiry?: boolean | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1140,6 +1682,50 @@ export type Database = {
           },
         ]
       }
+      creator_channels: {
+        Row: {
+          channel_name: string
+          channel_url: string | null
+          content_niche: string | null
+          created_at: string | null
+          id: string
+          is_monetized: boolean | null
+          platform: string
+          subscriber_count: number | null
+          user_id: string
+        }
+        Insert: {
+          channel_name: string
+          channel_url?: string | null
+          content_niche?: string | null
+          created_at?: string | null
+          id?: string
+          is_monetized?: boolean | null
+          platform: string
+          subscriber_count?: number | null
+          user_id: string
+        }
+        Update: {
+          channel_name?: string
+          channel_url?: string | null
+          content_niche?: string | null
+          created_at?: string | null
+          id?: string
+          is_monetized?: boolean | null
+          platform?: string
+          subscriber_count?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_channels_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       disposable_domains: {
         Row: {
           domain: string
@@ -1462,6 +2048,92 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      follows: {
+        Row: {
+          created_at: string | null
+          follower_id: string
+          following_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          follower_id: string
+          following_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string | null
+          follower_id?: string
+          following_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follows_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "follows_following_id_fkey"
+            columns: ["following_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gig_services: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_available: boolean | null
+          rate_amount: number | null
+          rate_type: string
+          service_area_city: string | null
+          service_name: string
+          service_radius_km: number | null
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_available?: boolean | null
+          rate_amount?: number | null
+          rate_type: string
+          service_area_city?: string | null
+          service_name: string
+          service_radius_km?: number | null
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_available?: boolean | null
+          rate_amount?: number | null
+          rate_type?: string
+          service_area_city?: string | null
+          service_name?: string
+          service_radius_km?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gig_services_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       hiring_assessments: {
         Row: {
@@ -1798,6 +2470,75 @@ export type Database = {
             columns: ["work_item_id"]
             isOneToOne: false
             referencedRelation: "work_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_referrals: {
+        Row: {
+          id: string
+          message: string | null
+          opportunity_id: string
+          org_id: string
+          referred_at: string | null
+          referred_by: string | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          message?: string | null
+          opportunity_id: string
+          org_id: string
+          referred_at?: string | null
+          referred_by?: string | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          message?: string | null
+          opportunity_id?: string
+          org_id?: string
+          referred_at?: string | null
+          referred_by?: string | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_referrals_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_referrals_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "job_referrals_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_referrals_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_referrals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -2734,21 +3475,37 @@ export type Database = {
       }
       opportunity_applications: {
         Row: {
+          ai_score: number | null
+          ai_score_breakdown: Json | null
+          ai_scored_at: string | null
+          ai_summary: string | null
+          applicant_email: string | null
           applicant_id: string
+          applied_at: string | null
           assessment_passed: boolean | null
           assessment_score: number | null
+          campaign_id: string | null
+          channel_id: string | null
           cover_letter: string | null
           cover_note: string | null
           created_at: string | null
           custom_answers: Json | null
+          email: string | null
+          follower_count: number | null
           id: string
+          interview_stage: string | null
           is_qualified: boolean | null
           joined_confirmed: boolean | null
+          media_kit_url: string | null
           message: string | null
           offer_accepted: boolean | null
           opportunity_id: string
+          pitch_text: string | null
+          platform: string | null
           portfolio_url: string | null
+          proposed_rate: number | null
           recruiter_notes: string | null
+          recruiter_score: number | null
           resume_url: string | null
           selected_at: string | null
           status: string | null
@@ -2756,21 +3513,37 @@ export type Database = {
           work_items_attached: string[] | null
         }
         Insert: {
+          ai_score?: number | null
+          ai_score_breakdown?: Json | null
+          ai_scored_at?: string | null
+          ai_summary?: string | null
+          applicant_email?: string | null
           applicant_id: string
+          applied_at?: string | null
           assessment_passed?: boolean | null
           assessment_score?: number | null
+          campaign_id?: string | null
+          channel_id?: string | null
           cover_letter?: string | null
           cover_note?: string | null
           created_at?: string | null
           custom_answers?: Json | null
+          email?: string | null
+          follower_count?: number | null
           id?: string
+          interview_stage?: string | null
           is_qualified?: boolean | null
           joined_confirmed?: boolean | null
+          media_kit_url?: string | null
           message?: string | null
           offer_accepted?: boolean | null
           opportunity_id: string
+          pitch_text?: string | null
+          platform?: string | null
           portfolio_url?: string | null
+          proposed_rate?: number | null
           recruiter_notes?: string | null
+          recruiter_score?: number | null
           resume_url?: string | null
           selected_at?: string | null
           status?: string | null
@@ -2778,21 +3551,37 @@ export type Database = {
           work_items_attached?: string[] | null
         }
         Update: {
+          ai_score?: number | null
+          ai_score_breakdown?: Json | null
+          ai_scored_at?: string | null
+          ai_summary?: string | null
+          applicant_email?: string | null
           applicant_id?: string
+          applied_at?: string | null
           assessment_passed?: boolean | null
           assessment_score?: number | null
+          campaign_id?: string | null
+          channel_id?: string | null
           cover_letter?: string | null
           cover_note?: string | null
           created_at?: string | null
           custom_answers?: Json | null
+          email?: string | null
+          follower_count?: number | null
           id?: string
+          interview_stage?: string | null
           is_qualified?: boolean | null
           joined_confirmed?: boolean | null
+          media_kit_url?: string | null
           message?: string | null
           offer_accepted?: boolean | null
           opportunity_id?: string
+          pitch_text?: string | null
+          platform?: string | null
           portfolio_url?: string | null
+          proposed_rate?: number | null
           recruiter_notes?: string | null
+          recruiter_score?: number | null
           resume_url?: string | null
           selected_at?: string | null
           status?: string | null
@@ -2800,6 +3589,20 @@ export type Database = {
           work_items_attached?: string[] | null
         }
         Relationships: [
+          {
+            foreignKeyName: "opportunity_applications_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_applications_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "creator_channels"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "opportunity_applications_opportunity_id_fkey"
             columns: ["opportunity_id"]
@@ -3903,6 +4706,49 @@ export type Database = {
           },
         ]
       }
+      org_user_follows: {
+        Row: {
+          followed_at: string | null
+          id: string
+          org_id: string
+          user_id: string
+        }
+        Insert: {
+          followed_at?: string | null
+          id?: string
+          org_id: string
+          user_id: string
+        }
+        Update: {
+          followed_at?: string | null
+          id?: string
+          org_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_user_follows_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_brain_summary"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "org_user_follows_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_user_follows_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       org_verif_routes: {
         Row: {
           assigned_to_user_id: string | null
@@ -4278,6 +5124,47 @@ export type Database = {
             columns: ["institution_id"]
             isOneToOne: false
             referencedRelation: "institutions_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pilot_usage: {
+        Row: {
+          ai_count: number | null
+          analytics_count: number | null
+          date: string
+          id: string
+          message_count: number
+          search_count: number | null
+          total_count: number | null
+          user_id: string
+        }
+        Insert: {
+          ai_count?: number | null
+          analytics_count?: number | null
+          date?: string
+          id?: string
+          message_count?: number
+          search_count?: number | null
+          total_count?: number | null
+          user_id: string
+        }
+        Update: {
+          ai_count?: number | null
+          analytics_count?: number | null
+          date?: string
+          id?: string
+          message_count?: number
+          search_count?: number | null
+          total_count?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pilot_usage_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -7351,19 +8238,34 @@ export type Database = {
       }
     }
     Functions: {
-      apply_to_opportunity: {
-        Args: {
-          p_cover_letter?: string
-          p_cover_note?: string
-          p_custom_answers?: Json
-          p_opportunity_id: string
-          p_portfolio_url?: string
-          p_resume_url?: string
-          p_why_good_fit?: string
-          p_work_items?: string[]
-        }
-        Returns: Json
-      }
+      apply_to_opportunity:
+        | {
+            Args: {
+              p_cover_letter?: string
+              p_cover_note?: string
+              p_custom_answers?: Json
+              p_opportunity_id: string
+              p_portfolio_url?: string
+              p_resume_url?: string
+              p_why_good_fit?: string
+              p_work_items?: string[]
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_contact_email?: string
+              p_cover_letter?: string
+              p_cover_note?: string
+              p_custom_answers?: Json
+              p_opportunity_id: string
+              p_portfolio_url?: string
+              p_resume_url?: string
+              p_why_good_fit?: string
+              p_work_items?: string[]
+            }
+            Returns: Json
+          }
       approve_employer_endorsement: {
         Args: { _endorsement_id: string }
         Returns: Json
@@ -7499,10 +8401,16 @@ export type Database = {
         Returns: string
       }
       expire_domain_verification_challenges: { Args: never; Returns: Json }
+      expire_opportunities: { Args: never; Returns: undefined }
+      expire_stale_verification_requests: { Args: never; Returns: number }
       expire_stale_verifications: { Args: never; Returns: number }
       generate_clean_username: {
         Args: { p_full_name: string; p_user_id: string }
         Returns: string
+      }
+      get_application_recruiter_view: {
+        Args: { p_application_id: string }
+        Returns: Json
       }
       get_application_status: {
         Args: { p_opportunity_id: string; p_user_id: string }
@@ -7518,6 +8426,13 @@ export type Database = {
         Returns: Json
       }
       get_my_contact: {
+        Args: never
+        Returns: {
+          email: string
+          phone: string
+        }[]
+      }
+      get_own_contact_info: {
         Args: never
         Returns: {
           email: string
@@ -7555,6 +8470,11 @@ export type Database = {
         Returns: string
       }
       increment_days_active: { Args: { uid: string }; Returns: undefined }
+      increment_opportunity_responses: {
+        Args: { opp_id: string }
+        Returns: undefined
+      }
+      increment_post_views: { Args: { post_id: string }; Returns: undefined }
       increment_score: {
         Args: { amount: number; uid: string }
         Returns: undefined
@@ -7624,18 +8544,31 @@ export type Database = {
           table_name: string
         }[]
       }
-      obs_log_rpc: {
-        Args: {
-          p_caller_id: string
-          p_duration_ms: number
-          p_error_code?: string
-          p_error_msg?: string
-          p_rpc_name: string
-          p_success?: boolean
-          p_surface?: string
-        }
-        Returns: undefined
-      }
+      obs_log_rpc:
+        | {
+            Args: {
+              p_caller_id: string
+              p_duration_ms: number
+              p_error_code?: string
+              p_error_msg?: string
+              p_rpc_name: string
+              p_success?: boolean
+              p_surface?: string
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_caller_id: string
+              p_duration_ms: number
+              p_error_code?: string
+              p_error_msg?: string
+              p_rpc_name: string
+              p_success?: boolean
+              p_surface?: string
+            }
+            Returns: undefined
+          }
       rank_explore_pages: {
         Args: { p_page_type?: string; p_user_id: string }
         Returns: {
@@ -7740,6 +8673,7 @@ export type Database = {
         Returns: boolean
       }
       verification_internal_write_allowed: { Args: never; Returns: boolean }
+      withdraw_application: { Args: { p_app_id: string }; Returns: Json }
     }
     Enums: {
       circle_post_type:
