@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
-  Bot, Send, ThumbsUp, ThumbsDown, Archive, Plus, ChevronRight,
-  Briefcase, Users, MessageCircle, Loader2, ShieldCheck,
-  TrendingUp, BarChart2, Flame, ArrowUpRight, CheckCircle2,
+  Bot, Send, ThumbsUp, ThumbsDown, Archive, Trash2, Plus, ChevronRight,
+  Briefcase, Search, Users, MessageCircle, Loader2, ShieldCheck,
+  TrendingUp, BarChart2, Flame, ArrowUpRight, CheckCircle2, Megaphone,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -12,6 +12,7 @@ import {
   loadPilotThreads,
   loadPilotMessages,
   archivePilotThread,
+  deletePilotThread,
   ratePilotAnswer,
   MAX_PILOT_CHATS,
   type TiikmePilotMode,
@@ -26,27 +27,28 @@ import { classifyIntent } from "@/lib/pilot/intent-classifier";
 import { handlePlatformFaq } from "@/lib/pilot/faq-map";
 import {
   handleSearchProfile, handleSearchJob, handleSearchOrg, handleSearchCircle,
-  handleMyAnalytics, handleMyApplications, handleTrending, handlePrivacyQuestion,
-  handleMyProfile, handleMyExperience, handleMySkills,
+  handleSearchCampaign, handleMyAnalytics, handleMyApplications, handleTrending, handlePrivacyQuestion,
 } from "@/lib/pilot/handlers";
 import { checkQuota, incrementQuota } from "@/lib/pilot/rate-limiter";
-import type { PilotResponse, ProfileCard, JobCard, ApplicationItem, AnalyticsData, TrendingHashtag, CircleCard, MyProfileData, ExperienceItem } from "@/lib/pilot/types";
+import type { PilotResponse, ProfileCard, JobCard, ApplicationItem, AnalyticsData, TrendingHashtag, CircleCard, CampaignCard } from "@/lib/pilot/types";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// ─── Constants ─────────────────────────────────────────────────────────────────
 
-const AI_DAILY_LIMIT = 3;
-const CHAR_LIMIT = 500;
+const AI_DAILY_LIMIT = 20;
+const CHAR_LIMIT = 1000;
 
 const QUICK_ACTIONS = [
-  "My profile",
-  "My experience",
-  "My skills",
-  "My activity score",
-  "My applications",
-  "Find jobs in Bangalore",
   "What's trending today?",
-  "Show me tech communities",
+  "Find software jobs in Bangalore",
+  "Show me startup organizations",
+  "My activity stats",
+  "New campaigns today",
+  "Find developers in Hyderabad",
+  "My job applications",
+  "Show tech communities",
+  "Remote jobs available",
+  "How does Tiikme work?",
 ];
 
 const THINKING_LABELS: Record<string, string> = {
@@ -54,18 +56,16 @@ const THINKING_LABELS: Record<string, string> = {
   SEARCH_JOB: "Finding open roles…",
   SEARCH_ORG: "Looking up organizations…",
   SEARCH_CIRCLE: "Searching communities…",
+  SEARCH_CAMPAIGN: "Finding campaigns…",
   MY_ANALYTICS: "Loading your stats…",
   MY_APPLICATIONS: "Fetching your applications…",
-  MY_PROFILE: "Loading your profile…",
-  MY_EXPERIENCE: "Fetching your work history…",
-  MY_SKILLS: "Loading your skills…",
   TRENDING: "Getting trending data…",
   PLATFORM_FAQ: "Looking that up…",
   PRIVACY_QUESTION: "Checking privacy info…",
   AI_QUERY: "Thinking…",
 };
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Types ─────────────────────────────────────────────────────────────────────
 
 interface ChatMessage {
   id: string;
@@ -78,14 +78,10 @@ interface ChatMessage {
   thinkingLabel?: string;
 }
 
-// ─── Response card components ─────────────────────────────────────────────────
+// ─── Response card components ──────────────────────────────────────────────────
 
 function VerifiedBadge() {
-  return (
-    <ShieldCheck
-      style={{ width: 12, height: 12, color: "#3B82F6", flexShrink: 0 }}
-    />
-  );
+  return <ShieldCheck style={{ width: 12, height: 12, color: "#3B82F6", flexShrink: 0 }} />;
 }
 
 function ProfileResultsCard({ cards }: { cards: ProfileCard[] }) {
@@ -95,27 +91,18 @@ function ProfileResultsCard({ cards }: { cards: ProfileCard[] }) {
         <Link
           key={p.id}
           to={`/app/profile/${p.id}`}
-          className="flex items-center gap-3 rounded-xl p-3 border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
+          className="flex items-center gap-3 rounded-xl p-3 border border-gray-100 bg-gray-50 hover:bg-orange-50 hover:border-orange-100 transition-colors"
         >
-          <AvatarSquare
-            src={p.avatar_url}
-            name={p.full_name}
-            size={40}
-            style={{ borderRadius: 10, flexShrink: 0 }}
-          />
+          <AvatarSquare src={p.avatar_url} name={p.full_name} size={40} style={{ borderRadius: 10, flexShrink: 0 }} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
-              <span className="text-[13px] font-semibold text-white truncate">{p.full_name}</span>
+              <span className="text-[13px] font-semibold text-gray-800 truncate">{p.full_name}</span>
               {p.is_verified && <VerifiedBadge />}
             </div>
-            {p.headline && (
-              <p className="text-[11px] text-white/50 truncate mt-0.5">{p.headline}</p>
-            )}
-            {p.location_city && (
-              <p className="text-[11px] text-white/35 mt-0.5">{p.location_city}</p>
-            )}
+            {p.headline && <p className="text-[11px] text-gray-500 truncate mt-0.5">{p.headline}</p>}
+            {p.location_city && <p className="text-[11px] text-gray-400 mt-0.5">{p.location_city}</p>}
           </div>
-          <ArrowUpRight style={{ width: 14, height: 14, color: "rgba(255,255,255,0.3)", flexShrink: 0 }} />
+          <ArrowUpRight style={{ width: 14, height: 14, color: "#9CA3AF", flexShrink: 0 }} />
         </Link>
       ))}
     </div>
@@ -124,9 +111,9 @@ function ProfileResultsCard({ cards }: { cards: ProfileCard[] }) {
 
 function JobResultsCard({ cards }: { cards: JobCard[] }) {
   const TYPE_COLORS: Record<string, string> = {
-    full_time: "#22C55E", part_time: "#F59E0B",
-    internship: "#3B82F6", contract: "#A855F7",
-    freelance: "#F97316",
+    full_time: "#16A34A", part_time: "#D97706",
+    internship: "#2563EB", contract: "#7C3AED",
+    freelance: "#EA580C",
   };
 
   return (
@@ -137,47 +124,77 @@ function JobResultsCard({ cards }: { cards: JobCard[] }) {
             ? `₹${(j.salary_max / 100000).toFixed(0)} LPA`
             : `₹${(j.salary_max / 1000).toFixed(0)}K`
           : null;
-        const typeColor = TYPE_COLORS[j.type || ""] || "#9CA3AF";
+        const typeColor = TYPE_COLORS[j.type || ""] || "#6B7280";
         return (
           <Link
             key={j.id}
             to={`/app/opportunities?opp=${j.id}`}
-            className="flex items-start gap-3 rounded-xl p-3 border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
+            className="flex items-start gap-3 rounded-xl p-3 border border-gray-100 bg-gray-50 hover:bg-orange-50 hover:border-orange-100 transition-colors"
           >
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 overflow-hidden"
-              style={{ background: "rgba(255,255,255,0.08)" }}
-            >
-              {j.org_logo ? (
-                <img src={j.org_logo} alt={j.org_name || ""} className="w-full h-full object-cover" />
-              ) : (
-                <Briefcase style={{ width: 16, height: 16, color: "rgba(255,255,255,0.4)" }} />
-              )}
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 overflow-hidden bg-white border border-gray-100">
+              {j.org_logo
+                ? <img src={j.org_logo} alt={j.org_name || ""} className="w-full h-full object-cover" />
+                : <Briefcase style={{ width: 16, height: 16, color: "#9CA3AF" }} />}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-semibold text-white truncate">{j.title}</p>
-              <p className="text-[11px] text-white/50 truncate">{j.org_name || "Unknown org"}</p>
+              <p className="text-[13px] font-semibold text-gray-800 truncate">{j.title}</p>
+              <p className="text-[11px] text-gray-500 truncate">{j.org_name || "Unknown org"}</p>
               <div className="flex items-center gap-2 mt-1 flex-wrap">
                 {j.type && (
-                  <span
-                    className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-                    style={{ background: `${typeColor}20`, color: typeColor }}
-                  >
+                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: `${typeColor}18`, color: typeColor }}>
                     {j.type.replace(/_/g, " ")}
                   </span>
                 )}
-                {j.is_remote && (
-                  <span className="text-[10px] text-white/40">Remote</span>
-                )}
-                {j.location && !j.is_remote && (
-                  <span className="text-[10px] text-white/40 truncate">{j.location}</span>
-                )}
-                {salaryLabel && (
-                  <span className="text-[10px] text-green-400 font-semibold">{salaryLabel}</span>
-                )}
+                {j.is_remote && <span className="text-[10px] text-gray-400">Remote</span>}
+                {j.location && !j.is_remote && <span className="text-[10px] text-gray-400 truncate">{j.location}</span>}
+                {salaryLabel && <span className="text-[10px] text-green-600 font-semibold">{salaryLabel}</span>}
               </div>
             </div>
-            <ArrowUpRight style={{ width: 14, height: 14, color: "rgba(255,255,255,0.3)", flexShrink: 0, marginTop: 2 }} />
+            <ArrowUpRight style={{ width: 14, height: 14, color: "#9CA3AF", flexShrink: 0, marginTop: 2 }} />
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
+function CampaignResultsCard({ cards }: { cards: CampaignCard[] }) {
+  return (
+    <div className="grid grid-cols-1 gap-2 mt-2">
+      {cards.map((c) => {
+        const budgetLabel = c.budget_max
+          ? c.budget_max >= 100000
+            ? `₹${(c.budget_max / 100000).toFixed(0)} LPA`
+            : `₹${(c.budget_max / 1000).toFixed(0)}K`
+          : null;
+        const deadlineLabel = c.deadline
+          ? new Date(c.deadline).toLocaleDateString("en-IN", { day: "numeric", month: "short" })
+          : null;
+        return (
+          <Link
+            key={c.id}
+            to={`/app/opportunities?tab=campaigns&campaign=${c.id}`}
+            className="flex items-start gap-3 rounded-xl p-3 border border-gray-100 bg-gray-50 hover:bg-orange-50 hover:border-orange-100 transition-colors"
+          >
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 overflow-hidden bg-orange-50 border border-orange-100">
+              {c.org_logo
+                ? <img src={c.org_logo} alt={c.org_name || ""} className="w-full h-full object-cover" />
+                : <Megaphone style={{ width: 16, height: 16, color: "#FF5A1F" }} />}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-semibold text-gray-800 truncate">{c.title}</p>
+              <p className="text-[11px] text-gray-500 truncate">{c.org_name || "Brand campaign"}</p>
+              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                {c.type && (
+                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-orange-50 text-orange-600">
+                    {c.type.replace(/_/g, " ")}
+                  </span>
+                )}
+                {budgetLabel && <span className="text-[10px] text-green-600 font-semibold">{budgetLabel}</span>}
+                {deadlineLabel && <span className="text-[10px] text-gray-400">Due {deadlineLabel}</span>}
+              </div>
+            </div>
+            <ArrowUpRight style={{ width: 14, height: 14, color: "#9CA3AF", flexShrink: 0, marginTop: 2 }} />
           </Link>
         );
       })}
@@ -187,37 +204,26 @@ function JobResultsCard({ cards }: { cards: JobCard[] }) {
 
 function AnalyticsCard({ data }: { data: AnalyticsData }) {
   const TIER_COLORS: Record<string, { bg: string; color: string }> = {
-    Newcomer: { bg: "#6B728020", color: "#9CA3AF" },
-    Explorer: { bg: "#3B82F620", color: "#60A5FA" },
-    Contributor: { bg: "#F59E0B20", color: "#FBBF24" },
-    Expert: { bg: "#10B98120", color: "#34D399" },
+    Newcomer:    { bg: "#F3F4F6", color: "#6B7280" },
+    Explorer:    { bg: "#EFF6FF", color: "#3B82F6" },
+    Contributor: { bg: "#FFFBEB", color: "#D97706" },
+    Expert:      { bg: "#F0FDF4", color: "#16A34A" },
   };
   const tierStyle = TIER_COLORS[data.tier] || TIER_COLORS.Newcomer;
   const pct = data.nextTier ? Math.min(100, Math.round((data.score / data.nextTier) * 100)) : 100;
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-4 mt-2 space-y-4">
-      {/* Header */}
+    <div className="rounded-2xl border border-gray-100 bg-white p-4 mt-2 space-y-4 shadow-sm">
       <div className="flex items-center gap-3">
-        <div
-          className="w-10 h-10 rounded-xl flex items-center justify-center"
-          style={{ background: tierStyle.bg }}
-        >
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: tierStyle.bg }}>
           <BarChart2 style={{ width: 18, height: 18, color: tierStyle.color }} />
         </div>
         <div>
-          <p className="text-[13px] font-bold text-white">
-            {data.name ? `${data.name}'s Stats` : "Your Stats"}
-          </p>
+          <p className="text-[13px] font-bold text-gray-800">{data.name ? `${data.name}'s Stats` : "Your Stats"}</p>
           <div className="flex items-center gap-1.5">
-            <span
-              className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-              style={{ background: tierStyle.bg, color: tierStyle.color }}
-            >
-              {data.tier}
-            </span>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: tierStyle.bg, color: tierStyle.color }}>{data.tier}</span>
             {data.isVerified && (
-              <span className="flex items-center gap-0.5 text-[10px] text-blue-400">
+              <span className="flex items-center gap-0.5 text-[10px] text-blue-500">
                 <ShieldCheck style={{ width: 10, height: 10 }} /> Verified
               </span>
             )}
@@ -225,45 +231,39 @@ function AnalyticsCard({ data }: { data: AnalyticsData }) {
         </div>
       </div>
 
-      {/* Score bar */}
       <div>
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-[11px] text-white/50">Activity Score</span>
+          <span className="text-[11px] text-gray-400">Activity Score</span>
           <span className="text-[13px] font-bold" style={{ color: tierStyle.color }}>{data.score} pts</span>
         </div>
-        <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-          <div
-            className="h-full rounded-full transition-all"
-            style={{ width: `${pct}%`, background: tierStyle.color }}
-          />
+        <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+          <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: tierStyle.color }} />
         </div>
         {data.nextTier && (
-          <p className="text-[10px] text-white/30 mt-1">{data.score} / {data.nextTier} to next tier</p>
+          <p className="text-[10px] text-gray-400 mt-1">{data.score} / {data.nextTier} to next tier</p>
         )}
       </div>
 
-      {/* Stats grid */}
       <div className="grid grid-cols-3 gap-2">
         {[
           { label: "Posts", value: data.postCount },
           { label: "Connections", value: data.connCount },
           { label: "Followers", value: data.followerCount },
         ].map(({ label, value }) => (
-          <div key={label} className="text-center rounded-xl py-2.5" style={{ background: "rgba(255,255,255,0.05)" }}>
-            <p className="text-[16px] font-bold text-white">{value}</p>
-            <p className="text-[10px] text-white/40">{label}</p>
+          <div key={label} className="text-center rounded-xl py-2.5 bg-gray-50">
+            <p className="text-[16px] font-bold text-gray-800">{value}</p>
+            <p className="text-[10px] text-gray-400">{label}</p>
           </div>
         ))}
       </div>
 
-      {/* Tips */}
       {data.tips.length > 0 && (
         <div className="space-y-1.5">
-          <p className="text-[11px] font-semibold text-white/50 uppercase tracking-wide">Tips to grow</p>
+          <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Tips to grow</p>
           {data.tips.map((tip, i) => (
             <div key={i} className="flex items-start gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-orange-400 mt-1.5 shrink-0" />
-              <p className="text-[12px] text-white/60 leading-snug">{tip}</p>
+              <p className="text-[12px] text-gray-600 leading-snug">{tip}</p>
             </div>
           ))}
         </div>
@@ -274,24 +274,20 @@ function AnalyticsCard({ data }: { data: AnalyticsData }) {
 
 function TrendingCard({ hashtags }: { hashtags: TrendingHashtag[] }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-4 mt-2">
+    <div className="rounded-2xl border border-gray-100 bg-white p-4 mt-2 shadow-sm">
       <div className="flex items-center gap-2 mb-3">
         <Flame style={{ width: 14, height: 14, color: "#F97316" }} />
-        <span className="text-[12px] font-semibold text-white/70">Trending on Tiikme</span>
+        <span className="text-[12px] font-semibold text-gray-600">Trending on Tiikme</span>
       </div>
       <div className="space-y-1.5">
         {hashtags.map((h, i) => (
-          <Link
-            key={h.tag}
-            to={h.url}
-            className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors"
-          >
-            <span className="text-[11px] font-bold text-white/30 w-5 text-center">{i + 1}</span>
+          <Link key={h.tag} to={h.url} className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
+            <span className="text-[11px] font-bold text-gray-300 w-5 text-center">{i + 1}</span>
             <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-semibold text-orange-400">{h.tag}</p>
-              <p className="text-[10px] text-white/35">{h.count} post{h.count !== 1 ? "s" : ""}</p>
+              <p className="text-[13px] font-semibold text-orange-500">{h.tag}</p>
+              <p className="text-[10px] text-gray-400">{h.count} post{h.count !== 1 ? "s" : ""}</p>
             </div>
-            <TrendingUp style={{ width: 12, height: 12, color: "rgba(255,255,255,0.2)" }} />
+            <TrendingUp style={{ width: 12, height: 12, color: "#D1D5DB" }} />
           </Link>
         ))}
       </div>
@@ -301,15 +297,15 @@ function TrendingCard({ hashtags }: { hashtags: TrendingHashtag[] }) {
 
 function ApplicationsListCard({ applications }: { applications: ApplicationItem[] }) {
   const STATUS_STYLES: Record<string, { bg: string; color: string }> = {
-    applied: { bg: "#3B82F620", color: "#60A5FA" },
-    pending: { bg: "#3B82F620", color: "#60A5FA" },
-    reviewing: { bg: "#F59E0B20", color: "#FBBF24" },
-    shortlisted: { bg: "#F59E0B20", color: "#FBBF24" },
-    selected: { bg: "#10B98120", color: "#34D399" },
-    approved: { bg: "#10B98120", color: "#34D399" },
-    completed: { bg: "#10B98120", color: "#34D399" },
-    rejected: { bg: "#EF444420", color: "#F87171" },
-    withdrawn: { bg: "#6B728020", color: "#9CA3AF" },
+    applied:     { bg: "#EFF6FF", color: "#3B82F6" },
+    pending:     { bg: "#EFF6FF", color: "#3B82F6" },
+    reviewing:   { bg: "#FFFBEB", color: "#D97706" },
+    shortlisted: { bg: "#FFFBEB", color: "#D97706" },
+    selected:    { bg: "#F0FDF4", color: "#16A34A" },
+    approved:    { bg: "#F0FDF4", color: "#16A34A" },
+    completed:   { bg: "#F0FDF4", color: "#16A34A" },
+    rejected:    { bg: "#FFF1F2", color: "#E11D48" },
+    withdrawn:   { bg: "#F3F4F6", color: "#6B7280" },
   };
 
   return (
@@ -320,26 +316,18 @@ function ApplicationsListCard({ applications }: { applications: ApplicationItem[
           <Link
             key={app.id}
             to={app.jobId ? `/app/opportunities?opp=${app.jobId}` : "/app/opportunities"}
-            className="flex items-center gap-3 rounded-xl p-3 border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
+            className="flex items-center gap-3 rounded-xl p-3 border border-gray-100 bg-gray-50 hover:bg-orange-50 hover:border-orange-100 transition-colors"
           >
-            <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 overflow-hidden"
-              style={{ background: "rgba(255,255,255,0.08)" }}
-            >
-              {app.orgLogo ? (
-                <img src={app.orgLogo} alt={app.orgName || ""} className="w-full h-full object-cover" />
-              ) : (
-                <Briefcase style={{ width: 14, height: 14, color: "rgba(255,255,255,0.4)" }} />
-              )}
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 overflow-hidden bg-white border border-gray-100">
+              {app.orgLogo
+                ? <img src={app.orgLogo} alt={app.orgName || ""} className="w-full h-full object-cover" />
+                : <Briefcase style={{ width: 14, height: 14, color: "#9CA3AF" }} />}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[12px] font-semibold text-white truncate">{app.jobTitle || "Job"}</p>
-              <p className="text-[11px] text-white/40 truncate">{app.orgName || "Unknown"}</p>
+              <p className="text-[12px] font-semibold text-gray-800 truncate">{app.jobTitle || "Job"}</p>
+              <p className="text-[11px] text-gray-400 truncate">{app.orgName || "Unknown"}</p>
             </div>
-            <span
-              className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0"
-              style={{ background: style.bg, color: style.color }}
-            >
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0" style={{ background: style.bg, color: style.color }}>
               {app.statusLabel}
             </span>
           </Link>
@@ -356,143 +344,23 @@ function CircleResultsCard({ cards }: { cards: CircleCard[] }) {
         <Link
           key={c.id}
           to={`/app/circles/${c.slug}`}
-          className="flex items-center gap-3 rounded-xl p-3 border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
+          className="flex items-center gap-3 rounded-xl p-3 border border-gray-100 bg-gray-50 hover:bg-orange-50 hover:border-orange-100 transition-colors"
         >
-          <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: "rgba(249,115,22,0.12)" }}
-          >
-            <MessageCircle style={{ width: 16, height: 16, color: "#F97316" }} />
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-orange-50">
+            <MessageCircle style={{ width: 16, height: 16, color: "#FF5A1F" }} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-semibold text-white truncate">{c.name}</p>
-            {c.description && (
-              <p className="text-[11px] text-white/40 truncate">{c.description}</p>
-            )}
+            <p className="text-[13px] font-semibold text-gray-800 truncate">{c.name}</p>
+            {c.description && <p className="text-[11px] text-gray-400 truncate">{c.description}</p>}
             {c.member_count !== undefined && (
-              <p className="text-[10px] text-white/30 mt-0.5">
-                {c.member_count} member{c.member_count !== 1 ? "s" : ""}
-                {c.post_count ? ` · ${c.post_count} posts` : ""}
+              <p className="text-[10px] text-gray-400 mt-0.5">
+                {c.member_count} member{c.member_count !== 1 ? "s" : ""}{c.post_count ? ` · ${c.post_count} posts` : ""}
               </p>
             )}
           </div>
-          <ArrowUpRight style={{ width: 14, height: 14, color: "rgba(255,255,255,0.3)", flexShrink: 0 }} />
+          <ArrowUpRight style={{ width: 14, height: 14, color: "#9CA3AF", flexShrink: 0 }} />
         </Link>
       ))}
-    </div>
-  );
-}
-
-function MyProfileCard({ data, action }: { data: MyProfileData; action?: { label: string; url: string } }) {
-  const hasExperience = data.experience && data.experience.length > 0;
-
-  const formatDate = (d: string | null | undefined) => {
-    if (!d) return null;
-    try {
-      return new Date(d).toLocaleDateString("en-IN", { month: "short", year: "numeric" });
-    } catch { return d; }
-  };
-
-  // Experience-only view
-  if (hasExperience) {
-    return (
-      <div className="space-y-3">
-        <div className="rounded-2xl rounded-tl-sm bg-white/8 border border-white/10 p-4 space-y-3">
-          <p className="text-[12px] font-semibold text-white/50 uppercase tracking-wide">Work History</p>
-          {data.experience!.map((exp, i) => (
-            <div key={i} className="flex gap-3">
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(249,115,22,0.12)" }}>
-                <Briefcase style={{ width: 14, height: 14, color: "#F97316" }} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-semibold text-white">{exp.role || "Role"}</p>
-                <p className="text-[11px] text-white/60">{exp.company}</p>
-                <p className="text-[10px] text-white/35 mt-0.5">
-                  {formatDate(exp.start_date)}
-                  {" – "}
-                  {exp.is_current ? "Present" : formatDate(exp.end_date) || "—"}
-                </p>
-                {exp.description && (
-                  <p className="text-[11px] text-white/45 mt-1 leading-snug line-clamp-2">{exp.description}</p>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-        {action && (
-          <Link to={action.url} className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-400 hover:text-orange-300 transition-colors">
-            {action.label} <ArrowUpRight style={{ width: 12, height: 12 }} />
-          </Link>
-        )}
-      </div>
-    );
-  }
-
-  // Full profile view
-  return (
-    <div className="space-y-3">
-      <div className="rounded-2xl rounded-tl-sm bg-white/8 border border-white/10 p-4 space-y-4">
-        {/* Header */}
-        <div className="flex items-start gap-3">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(249,115,22,0.12)" }}>
-            <Users style={{ width: 20, height: 20, color: "#F97316" }} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[15px] font-bold text-white">{data.full_name || "Your Profile"}</span>
-              {data.is_verified && (
-                <span className="flex items-center gap-0.5 text-[10px] text-blue-400">
-                  <ShieldCheck style={{ width: 10, height: 10 }} /> Verified
-                </span>
-              )}
-            </div>
-            {data.headline && <p className="text-[12px] text-white/60 mt-0.5 leading-snug">{data.headline}</p>}
-            {(data.location_city || data.location_state) && (
-              <p className="text-[11px] text-white/35 mt-0.5">
-                {[data.location_city, data.location_state].filter(Boolean).join(", ")}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Current workplace */}
-        {data.currently_working_at && (
-          <div className="flex items-center gap-2">
-            <Briefcase style={{ width: 12, height: 12, color: "rgba(255,255,255,0.3)", flexShrink: 0 }} />
-            <span className="text-[12px] text-white/60">{data.currently_working_at}</span>
-          </div>
-        )}
-
-        {/* About/Bio */}
-        {data.about && (
-          <div>
-            <p className="text-[11px] font-semibold text-white/40 uppercase tracking-wide mb-1">About</p>
-            <p className="text-[13px] text-white/75 leading-relaxed line-clamp-4">{data.about}</p>
-          </div>
-        )}
-
-        {/* Skills */}
-        {data.skills && data.skills.length > 0 && (
-          <div>
-            <p className="text-[11px] font-semibold text-white/40 uppercase tracking-wide mb-2">Skills</p>
-            <div className="flex flex-wrap gap-1.5">
-              {data.skills.slice(0, 8).map((s, i) => (
-                <span key={i} className="text-[11px] px-2 py-0.5 rounded-full" style={{ background: "rgba(249,115,22,0.12)", color: "#FB923C" }}>
-                  {s}
-                </span>
-              ))}
-              {data.skills.length > 8 && (
-                <span className="text-[11px] text-white/35">+{data.skills.length - 8} more</span>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-      {action && (
-        <Link to={action.url} className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-400 hover:text-orange-300 transition-colors">
-          {action.label} <ArrowUpRight style={{ width: 12, height: 12 }} />
-        </Link>
-      )}
     </div>
   );
 }
@@ -501,16 +369,15 @@ function FaqCard({ content, action }: { content: string; action?: { label: strin
   const lines = content.split("\n");
   return (
     <div className="space-y-3">
-      <div className="rounded-2xl rounded-tl-sm bg-white/8 border border-white/10 px-4 py-3">
-        <div className="text-sm text-white/90 leading-relaxed whitespace-pre-wrap">
+      <div className="rounded-2xl rounded-tl-sm bg-gray-50 border border-gray-100 px-4 py-3">
+        <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
           {lines.map((line, i) => {
             if (!line.trim()) return <br key={i} />;
-            // Bold text between **
             const parts = line.split(/\*\*([^*]+)\*\*/g);
             return (
               <p key={i} className="mb-0.5">
                 {parts.map((part, j) =>
-                  j % 2 === 1 ? <strong key={j} className="text-white font-semibold">{part}</strong> : part
+                  j % 2 === 1 ? <strong key={j} className="text-gray-900 font-semibold">{part}</strong> : part
                 )}
               </p>
             );
@@ -518,10 +385,7 @@ function FaqCard({ content, action }: { content: string; action?: { label: strin
         </div>
       </div>
       {action && (
-        <Link
-          to={action.url}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-400 hover:text-orange-300 transition-colors"
-        >
+        <Link to={action.url} className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-500 hover:text-orange-600 transition-colors">
           {action.label} <ArrowUpRight style={{ width: 12, height: 12 }} />
         </Link>
       )}
@@ -537,15 +401,15 @@ const SOURCE_TYPE_LABEL: Record<TiikmePilotSource["type"], string> = {
 
 function SourceCard({ source }: { source: TiikmePilotSource }) {
   const inner = (
-    <div className="rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors p-3 flex flex-col gap-1 min-w-0">
+    <div className="rounded-xl border border-gray-100 bg-gray-50 hover:bg-orange-50 hover:border-orange-100 transition-colors p-3 flex flex-col gap-1 min-w-0">
       <div className="flex items-center gap-1.5 min-w-0">
-        <span className="text-[10px] font-semibold uppercase tracking-wide text-orange-400/80 shrink-0">
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-orange-500 shrink-0">
           {SOURCE_TYPE_LABEL[source.type]}
         </span>
-        {source.meta && <span className="text-[10px] text-white/40 truncate">{source.meta}</span>}
+        {source.meta && <span className="text-[10px] text-gray-400 truncate">{source.meta}</span>}
       </div>
-      <p className="text-sm font-medium text-white truncate leading-snug">{source.title}</p>
-      {source.subtitle && <p className="text-xs text-white/50 truncate">{source.subtitle}</p>}
+      <p className="text-sm font-medium text-gray-800 truncate leading-snug">{source.title}</p>
+      {source.subtitle && <p className="text-xs text-gray-400 truncate">{source.subtitle}</p>}
     </div>
   );
 
@@ -557,15 +421,9 @@ function SourceCard({ source }: { source: TiikmePilotSource }) {
   return inner;
 }
 
-// ─── AssistantBubble ──────────────────────────────────────────────────────────
+// ─── AssistantBubble ───────────────────────────────────────────────────────────
 
-function AssistantBubble({
-  msg,
-  onRate,
-}: {
-  msg: ChatMessage;
-  onRate: (messageId: string, rating: "up" | "down") => void;
-}) {
+function AssistantBubble({ msg, onRate }: { msg: ChatMessage; onRate: (messageId: string, rating: "up" | "down") => void }) {
   const [rated, setRated] = useState<"up" | "down" | null>(null);
   const pr = msg.pilotResponse;
   const reply = msg.reply;
@@ -575,24 +433,22 @@ function AssistantBubble({
     if (rated) return;
     setRated(r);
     onRate(msg.id, r);
+    toast.success(r === "up" ? "Thanks for the feedback!" : "We'll work on improving this.");
   };
 
-  // Thinking indicator
   if (msg.content === "…") {
     return (
       <div className="flex gap-3 items-start">
         <div className="shrink-0 mt-1 w-7 h-7 rounded-full bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center">
           <Bot size={14} className="text-white" />
         </div>
-        <div className="rounded-2xl rounded-tl-sm bg-white/8 border border-white/10 px-4 py-3 flex items-center gap-3">
+        <div className="rounded-2xl rounded-tl-sm bg-gray-50 border border-gray-100 px-4 py-3 flex items-center gap-3">
           <div className="flex gap-1">
-            <span className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce [animation-delay:0ms]" />
-            <span className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce [animation-delay:150ms]" />
-            <span className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce [animation-delay:300ms]" />
+            <span className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce [animation-delay:0ms]" />
+            <span className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce [animation-delay:150ms]" />
+            <span className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce [animation-delay:300ms]" />
           </div>
-          {msg.thinkingLabel && (
-            <span className="text-[12px] text-white/30">{msg.thinkingLabel}</span>
-          )}
+          {msg.thinkingLabel && <span className="text-[12px] text-gray-400">{msg.thinkingLabel}</span>}
         </div>
       </div>
     );
@@ -605,35 +461,21 @@ function AssistantBubble({
       </div>
 
       <div className="flex-1 min-w-0 space-y-3">
-        {/* Render based on response type */}
         {!pr && (
-          <div className="rounded-2xl rounded-tl-sm bg-white/8 border border-white/10 px-4 py-3">
-            <p className="text-sm text-white/90 leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+          <div className="rounded-2xl rounded-tl-sm bg-gray-50 border border-gray-100 px-4 py-3">
+            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{msg.content}</p>
           </div>
         )}
 
-        {pr?.type === "faq" && pr.content && (
-          <FaqCard content={pr.content} action={pr.action} />
-        )}
-
-        {pr?.type === "limit_reached" && pr.content && (
-          <div className="space-y-2">
-            <div className="rounded-2xl rounded-tl-sm px-4 py-3" style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.25)" }}>
-              <p className="text-sm text-red-300 leading-relaxed whitespace-pre-wrap">{pr.content}</p>
-            </div>
-          </div>
-        )}
+        {pr?.type === "faq" && pr.content && <FaqCard content={pr.content} action={pr.action} />}
 
         {pr?.type === "text" && pr.content && (
           <div className="space-y-2">
-            <div className="rounded-2xl rounded-tl-sm bg-white/8 border border-white/10 px-4 py-3">
-              <p className="text-sm text-white/90 leading-relaxed whitespace-pre-wrap">{pr.content}</p>
+            <div className="rounded-2xl rounded-tl-sm bg-gray-50 border border-gray-100 px-4 py-3">
+              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{pr.content}</p>
             </div>
             {pr.action && (
-              <Link
-                to={pr.action.url}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-400 hover:text-orange-300 transition-colors"
-              >
+              <Link to={pr.action.url} className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-500 hover:text-orange-600 transition-colors">
                 {pr.action.label} <ArrowUpRight style={{ width: 12, height: 12 }} />
               </Link>
             )}
@@ -642,15 +484,10 @@ function AssistantBubble({
 
         {pr?.type === "profile_results" && (
           <div>
-            {pr.content && (
-              <p className="text-[12px] text-white/50 mb-2">{pr.content}</p>
-            )}
+            {pr.content && <p className="text-[12px] text-gray-400 mb-2">{pr.content}</p>}
             <ProfileResultsCard cards={pr.cards as ProfileCard[]} />
             {pr.action && (
-              <Link
-                to={pr.action.url}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-400 hover:text-orange-300 transition-colors mt-2"
-              >
+              <Link to={pr.action.url} className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-500 hover:text-orange-600 transition-colors mt-2">
                 {pr.action.label} <ArrowUpRight style={{ width: 12, height: 12 }} />
               </Link>
             )}
@@ -659,37 +496,30 @@ function AssistantBubble({
 
         {pr?.type === "job_results" && (
           <div>
-            {pr.content && (
-              <p className="text-[12px] text-white/50 mb-2">{pr.content}</p>
-            )}
+            {pr.content && <p className="text-[12px] text-gray-400 mb-2">{pr.content}</p>}
             <JobResultsCard cards={pr.cards as JobCard[]} />
-            {pr.action && (
-              <Link
-                to={pr.action.url}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-400 hover:text-orange-300 transition-colors mt-2"
-              >
-                {pr.action.label} <ArrowUpRight style={{ width: 12, height: 12 }} />
-              </Link>
-            )}
           </div>
         )}
 
-        {pr?.type === "analytics_card" && pr.data && (
-          <AnalyticsCard data={pr.data} />
+        {pr?.type === "campaign_results" && (
+          <div>
+            {pr.content && <p className="text-[12px] text-gray-400 mb-2">{pr.content}</p>}
+            <CampaignResultsCard cards={pr.cards as CampaignCard[]} />
+            <Link to="/app/opportunities?tab=campaigns" className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-500 hover:text-orange-600 transition-colors mt-2">
+              Browse all campaigns <ArrowUpRight style={{ width: 12, height: 12 }} />
+            </Link>
+          </div>
         )}
 
-        {pr?.type === "trending_card" && pr.hashtags && (
-          <TrendingCard hashtags={pr.hashtags} />
-        )}
+        {pr?.type === "analytics_card" && pr.data && <AnalyticsCard data={pr.data} />}
+
+        {pr?.type === "trending_card" && pr.hashtags && <TrendingCard hashtags={pr.hashtags} />}
 
         {pr?.type === "applications_list" && pr.applications && (
           <div>
-            <p className="text-[12px] text-white/50 mb-2">Your recent applications:</p>
+            <p className="text-[12px] text-gray-400 mb-2">Your recent applications:</p>
             <ApplicationsListCard applications={pr.applications} />
-            <Link
-              to="/app/opportunities?tab=applications"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-400 hover:text-orange-300 transition-colors mt-2"
-            >
+            <Link to="/app/opportunities?tab=applications" className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-500 hover:text-orange-600 transition-colors mt-2">
               View all applications <ArrowUpRight style={{ width: 12, height: 12 }} />
             </Link>
           </div>
@@ -697,23 +527,15 @@ function AssistantBubble({
 
         {pr?.type === "circle_results" && (
           <div>
-            {pr.content && (
-              <p className="text-[12px] text-white/50 mb-2">{pr.content}</p>
-            )}
+            {pr.content && <p className="text-[12px] text-gray-400 mb-2">{pr.content}</p>}
             <CircleResultsCard cards={pr.cards as CircleCard[]} />
-            {pr.action && (
-              <Link
-                to={pr.action.url}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-400 hover:text-orange-300 transition-colors mt-2"
-              >
-                {pr.action.label} <ArrowUpRight style={{ width: 12, height: 12 }} />
-              </Link>
-            )}
           </div>
         )}
 
-        {pr?.type === "my_profile_card" && pr.myProfile && (
-          <MyProfileCard data={pr.myProfile} action={pr.action} />
+        {pr?.type === "limit_reached" && pr.content && (
+          <div className="rounded-2xl rounded-tl-sm bg-orange-50 border border-orange-100 px-4 py-3">
+            <p className="text-sm text-orange-700 leading-relaxed whitespace-pre-wrap">{pr.content}</p>
+          </div>
         )}
 
         {/* AI reply source cards */}
@@ -724,14 +546,17 @@ function AssistantBubble({
         )}
 
         {/* Rating */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <button
             onClick={() => handleRate("up")}
             disabled={!!rated}
             className={cn(
               "p-1.5 rounded-lg transition-colors",
-              rated === "up" ? "text-green-400 bg-green-400/10" : "text-white/30 hover:text-white/60 hover:bg-white/5"
+              rated === "up"
+                ? "text-green-600 bg-green-50"
+                : "text-gray-400 hover:text-green-600 hover:bg-green-50"
             )}
+            title="Good answer"
           >
             <ThumbsUp size={13} />
           </button>
@@ -740,25 +565,32 @@ function AssistantBubble({
             disabled={!!rated}
             className={cn(
               "p-1.5 rounded-lg transition-colors",
-              rated === "down" ? "text-red-400 bg-red-400/10" : "text-white/30 hover:text-white/60 hover:bg-white/5"
+              rated === "down"
+                ? "text-red-500 bg-red-50"
+                : "text-gray-400 hover:text-red-500 hover:bg-red-50"
             )}
+            title="Not helpful"
           >
             <ThumbsDown size={13} />
           </button>
+          {rated && (
+            <span className="text-[11px] text-gray-400 ml-1">
+              {rated === "up" ? "Thanks!" : "Got it."}
+            </span>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-// ─── Main page ────────────────────────────────────────────────────────────────
+// ─── Main page ─────────────────────────────────────────────────────────────────
 
 export default function TiikmePilotPage() {
   const { user } = useAuth();
   const [threads, setThreads] = useState<TiikmePilotThread[]>([]);
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [mode, setMode] = useState<TiikmePilotMode>("discover");
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [loadingThreads, setLoadingThreads] = useState(true);
@@ -811,8 +643,6 @@ export default function TiikmePilotPage() {
         created_at: m.created_at,
       }));
       setMessages(chatMsgs);
-      const thread = threads.find((t) => t.id === threadId);
-      if (thread) setMode(thread.mode);
     } catch {
       toast.error("Could not load messages");
     } finally {
@@ -832,7 +662,24 @@ export default function TiikmePilotPage() {
     await archivePilotThread(threadId);
     setThreads((prev) => prev.filter((t) => t.id !== threadId));
     if (activeThreadId === threadId) { setActiveThreadId(null); setMessages([]); }
-    toast.success("Conversation archived");
+    toast.success("Archived");
+  };
+
+  const handleDelete = async (threadId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    toast(`Delete this conversation?`, {
+      action: {
+        label: "Delete",
+        onClick: async () => {
+          await deletePilotThread(threadId);
+          setThreads((prev) => prev.filter((t) => t.id !== threadId));
+          if (activeThreadId === threadId) { setActiveThreadId(null); setMessages([]); }
+          toast.success("Conversation deleted");
+        },
+      },
+      cancel: { label: "Cancel", onClick: () => {} },
+      duration: 5000,
+    });
   };
 
   const handleRate = async (messageId: string, rating: "up" | "down") => {
@@ -867,12 +714,10 @@ export default function TiikmePilotPage() {
     };
     setMessages((prev) => [...prev, userMsg]);
 
-    // Classify intent
     const intent = classifyIntent(text);
     const thinkingLabel = THINKING_LABELS[intent.type] || "Thinking…";
     const tempId = `thinking-${Date.now()}`;
 
-    // Show thinking bubble
     const thinkingMsg: ChatMessage = {
       id: tempId,
       role: "assistant",
@@ -882,11 +727,9 @@ export default function TiikmePilotPage() {
     };
     setMessages((prev) => [...prev, thinkingMsg]);
 
-    const removeThinking = () =>
-      setMessages((prev) => prev.filter((m) => m.id !== tempId));
+    const removeThinking = () => setMessages((prev) => prev.filter((m) => m.id !== tempId));
 
     try {
-      // ── FAQ / Privacy → zero-token, no rate limit ──
       if (intent.type === "PLATFORM_FAQ") {
         const faqResult = handlePlatformFaq(text);
         if (faqResult) { removeThinking(); addLocalReply(faqResult); return; }
@@ -897,7 +740,6 @@ export default function TiikmePilotPage() {
         removeThinking(); addLocalReply(result); return;
       }
 
-      // ── Search queries ──
       if (intent.type === "SEARCH_PROFILE" && userId) {
         const result = await handleSearchProfile(intent.extractedEntities, userId);
         removeThinking(); addLocalReply(result); return;
@@ -918,24 +760,13 @@ export default function TiikmePilotPage() {
         removeThinking(); addLocalReply(result); return;
       }
 
+      if (intent.type === "SEARCH_CAMPAIGN") {
+        const result = await handleSearchCampaign(intent.extractedEntities as any);
+        removeThinking(); addLocalReply(result); return;
+      }
+
       if (intent.type === "TRENDING") {
         const result = await handleTrending();
-        removeThinking(); addLocalReply(result); return;
-      }
-
-      // ── Personal data (requires login) ──
-      if (intent.type === "MY_PROFILE" && userId) {
-        const result = await handleMyProfile(userId);
-        removeThinking(); addLocalReply(result); return;
-      }
-
-      if (intent.type === "MY_EXPERIENCE" && userId) {
-        const result = await handleMyExperience(userId);
-        removeThinking(); addLocalReply(result); return;
-      }
-
-      if (intent.type === "MY_SKILLS" && userId) {
-        const result = await handleMySkills(userId);
         removeThinking(); addLocalReply(result); return;
       }
 
@@ -949,7 +780,7 @@ export default function TiikmePilotPage() {
         removeThinking(); addLocalReply(result); return;
       }
 
-      // ── AI_QUERY → rate-limited, goes to Edge Function ──
+      // AI_QUERY — rate-limited
       if (!userId) {
         removeThinking();
         addLocalReply({ type: "text", content: "Please sign in to use Pilot AI." });
@@ -961,17 +792,16 @@ export default function TiikmePilotPage() {
         removeThinking();
         addLocalReply({
           type: "limit_reached",
-          content: `You've used all ${AI_DAILY_LIMIT} AI questions for today. Resets at midnight.\n\nYou can still search for people, jobs, circles, and check your stats for free!`,
+          content: `You've reached your daily AI question limit (${AI_DAILY_LIMIT}). Resets at midnight.\n\nYou can still search for people, jobs, campaigns, circles, and check your stats for free!`,
         });
         setSending(false);
         return;
       }
 
-      // Increment before calling (prevent double-sends)
       await incrementQuota(userId, "AI_QUERY");
       setAiRemaining((prev) => Math.max(0, prev - 1));
 
-      const reply = await askPilot({ message: text, mode, threadId: activeThreadId ?? undefined });
+      const reply = await askPilot({ message: text, mode: "discover", threadId: activeThreadId ?? undefined });
 
       if (!activeThreadId) {
         setActiveThreadId(reply.threadId);
@@ -1008,49 +838,33 @@ export default function TiikmePilotPage() {
   const canSend = input.trim().length > 0 && !sending && remainingChats > 0;
 
   return (
-    <div className="flex h-[calc(100vh-64px)] overflow-hidden" style={{ background: "#0f0f1b" }}>
-      {/* ── Sidebar ── */}
+    <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-white">
+      {/* Sidebar */}
       <aside
         className={cn(
-          "flex flex-col w-64 shrink-0 transition-transform duration-200",
+          "flex flex-col w-64 shrink-0 border-r border-gray-100 bg-gray-50 transition-transform duration-200",
           "fixed inset-y-0 top-16 z-30 md:static md:translate-x-0",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
-        style={{ background: "#13131e", borderRight: "1px solid rgba(255,255,255,0.07)" }}
       >
-        {/* Sidebar brand header */}
-        <div className="flex items-center justify-between px-4 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, #FF5A1F, #FF8C42)" }}>
-              <Bot size={16} className="text-white" />
-            </div>
-            <div>
-              <p className="text-[13px] font-bold text-white leading-none">Tiikme Pilot</p>
-              <p className="text-[10px] mt-0.5" style={{ color: "#FF5A1F" }}>AI-powered assistant</p>
-            </div>
-          </div>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+          <span className="text-sm font-semibold text-gray-700">Conversations</span>
           <button
             onClick={newConversation}
-            title="New conversation"
-            className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-white/10"
-            style={{ color: "#FF5A1F" }}
+            className="flex items-center gap-1 text-xs text-orange-500 hover:text-orange-600 transition-colors font-semibold"
           >
-            <Plus size={15} />
+            <Plus size={14} /> New
           </button>
         </div>
 
-        {/* Thread list */}
         <div className="flex-1 overflow-y-auto py-2 space-y-0.5 px-2">
           {loadingThreads && (
-            <div className="flex justify-center py-8">
-              <Loader2 size={16} className="animate-spin" style={{ color: "#FF5A1F" }} />
+            <div className="flex justify-center py-6">
+              <Loader2 size={18} className="animate-spin text-gray-300" />
             </div>
           )}
           {!loadingThreads && threads.length === 0 && (
-            <div className="text-center py-8 px-4">
-              <p className="text-xs text-white/30">No conversations yet.</p>
-              <p className="text-[11px] text-white/20 mt-1">Start by asking anything below.</p>
-            </div>
+            <p className="text-xs text-gray-400 text-center py-6 px-4">No conversations yet. Ask Pilot anything!</p>
           )}
           {threads.map((t) => (
             <button
@@ -1059,35 +873,38 @@ export default function TiikmePilotPage() {
               className={cn(
                 "w-full text-left rounded-xl px-3 py-2.5 group flex items-start gap-2 transition-colors",
                 activeThreadId === t.id
-                  ? "text-white"
-                  : "text-white/50 hover:text-white/80"
+                  ? "bg-orange-50 text-gray-800 border border-orange-100"
+                  : "hover:bg-white text-gray-500 hover:text-gray-700"
               )}
-              style={activeThreadId === t.id
-                ? { background: "rgba(255,90,31,0.12)", border: "1px solid rgba(255,90,31,0.2)" }
-                : { border: "1px solid transparent" }
-              }
             >
               <div className="flex-1 min-w-0">
-                <p className="text-[12px] font-medium truncate leading-snug">{t.title}</p>
+                <p className="text-xs font-medium truncate leading-snug">{t.title}</p>
               </div>
-              <button
-                onClick={(e) => handleArchive(t.id, e)}
-                className="opacity-0 group-hover:opacity-100 p-1 rounded transition-all"
-                style={{ color: "rgba(255,255,255,0.4)" }}
-                title="Delete"
-              >
-                <Archive size={11} />
-              </button>
+              <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                <button
+                  onClick={(e) => handleArchive(t.id, e)}
+                  className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                  title="Archive"
+                >
+                  <Archive size={11} />
+                </button>
+                <button
+                  onClick={(e) => handleDelete(t.id, e)}
+                  className="p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                  title="Delete"
+                >
+                  <Trash2 size={11} />
+                </button>
+              </div>
             </button>
           ))}
         </div>
 
-        {/* Sidebar footer */}
-        <div className="px-4 py-3" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
-          <div className="flex items-center justify-between text-[11px]">
-            <span style={{ color: "rgba(255,255,255,0.3)" }}>{remainingChats} thread{remainingChats !== 1 ? "s" : ""} left</span>
-            <span style={{ color: aiRemaining <= 1 ? "#FF5A1F" : "rgba(255,255,255,0.3)" }}>
-              {aiRemaining} AI/{AI_DAILY_LIMIT} today
+        <div className="px-4 py-3 border-t border-gray-100 space-y-1">
+          <div className="flex items-center justify-between text-[11px] text-gray-400">
+            <span>{remainingChats} thread{remainingChats !== 1 ? "s" : ""} left</span>
+            <span className={cn(aiRemaining <= 3 ? "text-orange-500" : "")}>
+              {aiRemaining} AI question{aiRemaining !== 1 ? "s" : ""} today
             </span>
           </div>
         </div>
@@ -1095,115 +912,78 @@ export default function TiikmePilotPage() {
 
       {/* Mobile overlay */}
       {sidebarOpen && (
-        <div className="fixed inset-0 z-20 bg-black/70 md:hidden" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-0 z-20 bg-black/30 md:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* ── Main chat area ── */}
-      <div className="flex flex-col flex-1 min-w-0">
+      {/* Main chat area */}
+      <div className="flex flex-col flex-1 min-w-0 relative">
         {/* Top bar */}
-        <div className="flex items-center gap-3 px-5 py-3 shrink-0" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 shrink-0 bg-white">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="md:hidden p-2 rounded-lg transition-colors hover:bg-white/8"
-            style={{ color: "rgba(255,255,255,0.5)" }}
+            className="md:hidden p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50"
           >
             <ChevronRight size={18} />
           </button>
 
-          <div className="md:hidden flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, #FF5A1F, #FF8C42)" }}>
-              <Bot size={12} className="text-white" />
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center shrink-0">
+              <Bot size={13} className="text-white" />
             </div>
-            <span className="text-sm font-bold text-white">Tiikme Pilot</span>
+            <span className="text-sm font-bold text-gray-800">Tiikme Pilot</span>
+            <span className="text-[10px] font-medium text-orange-500 bg-orange-50 px-2 py-0.5 rounded-full">AI</span>
           </div>
 
-          {activeThreadId && (
-            <button
-              onClick={newConversation}
-              className="hidden md:flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors hover:bg-white/8"
-              style={{ color: "rgba(255,255,255,0.5)" }}
-            >
-              <Plus size={13} /> New chat
-            </button>
-          )}
-
-          <div className="ml-auto flex items-center gap-2">
-            <div
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium"
-              style={{
-                background: aiRemaining > 0 ? "rgba(255,90,31,0.1)" : "rgba(239,68,68,0.1)",
-                color: aiRemaining > 0 ? "#FF5A1F" : "#EF4444",
-                border: `1px solid ${aiRemaining > 0 ? "rgba(255,90,31,0.2)" : "rgba(239,68,68,0.2)"}`,
-              }}
-            >
-              <CheckCircle2 size={11} />
-              {aiRemaining} AI left
-            </div>
+          <div className="ml-auto shrink-0 hidden sm:flex items-center gap-1.5">
+            <CheckCircle2 size={11} className={aiRemaining > 0 ? "text-green-500" : "text-red-400"} />
+            <span className={cn("text-[11px] font-medium", aiRemaining > 0 ? "text-gray-400" : "text-red-400")}>
+              {aiRemaining} AI question{aiRemaining !== 1 ? "s" : ""} left
+            </span>
           </div>
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6 space-y-6">
+        <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6 bg-white">
           {!activeThreadId && messages.length === 0 && (
-            <div className="flex flex-col items-center justify-center h-full text-center gap-6 py-10 px-4">
-              {/* Brand icon */}
-              <div className="w-20 h-20 rounded-3xl flex items-center justify-center shadow-2xl" style={{ background: "linear-gradient(135deg, #FF5A1F, #FF8C42)", boxShadow: "0 20px 60px rgba(255,90,31,0.35)" }}>
-                <Bot size={36} className="text-white" />
+            <div className="flex flex-col items-center justify-center h-full text-center gap-5 py-8 max-w-lg mx-auto w-full">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center shadow-lg shadow-orange-100">
+                <Bot size={28} className="text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white tracking-tight">Tiikme Pilot</h1>
-                <p className="text-sm mt-2 max-w-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.45)" }}>
-                  Ask about your profile, find people and jobs, explore communities, or ask anything about the platform.
+                <h2 className="text-xl font-bold text-gray-800">Tiikme Pilot</h2>
+                <p className="text-sm text-gray-400 mt-1.5 max-w-xs leading-relaxed">
+                  Search profiles, jobs, campaigns and communities — or ask anything about Tiikme.
                 </p>
               </div>
-
-              {/* Quick action chips */}
-              <div className="grid grid-cols-2 gap-2 w-full max-w-lg">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
                 {QUICK_ACTIONS.map((q) => (
                   <button
                     key={q}
                     onClick={() => { setInput(q); inputRef.current?.focus(); }}
-                    className="text-left text-[12px] font-medium px-3.5 py-2.5 rounded-xl transition-all"
-                    style={{
-                      background: "rgba(255,255,255,0.04)",
-                      border: "1px solid rgba(255,255,255,0.09)",
-                      color: "rgba(255,255,255,0.65)",
-                    }}
-                    onMouseEnter={e => {
-                      (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,90,31,0.08)";
-                      (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,90,31,0.2)";
-                      (e.currentTarget as HTMLButtonElement).style.color = "#FF8C42";
-                    }}
-                    onMouseLeave={e => {
-                      (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.04)";
-                      (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.09)";
-                      (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.65)";
-                    }}
+                    className="text-left text-xs text-gray-500 hover:text-gray-800 bg-gray-50 hover:bg-orange-50 hover:border-orange-100 border border-gray-100 rounded-xl px-3 py-2.5 transition-colors flex items-center gap-2"
                   >
+                    <Search size={10} className="text-gray-300 shrink-0" />
                     {q}
                   </button>
                 ))}
               </div>
-              <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.2)" }}>
-                People/job/community searches are free · {aiRemaining} open-ended AI question{aiRemaining !== 1 ? "s" : ""} left today
+              <p className="text-[11px] text-gray-300">
+                Most searches are instant & free · {aiRemaining} AI question{aiRemaining !== 1 ? "s" : ""} left today
               </p>
             </div>
           )}
 
           {loadingMessages && (
             <div className="flex justify-center py-8">
-              <Loader2 size={20} className="animate-spin" style={{ color: "#FF5A1F" }} />
+              <Loader2 size={20} className="animate-spin text-gray-300" />
             </div>
           )}
 
           {messages.map((msg) =>
             msg.role === "user" ? (
               <div key={msg.id} className="flex justify-end">
-                <div
-                  className="max-w-[78%] rounded-2xl rounded-tr-sm px-4 py-3"
-                  style={{ background: "rgba(255,90,31,0.15)", border: "1px solid rgba(255,90,31,0.25)" }}
-                >
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: "rgba(255,255,255,0.92)" }}>{msg.content}</p>
+                <div className="max-w-[75%] rounded-2xl rounded-tr-sm bg-orange-500 px-4 py-3">
+                  <p className="text-sm text-white whitespace-pre-wrap">{msg.content}</p>
                 </div>
               </div>
             ) : (
@@ -1214,57 +994,42 @@ export default function TiikmePilotPage() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* ── Input area ── */}
-        <div className="shrink-0 px-4 md:px-8 py-4" style={{ borderTop: "1px solid rgba(255,255,255,0.07)", background: "#0f0f1b" }}>
-          <div
-            className="flex items-end gap-3 rounded-2xl px-4 py-3 transition-all"
-            style={{ background: "rgba(255,255,255,0.04)", border: "1.5px solid rgba(255,255,255,0.1)" }}
-            onFocus={() => {}}
-            ref={(el) => {
-              if (el) {
-                el.addEventListener("focusin", () => {
-                  el.style.borderColor = "rgba(255,90,31,0.5)";
-                  el.style.boxShadow = "0 0 0 3px rgba(255,90,31,0.08)";
-                });
-                el.addEventListener("focusout", () => {
-                  el.style.borderColor = "rgba(255,255,255,0.1)";
-                  el.style.boxShadow = "none";
-                });
-              }
-            }}
-          >
+        {/* Input area — single border */}
+        <div className="shrink-0 px-4 py-3 border-t border-gray-100 bg-white">
+          <div className="flex items-end gap-3 bg-gray-50 rounded-2xl px-4 py-3 focus-within:ring-2 focus-within:ring-orange-200 focus-within:bg-white transition-all">
             <textarea
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask me anything — my profile, find people, jobs, communities…"
-              rows={2}
+              placeholder="Search people, jobs, campaigns, circles — or ask anything about Tiikme…"
+              rows={1}
               maxLength={CHAR_LIMIT}
               disabled={sending || remainingChats === 0}
-              className="flex-1 resize-none bg-transparent text-[14px] outline-none leading-relaxed max-h-36 overflow-y-auto disabled:opacity-50"
-              style={{ color: "rgba(255,255,255,0.9)", caretColor: "#FF5A1F" }}
+              className="flex-1 resize-none bg-transparent text-sm text-gray-700 placeholder:text-gray-400 outline-none leading-relaxed max-h-32 overflow-y-auto disabled:opacity-50"
+              style={{ fieldSizing: "content" } as any}
             />
             <button
               onClick={sendMessage}
               disabled={!canSend}
-              className="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all mb-0.5"
-              style={canSend
-                ? { background: "#FF5A1F", color: "#fff", boxShadow: "0 4px 16px rgba(255,90,31,0.4)" }
-                : { background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.25)", cursor: "not-allowed" }
-              }
+              className={cn(
+                "shrink-0 w-8 h-8 rounded-xl flex items-center justify-center transition-all",
+                canSend
+                  ? "bg-orange-500 hover:bg-orange-400 text-white shadow-sm"
+                  : "bg-gray-100 text-gray-300 cursor-not-allowed"
+              )}
             >
-              {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+              {sending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
             </button>
           </div>
           <div className="flex items-center justify-between mt-1.5 px-1">
-            <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.2)" }}>
-              Press Enter to send · Shift+Enter for new line
-            </p>
-            <p
-              className="text-[10px]"
-              style={{ color: CHAR_LIMIT - input.length < 20 ? "#EF4444" : CHAR_LIMIT - input.length < 100 ? "#FF5A1F" : "rgba(255,255,255,0.2)" }}
-            >
+            <p className="text-[10px] text-gray-300">Enter to send · Shift+Enter for new line</p>
+            <p className={cn(
+              "text-[10px]",
+              CHAR_LIMIT - input.length < 50 ? "text-red-400"
+                : CHAR_LIMIT - input.length < 200 ? "text-orange-400"
+                : "text-gray-300"
+            )}>
               {CHAR_LIMIT - input.length}
             </p>
           </div>

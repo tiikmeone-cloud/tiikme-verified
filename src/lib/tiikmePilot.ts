@@ -107,6 +107,11 @@ export async function archivePilotThread(threadId: string): Promise<void> {
     .eq("id", threadId);
 }
 
+export async function deletePilotThread(threadId: string): Promise<void> {
+  await supabase.from("ai_messages" as any).delete().eq("thread_id", threadId);
+  await supabase.from("ai_threads" as any).delete().eq("id", threadId);
+}
+
 export async function ratePilotAnswer(messageId: string, rating: "up" | "down"): Promise<void> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;

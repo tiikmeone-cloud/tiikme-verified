@@ -3,6 +3,7 @@ export type IntentType =
   | 'SEARCH_ORG'
   | 'SEARCH_JOB'
   | 'SEARCH_CIRCLE'
+  | 'SEARCH_CAMPAIGN'
   | 'MY_ANALYTICS'
   | 'MY_APPLICATIONS'
   | 'MY_PROFILE'
@@ -22,6 +23,7 @@ export interface IntentResult {
     role?: string;
     jobKeyword?: string;
     faqKey?: string;
+    dateFilter?: 'today' | 'week' | null;
   };
 }
 
@@ -30,6 +32,7 @@ export type PilotResponseType =
   | 'profile_results'
   | 'job_results'
   | 'circle_results'
+  | 'campaign_results'
   | 'analytics_card'
   | 'trending_card'
   | 'applications_list'
@@ -108,6 +111,29 @@ export interface CircleCard {
   post_count?: number;
 }
 
+export interface CampaignCard {
+  id: string;
+  title: string;
+  org_name?: string;
+  org_logo?: string | null;
+  type?: string;
+  status?: string;
+  deadline?: string | null;
+  budget_min?: number | null;
+  budget_max?: number | null;
+  created_at?: string;
+}
+
+export interface ExperienceItem {
+  role?: string | null;
+  company?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  is_current?: boolean;
+  description?: string | null;
+  location?: string | null;
+}
+
 export interface MyProfileData {
   full_name?: string | null;
   headline?: string | null;
@@ -124,20 +150,10 @@ export interface MyProfileData {
   experience?: ExperienceItem[];
 }
 
-export interface ExperienceItem {
-  role?: string | null;
-  company?: string | null;
-  start_date?: string | null;
-  end_date?: string | null;
-  is_current?: boolean;
-  description?: string | null;
-  location?: string | null;
-}
-
 export interface PilotResponse {
   type: PilotResponseType;
   content?: string;
-  cards?: ProfileCard[] | JobCard[] | CircleCard[];
+  cards?: ProfileCard[] | JobCard[] | CircleCard[] | CampaignCard[];
   applications?: ApplicationItem[];
   data?: AnalyticsData;
   myProfile?: MyProfileData;

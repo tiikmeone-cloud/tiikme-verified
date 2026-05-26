@@ -1089,8 +1089,162 @@ function CircleComposer({ circle, linkedOrg, canPostAsOrg, onClose, onPosted }: 
 // =================================================================
 // ROUTER
 // =================================================================
+// =================================================================
+// LEFT SIDEBAR — My Circles list
+// =================================================================
+function CirclesSidebar({ activeSlug }: { activeSlug?: string }) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const { data: joinedCircles = [] } = useQuery({
+    queryKey: ["circles-sidebar", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data } = await supabase.from("circle_members")
+        .select("circle:circles!circle_members_circle_id_fkey(id, name, slug, icon_url, type)")
+        .eq("user_id", user.id)
+        .limit(20);
+      return ((data || []) as any[]).map((m: any) => m.circle).filter(Boolean);
+    },
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  return (
+    <aside className="hidden lg:flex flex-col shrink-0" style={{ width: 220, minWidth: 220 }}>
+      <div className="sticky top-4 space-y-1">
+        <div className="flex items-center justify-between px-2 mb-2">
+          <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "#9CA3AF" }}>My Circles</span>
+          <button
+            type="button"
+            onClick={() => navigate("/app/circles/create")}
+            className="cursor-pointer text-[11px] font-bold px-2 py-1 rounded-lg"
+            style={{ background: "rgba(255,90,31,0.1)", color: "#FF5A1F", border: "none" }}>
+            + Create
+          </button>
+        </div>
+
+        {joinedCircles.length === 0 && (
+          <p className="px-2 text-[12px]" style={{ color: "#9CA3AF" }}>You haven't joined any circles yet.</p>
+        )}
+
+        {joinedCircles.map((circle: any) => {
+          const conf = (CIRCLE_TYPE_CONFIG as any)[circle.type || "topic"] || CIRCLE_TYPE_CONFIG.topic;
+          const Icon = conf.icon;
+          const customIcon = circle.icon_url && circle.icon_url.length <= 4;
+          const isActive = activeSlug === circle.slug;
+          return (
+            <button
+              key={circle.id}
+              type="button"
+              onClick={() => navigate(`/app/circles/${circle.slug}`)}
+              className="w-full flex items-center gap-2.5 px-2 py-2 rounded-xl cursor-pointer text-left"
+              style={{
+                background: isActive ? "rgba(255,90,31,0.08)" : "transparent",
+                borderLeft: isActive ? "3px solid #FF5A1F" : "3px solid transparent",
+                color: isActive ? "#FF5A1F" : "#374151",
+              }}>
+              <div style={{ width: 28, height: 28, borderRadius: 8, background: conf.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>
+                {customIcon ? <span>{circle.icon_url}</span> : <Icon style={{ width: 14, height: 14, color: conf.color }} />}
+              </div>
+              <span className="text-[13px] font-semibold truncate">{circle.name}</span>
+            </button>
+          );
+        })}
+
+        <div style={{ borderTop: "1px solid #F0F0F0", margin: "8px 0" }} />
+        <button
+          type="button"
+          onClick={() => navigate("/app/circles")}
+          className="w-full flex items-center gap-2 px-2 py-2 rounded-xl cursor-pointer text-left"
+          style={{ background: !activeSlug ? "rgba(255,90,31,0.08)" : "transparent", color: !activeSlug ? "#FF5A1F" : "#6B7280" }}>
+          <Search style={{ width: 14, height: 14, flexShrink: 0 }} />
+          <span className="text-[13px] font-semibold">Discover Circles</span>
+        </button>
+      </div>
+    </aside>
+  );
+}
+
+// =================================================================
+// RIGHT SIDEBAR — Circle info when a circle is selected
+// =================================================================
+function CircleInfoSidebar({ slug }: { slug: string }) {
+  const [circle, setCircle] = useState<any>(null);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    supabase.from("circles").select("*").eq("slug", slug).maybeSingle()
+      .then(({ data }) => setCircle(data));
+  }, [slug]);
+
+  if (!circle) return null;
+
+  const conf = (CIRCLE_TYPE_CONFIG as any)[circle.type || "topic"] || CIRCLE_TYPE_CONFIG.topic;
+  const Icon = conf.icon;
+  const customIcon = circle.icon_url && circle.icon_url.length <= 4;
+
+  return (
+    <aside className="hidden xl:flex flex-col shrink-0" style={{ width: 280, minWidth: 280 }}>
+      <div className="sticky top-4 space-y-3">
+        <div className="rounded-2xl overflow-hidden" style={{ background: "#fff", border: "1px solid #ECECEA", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+          {/* Circle header banner */}
+          <div style={{ height: 56, background: `linear-gradient(135deg, ${conf.bg}, rgba(255,90,31,0.12))`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ width: 40, height: 40, borderRadius: 12, background: "rgba(255,255,255,0.8)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>
+              {customIcon ? <span>{circle.icon_url}</span> : <Icon style={{ width: 20, height: 20, color: conf.color }} />}
+            </div>
+          </div>
+          <div className="p-4">
+            <p className="font-bold text-[15px] mb-1" style={{ color: "#1A1A2E" }}>{circle.name}</p>
+            {circle.description && <p className="text-[12px] mb-3" style={{ color: "#6B7280", lineHeight: 1.5 }}>{circle.description}</p>}
+            <div className="flex gap-4 mb-3">
+              <div className="text-center">
+                <p className="font-bold text-[15px]" style={{ color: "#1A1A2E" }}>{circle.member_count || 0}</p>
+                <p className="text-[10px]" style={{ color: "#9CA3AF" }}>Members</p>
+              </div>
+              <div className="text-center">
+                <p className="font-bold text-[15px]" style={{ color: "#1A1A2E" }}>{circle.post_count || 0}</p>
+                <p className="text-[10px]" style={{ color: "#9CA3AF" }}>Posts</p>
+              </div>
+              {circle.active_7d != null && (
+                <div className="text-center">
+                  <p className="font-bold text-[15px]" style={{ color: "#1A1A2E" }}>{circle.active_7d}</p>
+                  <p className="text-[10px]" style={{ color: "#9CA3AF" }}>Active/wk</p>
+                </div>
+              )}
+            </div>
+            {circle.rules && (
+              <div className="rounded-xl p-3 mb-3" style={{ background: "#F9FAFB", border: "1px solid #F0F0F0" }}>
+                <p className="text-[11px] font-bold mb-1.5" style={{ color: "#374151" }}>Circle Rules</p>
+                <p className="text-[12px]" style={{ color: "#6B7280", lineHeight: 1.5 }}>{circle.rules}</p>
+              </div>
+            )}
+            {circle.created_at && (
+              <p className="text-[11px]" style={{ color: "#9CA3AF" }}>
+                Created {new Date(circle.created_at).toLocaleDateString("en-IN", { year: "numeric", month: "long" })}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+// =================================================================
+// ROUTER
+// =================================================================
 export default function Circles() {
   const { circleSlug } = useParams<{ circleSlug?: string }>();
   if (circleSlug === "create") return <CircleCreatePage />;
-  return circleSlug ? <CircleDetail slug={circleSlug} /> : <CirclesDiscovery />;
+
+  return (
+    <div className="flex gap-4 max-w-[1200px] mx-auto px-4 py-4">
+      <CirclesSidebar activeSlug={circleSlug} />
+      <div className="flex-1 min-w-0">
+        {circleSlug ? <CircleDetail slug={circleSlug} /> : <CirclesDiscovery />}
+      </div>
+      {circleSlug && <CircleInfoSidebar slug={circleSlug} />}
+    </div>
+  );
 }

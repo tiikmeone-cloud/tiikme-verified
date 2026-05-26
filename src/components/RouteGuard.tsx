@@ -64,7 +64,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   // previously marked complete (old 1-step onboarding didn't save profession_type).
   const needsOnboarding =
     profile.account_type !== "institution" &&
-    (!profile.onboarding_complete || !(profile as any).profession_type);
+    !profile.onboarding_complete;
 
   if (needsOnboarding && !location.pathname.startsWith("/onboarding")) {
     return <Navigate to="/onboarding" replace />;

@@ -11,6 +11,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { sendNotification } from "@/lib/notify";
 import ApplyModal from "@/components/opportunities/ApplyModal";
 import FindTab from "@/components/opportunities/FindTab";
 import ReferralsTab from "@/components/opportunities/ReferralsTab";
@@ -296,10 +297,12 @@ const Opportunities = () => {
       )}
 
       {/* ORG: FIND TALENT */}
-      {isInstitution && orgTab === "talent" && <FindTalentTab />}
+      {isInstitution && orgTab === "talent" && <FindTalentTab currentUserId={user?.id} orgId={profile?.org_id ?? undefined} />}
 
       {/* ORG: CAMPAIGNS */}
       {isInstitution && orgTab === "campaigns" && <OrgCampaignsTab />}
+
+      {/* ORG: CAMPAIGNS */}
 
       <AnimatePresence>
         {showApply && <ApplyModal open={!!showApply} onClose={() => setShowApply(null)} opportunity={showApply} orgName={showApply?.org?.name} onApplied={() => { queryClient.invalidateQueries({ queryKey: ["applied-opportunities"] }); queryClient.invalidateQueries({ queryKey: ["opportunities"] }); setShowApply(null); }} />}
@@ -472,10 +475,18 @@ function MyApplicationsTab({ userId }: { userId: string | undefined }) {
 }
 
 /* ─── Find Talent Tab ─── */
-function FindTalentTab() {
+function FindTalentTab({ currentUserId, orgId }: { currentUserId?: string; orgId?: string }) {
   const [talent, setTalent] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  // Refer Job modal state
+  const [referTarget, setReferTarget] = useState<{ id: string; full_name: string } | null>(null);
+  const [orgOpps, setOrgOpps] = useState<{ id: string; title: string; type: string }[]>([]);
+  const [oppsLoading, setOppsLoading] = useState(false);
+  const [selectedOppId, setSelectedOppId] = useState<string>("");
+  const [referMessage, setReferMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     supabase.from("profiles")
@@ -487,6 +498,79 @@ function FindTalentTab() {
       .then(({ data }) => { setTalent(data || []); setLoading(false); });
   }, []);
 
+  const openReferModal = async (person: { id: string; full_name: string }) => {
+    if (!orgId) { toast.error("No organisation linked to your account"); return; }
+    setReferTarget(person);
+    setSelectedOppId("");
+    setReferMessage("");
+    setOppsLoading(true);
+    // Try with status filter first, fall back without it
+    let { data } = await supabase.from("opportunities")
+      .select("id, title, type")
+      .eq("org_id", orgId)
+      .gt("expires_at", new Date().toISOString())
+      .eq("status", "active");
+    if (!data || data.length === 0) {
+      const fallback = await supabase.from("opportunities")
+        .select("id, title, type")
+        .eq("org_id", orgId)
+        .gt("expires_at", new Date().toISOString());
+      data = fallback.data;
+    }
+    if (!data || data.length === 0) {
+      // Try without expires_at filter too
+      const fallback2 = await supabase.from("opportunities")
+        .select("id, title, type")
+        .eq("org_id", orgId)
+        .eq("is_open", true);
+      data = fallback2.data;
+    }
+    setOrgOpps(data || []);
+    setOppsLoading(false);
+  };
+
+  const handleReferSubmit = async () => {
+    if (!selectedOppId) { toast.error("Please select a job to refer to"); return; }
+    if (!referTarget || !currentUserId || !orgId) return;
+    setSubmitting(true);
+
+    const { error } = await supabase.from("job_referrals").insert({
+      org_id: orgId,
+      user_id: referTarget.id,
+      opportunity_id: selectedOppId,
+      referred_by: currentUserId,
+      message: referMessage.trim() || null,
+    } as any);
+
+    if (error) {
+      setSubmitting(false);
+      if (error.code === "23505") {
+        toast.error("Already referred this person for this job");
+      } else {
+        toast.error("Failed to send referral");
+      }
+      return;
+    }
+
+    // Find selected opportunity title for notification
+    const selectedOpp = orgOpps.find(o => o.id === selectedOppId);
+    const jobTitle = selectedOpp?.title || "a job";
+
+    // Notify the referred user
+    sendNotification({
+      userId: referTarget.id,
+      actorId: currentUserId,
+      type: "opportunity",
+      title: "You've been referred for a job!",
+      body: `An organisation thinks you'd be a great fit for ${jobTitle}. Check it out!`,
+      actionUrl: "/app/opportunities",
+    });
+
+    setSubmitting(false);
+    toast.success("Referral sent!");
+    setReferTarget(null);
+  };
+
   if (loading) return <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="animate-pulse glass-light rounded-xl" style={{ height: 64 }} />)}</div>;
   if (talent.length === 0) return (
     <div className="text-center py-16">
@@ -496,22 +580,116 @@ function FindTalentTab() {
   );
 
   return (
-    <div className="space-y-2">
-      {talent.map((p: any) => (
-        <div key={p.id} className="glass-card flex items-center gap-3 cursor-pointer"
-          style={{ padding: 12, borderRadius: 12 }}
-          onClick={() => navigate(`/app/profile/${p.id}`)}>
-          <AvatarSquare src={p.avatar_url} name={p.full_name || "U"} size={44} />
-          <div className="flex-1 min-w-0">
-            <p className="font-semibold truncate" style={{ fontSize: 14, color: "#1A1A2E" }}>{p.full_name}</p>
-            <p className="text-[12px] truncate" style={{ color: "#6B7094" }}>{p.headline || p.role}</p>
-            {p.location_city && <p className="text-[11px]" style={{ color: "#9CA3C0" }}>{p.location_city}</p>}
+    <>
+      <div className="space-y-2">
+        {talent.map((p: any) => (
+          <div key={p.id} className="glass-card flex items-center gap-3"
+            style={{ padding: 12, borderRadius: 12 }}>
+            <div className="cursor-pointer flex items-center gap-3 flex-1 min-w-0"
+              onClick={() => navigate(`/app/profile/${p.id}`)}>
+              <AvatarSquare src={p.avatar_url} name={p.full_name || "U"} size={44} />
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold truncate" style={{ fontSize: 14, color: "#1A1A2E" }}>{p.full_name}</p>
+                <p className="text-[12px] truncate" style={{ color: "#6B7094" }}>{p.headline || p.role}</p>
+                {p.location_city && <p className="text-[11px]" style={{ color: "#9CA3C0" }}>{p.location_city}</p>}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-[11px] font-semibold px-2 py-1 rounded-full"
+                style={{ background: "rgba(52,199,89,0.10)", color: "#34C759" }}>Open</span>
+              <button
+                type="button"
+                onClick={() => openReferModal({ id: p.id, full_name: p.full_name || "User" })}
+                className="cursor-pointer text-[11px] font-semibold px-2.5 py-1 rounded-full"
+                style={{ border: "1.5px solid #E8733A", color: "#E8733A", background: "transparent" }}>
+                Refer Job →
+              </button>
+            </div>
           </div>
-          <span className="text-[11px] font-semibold px-2 py-1 rounded-full shrink-0"
-            style={{ background: "rgba(52,199,89,0.10)", color: "#34C759" }}>Open</span>
+        ))}
+      </div>
+
+      {/* Refer Job Modal */}
+      {referTarget && (
+        <div
+          className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.45)" }}
+          onClick={() => setReferTarget(null)}>
+          <div
+            className="w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl p-5 bg-white"
+            onClick={e => e.stopPropagation()}
+            style={{ maxHeight: "90vh", overflowY: "auto" }}>
+            <h3 className="font-bold text-[16px] mb-4" style={{ color: "#1A1A2E" }}>
+              Refer {referTarget.full_name} to a job
+            </h3>
+
+            {oppsLoading ? (
+              <div className="space-y-2 mb-4">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="animate-pulse rounded-xl" style={{ height: 44, background: "#F5F5F5" }} />
+                ))}
+              </div>
+            ) : orgOpps.length === 0 ? (
+              <p className="text-[13px] mb-4 text-center py-4" style={{ color: "#6B7094" }}>
+                No active job postings found. Post a job first.
+              </p>
+            ) : (
+              <div className="space-y-2 mb-4">
+                <p className="text-[12px] font-semibold mb-2" style={{ color: "#6B7094" }}>Select a job</p>
+                {orgOpps.map(opp => (
+                  <button
+                    key={opp.id}
+                    type="button"
+                    onClick={() => setSelectedOppId(opp.id)}
+                    className="w-full text-left cursor-pointer px-3 py-3 rounded-xl transition-colors"
+                    style={{
+                      border: selectedOppId === opp.id ? "2px solid #E8733A" : "1.5px solid #E8E8E8",
+                      background: selectedOppId === opp.id ? "rgba(232,115,58,0.06)" : "#FAFAFA",
+                    }}>
+                    <p className="font-semibold text-[13px]" style={{ color: "#1A1A2E" }}>{opp.title}</p>
+                    {opp.type && (
+                      <p className="text-[11px] mt-0.5" style={{ color: "#9CA3C0" }}>{opp.type}</p>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="mb-4">
+              <label className="block text-[12px] font-bold mb-1" style={{ color: "#1A1A2E" }}>
+                Add a personal note <span style={{ color: "#9CA3C0", fontWeight: 400 }}>(optional)</span>
+              </label>
+              <textarea
+                value={referMessage}
+                onChange={e => setReferMessage(e.target.value.slice(0, 500))}
+                rows={3}
+                placeholder="Why do you think they'd be a great fit?"
+                className="w-full outline-none text-[13px]"
+                style={{ padding: "10px 12px", borderRadius: 12, border: "1.5px solid #E8E8E8", background: "#FAFAFA", resize: "none", width: "100%" }}
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setReferTarget(null)}
+                className="flex-1 cursor-pointer py-2.5 rounded-xl text-[13px] font-semibold"
+                style={{ background: "#F5F5F5", color: "#1A1A2E", border: "none" }}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleReferSubmit}
+                disabled={submitting || !selectedOppId || orgOpps.length === 0}
+                className="flex-1 cursor-pointer py-2.5 rounded-xl text-[13px] font-bold disabled:opacity-50"
+                style={{ background: "#E8733A", color: "#fff", border: "none" }}>
+                {submitting ? "Sending..." : "Send Referral"}
+              </button>
+            </div>
+          </div>
         </div>
-      ))}
-    </div>
+      )}
+    </>
   );
 }
 

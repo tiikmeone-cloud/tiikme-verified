@@ -19,6 +19,17 @@ export function freshnessDecay(ageHours: number, type: string = "post"): number 
   return Math.exp(-0.693 * ageHours / halfLife);
 }
 
+/** Step-function freshness for feed posts — more predictable than pure exponential */
+export function postFreshnessStep(ageHours: number): number {
+  if (ageHours <= 2)   return 1.00;
+  if (ageHours <= 6)   return 0.95;
+  if (ageHours <= 12)  return 0.85;
+  if (ageHours <= 24)  return 0.70;
+  if (ageHours <= 72)  return 0.50;
+  if (ageHours <= 168) return 0.30;
+  return 0.15;
+}
+
 /* ─── ACTIVITY SCORE TIERS ─── */
 
 export interface ActivityTier {
@@ -53,6 +64,8 @@ export interface FeedRankingInput {
     author_role_subtype?: string | null;
     author_is_verified?: boolean;
     image_urls?: string[] | null;
+    hashtags?: string[] | null;
+    body?: string | null;
     mention_count?: number;
     reaction_count?: number;
     comment_count?: number;
@@ -63,6 +76,7 @@ export interface FeedRankingInput {
     sector: string | null;
     profession_type?: string | null;
     role_subtype?: string | null;
+    skills?: string[] | null;
   };
   connectionIds: Set<string>;
   followedOrgIds: Set<string>;
@@ -76,46 +90,64 @@ export function calculateFeedScore({
   followedOrgIds,
   followedUserIds,
 }: FeedRankingInput): number {
-  // Freshness decay — 12-hour half-life for posts
   const ageHours = post.created_at
     ? (Date.now() - new Date(post.created_at).getTime()) / 3600000
     : 9999;
-  const contentType = post.post_type === "achievement" ? "achievement" : "post";
-  const decay = freshnessDecay(ageHours, contentType);
 
-  // Relationship score — connection (3x) > followed user (2x) > followed org (2.5x org) > stranger (0)
+  // Use step-function freshness for feed posts, exponential for achievements
+  const decay = post.post_type === "achievement"
+    ? freshnessDecay(ageHours, "achievement")
+    : postFreshnessStep(ageHours);
+
+  // Relationship score — connection (3x) > followed user (2x) > followed org (2.5x)
   const isConnection = connectionIds.has(post.author_id || "") ? 3.0 : 0;
   const isFollowedUser = !isConnection && followedUserIds?.has(post.author_id || "") ? 2.0 : 0;
   const isFollowedOrg = followedOrgIds.has(post.posted_by_org || "") ? 2.5 : 0;
+
+  // Sector + profession + role match
   const sameSector =
     currentUser.sector && post.author_sector === currentUser.sector ? 1.5 : 0;
-
-  // Profession type match — same profession_type gives a relevance boost
   const sameProfession =
     currentUser.profession_type && post.author_profession_type &&
     post.author_profession_type === currentUser.profession_type ? 2.0 : 0;
-
-  // Role subtype match — same specific role (e.g. "Software Engineering") is even more relevant
   const sameRole =
     currentUser.role_subtype && post.author_role_subtype &&
     post.author_role_subtype === currentUser.role_subtype ? 1.5 : 0;
 
-  // Engagement velocity
+  // Topic relevance: user's skills vs post hashtags + body text
+  let topicBoost = 0;
+  if (currentUser.skills && currentUser.skills.length > 0) {
+    const userSkillsLower = currentUser.skills.map(s => s.toLowerCase());
+    const postText = [
+      ...(post.hashtags || []),
+      ...(post.body || "").toLowerCase().split(/\s+/),
+    ].map(t => t.toLowerCase().replace(/^#/, ""));
+    let matches = 0;
+    for (const skill of userSkillsLower) {
+      if (postText.some(t => t.includes(skill) || skill.includes(t))) matches++;
+    }
+    topicBoost = Math.min(matches * 0.5, 2.0);
+  }
+
+  // Content quality
+  const bodyLen = (post.body || "").length;
+  const lengthBoost = bodyLen > 500 ? 1.2 : bodyLen > 200 ? 1.1 : 1.0;
+  const hasHashtags = (post.hashtags || []).length > 0 ? 1.05 : 1.0;
+
+  // Engagement velocity (normalized per hour, capped at 4x)
   const engagementCount =
     (post.reaction_count || 0) +
     (post.comment_count || 0) * 2 +
     (post.repost_count || 0) * 3;
   const engagementVelocity = Math.min(
-    engagementCount / Math.max(ageHours, 1),
-    5.0
+    engagementCount / Math.max(ageHours * 0.5, 1),
+    4.0
   );
 
-  // Content quality signals
   const isVerifiedAuthor = post.author_is_verified ? 1.2 : 0;
-  const hasImages = post.image_urls && post.image_urls.length > 0 ? 1.1 : 0;
+  const hasImages = post.image_urls && post.image_urls.length > 0 ? 1.15 : 0;
   const hasMentions = (post.mention_count || 0) > 0 ? 0.5 : 0;
 
-  // Master score
   const baseWeight =
     isConnection +
     isFollowedUser +
@@ -123,12 +155,14 @@ export function calculateFeedScore({
     sameSector +
     sameProfession +
     sameRole +
+    topicBoost +
     engagementVelocity +
     isVerifiedAuthor +
     hasImages +
     hasMentions;
 
-  return decay * Math.max(baseWeight, 0.1);
+  // Apply content quality multipliers
+  return decay * Math.max(baseWeight, 0.15) * lengthBoost * hasHashtags;
 }
 
 /**

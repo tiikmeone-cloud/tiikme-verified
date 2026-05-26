@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import {
   ArrowLeft, Search, User, FileText, Bell, CheckCircle, XCircle,
-  Clock, ChevronRight, Shield
+  Clock, ChevronRight, Shield, Sparkles, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +39,8 @@ export default function ApplicationsDashboard() {
   const [savingNotes, setSavingNotes] = useState(false);
   const [rejectingAppId, setRejectingAppId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [scoringId, setScoringId] = useState<string | null>(null);
+  const [bulkScoring, setBulkScoring] = useState(false);
 
   useEffect(() => {
     if (!oppId) return;
@@ -123,6 +125,45 @@ export default function ApplicationsDashboard() {
     toast.success("Interview invite sent via Alerts");
   };
 
+  const scoreWithAI = async (appId: string) => {
+    setScoringId(appId);
+    try {
+      const { data, error } = await supabase.functions.invoke("score-applicant", {
+        body: { application_id: appId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setApplications(prev => prev.map(a => a.id === appId ? {
+        ...a,
+        ai_score: data.score,
+        ai_score_breakdown: data.breakdown,
+        ai_summary: data.summary,
+        ai_scored_at: new Date().toISOString(),
+      } : a));
+      if (selectedApp?.id === appId) setSelectedApp((p: any) => ({
+        ...p,
+        ai_score: data.score,
+        ai_score_breakdown: data.breakdown,
+        ai_summary: data.summary,
+      }));
+      toast.success("AI score computed");
+    } catch (e: any) {
+      toast.error(e?.message || "AI scoring failed");
+    }
+    setScoringId(null);
+  };
+
+  const scoreAllWithAI = async () => {
+    const unscored = filtered.filter(a => a.ai_score == null && a.status !== "auto_rejected" && a.status !== "rejected");
+    if (!unscored.length) { toast.info("All visible applicants already scored"); return; }
+    setBulkScoring(true);
+    for (const app of unscored) {
+      await scoreWithAI(app.id);
+    }
+    setBulkScoring(false);
+    toast.success(`Scored ${unscored.length} applicants`);
+  };
+
   const openResume = async (resumeUrl: string) => {
     try {
       const signedUrl = await resolveResumeUrl(resumeUrl);
@@ -181,6 +222,15 @@ export default function ApplicationsDashboard() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-3)" }} />
           <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search applicants..." className="pl-9 h-10" style={{ borderRadius: 12 }} />
         </div>
+        <button
+          type="button"
+          onClick={scoreAllWithAI}
+          disabled={bulkScoring}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold cursor-pointer shrink-0 disabled:opacity-50"
+          style={{ background: "rgba(99,102,241,0.1)", color: "#6366F1", border: "1px solid rgba(99,102,241,0.25)" }}>
+          {bulkScoring ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+          Score All with AI
+        </button>
         <div className="flex gap-1 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
           {STATUS_TABS.map(s => {
             const filterKey = s.toLowerCase().replace("-", "_");
@@ -221,9 +271,32 @@ export default function ApplicationsDashboard() {
                     <p className="text-[13px] font-bold truncate" style={{ color: "#1A1A1A" }}>{app.applicant?.full_name || "Applicant"}</p>
                     <p className="text-[11px] truncate" style={{ color: "#9CA3AF" }}>{app.applicant?.headline || app.applicant?.role || ""}</p>
                   </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0" style={{ background: colors.bg, color: colors.text }}>
-                    {app.status || "reviewing"}
-                  </span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {app.ai_score != null ? (
+                      <span className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-extrabold"
+                        style={{
+                          background: app.ai_score >= 75 ? "rgba(22,163,74,0.12)" : app.ai_score >= 50 ? "rgba(217,119,6,0.12)" : "rgba(220,38,38,0.12)",
+                          color: app.ai_score >= 75 ? "#16A34A" : app.ai_score >= 50 ? "#D97706" : "#DC2626",
+                        }}>
+                        {app.ai_score}
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={e => { e.stopPropagation(); scoreWithAI(app.id); }}
+                        disabled={scoringId === app.id}
+                        className="cursor-pointer"
+                        title="Score with AI"
+                        style={{ background: "none", border: "none", padding: 4 }}>
+                        {scoringId === app.id
+                          ? <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#6366F1" }} />
+                          : <Sparkles className="w-4 h-4" style={{ color: "#9CA3AF" }} />}
+                      </button>
+                    )}
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: colors.bg, color: colors.text }}>
+                      {app.status || "reviewing"}
+                    </span>
+                  </div>
                 </div>
               </GlassBox>
             );
@@ -366,6 +439,50 @@ export default function ApplicationsDashboard() {
                     ))}
                   </div>
                 )}
+
+                {/* AI Score Panel */}
+                <div className="rounded-xl p-4" style={{ background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.15)" }}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-1.5">
+                      <Sparkles className="w-4 h-4" style={{ color: "#6366F1" }} />
+                      <span className="text-[12px] font-bold" style={{ color: "#6366F1" }}>AI Match Score</span>
+                    </div>
+                    {selectedApp.ai_score != null ? (
+                      <span className="text-[22px] font-extrabold"
+                        style={{ color: selectedApp.ai_score >= 75 ? "#16A34A" : selectedApp.ai_score >= 50 ? "#D97706" : "#DC2626" }}>
+                        {selectedApp.ai_score}<span className="text-[13px] font-normal" style={{ color: "#9CA3AF" }}>/100</span>
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => scoreWithAI(selectedApp.id)}
+                        disabled={scoringId === selectedApp.id}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold cursor-pointer disabled:opacity-50"
+                        style={{ background: "#6366F1", color: "#fff", border: "none" }}>
+                        {scoringId === selectedApp.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                        {scoringId === selectedApp.id ? "Scoring..." : "Score Now"}
+                      </button>
+                    )}
+                  </div>
+                  {selectedApp.ai_summary && (
+                    <p className="text-[12px] mb-3" style={{ color: "#374151" }}>{selectedApp.ai_summary}</p>
+                  )}
+                  {selectedApp.ai_score_breakdown && (
+                    <div className="space-y-1.5">
+                      {Object.entries(selectedApp.ai_score_breakdown as Record<string, number>).map(([key, val]) => (
+                        <div key={key}>
+                          <div className="flex justify-between text-[11px] mb-0.5">
+                            <span style={{ color: "#6B7280" }}>{key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}</span>
+                            <span style={{ color: "#374151", fontWeight: 600 }}>{val}/25</span>
+                          </div>
+                          <div className="rounded-full overflow-hidden" style={{ height: 4, background: "#E5E7EB" }}>
+                            <div className="h-full rounded-full" style={{ width: `${(val / 25) * 100}%`, background: val >= 18 ? "#16A34A" : val >= 12 ? "#D97706" : "#DC2626" }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
                 {/* Notes */}
                 <div>

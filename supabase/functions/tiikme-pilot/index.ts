@@ -108,14 +108,37 @@ function estimateCostUsd(model: string, usage: any): number {
 }
 
 function getModeSystemPrompt(mode: PilotMode, maxWords: number): string {
-  const base: Record<PilotMode, string> = {
-    discover:     "You are Tiikme Pilot in Discovery mode. Help the user find people, organisations, circles, and opportunities across the platform.",
-    jobs:         "You are Tiikme Pilot in Jobs mode. Match the user with relevant opportunities based on their profile, location, and skills.",
-    profile:      "You are Tiikme Pilot in Profile mode. Help the user understand and improve their professional presence on Tiikme.",
-    hiring:       "You are Tiikme Pilot in Hiring mode. Help org admins and hiring managers find and evaluate visible candidates on the platform.",
-    verification: "You are Tiikme Pilot in Verification mode. Answer questions about Tiikme's verification process and visible verification status.",
+  const coreInstructions = `You are Tiikme Pilot — an AI assistant built exclusively for the Tiikme professional platform.
+
+TIIKME PLATFORM CONTEXT:
+- Tiikme is a verified professional network for India connecting students, professionals, and organisations
+- Users have profiles with roles: professional, student, freelancer, creator, founder
+- Key features: Feed (posts/articles), Opportunities (jobs/internships/gigs/campaigns), Circles (communities), Strands (connections), Organisations
+- Verification: users can get verified via document upload or work email domain
+- Activity Score: points for posts, connections, applications; tiers: Newcomer → Explorer → Contributor → Expert
+- Campaigns: brand/creator collaboration opportunities posted by organisations for influencers and content creators
+- Circles: topic-based communities (like Reddit) where users post and discuss
+
+STRICT RULES:
+1. ONLY answer about Tiikme platform data, features, users, organisations, jobs, campaigns, and circles
+2. Never answer questions about external topics (world events, general knowledge, coding help, etc.)
+3. If asked about something outside Tiikme, say: "I only have information about Tiikme — try asking about profiles, jobs, campaigns, circles, or platform features."
+4. Answer only from the provided retrieval context — do not invent names, companies, or numbers
+5. Never reveal private emails, phone numbers, or hidden personal data
+6. Keep answers under ${maxWords} words
+7. No emojis. Use plain, professional language.
+8. If the retrieval context is empty, say "I couldn't find matching Tiikme data for that query" — never make up results
+9. When showing results, describe what you found from the context cards provided`;
+
+  const modeAdditions: Record<PilotMode, string> = {
+    discover:     "Help the user discover people, organisations, circles, and opportunities across Tiikme based on the retrieved data.",
+    jobs:         "Help match the user with relevant job opportunities on Tiikme. Highlight role type, location, and organisation from the retrieved records.",
+    profile:      "Help the user understand profiles and professional presence on Tiikme. Reference the retrieved profile data.",
+    hiring:       "Help org admins find and evaluate candidates visible on Tiikme. Reference the retrieved candidate data. Only show publicly available profile info.",
+    verification: "Answer questions about Tiikme's verification process: document upload, work email domain verification, and what the verified badge means.",
   };
-  return `${base[mode]}\nAnswer only from the provided Tiikme retrieval context. Do not invent data. Do not use emojis. Keep the answer under ${maxWords} words. If data is missing from retrieved records, say so plainly. Never reveal private emails, phone numbers, or hidden analytics.`;
+
+  return `${coreInstructions}\n\n${modeAdditions[mode]}`;
 }
 
 serve(async (req) => {
@@ -207,7 +230,7 @@ serve(async (req) => {
     const searchText = extractSearchText(message);
 
     // Parallel retrieval
-    const [orgsRes, oppsRes, profilesRes, circlesRes, appsRes] = await Promise.allSettled([
+    const [orgsRes, oppsRes, profilesRes, circlesRes, appsRes, campaignsRes] = await Promise.allSettled([
       adminClient.from("organizations")
         .select("id, name, type, tagline, about, city, state, website_url, is_verified, followers_count, slug")
         .or(`name.ilike.%${searchText}%,about.ilike.%${searchText}%,tagline.ilike.%${searchText}%`)
@@ -237,6 +260,13 @@ serve(async (req) => {
       adminClient.from("opportunity_applications")
         .select("id, status, created_at, opportunity:opportunities!opportunity_applications_opportunity_id_fkey(title, org:organizations!opportunities_org_id_fkey(name))")
         .eq("applicant_id", user.id).order("created_at", { ascending: false }).limit(5),
+
+      /\bcampaign\b/i.test(searchText)
+        ? adminClient.from("campaigns")
+            .select("id, title, type, status, deadline, created_at, org:organizations!campaigns_org_id_fkey(name, slug)")
+            .in("status", ["active", "open", "published"])
+            .order("created_at", { ascending: false }).limit(4)
+        : Promise.resolve({ data: [] }),
     ]);
 
     const orgs = orgsRes.status === "fulfilled" ? (orgsRes.value as any).data || [] : [];
@@ -244,6 +274,7 @@ serve(async (req) => {
     const profiles = profilesRes.status === "fulfilled" ? (profilesRes.value as any).data || [] : [];
     const circles = circlesRes.status === "fulfilled" ? (circlesRes.value as any).data || [] : [];
     const ownApps = appsRes.status === "fulfilled" ? (appsRes.value as any).data || [] : [];
+    const campaigns = campaignsRes.status === "fulfilled" ? (campaignsRes.value as any).data || [] : [];
 
     // Build source cards
     const sourceCards: SourceCard[] = [];
@@ -277,6 +308,15 @@ serve(async (req) => {
         subtitle: c.description?.slice(0, 80) || null,
         href: `/app/circles/${c.slug}`,
         meta: c.member_count ? `${c.member_count} members` : null,
+      });
+    }
+    for (const camp of campaigns.slice(0, 2)) {
+      const org = Array.isArray(camp.org) ? camp.org[0] : camp.org;
+      sourceCards.push({
+        type: "opportunity", id: camp.id, title: camp.title,
+        subtitle: [org?.name, camp.type].filter(Boolean).join(" · "),
+        href: `/app/opportunities?tab=campaigns&campaign=${camp.id}`,
+        meta: "Campaign",
       });
     }
 

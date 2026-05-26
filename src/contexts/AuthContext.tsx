@@ -73,7 +73,7 @@ const AuthContext = createContext<AuthContextValue>({
 
 export const useAuth = () => useContext(AuthContext);
 
-const PROFILE_CACHE_VERSION = 2;
+const PROFILE_CACHE_VERSION = 3;
 const PROFILE_CACHE_KEY = (id: string) => `tiikme-profile:v${PROFILE_CACHE_VERSION}:${id}`;
 
 const readCache = (id: string): UserProfile | null => {

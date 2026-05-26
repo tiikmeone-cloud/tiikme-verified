@@ -55,12 +55,13 @@ interface FeedPageOptions {
   sector: string | null;
   professionType: string | null;
   roleSubtype: string | null;
+  skills: string[] | null;
   connectionIds: Set<string>;
   followedOrgIds: Set<string>;
 }
 
 async function fetchFeedPage(pageParam: number, opts: FeedPageOptions) {
-  const { sector, professionType, roleSubtype, connectionIds, followedOrgIds } = opts;
+  const { sector, professionType, roleSubtype, skills, connectionIds, followedOrgIds } = opts;
   const { data, error } = await supabase
     .from("posts")
     .select(FEED_SELECT)
@@ -80,11 +81,12 @@ async function fetchFeedPage(pageParam: number, opts: FeedPageOptions) {
         author_profession_type: post.author?.profession_type || null,
         author_role_subtype: post.author?.role_subtype || null,
         author_is_verified: post.author?.is_verified || false,
-        image_urls: post.image_urls, mention_count: 0,
+        image_urls: post.image_urls, hashtags: post.hashtags, body: post.content,
+        mention_count: 0,
         reaction_count: reactionCount, comment_count: post.comment_count || 0,
         repost_count: post.repost_count || 0, post_type: post.post_type,
       },
-      currentUser: { sector: sector || null, profession_type: professionType, role_subtype: roleSubtype },
+      currentUser: { sector: sector || null, profession_type: professionType, role_subtype: roleSubtype, skills },
       connectionIds,
       followedOrgIds,
       followedUserIds: new Set<string>(),
@@ -169,6 +171,7 @@ export function useFeedPosts() {
       sector: profile?.sector || null,
       professionType: (profile as any)?.profession_type || null,
       roleSubtype: (profile as any)?.role_subtype || null,
+      skills: profile?.skills || null,
       connectionIds,
       followedOrgIds: mergedFollowedOrgIds,
     }),
