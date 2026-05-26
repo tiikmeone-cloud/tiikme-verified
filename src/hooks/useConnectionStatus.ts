@@ -91,7 +91,7 @@ export function useConnectionStatus(targetUserId?: string | null): ConnectionAct
         type: "connection_request",
         title: "Sent you a connection request",
         actionUrl: `/app/profile/${currentUserId}`,
-      }).catch(() => {});
+      });
     } catch {
       toast.error("Could not send request. Try again.");
     } finally {
@@ -117,7 +117,7 @@ export function useConnectionStatus(targetUserId?: string | null): ConnectionAct
         type: "connection_accepted",
         title: "Accepted your connection request",
         actionUrl: `/app/profile/${currentUserId}`,
-      }).catch(() => {});
+      });
     } catch {
       toast.error("Could not accept. Try again.");
     } finally {
@@ -221,7 +221,7 @@ export function useConnectionStatus(targetUserId?: string | null): ConnectionAct
         type: "org_follow",
         title: "Your organization is now following you",
         actionUrl: `/app/profile/${userId}`,
-      }).catch(() => {});
+      });
     } catch {
       toast.error("Could not follow. Try again.");
     } finally {
@@ -295,7 +295,7 @@ export async function sendConnectionRequest(
     type: "connection_request",
     title: "Sent you a connection request",
     actionUrl: `/app/profile/${currentUserId}`,
-  }).catch(() => {});
+  });
 
   return status;
 }
