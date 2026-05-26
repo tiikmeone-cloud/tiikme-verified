@@ -69,6 +69,7 @@ const AvatarSquare = ({
         borderRadius: 0,
         border: "2px solid rgba(255,255,255,0.30)",
         backgroundColor: showImage ? "rgba(255,255,255,0.50)" : bg,
+        ...style,
       }}
     >
       {showImage ? (
