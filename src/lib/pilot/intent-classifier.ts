@@ -132,6 +132,20 @@ const PLATFORM_FAQ_PATTERNS: RegExp[] = [
   /\btiikme\s+(?:help|faq|guide)\b/i,
 ];
 
+const SEARCH_CAMPAIGN_PATTERNS: RegExp[] = [
+  /\bcampaign\b/i,
+  /\bcampaigns?\s+(?:today|new|latest|recent|open|active)\b/i,
+  /\bnew\s+campaigns?\b/i,
+  /\bactive\s+campaigns?\b/i,
+  /\bbrand\s+(?:deal|deals|collab|collaboration)\b/i,
+  /\bcreator\s+(?:campaign|opportunity)\b/i,
+  /\binfluencer\s+(?:campaign|deal|opportunity)\b/i,
+  /\bsponsorship\s+(?:opportunity|campaign)\b/i,
+  /\bcollaboration\s+opportunity\b/i,
+  /\bshow\s+(?:me\s+)?campaigns?\b/i,
+  /\bfind\s+campaigns?\b/i,
+];
+
 const PRIVACY_QUESTION_PATTERNS: RegExp[] = [
   /\bwho\s+can\s+see\s+my\b/i,
   /\bis\s+my\s+(?:email|phone|number)\s+visible\b/i,
@@ -243,6 +257,12 @@ function extractJobKeyword(message: string): string | undefined {
   return undefined;
 }
 
+function extractDateFilter(message: string): 'today' | 'week' | null {
+  if (/\btoday\b|\bthis\s+day\b/i.test(message)) return 'today';
+  if (/\bthis\s+week\b|\blast\s+7\s+days?\b/i.test(message)) return 'week';
+  return null;
+}
+
 // ─── Classifier ───────────────────────────────────────────────────────────────
 
 function matchesAny(message: string, patterns: RegExp[]): boolean {
@@ -253,6 +273,17 @@ export function classifyIntent(message: string): IntentResult {
   const msg = message.trim();
 
   // Check intents in priority order
+  if (matchesAny(msg, SEARCH_CAMPAIGN_PATTERNS)) {
+    return {
+      type: 'SEARCH_CAMPAIGN',
+      confidence: 0.9,
+      extractedEntities: {
+        name: extractName(msg),
+        dateFilter: extractDateFilter(msg),
+      },
+    };
+  }
+
   if (matchesAny(msg, PRIVACY_QUESTION_PATTERNS)) {
     return {
       type: 'PRIVACY_QUESTION',

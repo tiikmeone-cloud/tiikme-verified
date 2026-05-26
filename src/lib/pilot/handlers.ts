@@ -7,6 +7,7 @@ import type {
   AnalyticsData,
   TrendingHashtag,
   CircleCard,
+  CampaignCard,
 } from './types';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -456,6 +457,114 @@ function buildTrendingFromPosts(rows: any[]): PilotResponse {
   return {
     type: 'trending_card',
     hashtags,
+  };
+}
+
+// ─── handleSearchCampaign ─────────────────────────────────────────────────────
+
+export async function handleSearchCampaign(
+  entities: Entities & { dateFilter?: 'today' | 'week' | null }
+): Promise<PilotResponse> {
+  let query = supabase
+    .from('campaigns' as any)
+    .select('id, title, type, status, deadline, budget_min, budget_max, created_at, org_id, org:organizations!campaigns_org_id_fkey(name, logo_url)')
+    .in('status', ['active', 'open', 'published'])
+    .order('created_at', { ascending: false })
+    .limit(6);
+
+  if (entities.dateFilter === 'today') {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    query = query.gte('created_at', todayStart.toISOString());
+  } else if (entities.dateFilter === 'week') {
+    const weekAgo = new Date(Date.now() - 7 * 86400000);
+    query = query.gte('created_at', weekAgo.toISOString());
+  }
+
+  if (entities.name) {
+    query = query.ilike('title', `%${entities.name}%`);
+  }
+
+  const { data, error } = await query;
+
+  // If today filter returned nothing, fall back to recent without date filter
+  if ((!data || data.length === 0) && entities.dateFilter === 'today') {
+    const { data: recent } = await supabase
+      .from('campaigns' as any)
+      .select('id, title, type, status, deadline, budget_min, budget_max, created_at, org_id, org:organizations!campaigns_org_id_fkey(name, logo_url)')
+      .in('status', ['active', 'open', 'published'])
+      .order('created_at', { ascending: false })
+      .limit(6);
+
+    const cards: CampaignCard[] = ((recent || []) as any[]).map((c: any) => {
+      const org = Array.isArray(c.org) ? c.org[0] : c.org;
+      return {
+        id: c.id,
+        title: c.title,
+        org_name: org?.name,
+        org_logo: org?.logo_url ?? null,
+        type: c.type,
+        status: c.status,
+        deadline: c.deadline,
+        budget_min: c.budget_min,
+        budget_max: c.budget_max,
+        created_at: c.created_at,
+      };
+    });
+
+    if (cards.length === 0) {
+      return {
+        type: 'text',
+        content: 'No active campaigns found right now. Check back soon!',
+        action: { label: 'Browse campaigns →', url: '/app/opportunities?tab=campaigns' },
+      };
+    }
+
+    return {
+      type: 'campaign_results',
+      cards,
+      content: 'No new campaigns today — here are the most recent active campaigns:',
+    };
+  }
+
+  if (error) {
+    return { type: 'text', content: 'Sorry, I had trouble searching campaigns. Please try again.' };
+  }
+
+  const cards: CampaignCard[] = ((data || []) as any[]).map((c: any) => {
+    const org = Array.isArray(c.org) ? c.org[0] : c.org;
+    return {
+      id: c.id,
+      title: c.title,
+      org_name: org?.name,
+      org_logo: org?.logo_url ?? null,
+      type: c.type,
+      status: c.status,
+      deadline: c.deadline,
+      budget_min: c.budget_min,
+      budget_max: c.budget_max,
+      created_at: c.created_at,
+    };
+  });
+
+  if (cards.length === 0) {
+    return {
+      type: 'text',
+      content: `No campaigns found${entities.name ? ` matching "${entities.name}"` : ''}. Try different keywords or check back later.`,
+      action: { label: 'Browse campaigns →', url: '/app/opportunities?tab=campaigns' },
+    };
+  }
+
+  const label = entities.dateFilter === 'today'
+    ? `Found ${cards.length} new campaign${cards.length !== 1 ? 's' : ''} today:`
+    : entities.dateFilter === 'week'
+      ? `Found ${cards.length} campaign${cards.length !== 1 ? 's' : ''} this week:`
+      : `Found ${cards.length} active campaign${cards.length !== 1 ? 's' : ''}:`;
+
+  return {
+    type: 'campaign_results',
+    cards,
+    content: label,
   };
 }
 
