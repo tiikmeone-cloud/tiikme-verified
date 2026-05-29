@@ -30,9 +30,9 @@ import { getPrimaryRoleLine, sanitizeIdentityText } from "@/lib/profileUtils";
 
 /* ─── HELPERS ─── */
 const roleColorMap: Record<string, string> = {
-  student: "#4F46E5", working: "#0369A1", professional: "#0369A1",
-  healthcare: "#0E7490", doctor: "#0E7490", educator: "#166534",
-  government: "#166534", gig_worker: "#C2410C", founder: "#92400E", creator: "#7E22CE",
+  student: "#FF5A1F", working: "#C44A1F", professional: "#C44A1F",
+  healthcare: "#2D7A4F", doctor: "#2D7A4F", educator: "#166534",
+  government: "#166534", gig_worker: "#C2410C", founder: "#92400E", creator: "#B7640A",
 };
 
 function getTimeAgo(date: Date): string {
@@ -271,7 +271,7 @@ const FeedComposer = ({ onPublished }: { onPublished: () => void }) => {
   if (!user) return null;
 
   return (
-    <div style={{ background: "#FFFFFF", border: "1px solid #E8E8E8", borderRadius: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.04)", padding: "12px 16px", marginBottom: 16 }}>
+    <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-glass)", borderRadius: 16, boxShadow: "var(--shadow-sm)", padding: "12px 16px", marginBottom: 16 }}>
       <div className="flex items-center" style={{ gap: 10 }}>
         <AvatarSquare src={profile?.avatar_url} name={profile?.full_name || "You"} size={36} />
         <div className="flex-1 min-w-0 relative">
@@ -284,23 +284,23 @@ const FeedComposer = ({ onPublished }: { onPublished: () => void }) => {
             className="w-full outline-none resize-none"
             style={{
               minHeight: 40, maxHeight: 160, overflow: "hidden",
-              background: "#F5F5F5", border: "1px solid #E8E8E8", borderRadius: 10,
-              padding: "10px 12px", fontSize: 14, color: "#1A1A2E", lineHeight: "1.4",
+              background: "var(--surface-2)", border: "1px solid var(--border-glass)", borderRadius: 10,
+              padding: "10px 12px", fontSize: 14, color: "var(--text-1)", lineHeight: "1.4",
             }}
-            onFocus={e => { e.currentTarget.style.borderColor = "rgba(232,115,58,0.50)"; }}
-            onBlur={e => { e.currentTarget.style.borderColor = "#E8E8E8"; }}
+            onFocus={e => { e.currentTarget.style.borderColor = "rgba(255,90,31,0.50)"; }}
+            onBlur={e => { e.currentTarget.style.borderColor = "var(--border-glass)"; }}
           />
           {/* Mention suggestions dropdown */}
           {showSuggestions && suggestions.length > 0 && (
             <div className="absolute left-0 right-0 z-20 rounded-xl overflow-hidden"
-              style={{ top: "100%", marginTop: 4, background: "#fff", border: "1px solid #E5E7EB", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
+              style={{ top: "100%", marginTop: 4, background: "var(--bg-card)", border: "1px solid var(--border-glass)", boxShadow: "var(--shadow-lg)" }}>
               {suggestions.map((s, idx) => (
                 <button key={s.id} type="button" onClick={() => insertMention(s)}
                   className="flex items-center gap-2.5 w-full px-3 py-2.5 text-left cursor-pointer"
-                  style={{ background: idx === selectedIdx ? "rgba(232,115,58,0.08)" : "transparent", borderBottom: idx < suggestions.length - 1 ? "1px solid #F0F0F0" : "none" }}>
+                  style={{ background: idx === selectedIdx ? "rgba(255,90,31,0.08)" : "transparent", borderBottom: idx < suggestions.length - 1 ? "1px solid var(--border-subtle)" : "none" }}>
                   <AvatarSquare src={s.avatar_url} name={s.display} size={28} />
                   <div className="min-w-0 flex-1">
-                    <p className="text-[13px] font-semibold truncate" style={{ color: "#1A1A2E" }}>{s.display}</p>
+                    <p className="text-[13px] font-semibold truncate" style={{ color: "var(--text-1)" }}>{s.display}</p>
                     {s.username && <p className="text-[11px]" style={{ color: "#9CA3AF" }}>@{s.username} · {s.type === "page" ? "Page" : "User"}</p>}
                   </div>
                 </button>
@@ -308,12 +308,12 @@ const FeedComposer = ({ onPublished }: { onPublished: () => void }) => {
             </div>
           )}
         </div>
-        <button type="button" onClick={handleAttach} className="cursor-pointer shrink-0 flex items-center justify-center" style={{ width: 36, height: 36, color: "#9CA3C0" }}>
+        <button type="button" onClick={handleAttach} className="cursor-pointer shrink-0 flex items-center justify-center" style={{ width: 36, height: 36, color: "var(--text-muted)" }}>
           <Paperclip style={{ width: 18, height: 18 }} />
         </button>
         <button type="button" onClick={handlePublish} disabled={publishing || (!content.trim() && attachFiles.length === 0)}
           className="shrink-0 disabled:opacity-50 cursor-pointer"
-          style={{ fontSize: 13, fontWeight: 600, height: 36, padding: "0 16px", borderRadius: 10, background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none" }}>
+          style={{ fontSize: 13, fontWeight: 600, height: 36, padding: "0 16px", borderRadius: 10, background: "#FF5A1F", color: "#fff", border: "none" }}>
           {publishing ? <Loader2 className="w-4 h-4 animate-spin" /> : "Post"}
         </button>
       </div>
@@ -322,14 +322,14 @@ const FeedComposer = ({ onPublished }: { onPublished: () => void }) => {
       {attachPreviews.length > 0 && (
         <div className="flex flex-wrap gap-2" style={{ marginTop: 8 }}>
           {attachPreviews.map((att, i) => (
-            <div key={`${att.name}-${att.size}-${i}`} className="relative" style={{ borderRadius: 6, overflow: "hidden", border: "1px solid #E8E8E8" }}>
+            <div key={`${att.name}-${att.size}-${i}`} className="relative" style={{ borderRadius: 6, overflow: "hidden", border: "1px solid var(--border-glass)" }}>
               {att.type.startsWith("image/") ? (
                 <img src={att.url} alt="" loading="lazy" style={{ height: 80, width: "auto", maxWidth: 120, objectFit: "cover", borderRadius: 6 }} />
               ) : (
-                <div className="flex items-center gap-2" style={{ height: 36, padding: "0 10px", background: "#F5F5F5", fontSize: 12, color: "#6B7094" }}>
+                <div className="flex items-center gap-2" style={{ height: 36, padding: "0 10px", background: "var(--surface-2)", fontSize: 12, color: "var(--text-3)" }}>
                   <Paperclip style={{ width: 14, height: 14 }} />
                   <span className="truncate" style={{ maxWidth: 100 }}>{att.name}</span>
-                  <span style={{ color: "#9CA3C0" }}>{(att.size / 1024).toFixed(0)}KB</span>
+                  <span style={{ color: "var(--text-muted)" }}>{(att.size / 1024).toFixed(0)}KB</span>
                 </div>
               )}
               <button type="button" onClick={() => removeAttach(i)} className="absolute top-1 right-1 cursor-pointer flex items-center justify-center" style={{ width: 16, height: 16, borderRadius: 8, background: "rgba(0,0,0,0.5)" }}>
@@ -369,24 +369,24 @@ const PostGroupCard = ({
   }, [api]);
 
   return (
-    <article className="overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid #E8E8E8", borderRadius: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.04)", marginBottom: 16 }}>
-      <header className="flex items-start" style={{ gap: 10, padding: 16, borderBottom: "1px solid #F0F0F0" }}>
+    <article className="overflow-hidden" style={{ background: "var(--bg-card)", border: "1px solid var(--border-glass)", borderRadius: 16, boxShadow: "var(--shadow-sm)", marginBottom: 16 }}>
+      <header className="flex items-start" style={{ gap: 10, padding: 16, borderBottom: "1px solid var(--border-subtle)" }}>
         <Link to={profileLink} className="shrink-0"><AvatarSquare src={displayAvatar} name={displayName} size={40} /></Link>
         <div className="min-w-0 flex-1">
           <Link
             to={profileLink}
             className="hover:underline block"
-            style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", lineHeight: "18px", ...clampTwoLinesStyle }}
+            style={{ fontSize: 14, fontWeight: 600, color: "var(--text-1)", lineHeight: "18px", ...clampTwoLinesStyle }}
           >
             {displayName}
           </Link>
-          <div className="flex items-center flex-wrap" style={{ gap: "2px 6px", marginTop: 3, fontSize: 12, color: "#9CA3C0" }}>
+          <div className="flex items-center flex-wrap" style={{ gap: "2px 6px", marginTop: 3, fontSize: 12, color: "var(--text-muted)" }}>
             <span>Posted <span className="num">{posts.length}</span> updates</span>
-            <span style={{ color: "#C0C4D8" }}>•</span>
+            <span style={{ color: "var(--border-subtle)" }}>•</span>
             <span>{first.created_at ? getTimeAgo(new Date(first.created_at)) : ""}</span>
           </div>
         </div>
-        <div className="num shrink-0" style={{ fontSize: 12, color: "#9CA3C0" }}>{idx + 1}/{posts.length}</div>
+        <div className="num shrink-0" style={{ fontSize: 12, color: "var(--text-muted)" }}>{idx + 1}/{posts.length}</div>
       </header>
       <div ref={carouselRef} className="overflow-hidden">
         <div className="flex">
@@ -407,7 +407,7 @@ const PostGroupCard = ({
       </div>
       <div className="flex justify-center" style={{ gap: 6, padding: "0 0 10px" }}>
         {posts.map((_, i) => (
-          <button key={i} type="button" aria-label={`Go to post ${i + 1}`} onClick={() => api?.scrollTo(i)} style={{ width: i === idx ? 24 : 6, height: 6, borderRadius: 999, background: i === idx ? "#E8733A" : "#D1D5DB", transition: "width 150ms ease" }} />
+          <button key={i} type="button" aria-label={`Go to post ${i + 1}`} onClick={() => api?.scrollTo(i)} style={{ width: i === idx ? 24 : 6, height: 6, borderRadius: 999, background: i === idx ? "#FF5A1F" : "#D1D5DB", transition: "width 150ms ease" }} />
         ))}
       </div>
     </article>
@@ -454,8 +454,8 @@ const SuggestedWidget = ({ connectionIds }: { connectionIds: Set<string> }) => {
   return (
     <div className="glass-card" style={{ padding: 12, borderRadius: 16 }}>
       <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
-        <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>Suggested</span>
-        <Link to="/app/explore" style={{ fontSize: 12, color: "#E8733A" }}>See all</Link>
+        <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text-1)" }}>Suggested</span>
+        <Link to="/app/explore" style={{ fontSize: 12, color: "#FF5A1F" }}>See all</Link>
       </div>
       {suggested.map((s, i) => (
         <div key={s.id} className="flex items-center" style={{ gap: 8, padding: "6px 0", borderBottom: i < suggested.length - 1 ? "1px solid var(--border-subtle)" : "none" }}>
@@ -466,11 +466,11 @@ const SuggestedWidget = ({ connectionIds }: { connectionIds: Set<string> }) => {
             <Link
               to={`/app/profile/${s.id}`}
               className="hover:underline block"
-              style={{ fontSize: 13, fontWeight: 500, color: "#1A1A2E", lineHeight: "17px", ...clampTwoLinesStyle }}
+              style={{ fontSize: 13, fontWeight: 500, color: "var(--text-1)", lineHeight: "17px", ...clampTwoLinesStyle }}
             >
               {s.full_name || "User"}
             </Link>
-            <p style={{ fontSize: 12, color: "#9CA3C0", lineHeight: "16px", ...clampTwoLinesStyle }}>
+            <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: "16px", ...clampTwoLinesStyle }}>
               {sanitizeIdentityText(getPrimaryRoleLine(s))}
             </p>
           </div>
@@ -513,8 +513,8 @@ const CirclesWidget = () => {
   return (
     <div className="glass-card" style={{ padding: 12, borderRadius: 16, marginTop: 12 }}>
       <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
-        <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>Discover Circles</span>
-        <Link to="/app/circles" style={{ fontSize: 12, color: "#E8733A" }}>See all</Link>
+        <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text-1)" }}>Discover Circles</span>
+        <Link to="/app/circles" style={{ fontSize: 12, color: "#FF5A1F" }}>See all</Link>
       </div>
       {circles.map((c, i) => (
         <Link
@@ -525,15 +525,15 @@ const CirclesWidget = () => {
         >
           <div
             className="flex items-center justify-center shrink-0"
-            style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(139,92,246,0.10)", border: "1px solid rgba(139,92,246,0.20)" }}
+            style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,90,31,0.10)", border: "1px solid rgba(255,90,31,0.20)" }}
           >
             <span style={{ fontSize: 16 }}>
               {c.category === "tech" ? "💻" : c.category === "finance" ? "📊" : c.category === "healthcare" ? "🏥" : c.category === "education" ? "🎓" : "💬"}
             </span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="truncate" style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>{c.name}</p>
-            <p style={{ fontSize: 11, color: "#9CA3C0" }}>
+            <p className="truncate" style={{ fontSize: 13, fontWeight: 600, color: "var(--text-1)" }}>{c.name}</p>
+            <p style={{ fontSize: 11, color: "var(--text-muted)" }}>
               <span className="num">{(c.member_count || 0).toLocaleString()}</span> members
             </p>
           </div>
@@ -563,8 +563,8 @@ const OpportunitiesWidget = () => {
   return (
     <div className="glass-card" style={{ padding: 12, borderRadius: 16, marginTop: 12 }}>
       <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
-        <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>Open Roles</span>
-        <Link to="/app/opportunities" style={{ fontSize: 12, color: "#E8733A" }}>See all</Link>
+        <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text-1)" }}>Open Roles</span>
+        <Link to="/app/opportunities" style={{ fontSize: 12, color: "#FF5A1F" }}>See all</Link>
       </div>
       {opps.map((o, i) => (
         <Link
@@ -573,12 +573,12 @@ const OpportunitiesWidget = () => {
           className="flex flex-col hover:opacity-80 transition-opacity"
           style={{ padding: "7px 0", borderBottom: i < opps.length - 1 ? "1px solid var(--border-subtle)" : "none", textDecoration: "none" }}
         >
-          <p className="truncate" style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>{o.title}</p>
-          <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>
+          <p className="truncate" style={{ fontSize: 13, fontWeight: 600, color: "var(--text-1)" }}>{o.title}</p>
+          <p className="truncate" style={{ fontSize: 12, color: "var(--text-3)" }}>
             {[o.company_name, o.location].filter(Boolean).join(" · ")}
           </p>
           {o.type && (
-            <span style={{ marginTop: 3, fontSize: 11, fontWeight: 500, padding: "1px 6px", borderRadius: 4, background: "rgba(232,115,58,0.10)", color: "#E8733A", alignSelf: "flex-start" }}>
+            <span style={{ marginTop: 3, fontSize: 11, fontWeight: 500, padding: "1px 6px", borderRadius: 4, background: "rgba(255,90,31,0.10)", color: "#FF5A1F", alignSelf: "flex-start" }}>
               {o.type}
             </span>
           )}
@@ -703,7 +703,7 @@ const Feed = () => {
       requestAnimationFrame(() => {
         el.scrollIntoView({ behavior: "smooth", block: "start" });
         el.style.transition = "box-shadow 600ms";
-        el.style.boxShadow = "0 0 0 2px #E8733A, 0 1px 4px rgba(0,0,0,0.04)";
+        el.style.boxShadow = "0 0 0 2px #FF5A1F, 0 1px 4px rgba(0,0,0,0.04)";
         setTimeout(() => { el.style.boxShadow = "0 1px 4px rgba(0,0,0,0.04)"; }, 1800);
       });
       scrolledRef.current = true;
@@ -728,11 +728,12 @@ const Feed = () => {
       <div className="flex" style={{ gap: 20 }}>
         <div style={{ flex: 1, minWidth: 0, maxWidth: 640 }}>
           <div className="flex items-center justify-between" style={{ marginBottom: 4 }}>
-            <p style={{ fontSize: 22, fontWeight: 700, color: "#1A1A2E" }}>Feed</p>
+            <p style={{ fontSize: 22, fontWeight: 700, color: "var(--text-1)", fontFamily: "var(--font-display, 'Bricolage Grotesque', sans-serif)" }}>Feed</p>
             <button
               type="button"
               onClick={() => setShowPrefs(v => !v)}
-              className="flex items-center gap-2 rounded-xl border border-[#E8E8E8] bg-white px-3 py-2 text-sm font-medium text-[#1A1A2E] hover:bg-[#F9FAFB]"
+              className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium"
+              style={{ background: "var(--bg-card)", border: "1px solid var(--border-glass)", color: "var(--text-1)" }}
             >
               <Settings2 size={15} />
               Settings
@@ -749,19 +750,19 @@ const Feed = () => {
           />
 
           {showPrefs && (
-            <div style={{ background: "#FFFFFF", border: "1px solid #E8E8E8", borderRadius: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.04)", padding: 14, marginBottom: 12 }}>
+            <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-glass)", borderRadius: 16, boxShadow: "var(--shadow-sm)", padding: 14, marginBottom: 12 }}>
               <div className="space-y-3">
                 <label className="flex items-center justify-between gap-3">
                   <div>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>Hide organization posts</p>
-                    <p style={{ fontSize: 12, color: "#6B7094" }}>Show only people-first posts in your main feed.</p>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-1)" }}>Hide organization posts</p>
+                    <p style={{ fontSize: 12, color: "var(--text-3)" }}>Show only people-first posts in your main feed.</p>
                   </div>
                   <input type="checkbox" checked={feedPrefs.hideOrgPosts} onChange={(e) => updateFeedPref("hideOrgPosts", e.target.checked)} />
                 </label>
                 <label className="flex items-center justify-between gap-3">
                   <div>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>Hide posts from circles</p>
-                    <p style={{ fontSize: 12, color: "#6B7094" }}>Keep circle discussions separate from your main feed.</p>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-1)" }}>Hide posts from circles</p>
+                    <p style={{ fontSize: 12, color: "var(--text-3)" }}>Keep circle discussions separate from your main feed.</p>
                   </div>
                   <input type="checkbox" checked={hideCirclePosts} onChange={e => { setHideCirclePosts(e.target.checked); localStorage.setItem("feed_hide_circle", e.target.checked ? "1" : "0"); }} />
                 </label>
@@ -795,16 +796,16 @@ const Feed = () => {
           ))}
 
           {!loading && !visiblePosts.length && (
-            <div className="text-center" style={{ padding: 32, borderRadius: 16, background: "#FFFFFF", border: "1px solid #E8E8E8" }}>
+            <div className="text-center" style={{ padding: 32, borderRadius: 16, background: "var(--bg-card)", border: "1px solid var(--border-glass)" }}>
               {feedMode === "following" ? (
                 <>
-                  <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", marginBottom: 6 }}>Nothing from your network yet</p>
-                  <p style={{ fontSize: 13, color: "#9CA3C0" }}>Connect with people and follow organizations to see their posts here.</p>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-1)", marginBottom: 6 }}>Nothing from your network yet</p>
+                  <p style={{ fontSize: 13, color: "var(--text-3)" }}>Connect with people and follow organizations to see their posts here.</p>
                 </>
               ) : (
                 <>
-                  <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", marginBottom: 4 }}>Nothing here yet</p>
-                  <p style={{ fontSize: 13, color: "#9CA3C0" }}>Be the first to post something.</p>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-1)", marginBottom: 4 }}>Nothing here yet</p>
+                  <p style={{ fontSize: 13, color: "var(--text-3)" }}>Be the first to post something.</p>
                 </>
               )}
             </div>
@@ -813,12 +814,12 @@ const Feed = () => {
           <div ref={sentinelRef} className="h-1" />
           {loadingMore && (
             <div className="flex justify-center" style={{ margin: 16 }}>
-              <Loader2 className="animate-spin" style={{ width: 24, height: 24, color: "#E8733A" }} />
+              <Loader2 className="animate-spin" style={{ width: 24, height: 24, color: "#FF5A1F" }} />
             </div>
           )}
           {!loading && !hasMore && visiblePosts.length > 0 && !loadingMore && (
-            <div className="text-center" style={{ padding: 20, borderRadius: 16, marginTop: 8, background: "#FFFFFF", border: "1px solid #E8E8E8" }}>
-              <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>You're all caught up!</p>
+            <div className="text-center" style={{ padding: 20, borderRadius: 16, marginTop: 8, background: "var(--bg-card)", border: "1px solid var(--border-glass)" }}>
+              <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-1)" }}>You're all caught up!</p>
             </div>
           )}
         </div>

@@ -273,19 +273,19 @@ export function PostCard({
         ref={cardRef}
         id={`post-${post.id}`}
         style={{
-          background: "#FFFFFF",
-          border: grouped ? "none" : "1px solid #E8E8E8",
+          background: "var(--bg-card)",
+          border: grouped ? "none" : "1px solid var(--border-glass)",
           borderRadius: grouped ? 0 : 16,
-          boxShadow: grouped ? "none" : "0 1px 4px rgba(0,0,0,0.04)",
+          boxShadow: grouped ? "none" : "var(--shadow-sm)",
           padding: 20,
           marginBottom: grouped ? 0 : 16,
-          borderLeft: isTownhall ? "4px solid #E8733A" : undefined,
+          borderLeft: isTownhall ? "4px solid #FF5A1F" : undefined,
           scrollMarginTop: 80,
         }}
       >
         {isTownhall && (
           <div style={{ paddingBottom: 4 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#E8733A" }}>TOWNHALL</span>
+            <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#FF5A1F" }}>TOWNHALL</span>
           </div>
         )}
 
@@ -299,7 +299,7 @@ export function PostCard({
                 <Link
                   to={profileLink}
                   className="hover:underline min-w-0"
-                  style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", lineHeight: "18px", ...clampTwoLinesStyle }}
+                  style={{ fontSize: 14, fontWeight: 600, color: "var(--text-1)", lineHeight: "18px", ...clampTwoLinesStyle }}
                 >
                   {displayName}
                 </Link>
@@ -315,16 +315,16 @@ export function PostCard({
                 )}
               </div>
               <div className="flex items-center flex-wrap min-w-0" style={{ gap: "2px 6px", marginTop: 2, lineHeight: "18px" }}>
-                {roleLine && <span style={{ fontSize: 12, color: "#6B7094", ...clampTwoLinesStyle }}>{roleLine}</span>}
+                {roleLine && <span style={{ fontSize: 12, color: "var(--text-3)", ...clampTwoLinesStyle }}>{roleLine}</span>}
                 {companyName && (
                   <>
-                    {roleLine && <span className="shrink-0" style={{ fontSize: 12, color: "#C0C4D8" }}>•</span>}
-                    <span style={{ fontSize: 12, color: "#6B7094", ...clampTwoLinesStyle }}>{companyName}</span>
+                    {roleLine && <span className="shrink-0" style={{ fontSize: 12, color: "var(--border-subtle)" }}>•</span>}
+                    <span style={{ fontSize: 12, color: "var(--text-3)", ...clampTwoLinesStyle }}>{companyName}</span>
                   </>
                 )}
-                {(roleLine || companyName) && <span className="shrink-0" style={{ fontSize: 12, color: "#C0C4D8" }}>•</span>}
-                <span className="shrink-0" style={{ fontSize: 12, color: "#9CA3C0" }}>{timeAgo}</span>
-                {isEdited && <span className="shrink-0" style={{ fontSize: 11, fontStyle: "italic", color: "#9CA3C0" }}>(edited)</span>}
+                {(roleLine || companyName) && <span className="shrink-0" style={{ fontSize: 12, color: "var(--border-subtle)" }}>•</span>}
+                <span className="shrink-0" style={{ fontSize: 12, color: "var(--text-muted)" }}>{timeAgo}</span>
+                {isEdited && <span className="shrink-0" style={{ fontSize: 11, fontStyle: "italic", color: "var(--text-muted)" }}>(edited)</span>}
               </div>
             </div>
 
@@ -333,12 +333,12 @@ export function PostCard({
                 type="button"
                 onClick={() => setShowMenu(!showMenu)}
                 className="flex items-center justify-center cursor-pointer"
-                style={{ width: 32, height: 32, color: "#9CA3C0" }}
+                style={{ width: 32, height: 32, color: "var(--text-muted)" }}
               >
                 <MoreHorizontal style={{ width: 16, height: 16 }} />
               </button>
               {showMenu && (
-                <div className="absolute right-0 top-8 z-[100]" style={{ width: 190, borderRadius: 12, padding: "8px 0", background: "#FFFFFF", border: "1px solid #E5E7EB", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
+                <div className="absolute right-0 top-8 z-[100]" style={{ width: 190, borderRadius: 12, padding: "8px 0", background: "var(--bg-card)", border: "1px solid var(--border-glass)", boxShadow: "var(--shadow-lg)" }}>
                   {effectivelyConnected && (
                     <button type="button" onClick={() => {
                       setShowMenu(false);
@@ -357,26 +357,26 @@ export function PostCard({
                         cancel: { label: "Cancel", onClick: () => {} },
                         duration: 5000,
                       });
-                    }} className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "10px 16px", fontSize: 14, color: "#EF4444" }}>
+                    }} className="flex items-center gap-2 w-full cursor-pointer hover:bg-surface-2" style={{ padding: "10px 16px", fontSize: 14, color: "#EF4444" }}>
                       <UserX style={{ width: 14, height: 14 }} /> Remove Connection
                     </button>
                   )}
-                  <button type="button" onClick={handleCopyLink} className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "10px 16px", fontSize: 14, color: "#1A1A2E" }}>
+                  <button type="button" onClick={handleCopyLink} className="flex items-center gap-2 w-full cursor-pointer hover:bg-surface-2" style={{ padding: "10px 16px", fontSize: 14, color: "var(--text-1)" }}>
                     <Copy style={{ width: 14, height: 14 }} /> Copy Link
                   </button>
                   {isOwn ? (
                     <>
                       {!isRepost && (
-                        <button type="button" onClick={() => { onEdit(post); setShowMenu(false); }} className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "10px 16px", fontSize: 14, color: "#1A1A2E" }}>
+                        <button type="button" onClick={() => { onEdit(post); setShowMenu(false); }} className="flex items-center gap-2 w-full cursor-pointer hover:bg-surface-2" style={{ padding: "10px 16px", fontSize: 14, color: "var(--text-1)" }}>
                           <Pencil style={{ width: 14, height: 14 }} /> Edit Post
                         </button>
                       )}
-                      <button type="button" onClick={() => { onDelete(post.id); setShowMenu(false); }} className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "10px 16px", fontSize: 14, color: "#EF4444" }}>
+                      <button type="button" onClick={() => { onDelete(post.id); setShowMenu(false); }} className="flex items-center gap-2 w-full cursor-pointer hover:bg-surface-2" style={{ padding: "10px 16px", fontSize: 14, color: "#EF4444" }}>
                         <Trash2 style={{ width: 14, height: 14 }} /> {isRepost ? "Remove Repost" : "Delete Post"}
                       </button>
                     </>
                   ) : (
-                    <button type="button" onClick={handleReport} className="flex items-center gap-2 w-full cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "10px 16px", fontSize: 14, color: "#1A1A2E" }}>
+                    <button type="button" onClick={handleReport} className="flex items-center gap-2 w-full cursor-pointer hover:bg-surface-2" style={{ padding: "10px 16px", fontSize: 14, color: "var(--text-1)" }}>
                       <Flag style={{ width: 14, height: 14 }} /> Report
                     </button>
                   )}
@@ -393,14 +393,14 @@ export function PostCard({
               fontSize: 15,
               fontWeight: 400,
               lineHeight: "22px",
-              color: "#1A1A2E",
+              color: "var(--text-1)",
               ...((!expanded && needsClamp) ? { maxHeight: 100, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 5, WebkitBoxOrient: "vertical" as const } : {}),
             }}
           >
             <MentionText text={post.content} />
           </div>
           {needsClamp && !expanded && (
-            <button type="button" onClick={() => setExpanded(true)} className="cursor-pointer" style={{ fontSize: 13, fontWeight: 600, color: "#E8733A", marginTop: 2 }}>
+            <button type="button" onClick={() => setExpanded(true)} className="cursor-pointer" style={{ fontSize: 13, fontWeight: 600, color: "#FF5A1F", marginTop: 2 }}>
               See more
             </button>
           )}
@@ -413,12 +413,12 @@ export function PostCard({
         )}
 
         {localRepostCount >= 2 && (
-          <p style={{ fontSize: 12, color: "#9CA3C0", marginTop: 4 }}>
+          <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
             {displayName} and {localRepostCount - 1} other{localRepostCount > 2 ? "s" : ""} reposted
           </p>
         )}
 
-        <div className="flex items-center flex-wrap" style={{ marginTop: 12, gap: 6, borderTop: "1px solid #F0F0F0", paddingTop: 10 }}>
+        <div className="flex items-center flex-wrap" style={{ marginTop: 12, gap: 6, borderTop: "1px solid var(--border-subtle)", paddingTop: 10 }}>
           <button
             type="button"
             onClick={handleLike}
@@ -434,33 +434,33 @@ export function PostCard({
               transition: "transform 150ms ease",
             }}
           >
-            <Heart style={{ width: 15, height: 15, fill: liked ? "#E8733A" : "none", color: liked ? "#E8733A" : "#9CA3C0" }} />
-            <span style={{ fontSize: 12, fontWeight: 500, color: liked ? "#E8733A" : "#9CA3C0" }}>
+            <Heart style={{ width: 15, height: 15, fill: liked ? "#FF5A1F" : "none", color: liked ? "#FF5A1F" : "var(--text-muted)" }} />
+            <span style={{ fontSize: 12, fontWeight: 500, color: liked ? "#FF5A1F" : "var(--text-muted)" }}>
               {likeCount > 0 ? <span className="num">{formatCompactCount(likeCount)}</span> : "Like"}
             </span>
           </button>
 
           <button type="button" onClick={() => toggleComments(post.id)} className="flex items-center cursor-pointer" style={{ gap: 6, padding: "8px 10px", borderRadius: 10, minWidth: 84, flex: "1 1 0", justifyContent: "center" }}>
-            <MessageCircle style={{ width: 15, height: 15, color: isOpen ? "#E8733A" : "#9CA3C0" }} />
-            <span style={{ fontSize: 12, fontWeight: 500, color: isOpen ? "#E8733A" : "#9CA3C0" }}>
+            <MessageCircle style={{ width: 15, height: 15, color: isOpen ? "#FF5A1F" : "var(--text-muted)" }} />
+            <span style={{ fontSize: 12, fontWeight: 500, color: isOpen ? "#FF5A1F" : "var(--text-muted)" }}>
               {commentCount > 0 ? <span className="num">{formatCompactCount(commentCount)}</span> : "Comment"}
             </span>
           </button>
 
           <button type="button" onClick={handleRepost} disabled={reposting} className="flex items-center cursor-pointer" style={{ gap: 6, padding: "8px 10px", borderRadius: 10, minWidth: 84, flex: "1 1 0", justifyContent: "center", opacity: reposting ? 0.5 : 1 }}>
-            <Repeat2 style={{ width: 15, height: 15, color: hasReposted ? "#E8733A" : "#9CA3C0" }} />
-            <span style={{ fontSize: 12, fontWeight: 500, color: hasReposted ? "#E8733A" : "#9CA3C0" }}>
+            <Repeat2 style={{ width: 15, height: 15, color: hasReposted ? "#FF5A1F" : "var(--text-muted)" }} />
+            <span style={{ fontSize: 12, fontWeight: 500, color: hasReposted ? "#FF5A1F" : "var(--text-muted)" }}>
               {localRepostCount > 0 ? <span className="num">{formatCompactCount(localRepostCount)}</span> : "Repost"}
             </span>
           </button>
 
           <button type="button" onClick={() => setSharePostId(post.id)} className="flex items-center cursor-pointer" style={{ gap: 6, padding: "8px 10px", borderRadius: 10, minWidth: 84, flex: "1 1 0", justifyContent: "center" }}>
-            <Send style={{ width: 15, height: 15, color: "#9CA3C0" }} />
-            <span style={{ fontSize: 12, fontWeight: 500, color: "#9CA3C0" }}>Share</span>
+            <Send style={{ width: 15, height: 15, color: "var(--text-muted)" }} />
+            <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text-muted)" }}>Share</span>
           </button>
 
           {(post.view_count || 0) > 0 && (
-            <span className="flex items-center ml-auto shrink-0" style={{ gap: 4, fontSize: 11, color: "#C0C4D8", padding: "8px 4px" }}>
+            <span className="flex items-center ml-auto shrink-0" style={{ gap: 4, fontSize: 11, color: "var(--border-subtle)", padding: "8px 4px" }}>
               <Eye style={{ width: 12, height: 12 }} />
               {formatCompactCount(post.view_count)}
             </span>
@@ -487,7 +487,7 @@ export function PostCard({
                 border: "none",
                 ...(connectState === "pending"
                   ? { background: "rgba(255,184,0,0.12)", color: "#B8860B", border: "1px solid rgba(255,184,0,0.30)", cursor: "default" }
-                  : { background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", boxShadow: "0 2px 8px rgba(232,115,58,0.25)" }
+                  : { background: "#FF5A1F", color: "#fff", boxShadow: "0 2px 8px rgba(255,90,31,0.25)" }
                 ),
               }}
             >
