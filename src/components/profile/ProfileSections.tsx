@@ -10,7 +10,7 @@ import VerificationRequest from "@/components/profile/VerificationRequest";
 import { useCompanyLogos } from "@/hooks/useCompanyLogos";
 
 /* ── Helpers ── */
-const LOGO_COLORS = ["#E8733A", "#0369A1", "#34C759", "#FF6B9D", "#8B5CF6", "#FFB800"];
+const LOGO_COLORS = ["#E8733A", "#C44A1F", "#34C759", "#166534", "#B7640A", "#FFB800"];
 const hashColor = (name: string) => LOGO_COLORS[name.split("").reduce((a, c) => a + c.charCodeAt(0), 0) % LOGO_COLORS.length];
 
 const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -124,7 +124,7 @@ const CompanyLogo = ({ name, logoUrl, color, size = 40 }: { name: string; logoUr
   const bg = color || hashColor(name || "X");
   return (
     <div className="flex items-center justify-center shrink-0 overflow-hidden"
-      style={{ width: size, height: size, borderRadius: 0, backgroundColor: logoUrl ? "transparent" : bg, border: "2px solid rgba(255,255,255,0.30)" }}>
+      style={{ width: size, height: size, borderRadius: 0, backgroundColor: logoUrl ? "transparent" : bg, border: "2px solid var(--border-glass)" }}>
       {logoUrl ? (
         <img src={fixStorageUrl(logoUrl) || ""} alt="" loading="lazy" className="w-full h-full object-cover" style={{ borderRadius: 0 }}
           onError={e => { (e.target as HTMLImageElement).style.display = "none"; e.currentTarget.parentElement!.style.backgroundColor = bg; }} />
@@ -140,18 +140,16 @@ const SectionBox = ({ title, icon: Icon, iconColor, count, isOwnProfile, onAdd, 
   <div className="glass-card" style={{
     padding: 12, borderRadius: 16,
     borderLeft: `2px solid ${borderColor}66`,
-    boxShadow: `0 8px 32px rgba(26,26,78,0.08), inset 0 1px 0 rgba(255,255,255,0.60), -3px 0 14px ${borderColor}26`,
-    transition: "all 200ms ease",
   }}
-    onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = `0 12px 40px rgba(26,26,78,0.12), inset 0 1px 0 rgba(255,255,255,0.60), -3px 0 20px ${borderColor}3d`; }}
-    onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = `0 8px 32px rgba(26,26,78,0.08), inset 0 1px 0 rgba(255,255,255,0.60), -3px 0 14px ${borderColor}26`; }}
+    onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; }}
+    onMouseLeave={e => { e.currentTarget.style.transform = ""; }}
   >
     {/* HEADER ROW — exact 28px height */}
     <div className="flex items-center" style={{ height: 28, gap: 8 }}>
       <Icon style={{ width: 18, height: 18, color: iconColor, flexShrink: 0 }} />
       <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", flex: 1 }}>{title}</span>
       {count !== undefined && count > 0 && (
-        <span className="num" style={{ fontSize: 11, color: "var(--text-muted)", background: "rgba(255,255,255,0.25)", padding: "0 6px", borderRadius: 4, height: 18, display: "inline-flex", alignItems: "center" }}>{count}</span>
+        <span className="num" style={{ fontSize: 11, color: "var(--text-muted)", background: "var(--surface-2)", padding: "0 6px", borderRadius: 4, height: 18, display: "inline-flex", alignItems: "center" }}>{count}</span>
       )}
       {isOwnProfile && onAdd && (
         <button type="button" onClick={onAdd} className="cursor-pointer" style={{
@@ -210,14 +208,14 @@ export const ExperienceSection = ({ items, isOwnProfile, onAdd, onDelete, onTogg
   if (items.length === 0 && !isOwnProfile) return null;
 
   return (
-    <SectionBox title="Experience" icon={Briefcase} iconColor="#0369A1" borderColor="#0369A1" count={items.length} isOwnProfile={isOwnProfile} onAdd={onAdd}>
+    <SectionBox title="Experience" icon={Briefcase} iconColor="#FF5A1F" borderColor="#FF5A1F" count={items.length} isOwnProfile={isOwnProfile} onAdd={onAdd}>
       {items.length === 0 ? (
         isOwnProfile ? (
           <button type="button" onClick={onAdd}
             className="flex items-center gap-2 cursor-pointer w-full text-left"
-            style={{ background: "rgba(74,144,217,0.05)", border: "1px dashed rgba(74,144,217,0.30)", borderRadius: 10, padding: "10px 12px", marginTop: 4 }}>
-            <Plus style={{ width: 14, height: 14, color: "#0369A1", flexShrink: 0 }} />
-            <span style={{ fontSize: 13, color: "#0369A1", fontWeight: 500 }}>Add your first experience</span>
+            style={{ background: "rgba(255,90,31,0.05)", border: "1px dashed rgba(255,90,31,0.30)", borderRadius: 10, padding: "10px 12px", marginTop: 4 }}>
+            <Plus style={{ width: 14, height: 14, color: "#FF5A1F", flexShrink: 0 }} />
+            <span style={{ fontSize: 13, color: "#FF5A1F", fontWeight: 500 }}>Add your first experience</span>
           </button>
         ) : (
           <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "4px 0" }}>No experience added</p>
@@ -382,7 +380,7 @@ export const ProjectsSection = ({ items, isOwnProfile, onAdd, onDelete, onToggle
                 extra={techStack.length > 0 ? (
                   <div className="flex flex-wrap gap-1" style={{ marginTop: 4 }}>
                     {techStack.slice(0, 3).map((s: string) => (
-                      <span key={s} style={{ fontSize: 12, fontWeight: 400, padding: "0 8px", height: 24, display: "inline-flex", alignItems: "center", borderRadius: 6, background: "rgba(139,92,246,0.08)", color: "#8B5CF6" }}>{s}</span>
+                      <span key={s} style={{ fontSize: 12, fontWeight: 400, padding: "0 8px", height: 24, display: "inline-flex", alignItems: "center", borderRadius: 6, background: "rgba(255,90,31,0.08)", color: "#FF5A1F" }}>{s}</span>
                     ))}
                     {techStack.length > 3 && <span style={{ fontSize: 12, padding: "0 8px", height: 24, display: "inline-flex", alignItems: "center", borderRadius: 6, background: "var(--bg-card)", color: "var(--text-muted)" }}>+{techStack.length - 3}</span>}
                   </div>
@@ -489,14 +487,14 @@ export const SkillsSection = ({ skills, isOwnProfile, onAdd, onRemoveSkill }: {
   if (skills.length === 0 && !isOwnProfile) return null;
 
   return (
-    <SectionBox title="Skills" icon={Star} iconColor="#8B5CF6" borderColor="#8B5CF6" count={skills.length} isOwnProfile={isOwnProfile} onAdd={onAdd}>
+    <SectionBox title="Skills" icon={Star} iconColor="#FF5A1F" borderColor="#FF5A1F" count={skills.length} isOwnProfile={isOwnProfile} onAdd={onAdd}>
       {skills.length === 0 ? (
         isOwnProfile ? (
           <button type="button" onClick={onAdd}
             className="flex items-center gap-2 cursor-pointer w-full text-left"
-            style={{ background: "rgba(139,92,246,0.05)", border: "1px dashed rgba(139,92,246,0.30)", borderRadius: 10, padding: "10px 12px", marginTop: 4 }}>
-            <Plus style={{ width: 14, height: 14, color: "#8B5CF6", flexShrink: 0 }} />
-            <span style={{ fontSize: 13, color: "#8B5CF6", fontWeight: 500 }}>Add your top skills</span>
+            style={{ background: "rgba(255,90,31,0.05)", border: "1px dashed rgba(255,90,31,0.30)", borderRadius: 10, padding: "10px 12px", marginTop: 4 }}>
+            <Plus style={{ width: 14, height: 14, color: "#FF5A1F", flexShrink: 0 }} />
+            <span style={{ fontSize: 13, color: "#FF5A1F", fontWeight: 500 }}>Add your top skills</span>
           </button>
         ) : null
       ) : (
@@ -504,12 +502,12 @@ export const SkillsSection = ({ skills, isOwnProfile, onAdd, onRemoveSkill }: {
           {visible.map((s: string) => (
             <span key={s} className="flex items-center" style={{
               height: 24, padding: "0 8px", borderRadius: 6, fontSize: 12, fontWeight: 400,
-              background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.15)", color: "#8B5CF6",
+              background: "rgba(255,90,31,0.08)", border: "1px solid rgba(255,90,31,0.15)", color: "#FF5A1F",
               gap: 4,
             }}>
               {s}
               {isOwnProfile && (
-                <button type="button" onClick={() => onRemoveSkill(s)} className="cursor-pointer" style={{ color: "#8B5CF6", opacity: 0.5, background: "none", border: "none", padding: 0 }}>
+                <button type="button" onClick={() => onRemoveSkill(s)} className="cursor-pointer" style={{ color: "#FF5A1F", opacity: 0.5, background: "none", border: "none", padding: 0 }}>
                   <X className="w-3 h-3" />
                 </button>
               )}
@@ -567,13 +565,13 @@ export const RolesSection = ({ items, isOwnProfile, onAdd, onDelete }: {
 }) => {
   const ROLE_TYPE_COLORS: Record<string, string> = {
     "Side Hustle": "#E8733A",
-    "Freelance": "#8B5CF6",
-    "Dual Employment": "#0369A1",
+    "Freelance": "#C44A1F",
+    "Dual Employment": "#FF5A1F",
     "Moonlighting": "#34C759",
   };
 
   return (
-    <SectionBox title="Moonlighting" icon={Star} iconColor="#0369A1" borderColor="#0369A1" count={items.length} isOwnProfile={isOwnProfile} onAdd={onAdd}>
+    <SectionBox title="Moonlighting" icon={Star} iconColor="#FF5A1F" borderColor="#FF5A1F" count={items.length} isOwnProfile={isOwnProfile} onAdd={onAdd}>
       {items.length === 0 ? (
         <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "4px 0" }}>No additional roles added</p>
       ) : (

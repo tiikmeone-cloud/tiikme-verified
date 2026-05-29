@@ -889,40 +889,48 @@ const Profile = () => {
     const { status, direction } = connectionStatus;
     if (status === "accepted") {
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button type="button" className="cursor-pointer" style={{ height: 32, padding: "0 12px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "rgba(52,199,89,0.10)", color: "#34C759", border: "1px solid rgba(52,199,89,0.25)", display: "inline-flex", alignItems: "center", gap: 4 }}>
-              <CheckCircle className="w-3.5 h-3.5" /> Connected <ChevronDown className="w-3 h-3" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="bg-white">
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleDisconnect} className="text-red-500 focus:text-red-500">
-              <UserX className="w-3.5 h-3.5 mr-2" /> Remove Connection
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleBlock} className="text-red-500 focus:text-red-500">
-              <Ban className="w-3.5 h-3.5 mr-2" /> Block
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleReport}>
-              <Flag className="w-3.5 h-3.5 mr-2" /> Report
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <button
+          type="button"
+          className="cursor-pointer"
+          style={{
+            height: 32, padding: "0 12px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+            background: "rgba(52,199,89,0.10)", color: "#34C759",
+            border: "1px solid rgba(52,199,89,0.25)",
+            display: "inline-flex", alignItems: "center", gap: 4
+          }}
+          onClick={() => {
+            const name = profileData?.full_name || displayName || "this person";
+            toast(`Disconnect from ${name}?`, {
+              action: { label: "Disconnect", onClick: handleDisconnect },
+              cancel: { label: "Cancel", onClick: () => {} },
+              duration: 5000,
+            });
+          }}
+        >
+          <CheckCircle className="w-3.5 h-3.5" /> Connected ✓
+        </button>
       );
     }
     if (status === "pending" && direction === "sent") return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button type="button" className="cursor-pointer" style={{ height: 32, padding: "0 12px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "rgba(255,184,0,0.10)", color: "#FFB800", border: "1px solid rgba(255,184,0,0.25)", display: "inline-flex", alignItems: "center", gap: 4 }}>
-            Pending <ChevronDown className="w-3 h-3" />
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="bg-white">
-          <DropdownMenuItem onClick={handleWithdraw}>
-            <UserX className="w-3.5 h-3.5 mr-2" /> Withdraw request
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <button
+        type="button"
+        className="cursor-pointer"
+        style={{
+          height: 32, padding: "0 12px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+          background: "rgba(255,184,0,0.10)", color: "#FFB800",
+          border: "1px solid rgba(255,184,0,0.25)",
+          display: "inline-flex", alignItems: "center", gap: 4
+        }}
+        onClick={() => {
+          toast("Withdraw connection request?", {
+            action: { label: "Withdraw", onClick: handleWithdraw },
+            cancel: { label: "Cancel", onClick: () => {} },
+            duration: 5000,
+          });
+        }}
+      >
+        Pending…
+      </button>
     );
     if (status === "pending" && direction === "received") return (
       <div className="flex gap-2">
@@ -931,7 +939,7 @@ const Profile = () => {
       </div>
     );
     return (
-      <button type="button" onClick={handleConnect} disabled={connectLoading} className="cursor-pointer" style={{ height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 700, background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 2px 12px rgba(232,115,58,0.25)" }}>
+      <button type="button" onClick={handleConnect} disabled={connectLoading} className="cursor-pointer" style={{ height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 700, background: "#FF5A1F", color: "#fff", border: "none", boxShadow: "0 2px 12px rgba(255,90,31,0.25)" }}>
         <Users className="w-3 h-3 inline mr-1" />Connect
       </button>
     );
@@ -945,10 +953,16 @@ const Profile = () => {
         {/* ── PROFILE INFO CARD ── */}
         <div className="glass-card relative overflow-hidden" style={{
           borderRadius: 16,
-          background: "rgba(255,255,255,0.25)", backdropFilter: "blur(20px)",
-          border: "1px solid rgba(255,255,255,0.40)",
-          boxShadow: "0 8px 32px rgba(26,26,78,0.08), inset 0 1px 0 rgba(255,255,255,0.60)",
+          background: "var(--bg-card)",
+          border: "1px solid var(--border-glass)",
+          boxShadow: "var(--card-shadow)",
         }}>
+          {/* Gradient header strip — no cover photo, role color only */}
+          <div style={{
+            height: 72,
+            borderRadius: "14px 14px 0 0",
+            background: `linear-gradient(135deg, ${roleColor}22, ${roleColor}44)`,
+          }} />
           <div className="p-5 md:p-6 relative">
           {isOwnProfile && (
             <Link
@@ -957,8 +971,8 @@ const Profile = () => {
               className="absolute flex items-center justify-center cursor-pointer active:scale-95"
               style={{
                 top: 12, right: 12, width: 36, height: 36, borderRadius: 10,
-                background: "rgba(255,255,255,0.85)", border: "1px solid rgba(0,0,0,0.08)",
-                color: "#1A1A2E", zIndex: 5,
+                background: "var(--bg-card)", border: "1px solid var(--border-glass)",
+                color: "var(--text-1)", zIndex: 5,
               }}
             >
               <Settings style={{ width: 18, height: 18 }} strokeWidth={1.8} />
@@ -985,7 +999,7 @@ const Profile = () => {
             <div className="profile-info-body w-full text-center md:text-left" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 5 }}>
               {/* ROW 1: Name + optional Open to work pill */}
               <div className="flex items-center md:items-start justify-center md:justify-start flex-wrap" style={{ gap: 8 }}>
-                <p style={{ flex: 1, minWidth: 0, fontSize: 20, fontWeight: 700, lineHeight: "28px", color: "#1A1A2E", whiteSpace: "normal", overflowWrap: "anywhere", wordBreak: "break-word" }}>
+                <p style={{ flex: 1, minWidth: 0, fontSize: 20, fontWeight: 700, lineHeight: "28px", color: "var(--text-1)", whiteSpace: "normal", overflowWrap: "anywhere", wordBreak: "break-word" }}>
                   {displayName}
                   {isVerified && <VerifiedBadge size={18} />}
                 </p>
@@ -1053,8 +1067,8 @@ const Profile = () => {
               {/* ROW 4: Stats — Posts count only; Connections are in the box below */}
               <div className="flex items-center flex-wrap" style={{ gap: 12, marginTop: 6 }}>
                 <Link to={`/app/u/${username || targetUserId}/posts`} className="hover:opacity-80" style={{ fontSize: 13 }}>
-                  <span className="num" style={{ fontWeight: 700, color: "#1A1A2E" }}>{stats.posts}</span>
-                  <span style={{ fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Posts</span>
+                  <span className="num" style={{ fontWeight: 700, color: "var(--text-1)" }}>{stats.posts}</span>
+                  <span style={{ fontWeight: 400, color: "var(--text-3)", marginLeft: 4 }}>Posts</span>
                 </Link>
                 {(() => {
                   const score = (profileData as any).activity_score ?? 0;

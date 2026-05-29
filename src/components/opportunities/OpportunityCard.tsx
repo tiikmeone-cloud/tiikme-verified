@@ -95,10 +95,10 @@ export function OpportunityCard({
     job: "bg-[#FFF7ED] text-[#C44A1F]",
     full_time: "bg-[#FFF7ED] text-[#C44A1F]",
     internship: "bg-[#F0FDF4] text-[#166534]",
-    freelance: "bg-[#F0F9FF] text-[#0369A1]",
-    gig: "bg-[#F0F9FF] text-[#0369A1]",
+    freelance: "bg-[#FFF7ED] text-[#C44A1F]",
+    gig: "bg-[#FFF7ED] text-[#C44A1F]",
     contract: "bg-[#FFF7ED] text-[#92400E]",
-    hackathon: "bg-[#FDF4FF] text-[#7E22CE]",
+    hackathon: "bg-[#FFF7ED] text-[#C44A1F]",
     volunteer: "bg-[#FFF1F2] text-[#9F1239]",
     fellowship: "bg-[#F0FDF4] text-[#14532D]",
   };
