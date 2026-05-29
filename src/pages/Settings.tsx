@@ -2,7 +2,8 @@ import AvatarSquare from "@/components/ui/AvatarSquare";
 import { storageImageUrl } from "@/lib/imageTransform";
 import { cleanUsername } from "@/lib/cleanUsername";
 import { useState, useEffect, useRef } from "react";
-import { Check, Camera, User, Eye, Lock, LogOut, Users, Copy, Share2, HelpCircle, MessageSquare, Send, CreditCard, Sparkles, FileText, Shield, Trash2, Mail, UserPlus, X, Crown } from "lucide-react";
+import { Check, Camera, User, Eye, Lock, LogOut, Users, Copy, Share2, HelpCircle, MessageSquare, Send, CreditCard, Sparkles, FileText, Shield, Trash2, Mail, UserPlus, X, Crown, Moon, Sun, Monitor } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
 import DeleteAccountModal from "@/components/legal/DeleteAccountModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,7 @@ const baseNavItems = [
   { id: "profile", label: "Profile", icon: User },
   { id: "account", label: "Account", icon: Lock },
   { id: "display", label: "Profile Display", icon: Sparkles },
+  { id: "appearance", label: "Appearance", icon: Moon },
   { id: "privacy", label: "Privacy", icon: Eye },
   { id: "invite", label: "Invite", icon: Users },
   { id: "legal", label: "Legal", icon: Shield },
@@ -347,6 +349,46 @@ const DisplaySection = ({ userId }: { userId: string }) => {
   );
 };
 
+/* ── Appearance Section — dark / light / system toggle ── */
+const AppearanceSection = () => {
+  const { mode, setMode } = useTheme();
+  const options = [
+    { value: "dark" as const, label: "Dark", desc: "Easy on the eyes", icon: Moon },
+    { value: "light" as const, label: "Light", desc: "Classic look", icon: Sun },
+    { value: "system" as const, label: "System", desc: "Follows device setting", icon: Monitor },
+  ];
+  return (
+    <div className="space-y-5">
+      <div className="glass-light" style={{ padding: 16, borderRadius: 20 }}>
+        <h3 className="text-[16px] font-semibold mb-1" style={{ color: "var(--text-1)" }}>Theme</h3>
+        <p className="text-[13px] mb-4" style={{ color: "var(--text-3)" }}>Choose how Tiikme looks for you.</p>
+        <div className="flex gap-3">
+          {options.map(opt => {
+            const Icon = opt.icon;
+            const active = mode === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setMode(opt.value)}
+                className="flex-1 flex flex-col items-center gap-2 py-4 rounded-xl border-2 transition-all"
+                style={{
+                  background: active ? "rgba(255,90,31,0.08)" : "var(--surface-2)",
+                  borderColor: active ? "#FF5A1F" : "var(--border)",
+                }}
+              >
+                <Icon style={{ width: 22, height: 22, color: active ? "#FF5A1F" : "var(--text-2)" }} strokeWidth={1.8} />
+                <span style={{ fontSize: 13, fontWeight: 600, color: active ? "#FF5A1F" : "var(--text-1)" }}>{opt.label}</span>
+                <span style={{ fontSize: 11, color: "var(--text-3)" }}>{opt.desc}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const SubscriptionSection = ({ userId }: { userId: string | null }) => {
   const { subscription, trialDaysRemaining, isTrialExpired, hasAccess } = useOrgSubscription();
 
@@ -449,7 +491,7 @@ const SettingsPage = () => {
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(() => {
     const tab = searchParams.get("tab");
-    const validTabs = ["profile", "account", "display", "privacy", "invite", "legal", "help", "team", "subscription"];
+    const validTabs = ["profile", "account", "display", "appearance", "privacy", "invite", "legal", "help", "team", "subscription"];
     return validTabs.includes(tab || "") ? tab! : "profile";
   });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -786,6 +828,11 @@ const SettingsPage = () => {
           {/* Profile Display preference */}
           {activeTab === "display" && userId && (
             <DisplaySection userId={userId} />
+          )}
+
+          {/* Appearance */}
+          {activeTab === "appearance" && (
+            <AppearanceSection />
           )}
 
           {/* Privacy */}
