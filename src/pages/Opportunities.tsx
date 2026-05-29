@@ -103,7 +103,7 @@ const Opportunities = () => {
     requestAnimationFrame(() => {
       el.scrollIntoView({ behavior: "smooth", block: "start" });
       el.style.transition = "box-shadow 600ms";
-      el.style.boxShadow = "0 0 0 2px #E8733A, 0 1px 4px rgba(0,0,0,0.04)";
+      el.style.boxShadow = "0 0 0 2px #FF5A1F, 0 1px 4px rgba(0,0,0,0.04)";
       setTimeout(() => { el.style.boxShadow = ""; }, 1800);
       scrolledRef.current = true;
     });
@@ -277,9 +277,9 @@ const Opportunities = () => {
           ) : myOpps.length === 0 ? (
             <div className="text-center py-16">
               <Briefcase className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
-              <p className="text-[16px] font-bold" style={{ color: "#1A1A2E" }}>No active postings</p>
+              <p className="text-[16px] font-bold" style={{ color: "var(--text-1)" }}>No active postings</p>
               <button type="button" onClick={() => setOrgTab("post")} className="mt-3 text-[13px] font-semibold cursor-pointer"
-                style={{ color: "#E8733A", background: "none", border: "none" }}>Post your first job →</button>
+                style={{ color: "#FF5A1F", background: "none", border: "none" }}>Post your first job →</button>
             </div>
           ) : myOpps.map(o => (
             <SharedOpportunityCard
@@ -374,7 +374,7 @@ function StickyOppHeader({ isInstitution, userTab, setUserTab, orgTab, setOrgTab
   const showFilters = (!isInstitution && userTab === "jobs") || (isInstitution && orgTab === "listings");
 
   return (
-    <div className="sticky z-30" style={{ top: 0, background: "rgba(255,255,255,0.78)", backdropFilter: "blur(14px)", marginInline: -16, paddingInline: 16, borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+    <div className="sticky z-30" style={{ top: 0, background: "var(--bg-page)", backdropFilter: "blur(14px)", marginInline: -16, paddingInline: 16, borderBottom: "1px solid var(--border-subtle)" }}>
       {!isInstitution
         ? <PrimaryTabs tabs={userTabs as any} active={userTab} onChange={setUserTab} />
         : <PrimaryTabs tabs={orgTabs as any} active={orgTab} onChange={setOrgTab} />}
@@ -394,7 +394,7 @@ function StickyOppHeader({ isInstitution, userTab, setUserTab, orgTab, setOrgTab
         footer={
           <>
             <button type="button" onClick={() => setActiveType("All")} className="flex-1 cursor-pointer"
-              style={{ height: 40, borderRadius: 10, fontSize: 13, fontWeight: 600, background: "rgba(0,0,0,0.06)", color: "#1A1A2E", border: "none" }}>Reset</button>
+              style={{ height: 40, borderRadius: 10, fontSize: 13, fontWeight: 600, background: "var(--surface-2)", color: "var(--text-1)", border: "none" }}>Reset</button>
             <button type="button" onClick={() => setMoreOpen(false)} className="flex-1 cursor-pointer"
               style={{ height: 40, borderRadius: 10, fontSize: 13, fontWeight: 700, background: "#FF5A1F", color: "#fff", border: "none" }}>Apply</button>
           </>
@@ -405,8 +405,8 @@ function StickyOppHeader({ isInstitution, userTab, setUserTab, orgTab, setOrgTab
               className="cursor-pointer"
               style={{
                 height: 32, padding: "0 12px", borderRadius: 999, fontSize: 12, fontWeight: 600,
-                background: activeType === f ? "#FF5A1F" : "rgba(0,0,0,0.05)",
-                color: activeType === f ? "#fff" : "#1A1A2E", border: "none",
+                background: activeType === f ? "#FF5A1F" : "var(--surface-2)",
+                color: activeType === f ? "#fff" : "var(--text-1)", border: "none",
               }}>{f}</button>
           ))}
         </div>
@@ -441,8 +441,8 @@ function MyApplicationsTab({ userId }: { userId: string | undefined }) {
   if (applications.length === 0) return (
     <div className="text-center py-16">
       <Briefcase className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
-      <p className="text-[16px] font-bold" style={{ color: "#1A1A2E" }}>No applications yet</p>
-      <p className="text-[13px] mt-1" style={{ color: "#6B7094" }}>Apply to jobs and track your status here</p>
+      <p className="text-[16px] font-bold" style={{ color: "var(--text-1)" }}>No applications yet</p>
+      <p className="text-[13px] mt-1" style={{ color: "var(--text-3)" }}>Apply to jobs and track your status here</p>
     </div>
   );
 
@@ -458,11 +458,11 @@ function MyApplicationsTab({ userId }: { userId: string | undefined }) {
                 style={{ background: "var(--surface-2)", border: "1.5px solid var(--border)", flexShrink: 0 }}>
                 {opp?.org?.logo_url
                   ? <img src={opp.org.logo_url} alt="" className="w-full h-full object-cover" loading="lazy" />
-                  : <Building2 className="w-5 h-5" style={{ color: "#6B7094" }} />}
+                  : <Building2 className="w-5 h-5" style={{ color: "var(--text-3)" }} />}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold truncate" style={{ fontSize: 14, color: "#1A1A2E" }}>{opp?.title || "Opportunity"}</p>
-                <p className="text-[12px] truncate" style={{ color: "#6B7094" }}>{opp?.org?.name || "—"}</p>
+                <p className="font-semibold truncate" style={{ fontSize: 14, color: "var(--text-1)" }}>{opp?.title || "Opportunity"}</p>
+                <p className="text-[12px] truncate" style={{ color: "var(--text-3)" }}>{opp?.org?.name || "—"}</p>
               </div>
               <span className="text-[11px] font-semibold px-3 py-1 rounded-full shrink-0"
                 style={{ background: s.bg, color: s.color }}>{s.label}</span>
@@ -575,7 +575,7 @@ function FindTalentTab({ currentUserId, orgId }: { currentUserId?: string; orgId
   if (talent.length === 0) return (
     <div className="text-center py-16">
       <UsersIcon className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
-      <p className="text-[14px]" style={{ color: "#6B7094" }}>No candidates marked open to work yet</p>
+      <p className="text-[14px]" style={{ color: "var(--text-3)" }}>No candidates marked open to work yet</p>
     </div>
   );
 
@@ -589,8 +589,8 @@ function FindTalentTab({ currentUserId, orgId }: { currentUserId?: string; orgId
               onClick={() => navigate(`/app/profile/${p.id}`)}>
               <AvatarSquare src={p.avatar_url} name={p.full_name || "U"} size={44} />
               <div className="flex-1 min-w-0">
-                <p className="font-semibold truncate" style={{ fontSize: 14, color: "#1A1A2E" }}>{p.full_name}</p>
-                <p className="text-[12px] truncate" style={{ color: "#6B7094" }}>{p.headline || p.role}</p>
+                <p className="font-semibold truncate" style={{ fontSize: 14, color: "var(--text-1)" }}>{p.full_name}</p>
+                <p className="text-[12px] truncate" style={{ color: "var(--text-3)" }}>{p.headline || p.role}</p>
                 {p.location_city && <p className="text-[11px]" style={{ color: "#9CA3C0" }}>{p.location_city}</p>}
               </div>
             </div>
@@ -601,7 +601,7 @@ function FindTalentTab({ currentUserId, orgId }: { currentUserId?: string; orgId
                 type="button"
                 onClick={() => openReferModal({ id: p.id, full_name: p.full_name || "User" })}
                 className="cursor-pointer text-[11px] font-semibold px-2.5 py-1 rounded-full"
-                style={{ border: "1.5px solid #E8733A", color: "#E8733A", background: "transparent" }}>
+                style={{ border: "1.5px solid #FF5A1F", color: "#FF5A1F", background: "transparent" }}>
                 Refer Job →
               </button>
             </div>
@@ -616,26 +616,26 @@ function FindTalentTab({ currentUserId, orgId }: { currentUserId?: string; orgId
           style={{ background: "rgba(0,0,0,0.45)" }}
           onClick={() => setReferTarget(null)}>
           <div
-            className="w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl p-5 bg-white"
+            className="w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl p-5" style={{ background: "var(--bg-card)" }}
             onClick={e => e.stopPropagation()}
             style={{ maxHeight: "90vh", overflowY: "auto" }}>
-            <h3 className="font-bold text-[16px] mb-4" style={{ color: "#1A1A2E" }}>
+            <h3 className="font-bold text-[16px] mb-4" style={{ color: "var(--text-1)" }}>
               Refer {referTarget.full_name} to a job
             </h3>
 
             {oppsLoading ? (
               <div className="space-y-2 mb-4">
                 {[1, 2, 3].map(i => (
-                  <div key={i} className="animate-pulse rounded-xl" style={{ height: 44, background: "#F5F5F5" }} />
+                  <div key={i} className="animate-pulse rounded-xl" style={{ height: 44, background: "var(--surface-2)" }} />
                 ))}
               </div>
             ) : orgOpps.length === 0 ? (
-              <p className="text-[13px] mb-4 text-center py-4" style={{ color: "#6B7094" }}>
+              <p className="text-[13px] mb-4 text-center py-4" style={{ color: "var(--text-3)" }}>
                 No active job postings found. Post a job first.
               </p>
             ) : (
               <div className="space-y-2 mb-4">
-                <p className="text-[12px] font-semibold mb-2" style={{ color: "#6B7094" }}>Select a job</p>
+                <p className="text-[12px] font-semibold mb-2" style={{ color: "var(--text-3)" }}>Select a job</p>
                 {orgOpps.map(opp => (
                   <button
                     key={opp.id}
@@ -643,10 +643,10 @@ function FindTalentTab({ currentUserId, orgId }: { currentUserId?: string; orgId
                     onClick={() => setSelectedOppId(opp.id)}
                     className="w-full text-left cursor-pointer px-3 py-3 rounded-xl transition-colors"
                     style={{
-                      border: selectedOppId === opp.id ? "2px solid #E8733A" : "1.5px solid #E8E8E8",
-                      background: selectedOppId === opp.id ? "rgba(232,115,58,0.06)" : "#FAFAFA",
+                      border: selectedOppId === opp.id ? "2px solid #FF5A1F" : "1.5px solid var(--border-glass)",
+                      background: selectedOppId === opp.id ? "rgba(255,90,31,0.06)" : "#FAFAFA",
                     }}>
-                    <p className="font-semibold text-[13px]" style={{ color: "#1A1A2E" }}>{opp.title}</p>
+                    <p className="font-semibold text-[13px]" style={{ color: "var(--text-1)" }}>{opp.title}</p>
                     {opp.type && (
                       <p className="text-[11px] mt-0.5" style={{ color: "#9CA3C0" }}>{opp.type}</p>
                     )}
@@ -656,7 +656,7 @@ function FindTalentTab({ currentUserId, orgId }: { currentUserId?: string; orgId
             )}
 
             <div className="mb-4">
-              <label className="block text-[12px] font-bold mb-1" style={{ color: "#1A1A2E" }}>
+              <label className="block text-[12px] font-bold mb-1" style={{ color: "var(--text-1)" }}>
                 Add a personal note <span style={{ color: "#9CA3C0", fontWeight: 400 }}>(optional)</span>
               </label>
               <textarea
@@ -665,7 +665,7 @@ function FindTalentTab({ currentUserId, orgId }: { currentUserId?: string; orgId
                 rows={3}
                 placeholder="Why do you think they'd be a great fit?"
                 className="w-full outline-none text-[13px]"
-                style={{ padding: "10px 12px", borderRadius: 12, border: "1.5px solid #E8E8E8", background: "#FAFAFA", resize: "none", width: "100%" }}
+                style={{ padding: "10px 12px", borderRadius: 12, border: "1.5px solid var(--border-glass)", background: "var(--bg-input, var(--surface-2))", resize: "none", width: "100%" }}
               />
             </div>
 
@@ -674,7 +674,7 @@ function FindTalentTab({ currentUserId, orgId }: { currentUserId?: string; orgId
                 type="button"
                 onClick={() => setReferTarget(null)}
                 className="flex-1 cursor-pointer py-2.5 rounded-xl text-[13px] font-semibold"
-                style={{ background: "#F5F5F5", color: "#1A1A2E", border: "none" }}>
+                style={{ background: "var(--surface-2)", color: "var(--text-1)", border: "none" }}>
                 Cancel
               </button>
               <button
@@ -682,7 +682,7 @@ function FindTalentTab({ currentUserId, orgId }: { currentUserId?: string; orgId
                 onClick={handleReferSubmit}
                 disabled={submitting || !selectedOppId || orgOpps.length === 0}
                 className="flex-1 cursor-pointer py-2.5 rounded-xl text-[13px] font-bold disabled:opacity-50"
-                style={{ background: "#E8733A", color: "#fff", border: "none" }}>
+                style={{ background: "#FF5A1F", color: "#fff", border: "none" }}>
                 {submitting ? "Sending..." : "Send Referral"}
               </button>
             </div>
@@ -742,14 +742,14 @@ function OrgCampaignsTab() {
     setForm(f => ({ ...f, deliverable_platforms: f.deliverable_platforms.includes(p) ? f.deliverable_platforms.filter(x => x !== p) : [...f.deliverable_platforms, p] }));
   };
 
-  const inputStyle = { padding: "10px 12px", borderRadius: 12, border: "1.5px solid #E8E8E8", background: "#FAFAFA", fontSize: 13, width: "100%", outline: "none" } as React.CSSProperties;
+  const inputStyle = { padding: "10px 12px", borderRadius: 12, border: "1.5px solid var(--border-glass)", background: "var(--bg-input, var(--surface-2))", fontSize: 13, width: "100%", outline: "none" } as React.CSSProperties;
 
-  if (loading) return <div className="animate-pulse" style={{ height: 80, borderRadius: 12, background: "#F5F5F5" }} />;
+  if (loading) return <div className="animate-pulse" style={{ height: 80, borderRadius: 12, background: "var(--surface-2)" }} />;
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-[12px] font-semibold" style={{ color: "#6B7094" }}>Creator campaigns you've posted</p>
+        <p className="text-[12px] font-semibold" style={{ color: "var(--text-3)" }}>Creator campaigns you've posted</p>
         <button type="button" onClick={() => setShowCreate(true)}
           className="flex items-center gap-1 cursor-pointer px-3 py-1.5 rounded-xl text-[12px] font-bold"
           style={{ background: "#FF5A1F", color: "#fff", border: "none" }}>
@@ -760,22 +760,22 @@ function OrgCampaignsTab() {
       {campaigns.length === 0 ? (
         <div className="text-center py-12">
           <Zap className="w-10 h-10 mx-auto mb-2" style={{ color: "var(--text-3)" }} />
-          <p className="text-[14px] font-semibold mb-1" style={{ color: "#1A1A2E" }}>No campaigns yet</p>
-          <p className="text-[13px]" style={{ color: "#6B7094" }}>Create your first creator campaign to find influencers and UGC creators.</p>
+          <p className="text-[14px] font-semibold mb-1" style={{ color: "var(--text-1)" }}>No campaigns yet</p>
+          <p className="text-[13px]" style={{ color: "var(--text-3)" }}>Create your first creator campaign to find influencers and UGC creators.</p>
         </div>
       ) : campaigns.map(c => {
         const typeConf = CAMPAIGN_TYPE_LABELS[c.campaign_type] || CAMPAIGN_TYPE_LABELS.ugc;
         const appCount = Array.isArray(c._apps) ? c._apps.length : 0;
         return (
-          <div key={c.id} className="bg-white border border-gray-100 rounded-2xl p-4">
+          <div key={c.id} className="glass-card rounded-2xl p-4">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className="font-bold text-[14px]" style={{ color: "#1A1A2E" }}>{c.title}</p>
+                  <p className="font-bold text-[14px]" style={{ color: "var(--text-1)" }}>{c.title}</p>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: typeConf.bg, color: typeConf.color }}>{typeConf.label}</span>
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${c.status === "active" ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-500"}`}>{c.status}</span>
                 </div>
-                {c.description && <p className="text-[12px] mt-1 line-clamp-1" style={{ color: "#6B7094" }}>{c.description}</p>}
+                {c.description && <p className="text-[12px] mt-1 line-clamp-1" style={{ color: "var(--text-3)" }}>{c.description}</p>}
                 <div className="flex items-center gap-3 mt-2 text-[11px]" style={{ color: "#9CA3C0" }}>
                   <span>{appCount} applicant{appCount !== 1 ? "s" : ""}</span>
                   {c.budget_per_creator && <span>₹{c.budget_per_creator.toLocaleString()}/creator</span>}
@@ -785,7 +785,7 @@ function OrgCampaignsTab() {
               <button type="button"
                 onClick={() => navigate(`/app/opportunities/campaign/${c.id}/applicants`)}
                 className="shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-bold cursor-pointer"
-                style={{ background: "#F5F5F5", color: "#1A1A2E", border: "none" }}>
+                style={{ background: "var(--surface-2)", color: "var(--text-1)", border: "none" }}>
                 Review →
               </button>
             </div>
@@ -796,65 +796,65 @@ function OrgCampaignsTab() {
       {/* Create campaign modal */}
       {showCreate && (
         <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center" style={{ background: "rgba(0,0,0,0.45)" }} onClick={() => setShowCreate(false)}>
-          <div className="w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl p-5 bg-white" onClick={e => e.stopPropagation()} style={{ maxHeight: "90vh", overflowY: "auto" }}>
-            <h3 className="font-bold text-[16px] mb-4" style={{ color: "#1A1A2E" }}>Create creator campaign</h3>
+          <div className="w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl p-5" style={{ background: "var(--bg-card)", maxHeight: "90vh", overflowY: "auto" }} onClick={e => e.stopPropagation()}>
+            <h3 className="font-bold text-[16px] mb-4" style={{ color: "var(--text-1)" }}>Create creator campaign</h3>
             <div className="space-y-3">
               <div>
-                <label className="block text-[12px] font-bold mb-1" style={{ color: "#1A1A2E" }}>Campaign title *</label>
+                <label className="block text-[12px] font-bold mb-1" style={{ color: "var(--text-1)" }}>Campaign title *</label>
                 <input style={inputStyle} placeholder="e.g. Unboxing campaign for new product" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value.slice(0, 100) }))} />
               </div>
               <div>
-                <label className="block text-[12px] font-bold mb-1" style={{ color: "#1A1A2E" }}>Campaign type</label>
+                <label className="block text-[12px] font-bold mb-1" style={{ color: "var(--text-1)" }}>Campaign type</label>
                 <div className="flex flex-wrap gap-2">
                   {Object.entries(CAMPAIGN_TYPE_LABELS).map(([k, v]) => (
                     <button key={k} type="button" onClick={() => setForm(f => ({ ...f, campaign_type: k }))}
                       className="cursor-pointer px-3 py-1 rounded-full text-[11px] font-bold"
-                      style={{ background: form.campaign_type === k ? v.bg : "#F5F5F5", color: form.campaign_type === k ? v.color : "#6B7094", border: form.campaign_type === k ? `1.5px solid ${v.color}` : "1.5px solid transparent" }}>
+                      style={{ background: form.campaign_type === k ? v.bg : "var(--surface-2)", color: form.campaign_type === k ? v.color : "var(--text-3)", border: form.campaign_type === k ? `1.5px solid ${v.color}` : "1.5px solid transparent" }}>
                       {v.label}
                     </button>
                   ))}
                 </div>
               </div>
               <div>
-                <label className="block text-[12px] font-bold mb-1" style={{ color: "#1A1A2E" }}>Platforms</label>
+                <label className="block text-[12px] font-bold mb-1" style={{ color: "var(--text-1)" }}>Platforms</label>
                 <div className="flex flex-wrap gap-2">
                   {Object.entries(PLATFORM_LABELS).map(([k, v]) => (
                     <button key={k} type="button" onClick={() => togglePlatform(k)}
                       className="cursor-pointer px-2.5 py-1 rounded-full text-[11px] font-semibold"
-                      style={{ background: form.deliverable_platforms.includes(k) ? "#FF5A1F" : "#F5F5F5", color: form.deliverable_platforms.includes(k) ? "#fff" : "#6B7094", border: "none" }}>
+                      style={{ background: form.deliverable_platforms.includes(k) ? "#FF5A1F" : "var(--surface-2)", color: form.deliverable_platforms.includes(k) ? "#fff" : "var(--text-3)", border: "none" }}>
                       {v}
                     </button>
                   ))}
                 </div>
               </div>
               <div>
-                <label className="block text-[12px] font-bold mb-1" style={{ color: "#1A1A2E" }}>What creators must deliver</label>
+                <label className="block text-[12px] font-bold mb-1" style={{ color: "var(--text-1)" }}>What creators must deliver</label>
                 <textarea value={form.deliverable_description} onChange={e => setForm(f => ({ ...f, deliverable_description: e.target.value.slice(0, 500) }))}
                   rows={2} placeholder="e.g. 1 Instagram Reel (30–60s) with product mention"
                   className="w-full outline-none" style={{ ...inputStyle, resize: "none" }} />
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <label className="block text-[12px] font-bold mb-1" style={{ color: "#1A1A2E" }}>Budget/creator (₹)</label>
+                  <label className="block text-[12px] font-bold mb-1" style={{ color: "var(--text-1)" }}>Budget/creator (₹)</label>
                   <input type="number" style={inputStyle} placeholder="e.g. 5000" value={form.budget_per_creator} onChange={e => setForm(f => ({ ...f, budget_per_creator: e.target.value }))} />
                 </div>
                 <div>
-                  <label className="block text-[12px] font-bold mb-1" style={{ color: "#1A1A2E" }}>Slots</label>
+                  <label className="block text-[12px] font-bold mb-1" style={{ color: "var(--text-1)" }}>Slots</label>
                   <input type="number" style={inputStyle} value={form.creator_slots} onChange={e => setForm(f => ({ ...f, creator_slots: e.target.value }))} />
                 </div>
                 <div>
-                  <label className="block text-[12px] font-bold mb-1" style={{ color: "#1A1A2E" }}>Min followers</label>
+                  <label className="block text-[12px] font-bold mb-1" style={{ color: "var(--text-1)" }}>Min followers</label>
                   <input type="number" style={inputStyle} value={form.min_followers} onChange={e => setForm(f => ({ ...f, min_followers: e.target.value }))} />
                 </div>
               </div>
               <div>
-                <label className="block text-[12px] font-bold mb-1" style={{ color: "#1A1A2E" }}>Application deadline</label>
+                <label className="block text-[12px] font-bold mb-1" style={{ color: "var(--text-1)" }}>Application deadline</label>
                 <input type="date" style={inputStyle} value={form.application_deadline} onChange={e => setForm(f => ({ ...f, application_deadline: e.target.value }))} />
               </div>
               <div className="flex gap-2 pt-1">
                 <button type="button" onClick={() => setShowCreate(false)}
                   className="flex-1 cursor-pointer py-2.5 rounded-xl text-[13px] font-semibold"
-                  style={{ background: "#F5F5F5", color: "#1A1A2E", border: "none" }}>Cancel</button>
+                  style={{ background: "var(--surface-2)", color: "var(--text-1)", border: "none" }}>Cancel</button>
                 <button type="button" onClick={handleCreate} disabled={creating || !form.title.trim()}
                   className="flex-1 cursor-pointer py-2.5 rounded-xl text-[13px] font-bold disabled:opacity-50"
                   style={{ background: "#FF5A1F", color: "#fff", border: "none" }}>
@@ -880,7 +880,7 @@ const CAMPAIGN_TYPE_LABELS: Record<string, { label: string; color: string; bg: s
   review: { label: "Review", color: "#166534", bg: "#F0FDF4" },
   event: { label: "Event", color: "#92400E", bg: "#FFF7ED" },
   affiliate: { label: "Affiliate", color: "#C44A1F", bg: "#FFF7ED" },
-  sponsored: { label: "Sponsored", color: "#1A1A2E", bg: "#F5F5F5" },
+  sponsored: { label: "Sponsored", color: "var(--text-1)", bg: "var(--surface-2)" },
 };
 
 function CampaignsTab() {
@@ -935,28 +935,28 @@ function CampaignsTab() {
   if (campaigns.length === 0) return (
     <div className="text-center py-16">
       <Zap className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
-      <p className="font-semibold mb-1" style={{ fontSize: 15, color: "#1A1A2E" }}>No active campaigns</p>
-      <p className="text-[13px]" style={{ color: "#6B7094" }}>Brands will post creator campaigns here. Check back soon.</p>
+      <p className="font-semibold mb-1" style={{ fontSize: 15, color: "var(--text-1)" }}>No active campaigns</p>
+      <p className="text-[13px]" style={{ color: "var(--text-3)" }}>Brands will post creator campaigns here. Check back soon.</p>
     </div>
   );
 
   return (
     <div className="space-y-3">
-      <p className="text-[12px] font-semibold" style={{ color: "#6B7094" }}>Brand campaigns open for creators and gig workers</p>
+      <p className="text-[12px] font-semibold" style={{ color: "var(--text-3)" }}>Brand campaigns open for creators and gig workers</p>
       {campaigns.map(c => {
         const typeConf = CAMPAIGN_TYPE_LABELS[c.campaign_type] || CAMPAIGN_TYPE_LABELS.ugc;
         const isApplied = applied.has(c.id);
         const platforms = (c.deliverable_platforms || []).map((p: string) => PLATFORM_LABELS[p] || p);
         return (
-          <div key={c.id} className="bg-white border border-gray-100 rounded-2xl p-4" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+          <div key={c.id} className="glass-card rounded-2xl p-4" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
             <div className="flex items-start gap-3">
               <AvatarSquare src={c.org?.logo_url} name={c.org?.name || "Brand"} size={40} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <p className="font-bold text-[14px]" style={{ color: "#1A1A2E" }}>{c.title}</p>
+                  <p className="font-bold text-[14px]" style={{ color: "var(--text-1)" }}>{c.title}</p>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: typeConf.bg, color: typeConf.color }}>{typeConf.label}</span>
                 </div>
-                <p className="text-[12px]" style={{ color: "#6B7094" }}>{c.org?.name}</p>
+                <p className="text-[12px]" style={{ color: "var(--text-3)" }}>{c.org?.name}</p>
               </div>
               <button
                 type="button"
@@ -994,46 +994,46 @@ function CampaignsTab() {
       {/* Apply pitch modal */}
       {openPitch && (
         <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center" style={{ background: "rgba(0,0,0,0.45)" }} onClick={() => setOpenPitch(null)}>
-          <div className="w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl p-5 bg-white" onClick={e => e.stopPropagation()} style={{ maxHeight: "90vh", overflowY: "auto" }}>
-            <h3 className="font-bold text-[15px] mb-1" style={{ color: "#1A1A2E" }}>Apply to: {openPitch.title}</h3>
-            <p className="text-[12px] mb-4" style={{ color: "#6B7094" }}>{openPitch.org?.name}</p>
+          <div className="w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl p-5" style={{ background: "var(--bg-card)", maxHeight: "90vh", overflowY: "auto" }} onClick={e => e.stopPropagation()}>
+            <h3 className="font-bold text-[15px] mb-1" style={{ color: "var(--text-1)" }}>Apply to: {openPitch.title}</h3>
+            <p className="text-[12px] mb-4" style={{ color: "var(--text-3)" }}>{openPitch.org?.name}</p>
             <div className="space-y-3">
               <div>
-                <label className="block text-[12px] font-bold mb-1" style={{ color: "#1A1A2E" }}>Your pitch <span style={{ color: "#9CA3C0", fontWeight: 400 }}>(optional)</span></label>
+                <label className="block text-[12px] font-bold mb-1" style={{ color: "var(--text-1)" }}>Your pitch <span style={{ color: "#9CA3C0", fontWeight: 400 }}>(optional)</span></label>
                 <textarea value={pitchText} onChange={e => setPitchText(e.target.value.slice(0, 500))}
                   rows={3} placeholder="Why are you a good fit for this campaign?"
                   className="w-full outline-none text-[13px]"
-                  style={{ padding: "10px 12px", borderRadius: 12, border: "1.5px solid #E8E8E8", background: "#FAFAFA", resize: "none" }} />
+                  style={{ padding: "10px 12px", borderRadius: 12, border: "1.5px solid var(--border-glass)", background: "var(--bg-input, var(--surface-2))", resize: "none" }} />
               </div>
               <div>
-                <label className="block text-[12px] font-bold mb-1" style={{ color: "#1A1A2E" }}>Primary platform</label>
+                <label className="block text-[12px] font-bold mb-1" style={{ color: "var(--text-1)" }}>Primary platform</label>
                 <select value={pitchPlatform} onChange={e => setPitchPlatform(e.target.value)}
                   className="w-full outline-none text-[13px] cursor-pointer"
-                  style={{ padding: "10px 12px", borderRadius: 12, border: "1.5px solid #E8E8E8", background: "#FAFAFA" }}>
+                  style={{ padding: "10px 12px", borderRadius: 12, border: "1.5px solid var(--border-glass)", background: "var(--bg-input, var(--surface-2))" }}>
                   <option value="">Select platform</option>
                   {Object.entries(PLATFORM_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                 </select>
               </div>
               <div className="flex gap-3">
                 <div className="flex-1">
-                  <label className="block text-[12px] font-bold mb-1" style={{ color: "#1A1A2E" }}>Followers / subscribers</label>
+                  <label className="block text-[12px] font-bold mb-1" style={{ color: "var(--text-1)" }}>Followers / subscribers</label>
                   <input type="number" value={pitchFollowers} onChange={e => setPitchFollowers(e.target.value)}
                     placeholder="e.g. 5000"
                     className="w-full outline-none text-[13px]"
-                    style={{ padding: "10px 12px", borderRadius: 12, border: "1.5px solid #E8E8E8", background: "#FAFAFA" }} />
+                    style={{ padding: "10px 12px", borderRadius: 12, border: "1.5px solid var(--border-glass)", background: "var(--bg-input, var(--surface-2))" }} />
                 </div>
               </div>
               <div>
-                <label className="block text-[12px] font-bold mb-1" style={{ color: "#1A1A2E" }}>Portfolio / profile link <span style={{ color: "#9CA3C0", fontWeight: 400 }}>(optional)</span></label>
+                <label className="block text-[12px] font-bold mb-1" style={{ color: "var(--text-1)" }}>Portfolio / profile link <span style={{ color: "#9CA3C0", fontWeight: 400 }}>(optional)</span></label>
                 <input type="url" value={pitchPortfolio} onChange={e => setPitchPortfolio(e.target.value)}
                   placeholder="https://..."
                   className="w-full outline-none text-[13px]"
-                  style={{ padding: "10px 12px", borderRadius: 12, border: "1.5px solid #E8E8E8", background: "#FAFAFA" }} />
+                  style={{ padding: "10px 12px", borderRadius: 12, border: "1.5px solid var(--border-glass)", background: "var(--bg-input, var(--surface-2))" }} />
               </div>
               <div className="flex gap-2 pt-1">
                 <button type="button" onClick={() => setOpenPitch(null)}
                   className="flex-1 cursor-pointer py-2.5 rounded-xl text-[13px] font-semibold"
-                  style={{ background: "#F5F5F5", color: "#1A1A2E", border: "none" }}>Cancel</button>
+                  style={{ background: "var(--surface-2)", color: "var(--text-1)", border: "none" }}>Cancel</button>
                 <button type="button" onClick={handleApply} disabled={submitting}
                   className="flex-1 cursor-pointer py-2.5 rounded-xl text-[13px] font-bold disabled:opacity-50"
                   style={{ background: "#FF5A1F", color: "#fff", border: "none" }}>
