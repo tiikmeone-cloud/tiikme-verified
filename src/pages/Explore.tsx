@@ -85,7 +85,7 @@ const PersonCarouselCard = ({
             ...(isConnected
               ? { background: "rgba(52,199,89,0.10)", color: "#34C759" }
               : isPending
-              ? { background: "rgba(232,115,58,0.12)", color: "#E8733A" }
+              ? { background: "rgba(255,90,31,0.12)", color: "#FF5A1F" }
               : { background: "#FF5A1F", color: "#fff" }
             ),
           }}
@@ -205,7 +205,7 @@ const CircleCarouselCard = ({
         style={{
           marginTop: 8, padding: "7px 14px", borderRadius: 8, width: "100%",
           fontSize: 12, fontWeight: 600, border: "none",
-          background: isMember ? "rgba(52,199,89,0.10)" : "linear-gradient(135deg, #7C3AED, #A855F7)",
+          background: isMember ? "rgba(52,199,89,0.10)" : "#FF5A1F",
           color: isMember ? "#34C759" : "#fff",
         }}
       >
@@ -274,7 +274,7 @@ const HashtagCarouselCard = ({ tag, count, onClick }: { tag: string; count: numb
     onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(26,26,78,0.10)"; }}
     onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
   >
-    <p style={{ fontSize: 18, fontWeight: 700, color: "#E8733A", lineHeight: "22px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "100%" }}>#{tag}</p>
+    <p style={{ fontSize: 18, fontWeight: 700, color: "#FF5A1F", lineHeight: "22px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "100%" }}>#{tag}</p>
     <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}><span className="num">{count}</span> posts</p>
   </button>
 );
@@ -294,15 +294,15 @@ const CarouselSection = ({
     <div ref={sectionRef} style={{ marginBottom: 28 }}>
       {/* Section header */}
       <div className="flex items-center" style={{ marginBottom: 10 }}>
-        <div style={{ width: 3, height: 18, borderRadius: 2, background: "#E8733A", marginRight: 8, flexShrink: 0 }} />
+        <div style={{ width: 3, height: 18, borderRadius: 2, background: "#FF5A1F", marginRight: 8, flexShrink: 0 }} />
         <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)", flex: 1, margin: 0 }}>{title}</h2>
-        <span style={{ fontSize: 12, fontWeight: 600, color: "#fff", background: "#E8733A", borderRadius: 10, padding: "1px 8px", marginLeft: 8 }}>{count}</span>
+        <span style={{ fontSize: 12, fontWeight: 600, color: "#fff", background: "#FF5A1F", borderRadius: 10, padding: "1px 8px", marginLeft: 8 }}>{count}</span>
         {seeAllHref && (
           <button
             type="button"
             onClick={() => navigate(seeAllHref)}
             className="cursor-pointer"
-            style={{ marginLeft: 12, fontSize: 12, fontWeight: 600, color: "#E8733A", background: "none", border: "none", whiteSpace: "nowrap" }}
+            style={{ marginLeft: 12, fontSize: 12, fontWeight: 600, color: "#FF5A1F", background: "none", border: "none", whiteSpace: "nowrap" }}
           >
             See all →
           </button>
@@ -664,10 +664,10 @@ const Explore = () => {
             className="w-full outline-none"
             style={{
               height: 48, borderRadius: 16, paddingLeft: 48, paddingRight: 16, fontSize: 14, fontWeight: 400,
-              background: "#FFFFFF",
-              border: focused ? "1px solid rgba(232,115,58,0.50)" : "1px solid #E5E7EB",
-              boxShadow: focused ? "0 0 0 3px rgba(232,115,58,0.10)" : "none",
-              color: "#1A1A2E", transition: "border-color 150ms, box-shadow 150ms",
+              background: "var(--bg-input, var(--surface-2))",
+              border: focused ? "1px solid rgba(255,90,31,0.50)" : "1px solid var(--border-glass)",
+              boxShadow: focused ? "0 0 0 3px rgba(255,90,31,0.10)" : "none",
+              color: "var(--text-1)", transition: "border-color 150ms, box-shadow 150ms",
             }} />
           {search && (
             <button type="button" onClick={() => setSearch("")} className="absolute" style={{ right: 16, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)" }} aria-label="Clear search">
@@ -678,9 +678,9 @@ const Explore = () => {
           {showSearchResults && searchResults.length > 0 && (
             <div className="absolute w-full overflow-y-auto" style={{
               marginTop: 4, maxHeight: 320, padding: 4, borderRadius: 12, zIndex: 30,
-              background: "#FFFFFF",
-              border: "1px solid #E5E7EB",
-              boxShadow: "0 8px 32px rgba(26,26,78,0.12)",
+              background: "var(--bg-card)",
+              border: "1px solid var(--border-glass)",
+              boxShadow: "var(--shadow-lg)",
             }}>
               {searchResults.map((r: any) => (
                 <button key={r.id} type="button"
@@ -728,9 +728,9 @@ const Explore = () => {
                 style={{
                   flexShrink: 0, padding: "0 16px", height: 32, borderRadius: 999,
                   fontSize: 13, fontWeight: 600, whiteSpace: "nowrap",
-                  background: isActive ? "#FF5A1F" : "#FFFFFF",
-                  border: isActive ? "1px solid #FF5A1F" : "1px solid #E5E7EB",
-                  color: isActive ? "#FFFFFF" : "#6B7094",
+                  background: isActive ? "#FF5A1F" : "var(--surface-2)",
+                  border: isActive ? "1px solid #FF5A1F" : "1px solid var(--border-glass)",
+                  color: isActive ? "#FFFFFF" : "var(--text-3)",
                   boxShadow: isActive ? "0 4px 12px rgba(249,115,22,0.25)" : "none",
                 }}
               >
@@ -745,16 +745,16 @@ const Explore = () => {
       {profileIncomplete && !isLoading && (
         <div className="flex items-center" style={{
           gap: 12, padding: 14, marginTop: 16, borderRadius: 12,
-          background: "rgba(232,115,58,0.08)", border: "1px solid rgba(232,115,58,0.20)",
+          background: "rgba(255,90,31,0.08)", border: "1px solid rgba(255,90,31,0.20)",
         }}>
-          <AlertCircle style={{ width: 20, height: 20, color: "#E8733A", flexShrink: 0 }} />
+          <AlertCircle style={{ width: 20, height: 20, color: "#FF5A1F", flexShrink: 0 }} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>Complete your profile for better picks</p>
             <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-secondary)", margin: 0 }}>Add your role, city and interests to personalize Explore.</p>
           </div>
           <Link to="/app/profile" style={{
             padding: "8px 14px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-            background: "#E8733A", color: "#fff", textDecoration: "none", whiteSpace: "nowrap",
+            background: "#FF5A1F", color: "#fff", textDecoration: "none", whiteSpace: "nowrap",
           }}>Edit profile</Link>
         </div>
       )}
