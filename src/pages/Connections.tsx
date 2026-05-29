@@ -17,9 +17,9 @@ import { useFilterFlag, useFilterParam } from "@/lib/useFilterParam";
 import { getDisplayFlags, safeDisplayName } from "@/utils/displayProfile";
 
 const ROLE_COLORS: Record<string, string> = {
-  student: "#4F46E5", professional: "#0369A1", government: "#166534",
-  doctor: "#0E7490", faculty: "#92400E", skilled_trade: "#C2410C",
-  hr: "#6B21A8", aspirant: "#374151", builder: "#7C3AED",
+  student: "#FF5A1F", professional: "#C44A1F", government: "#166534",
+  doctor: "#2D7A4F", faculty: "#92400E", skilled_trade: "#C2410C",
+  hr: "#B7640A", aspirant: "#6B6B6B", builder: "#FF5A1F",
 };
 
 interface ProfileLite {
@@ -54,12 +54,12 @@ function getTimeAgo(dateStr: string): string {
 
 const SkeletonRow = () => (
   <div className="glass-card animate-pulse flex items-center gap-3" style={{ padding: 12, borderRadius: 12, height: 72 }}>
-    <div style={{ width: 44, height: 44, borderRadius: 10, background: "rgba(0,0,0,0.06)" }} />
+    <div style={{ width: 44, height: 44, borderRadius: 10, background: "var(--surface-2)" }} />
     <div className="flex-1 space-y-2">
-      <div style={{ height: 12, width: "40%", borderRadius: 6, background: "rgba(0,0,0,0.06)" }} />
-      <div style={{ height: 10, width: "65%", borderRadius: 6, background: "rgba(0,0,0,0.04)" }} />
+      <div style={{ height: 12, width: "40%", borderRadius: 6, background: "var(--surface-2)" }} />
+      <div style={{ height: 10, width: "65%", borderRadius: 6, background: "var(--border-glass)" }} />
     </div>
-    <div style={{ width: 70, height: 32, borderRadius: 8, background: "rgba(0,0,0,0.05)" }} />
+    <div style={{ width: 70, height: 32, borderRadius: 8, background: "var(--surface-2)" }} />
   </div>
 );
 
@@ -281,19 +281,19 @@ const Connections = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <Link2 style={{ width: 22, height: 22, color: "#E8733A" }} />
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: "#1A1A2E" }}>My Connections</h1>
+          <Link2 style={{ width: 22, height: 22, color: "#FF5A1F" }} />
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: "var(--text-1)" }}>My Connections</h1>
         </div>
         <div className="flex items-center gap-1.5"
           style={{ height: 32, padding: "0 12px", borderRadius: 999,
-            background: "rgba(232,115,58,0.10)", border: "1px solid rgba(232,115,58,0.20)",
-            fontSize: 12, fontWeight: 700, color: "#E8733A" }}>
+            background: "rgba(255,90,31,0.10)", border: "1px solid rgba(255,90,31,0.20)",
+            fontSize: 12, fontWeight: 700, color: "#FF5A1F" }}>
           {totalConnections} {totalConnections === 1 ? "connection" : "connections"}
         </div>
       </div>
 
       {/* Sticky 2-row header: Tabs + Filters */}
-      <div className="sticky z-30" style={{ top: 0, background: "rgba(255,255,255,0.78)", backdropFilter: "blur(14px)", marginInline: -16, paddingInline: 16, borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+      <div className="sticky z-30" style={{ top: 0, background: "var(--bg-page)", backdropFilter: "blur(14px)", marginInline: -16, paddingInline: 16, borderBottom: "1px solid var(--border-subtle)" }}>
         <PrimaryTabs<TabKey>
           tabs={[
             { key: "all", label: "Connected", badge: totalConnections },
@@ -335,7 +335,7 @@ const Connections = () => {
           <>
             <button type="button" onClick={() => { clearAllFilters(); }}
               className="flex-1 cursor-pointer"
-              style={{ height: 40, borderRadius: 10, fontSize: 13, fontWeight: 600, background: "rgba(0,0,0,0.06)", color: "#1A1A2E", border: "none" }}>
+              style={{ height: 40, borderRadius: 10, fontSize: 13, fontWeight: 600, background: "var(--surface-2)", color: "var(--text-1)", border: "none" }}>
               Reset
             </button>
             <button type="button" onClick={() => setMoreOpen(false)}
@@ -347,22 +347,22 @@ const Connections = () => {
         }>
         <div className="space-y-5">
           <div>
-            <p className="mb-2" style={{ fontSize: 12, fontWeight: 700, color: "#6B7094", textTransform: "uppercase", letterSpacing: 0.5 }}>Status</p>
+            <p className="mb-2" style={{ fontSize: 12, fontWeight: 700, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: 0.5 }}>Status</p>
             <label className="flex items-center gap-2 py-2 cursor-pointer">
               <input type="checkbox" checked={verifiedOnly} onChange={e => setVerifiedOnly(e.target.checked)} />
-              <span style={{ fontSize: 13, color: "#1A1A2E" }}>Verified profiles only</span>
+              <span style={{ fontSize: 13, color: "var(--text-1)" }}>Verified profiles only</span>
             </label>
             <label className="flex items-center gap-2 py-2 cursor-pointer">
               <input type="checkbox" checked={withCompany} onChange={e => setWithCompany(e.target.checked)} />
-              <span style={{ fontSize: 13, color: "#1A1A2E" }}>Has company / institution</span>
+              <span style={{ fontSize: 13, color: "var(--text-1)" }}>Has company / institution</span>
             </label>
             <label className="flex items-center gap-2 py-2 cursor-pointer">
               <input type="checkbox" checked={activeRecent} onChange={e => setActiveRecent(e.target.checked)} />
-              <span style={{ fontSize: 13, color: "#1A1A2E" }}>Active this week</span>
+              <span style={{ fontSize: 13, color: "var(--text-1)" }}>Active this week</span>
             </label>
           </div>
           <div>
-            <p className="mb-2" style={{ fontSize: 12, fontWeight: 700, color: "#6B7094", textTransform: "uppercase", letterSpacing: 0.5 }}>Role</p>
+            <p className="mb-2" style={{ fontSize: 12, fontWeight: 700, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: 0.5 }}>Role</p>
             <div className="flex flex-wrap gap-2">
               {["student", "professional", "doctor", "faculty", "government", "skilled_trade", "hr", "builder"].map(r => {
                 const active = roleFilter === r;
@@ -371,8 +371,8 @@ const Connections = () => {
                     className="cursor-pointer"
                     style={{
                       height: 32, padding: "0 12px", borderRadius: 999, fontSize: 12, fontWeight: 600,
-                      background: active ? "#FF5A1F" : "rgba(0,0,0,0.05)",
-                      color: active ? "#fff" : "#1A1A2E", border: "none",
+                      background: active ? "#FF5A1F" : "var(--surface-2)",
+                      color: active ? "#fff" : "var(--text-1)", border: "none",
                     }}>
                     {roleLabel(r)}
                   </button>
@@ -389,34 +389,34 @@ const Connections = () => {
           {/* Search + Sort */}
           <div className="flex gap-2 mb-3">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2" style={{ width: 16, height: 16, color: "#6B7094" }} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2" style={{ width: 16, height: 16, color: "var(--text-3)" }} />
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search connections..."
                 className="w-full outline-none transition-all"
                 style={{ height: 40, borderRadius: 12, paddingLeft: 36, paddingRight: 12, fontSize: 13,
-                  background: "rgba(255,255,255,0.20)", backdropFilter: "blur(20px)",
-                  border: "1px solid rgba(255,255,255,0.30)", color: "#1A1A2E" }} />
+                  background: "var(--bg-input, var(--surface-2))", backdropFilter: "blur(20px)",
+                  border: "1px solid var(--border-glass)", color: "var(--text-1)" }} />
             </div>
             <div className="relative" ref={sortRef}>
               <button type="button" onClick={() => setSortOpen(o => !o)}
                 aria-label="Sort connections"
                 className="flex items-center gap-1.5 cursor-pointer"
                 style={{ height: 40, padding: "0 14px", borderRadius: 12, fontSize: 13, fontWeight: 600,
-                  background: "rgba(255,255,255,0.20)", backdropFilter: "blur(20px)",
-                  border: "1px solid rgba(255,255,255,0.30)", color: "#1A1A2E", whiteSpace: "nowrap" }}>
+                  background: "var(--surface-2)", backdropFilter: "blur(20px)",
+                  border: "1px solid var(--border-glass)", color: "var(--text-1)", whiteSpace: "nowrap" }}>
                 {sortLabels[sortBy]}
                 <ChevronDown style={{ width: 14, height: 14 }} />
               </button>
               {sortOpen && (
                 <div className="absolute right-0 top-11 z-50"
                   style={{ minWidth: 200, borderRadius: 12, padding: "4px 0",
-                    background: "rgba(255,255,255,0.95)", backdropFilter: "blur(20px)",
-                    border: "1px solid rgba(255,255,255,0.40)", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
+                    background: "var(--bg-card)", backdropFilter: "blur(20px)",
+                    border: "1px solid var(--border-glass)", boxShadow: "var(--shadow-lg)" }}>
                   {(Object.keys(sortLabels) as SortKey[]).map(k => (
                     <button type="button" key={k}
                       onClick={() => { setSortBy(k); setSortOpen(false); }}
-                      className="w-full text-left cursor-pointer hover:bg-black/5 transition-colors"
+                      className="w-full text-left cursor-pointer hover:bg-surface-2 transition-colors"
                       style={{ padding: "9px 14px", fontSize: 13,
-                        color: sortBy === k ? "#E8733A" : "#1A1A2E",
+                        color: sortBy === k ? "#FF5A1F" : "var(--text-1)",
                         fontWeight: sortBy === k ? 700 : 500 }}>
                       {sortLabels[k]}
                     </button>
@@ -444,18 +444,18 @@ const Connections = () => {
                     <AvatarSquare src={other?.avatar_url} name={cardName} size={44} bgColor={ROLE_COLORS[other?.role || ""] || "#6B7280"} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{cardName}</p>
+                        <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "var(--text-1)" }}>{cardName}</p>
                         {other?.is_verified && <VerifiedBadge size={14} />}
                       </div>
                       {flags.showRole && (
-                        <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>
+                        <p className="truncate" style={{ fontSize: 12, color: "var(--text-2)" }}>
                           {roleLabel(other?.role || "")}
                           {subtype && <span style={{ opacity: 0.75 }}> · {subtype}</span>}
                           {flags.showCompany && company && <span> · {company}</span>}
                         </p>
                       )}
                       {lastActiveSrc && (
-                        <p className="truncate" style={{ fontSize: 11, color: "#9CA3C0", marginTop: 2 }}>
+                        <p className="truncate" style={{ fontSize: 11, color: "var(--text-3)", marginTop: 2 }}>
                           Last active {getTimeAgo(lastActiveSrc)}
                         </p>
                       )}
@@ -467,27 +467,27 @@ const Connections = () => {
                           aria-label="More options"
                           className="cursor-pointer flex items-center justify-center transition-all"
                           style={{ height: 34, width: 34, borderRadius: 8,
-                            background: "rgba(232,115,58,0.08)", color: "#E8733A", border: "1px solid rgba(232,115,58,0.20)" }}>
+                            background: "rgba(255,90,31,0.08)", color: "#FF5A1F", border: "1px solid rgba(255,90,31,0.20)" }}>
                           <MoreHorizontal style={{ width: 14, height: 14 }} />
                         </button>
                         {openMenuId === s.id && (
                           <div className="absolute right-0 top-10 z-50"
                             style={{ minWidth: 220, borderRadius: 12,
-                              background: "rgba(255,255,255,0.95)", backdropFilter: "blur(20px)",
-                              border: "1px solid rgba(255,255,255,0.40)", boxShadow: "0 8px 24px rgba(0,0,0,0.12)", padding: "4px 0" }}>
+                              background: "var(--bg-card)", backdropFilter: "blur(20px)",
+                              border: "1px solid var(--border-glass)", boxShadow: "var(--shadow-lg)", padding: "4px 0" }}>
                             <button type="button"
                               onClick={e => { e.stopPropagation(); setOpenMenuId(null); navigate(`/app/profile/${other?.id}`); }}
-                              className="w-full text-left flex items-center gap-2.5 cursor-pointer hover:bg-black/5 transition-colors"
-                              style={{ padding: "9px 14px", fontSize: 13, color: "#1A1A2E" }}>
-                              <Eye style={{ width: 14, height: 14, color: "#6B7094" }} /> View profile
+                              className="w-full text-left flex items-center gap-2.5 cursor-pointer hover:bg-surface-2 transition-colors"
+                              style={{ padding: "9px 14px", fontSize: 13, color: "var(--text-1)" }}>
+                              <Eye style={{ width: 14, height: 14, color: "var(--text-3)" }} /> View profile
                             </button>
                             <button type="button"
                               onClick={e => { e.stopPropagation(); setOpenMenuId(null); if (other?.id) handleMute(other.id); }}
-                              className="w-full text-left flex items-center gap-2.5 cursor-pointer hover:bg-black/5 transition-colors"
-                              style={{ padding: "9px 14px", fontSize: 13, color: "#1A1A2E" }}>
-                              <BellOff style={{ width: 14, height: 14, color: "#6B7094" }} /> Mute notifications for 30 days
+                              className="w-full text-left flex items-center gap-2.5 cursor-pointer hover:bg-surface-2 transition-colors"
+                              style={{ padding: "9px 14px", fontSize: 13, color: "var(--text-1)" }}>
+                              <BellOff style={{ width: 14, height: 14, color: "var(--text-3)" }} /> Mute notifications for 30 days
                             </button>
-                            <div style={{ height: 1, background: "rgba(0,0,0,0.06)", margin: "4px 0" }} />
+                            <div style={{ height: 1, background: "var(--border-subtle)", margin: "4px 0" }} />
                             <button type="button"
                               onClick={e => { e.stopPropagation(); setOpenMenuId(null); handleDisconnect(s); }}
                               className="w-full text-left flex items-center gap-2.5 cursor-pointer hover:bg-[#FFF5F5] transition-colors"
@@ -516,15 +516,15 @@ const Connections = () => {
             </div>
           ) : (
             <div style={{ textAlign: "center", padding: "48px 0" }}>
-              <Link2 style={{ width: 40, height: 40, margin: "0 auto 12px", color: "#6B7094" }} />
-              <p style={{ fontSize: 14, fontWeight: 700, color: "#1A1A2E" }}>
+              <Link2 style={{ width: 40, height: 40, margin: "0 auto 12px", color: "var(--text-3)" }} />
+              <p style={{ fontSize: 14, fontWeight: 700, color: "var(--text-1)" }}>
                 {search ? "No connections match your search" : "No connections yet"}
               </p>
               <button type="button" onClick={() => navigate("/app/explore")}
                 className="flex items-center gap-1.5 mx-auto mt-3 cursor-pointer"
                 style={{ height: 40, padding: "0 20px", borderRadius: 12, fontSize: 13, fontWeight: 600,
-                  background: "rgba(255,255,255,0.20)", backdropFilter: "blur(12px)",
-                  border: "1px solid rgba(255,255,255,0.25)", color: "#1A1A2E" }}>
+                  background: "var(--surface-2)", backdropFilter: "blur(12px)",
+                  border: "1px solid var(--border-glass)", color: "var(--text-1)" }}>
                 <Compass style={{ width: 16, height: 16 }} /> Find people
               </button>
             </div>
@@ -533,7 +533,7 @@ const Connections = () => {
           {/* Suggestions strip when there are connections */}
           {!loading && filteredConnected.length > 0 && suggested.length > 0 && (
             <div className="mt-6">
-              <h2 style={{ fontSize: 14, fontWeight: 700, color: "#1A1A2E", marginBottom: 10 }}>People you may know</h2>
+              <h2 style={{ fontSize: 14, fontWeight: 700, color: "var(--text-1)", marginBottom: 10 }}>People you may know</h2>
               <div className="space-y-2">
                 {suggested.slice(0, 4).map((person: any) => {
                   const flags = getDisplayFlags(person);
@@ -545,9 +545,9 @@ const Connections = () => {
                       onClick={() => navigate(`/app/profile/${person.id}`)}>
                       <AvatarSquare src={person.avatar_url} name={cardName} size={44} bgColor={ROLE_COLORS[person.role || ""] || "#6B7280"} />
                       <div className="flex-1 min-w-0">
-                        <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{cardName}</p>
+                        <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "var(--text-1)" }}>{cardName}</p>
                         {flags.showRole && (
-                          <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>
+                          <p className="truncate" style={{ fontSize: 12, color: "var(--text-2)" }}>
                             {roleLabel(person.role || "")}
                             {person.location_city && ` · ${person.location_city}`}
                             {flags.showCompany && company && ` · ${company}`}
@@ -568,13 +568,13 @@ const Connections = () => {
         <div>
           {followedOrgs.length === 0 ? (
             <div style={{ textAlign: "center", padding: "48px 0" }}>
-              <Compass style={{ width: 40, height: 40, margin: "0 auto 12px", color: "#6B7094" }} />
-              <p style={{ fontSize: 14, fontWeight: 700, color: "#1A1A2E" }}>Not following any organizations yet</p>
+              <Compass style={{ width: 40, height: 40, margin: "0 auto 12px", color: "var(--text-3)" }} />
+              <p style={{ fontSize: 14, fontWeight: 700, color: "var(--text-1)" }}>Not following any organizations yet</p>
               <button type="button" onClick={() => navigate("/app/explore")}
                 className="flex items-center gap-1.5 mx-auto mt-3 cursor-pointer"
                 style={{ height: 40, padding: "0 20px", borderRadius: 12, fontSize: 13, fontWeight: 600,
-                  background: "rgba(255,255,255,0.20)", backdropFilter: "blur(12px)",
-                  border: "1px solid rgba(255,255,255,0.25)", color: "#1A1A2E" }}>
+                  background: "var(--surface-2)", backdropFilter: "blur(12px)",
+                  border: "1px solid var(--border-glass)", color: "var(--text-1)" }}>
                 <Compass style={{ width: 16, height: 16 }} /> Discover organizations
               </button>
             </div>
@@ -590,9 +590,9 @@ const Connections = () => {
                     onClick={() => navigate(`/org/${org.slug}`)}>
                     <AvatarSquare src={org.logo_url} name={org.name || "Org"} size={44} />
                     <div className="flex-1 min-w-0">
-                      <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{org.name}</p>
+                      <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "var(--text-1)" }}>{org.name}</p>
                       {org.type && (
-                        <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>
+                        <p className="truncate" style={{ fontSize: 12, color: "var(--text-2)" }}>
                           {org.type.charAt(0).toUpperCase() + org.type.slice(1).replace(/_/g, " ")}
                           {org.followers_count != null && ` · ${org.followers_count} followers`}
                         </p>
@@ -632,18 +632,18 @@ const Connections = () => {
           {/* Received */}
           <section>
             <div className="flex items-center justify-between mb-2">
-              <h2 style={{ fontSize: 14, fontWeight: 700, color: "#1A1A2E" }}>Received ({pendingIncoming.length})</h2>
+              <h2 style={{ fontSize: 14, fontWeight: 700, color: "var(--text-1)" }}>Received ({pendingIncoming.length})</h2>
             </div>
             {loading ? (
               <div className="space-y-2">{[1, 2].map(i => <SkeletonRow key={i} />)}</div>
             ) : pendingIncoming.length === 0 ? (
               <div className="glass-card" style={{ padding: "32px 16px", borderRadius: 12, textAlign: "center" }}>
-                <UserPlus style={{ width: 36, height: 36, margin: "0 auto 10px", color: "#6B7094" }} />
-                <p style={{ fontSize: 13, color: "#6B7094", marginBottom: 12 }}>No pending requests</p>
+                <UserPlus style={{ width: 36, height: 36, margin: "0 auto 10px", color: "var(--text-3)" }} />
+                <p style={{ fontSize: 13, color: "var(--text-3)", marginBottom: 12 }}>No pending requests</p>
                 <button type="button" onClick={() => navigate("/app/explore")}
                   className="inline-flex items-center gap-1.5 cursor-pointer"
                   style={{ height: 36, padding: "0 16px", borderRadius: 10, fontSize: 12, fontWeight: 600,
-                    background: "rgba(232,115,58,0.10)", color: "#E8733A", border: "1px solid rgba(232,115,58,0.20)" }}>
+                    background: "rgba(255,90,31,0.10)", color: "#FF5A1F", border: "1px solid rgba(255,90,31,0.20)" }}>
                   <Compass style={{ width: 14, height: 14 }} /> Find people
                 </button>
               </div>
@@ -658,17 +658,17 @@ const Connections = () => {
                       <AvatarSquare src={s.requester?.avatar_url} name={cardName} size={44} bgColor={ROLE_COLORS[s.requester?.role || ""] || "#6B7280"} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{cardName}</p>
+                          <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "var(--text-1)" }}>{cardName}</p>
                           {s.requester?.is_verified && <VerifiedBadge size={14} />}
                         </div>
                         {flags.showRole && (
-                          <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>
+                          <p className="truncate" style={{ fontSize: 12, color: "var(--text-2)" }}>
                             {roleLabel(s.requester?.role || "")}
                             {s.requester?.role_subtype && <span style={{ opacity: 0.75 }}> · {s.requester.role_subtype}</span>}
                             {flags.showCompany && company && <span> · {company}</span>}
                           </p>
                         )}
-                        <p style={{ fontSize: 11, color: "#9CA3C0", marginTop: 2 }}>{getTimeAgo(s.created_at)}</p>
+                        <p style={{ fontSize: 11, color: "var(--text-3)", marginTop: 2 }}>{getTimeAgo(s.created_at)}</p>
                       </div>
                       <div className="flex gap-1.5 shrink-0">
                         <button type="button" onClick={() => handleAccept(s)} className="cursor-pointer transition-all"
@@ -691,14 +691,14 @@ const Connections = () => {
           {/* Sent */}
           <section>
             <div className="flex items-center justify-between mb-2">
-              <h2 style={{ fontSize: 14, fontWeight: 700, color: "#1A1A2E" }}>Sent ({pendingSent.length})</h2>
+              <h2 style={{ fontSize: 14, fontWeight: 700, color: "var(--text-1)" }}>Sent ({pendingSent.length})</h2>
             </div>
             {loading ? (
               <div className="space-y-2">{[1, 2].map(i => <SkeletonRow key={`s${i}`} />)}</div>
             ) : pendingSent.length === 0 ? (
               <div className="glass-card" style={{ padding: "24px 16px", borderRadius: 12, textAlign: "center" }}>
-                <Clock style={{ width: 32, height: 32, margin: "0 auto 8px", color: "#6B7094" }} />
-                <p style={{ fontSize: 13, color: "#6B7094" }}>No pending requests sent</p>
+                <Clock style={{ width: 32, height: 32, margin: "0 auto 8px", color: "var(--text-3)" }} />
+                <p style={{ fontSize: 13, color: "var(--text-3)" }}>No pending requests sent</p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -711,17 +711,17 @@ const Connections = () => {
                       <AvatarSquare src={s.receiver?.avatar_url} name={cardName} size={44} bgColor={ROLE_COLORS[s.receiver?.role || ""] || "#6B7280"} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{cardName}</p>
+                          <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "var(--text-1)" }}>{cardName}</p>
                           {s.receiver?.is_verified && <VerifiedBadge size={14} />}
                         </div>
                         {flags.showRole && (
-                          <p className="truncate" style={{ fontSize: 12, color: "#6B7094" }}>
+                          <p className="truncate" style={{ fontSize: 12, color: "var(--text-2)" }}>
                             {roleLabel(s.receiver?.role || "")}
                             {s.receiver?.role_subtype && <span style={{ opacity: 0.75 }}> · {s.receiver.role_subtype}</span>}
                             {flags.showCompany && company && <span> · {company}</span>}
                           </p>
                         )}
-                        <p style={{ fontSize: 11, color: "#9CA3C0", marginTop: 2 }}>Sent {getTimeAgo(s.created_at)}</p>
+                        <p style={{ fontSize: 11, color: "var(--text-3)", marginTop: 2 }}>Sent {getTimeAgo(s.created_at)}</p>
                       </div>
                       <button type="button" onClick={() => handleWithdraw(s)} className="cursor-pointer transition-all shrink-0"
                         style={{ height: 34, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 600, ...connectionButtonStyle("pending_sent") }}>
