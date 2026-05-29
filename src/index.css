@@ -51,21 +51,21 @@
     --glossy-white: rgba(255, 255, 255, 0.06);
     --glossy-white-stroke: rgba(255, 255, 255, 0.14);
 
-    /* ── Page backgrounds ── */
-    --bg-page: #FAFAF7;
+    /* ── Page backgrounds (White Matte) ── */
+    --bg-page: #F4F3EF;
     --bg-card: #FFFFFF;
-    --bg-card-hover: #F4F4F0;
-    --bg-input: #FFFFFF;
+    --bg-card-hover: #F7F6F2;
+    --bg-input: #F7F6F2;
     --bg-elevated: #FFFFFF;
 
     /* ── Borders ── */
-    --border-glass: #ECECEA;
-    --border-subtle: #ECECEA;
+    --border-glass: #EAE8E2;
+    --border-subtle: #EAE8E2;
 
     /* ── Text ── */
-    --text-primary: #0A0A0B;
-    --text-secondary: #3A3A3A;
-    --text-muted: #6B6B6B;
+    --text-primary: #16161A;
+    --text-secondary: #6E6E76;
+    --text-muted: #A0A0A8;
 
     /* ── Accent (orange brand) ── */
     --accent: #FF5A1F;
@@ -95,45 +95,45 @@
     --mesh-blob-3: rgba(74, 144, 217, 0.02);
 
     /* ── Mapped legacy tokens (reused names, new values) ── */
-    --bg: #FAFAF7;
-    --bg-2: #F4F4F0;
+    --bg: #F4F3EF;
+    --bg-2: #F0EFE9;
     --surface: #FFFFFF;
-    --surface-2: #F4F4F0;
+    --surface-2: #F0EFE9;
     --surface-3: #FFFFFF;
-    --border: #ECECEA;
-    --border-2: #ECECEA;
+    --border: #EAE8E2;
+    --border-2: #EAE8E2;
     --brand: #FF5A1F;
     --brand-2: #F04A12;
     --brand-dim: rgba(255, 90, 31, 0.12);
     --brand-glow: rgba(255, 90, 31, 0.20);
     --brand-hover: #F04A12;
     --brand-press: #D93E08;
-    --text-1: #0A0A0B;
-    --text-2: #3A3A3A;
-    --text-3: #6B6B6B;
+    --text-1: #16161A;
+    --text-2: #6E6E76;
+    --text-3: #A0A0A8;
     --tiik-gold: #FFB800;
     --tiik-grey: #6B6B6B;
     --open-green: #34C759;
     --danger: #EF4444;
     --radius: 0.875rem;
 
-    /* Shadows — Paper context */
-    --shadow-sm: 0 1px 2px rgba(10,10,11,0.04), 0 4px 16px rgba(10,10,11,0.04);
-    --shadow-md: 0 1px 2px rgba(10,10,11,0.04), 0 4px 16px rgba(10,10,11,0.06);
-    --shadow-lg: 0 8px 24px rgba(10,10,11,0.08);
+    /* Shadows — White Matte context */
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+    --shadow-md: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.04);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
     --shadow-glow: 0 0 20px var(--accent-glow);
     --card-shadow: var(--shadow-md);
 
-    /* Glass */
-    --glass-border-t: #ECECEA;
+    /* Bento card */
+    --glass-border-t: #EAE8E2;
     --glass-blur: blur(0px);
-    --glass-radius: 16px;
-    --glass-shadow-legacy: 0 1px 2px rgba(10,10,11,0.04), 0 4px 16px rgba(10,10,11,0.06);
+    --glass-radius: 20px;
+    --glass-shadow-legacy: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.04);
 
-    /* Sidebar (Paper) */
+    /* Sidebar (White Matte) */
     --sidebar-bg: #FFFFFF;
-    --sidebar-border: #ECECEA;
-    --sidebar-item-hover: #F4F4F0;
+    --sidebar-border: #EAE8E2;
+    --sidebar-item-hover: #F0EFE9;
     --sidebar-item-active: rgba(255, 90, 31, 0.12);
     --sidebar-background: #FFFFFF;
     --sidebar-foreground: var(--text-1);
@@ -218,68 +218,68 @@
    Applied when html.dark class is present
    ════════════════════════════════════════════════════ */
 .dark {
-  --bg-page: #0E0E0F;
-  --bg-card: #1A1A1C;
-  --bg-card-hover: #222224;
-  --bg-input: #1A1A1C;
-  --bg-elevated: #222224;
+  --bg-page: #100F12;
+  --bg-card: #1A1A1D;
+  --bg-card-hover: #232328;
+  --bg-input: #1E1E22;
+  --bg-elevated: #232328;
 
-  --border-glass: rgba(255,255,255,0.08);
-  --border-subtle: rgba(255,255,255,0.06);
+  --border-glass: #26262B;
+  --border-subtle: rgba(38,38,43,0.8);
 
-  --text-primary: #F2F2F0;
-  --text-secondary: #A8A8A6;
-  --text-muted: #6B6B6B;
+  --text-primary: #F2F1EE;
+  --text-secondary: #9B9BA2;
+  --text-muted: #5E5E66;
 
   --accent: #FF5A1F;
   --accent-hover: #F04A12;
   --accent-glow: rgba(255, 90, 31, 0.20);
 
-  --surface: #1A1A1C;
-  --surface-2: #222224;
-  --surface-3: #2A2A2C;
-  --border: rgba(255,255,255,0.08);
-  --border-2: rgba(255,255,255,0.06);
-  --bg: #0E0E0F;
-  --bg-2: #1A1A1C;
-  --text-1: #F2F2F0;
-  --text-2: #A8A8A6;
-  --text-3: #6B6B6B;
+  --surface: #1A1A1D;
+  --surface-2: #232328;
+  --surface-3: #2A2A30;
+  --border: #26262B;
+  --border-2: rgba(38,38,43,0.8);
+  --bg: #100F12;
+  --bg-2: #1A1A1D;
+  --text-1: #F2F1EE;
+  --text-2: #9B9BA2;
+  --text-3: #5E5E66;
 
-  --glass-bg: rgba(26,26,28,0.92);
-  --glass-bg-medium: rgba(30,30,32,0.88);
-  --glass-border: rgba(255,255,255,0.08);
-  --glass-border-subtle: rgba(255,255,255,0.06);
-  --glass-highlight: rgba(255,255,255,0.06);
-  --glass-shadow: rgba(0,0,0,0.4);
-  --glass-shadow-hover: rgba(0,0,0,0.5);
-  --glass-border-t: rgba(255,255,255,0.08);
+  --glass-bg: rgba(26,26,29,0.95);
+  --glass-bg-medium: rgba(30,30,34,0.92);
+  --glass-border: #26262B;
+  --glass-border-subtle: rgba(38,38,43,0.8);
+  --glass-highlight: rgba(255,255,255,0.05);
+  --glass-shadow: rgba(0,0,0,0.5);
+  --glass-shadow-hover: rgba(0,0,0,0.6);
+  --glass-border-t: #26262B;
 
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.2);
-  --shadow-md: 0 1px 2px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.25);
-  --shadow-lg: 0 8px 24px rgba(0,0,0,0.4);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.3);
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.4), 0 4px 16px rgba(0,0,0,0.3);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
   --card-shadow: var(--shadow-md);
 
-  --sidebar-bg: #131315;
-  --sidebar-border: rgba(255,255,255,0.06);
-  --sidebar-item-hover: rgba(255,255,255,0.05);
-  --sidebar-item-active: rgba(255, 90, 31, 0.15);
-  --sidebar-background: #131315;
-  --sidebar-foreground: #F2F2F0;
+  --sidebar-bg: #0D0D10;
+  --sidebar-border: #26262B;
+  --sidebar-item-hover: rgba(255,255,255,0.04);
+  --sidebar-item-active: rgba(255, 90, 31, 0.14);
+  --sidebar-background: #0D0D10;
+  --sidebar-foreground: #F2F1EE;
 
-  --input-bg: #1A1A1C;
-  --input-border: rgba(255,255,255,0.08);
+  --input-bg: #1E1E22;
+  --input-border: #26262B;
   --input-focus-border: #FF5A1F;
-  --input-focus-glow: rgba(255, 90, 31, 0.20);
+  --input-focus-glow: rgba(255, 90, 31, 0.18);
 
-  --color-bg: #0E0E0F;
-  --color-bg-secondary: #1A1A1C;
-  --color-surface: #1A1A1C;
-  --color-surface-hover: #222224;
-  --color-surface-elevated: #222224;
-  --color-text: #F2F2F0;
-  --color-text-secondary: #A8A8A6;
-  --color-text-muted: #6B6B6B;
+  --color-bg: #100F12;
+  --color-bg-secondary: #1A1A1D;
+  --color-surface: #1A1A1D;
+  --color-surface-hover: #232328;
+  --color-surface-elevated: #232328;
+  --color-text: #F2F1EE;
+  --color-text-secondary: #9B9BA2;
+  --color-text-muted: #5E5E66;
   --color-accent: #FF5A1F;
   --color-accent-glow: rgba(255, 90, 31, 0.20);
   --color-accent-hover: rgba(255, 90, 31, 0.30);
@@ -300,15 +300,14 @@
 @layer components {
   /* ═══ GLASS CARD VARIANTS ═══ */
 
+  /* ═══ BENTO CARD (SimpleSocial style — matte, no blur, generous radius) ═══ */
   .glass-card,
   .t-card,
   .glass-liquid,
   .glass-light {
     background: var(--bg-card);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--border-glass);
-    border-radius: 16px;
+    border-radius: 20px;
     box-shadow: var(--card-shadow);
     position: relative;
     overflow: hidden;
@@ -352,22 +351,51 @@
     box-shadow: 0 12px 40px rgba(26,26,78,0.14), inset 0 1px 0 rgba(255,255,255,0.80);
   }
 
-  /* ═══ TIIKME PRIMARY BUTTONS (solid orange) ═══ */
+  /* ═══ GLOSSY ORANGE BUTTON (SimpleSocial signature — primary CTAs only) ═══ */
+  .btn-primary,
   .btn-liquid-primary {
-    background: var(--brand);
-    color: white;
+    background: linear-gradient(180deg, #FF7A45 0%, #FF5A1F 50%, #F04E15 100%);
+    color: #FFFFFF;
     font-weight: 600;
     font-size: 14px;
-    border-radius: 12px;
-    height: 48px;
+    border-radius: 999px;
+    height: 44px;
     padding: 0 24px;
     border: none;
-    box-shadow: 0 4px 14px rgba(255, 90, 31,0.30);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.35) inset,
+      0 -1px 0 rgba(0,0,0,0.15) inset,
+      0 4px 14px rgba(255,90,31,0.35);
     cursor: pointer;
-    transition: background 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+    transition: all 150ms ease-out;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
   }
-  .btn-liquid-primary:hover { background: var(--brand-hover); }
-  .btn-liquid-primary:active { background: var(--brand-press); transform: translateY(0); }
+  .btn-primary:hover,
+  .btn-liquid-primary:hover {
+    filter: brightness(1.06);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.35) inset,
+      0 -1px 0 rgba(0,0,0,0.15) inset,
+      0 6px 20px rgba(255,90,31,0.45);
+  }
+  .btn-primary:active,
+  .btn-liquid-primary:active {
+    transform: scale(0.97);
+    filter: brightness(0.97);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.20) inset,
+      0 -1px 0 rgba(0,0,0,0.20) inset,
+      0 2px 8px rgba(255,90,31,0.25);
+  }
+  .btn-primary:disabled,
+  .btn-liquid-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: none;
+  }
 
   .btn-liquid-md {
     background: var(--brand);

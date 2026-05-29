@@ -1141,7 +1141,6 @@ const Profile = () => {
         {isOwnProfile && (
           <div className="md:hidden glass-card mt-2" style={{ padding: 4, borderRadius: 16, overflow: "hidden" }}>
             {[
-              { label: "Circles", icon: Layers, path: "/app/circles" },
               { label: "Connections", icon: Link2, path: "/app/connections" },
             ].map((item, i, arr) => (
               <Link

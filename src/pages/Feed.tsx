@@ -483,66 +483,6 @@ const SuggestedWidget = ({ connectionIds }: { connectionIds: Set<string> }) => {
 };
 
 /* ─── CIRCLES DISCOVERY WIDGET ─── */
-const CirclesWidget = () => {
-  const { user, profile } = useAuth();
-  const [circles, setCircles] = useState<any[]>([]);
-
-  useEffect(() => {
-    if (!user) return;
-    // Find circles the user hasn't joined yet, filtered by their role/sector
-    supabase.from("circles")
-      .select("id, name, slug, description, member_count, category")
-      .eq("is_public", true)
-      .order("member_count", { ascending: false })
-      .limit(8)
-      .then(({ data }) => {
-        if (!data) return;
-        // Prefer circles matching user's role
-        const role = profile?.role || "";
-        const sorted = [...data].sort((a, b) => {
-          const aMatch = a.category?.toLowerCase().includes(role) ? 1 : 0;
-          const bMatch = b.category?.toLowerCase().includes(role) ? 1 : 0;
-          return bMatch - aMatch;
-        });
-        setCircles(sorted.slice(0, 3));
-      });
-  }, [user, profile?.role]);
-
-  if (!circles.length) return null;
-
-  return (
-    <div className="glass-card" style={{ padding: 12, borderRadius: 16, marginTop: 12 }}>
-      <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
-        <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text-1)" }}>Discover Circles</span>
-        <Link to="/app/circles" style={{ fontSize: 12, color: "#FF5A1F" }}>See all</Link>
-      </div>
-      {circles.map((c, i) => (
-        <Link
-          key={c.id}
-          to={`/app/circles/${c.slug || c.id}`}
-          className="flex items-center hover:opacity-80 transition-opacity"
-          style={{ gap: 10, padding: "7px 0", borderBottom: i < circles.length - 1 ? "1px solid var(--border-subtle)" : "none", textDecoration: "none" }}
-        >
-          <div
-            className="flex items-center justify-center shrink-0"
-            style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,90,31,0.10)", border: "1px solid rgba(255,90,31,0.20)" }}
-          >
-            <span style={{ fontSize: 16 }}>
-              {c.category === "tech" ? "💻" : c.category === "finance" ? "📊" : c.category === "healthcare" ? "🏥" : c.category === "education" ? "🎓" : "💬"}
-            </span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="truncate" style={{ fontSize: 13, fontWeight: 600, color: "var(--text-1)" }}>{c.name}</p>
-            <p style={{ fontSize: 11, color: "var(--text-muted)" }}>
-              <span className="num">{(c.member_count || 0).toLocaleString()}</span> members
-            </p>
-          </div>
-        </Link>
-      ))}
-    </div>
-  );
-};
-
 /* ─── OPPORTUNITIES TEASER WIDGET ─── */
 const OpportunitiesWidget = () => {
   const { user, profile } = useAuth();
@@ -609,7 +549,6 @@ const Feed = () => {
   const targetPostId = searchParams.get("post");
   const scrolledRef = useRef(false);
   const [hideOrgPosts, setHideOrgPosts] = useState(() => localStorage.getItem("feed_hide_org") === "1");
-  const [hideCirclePosts, setHideCirclePosts] = useState(() => localStorage.getItem("feed_hide_circle") === "1");
 
   // Load connection IDs and followed org IDs for "Following" tab filter
   useEffect(() => {
@@ -659,7 +598,7 @@ const Feed = () => {
     let posts = livePosts
       .filter((p: any) => !deletedIds.has(p.id))
       .filter((p: any) => !(hideOrgPosts && p.posted_as_org_id))
-      .filter((p: any) => !(hideCirclePosts && p.circle_id))
+
       .filter((p: any) => !feedPrefs.hideOrgPosts || !p.posted_by_org)
       .filter((p: any) => !feedPrefs.hideSharedPosts || !(p.visibility === "workspace" || p.is_shared_to_feed))
       .map((p: any) => editedPosts[p.id] ? { ...p, ...editedPosts[p.id] } : p);
@@ -676,7 +615,7 @@ const Feed = () => {
     }
 
     return posts;
-  }, [livePosts, deletedIds, editedPosts, hideOrgPosts, hideCirclePosts, feedPrefs, feedMode, connectionIds, followedOrgIds]);
+  }, [livePosts, deletedIds, editedPosts, hideOrgPosts, feedPrefs, feedMode, connectionIds, followedOrgIds]);
 
   const postIds = useMemo(() => visiblePosts.map((p: any) => p.id), [visiblePosts]);
   const feedItems = useMemo(() => groupConsecutivePosts(visiblePosts), [visiblePosts]);
@@ -759,13 +698,7 @@ const Feed = () => {
                   </div>
                   <input type="checkbox" checked={feedPrefs.hideOrgPosts} onChange={(e) => updateFeedPref("hideOrgPosts", e.target.checked)} />
                 </label>
-                <label className="flex items-center justify-between gap-3">
-                  <div>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-1)" }}>Hide posts from circles</p>
-                    <p style={{ fontSize: 12, color: "var(--text-3)" }}>Keep circle discussions separate from your main feed.</p>
-                  </div>
-                  <input type="checkbox" checked={hideCirclePosts} onChange={e => { setHideCirclePosts(e.target.checked); localStorage.setItem("feed_hide_circle", e.target.checked ? "1" : "0"); }} />
-                </label>
+
               </div>
             </div>
           )}
@@ -827,7 +760,6 @@ const Feed = () => {
         <aside className="hidden md:block shrink-0 sticky top-4 self-start" style={{ width: 280 }}>
           <ActivityWidget score={profile?.activity_score || 0} />
           <SuggestedWidget connectionIds={connectionIds} />
-          <CirclesWidget />
           <OpportunitiesWidget />
         </aside>
       </div>

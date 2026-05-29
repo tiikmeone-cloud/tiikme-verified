@@ -26,11 +26,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { classifyIntent } from "@/lib/pilot/intent-classifier";
 import { handlePlatformFaq } from "@/lib/pilot/faq-map";
 import {
-  handleSearchProfile, handleSearchJob, handleSearchOrg, handleSearchCircle,
+  handleSearchProfile, handleSearchJob, handleSearchOrg,
   handleSearchCampaign, handleMyAnalytics, handleMyApplications, handleTrending, handlePrivacyQuestion,
 } from "@/lib/pilot/handlers";
 import { checkQuota, incrementQuota } from "@/lib/pilot/rate-limiter";
-import type { PilotResponse, ProfileCard, JobCard, ApplicationItem, AnalyticsData, TrendingHashtag, CircleCard, CampaignCard } from "@/lib/pilot/types";
+import type { PilotResponse, ProfileCard, JobCard, ApplicationItem, AnalyticsData, TrendingHashtag, CampaignCard } from "@/lib/pilot/types";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
@@ -55,7 +55,7 @@ const THINKING_LABELS: Record<string, string> = {
   SEARCH_PROFILE: "Searching profiles…",
   SEARCH_JOB: "Finding open roles…",
   SEARCH_ORG: "Looking up organizations…",
-  SEARCH_CIRCLE: "Searching communities…",
+
   SEARCH_CAMPAIGN: "Finding campaigns…",
   MY_ANALYTICS: "Loading your stats…",
   MY_APPLICATIONS: "Fetching your applications…",
@@ -337,34 +337,6 @@ function ApplicationsListCard({ applications }: { applications: ApplicationItem[
   );
 }
 
-function CircleResultsCard({ cards }: { cards: CircleCard[] }) {
-  return (
-    <div className="grid grid-cols-1 gap-2 mt-2">
-      {cards.map((c) => (
-        <Link
-          key={c.id}
-          to={`/app/circles/${c.slug}`}
-          className="flex items-center gap-3 rounded-xl p-3 border border-gray-100 bg-gray-50 hover:bg-orange-50 hover:border-orange-100 transition-colors"
-        >
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-orange-50">
-            <MessageCircle style={{ width: 16, height: 16, color: "#FF5A1F" }} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-semibold text-gray-800 truncate">{c.name}</p>
-            {c.description && <p className="text-[11px] text-gray-400 truncate">{c.description}</p>}
-            {c.member_count !== undefined && (
-              <p className="text-[10px] text-gray-400 mt-0.5">
-                {c.member_count} member{c.member_count !== 1 ? "s" : ""}{c.post_count ? ` · ${c.post_count} posts` : ""}
-              </p>
-            )}
-          </div>
-          <ArrowUpRight style={{ width: 14, height: 14, color: "#9CA3AF", flexShrink: 0 }} />
-        </Link>
-      ))}
-    </div>
-  );
-}
-
 function FaqCard({ content, action }: { content: string; action?: { label: string; url: string } }) {
   const lines = content.split("\n");
   return (
@@ -396,7 +368,7 @@ function FaqCard({ content, action }: { content: string; action?: { label: strin
 // ─── Source card (for AI replies) ─────────────────────────────────────────────
 
 const SOURCE_TYPE_LABEL: Record<TiikmePilotSource["type"], string> = {
-  organization: "Org", opportunity: "Job", post: "Post", circle: "Circle", profile: "Person",
+  organization: "Org", opportunity: "Job", post: "Post", profile: "Person",
 };
 
 function SourceCard({ source }: { source: TiikmePilotSource }) {
@@ -522,13 +494,6 @@ function AssistantBubble({ msg, onRate }: { msg: ChatMessage; onRate: (messageId
             <Link to="/app/opportunities?tab=applications" className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-500 hover:text-orange-600 transition-colors mt-2">
               View all applications <ArrowUpRight style={{ width: 12, height: 12 }} />
             </Link>
-          </div>
-        )}
-
-        {pr?.type === "circle_results" && (
-          <div>
-            {pr.content && <p className="text-[12px] text-gray-400 mb-2">{pr.content}</p>}
-            <CircleResultsCard cards={pr.cards as CircleCard[]} />
           </div>
         )}
 
@@ -755,11 +720,6 @@ export default function TiikmePilotPage() {
         removeThinking(); addLocalReply(result); return;
       }
 
-      if (intent.type === "SEARCH_CIRCLE") {
-        const result = await handleSearchCircle(intent.extractedEntities);
-        removeThinking(); addLocalReply(result); return;
-      }
-
       if (intent.type === "SEARCH_CAMPAIGN") {
         const result = await handleSearchCampaign(intent.extractedEntities as any);
         removeThinking(); addLocalReply(result); return;
@@ -792,7 +752,7 @@ export default function TiikmePilotPage() {
         removeThinking();
         addLocalReply({
           type: "limit_reached",
-          content: `You've reached your daily AI question limit (${AI_DAILY_LIMIT}). Resets at midnight.\n\nYou can still search for people, jobs, campaigns, circles, and check your stats for free!`,
+          content: `You've reached your daily AI question limit (${AI_DAILY_LIMIT}). Resets at midnight.\n\nYou can still search for people, jobs, campaigns, and check your stats for free!`,
         });
         setSending(false);
         return;
@@ -1002,7 +962,7 @@ export default function TiikmePilotPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Search people, jobs, campaigns, circles — or ask anything about Tiikme…"
+              placeholder="Search people, jobs, campaigns — or ask anything about Tiikme…"
               rows={1}
               maxLength={CHAR_LIMIT}
               disabled={sending || remainingChats === 0}

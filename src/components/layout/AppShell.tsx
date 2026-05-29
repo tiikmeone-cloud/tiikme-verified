@@ -27,7 +27,6 @@ const BASE_NAV_GROUPS = [
     label: "WORK",
     items: [
       { label: "Profile", icon: User, path: "/app/profile" },
-      { label: "Circles", icon: Users, path: "/app/circles" },
     ],
   },
   {
