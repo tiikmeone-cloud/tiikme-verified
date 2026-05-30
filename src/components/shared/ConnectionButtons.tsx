@@ -119,32 +119,12 @@ export function ConnectionButtons({
     );
   }
 
-  // Following (not connected)
-  if (conn.state === "following") {
-    return (
-      <div className="flex gap-2">
-        <button className={gray} disabled={conn.isLoading} onClick={conn.unfollow}>
-          {conn.isLoading ? <Loader2 size={14} className="animate-spin" /> : null}
-          Following ✓
-        </button>
-        <button className={secondary} disabled={conn.isLoading} onClick={conn.sendRequest}>
-          <UserPlus size={14} />
-          Connect
-        </button>
-      </div>
-    );
-  }
-
   // None — default
   return (
     <div className="flex gap-2">
-      <button className={primary} disabled={conn.isLoading} onClick={conn.follow}>
-        {conn.isLoading ? <Loader2 size={14} className="animate-spin" /> : null}
-        + Follow
-      </button>
-      <button className={secondary} disabled={conn.isLoading} onClick={conn.sendRequest}>
-        <UserPlus size={14} />
-        {!compact && "Connect"}
+      <button className={primary} disabled={conn.isLoading} onClick={conn.sendRequest}>
+        {conn.isLoading ? <Loader2 size={14} className="animate-spin" /> : <UserPlus size={14} />}
+        Connect
       </button>
     </div>
   );

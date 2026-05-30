@@ -965,9 +965,9 @@ const TeamAccessSection = ({ orgId, currentUserId }: { orgId: string; currentUse
       org_id: orgId, user_id: profile.id, role: inviteRole,
     });
     if (error) {
-      tiikToast("Couldn't add team member. They may already be an admin.", "error");
+      tiikToast.error("Couldn't add team member. They may already be an admin.");
     } else {
-      tiikToast(`${profile.full_name} added as ${ADMIN_ROLE_LABELS[inviteRole]}`, "success");
+      tiikToast.success(`${profile.full_name} added as ${ADMIN_ROLE_LABELS[inviteRole]}`);
       // Notify the newly added member in-app
       await supabase.from("notifications").insert({
         user_id: profile.id,
@@ -986,7 +986,7 @@ const TeamAccessSection = ({ orgId, currentUserId }: { orgId: string; currentUse
     if (!window.confirm(`Remove ${name} from team?`)) return;
     await supabase.from("org_admins").delete().eq("id", adminId);
     setAdmins(prev => prev.filter(a => a.id !== adminId));
-    tiikToast(`${name} removed from team`, "success");
+    tiikToast.success(`${name} removed from team`);
   };
 
   return (

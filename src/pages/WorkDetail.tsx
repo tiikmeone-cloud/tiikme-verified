@@ -10,7 +10,7 @@ import { PageSEO } from "@/hooks/usePageSEO";
 import { sendNotification } from "@/lib/notify";
 
 const WorkDetail = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
   const { slug } = useParams();
   const [work, setWork] = useState<any>(null);

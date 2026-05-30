@@ -97,7 +97,7 @@ export async function loadPilotMessages(threadId: string): Promise<TiikmePilotMe
     .select("id, role, content, metadata, created_at")
     .eq("thread_id", threadId)
     .order("created_at", { ascending: true });
-  return (data as TiikmePilotMessageRecord[]) || [];
+  return ((data as unknown) as TiikmePilotMessageRecord[]) || [];
 }
 
 export async function archivePilotThread(threadId: string): Promise<void> {
