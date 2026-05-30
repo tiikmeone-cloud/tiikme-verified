@@ -7,7 +7,6 @@ const DAILY_LIMITS: Partial<Record<IntentType, number>> = {
   SEARCH_PROFILE: 50,
   SEARCH_JOB: 50,
   SEARCH_ORG: 50,
-  SEARCH_CIRCLE: 50,
   MY_ANALYTICS: 20,
   MY_APPLICATIONS: 20,
   TRENDING: 20,
@@ -29,7 +28,6 @@ function getQuotaColumn(intentType: IntentType): QuotaColumn {
     case 'SEARCH_PROFILE':
     case 'SEARCH_JOB':
     case 'SEARCH_ORG':
-    case 'SEARCH_CIRCLE':
       return 'search_count';
     case 'PLATFORM_FAQ':
     case 'PRIVACY_QUESTION':

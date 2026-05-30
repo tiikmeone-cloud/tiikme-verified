@@ -2,7 +2,6 @@ export type IntentType =
   | 'SEARCH_PROFILE'
   | 'SEARCH_ORG'
   | 'SEARCH_JOB'
-  | 'SEARCH_CIRCLE'
   | 'SEARCH_CAMPAIGN'
   | 'MY_ANALYTICS'
   | 'MY_APPLICATIONS'
@@ -31,7 +30,6 @@ export type PilotResponseType =
   | 'text'
   | 'profile_results'
   | 'job_results'
-  | 'circle_results'
   | 'campaign_results'
   | 'analytics_card'
   | 'trending_card'
@@ -102,15 +100,6 @@ export interface TrendingHashtag {
   url: string;
 }
 
-export interface CircleCard {
-  id: string;
-  name: string;
-  slug: string;
-  member_count?: number;
-  description?: string | null;
-  post_count?: number;
-}
-
 export interface CampaignCard {
   id: string;
   title: string;
@@ -153,7 +142,7 @@ export interface MyProfileData {
 export interface PilotResponse {
   type: PilotResponseType;
   content?: string;
-  cards?: ProfileCard[] | JobCard[] | CircleCard[] | CampaignCard[];
+  cards?: ProfileCard[] | JobCard[] | CampaignCard[];
   applications?: ApplicationItem[];
   data?: AnalyticsData;
   myProfile?: MyProfileData;

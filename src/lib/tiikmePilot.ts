@@ -6,14 +6,13 @@ export type TiikmePilotMode =
   | "discover"
   | "jobs"
   | "people"
-  | "circles"
   // legacy values kept for historical thread data
   | "profile"
   | "hiring"
   | "verification";
 
 export interface TiikmePilotSource {
-  type: "organization" | "opportunity" | "post" | "circle" | "profile";
+  type: "organization" | "opportunity" | "post" | "profile";
   id: string;
   title: string;
   subtitle?: string | null;

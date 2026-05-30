@@ -53,16 +53,6 @@ const SEARCH_ORG_PATTERNS: RegExp[] = [
   /\borganisations?\s+(?:in|from)\b/i,
 ];
 
-const SEARCH_CIRCLE_PATTERNS: RegExp[] = [
-  /\bcircles?\b/i,
-  /\bcommunity\b/i,
-  /\bcommunities\b/i,
-  /\bgroups?\s+for\b/i,
-  /\bjoin\s+(?:a\s+)?(?:circle|community|group)\b/i,
-  /\bfind\s+(?:a\s+)?(?:circle|community|group)\b/i,
-  /\bshow\s+(?:me\s+)?(?:circle|community|group)/i,
-];
-
 const MY_PROFILE_PATTERNS: RegExp[] = [
   /\bmy\s+profile\b/i,
   /\bshow\s+my\s+profile\b/i,
@@ -148,13 +138,11 @@ const PLATFORM_FAQ_PATTERNS: RegExp[] = [
   /\bwhat\s+is\s+tiikme\b/i,
   /\bactivity\s+score\b/i,
   /\bhow\s+to\s+(?:get\s+)?verif(?:y|ied)\b/i,
-  /\bcircles?\s+creation\b/i,
-  /\bhow\s+to\s+create\s+(?:a\s+)?circle\b/i,
   /\bapi\s+access\b/i,
   /\btiikme\s+api\b/i,
   /\bprivacy\s+policy\b/i,
   /\bhow\s+(?:does?\s+)?(?:the\s+)?(?:platform|tiikme)\s+work\b/i,
-  /\bwhat\s+are\s+(?:circles?|campaigns?|strands?)\b/i,
+  /\bwhat\s+are\s+(?:campaigns?|strands?)\b/i,
   /\bdelete\s+(?:my\s+)?account\b/i,
   /\bhow\s+(?:do\s+i\s+)?delete\b/i,
   /\bverification\s+(?:process|steps?|docs?)\b/i,
@@ -382,17 +370,6 @@ export function classifyIntent(message: string): IntentResult {
       type: 'TRENDING',
       confidence: 0.85,
       extractedEntities: {},
-    };
-  }
-
-  if (matchesAny(msg, SEARCH_CIRCLE_PATTERNS)) {
-    return {
-      type: 'SEARCH_CIRCLE',
-      confidence: 0.85,
-      extractedEntities: {
-        name: extractName(msg),
-        location: extractLocation(msg),
-      },
     };
   }
 

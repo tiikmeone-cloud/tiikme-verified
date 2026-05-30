@@ -6,7 +6,6 @@ import type {
   ApplicationItem,
   AnalyticsData,
   TrendingHashtag,
-  CircleCard,
   CampaignCard,
   MyProfileData,
   ExperienceItem,
@@ -241,57 +240,6 @@ export async function handleSearchOrg(
     content: `Found ${cards.length} organization${cards.length !== 1 ? 's' : ''}`,
     cards,
     action: { label: 'Explore all orgs →', url: '/app/explore' },
-  };
-}
-
-// ─── handleSearchCircle ───────────────────────────────────────────────────────
-
-export async function handleSearchCircle(entities: Entities): Promise<PilotResponse> {
-  let query = supabase
-    .from('circles')
-    .select('id, name, slug, member_count, description, post_count, visibility')
-    .eq('visibility', 'public')
-    .order('member_count', { ascending: false })
-    .limit(6);
-
-  if (entities.name) {
-    query = query.ilike('name', `%${entities.name}%`);
-  }
-  if (entities.role) {
-    query = query.or(`name.ilike.%${entities.role}%,description.ilike.%${entities.role}%`);
-  }
-
-  const { data, error } = await query;
-
-  if (error) {
-    return {
-      type: 'text',
-      content: 'Sorry, I had trouble finding circles. Please try again.',
-    };
-  }
-
-  if (!data || data.length === 0) {
-    return {
-      type: 'text',
-      content: 'No public circles found. Try browsing all communities.',
-      action: { label: 'Browse circles →', url: '/app/circles' },
-    };
-  }
-
-  const cards: CircleCard[] = data.map((c: any) => ({
-    id: c.id,
-    name: c.name,
-    slug: c.slug,
-    member_count: c.member_count ?? 0,
-    description: c.description,
-    post_count: c.post_count ?? 0,
-  }));
-
-  return {
-    type: 'circle_results',
-    content: `Found ${cards.length} community circle${cards.length !== 1 ? 's' : ''}`,
-    cards,
-    action: { label: 'Browse all circles →', url: '/app/circles' },
   };
 }
 
