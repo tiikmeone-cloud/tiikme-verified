@@ -22,10 +22,9 @@ const overlap = (a: string[], b: string[]) => {
   return b.some(x => A.has(lower(x)));
 };
 
-type SectionKey = "people" | "circles" | "orgs" | "posts" | "hashtags";
+type SectionKey = "people" | "orgs" | "posts" | "hashtags";
 const SECTIONS: { key: SectionKey; label: string }[] = [
   { key: "people", label: "People" },
-  { key: "circles", label: "Circles" },
   { key: "orgs", label: "Organizations" },
   { key: "posts", label: "Top Posts" },
   { key: "hashtags", label: "Hashtags" },
@@ -85,7 +84,7 @@ const PersonCarouselCard = ({
             ...(isConnected
               ? { background: "rgba(52,199,89,0.10)", color: "#34C759" }
               : isPending
-              ? { background: "rgba(232,115,58,0.12)", color: "#E8733A" }
+              ? { background: "rgba(255,90,31,0.12)", color: "#FF5A1F" }
               : { background: "#FF5A1F", color: "#fff" }
             ),
           }}
@@ -163,58 +162,6 @@ const OrgCarouselCard = ({
   );
 };
 
-/* CircleCard fixed-size wrapper: 200×200px */
-const CircleCarouselCard = ({
-  circle, isMember, onJoin,
-}: {
-  circle: any; isMember: boolean; onJoin: (e: React.MouseEvent) => void;
-}) => {
-  const navigate = useNavigate();
-  const memberCount = circle.member_count ?? 0;
-  return (
-    <article
-      className="glass-card cursor-pointer"
-      style={{
-        width: 200, minWidth: 200, height: 200, flexShrink: 0,
-        display: "flex", flexDirection: "column",
-        padding: "14px 12px 12px", borderRadius: 14,
-        scrollSnapAlign: "start",
-        transition: "transform 200ms, box-shadow 200ms",
-        boxSizing: "border-box", overflow: "hidden",
-      }}
-      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(26,26,78,0.12)"; }}
-      onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
-      onClick={() => navigate(`/app/circles/${circle.slug}`)}
-    >
-      <p style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)", lineHeight: "18px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", wordBreak: "break-word" }}>
-        {circle.name}
-      </p>
-      <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 3, lineHeight: "15px" }}>
-        {memberCount.toLocaleString()} members
-      </p>
-      {circle.description && (
-        <p style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 4, lineHeight: "15px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-          {circle.description}
-        </p>
-      )}
-      <div style={{ flex: 1 }} />
-      <button
-        type="button"
-        onClick={onJoin}
-        className="cursor-pointer"
-        style={{
-          marginTop: 8, padding: "7px 14px", borderRadius: 8, width: "100%",
-          fontSize: 12, fontWeight: 600, border: "none",
-          background: isMember ? "rgba(52,199,89,0.10)" : "linear-gradient(135deg, #7C3AED, #A855F7)",
-          color: isMember ? "#34C759" : "#fff",
-        }}
-      >
-        {isMember ? "Joined" : "Join Circle"}
-      </button>
-    </article>
-  );
-};
-
 /* PostCarouselCard fixed-size wrapper: 200×220px */
 const PostCarouselCard = ({ post, authorProfile }: { post: any; authorProfile?: any }) => {
   const navigate = useNavigate();
@@ -274,7 +221,7 @@ const HashtagCarouselCard = ({ tag, count, onClick }: { tag: string; count: numb
     onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(26,26,78,0.10)"; }}
     onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
   >
-    <p style={{ fontSize: 18, fontWeight: 700, color: "#E8733A", lineHeight: "22px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "100%" }}>#{tag}</p>
+    <p style={{ fontSize: 18, fontWeight: 700, color: "#FF5A1F", lineHeight: "22px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "100%" }}>#{tag}</p>
     <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}><span className="num">{count}</span> posts</p>
   </button>
 );
@@ -294,15 +241,15 @@ const CarouselSection = ({
     <div ref={sectionRef} style={{ marginBottom: 28 }}>
       {/* Section header */}
       <div className="flex items-center" style={{ marginBottom: 10 }}>
-        <div style={{ width: 3, height: 18, borderRadius: 2, background: "#E8733A", marginRight: 8, flexShrink: 0 }} />
+        <div style={{ width: 3, height: 18, borderRadius: 2, background: "#FF5A1F", marginRight: 8, flexShrink: 0 }} />
         <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)", flex: 1, margin: 0 }}>{title}</h2>
-        <span style={{ fontSize: 12, fontWeight: 600, color: "#fff", background: "#E8733A", borderRadius: 10, padding: "1px 8px", marginLeft: 8 }}>{count}</span>
+        <span style={{ fontSize: 12, fontWeight: 600, color: "#fff", background: "#FF5A1F", borderRadius: 10, padding: "1px 8px", marginLeft: 8 }}>{count}</span>
         {seeAllHref && (
           <button
             type="button"
             onClick={() => navigate(seeAllHref)}
             className="cursor-pointer"
-            style={{ marginLeft: 12, fontSize: 12, fontWeight: 600, color: "#E8733A", background: "none", border: "none", whiteSpace: "nowrap" }}
+            style={{ marginLeft: 12, fontSize: 12, fontWeight: 600, color: "#FF5A1F", background: "none", border: "none", whiteSpace: "nowrap" }}
           >
             See all →
           </button>
@@ -346,13 +293,12 @@ const Explore = () => {
 
   const [strandMap, setStrandMap] = useState<Record<string, string>>({});
   const [followMap, setFollowMap] = useState<Record<string, boolean>>({});
-  const [memberMap, setMemberMap] = useState<Record<string, boolean>>({});
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [activeFilter, setActiveFilter] = useState<SectionKey | null>(null);
 
   const sectionRefs = useRef<Record<SectionKey, HTMLDivElement | null>>({
-    people: null, circles: null, orgs: null, posts: null, hashtags: null,
+    people: null, orgs: null, posts: null, hashtags: null,
   });
 
   useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
@@ -417,16 +363,10 @@ const Explore = () => {
         .filter(Boolean)
     );
 
-    /* follows + circle membership */
-    const [followsRes, myCirclesRes] = await Promise.all([
-      supabase.from("org_followers").select("org_id").eq("user_id", user.id),
-      supabase.from("circle_members").select("circle_id").eq("user_id", user.id),
-    ]);
+    /* org follows */
+    const followsRes = await supabase.from("org_followers").select("org_id").eq("user_id", user.id);
     const fMap: Record<string, boolean> = {};
     (followsRes.data || []).forEach((f: any) => { fMap[f.org_id] = true; });
-    const mMap: Record<string, boolean> = {};
-    (myCirclesRes.data || []).forEach((m: any) => { mMap[m.circle_id] = true; });
-
     /* ─── PEOPLE (relevance filtered, backfill with top activity) ─── */
     const { data: peopleRaw } = await supabase
       .from("profiles")
@@ -470,28 +410,6 @@ const Explore = () => {
       .limit(40);
     const orgs = (orgsRaw || []).filter((o: any) => !fMap[o.id]).slice(0, 10);
 
-    /* ─── CIRCLES (relevance + popular) ─── */
-    const { data: circlesRaw } = await supabase
-      .from("circles")
-      .select("id, name, slug, description, icon_url, member_count, active_7d, type, created_by, created_at")
-      .eq("visibility", "public")
-      .order("member_count", { ascending: false, nullsFirst: false })
-      .order("active_7d", { ascending: false, nullsFirst: false })
-      .limit(40);
-
-    const notMember = (circlesRaw || []).filter((c: any) => !mMap[c.id]);
-    const circleMatched = notMember.filter((c: any) => {
-      const hay = `${c.name || ""} ${c.type || ""}`.toLowerCase();
-      if (profile?.sector && hay.includes(lower(profile.sector))) return true;
-      if (profile?.role && hay.includes(lower(profile.role))) return true;
-      if (profile?.location_city && hay.includes(lower(profile.location_city))) return true;
-      if (viewerInterests.some(t => hay.includes(t))) return true;
-      return false;
-    });
-    const circleSet = new Set(circleMatched.map((c: any) => c.id));
-    const circleBackfill = notMember.filter((c: any) => !circleSet.has(c.id)).slice(0, Math.max(0, 20 - circleMatched.length));
-    const circles = [...circleMatched, ...circleBackfill].slice(0, 20);
-
     /* ─── TOP POSTS (interest-tag overlap or from connections, < 48h) ─── */
     const twoDaysAgo = new Date(Date.now() - 48 * 3600000).toISOString();
     const { data: postsRaw } = await supabase
@@ -525,12 +443,9 @@ const Explore = () => {
       (authors || []).forEach((a: any) => { postAuthors[a.id] = a; });
     }
 
-    /* ─── TRENDING HASHTAGS (last 7 days, posts + circle_posts) ─── */
+    /* ─── TRENDING HASHTAGS (last 7 days) ─── */
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 3600000).toISOString();
-    const [{ data: feedTags }, { data: cpTags }] = await Promise.all([
-      supabase.from("posts").select("hashtags").gte("created_at", sevenDaysAgo).limit(500),
-      supabase.from("circle_posts").select("body").gte("created_at", sevenDaysAgo).limit(500),
-    ]);
+    const { data: feedTags } = await supabase.from("posts").select("hashtags").gte("created_at", sevenDaysAgo).limit(500);
     const tagCount: Record<string, number> = {};
     (feedTags || []).forEach((row: any) => {
       (row.hashtags || []).forEach((h: string) => {
@@ -538,20 +453,12 @@ const Explore = () => {
         if (k) tagCount[k] = (tagCount[k] || 0) + 1;
       });
     });
-    (cpTags || []).forEach((row: any) => {
-      const text = row.body || "";
-      const matches = text.matchAll(HASHTAG_RE);
-      for (const m of matches) {
-        const k = lower(m[1]);
-        if (k) tagCount[k] = (tagCount[k] || 0) + 1;
-      }
-    });
     const hashtags = Object.entries(tagCount)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10)
       .map(([tag, count]) => ({ tag, count }));
 
-    return { sMap, fMap, mMap, people, orgs, circles, posts, postAuthors, hashtags };
+    return { sMap, fMap, people, orgs, posts, postAuthors, hashtags };
   }, [user?.id, profile?.role, profile?.role_subtype, profile?.location_city, profile?.sector, profile?.account_type, (profile as any)?.profession_type, viewerInterests.join(",")]);
 
   const { data: exploreData, isLoading } = useQuery({
@@ -565,7 +472,6 @@ const Explore = () => {
     if (exploreData) {
       setStrandMap(exploreData.sMap);
       setFollowMap(exploreData.fMap);
-      setMemberMap(exploreData.mMap);
     }
   }, [exploreData]);
 
@@ -605,14 +511,6 @@ const Explore = () => {
     }
   };
 
-  const joinCircle = async (circleId: string) => {
-    if (!user) return;
-    const { error } = await supabase.from("circle_members").insert({ circle_id: circleId, user_id: user.id });
-    if (error) { toast.error("Couldn't join"); return; }
-    setMemberMap(prev => ({ ...prev, [circleId]: true }));
-    toast.success("Joined circle");
-  };
-
   const toggleSectionFilter = (k: SectionKey) => {
     setActiveFilter(prev => {
       const next = prev === k ? null : k;
@@ -628,17 +526,16 @@ const Explore = () => {
   const getOrgNavigateTo = (org: any) => org.slug ? `/org/${org.slug}` : "#";
 
   const showPeople = (exploreData?.people.length ?? 0) > 0;
-  const showCircles = (exploreData?.circles.length ?? 0) > 0;
   const showOrgs = (exploreData?.orgs.length ?? 0) > 0;
   const showPosts = (exploreData?.posts.length ?? 0) > 0;
   const showHashtags = (exploreData?.hashtags.length ?? 0) > 0;
-  const anyContent = showPeople || showCircles || showOrgs || showPosts || showHashtags;
+  const anyContent = showPeople || showOrgs || showPosts || showHashtags;
 
   return (
     <main className="mx-auto max-w-6xl px-4 md:px-6 pt-4 pb-24 md:pb-12">
       <PageSEO
         title="Explore Verified Professionals & Organizations | Tiikme"
-        description="Discover verified professionals, organizations, trending opportunities, and circles on Tiikme — India's professional identity network."
+        description="Discover verified professionals, organizations, and trending opportunities on Tiikme — India's professional identity network."
         canonical="https://tiikme.com/app/explore"
         ogType="website"
         twitterCard="summary_large_image"
@@ -660,14 +557,14 @@ const Explore = () => {
             onChange={e => setSearch(e.target.value)}
             onFocus={() => setFocused(true)}
             onBlur={() => setTimeout(() => { setFocused(false); setShowSearchResults(false); }, 200)}
-            placeholder="Search people, companies, circles..."
+            placeholder="Search people, companies..."
             className="w-full outline-none"
             style={{
               height: 48, borderRadius: 16, paddingLeft: 48, paddingRight: 16, fontSize: 14, fontWeight: 400,
-              background: "#FFFFFF",
-              border: focused ? "1px solid rgba(232,115,58,0.50)" : "1px solid #E5E7EB",
-              boxShadow: focused ? "0 0 0 3px rgba(232,115,58,0.10)" : "none",
-              color: "#1A1A2E", transition: "border-color 150ms, box-shadow 150ms",
+              background: "var(--bg-input, var(--surface-2))",
+              border: focused ? "1px solid rgba(255,90,31,0.50)" : "1px solid var(--border-glass)",
+              boxShadow: focused ? "0 0 0 3px rgba(255,90,31,0.10)" : "none",
+              color: "var(--text-1)", transition: "border-color 150ms, box-shadow 150ms",
             }} />
           {search && (
             <button type="button" onClick={() => setSearch("")} className="absolute" style={{ right: 16, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)" }} aria-label="Clear search">
@@ -678,9 +575,9 @@ const Explore = () => {
           {showSearchResults && searchResults.length > 0 && (
             <div className="absolute w-full overflow-y-auto" style={{
               marginTop: 4, maxHeight: 320, padding: 4, borderRadius: 12, zIndex: 30,
-              background: "#FFFFFF",
-              border: "1px solid #E5E7EB",
-              boxShadow: "0 8px 32px rgba(26,26,78,0.12)",
+              background: "var(--bg-card)",
+              border: "1px solid var(--border-glass)",
+              boxShadow: "var(--shadow-lg)",
             }}>
               {searchResults.map((r: any) => (
                 <button key={r.id} type="button"
@@ -728,9 +625,9 @@ const Explore = () => {
                 style={{
                   flexShrink: 0, padding: "0 16px", height: 32, borderRadius: 999,
                   fontSize: 13, fontWeight: 600, whiteSpace: "nowrap",
-                  background: isActive ? "#FF5A1F" : "#FFFFFF",
-                  border: isActive ? "1px solid #FF5A1F" : "1px solid #E5E7EB",
-                  color: isActive ? "#FFFFFF" : "#6B7094",
+                  background: isActive ? "#FF5A1F" : "var(--surface-2)",
+                  border: isActive ? "1px solid #FF5A1F" : "1px solid var(--border-glass)",
+                  color: isActive ? "#FFFFFF" : "var(--text-3)",
                   boxShadow: isActive ? "0 4px 12px rgba(249,115,22,0.25)" : "none",
                 }}
               >
@@ -745,16 +642,16 @@ const Explore = () => {
       {profileIncomplete && !isLoading && (
         <div className="flex items-center" style={{
           gap: 12, padding: 14, marginTop: 16, borderRadius: 12,
-          background: "rgba(232,115,58,0.08)", border: "1px solid rgba(232,115,58,0.20)",
+          background: "rgba(255,90,31,0.08)", border: "1px solid rgba(255,90,31,0.20)",
         }}>
-          <AlertCircle style={{ width: 20, height: 20, color: "#E8733A", flexShrink: 0 }} />
+          <AlertCircle style={{ width: 20, height: 20, color: "#FF5A1F", flexShrink: 0 }} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>Complete your profile for better picks</p>
             <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-secondary)", margin: 0 }}>Add your role, city and interests to personalize Explore.</p>
           </div>
           <Link to="/app/profile" style={{
             padding: "8px 14px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-            background: "#E8733A", color: "#fff", textDecoration: "none", whiteSpace: "nowrap",
+            background: "#FF5A1F", color: "#fff", textDecoration: "none", whiteSpace: "nowrap",
           }}>Edit profile</Link>
         </div>
       )}
@@ -791,24 +688,6 @@ const Explore = () => {
                 strandStatus={strandMap[p.id] || "none"}
                 onStrand={() => handleStrand(p.id)}
                 currentUserId={user?.id}
-              />
-            ))}
-          </CarouselSection>
-        )}
-
-        {showCircles && (!activeFilter || activeFilter === "circles") && (
-          <CarouselSection
-            sectionRef={el => { sectionRefs.current.circles = el; }}
-            title="Circles for you"
-            count={exploreData!.circles.length}
-            seeAllHref="/app/circles"
-          >
-            {exploreData!.circles.slice(0, 20).map(c => (
-              <CircleCarouselCard
-                key={c.id}
-                circle={c}
-                isMember={!!memberMap[c.id]}
-                onJoin={(e) => { e.stopPropagation(); joinCircle(c.id); }}
               />
             ))}
           </CarouselSection>

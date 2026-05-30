@@ -25,15 +25,15 @@ function PrimaryTabs<T extends string>({ tabs, active, onChange }: PrimaryTabsPr
             style={{
               height: 44, padding: "0 16px",
               fontSize: 14, fontWeight: isActive ? 700 : 500,
-              color: isActive ? "#1A1A2E" : "#6B7094",
+              color: isActive ? "var(--text-1)" : "var(--text-3)",
               background: "none", border: "none",
             }}>
             {t.label}
             {t.badge !== undefined && t.badge > 0 && (
               <span style={{
                 minWidth: 20, height: 20, borderRadius: 10, padding: "0 6px",
-                background: isActive ? "#E8733A" : "rgba(0,0,0,0.08)",
-                color: isActive ? "#fff" : "#6B7094",
+                background: isActive ? "#FF5A1F" : "var(--surface-2)",
+                color: isActive ? "#fff" : "var(--text-3)",
                 fontSize: 10, fontWeight: 700,
                 display: "inline-flex", alignItems: "center", justifyContent: "center",
               }}>{t.badge}</span>
@@ -42,7 +42,7 @@ function PrimaryTabs<T extends string>({ tabs, active, onChange }: PrimaryTabsPr
               <span aria-hidden style={{
                 position: "absolute", left: 12, right: 12, bottom: 0, height: 3,
                 borderRadius: "3px 3px 0 0",
-                background: "linear-gradient(90deg, #E8733A, #FF6B9D)",
+                background: "#FF5A1F",
               }} />
             )}
           </button>

@@ -1,6 +1,6 @@
 // src/components/shared/PostActions.tsx
 // Unified post action bar: like, comment, repost, share
-// Works for: feed posts, circle posts, opportunity posts
+// Works for: feed posts, opportunity posts
 // All actions optimistic with rollback on error
 
 import React, { useState, useCallback } from "react";
@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
-type PostSource = "feed" | "circle" | "opportunity";
+type PostSource = "feed" | "opportunity";
 
 interface PostActionsProps {
   postId: string;
@@ -66,18 +66,6 @@ export function PostActions({
             .from("post_reactions")
             .insert({ post_id: postId, user_id: user.id, reaction_type: "like" });
           if (error) throw error;
-        }
-      } else if (source === "circle") {
-        if (wasLiked) {
-          await supabase
-            .from("circle_post_upvotes")
-            .delete()
-            .eq("post_id", postId)
-            .eq("user_id", user.id);
-        } else {
-          await supabase
-            .from("circle_post_upvotes")
-            .insert({ post_id: postId, user_id: user.id });
         }
       } else if (source === "opportunity") {
         if (wasLiked) {
@@ -174,7 +162,7 @@ export function PostActions({
             className={liked ? "fill-[#E8733A] text-[#E8733A]" : ""}
           />
           <span className={liked ? "font-medium text-[#E8733A]" : ""}>
-            {likeCount > 0 ? likeCount : (source === "circle" ? "Upvote" : "Like")}
+            {likeCount > 0 ? likeCount : "Like"}
           </span>
         </button>
 

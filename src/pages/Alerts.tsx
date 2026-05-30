@@ -20,28 +20,28 @@ const ICON_MAP: Record<string, any> = {
 };
 
 const ICON_STYLES: Record<string, { bg: string; color: string }> = {
-  hr: { bg: "rgba(107,33,168,0.1)", color: "#6B21A8" },
-  strand: { bg: "rgba(79,70,229,0.1)", color: "#4F46E5" },
-  strand_request: { bg: "rgba(79,70,229,0.1)", color: "#4F46E5" },
-  verified: { bg: "rgba(245,158,11,0.1)", color: "#F59E0B" },
-  verification_request: { bg: "rgba(245,158,11,0.1)", color: "#F59E0B" },
-  verification_approved: { bg: "rgba(22,163,74,0.1)", color: "#16A34A" },
-  verification_declined: { bg: "rgba(220,38,38,0.1)", color: "#DC2626" },
-  work: { bg: "rgba(3,105,161,0.1)", color: "#0369A1" },
-  opportunity: { bg: "rgba(194,65,12,0.1)", color: "#C2410C" },
-  offer: { bg: "rgba(22,163,74,0.1)", color: "#16A34A" },
-  score: { bg: "rgba(91,79,255,0.1)", color: "#5B4FFF" },
-  challenge: { bg: "rgba(146,64,14,0.1)", color: "#92400E" },
-  like: { bg: "rgba(232,88,10,0.1)", color: "#FF5A1F" },
-  comment: { bg: "rgba(232,88,10,0.1)", color: "#FF5A1F" },
-  repost: { bg: "rgba(79,70,229,0.1)", color: "#4F46E5" },
-  mention: { bg: "rgba(232,115,58,0.1)", color: "#E8733A" },
-  connection_request: { bg: "rgba(79,70,229,0.1)", color: "#4F46E5" },
-  connection_accepted: { bg: "rgba(22,163,74,0.1)", color: "#16A34A" },
-  follow: { bg: "rgba(79,70,229,0.1)", color: "#4F46E5" },
-  new_message: { bg: "rgba(232,115,58,0.1)", color: "#E8733A" },
-  delegation_approval: { bg: "rgba(245,158,11,0.1)", color: "#F59E0B" },
-  ex_member_verification: { bg: "rgba(79,70,229,0.1)", color: "#4F46E5" },
+  hr:                    { bg: "rgba(255,90,31,0.12)",  color: "#FF5A1F" },
+  strand:                { bg: "rgba(255,90,31,0.12)",  color: "#FF5A1F" },
+  strand_request:        { bg: "rgba(255,90,31,0.12)",  color: "#FF5A1F" },
+  verified:              { bg: "rgba(245,158,11,0.12)", color: "#F59E0B" },
+  verification_request:  { bg: "rgba(245,158,11,0.12)", color: "#F59E0B" },
+  verification_approved: { bg: "rgba(22,163,74,0.12)",  color: "#16A34A" },
+  verification_declined: { bg: "rgba(220,38,38,0.12)",  color: "#DC2626" },
+  work:                  { bg: "rgba(45,122,79,0.12)",  color: "#2D7A4F" },
+  opportunity:           { bg: "rgba(196,74,31,0.12)",  color: "#C44A1F" },
+  offer:                 { bg: "rgba(22,163,74,0.12)",  color: "#16A34A" },
+  score:                 { bg: "rgba(255,90,31,0.12)",  color: "#FF5A1F" },
+  challenge:             { bg: "rgba(146,64,14,0.12)",  color: "#92400E" },
+  like:                  { bg: "rgba(255,90,31,0.12)",  color: "#FF5A1F" },
+  comment:               { bg: "rgba(255,90,31,0.12)",  color: "#FF5A1F" },
+  repost:                { bg: "rgba(52,199,89,0.12)",  color: "#34C759" },
+  mention:               { bg: "rgba(255,90,31,0.12)",  color: "#FF5A1F" },
+  connection_request:    { bg: "rgba(255,90,31,0.12)",  color: "#FF5A1F" },
+  connection_accepted:   { bg: "rgba(22,163,74,0.12)",  color: "#16A34A" },
+  follow:                { bg: "rgba(255,90,31,0.12)",  color: "#FF5A1F" },
+  new_message:           { bg: "rgba(255,90,31,0.12)",  color: "#FF5A1F" },
+  delegation_approval:   { bg: "rgba(245,158,11,0.12)", color: "#F59E0B" },
+  ex_member_verification:{ bg: "rgba(255,90,31,0.12)",  color: "#FF5A1F" },
 };
 
 function getTimeAgo(date: Date): string {
@@ -207,13 +207,13 @@ const Alerts = () => {
       <PageSEO title="Alerts | Tiikme" description="Your Tiikme alerts and notifications." noIndex />
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
-          <Bell className="w-6 h-6" style={{ color: "#E8733A" }} />
-          <h1 className="text-[20px] font-bold" style={{ color: "#1A1A2E" }}>Alerts</h1>
+          <Bell className="w-6 h-6" style={{ color: "#FF5A1F" }} />
+          <h1 className="text-[20px] font-bold" style={{ color: "var(--text-1)" }}>Alerts</h1>
         </div>
         {unreadCount > 0 && (
           <button type="button" onClick={markAllRead}
             className="h-8 px-3 rounded-xl text-[12px] font-semibold transition-all duration-200"
-            style={{ background: "rgba(255,255,255,0.20)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.25)", color: "#1A1A2E", cursor: "pointer" }}>
+            style={{ background: "var(--surface-2)", border: "1px solid var(--border-glass)", color: "var(--text-2)", cursor: "pointer" }}>
             Mark all read
           </button>
         )}
@@ -225,8 +225,8 @@ const Alerts = () => {
           <button type="button" key={ftab} onClick={() => setActiveTab(ftab)}
             className="px-5 py-2 rounded-[20px] text-[13px] font-semibold transition-all duration-200"
             style={activeTab === ftab
-              ? { background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", boxShadow: "0 4px 16px rgba(232,115,58,0.30)", cursor: "pointer" }
-              : { background: "rgba(255,255,255,0.20)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.25)", color: "#1A1A2E", cursor: "pointer" }
+              ? { background: "#FF5A1F", color: "#fff", border: "none", boxShadow: "0 4px 16px rgba(255,90,31,0.30)", cursor: "pointer" }
+              : { background: "var(--surface-2)", border: "1px solid var(--border-glass)", color: "var(--text-2)", cursor: "pointer" }
             }>
             {ftab === "Unread" ? `Unread (${unreadCount})` : ftab}
           </button>
@@ -238,8 +238,8 @@ const Alerts = () => {
         ...Object.entries(groups),
       ].map(([group, groupAlerts]) => (
         <div key={group} className="mb-6">
-          <p className="text-[11px] font-bold tracking-wider uppercase mb-2 px-1" style={{ color: "#6B7094" }}>{group}</p>
-          <div style={{ borderRadius: 12, overflow: "hidden", border: "1px solid #F1F3F5", background: "#FFFFFF" }}>
+          <p className="text-[11px] font-bold tracking-wider uppercase mb-2 px-1" style={{ color: "var(--text-3)" }}>{group}</p>
+          <div style={{ borderRadius: 12, overflow: "hidden", border: "1px solid var(--border-glass)", background: "var(--bg-card)" }}>
             {groupAlerts.map((notif, i) => {
               const unread = !notif.is_read;
               const style = ICON_STYLES[notif.type] || ICON_STYLES.score;
@@ -255,8 +255,8 @@ const Alerts = () => {
                   className="flex items-start gap-3 cursor-pointer transition-colors duration-150"
                   style={{
                     padding: 16,
-                    background: unread ? "#FFF8F5" : "#FFFFFF",
-                    borderBottom: i === groupAlerts.length - 1 ? "none" : "1px solid #F1F3F5",
+                    background: unread ? "rgba(255,90,31,0.05)" : "transparent",
+                    borderBottom: i === groupAlerts.length - 1 ? "none" : "1px solid var(--border-subtle)",
                   }}
                   onClick={async () => {
                     if (unread) {
@@ -267,7 +267,7 @@ const Alerts = () => {
                     if (notif.action_url && !isStrandRequest && !isOffer) navigate(notif.action_url);
                   }}>
                   <div className="w-2 flex items-start pt-2 shrink-0">
-                    {unread && <span className="w-2 h-2 rounded-full" style={{ background: "#E8733A" }} />}
+                    {unread && <span className="w-2 h-2 rounded-full" style={{ background: "#FF5A1F" }} />}
                   </div>
                   {(() => {
                     const actor = notif.data?.actor_id ? actorProfiles[notif.data.actor_id] : null;
@@ -275,7 +275,7 @@ const Alerts = () => {
                       return (
                         <div className="relative shrink-0">
                           <AvatarSquare src={actor.avatar_url} name={actor.full_name || "U"} size={36} />
-                          <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: isOffer ? "rgba(22,163,74,0.9)" : style.bg, border: "2px solid #FFFFFF" }}>
+                          <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: isOffer ? "rgba(22,163,74,0.9)" : style.bg, border: "2px solid var(--bg-card)" }}>
                             <Icon className="w-2.5 h-2.5" style={{ color: isOffer ? "#fff" : style.color }} />
                           </div>
                         </div>
@@ -288,18 +288,18 @@ const Alerts = () => {
                     );
                   })()}
                   <div className="flex-1 min-w-0">
-                    <p className="text-[14px] leading-relaxed" style={{ color: "#1A1A2E", fontWeight: 500 }}>
+                    <p className="text-[14px] leading-relaxed" style={{ color: "var(--text-1)", fontWeight: 500 }}>
                       {notif.title || notif.body}
                     </p>
                     {notif.body && notif.title && (
-                      <p className="text-[13px] mt-0.5" style={{ color: "#6B7094" }}>{notif.body}</p>
+                      <p className="text-[13px] mt-0.5" style={{ color: "var(--text-3)" }}>{notif.body}</p>
                     )}
                     {isStrandRequest && !handled && notif.data?.actor_id && (
                       <div className="flex gap-2 mt-2">
-                        <button type="button" className="h-8 px-4 rounded-xl text-[11px] font-bold" style={{ background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); acceptStrand(notif); }}>
+                        <button type="button" className="h-8 px-4 rounded-xl text-[11px] font-bold" style={{ background: "#FF5A1F", color: "#fff", border: "none", cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); acceptStrand(notif); }}>
                           <Check className="w-3 h-3 inline mr-1" /> Accept
                         </button>
-                        <button type="button" className="h-8 px-3 rounded-xl text-[11px] font-bold" style={{ background: "rgba(255,255,255,0.20)", border: "1px solid rgba(255,255,255,0.25)", color: "#1A1A2E", cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); declineStrand(notif); }}>
+                        <button type="button" className="h-8 px-3 rounded-xl text-[11px] font-bold" style={{ background: "var(--surface-2)", border: "1px solid var(--border-glass)", color: "var(--text-1)", cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); declineStrand(notif); }}>
                           <X className="w-3 h-3 inline mr-1" /> Decline
                         </button>
                       </div>
@@ -309,14 +309,14 @@ const Alerts = () => {
                         <button type="button" className="h-8 px-4 rounded-xl text-[11px] font-bold" style={{ background: "#16A34A", color: "#fff", border: "none", cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); acceptOffer(notif); }}>
                           Accept Offer
                         </button>
-                        <button type="button" className="h-8 px-3 rounded-xl text-[11px] font-bold" style={{ background: "rgba(255,255,255,0.20)", border: "1px solid rgba(255,255,255,0.25)", color: "#1A1A2E", cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); declineOffer(notif); }}>
+                        <button type="button" className="h-8 px-3 rounded-xl text-[11px] font-bold" style={{ background: "var(--surface-2)", border: "1px solid var(--border-glass)", color: "var(--text-1)", cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); declineOffer(notif); }}>
                           Decline
                         </button>
                       </div>
                     )}
                     {isDelegation && !handled && (
                       <div className="flex gap-2 mt-2">
-                        <button type="button" className="h-8 px-4 rounded-xl text-[11px] font-bold" style={{ background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", cursor: "pointer" }} onClick={async (e) => {
+                        <button type="button" className="h-8 px-4 rounded-xl text-[11px] font-bold" style={{ background: "#FF5A1F", color: "#fff", border: "none", cursor: "pointer" }} onClick={async (e) => {
                           e.stopPropagation();
                           const ruleData = notif.data;
                           if (ruleData?.org_id && ruleData?.member_id && ruleData?.access_type) {
@@ -329,7 +329,7 @@ const Alerts = () => {
                         }}>
                           <Check className="w-3 h-3 inline mr-1" /> Approve
                         </button>
-                        <button type="button" className="h-8 px-3 rounded-xl text-[11px] font-bold" style={{ background: "rgba(255,255,255,0.20)", border: "1px solid rgba(255,255,255,0.25)", color: "#1A1A2E", cursor: "pointer" }} onClick={async (e) => {
+                        <button type="button" className="h-8 px-3 rounded-xl text-[11px] font-bold" style={{ background: "var(--surface-2)", border: "1px solid var(--border-glass)", color: "var(--text-1)", cursor: "pointer" }} onClick={async (e) => {
                           e.stopPropagation();
                           const ruleData = notif.data;
                           if (ruleData?.org_id && ruleData?.member_id && ruleData?.access_type) {
@@ -346,7 +346,7 @@ const Alerts = () => {
                     )}
                     {isExVerification && !handled && (
                       <div className="flex gap-2 mt-2">
-                        <button type="button" className="h-8 px-4 rounded-xl text-[11px] font-bold" style={{ background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none", cursor: "pointer" }} onClick={async (e) => {
+                        <button type="button" className="h-8 px-4 rounded-xl text-[11px] font-bold" style={{ background: "#FF5A1F", color: "#fff", border: "none", cursor: "pointer" }} onClick={async (e) => {
                           e.stopPropagation();
                           await supabase.from("alerts").update({ is_read: true } as any).eq("id", notif.id);
                           setAlerts(prev => prev.map(a => a.id === notif.id ? { ...a, is_read: true, _accepted: true } : a));
@@ -355,7 +355,7 @@ const Alerts = () => {
                         }}>
                           <Check className="w-3 h-3 inline mr-1" /> Approve
                         </button>
-                        <button type="button" className="h-8 px-3 rounded-xl text-[11px] font-bold" style={{ background: "rgba(255,255,255,0.20)", border: "1px solid rgba(255,255,255,0.25)", color: "#1A1A2E", cursor: "pointer" }} onClick={async (e) => {
+                        <button type="button" className="h-8 px-3 rounded-xl text-[11px] font-bold" style={{ background: "var(--surface-2)", border: "1px solid var(--border-glass)", color: "var(--text-1)", cursor: "pointer" }} onClick={async (e) => {
                           e.stopPropagation();
                           await supabase.from("alerts").update({ is_read: true } as any).eq("id", notif.id);
                           setAlerts(prev => prev.map(a => a.id === notif.id ? { ...a, is_read: true, _declined: true } : a));
@@ -366,9 +366,9 @@ const Alerts = () => {
                       </div>
                     )}
                     {notif._accepted && <span className="text-[11px] font-bold mt-1 block" style={{ color: "#10B981" }}>✓ {isOffer ? "Joined" : "Accepted"}</span>}
-                    {notif._declined && <span className="text-[11px] font-bold mt-1 block" style={{ color: "#6B7094" }}>Declined</span>}
+                    {notif._declined && <span className="text-[11px] font-bold mt-1 block" style={{ color: "var(--text-3)" }}>Declined</span>}
                   </div>
-                  <span className="text-[12px] shrink-0 pt-0.5" style={{ color: "#6B7094" }}>
+                  <span className="text-[12px] shrink-0 pt-0.5" style={{ color: "var(--text-3)" }}>
                     {notif.created_at ? getTimeAgo(new Date(notif.created_at)) : ""}
                   </span>
                 </motion.div>
@@ -380,9 +380,9 @@ const Alerts = () => {
 
       {filteredAlerts.length === 0 && (
         <div className="text-center py-12">
-          <Bell className="w-10 h-10 mx-auto mb-3" style={{ color: "#6B7094" }} />
-          <p className="text-[15px] font-bold mb-1" style={{ color: "#1A1A2E" }}>No alerts yet</p>
-          <p className="text-[13px]" style={{ color: "#6B7094" }}>You'll be notified about connections, opportunities, and activity here.</p>
+          <Bell className="w-10 h-10 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
+          <p className="text-[15px] font-bold mb-1" style={{ color: "var(--text-1)" }}>No alerts yet</p>
+          <p className="text-[13px]" style={{ color: "var(--text-3)" }}>You'll be notified about connections, opportunities, and activity here.</p>
         </div>
       )}
 
@@ -392,15 +392,15 @@ const Alerts = () => {
           style={{ background: "rgba(26, 26, 78, 0.40)", backdropFilter: "blur(8px)" }}
           onClick={() => setShowJoinModal(null)}>
           <div className="glass-light w-full max-w-[400px]" style={{ padding: 24, borderRadius: 24 }} onClick={e => e.stopPropagation()}>
-            <h2 className="text-[22px] font-bold mb-2" style={{ color: "#1A1A2E" }}>Did you join {showJoinModal.data?.org_name || "the organization"}?</h2>
-            <p className="text-[14px] mb-6" style={{ color: "#6B7094" }}>We'll update your profile automatically</p>
+            <h2 className="text-[22px] font-bold mb-2" style={{ color: "var(--text-1)" }}>Did you join {showJoinModal.data?.org_name || "the organization"}?</h2>
+            <p className="text-[14px] mb-6" style={{ color: "var(--text-3)" }}>We'll update your profile automatically</p>
             <button type="button" onClick={() => confirmJoin(showJoinModal)}
               className="w-full h-[52px] rounded-2xl text-[15px] font-bold mb-3"
               style={{ background: "#16A34A", color: "#fff", border: "none", cursor: "pointer" }}>
               Yes, I joined!
             </button>
             <button type="button" onClick={() => setShowJoinModal(null)}
-              className="w-full text-center text-[13px] cursor-pointer" style={{ color: "#6B7094" }}>
+              className="w-full text-center text-[13px] cursor-pointer" style={{ color: "var(--text-3)" }}>
               Not yet — I'll confirm later
             </button>
           </div>

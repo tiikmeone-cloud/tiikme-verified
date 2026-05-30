@@ -91,7 +91,7 @@ export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonC
             <ActivityScoreMini score={p.activity_score} viewerIsOwner={currentUserId === p.id} />
           )}
           {p.account_type === "institution" && (
-            <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 999, background: "rgba(232,115,58,0.12)", color: "#E8733A" }}>
+            <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 999, background: "rgba(255,90,31,0.12)", color: "#FF5A1F" }}>
               Company
             </span>
           )}
@@ -284,7 +284,7 @@ export function TopicPill({ tag, count, onClick }: TopicPillProps) {
         flexShrink: 0, scrollSnapAlign: "start", cursor: "pointer",
         padding: "0 18px", height: 34, borderRadius: 12,
         background: "var(--bg-card)", border: "1px solid var(--border-glass)",
-        color: "#E8733A", fontSize: 13, fontWeight: 600,
+        color: "#FF5A1F", fontSize: 13, fontWeight: 600,
         transition: "transform 150ms",
       }}
       onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; }}
@@ -317,11 +317,11 @@ export function StartupCard({ startup, page }: { startup: any; page?: any }) {
       onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
       onClick={() => slug ? navigate(`/p/${slug}`) : undefined}
     >
-      <AvatarSquare src={page?.logo_url} name={name} size={64} bgColor="#7C3AED" />
+      <AvatarSquare src={page?.logo_url} name={name} size={64} bgColor="#FF5A1F" />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-start", gap: 4, minWidth: 0, paddingTop: 1 }}>
         <span style={{ ...clampTwoLines, fontWeight: 700, fontSize: 15, lineHeight: "20px", color: "var(--text-primary)" }}>{name}</span>
         {stage && (
-          <span style={{ fontSize: 12, color: "#7C3AED" }}>{stage}</span>
+          <span style={{ fontSize: 12, color: "#FF5A1F" }}>{stage}</span>
         )}
         {sectors.length > 0 && (
           <span style={{ ...clampTwoLines, fontSize: 12, lineHeight: "16px", color: "var(--text-muted)" }}>{sectors.slice(0, 3).join(", ")}</span>
@@ -332,7 +332,7 @@ export function StartupCard({ startup, page }: { startup: any; page?: any }) {
             marginTop: 6, padding: "5px 16px", borderRadius: 8,
             fontSize: 12, fontWeight: 600, border: "none",
             alignSelf: "flex-start",
-            background: "linear-gradient(135deg, #7C3AED, #A855F7)", color: "#fff",
+            background: "#FF5A1F", color: "#fff",
           }}
         >Learn More</span>
       </div>

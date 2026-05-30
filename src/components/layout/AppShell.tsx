@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutGrid, Compass, Users, Target, User,
   Link2, Bell, SlidersHorizontal, PencilLine, LogOut, Home,
-  Plus, Search, ClipboardList, Bot, ShieldCheck, Building2,
+  Plus, Search, ClipboardList, Bot, ShieldCheck, Building2, Briefcase,
 } from "lucide-react";
 import ThemeLogo from "@/components/ThemeLogo";
 import { toast } from "sonner";
@@ -27,7 +27,6 @@ const BASE_NAV_GROUPS = [
     label: "WORK",
     items: [
       { label: "Profile", icon: User, path: "/app/profile" },
-      { label: "Circles", icon: Users, path: "/app/circles" },
     ],
   },
   {
@@ -166,13 +165,13 @@ const AppShell = ({ children }: { children: ReactNode }) => {
   // Format alert count badge: 1-9 exact, 10-99 exact, 100+ shows "99+"
   const alertCountLabel = unreadAlerts > 99 ? "99+" : String(unreadAlerts);
 
-  // Mobile bottom nav items (left-of-center and right-of-center)
+  // Mobile bottom nav: Home · Together · [Create FAB] · Jobs · Profile
   const mobileLeftItems = [
-    { label: "Feed", icon: Home, path: "/app/feed" },
-    { label: "Explore", icon: Compass, path: "/app/explore" },
+    { label: "Home", icon: Home, path: "/app/feed" },
+    { label: "Together", icon: Users, path: "/app/connections" },
   ];
   const mobileRightItems = [
-    { label: "Alerts", icon: Bell, path: "/app/alerts" },
+    { label: "Jobs", icon: Briefcase, path: "/app/opportunities" },
     { label: isInstitution ? "Org" : "Profile", icon: User, path: profilePath, isProfile: true },
   ];
 
@@ -183,10 +182,10 @@ const AppShell = ({ children }: { children: ReactNode }) => {
         className="hidden md:flex flex-col fixed inset-y-0 left-0 z-40"
         style={{
           width: 220,
-          background: "rgba(255,255,255,0.72)",
+          background: "var(--sidebar-background)",
           backdropFilter: "blur(24px)",
           WebkitBackdropFilter: "blur(24px)",
-          borderRight: "1px solid rgba(0,0,0,0.06)",
+          borderRight: "1px solid var(--sidebar-border)",
           padding: "16px 12px",
           justifyContent: "space-between",
         }}
@@ -216,23 +215,23 @@ const AppShell = ({ children }: { children: ReactNode }) => {
                       className="flex items-center relative"
                       style={{
                         height: 38, padding: "0 12px", borderRadius: 10, gap: 10, marginBottom: 2,
-                        background: active ? "rgba(232,115,58,0.08)" : "transparent",
-                        color: active ? "#E8733A" : "var(--text-primary)",
+                        background: active ? "var(--sidebar-item-active)" : "transparent",
+                        color: active ? "#FF5A1F" : "var(--text-primary)",
                         fontWeight: active ? 600 : 500, fontSize: 13,
-                        borderLeft: active ? "3px solid #E8733A" : "3px solid transparent",
+                        borderLeft: active ? "3px solid #FF5A1F" : "3px solid transparent",
                         transition: "all 150ms ease",
                       }}
-                      onMouseEnter={e => { prefetchRoute(item.path); prefetchOnHover(queryClient, item.path, user?.id); if (!active) e.currentTarget.style.background = "rgba(0,0,0,0.03)"; }}
+                      onMouseEnter={e => { prefetchRoute(item.path); prefetchOnHover(queryClient, item.path, user?.id); if (!active) e.currentTarget.style.background = "var(--sidebar-item-hover)"; }}
                       onFocus={() => { prefetchRoute(item.path); prefetchOnHover(queryClient, item.path, user?.id); }}
                       onMouseLeave={e => { if (!active) e.currentTarget.style.background = active ? "rgba(232,115,58,0.08)" : "transparent"; }}
                     >
                       <div className="relative" style={{ display: "flex", alignItems: "center" }}>
-                        <item.icon style={{ width: 18, height: 18, flexShrink: 0, color: active ? "#E8733A" : "var(--text-secondary)" }} strokeWidth={1.8} />
+                        <item.icon style={{ width: 18, height: 18, flexShrink: 0, color: active ? "#FF5A1F" : "var(--text-secondary)" }} strokeWidth={1.8} />
                         {badge && badge > 0 && (
                           <span style={{
                             position: "absolute", top: -1, right: -3,
                             width: 8, height: 8, borderRadius: "50%",
-                            background: "#E8733A", border: "1.5px solid rgba(255,255,255,0.95)",
+                            background: "#FF5A1F", border: "1.5px solid var(--sidebar-background)",
                           }} />
                         )}
                       </div>
@@ -250,10 +249,10 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             className="flex items-center justify-center gap-2 active:scale-[0.97]"
             style={{
               width: "100%", height: 40, margin: "12px 0",
-              background: "linear-gradient(135deg, #E8733A, #FF6B9D)",
-              border: "1px solid var(--border-glass)", borderRadius: 10,
+              background: "#FF5A1F",
+              border: "none", borderRadius: 10,
               fontSize: 13, fontWeight: 600, color: "white",
-              boxShadow: "0 4px 16px rgba(232,115,58,0.30)",
+              boxShadow: "0 4px 16px rgba(255,90,31,0.30)",
               cursor: "pointer", transition: "all 200ms ease",
             }}
           >
@@ -261,7 +260,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           </button>
         </div>
 
-        <div style={{ paddingTop: 12, borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+        <div style={{ paddingTop: 12, borderTop: "1px solid var(--sidebar-border)" }}>
           <Link to={profilePath} className="flex items-center" style={{ gap: 10 }}>
             <AvatarSquare src={identityAvatar} name={identityName || "You"} size={32} />
             <div className="min-w-0 flex-1">
@@ -298,10 +297,10 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           className="md:hidden sticky top-0 z-50 flex items-center justify-between px-4"
           style={{
             height: 52,
-            background: "rgba(255,255,255,0.92)",
+            background: "var(--sidebar-background)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
-            borderBottom: "1px solid rgba(0,0,0,0.06)",
+            borderBottom: "1px solid var(--sidebar-border)",
           }}
         >
           <Link to="/app/feed" aria-label="Tiikme home">
@@ -314,7 +313,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
               aria-label="Search and explore"
               className="relative w-10 h-10 flex items-center justify-center rounded-full active:scale-95"
             >
-              <Search style={{ width: 22, height: 22, color: "#374151" }} strokeWidth={1.8} />
+              <Search style={{ width: 22, height: 22, color: "var(--text-secondary)" }} strokeWidth={1.8} />
             </Link>
             {/* Alerts bell with number count */}
             <Link
@@ -322,7 +321,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
               aria-label="Alerts"
               className="relative w-10 h-10 flex items-center justify-center rounded-full active:scale-95"
             >
-              <Bell style={{ width: 22, height: 22, color: "#374151" }} strokeWidth={1.8} />
+              <Bell style={{ width: 22, height: 22, color: "var(--text-secondary)" }} strokeWidth={1.8} />
               {unreadAlerts > 0 && (
                 <span
                   className="absolute flex items-center justify-center"
@@ -330,9 +329,9 @@ const AppShell = ({ children }: { children: ReactNode }) => {
                     top: 4, right: 2,
                     minWidth: 16, height: 16, padding: "0 4px",
                     borderRadius: 8,
-                    background: "#EF4444", color: "white",
+                    background: "#FF5A1F", color: "white",
                     fontSize: 10, fontWeight: 700, lineHeight: 1,
-                    border: "2px solid rgba(255,255,255,0.95)",
+                    border: "2px solid var(--sidebar-background)",
                   }}
                 >
                   {alertCountLabel}
@@ -345,15 +344,15 @@ const AppShell = ({ children }: { children: ReactNode }) => {
         <div key={pathname} className="page-enter">{children}</div>
       </main>
 
-      {/* ═══ MOBILE BOTTOM NAV — 5 items (Feed · Explore · Create · Alerts · Profile) ═══ */}
+      {/* ═══ MOBILE BOTTOM NAV — Home · Together · Create · Jobs · Profile ═══ */}
       <nav
         className="md:hidden fixed left-0 right-0 z-50"
         style={{
           bottom: 0,
           height: "calc(64px + env(safe-area-inset-bottom))",
           paddingBottom: "env(safe-area-inset-bottom)",
-          background: "#FFFFFF",
-          borderTop: "1px solid #E5E7EB",
+          background: "var(--sidebar-background)",
+          borderTop: "1px solid var(--sidebar-border)",
         }}
         aria-label="Primary"
       >
@@ -414,8 +413,8 @@ const AppShell = ({ children }: { children: ReactNode }) => {
                 transform: "translateX(-50%)",
                 width: 52, height: 52, borderRadius: "50%",
                 background: "#FF5A1F",
-                boxShadow: "0 8px 20px rgba(249,115,22,0.35), 0 2px 6px rgba(0,0,0,0.10)",
-                border: "3px solid #FFFFFF",
+                boxShadow: "0 8px 20px rgba(255,90,31,0.35), 0 2px 6px rgba(0,0,0,0.20)",
+                border: "3px solid var(--sidebar-background)",
               }}
             >
               <Plus style={{ width: 26, height: 26, color: "white" }} strokeWidth={2.6} />
@@ -486,7 +485,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
                         fontSize: 9, fontWeight: 700,
                         display: "flex", alignItems: "center", justifyContent: "center",
                         padding: "0 3px", lineHeight: 1,
-                        border: "1.5px solid #fff",
+                        border: "1.5px solid var(--sidebar-background)",
                       }}>
                         {badge > 99 ? "99+" : badge}
                       </span>

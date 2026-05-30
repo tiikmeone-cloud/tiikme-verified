@@ -53,7 +53,6 @@ export default function OrganizationPage() {
   const [members, setMembers] = useState<any[]>([]);
   const [opps, setOpps] = useState<any[]>([]);
   const [posts, setPosts] = useState<any[]>([]);
-  const [communityCircles, setCommunityCircles] = useState<any[]>([]);
 
   useEffect(() => {
     if (!slug) return;
@@ -63,21 +62,18 @@ export default function OrganizationPage() {
       setOrg(data);
       setFollowerCount(data.followers_count || 0);
 
-      const [membersRes, oppsRes, postsRes, circlesRes] = await Promise.allSettled([
+      const [membersRes, oppsRes, postsRes] = await Promise.allSettled([
         supabase.from("org_members")
           .select("*, profile:profiles!org_members_user_id_fkey(id, full_name, avatar_url, headline, role)")
           .eq("org_id", data.id).eq("is_current", true).order("joined_at", { ascending: true }),
         supabase.from("opportunities").select("*").eq("org_id", data.id).order("created_at", { ascending: false }).limit(50),
         supabase.from("posts").select("*, author:profiles!posts_author_id_fkey(full_name, avatar_url), post_reactions(count), post_comments(count)")
           .eq("posted_by_org", data.id).order("created_at", { ascending: false }).limit(20),
-        supabase.from("circles").select("id, name, slug, icon_url, description, member_count, active_7d, visibility")
-          .eq("linked_org_id", data.id).order("member_count", { ascending: false }),
       ]);
 
       if (membersRes.status === "fulfilled") setMembers((membersRes.value as any).data || []);
       if (oppsRes.status === "fulfilled") setOpps((oppsRes.value as any).data || []);
       if (postsRes.status === "fulfilled") setPosts((postsRes.value as any).data || []);
-      if (circlesRes.status === "fulfilled") setCommunityCircles((circlesRes.value as any).data || []);
 
       if (user) {
         const isInstitution = profile?.account_type === "institution";
@@ -504,63 +500,7 @@ export default function OrganizationPage() {
           )}
         </ScrollSection>
 
-        {/* ── SECTION 4: COMMUNITY ── */}
-        <ScrollSection>
-          <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-            <SectionHeader icon={Users} iconColor="#0E7490" title="Community" count={communityCircles.length} />
-            {isAdmin && (
-              <button type="button" onClick={() => navigate(`/app/circles/create?org=${org.id}`)} className="cursor-pointer" style={{
-                height: 28, padding: "0 10px", borderRadius: 6, fontSize: 11, fontWeight: 600,
-                background: "rgba(14,116,144,0.10)", color: "#0E7490", border: "1px solid rgba(14,116,144,0.20)",
-                display: "inline-flex", alignItems: "center", gap: 4,
-              }}>
-                <Plus style={{ width: 11, height: 11 }} /> New Circle
-              </button>
-            )}
-          </div>
-          {communityCircles.length === 0 ? (
-            <div style={{ padding: "16px 0", textAlign: "center" }}>
-              <p style={{ fontSize: 13, color: "#9CA3C0" }}>
-                {isAdmin ? "Create a circle so your followers can talk to each other." : "No community circles yet."}
-              </p>
-              {isAdmin && (
-                <button type="button" onClick={() => navigate(`/app/circles/create?org=${org.id}`)} className="cursor-pointer" style={{
-                  marginTop: 8, height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-                  background: "rgba(14,116,144,0.10)", color: "#0E7490", border: "1px solid rgba(14,116,144,0.20)",
-                  display: "inline-flex", alignItems: "center", gap: 4,
-                }}>
-                  <Plus style={{ width: 12, height: 12 }} /> Create first circle
-                </button>
-              )}
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-              {communityCircles.map((c, idx) => (
-                <Link key={c.id} to={`/app/circles/${c.slug}`} className="flex items-center" style={{
-                  gap: 10, padding: "10px 0",
-                  borderBottom: idx < communityCircles.length - 1 ? "1px solid rgba(0,0,0,0.06)" : "none",
-                }}>
-                  <div className="flex items-center justify-center shrink-0" style={{
-                    width: 36, height: 36, borderRadius: 10,
-                    background: "rgba(14,116,144,0.10)", fontSize: 18,
-                  }}>
-                    {c.icon_url || "💬"}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</p>
-                    <p style={{ fontSize: 11, color: "#9CA3C0" }}>
-                      {c.member_count || 0} member{(c.member_count || 0) === 1 ? "" : "s"}
-                      {c.active_7d ? ` · ${c.active_7d} active this week` : ""}
-                    </p>
-                  </div>
-                  <ChevronRight style={{ width: 14, height: 14, color: "#9CA3C0", flexShrink: 0 }} />
-                </Link>
-              ))}
-            </div>
-          )}
-        </ScrollSection>
-
-        {/* ── SECTION 5: TEAM ── */}
+        {/* ── SECTION 4: TEAM ── */}
         <ScrollSection>
           <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
             <SectionHeader icon={Users} iconColor="#9CA3C0" title="Team" count={members.length} />

@@ -54,9 +54,7 @@ const OrganizationCreate = lazyWithRetry(() => import("./pages/OrganizationCreat
 const ApplicationsDashboard = lazyWithRetry(() => import("./pages/ApplicationsDashboard.tsx"), "ApplicationsDashboard");
 const OpportunityCreate = lazyWithRetry(() => import("./pages/OpportunityCreate.tsx"), "OpportunityCreate");
 const WorkspacePage = lazyWithRetry(() => import("./pages/Workspace.tsx"), "WorkspacePage");
-const CirclesPage = lazyWithRetry(() => import("./pages/Circles.tsx"), "CirclesPage");
-const CircleCreate = lazyWithRetry(() => import("./pages/CircleCreate.tsx"), "CircleCreate");
-const CirclePostDetail = lazyWithRetry(() => import("./pages/CirclePostDetail.tsx"), "CirclePostDetail");
+
 const VerificationInbox = lazyWithRetry(() => import("./pages/VerificationInbox.tsx"), "VerificationInbox");
 const Academy = lazyWithRetry(() => import("./pages/Academy.tsx"), "Academy");
 const BuildLog = lazyWithRetry(() => import("./pages/BuildLog.tsx"), "BuildLog");
@@ -167,11 +165,9 @@ const AppRoutes = () => {
             <Route path="/app/opportunities/campaign/:campaignId/applicants" element={<Shell><CampaignApplicants /></Shell>} />
             <Route path="/app/applications" element={<Shell><MyApplications /></Shell>} />
             <Route path="/app/pilot" element={<Shell><TiikmePilot /></Shell>} />
-            <Route path="/app/workspace" element={<Navigate to="/app/circles" replace />} />
-            <Route path="/app/circles" element={<Shell><CirclesPage /></Shell>} />
-            <Route path="/app/circles/create" element={<Shell><CircleCreate /></Shell>} />
-            <Route path="/app/circles/:circleSlug" element={<Shell><CirclesPage /></Shell>} />
-            <Route path="/app/circles/:circleSlug/:postId" element={<Shell><CirclePostDetail /></Shell>} />
+            <Route path="/app/workspace" element={<Navigate to="/app/feed" replace />} />
+            <Route path="/app/circles" element={<Navigate to="/app/feed" replace />} />
+            <Route path="/app/circles/*" element={<Navigate to="/app/feed" replace />} />
             <Route path="/app/connections" element={<Shell><ConnectionsPage /></Shell>} />
             <Route path="/app/strands" element={<Shell><Strands /></Shell>} />
             <Route path="/app/alerts" element={<Shell><Alerts /></Shell>} />

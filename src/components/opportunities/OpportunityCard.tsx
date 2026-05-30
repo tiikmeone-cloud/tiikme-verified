@@ -1,7 +1,3 @@
-// src/components/opportunities/OpportunityCard.tsx
-// Fixed: full-width, Apply Now at bottom, applicant count at bottom-left,
-// working like/comment/refer, edit/delete for own opportunities
-
 import { useState } from "react";
 import {
   MapPin, Briefcase, Wifi, Clock, Users, Heart, MessageCircle,
@@ -12,7 +8,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import AvatarSquare from "@/components/ui/AvatarSquare";
-import { formatRelativeTime } from "@/utils/time";
 import SendJDModal from "@/components/opportunities/SendJDModal";
 import OpportunityCommentPanel from "@/components/opportunities/OpportunityCommentPanel";
 
@@ -55,6 +50,18 @@ interface OpportunityCardProps {
   onDelete?: (oppId: string) => void;
 }
 
+const typeConfig: Record<string, { bg: string; color: string }> = {
+  job:        { bg: "rgba(196,74,31,0.10)",  color: "#C44A1F" },
+  full_time:  { bg: "rgba(196,74,31,0.10)",  color: "#C44A1F" },
+  internship: { bg: "rgba(22,101,52,0.10)",  color: "#166534" },
+  freelance:  { bg: "rgba(196,74,31,0.10)",  color: "#C44A1F" },
+  gig:        { bg: "rgba(196,74,31,0.10)",  color: "#C44A1F" },
+  contract:   { bg: "rgba(146,64,14,0.10)",  color: "#92400E" },
+  hackathon:  { bg: "rgba(196,74,31,0.10)",  color: "#C44A1F" },
+  volunteer:  { bg: "rgba(159,18,57,0.10)",  color: "#9F1239" },
+  fellowship: { bg: "rgba(20,83,45,0.10)",   color: "#14532D" },
+};
+
 export function OpportunityCard({
   opp,
   company,
@@ -91,18 +98,6 @@ export function OpportunityCard({
     return null;
   };
 
-  const typeColor: Record<string, string> = {
-    job: "bg-[#FFF7ED] text-[#C44A1F]",
-    full_time: "bg-[#FFF7ED] text-[#C44A1F]",
-    internship: "bg-[#F0FDF4] text-[#166534]",
-    freelance: "bg-[#F0F9FF] text-[#0369A1]",
-    gig: "bg-[#F0F9FF] text-[#0369A1]",
-    contract: "bg-[#FFF7ED] text-[#92400E]",
-    hackathon: "bg-[#FDF4FF] text-[#7E22CE]",
-    volunteer: "bg-[#FFF1F2] text-[#9F1239]",
-    fellowship: "bg-[#F0FDF4] text-[#14532D]",
-  };
-
   const handleLike = async () => {
     if (!user) { toast.error("Sign in to like"); return; }
     const wasLiked = liked;
@@ -125,10 +120,7 @@ export function OpportunityCard({
   const handleApply = async () => {
     if (!user) { navigate("/sign-in"); return; }
     if (applied) return;
-    if (onApply) {
-      onApply(opp);
-      return;
-    }
+    if (onApply) { onApply(opp); return; }
     setApplying(true);
     try {
       const { error } = await supabase.from("opportunity_applications").insert({
@@ -141,7 +133,7 @@ export function OpportunityCard({
       toast.success("Application submitted!");
     } catch (error: unknown) {
       if (typeof error === "object" && error && "code" in error && error.code === "23505") {
-        setApplied(true); // already applied
+        setApplied(true);
       } else {
         toast.error("Could not apply. Try again.");
       }
@@ -191,6 +183,7 @@ export function OpportunityCard({
 
   const applicantCount = opp.responses_count ?? opp.applications_count ?? 0;
   const salary = salaryLabel();
+  const tc = typeConfig[opp.type] || { bg: "var(--surface-2)", color: "var(--text-2)" };
 
   const expiryBadge = (() => {
     if (!opp.is_open) return { label: "Closed", urgent: false, closed: true };
@@ -203,57 +196,69 @@ export function OpportunityCard({
     if (days <= 14) return { label: `${days}d left`, urgent: false, closed: false };
     return null;
   })();
+
   const handleRefer = () => {
-    if (onRefer) {
-      onRefer(opp);
-      return;
-    }
+    if (onRefer) { onRefer(opp); return; }
     setShowRefer(true);
   };
 
+  /* ── action button shared style ── */
+  const actionBtn = (active = false) => ({
+    display: "flex", alignItems: "center", gap: 6,
+    padding: "6px 8px", borderRadius: 8,
+    fontSize: 13, fontWeight: 500, border: "none", cursor: "pointer",
+    background: "none",
+    color: active ? "#FF5A1F" : "var(--text-3)",
+    transition: "background 120ms, color 120ms",
+  });
+
   return (
-    <div id={`opportunity-${opp.id}`} className="bg-white rounded-2xl border border-gray-100 w-full overflow-hidden hover:shadow-sm transition-shadow">
+    <div
+      id={`opportunity-${opp.id}`}
+      className="glass-card w-full overflow-hidden"
+      style={{ borderRadius: 16 }}
+    >
       {/* Header */}
-      <div className="p-4 pb-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-start gap-3 min-w-0 flex-1">
-            {/* Company logo */}
-            <AvatarSquare
-              src={company?.logo_url}
-              name={company?.name || "Company"}
-              size={44}
-            />
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <p className="text-xs text-gray-500 font-medium">
+      <div style={{ padding: "14px 14px 12px" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+          {/* Left: logo + title */}
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 12, minWidth: 0, flex: 1 }}>
+            <AvatarSquare src={company?.logo_url} name={company?.name || "Company"} size={44} />
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 12, color: "var(--text-3)", fontWeight: 500 }}>
                   {company?.name || "Unknown Company"}
-                </p>
+                </span>
                 {isFollowingOrg && (
-                  <span className="text-[10px] font-semibold bg-teal-50 text-teal-700 px-1.5 py-0.5 rounded-full">
-                    Following
-                  </span>
+                  <span style={{
+                    fontSize: 10, fontWeight: 700, padding: "1px 7px", borderRadius: 999,
+                    background: "rgba(13,148,136,0.10)", color: "#0D9488",
+                  }}>Following</span>
                 )}
               </div>
-              <h3 className="font-semibold text-[15px] text-gray-900 mt-0.5 leading-snug break-words">
+              <h3 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-1)", margin: "3px 0 0", lineHeight: "1.3" }}>
                 {opp.title}
               </h3>
             </div>
           </div>
-          {/* Apply button prominently in header + 3-dot menu */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {/* Apply Now — top-right, always visible */}
+
+          {/* Right: Apply button + 3-dot menu */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
             {!isOwn && (
               <button
                 type="button"
                 onClick={handleApply}
                 disabled={applying || applied || !opp.is_open}
-                className={`flex items-center gap-1 px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
-                  applied
-                    ? "bg-green-50 text-green-700 border border-green-200 cursor-default"
+                style={{
+                  display: "flex", alignItems: "center", gap: 5,
+                  padding: "7px 16px", borderRadius: 10,
+                  fontSize: 13, fontWeight: 700, border: "none", cursor: applying || applied || !opp.is_open ? "default" : "pointer",
+                  ...(applied
+                    ? { background: "rgba(52,199,89,0.10)", color: "#34C759" }
                     : !opp.is_open
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-[#E8733A] text-white hover:bg-[#d4632e] active:scale-95"
-                }`}
+                    ? { background: "var(--surface-2)", color: "var(--text-3)" }
+                    : { background: "#FF5A1F", color: "#fff" }),
+                }}
               >
                 {applying ? (
                   <Loader2 size={13} className="animate-spin" />
@@ -266,38 +271,57 @@ export function OpportunityCard({
                 )}
               </button>
             )}
-            {/* Three-dot menu */}
+
             {(isOwn || user?.id === opp.poster_id) && (
-              <div className="relative">
+              <div style={{ position: "relative" }}>
                 <button
                   type="button"
                   onClick={() => setShowMenu(!showMenu)}
-                  className="p-1 rounded-lg hover:bg-gray-100 text-gray-400"
+                  style={{
+                    width: 32, height: 32, borderRadius: 8, display: "flex", alignItems: "center",
+                    justifyContent: "center", background: "var(--surface-2)", border: "none",
+                    color: "var(--text-3)", cursor: "pointer",
+                  }}
                 >
-                  <MoreHorizontal size={16} />
+                  <MoreHorizontal size={15} />
                 </button>
                 {showMenu && (
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-                    <div className="absolute right-0 top-8 bg-white rounded-xl border border-gray-100 shadow-lg py-1 z-20 w-48">
-                      <button type="button" className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    <div style={{
+                      position: "absolute", right: 0, top: 36, zIndex: 20,
+                      minWidth: 192, borderRadius: 12, padding: "4px 0",
+                      background: "var(--bg-card)", border: "1px solid var(--border-glass)",
+                      boxShadow: "var(--shadow-lg)",
+                    }}>
+                      <button type="button"
+                        style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "9px 14px", fontSize: 13, color: "var(--text-1)", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--surface-2)"; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "none"; }}
                         onClick={() => { navigate(`/app/opportunities/${opp.id}/edit`); setShowMenu(false); }}>
                         <Edit2 size={14} /> Edit opportunity
                       </button>
-                      <button type="button" className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      <button type="button"
+                        style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "9px 14px", fontSize: 13, color: "var(--text-1)", background: "none", border: "none", cursor: "pointer", textAlign: "left", opacity: !opp.is_open ? 0.4 : 1 }}
+                        onMouseEnter={e => { if (opp.is_open) (e.currentTarget as HTMLElement).style.background = "var(--surface-2)"; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "none"; }}
                         onClick={handleCloseOpportunity}
                         disabled={!opp.is_open}>
                         <X size={14} /> Close opportunity
                       </button>
-                      <button type="button" className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      <button type="button"
+                        style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "9px 14px", fontSize: 13, color: "var(--text-1)", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--surface-2)"; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "none"; }}
                         onClick={() => { navigate(`/app/opportunities/${opp.id}/applications`); setShowMenu(false); }}>
                         <Users size={14} /> View applications
                       </button>
-                      <div className="border-t border-gray-100 my-1" />
-                      <button
-                        type="button"
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 disabled:text-red-300 disabled:hover:bg-transparent"
+                      <div style={{ height: 1, background: "var(--border-subtle)", margin: "4px 0" }} />
+                      <button type="button"
                         disabled={applicantCount > 0}
+                        style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "9px 14px", fontSize: 13, color: "#EF4444", background: "none", border: "none", cursor: applicantCount > 0 ? "default" : "pointer", textAlign: "left", opacity: applicantCount > 0 ? 0.4 : 1 }}
+                        onMouseEnter={e => { if (!applicantCount) (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.06)"; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "none"; }}
                         onClick={handleDelete}>
                         <Trash2 size={14} /> {applicantCount > 0 ? "Delete unavailable" : "Delete"}
                       </button>
@@ -310,30 +334,44 @@ export function OpportunityCard({
         </div>
 
         {/* Tags row */}
-        <div className="flex items-center flex-wrap gap-2 mt-3">
-          <span className={`text-xs font-medium px-2.5 py-1 rounded-full capitalize ${typeColor[opp.type] || "bg-gray-100 text-gray-600"}`}>
-            <Briefcase size={10} className="inline mr-1" />{opp.type}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 12 }}>
+          <span style={{
+            display: "inline-flex", alignItems: "center", gap: 4,
+            fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 999,
+            background: tc.bg, color: tc.color, textTransform: "capitalize",
+          }}>
+            <Briefcase size={10} />{opp.type.replace(/_/g, " ")}
           </span>
           {opp.location && (
-            <span className="text-xs text-gray-500 flex items-center gap-1">
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, color: "var(--text-3)" }}>
               <MapPin size={10} /> {opp.location}
             </span>
           )}
           {opp.is_remote && (
-            <span className="text-xs bg-teal-50 text-teal-700 px-2.5 py-1 rounded-full flex items-center gap-1">
+            <span style={{
+              display: "inline-flex", alignItems: "center", gap: 4,
+              fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 999,
+              background: "rgba(13,148,136,0.10)", color: "#0D9488",
+            }}>
               <Wifi size={10} /> Remote
             </span>
           )}
           {salary && (
-            <span className="text-xs font-medium text-green-700 bg-green-50 px-2.5 py-1 rounded-full">
-              {salary}
-            </span>
+            <span style={{
+              fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 999,
+              background: "rgba(22,101,52,0.10)", color: "#166534",
+            }}>{salary}</span>
           )}
           {expiryBadge && (
-            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1 ${
-              expiryBadge.closed ? "bg-gray-100 text-gray-500" :
-              expiryBadge.urgent ? "bg-red-50 text-red-600" : "bg-amber-50 text-amber-700"
-            }`}>
+            <span style={{
+              display: "inline-flex", alignItems: "center", gap: 4,
+              fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 999,
+              ...(expiryBadge.closed
+                ? { background: "var(--surface-2)", color: "var(--text-3)" }
+                : expiryBadge.urgent
+                ? { background: "rgba(239,68,68,0.10)", color: "#EF4444" }
+                : { background: "rgba(217,119,6,0.10)", color: "#D97706" }),
+            }}>
               <Clock size={9} /> {expiryBadge.label}
             </span>
           )}
@@ -341,68 +379,63 @@ export function OpportunityCard({
 
         {/* Description */}
         {opp.description && (
-          <p className="text-sm text-gray-600 mt-3 leading-relaxed line-clamp-3">
+          <p style={{
+            fontSize: 13, color: "var(--text-2)", marginTop: 12, lineHeight: "1.6",
+            display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden",
+          }}>
             {opp.description}
           </p>
         )}
 
         {/* Skills */}
         {opp.skills_required && opp.skills_required.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-3">
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
             {opp.skills_required.slice(0, 5).map(skill => (
-              <span key={skill} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-                {skill}
-              </span>
+              <span key={skill} style={{
+                fontSize: 11, padding: "2px 9px", borderRadius: 999,
+                background: "var(--surface-2)", color: "var(--text-2)",
+              }}>{skill}</span>
             ))}
             {opp.skills_required.length > 5 && (
-              <span className="text-xs text-gray-400">+{opp.skills_required.length - 5} more</span>
+              <span style={{ fontSize: 11, color: "var(--text-3)" }}>+{opp.skills_required.length - 5} more</span>
             )}
           </div>
         )}
       </div>
 
       {/* Actions row */}
-      <div className="border-t border-gray-100 px-4 py-2 flex items-center gap-1">
-        <button
-          type="button"
-          onClick={handleLike}
-          className={`flex items-center gap-1.5 text-sm px-2 py-1.5 rounded-lg transition-colors ${
-            liked ? "text-[#E8733A] hover:bg-[#FFF3EC]" : "text-gray-500 hover:text-[#E8733A] hover:bg-[#FFF3EC]"
-          }`}
-        >
-          <Heart size={15} className={liked ? "fill-[#E8733A]" : ""} />
+      <div style={{ borderTop: "1px solid var(--border-subtle)", padding: "2px 10px", display: "flex", alignItems: "center", gap: 2 }}>
+        <button type="button" onClick={handleLike} style={actionBtn(liked)}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,90,31,0.08)"; (e.currentTarget as HTMLElement).style.color = "#FF5A1F"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "none"; (e.currentTarget as HTMLElement).style.color = liked ? "#FF5A1F" : "var(--text-3)"; }}>
+          <Heart size={15} style={liked ? { fill: "#FF5A1F", color: "#FF5A1F" } : {}} />
           {likeCount > 0 ? likeCount : "Like"}
         </button>
-        <button
-          type="button"
-          onClick={() => setShowComments(!showComments)}
-          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#E8733A] hover:bg-[#FFF3EC] px-2 py-1.5 rounded-lg"
-        >
+        <button type="button" onClick={() => setShowComments(!showComments)} style={actionBtn(showComments)}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,90,31,0.08)"; (e.currentTarget as HTMLElement).style.color = "#FF5A1F"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "none"; (e.currentTarget as HTMLElement).style.color = showComments ? "#FF5A1F" : "var(--text-3)"; }}>
           <MessageCircle size={15} />
           {commentCount > 0 ? commentCount : "Comment"}
         </button>
-        <button
-          type="button"
-          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#E8733A] hover:bg-[#FFF3EC] px-2 py-1.5 rounded-lg"
-          onClick={handleRefer}
-        >
+        <button type="button" onClick={handleRefer} style={actionBtn()}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,90,31,0.08)"; (e.currentTarget as HTMLElement).style.color = "#FF5A1F"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "none"; (e.currentTarget as HTMLElement).style.color = "var(--text-3)"; }}>
           <Users size={15} />
           Refer
         </button>
-        <button
-          type="button"
-          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#E8733A] hover:bg-[#FFF3EC] px-2 py-1.5 rounded-lg"
+        <button type="button" style={actionBtn()}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,90,31,0.08)"; (e.currentTarget as HTMLElement).style.color = "#FF5A1F"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "none"; (e.currentTarget as HTMLElement).style.color = "var(--text-3)"; }}
           onClick={async () => {
             await navigator.clipboard.writeText(`${window.location.origin}/app/opportunities?opp=${opp.id}`);
             toast.success("Link copied!");
-          }}
-        >
+          }}>
           <Share2 size={15} />
           Share
         </button>
       </div>
 
-      {/* Comments */}
+      {/* Comments panel */}
       {showComments && (
         <OpportunityCommentPanel
           opportunityId={opp.id}
@@ -410,18 +443,22 @@ export function OpportunityCard({
         />
       )}
 
-      {/* Bottom: applicant count + deadline only */}
-      <div className="border-t border-gray-100 px-4 py-2.5 flex items-center gap-3 text-xs text-gray-400">
-        <span className="flex items-center gap-1">
-          <Users size={12} />
+      {/* Footer: applicant count + deadline */}
+      <div style={{
+        borderTop: "1px solid var(--border-subtle)", padding: "9px 14px",
+        display: "flex", alignItems: "center", gap: 12,
+        fontSize: 11, color: "var(--text-3)",
+      }}>
+        <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <Users size={11} />
           {applicantCount} applicant{applicantCount !== 1 ? "s" : ""}
           {opp.positions_available ? ` · ${opp.positions_available} open` : ""}
         </span>
         {opp.deadline && (
           <>
             <span>·</span>
-            <span className="flex items-center gap-1">
-              <Clock size={12} />
+            <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <Clock size={11} />
               Due {new Date(opp.deadline).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
             </span>
           </>
@@ -429,8 +466,8 @@ export function OpportunityCard({
         {opp.expires_at && !opp.deadline && (
           <>
             <span>·</span>
-            <span className="flex items-center gap-1">
-              <Clock size={12} />
+            <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <Clock size={11} />
               Expires {new Date(opp.expires_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
             </span>
           </>
