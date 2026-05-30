@@ -64,6 +64,8 @@ const HashtagFeed = lazyWithRetry(() => import("./pages/HashtagFeed.tsx"), "Hash
 const MyApplications = lazyWithRetry(() => import("./pages/MyApplications.tsx"), "MyApplications");
 const CampaignApplicants = lazyWithRetry(() => import("./pages/CampaignApplicants.tsx"), "CampaignApplicants");
 const TiikmePilot = lazyWithRetry(() => import("./pages/TiikmePilot.tsx"), "TiikmePilot");
+const Flicks = lazyWithRetry(() => import("./pages/Flicks.tsx"), "Flicks");
+const Stash = lazyWithRetry(() => import("./pages/Stash.tsx"), "Stash");
 
 // SEO guides hub
 const GuidesHub = lazyWithRetry(() => import("./pages/guides/GuidesHub.tsx"), "GuidesHub");
@@ -188,6 +190,8 @@ const AppRoutes = () => {
             {/* Feature routes */}
             <Route path="/app/academy" element={<Shell><Academy /></Shell>} />
             <Route path="/app/build-log" element={<Shell><BuildLog /></Shell>} />
+            <Route path="/app/flicks" element={<PageErrorBoundary><Flicks /></PageErrorBoundary>} />
+            <Route path="/app/stash" element={<Shell><Stash /></Shell>} />
 
             {/* Legacy redirects */}
             <Route path="/app/nexus" element={<Shell><Explore /></Shell>} />

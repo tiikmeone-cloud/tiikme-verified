@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import {
+  Bookmark,
+  BookmarkCheck,
   Copy,
   Eye,
   Flag,
@@ -165,12 +167,28 @@ export function PostCard({
   const comments = commentsData[post.id] || [];
   const [localRepostCount, setLocalRepostCount] = useState(post.repost_count || 0);
   const [hasReposted, setHasReposted] = useState(false);
+  const [bookmarked, setBookmarked] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     supabase.from("post_reposts").select("id").eq("post_id", post.id).eq("reposted_by", user.id).maybeSingle()
       .then(({ data }) => setHasReposted(!!data));
+    (supabase.from("post_bookmarks" as any).select("id").eq("post_id", post.id).eq("user_id", user.id).maybeSingle() as any)
+      .then(({ data }: { data: any }) => setBookmarked(!!data));
   }, [post.id, user]);
+
+  const handleBookmark = async () => {
+    if (!user) { toast.error("Sign in to bookmark"); return; }
+    const was = bookmarked;
+    setBookmarked(!was);
+    if (was) {
+      await (supabase.from("post_bookmarks" as any).delete().eq("post_id", post.id).eq("user_id", user.id) as any);
+      toast.success("Removed from Stash");
+    } else {
+      await (supabase.from("post_bookmarks" as any).insert({ post_id: post.id, user_id: user.id }) as any);
+      toast.success("Saved to Stash", { action: { label: "View", onClick: () => window.location.assign("/app/stash") } });
+    }
+  };
 
   const sortedComments = useMemo(() => {
     const arr = [...comments];
@@ -457,6 +475,13 @@ export function PostCard({
           <button type="button" onClick={() => setSharePostId(post.id)} className="flex items-center cursor-pointer" style={{ gap: 6, padding: "8px 10px", borderRadius: 10, minWidth: 84, flex: "1 1 0", justifyContent: "center" }}>
             <Send style={{ width: 15, height: 15, color: "var(--text-muted)" }} />
             <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text-muted)" }}>Share</span>
+          </button>
+
+          <button type="button" onClick={handleBookmark} className="flex items-center cursor-pointer" style={{ gap: 6, padding: "8px 10px", borderRadius: 10, justifyContent: "center" }}>
+            {bookmarked
+              ? <BookmarkCheck style={{ width: 15, height: 15, color: "#FF5A1F" }} />
+              : <Bookmark style={{ width: 15, height: 15, color: "var(--text-muted)" }} />
+            }
           </button>
 
           {(post.view_count || 0) > 0 && (
