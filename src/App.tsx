@@ -192,7 +192,7 @@ const AppRoutes = () => {
             {/* Feature routes */}
             <Route path="/app/academy" element={<Shell><Academy /></Shell>} />
             <Route path="/app/build-log" element={<Shell><BuildLog /></Shell>} />
-            <Route path="/app/flicks" element={<PageErrorBoundary><Flicks /></PageErrorBoundary>} />
+            <Route path="/app/flicks" element={<Shell><Flicks /></Shell>} />
             <Route path="/app/stash" element={<Shell><Stash /></Shell>} />
 
             {/* Legacy redirects */}

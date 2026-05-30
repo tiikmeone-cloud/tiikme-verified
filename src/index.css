@@ -319,6 +319,16 @@
     overflow: hidden;
   }
 
+  /* Dark mode: flat cards — no border, no shadow (matches reference) */
+  .dark .glass-card,
+  .dark .t-card,
+  .dark .glass-liquid,
+  .dark .glass-light,
+  .dark .post-card-article {
+    border-color: transparent;
+    box-shadow: none;
+  }
+
   .glass-medium {
     background: var(--glass-bg-medium);
     backdrop-filter: blur(24px);
@@ -622,6 +632,16 @@
     font-size: inherit !important;
     line-height: inherit !important;
     transform: none !important;
+  }
+}
+
+/* ═══ FLICKS VIEWPORT — full height accounting for AppShell chrome ═══ */
+.flicks-viewport {
+  height: calc(100dvh - 52px - 88px); /* mobile: header 52 + bottom nav 88 */
+}
+@media (min-width: 768px) {
+  .flicks-viewport {
+    height: 100dvh; /* desktop: sidebar is offset via ml-[220px], no bottom chrome */
   }
 }
 

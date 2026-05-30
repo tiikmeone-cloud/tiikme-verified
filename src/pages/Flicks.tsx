@@ -328,7 +328,7 @@ export default function Flicks() {
 
   if (loading) {
     return (
-      <div style={{ height: "100dvh", background: "#000", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div className="flicks-viewport" style={{ background: "#000", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <Loader2 style={{ width: 32, height: 32, color: "#FF5A1F", animation: "spin 1s linear infinite" }} />
       </div>
     );
@@ -336,7 +336,7 @@ export default function Flicks() {
 
   if (flicks.length === 0) {
     return (
-      <div style={{ height: "100dvh", background: "var(--bg-page)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, padding: 24 }}>
+      <div className="flicks-viewport" style={{ background: "var(--bg-page)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, padding: 24 }}>
         <div style={{ width: 64, height: 64, borderRadius: 16, background: "rgba(255,90,31,0.10)", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <ImagePlus style={{ width: 32, height: 32, color: "#FF5A1F" }} />
         </div>
@@ -355,19 +355,19 @@ export default function Flicks() {
   }
 
   return (
-    <div style={{ position: "relative", height: "100dvh", background: "#000" }}>
+    <div className="flicks-viewport" style={{ position: "relative", background: "#000" }}>
       {/* Vertical scroll container */}
       <div
         ref={containerRef}
+        className="flicks-viewport"
         style={{
-          height: "100dvh",
           overflowY: "scroll",
           scrollSnapType: "y mandatory",
           scrollbarWidth: "none",
         }}
       >
         {flicks.map((flick, idx) => (
-          <div key={flick.id} style={{ height: "100dvh", width: "100%", scrollSnapAlign: "start" }}>
+          <div key={flick.id} className="flicks-viewport" style={{ width: "100%", scrollSnapAlign: "start" }}>
             <FlickCard
               flick={flick}
               onLike={() => {}}
