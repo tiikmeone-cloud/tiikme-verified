@@ -8,6 +8,7 @@ import {
   Images, Bookmark,
 } from "lucide-react";
 import ThemeLogo from "@/components/ThemeLogo";
+import { CreateChooser } from "@/components/layout/CreateChooser";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -52,7 +53,6 @@ const AppShell = ({ children }: { children: ReactNode }) => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const openPostCreate = () => navigate("/post/create");
   const { profile, displayName, user } = useAuth();
   const [orgData, setOrgData] = useState<{ name: string; logo_url: string | null; type: string; slug: string } | null>(null);
 
@@ -246,21 +246,25 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             ))}
           </nav>
 
-          <button
-            type="button"
-            onClick={openPostCreate}
-            className="flex items-center justify-center gap-2 active:scale-[0.97]"
-            style={{
-              width: "100%", height: 40, margin: "12px 0",
-              background: "#FF5A1F",
-              border: "none", borderRadius: 10,
-              fontSize: 13, fontWeight: 600, color: "white",
-              boxShadow: "0 4px 16px rgba(255,90,31,0.30)",
-              cursor: "pointer", transition: "all 200ms ease",
-            }}
-          >
-            <PencilLine style={{ width: 14, height: 14 }} /> New Post
-          </button>
+          <CreateChooser>
+            {(openChooser) => (
+              <button
+                type="button"
+                onClick={openChooser}
+                className="flex items-center justify-center gap-2 active:scale-[0.97]"
+                style={{
+                  width: "100%", height: 40, margin: "12px 0",
+                  background: "#FF5A1F",
+                  border: "none", borderRadius: 10,
+                  fontSize: 13, fontWeight: 600, color: "white",
+                  boxShadow: "0 4px 16px rgba(255,90,31,0.30)",
+                  cursor: "pointer", transition: "all 200ms ease",
+                }}
+              >
+                <PencilLine style={{ width: 14, height: 14 }} /> New Post
+              </button>
+            )}
+          </CreateChooser>
         </div>
 
         <div style={{ paddingTop: 12, borderTop: "1px solid var(--sidebar-border)" }}>
@@ -397,38 +401,42 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           })}
 
           {/* Tab 3 — CREATE (raised center button) */}
-          <button
-            type="button"
-            onClick={openPostCreate}
-            aria-label="Create new post"
-            className="flex flex-col items-center justify-end active:scale-95"
-            style={{
-              background: "transparent", border: "none", cursor: "pointer",
-              transition: "transform 120ms ease",
-            }}
-          >
-            <span
-              className="flex items-center justify-center"
-              style={{
-                position: "absolute",
-                top: -16,
-                left: "50%",
-                transform: "translateX(-50%)",
-                width: 52, height: 52, borderRadius: "50%",
-                background: "#FF5A1F",
-                boxShadow: "0 8px 20px rgba(255,90,31,0.35), 0 2px 6px rgba(0,0,0,0.20)",
-                border: "3px solid var(--sidebar-background)",
-              }}
-            >
-              <Plus style={{ width: 26, height: 26, color: "white" }} strokeWidth={2.6} />
-            </span>
-            <span style={{
-              fontSize: 10, fontWeight: 600, color: "#9CA3AF",
-              marginBottom: 8,
-            }}>
-              Create
-            </span>
-          </button>
+          <CreateChooser>
+            {(openChooser) => (
+              <button
+                type="button"
+                onClick={openChooser}
+                aria-label="Create new post"
+                className="flex flex-col items-center justify-end active:scale-95"
+                style={{
+                  background: "transparent", border: "none", cursor: "pointer",
+                  transition: "transform 120ms ease",
+                }}
+              >
+                <span
+                  className="flex items-center justify-center"
+                  style={{
+                    position: "absolute",
+                    top: -16,
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    width: 52, height: 52, borderRadius: "50%",
+                    background: "#FF5A1F",
+                    boxShadow: "0 8px 20px rgba(255,90,31,0.35), 0 2px 6px rgba(0,0,0,0.20)",
+                    border: "3px solid var(--sidebar-background)",
+                  }}
+                >
+                  <Plus style={{ width: 26, height: 26, color: "white" }} strokeWidth={2.6} />
+                </span>
+                <span style={{
+                  fontSize: 10, fontWeight: 600, color: "#9CA3AF",
+                  marginBottom: 8,
+                }}>
+                  Create
+                </span>
+              </button>
+            )}
+          </CreateChooser>
 
           {/* Tab 4 — Alerts (with badge), Tab 5 — Profile */}
           {mobileRightItems.map((item) => {

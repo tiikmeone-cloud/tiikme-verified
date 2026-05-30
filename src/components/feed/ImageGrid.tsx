@@ -89,8 +89,8 @@ const ImageItem = ({ src, className, style, onClick }: { src: string; className?
   const [error, setError] = useState(false);
   if (error) {
     return (
-      <div className={`flex items-center justify-center ${className || ""}`} style={{ ...style, background: "rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10 }}>
-        <span style={{ fontSize: 12, fontWeight: 500, color: "#9CA3C0" }}>Image could not be loaded</span>
+      <div className={`flex items-center justify-center ${className || ""}`} style={{ ...style, background: "var(--surface-2)", border: "1px solid var(--hairline)", borderRadius: 10 }}>
+        <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text-3)" }}>Image could not be loaded</span>
       </div>
     );
   }
@@ -120,7 +120,7 @@ const ImageGrid = ({ images }: { images: string[] }) => {
   if (validImages.length === 1) {
     return (
       <>
-        <div style={{ width: "100%", borderRadius: 10, overflow: "hidden", background: "rgba(0,0,0,0.03)" }}>
+        <div style={{ width: "100%", borderRadius: 10, overflow: "hidden", background: "var(--surface-2)" }}>
           <ImageItem src={validImages[0]} style={{ width: "100%", height: "auto", maxHeight: 600, objectFit: "contain", display: "block" }} onClick={() => open(0)} />
         </div>
         {lightboxIdx !== null && <ImageLightbox images={validImages} startIndex={lightboxIdx} onClose={() => setLightboxIdx(null)} />}
@@ -233,7 +233,7 @@ const HorizontalImageCarousel = ({ images, onImageClick }: { images: string[]; o
       >
         {images.map((img, i) => (
           <div key={i} style={{ flexShrink: 0, width: "85%", maxWidth: 400, scrollSnapAlign: "start" }}>
-            <ImageItem src={img} style={{ width: "100%", height: "auto", maxHeight: 400, objectFit: "contain", background: "rgba(0,0,0,0.03)" }} onClick={() => onImageClick(i)} />
+            <ImageItem src={img} style={{ width: "100%", height: "auto", maxHeight: 400, objectFit: "contain", background: "var(--surface-2)" }} onClick={() => onImageClick(i)} />
           </div>
         ))}
       </div>
@@ -243,7 +243,7 @@ const HorizontalImageCarousel = ({ images, onImageClick }: { images: string[]; o
             height: 6,
             width: i === activeIdx ? 16 : 6,
             borderRadius: i === activeIdx ? 3 : "50%",
-            background: i === activeIdx ? "#E8733A" : "#9CA3C0",
+            background: i === activeIdx ? "var(--accent)" : "var(--text-3)",
             transition: "all 0.2s",
           }} />
         ))}

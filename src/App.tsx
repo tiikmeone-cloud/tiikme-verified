@@ -65,6 +65,7 @@ const MyApplications = lazyWithRetry(() => import("./pages/MyApplications.tsx"),
 const CampaignApplicants = lazyWithRetry(() => import("./pages/CampaignApplicants.tsx"), "CampaignApplicants");
 const TiikmePilot = lazyWithRetry(() => import("./pages/TiikmePilot.tsx"), "TiikmePilot");
 const Flicks = lazyWithRetry(() => import("./pages/Flicks.tsx"), "Flicks");
+const FlickCreate = lazyWithRetry(() => import("./pages/FlickCreate.tsx"), "FlickCreate");
 const Stash = lazyWithRetry(() => import("./pages/Stash.tsx"), "Stash");
 
 // SEO guides hub
@@ -138,6 +139,7 @@ const AppRoutes = () => {
             <Route path="/certificate/:id" element={<PageErrorBoundary><CertificatePage /></PageErrorBoundary>} />
             <Route path="/create-page" element={<Shell><CreatePage /></Shell>} />
             <Route path="/post/create" element={<Shell><PostCreate /></Shell>} />
+            <Route path="/flick/create" element={<Shell><FlickCreate /></Shell>} />
             <Route path="/post/:postId" element={<Shell><PostDetail /></Shell>} />
 
             {/* Public shorthand redirects */}

@@ -69,9 +69,12 @@
 
     /* ── Accent (orange brand) ── */
     --accent: #FF5A1F;
+    --accent-2: #FF7A45;
     --accent-hover: #F04A12;
     --accent-glow: rgba(255, 90, 31, 0.15);
     --accent-pink: #FF5A1F;
+    --hairline: #EAE8E2;
+    --like: #FF3B30;
 
     /* ── Semantic ── */
     --success: #34C759;
@@ -232,8 +235,11 @@
   --text-muted: #5E5E66;
 
   --accent: #FF5A1F;
+  --accent-2: #FF7A45;
   --accent-hover: #F04A12;
   --accent-glow: rgba(255, 90, 31, 0.20);
+  --hairline: #26262B;
+  --like: #FF453A;
 
   --surface: #1A1A1D;
   --surface-2: #232328;
