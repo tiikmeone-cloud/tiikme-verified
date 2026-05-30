@@ -290,10 +290,11 @@ export function PostCard({
       <article
         ref={cardRef}
         id={`post-${post.id}`}
+        className={grouped ? undefined : "post-card-article"}
         style={{
           background: "var(--bg-card)",
           border: grouped ? "none" : "1px solid var(--border-glass)",
-          borderRadius: grouped ? 0 : 16,
+          borderRadius: grouped ? 0 : 20,
           boxShadow: grouped ? "none" : "var(--shadow-sm)",
           padding: 20,
           marginBottom: grouped ? 0 : 16,
