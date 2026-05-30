@@ -11,7 +11,7 @@ import {
   Pencil, Trash2, Briefcase, GraduationCap, Award, Code2, Eye, EyeOff,
   Heart, Rocket, Send, Share2, Users, Globe, ExternalLink, LinkIcon, TrendingUp,
   Mail, Settings, Camera, UserX, Layers, ChevronRight, LifeBuoy, MoreHorizontal,
-  Flag, Ban, ChevronDown, Zap
+  Flag, Ban, ChevronDown, Zap, FileText, Upload
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -223,6 +223,8 @@ const Profile = () => {
   const [gigServices, setGigServices] = useState<any[]>([]);
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
   const avatarFileRef = useRef<HTMLInputElement>(null);
+  const [resumeUploading, setResumeUploading] = useState(false);
+  const resumeInputRef = useRef<HTMLInputElement>(null);
 
   const [connectionStatus, setConnectionStatus] = useState<{ status: string | null; direction: string | null; id: string | null }>({ status: null, direction: null, id: null });
   const [connectLoading, setConnectLoading] = useState(false);
@@ -774,6 +776,25 @@ const Profile = () => {
     await refreshProfile(); loadProfile();
   };
 
+  const handleResumeUpload = async (file: File) => {
+    if (!user) return;
+    if (!file.name.endsWith(".pdf")) { toast.error("PDF only"); return; }
+    if (file.size > 10 * 1024 * 1024) { toast.error("Max 10 MB"); return; }
+    setResumeUploading(true);
+    const path = `${user.id}/profile-resume.pdf`;
+    const { data: upData, error: upErr } = await supabase.storage
+      .from("resumes").upload(path, file, { upsert: true });
+    if (upErr || !upData) { toast.error("Upload failed"); setResumeUploading(false); return; }
+    const { data: urlData } = supabase.storage.from("resumes").getPublicUrl(path);
+    const url = urlData?.publicUrl;
+    if (url) {
+      await supabase.from("profiles").update({ resume_url: url } as any).eq("id", user.id);
+      setViewedProfile((prev: any) => ({ ...prev, resume_url: url }));
+      toast.success("Resume uploaded");
+    }
+    setResumeUploading(false);
+  };
+
   /* Role save/delete */
   const saveRole = async () => {
     if (!roleForm.title.trim() || !user) return;
@@ -1206,7 +1227,53 @@ const Profile = () => {
             </div>
             )}
 
-            {/* L3: Links */}
+            {/* L3: Resume */}
+            {((profileData as any).resume_url || isOwnProfile) && (
+              <div className="glass-card" style={{ padding: 12, borderRadius: 16 }}>
+                <div className="flex items-center" style={{ gap: 8, marginBottom: (profileData as any).resume_url ? 8 : 0 }}>
+                  <FileText style={{ width: 16, height: 16, color: "#FF5A1F", flexShrink: 0 }} />
+                  <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text-1)", flex: 1 }}>Resume</span>
+                  {isOwnProfile && (
+                    <>
+                      <input
+                        ref={resumeInputRef}
+                        type="file"
+                        accept=".pdf"
+                        style={{ display: "none" }}
+                        onChange={e => { const f = e.target.files?.[0]; if (f) handleResumeUpload(f); e.target.value = ""; }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => resumeInputRef.current?.click()}
+                        disabled={resumeUploading}
+                        className="cursor-pointer"
+                        style={{ height: 26, padding: "0 10px", borderRadius: 6, fontSize: 11, fontWeight: 500, background: "var(--bg-card)", border: "1px solid var(--border-glass)", color: "var(--text-2)", display: "inline-flex", alignItems: "center", gap: 4 }}
+                      >
+                        <Upload style={{ width: 11, height: 11 }} />
+                        {resumeUploading ? "Uploading…" : (profileData as any).resume_url ? "Replace" : "Upload"}
+                      </button>
+                    </>
+                  )}
+                </div>
+                {(profileData as any).resume_url ? (
+                  <a
+                    href={(profileData as any).resume_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center"
+                    style={{ gap: 6, height: 36, padding: "0 12px", borderRadius: 8, background: "rgba(255,90,31,0.06)", border: "1px solid rgba(255,90,31,0.15)", textDecoration: "none" }}
+                  >
+                    <FileText style={{ width: 14, height: 14, color: "#FF5A1F", flexShrink: 0 }} />
+                    <span style={{ fontSize: 12, fontWeight: 500, color: "#FF5A1F", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>View resume PDF</span>
+                    <ExternalLink style={{ width: 12, height: 12, color: "#FF5A1F", flexShrink: 0 }} />
+                  </a>
+                ) : isOwnProfile ? (
+                  <p style={{ fontSize: 12, color: "var(--text-3)", marginTop: 6 }}>Upload a PDF — visible to visitors</p>
+                ) : null}
+              </div>
+            )}
+
+            {/* L4: Links */}
             <div className="glass-card" style={{ padding: 12, borderRadius: 16 }}>
               <div className="flex items-center" style={{ gap: 8 }}>
                 <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", flex: 1 }}>Links</span>
