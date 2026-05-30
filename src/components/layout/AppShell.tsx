@@ -5,6 +5,7 @@ import {
   LayoutGrid, Compass, Users, Target, User,
   Link2, Bell, SlidersHorizontal, PencilLine, LogOut, Home,
   Plus, Search, ClipboardList, Bot, ShieldCheck, Building2, Briefcase,
+  Images, Bookmark,
 } from "lucide-react";
 import ThemeLogo from "@/components/ThemeLogo";
 import { toast } from "sonner";
@@ -21,6 +22,7 @@ const BASE_NAV_GROUPS = [
     items: [
       { label: "Home", icon: LayoutGrid, path: "/app/feed" },
       { label: "Explore", icon: Compass, path: "/app/explore" },
+      { label: "Flicks", icon: Images, path: "/app/flicks" },
     ],
   },
   {
@@ -33,6 +35,7 @@ const BASE_NAV_GROUPS = [
     label: "CONNECT",
     items: [
       { label: "My Connections", icon: Link2, path: "/app/connections" },
+      { label: "Stash", icon: Bookmark, path: "/app/stash" },
       { label: "Alerts", icon: Bell, path: "/app/alerts" },
     ],
   },
