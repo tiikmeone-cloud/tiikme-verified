@@ -51,6 +51,7 @@ export default function Stash() {
   const [posts, setPosts] = useState<StashedPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [removing, setRemoving] = useState<Set<string>>(new Set());
+  const [filter, setFilter] = useState<"All" | "Media">("All");
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -116,6 +117,28 @@ export default function Stash() {
         )}
       </div>
 
+      {/* Filter tabs — All / Media */}
+      {!loading && posts.length > 0 && (
+        <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+          {(["All", "Media"] as const).map(f => (
+            <button
+              key={f}
+              type="button"
+              onClick={() => setFilter(f)}
+              style={{
+                height: 32, padding: "0 16px", borderRadius: 999, fontSize: 13, fontWeight: 600,
+                border: "none", cursor: "pointer",
+                background: filter === f ? "#FF5A1F" : "var(--surface-2)",
+                color: filter === f ? "#fff" : "var(--text-2)",
+                boxShadow: filter === f ? "0 4px 12px rgba(255,90,31,0.25)" : "none",
+              }}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Content */}
       {loading ? (
         <>{[1, 2, 3].map(i => <SkeletonCard key={i} />)}</>
@@ -130,7 +153,7 @@ export default function Stash() {
         </div>
       ) : (
         <div>
-          {posts.map(post => {
+          {posts.filter(post => filter === "All" || (post.image_urls && post.image_urls.length > 0)).map(post => {
             const name = post.author?.full_name || post.author?.username || "User";
             const initials = name.split(" ").filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase() || "U";
             const isRemoving = removing.has(post.id);

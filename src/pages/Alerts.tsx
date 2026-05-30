@@ -65,7 +65,11 @@ function getGroup(dateStr: string): string {
   return "Earlier";
 }
 
-const filterTabs = ["All", "Unread"];
+const filterTabs = ["All", "Likes", "Replies", "Follows"];
+
+const LIKE_TYPES = new Set(["like", "repost"]);
+const REPLY_TYPES = new Set(["comment", "mention"]);
+const FOLLOW_TYPES = new Set(["follow", "connection_request", "connection_accepted", "strand_request", "strand"]);
 
 const Alerts = () => {
   useEffect(() => { trackPageView("notifications"); }, []);
@@ -179,7 +183,11 @@ const Alerts = () => {
   };
 
   const unreadCount = alerts.filter(a => !a.is_read).length;
-  const filteredAlerts = activeTab === "Unread" ? alerts.filter(a => !a.is_read) : alerts;
+  const filteredAlerts =
+    activeTab === "Likes"   ? alerts.filter(a => LIKE_TYPES.has(a.type)) :
+    activeTab === "Replies" ? alerts.filter(a => REPLY_TYPES.has(a.type)) :
+    activeTab === "Follows" ? alerts.filter(a => FOLLOW_TYPES.has(a.type)) :
+    alerts;
 
   const VERIFICATION_TYPES = new Set(["verification_approved", "verification_request", "verification_rejected", "verification_declined"]);
   const verificationAlerts = filteredAlerts.filter(a => VERIFICATION_TYPES.has(a.type));
@@ -228,7 +236,7 @@ const Alerts = () => {
               ? { background: "#FF5A1F", color: "#fff", border: "none", boxShadow: "0 4px 16px rgba(255,90,31,0.30)", cursor: "pointer" }
               : { background: "var(--surface-2)", border: "1px solid var(--border-glass)", color: "var(--text-2)", cursor: "pointer" }
             }>
-            {ftab === "Unread" ? `Unread (${unreadCount})` : ftab}
+            {ftab}{ftab === "All" && unreadCount > 0 ? ` (${unreadCount})` : ""}
           </button>
         ))}
       </div>
