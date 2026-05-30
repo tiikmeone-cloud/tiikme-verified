@@ -20,6 +20,7 @@ import AvatarSquare from "@/components/ui/AvatarSquare";
 import MentionText from "@/components/feed/MentionText";
 import ImageGrid from "@/components/feed/ImageGrid";
 import ShareModal from "@/components/feed/ShareModal";
+import ThreadModal from "@/components/feed/ThreadModal";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import CommentPanel from "@/components/comments/CommentPanel";
 import { sendNotification } from "@/lib/notify";
@@ -200,6 +201,7 @@ export function PostCard({
     return arr;
   }, [comments, user?.id]);
 
+  const [threadOpen, setThreadOpen] = useState(false);
   const [reposting, setReposting] = useState(false);
   const handleRepost = async () => {
     if (!user || reposting) return;
@@ -437,64 +439,98 @@ export function PostCard({
           </p>
         )}
 
-        <div className="flex items-center flex-wrap" style={{ marginTop: 12, gap: 6, borderTop: "1px solid var(--border-subtle)", paddingTop: 10 }}>
+        {/* Engagement bar — Like · Recast · Comment [spacer] Bookmark · Share */}
+        <div className="flex items-center" style={{ marginTop: 12, gap: 2, borderTop: "1px solid var(--border-subtle)", paddingTop: 10 }}>
+          {/* Like */}
           <button
             type="button"
             onClick={handleLike}
             className="flex items-center cursor-pointer active:scale-95"
             style={{
-              gap: 6,
-              padding: "8px 10px",
-              borderRadius: 10,
-              minWidth: 84,
-              flex: "1 1 0",
-              justifyContent: "center",
+              gap: 5, padding: "7px 10px", borderRadius: 10,
               transform: likeAnimating ? "scale(1.2)" : "scale(1)",
               transition: "transform 150ms ease",
+              background: "none", border: "none",
             }}
           >
-            <Heart style={{ width: 15, height: 15, fill: liked ? "#FF5A1F" : "none", color: liked ? "#FF5A1F" : "var(--text-muted)" }} />
-            <span style={{ fontSize: 12, fontWeight: 500, color: liked ? "#FF5A1F" : "var(--text-muted)" }}>
+            <Heart style={{ width: 15, height: 15, fill: liked ? "var(--like)" : "none", color: liked ? "var(--like)" : "var(--text-muted)" }} />
+            <span style={{ fontSize: 12, fontWeight: 500, color: liked ? "var(--like)" : "var(--text-muted)" }}>
               {likeCount > 0 ? <span className="num">{formatCompactCount(likeCount)}</span> : "Like"}
             </span>
           </button>
 
-          <button type="button" onClick={() => toggleComments(post.id)} className="flex items-center cursor-pointer" style={{ gap: 6, padding: "8px 10px", borderRadius: 10, minWidth: 84, flex: "1 1 0", justifyContent: "center" }}>
-            <MessageCircle style={{ width: 15, height: 15, color: isOpen ? "#FF5A1F" : "var(--text-muted)" }} />
-            <span style={{ fontSize: 12, fontWeight: 500, color: isOpen ? "#FF5A1F" : "var(--text-muted)" }}>
+          {/* Recast (formerly Repost) */}
+          <button
+            type="button"
+            onClick={handleRepost}
+            disabled={reposting}
+            className="flex items-center cursor-pointer"
+            style={{ gap: 5, padding: "7px 10px", borderRadius: 10, opacity: reposting ? 0.5 : 1, background: "none", border: "none" }}
+          >
+            <Repeat2 style={{ width: 15, height: 15, color: hasReposted ? "#34C759" : "var(--text-muted)" }} />
+            <span style={{ fontSize: 12, fontWeight: 500, color: hasReposted ? "#34C759" : "var(--text-muted)" }}>
+              {localRepostCount > 0 ? <span className="num">{formatCompactCount(localRepostCount)}</span> : "Recast"}
+            </span>
+          </button>
+
+          {/* Comment — opens thread modal */}
+          <button
+            type="button"
+            onClick={() => setThreadOpen(true)}
+            className="flex items-center cursor-pointer"
+            style={{ gap: 5, padding: "7px 10px", borderRadius: 10, background: "none", border: "none" }}
+          >
+            <MessageCircle style={{ width: 15, height: 15, color: "var(--text-muted)" }} />
+            <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text-muted)" }}>
               {commentCount > 0 ? <span className="num">{formatCompactCount(commentCount)}</span> : "Comment"}
             </span>
           </button>
 
-          <button type="button" onClick={handleRepost} disabled={reposting} className="flex items-center cursor-pointer" style={{ gap: 6, padding: "8px 10px", borderRadius: 10, minWidth: 84, flex: "1 1 0", justifyContent: "center", opacity: reposting ? 0.5 : 1 }}>
-            <Repeat2 style={{ width: 15, height: 15, color: hasReposted ? "#FF5A1F" : "var(--text-muted)" }} />
-            <span style={{ fontSize: 12, fontWeight: 500, color: hasReposted ? "#FF5A1F" : "var(--text-muted)" }}>
-              {localRepostCount > 0 ? <span className="num">{formatCompactCount(localRepostCount)}</span> : "Repost"}
+          {/* Spacer */}
+          <div style={{ flex: 1 }} />
+
+          {/* View count (quiet, far right before bookmark) */}
+          {(post.view_count || 0) > 0 && (
+            <span className="flex items-center" style={{ gap: 3, fontSize: 11, color: "var(--text-3)", padding: "7px 6px" }}>
+              <Eye style={{ width: 12, height: 12 }} />
+              {formatCompactCount(post.view_count)}
             </span>
-          </button>
+          )}
 
-          <button type="button" onClick={() => setSharePostId(post.id)} className="flex items-center cursor-pointer" style={{ gap: 6, padding: "8px 10px", borderRadius: 10, minWidth: 84, flex: "1 1 0", justifyContent: "center" }}>
-            <Send style={{ width: 15, height: 15, color: "var(--text-muted)" }} />
-            <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text-muted)" }}>Share</span>
-          </button>
-
-          <button type="button" onClick={handleBookmark} className="flex items-center cursor-pointer" style={{ gap: 6, padding: "8px 10px", borderRadius: 10, justifyContent: "center" }}>
+          {/* Bookmark */}
+          <button
+            type="button"
+            onClick={handleBookmark}
+            className="flex items-center cursor-pointer"
+            style={{ gap: 5, padding: "7px 8px", borderRadius: 10, background: "none", border: "none" }}
+          >
             {bookmarked
               ? <BookmarkCheck style={{ width: 15, height: 15, color: "#FF5A1F" }} />
               : <Bookmark style={{ width: 15, height: 15, color: "var(--text-muted)" }} />
             }
           </button>
 
-          {(post.view_count || 0) > 0 && (
-            <span className="flex items-center ml-auto shrink-0" style={{ gap: 4, fontSize: 11, color: "var(--border-subtle)", padding: "8px 4px" }}>
-              <Eye style={{ width: 12, height: 12 }} />
-              {formatCompactCount(post.view_count)}
-            </span>
-          )}
+          {/* Share */}
+          <button
+            type="button"
+            onClick={() => setSharePostId(post.id)}
+            className="flex items-center cursor-pointer"
+            style={{ gap: 5, padding: "7px 8px", borderRadius: 10, background: "none", border: "none" }}
+          >
+            <Send style={{ width: 15, height: 15, color: "var(--text-muted)" }} />
+          </button>
         </div>
 
-        {isOpen && (
-          <CommentPanel postId={post.id} table="post_comments" postAuthorId={post.author_id} postUrlPrefix="/app/post" />
+        {/* Thread modal */}
+        {threadOpen && (
+          <ThreadModal
+            post={post}
+            likeCount={likeCount}
+            commentCount={commentCount}
+            repostCount={localRepostCount}
+            liked={liked}
+            onClose={() => setThreadOpen(false)}
+          />
         )}
 
         {showConnect && (

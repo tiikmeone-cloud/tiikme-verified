@@ -296,6 +296,8 @@ const Explore = () => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [activeFilter, setActiveFilter] = useState<SectionKey | null>(null);
+  const [exploreMode, setExploreMode] = useState<"foryou" | "trending">("foryou");
+  const [activeCategoryTag, setActiveCategoryTag] = useState<string | null>(null);
 
   const sectionRefs = useRef<Record<SectionKey, HTMLDivElement | null>>({
     people: null, orgs: null, posts: null, hashtags: null,
@@ -525,11 +527,24 @@ const Explore = () => {
 
   const getOrgNavigateTo = (org: any) => org.slug ? `/org/${org.slug}` : "#";
 
+  const displayedPosts = useMemo(() => {
+    if (!exploreData) return [];
+    let pts = exploreData.posts as any[];
+    if (activeCategoryTag) {
+      pts = pts.filter((p: any) =>
+        (p.hashtags || []).some((h: string) => lower(h).replace(/^#/, "") === activeCategoryTag)
+      );
+    }
+    if (exploreMode === "trending") {
+      pts = [...pts].sort((a: any, b: any) => (b._engagement || 0) - (a._engagement || 0));
+    }
+    return pts;
+  }, [exploreData, activeCategoryTag, exploreMode]);
+
   const showPeople = (exploreData?.people.length ?? 0) > 0;
   const showOrgs = (exploreData?.orgs.length ?? 0) > 0;
-  const showPosts = (exploreData?.posts.length ?? 0) > 0;
   const showHashtags = (exploreData?.hashtags.length ?? 0) > 0;
-  const anyContent = showPeople || showOrgs || showPosts || showHashtags;
+  const anyContent = showPeople || showOrgs || displayedPosts.length > 0 || showHashtags;
 
   return (
     <main className="mx-auto max-w-6xl px-4 md:px-6 pt-4 pb-24 md:pb-12">
@@ -612,8 +627,65 @@ const Explore = () => {
           )}
         </div>
 
+        {/* For you / Trending toggle */}
+        <div className="flex items-center" style={{ marginTop: 12, gap: 4, background: "var(--surface-2)", borderRadius: 999, padding: 3, width: "fit-content" }}>
+          {(["foryou", "trending"] as const).map(mode => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => setExploreMode(mode)}
+              className="cursor-pointer"
+              style={{
+                height: 28, padding: "0 16px", borderRadius: 999, fontSize: 12, fontWeight: 600, border: "none",
+                background: exploreMode === mode ? "#FF5A1F" : "transparent",
+                color: exploreMode === mode ? "#fff" : "var(--text-3)",
+                boxShadow: exploreMode === mode ? "0 2px 8px rgba(255,90,31,0.25)" : "none",
+                transition: "all 150ms",
+              }}
+            >
+              {mode === "foryou" ? "For you" : "Trending"}
+            </button>
+          ))}
+        </div>
+
+        {/* Category chips — top hashtags as content filters */}
+        {(exploreData?.hashtags?.length ?? 0) > 0 && (
+          <div className="flex overflow-x-auto" style={{ gap: 8, marginTop: 10, paddingBottom: 2, scrollbarWidth: "none" }}>
+            <button
+              type="button"
+              onClick={() => setActiveCategoryTag(null)}
+              className="cursor-pointer"
+              style={{
+                flexShrink: 0, padding: "0 14px", height: 30, borderRadius: 999, fontSize: 12, fontWeight: 600, border: "none", whiteSpace: "nowrap",
+                background: activeCategoryTag === null ? "rgba(255,90,31,0.15)" : "var(--surface-2)",
+                color: activeCategoryTag === null ? "#FF5A1F" : "var(--text-3)",
+              }}
+            >
+              All
+            </button>
+            {exploreData!.hashtags.map(h => {
+              const isActive = activeCategoryTag === h.tag;
+              return (
+                <button
+                  key={h.tag}
+                  type="button"
+                  onClick={() => setActiveCategoryTag(prev => prev === h.tag ? null : h.tag)}
+                  className="cursor-pointer"
+                  style={{
+                    flexShrink: 0, padding: "0 14px", height: 30, borderRadius: 999, fontSize: 12, fontWeight: 600, border: "none", whiteSpace: "nowrap",
+                    background: isActive ? "rgba(255,90,31,0.15)" : "var(--surface-2)",
+                    color: isActive ? "#FF5A1F" : "var(--text-3)",
+                  }}
+                >
+                  #{h.tag}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {/* Section nav pills */}
-        <div className="flex overflow-x-auto" style={{ gap: 8, marginTop: 12, paddingBottom: 4, scrollbarWidth: "none" }}>
+        <div className="flex overflow-x-auto" style={{ gap: 8, marginTop: 10, paddingBottom: 4, scrollbarWidth: "none" }}>
           {SECTIONS.map(s => {
             const isActive = activeFilter === s.key;
             return (
@@ -712,14 +784,14 @@ const Explore = () => {
           </CarouselSection>
         )}
 
-        {showPosts && (!activeFilter || activeFilter === "posts") && (
+        {(!activeFilter || activeFilter === "posts") && displayedPosts.length > 0 && (
           <CarouselSection
             sectionRef={el => { sectionRefs.current.posts = el; }}
-            title="Top posts"
-            count={exploreData!.posts.length}
+            title={exploreMode === "trending" ? "Trending posts" : "Top posts"}
+            count={displayedPosts.length}
             seeAllHref="/app/feed"
           >
-            {exploreData!.posts.map(p => (
+            {displayedPosts.map((p: any) => (
               <PostCarouselCard
                 key={p.id}
                 post={p}
