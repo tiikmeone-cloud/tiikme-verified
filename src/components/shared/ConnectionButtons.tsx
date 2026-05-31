@@ -4,6 +4,7 @@
 
 import React from "react";
 import { Loader2, UserPlus, UserCheck, Check, X } from "lucide-react";
+import { toast } from "sonner";
 import { useConnectionStatus } from "@/hooks/useConnectionStatus";
 
 interface ConnectionButtonsProps {
@@ -44,7 +45,13 @@ export function ConnectionButtons({
         <button
           className={gray}
           disabled={conn.isLoading}
-          onClick={() => conn.unfollowOrg(orgId)}
+          onClick={() => {
+            toast(`Unfollow ${targetName}?`, {
+              action: { label: "Unfollow", onClick: () => conn.unfollowOrg(orgId) },
+              cancel: { label: "Cancel", onClick: () => {} },
+              duration: 5000,
+            });
+          }}
         >
           {conn.isLoading ? <Loader2 size={14} className="animate-spin" /> : <UserCheck size={14} />}
           Following
@@ -73,7 +80,13 @@ export function ConnectionButtons({
         <button
           className={gray + " group relative"}
           disabled={conn.isLoading}
-          onClick={conn.disconnect}
+          onClick={() => {
+            toast(`Disconnect from ${targetName}?`, {
+              action: { label: "Disconnect", onClick: conn.disconnect },
+              cancel: { label: "Cancel", onClick: () => {} },
+              duration: 5000,
+            });
+          }}
         >
           <UserCheck size={14} />
           Connected
@@ -86,7 +99,13 @@ export function ConnectionButtons({
   if (conn.state === "pending_sent") {
     return (
       <div className="flex gap-2">
-        <button className={gray} disabled={conn.isLoading} onClick={conn.withdrawRequest}>
+        <button className={gray} disabled={conn.isLoading} onClick={() => {
+          toast("Withdraw connection request?", {
+            action: { label: "Withdraw", onClick: conn.withdrawRequest },
+            cancel: { label: "Cancel", onClick: () => {} },
+            duration: 5000,
+          });
+        }}>
           {conn.isLoading ? <Loader2 size={14} className="animate-spin" /> : null}
           Request sent
         </button>

@@ -447,7 +447,7 @@ export function PostCard({
             onClick={handleLike}
             className="flex items-center cursor-pointer active:scale-95"
             style={{
-              gap: 5, padding: "7px 10px", borderRadius: 10,
+              gap: 5, padding: "10px 10px", borderRadius: 10, minHeight: 44,
               transform: likeAnimating ? "scale(1.2)" : "scale(1)",
               transition: "transform 150ms ease",
               background: "none", border: "none",
@@ -465,7 +465,7 @@ export function PostCard({
             onClick={handleRepost}
             disabled={reposting}
             className="flex items-center cursor-pointer"
-            style={{ gap: 5, padding: "7px 10px", borderRadius: 10, opacity: reposting ? 0.5 : 1, background: "none", border: "none" }}
+            style={{ gap: 5, padding: "10px 10px", borderRadius: 10, minHeight: 44, opacity: reposting ? 0.5 : 1, background: "none", border: "none" }}
           >
             <Repeat2 style={{ width: 15, height: 15, color: hasReposted ? "#34C759" : "var(--text-muted)" }} />
             <span style={{ fontSize: 12, fontWeight: 500, color: hasReposted ? "#34C759" : "var(--text-muted)" }}>
@@ -478,7 +478,7 @@ export function PostCard({
             type="button"
             onClick={() => setThreadOpen(true)}
             className="flex items-center cursor-pointer"
-            style={{ gap: 5, padding: "7px 10px", borderRadius: 10, background: "none", border: "none" }}
+            style={{ gap: 5, padding: "10px 10px", borderRadius: 10, minHeight: 44, background: "none", border: "none" }}
           >
             <MessageCircle style={{ width: 15, height: 15, color: "var(--text-muted)" }} />
             <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text-muted)" }}>
@@ -502,7 +502,7 @@ export function PostCard({
             type="button"
             onClick={handleBookmark}
             className="flex items-center cursor-pointer"
-            style={{ gap: 5, padding: "7px 8px", borderRadius: 10, background: "none", border: "none" }}
+            style={{ gap: 5, padding: "10px 8px", borderRadius: 10, minHeight: 44, background: "none", border: "none" }}
           >
             {bookmarked
               ? <BookmarkCheck style={{ width: 15, height: 15, color: "#FF5A1F" }} />
@@ -515,7 +515,7 @@ export function PostCard({
             type="button"
             onClick={() => setSharePostId(post.id)}
             className="flex items-center cursor-pointer"
-            style={{ gap: 5, padding: "7px 8px", borderRadius: 10, background: "none", border: "none" }}
+            style={{ gap: 5, padding: "10px 8px", borderRadius: 10, minHeight: 44, background: "none", border: "none" }}
           >
             <Send style={{ width: 15, height: 15, color: "var(--text-muted)" }} />
           </button>

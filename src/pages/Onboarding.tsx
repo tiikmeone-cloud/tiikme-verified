@@ -183,6 +183,8 @@ interface WizardState {
   location_city: string;
   location_state: string;
   avatar_url: string;
+  org_id: string;
+  currently_working_at: string;
 }
 
 const EMPTY: WizardState = {
@@ -194,6 +196,8 @@ const EMPTY: WizardState = {
   location_city: "",
   location_state: "",
   avatar_url: "",
+  org_id: "",
+  currently_working_at: "",
 };
 
 /* ─── Shared input/select style (light, white bg) ─── */
@@ -368,6 +372,8 @@ export default function Onboarding() {
                   location_city: state.location_city.trim(),
                   location_state: state.location_state,
                   avatar_url: state.avatar_url || undefined,
+                  org_id: state.org_id || undefined,
+                  currently_working_at: state.currently_working_at.trim() || undefined,
                 });
                 setSaving(false);
                 if (ok) goto(4);
@@ -545,6 +551,32 @@ function StepBasicInfo({
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [orgQuery, setOrgQuery] = useState(state.currently_working_at || "");
+  const [orgResults, setOrgResults] = useState<{ id: string; name: string; logo_url: string | null; type: string }[]>([]);
+  const [orgSearching, setOrgSearching] = useState(false);
+  const orgDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const searchOrgs = (q: string) => {
+    setOrgQuery(q);
+    set("currently_working_at", q);
+    set("org_id", "");
+    if (orgDebounce.current) clearTimeout(orgDebounce.current);
+    if (!q.trim() || q.trim().length < 2) { setOrgResults([]); return; }
+    orgDebounce.current = setTimeout(async () => {
+      setOrgSearching(true);
+      const { data } = await supabase.from("organizations").select("id, name, logo_url, type")
+        .ilike("name", `%${q.trim()}%`).limit(5);
+      setOrgResults(data || []);
+      setOrgSearching(false);
+    }, 300);
+  };
+
+  const selectOrg = (org: { id: string; name: string }) => {
+    setOrgQuery(org.name);
+    set("currently_working_at", org.name);
+    set("org_id", org.id);
+    setOrgResults([]);
+  };
 
   const headlinePlaceholder =
     HEADLINE_PLACEHOLDERS[state.profession_type] ?? "e.g. Your role and organisation";
@@ -692,6 +724,63 @@ function StepBasicInfo({
               <option key={s} value={s}>{s}</option>
             ))}
           </select>
+        </div>
+
+        {/* Org search */}
+        <div style={{ position: "relative" }}>
+          <label className="block text-[13px] font-semibold mb-1.5" style={{ color: "#374151" }}>
+            Organisation <span style={{ fontWeight: 400, color: "#9CA3AF" }}>(optional)</span>
+          </label>
+          <input
+            type="text"
+            value={orgQuery}
+            onChange={e => searchOrgs(e.target.value)}
+            placeholder="Search for your employer or college"
+            style={inputStyle}
+            autoComplete="off"
+          />
+          {state.org_id && (
+            <span style={{ fontSize: 11, color: "#34C759", marginTop: 4, display: "block" }}>
+              ✓ Linked to organisation
+            </span>
+          )}
+          {(orgSearching || orgResults.length > 0) && (
+            <div style={{
+              position: "absolute", top: "100%", left: 0, right: 0, zIndex: 50,
+              background: "#fff", borderRadius: 12, boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+              border: "1.5px solid #E5E7EB", marginTop: 4, overflow: "hidden",
+            }}>
+              {orgSearching && (
+                <div style={{ padding: "12px 14px", fontSize: 13, color: "#9CA3AF" }}>Searching…</div>
+              )}
+              {!orgSearching && orgResults.map(org => (
+                <button
+                  key={org.id}
+                  type="button"
+                  onClick={() => selectOrg(org)}
+                  className="w-full flex items-center gap-3 cursor-pointer hover:bg-gray-50"
+                  style={{ padding: "10px 14px", textAlign: "left", border: "none", background: "none" }}
+                >
+                  {org.logo_url ? (
+                    <img src={org.logo_url} alt="" style={{ width: 28, height: 28, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
+                  ) : (
+                    <div style={{ width: 28, height: 28, borderRadius: 6, background: "#F3F4F6", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: "#6B7280" }}>{org.name.charAt(0)}</span>
+                    </div>
+                  )}
+                  <div>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: "#111827" }}>{org.name}</p>
+                    {org.type && <p style={{ fontSize: 11, color: "#9CA3AF", textTransform: "capitalize" }}>{org.type.replace(/_/g, " ")}</p>}
+                  </div>
+                </button>
+              ))}
+              {!orgSearching && orgResults.length === 0 && orgQuery.trim().length >= 2 && (
+                <div style={{ padding: "12px 14px", fontSize: 13, color: "#9CA3AF" }}>
+                  No matches — your org may not be on Tiikme yet
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
