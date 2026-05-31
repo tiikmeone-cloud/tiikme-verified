@@ -21,6 +21,7 @@ interface OpportunityCardProps {
     type: string;
     location?: string | null;
     is_remote?: boolean;
+    work_arrangement?: "onsite" | "hybrid" | "remote" | null;
     salary_min?: number | null;
     salary_max?: number | null;
     salary_currency?: string;
@@ -347,13 +348,22 @@ export function OpportunityCard({
               <MapPin size={10} /> {opp.location}
             </span>
           )}
-          {opp.is_remote && (
+          {(opp.work_arrangement === "remote" || (!opp.work_arrangement && opp.is_remote)) && (
             <span style={{
               display: "inline-flex", alignItems: "center", gap: 4,
               fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 999,
               background: "rgba(13,148,136,0.10)", color: "#0D9488",
             }}>
               <Wifi size={10} /> Remote
+            </span>
+          )}
+          {opp.work_arrangement === "hybrid" && (
+            <span style={{
+              display: "inline-flex", alignItems: "center", gap: 4,
+              fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 999,
+              background: "rgba(99,102,241,0.10)", color: "#4F46E5",
+            }}>
+              Hybrid
             </span>
           )}
           {salary && (
