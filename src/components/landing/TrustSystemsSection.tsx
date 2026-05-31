@@ -1,4 +1,4 @@
-import { ShieldCheck, BadgeCheck, Zap, Award, Briefcase, Users, Brain, Circle } from "lucide-react";
+import { ShieldCheck, BadgeCheck, Zap, Award, Briefcase, Brain, Circle } from "lucide-react";
 
 const systems = [
   {
@@ -42,13 +42,6 @@ const systems = [
     tagline: "Schedule interviews, receive offers, track every application",
     accent: "#E8733A",
     bg: "rgba(232,115,58,0.08)",
-  },
-  {
-    icon: Users,
-    name: "Circles",
-    tagline: "Professional communities by city, role, and sector — no noise",
-    accent: "#0891B2",
-    bg: "#ECFEFF",
   },
   {
     icon: Brain,

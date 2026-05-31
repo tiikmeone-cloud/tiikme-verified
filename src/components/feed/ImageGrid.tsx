@@ -100,7 +100,7 @@ const ImageItem = ({ src, className, style, onClick }: { src: string; className?
       alt=""
       loading="lazy"
       className={className}
-      style={{ borderRadius: 8, cursor: "pointer", ...style }}
+      style={{ borderRadius: 8, cursor: "pointer", background: "var(--surface-2)", ...style }}
       onError={() => setError(true)}
       onClick={onClick}
     />
