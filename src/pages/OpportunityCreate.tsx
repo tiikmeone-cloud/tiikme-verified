@@ -43,7 +43,8 @@ export default function OpportunityCreate() {
   const [description, setDescription] = useState("");
   const [domain, setDomain] = useState("");
   const [location, setLocation] = useState("");
-  const [isRemote, setIsRemote] = useState(false);
+  const [workArrangement, setWorkArrangement] = useState<"onsite" | "hybrid" | "remote">("onsite");
+  const isRemote = workArrangement === "remote";
   const [deadline, setDeadline] = useState("");
   const [skillsInput, setSkillsInput] = useState("");
   const [skills, setSkills] = useState<string[]>([]);
@@ -163,7 +164,7 @@ export default function OpportunityCreate() {
       setDescription(data.description || "");
       setDomain(data.domain || "");
       setLocation(data.location && data.location !== "Remote" ? data.location : "");
-      setIsRemote(!!data.is_remote || data.location === "Remote");
+      setWorkArrangement(!!data.is_remote || data.location === "Remote" ? "remote" : (data.work_arrangement || "onsite") as any);
       setDeadline(data.deadline || "");
       setSkills(Array.isArray(data.skills_required) ? data.skills_required : []);
       setSalaryMin(data.salary_min ? String(data.salary_min) : "");
@@ -262,8 +263,9 @@ export default function OpportunityCreate() {
         type: oppType,
         description: description.trim() || null,
         domain: domain.trim() || null,
-        location: isRemote ? "Remote" : location.trim() || null,
-        is_remote: isRemote,
+        location: workArrangement === "remote" ? "Remote" : location.trim() || null,
+        is_remote: workArrangement === "remote",
+        work_arrangement: workArrangement,
         deadline: deadline || null,
         skills_required: skills.length ? skills : [],
         compensation,
@@ -349,7 +351,7 @@ export default function OpportunityCreate() {
         </div>
       )}
 
-      {/* Step 1: Type Selection */}
+      {/* Step 1: Type + Arrangement Selection */}
       {!loadingExisting && step === 1 && (
         <>
           <h1 className="text-[24px] font-bold mb-1" style={{ color: "var(--text-1)" }}>{isEditMode ? "Edit Opportunity" : "Post an Opportunity"}</h1>
@@ -373,6 +375,35 @@ export default function OpportunityCreate() {
               );
             })}
           </div>
+
+          {/* Work arrangement */}
+          <div className="mt-6">
+            <p className="text-[14px] font-semibold mb-3" style={{ color: "var(--text-1)" }}>How will they work?</p>
+            <div className="flex gap-3">
+              {[
+                { value: "onsite", label: "Onsite" },
+                { value: "hybrid", label: "Hybrid" },
+                { value: "remote", label: "Remote" },
+              ].map(a => (
+                <button
+                  key={a.value}
+                  type="button"
+                  onClick={() => setWorkArrangement(a.value as any)}
+                  className="flex-1 cursor-pointer"
+                  style={{
+                    height: 48, borderRadius: 12, fontSize: 14, fontWeight: 600,
+                    border: workArrangement === a.value ? `2px solid ${typeColor}` : "1.5px solid var(--border-2)",
+                    background: workArrangement === a.value ? `${typeColor}14` : "var(--surface-2)",
+                    color: workArrangement === a.value ? typeColor : "var(--text-2)",
+                    transition: "all 150ms",
+                  }}
+                >
+                  {a.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <Button onClick={() => { if (oppType) setStep(2); else toast.error("Select a type"); }} disabled={!oppType}
             className="w-full mt-6" style={{ height: 52, borderRadius: 14, background: typeColor }}>
             Continue →
@@ -403,11 +434,22 @@ export default function OpportunityCreate() {
             {/* Location */}
             <div>
               {sectionLabel("Location")}
-              <div className="flex items-center gap-3 mb-2">
-                <Switch checked={isRemote} onCheckedChange={setIsRemote} />
-                <span className="text-[13px]" style={{ color: "var(--text-2)" }}>Remote</span>
+              <div className="flex gap-2 mb-2">
+                {[{ v: "onsite", l: "Onsite" }, { v: "hybrid", l: "Hybrid" }, { v: "remote", l: "Remote" }].map(a => (
+                  <button key={a.v} type="button" onClick={() => setWorkArrangement(a.v as any)} className="flex-1 cursor-pointer"
+                    style={{ height: 38, borderRadius: 10, fontSize: 13, fontWeight: 600,
+                      border: workArrangement === a.v ? `2px solid ${typeColor}` : "1.5px solid var(--border-2)",
+                      background: workArrangement === a.v ? `${typeColor}14` : "var(--surface-2)",
+                      color: workArrangement === a.v ? typeColor : "var(--text-2)", transition: "all 120ms" }}>
+                    {a.l}
+                  </button>
+                ))}
               </div>
-              {!isRemote && <Input value={location} onChange={e => setLocation(e.target.value)} placeholder="City, State" style={inputStyle} />}
+              {workArrangement !== "remote" && (
+                <Input value={location} onChange={e => setLocation(e.target.value)}
+                  placeholder={workArrangement === "hybrid" ? "City, State (primary office)" : "City, State"}
+                  style={inputStyle} />
+              )}
             </div>
 
             {/* Deadline */}
