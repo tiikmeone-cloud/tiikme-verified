@@ -432,7 +432,7 @@ export default function Flicks() {
       </div>
 
       {/* Counter pill */}
-      <div style={{ position: "fixed", top: 16, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.50)", borderRadius: 999, padding: "4px 12px", zIndex: 10 }}>
+      <div style={{ position: "fixed", top: 64, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.50)", borderRadius: 999, padding: "4px 12px", zIndex: 10 }}>
         <span style={{ fontSize: 12, color: "#fff", fontWeight: 600 }}>{activeIdx + 1} / {flicks.length}</span>
       </div>
 
