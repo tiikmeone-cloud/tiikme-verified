@@ -11,7 +11,7 @@ import {
   Pencil, Trash2, Briefcase, GraduationCap, Award, Code2, Eye, EyeOff,
   Heart, Rocket, Send, Share2, Users, Globe, ExternalLink, LinkIcon, TrendingUp,
   Mail, Settings, Camera, UserX, Layers, ChevronRight, LifeBuoy, MoreHorizontal,
-  Flag, Ban, ChevronDown, Zap, FileText, Upload
+  Flag, Ban, ChevronDown, Zap, FileText, Upload, Images
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -21,6 +21,7 @@ import GlassModal, { glassInputDarkStyle as gInputStyle, glassSelectDarkStyle as
 import ActivityScoreCard from "@/components/profile/ActivityScoreCard";
 import { shouldShowPublicScore } from "@/lib/activityTiers";
 import { ExperienceSection, EducationSection, ProjectsSection, AchievementsSection, SkillsSection, PostsSection, RolesSection } from "@/components/profile/ProfileSections";
+import ProfileFlicksSection from "@/components/profile/ProfileFlicksSection";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -391,7 +392,7 @@ const Profile = () => {
   );
   if (!user && isOwnProfile) return null;
 
-  const rawProfileData = viewedProfile || authProfile;
+  const rawProfileData = isOwnProfile ? authProfile : viewedProfile;
   if (!rawProfileData) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
       <p style={{ fontSize: 16, fontWeight: 700, color: "#1A1A2E" }}>Profile not found</p>
@@ -1695,6 +1696,19 @@ const Profile = () => {
             {isOwnProfile && targetUserId && (
               <div style={{ marginTop: 4 }}>
                 <ProfileAnalyticsRow profileId={targetUserId} />
+              </div>
+            )}
+
+            {/* Flicks */}
+            {(isOwnProfile || true) && (
+              <div className="glass-card" style={{ padding: "16px 20px", borderRadius: 16 }}>
+                <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
+                  <div className="flex items-center" style={{ gap: 6 }}>
+                    <Images style={{ width: 16, height: 16, color: "#FF5A1F" }} />
+                    <p style={{ fontSize: 13, fontWeight: 700, color: "var(--text-1)" }}>Flicks</p>
+                  </div>
+                </div>
+                <ProfileFlicksSection profileId={targetUserId || ""} isOwnProfile={isOwnProfile} />
               </div>
             )}
           </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Heart, Share2, ChevronUp, ChevronDown, Loader2, ImagePlus } from "lucide-react";
+import { Heart, Check, Eye, ChevronUp, ChevronDown, Loader2, ImagePlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -123,17 +123,12 @@ function FlickCard({
     setFollowed(!wasFollowed);
     if (wasFollowed) {
       await (supabase.from("user_follows" as any).delete().eq("follower_id", user.id).eq("following_id", flick.author_id) as any);
+      toast.success(`Unfollowed ${flick.full_name || flick.username || "user"}`);
     } else {
       await (supabase.from("user_follows" as any).insert({ follower_id: user.id, following_id: flick.author_id }) as any);
       toast.success(`Following ${flick.full_name || flick.username || "user"}`);
     }
     onFollow(flick.author_id, !wasFollowed);
-  };
-
-  const handleShare = async () => {
-    const url = `${window.location.origin}/app/flicks#${flick.id}`;
-    try { await navigator.clipboard.writeText(url); toast.success("Link copied!"); }
-    catch { toast.error("Couldn't copy link"); }
   };
 
   const name = flick.full_name || flick.username || "User";
@@ -151,6 +146,7 @@ function FlickCard({
         overflow: "hidden",
         scrollSnapAlign: "start",
         flexShrink: 0,
+        borderRadius: "inherit",
       }}
     >
       {/* Image — tappable for double-tap like */}
@@ -196,11 +192,6 @@ function FlickCard({
               </Link>
               {flick.is_verified && <VerifiedBadge size={14} />}
             </div>
-            {flick.view_count > 0 && (
-              <span style={{ fontSize: 11, color: "rgba(255,255,255,0.60)" }}>
-                {flick.view_count.toLocaleString()} views
-              </span>
-            )}
           </div>
         </div>
 
@@ -209,15 +200,22 @@ function FlickCard({
             type="button"
             onClick={handleFollow}
             className="cursor-pointer"
-            style={{
-              height: 32, padding: "0 14px", borderRadius: 999, flexShrink: 0,
-              fontSize: 12, fontWeight: 600, border: "none",
-              background: followed ? "rgba(255,255,255,0.20)" : "#FF5A1F",
-              color: "#fff",
+            aria-label={followed ? "Following" : "Follow"}
+            style={followed ? {
+              width: 32, height: 32, borderRadius: "50%", flexShrink: 0,
+              border: "none", cursor: "pointer",
+              background: "rgba(255,255,255,0.18)",
               backdropFilter: "blur(8px)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            } : {
+              height: 32, padding: "0 16px", borderRadius: 999, flexShrink: 0,
+              fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer",
+              background: "linear-gradient(135deg, #FF8A3D 0%, #FF5C00 100%)",
+              color: "#fff",
+              boxShadow: "0 5px 14px rgba(255,92,0,0.42), inset 0 1px 0 rgba(255,255,255,0.45)",
             }}
           >
-            {followed ? "Following" : "+ Follow"}
+            {followed ? <Check style={{ width: 16, height: 16, color: "#fff" }} /> : "Follow"}
           </button>
         )}
       </div>
@@ -250,17 +248,15 @@ function FlickCard({
           {likeCount > 0 && <span style={{ fontSize: 11, color: "#fff", fontWeight: 600 }}>{likeCount.toLocaleString()}</span>}
         </button>
 
-        {/* Share */}
-        <button
-          type="button"
-          onClick={handleShare}
-          className="cursor-pointer"
-          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none" }}
-        >
-          <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Share2 style={{ width: 20, height: 20, color: "#fff" }} />
+        {/* View count */}
+        {flick.view_count > 0 && (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Eye style={{ width: 20, height: 20, color: "#fff" }} />
+            </div>
+            <span style={{ fontSize: 11, color: "#fff", fontWeight: 600 }}>{flick.view_count >= 1000 ? `${(flick.view_count/1000).toFixed(1)}k` : flick.view_count}</span>
           </div>
-        </button>
+        )}
       </div>
     </div>
   );
@@ -355,11 +351,11 @@ export default function Flicks() {
   }
 
   return (
-    <div className="flicks-viewport" style={{ position: "relative", background: "#000" }}>
+    <div className="flicks-viewport" style={{ position: "relative", background: "#000", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
       {/* Vertical scroll container */}
       <div
         ref={containerRef}
-        className="flicks-viewport"
+        className="flicks-reel-wrap"
         style={{
           overflowY: "scroll",
           scrollSnapType: "y mandatory",
@@ -367,7 +363,7 @@ export default function Flicks() {
         }}
       >
         {flicks.map((flick, idx) => (
-          <div key={flick.id} className="flicks-viewport" style={{ width: "100%", scrollSnapAlign: "start" }}>
+          <div key={flick.id} style={{ width: "100%", height: "100%", scrollSnapAlign: "start", flexShrink: 0 }}>
             <FlickCard
               flick={flick}
               onLike={() => {}}
@@ -383,7 +379,7 @@ export default function Flicks() {
       </div>
 
       {/* Nav arrows — desktop */}
-      <div className="hidden md:flex" style={{ position: "fixed", right: 80, top: "50%", transform: "translateY(-50%)", flexDirection: "column", gap: 8, zIndex: 10 }}>
+      <div className="hidden md:flex" style={{ position: "absolute", right: -56, top: "50%", transform: "translateY(-50%)", flexDirection: "column", gap: 8, zIndex: 10 }}>
         <button
           type="button"
           onClick={() => goTo(Math.max(0, activeIdx - 1))}
@@ -445,6 +441,23 @@ export default function Flicks() {
           100% { opacity: 0; transform: scale(1.0); }
         }
         div::-webkit-scrollbar { display: none; }
+        .flicks-reel-wrap {
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+        }
+        @media (min-width: 768px) {
+          .flicks-reel-wrap {
+            width: 288px;
+            height: min(512px, calc(100dvh - 80px));
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.60);
+          }
+        }
+        @media (max-width: 767px) {
+          .flicks-card-wrap { border-radius: 0; }
+        }
       `}</style>
     </div>
   );
