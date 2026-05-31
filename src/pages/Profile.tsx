@@ -40,6 +40,8 @@ import ProfileCompletenessCard from "@/components/profile/ProfileCompletenessCar
 import ProfileStatTiles from "@/components/profile/ProfileStatTiles";
 import ProfileAnalyticsRow from "@/components/profile/ProfileAnalyticsRow";
 import { track } from "@/lib/track";
+import ProfileResumeTab from "@/components/profile/ProfileResumeTab";
+import ProfileActivityTab from "@/components/profile/ProfileActivityTab";
 import ActivityScoreRing from "@/components/ActivityScoreRing";
 import { getActivityTier } from "@/lib/algorithms";
 import {
@@ -230,6 +232,8 @@ const Profile = () => {
   const avatarFileRef = useRef<HTMLInputElement>(null);
   const [resumeUploading, setResumeUploading] = useState(false);
   const resumeInputRef = useRef<HTMLInputElement>(null);
+  const [certifications, setCertifications] = useState<any[]>([]);
+  const [profileTab, setProfileTab] = useState<"overview" | "resume" | "activity">("overview");
 
   const [connectionStatus, setConnectionStatus] = useState<{ status: string | null; direction: string | null; id: string | null }>({ status: null, direction: null, id: null });
   const [connectLoading, setConnectLoading] = useState(false);
@@ -264,6 +268,7 @@ const Profile = () => {
     setWorkItems(itemsRes.status === "fulfilled" ? (itemsRes.value as any).data || [] : []);
     setUserPosts(postsRes.status === "fulfilled" ? (postsRes.value as any).data || [] : []);
     setAchievements(achvsRes.status === "fulfilled" ? (achvsRes.value as any).data || [] : []);
+    setCertifications(certsRes.status === "fulfilled" ? (certsRes.value as any).data || [] : []);
     const strandCount = strandCountRes.status === "fulfilled" ? (strandCountRes.value as any).count || 0 : 0;
     const postsCount = postsRes.status === "fulfilled" ? (postsRes.value as any).count || 0 : 0;
     setStats({ connections: strandCount, posts: postsCount });
@@ -1266,6 +1271,28 @@ const Profile = () => {
           </div>
         )}
 
+        {/* ── TAB NAV ── */}
+        <div className="flex" style={{ gap: 6, padding: "6px 0" }}>
+          {(["overview", "resume", ...(isOwnProfile ? ["activity"] : [])] as Array<"overview" | "resume" | "activity">).map(tab => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setProfileTab(tab)}
+              className="cursor-pointer"
+              style={{
+                height: 34, padding: "0 18px", borderRadius: 20, fontSize: 13, fontWeight: 500,
+                background: profileTab === tab ? "#E8733A" : "transparent",
+                color: profileTab === tab ? "#fff" : "var(--text-2)",
+                border: `1px solid ${profileTab === tab ? "#E8733A" : "var(--border-glass)"}`,
+                textTransform: "capitalize" as const,
+              }}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        {profileTab === "overview" && (<>
         {/* ── ABOUT ── */}
         <AboutSection about={aboutText} isOwnProfile={isOwnProfile} userId={targetUserId || ""} />
 
@@ -1662,6 +1689,30 @@ const Profile = () => {
             )}
           </div>
         </div>
+        </>)}
+
+        {/* ── RESUME TAB ── */}
+        {profileTab === "resume" && (
+          <ProfileResumeTab
+            profile={profileData}
+            workItems={workItems}
+            skills={skills}
+            certifications={certifications}
+            customLinks={visibleCustomLinks}
+            userEmail={userEmail}
+            isOwnProfile={isOwnProfile}
+            targetUserId={targetUserId || null}
+            onResumeUploaded={url => setViewedProfile((prev: any) => ({ ...prev, resume_url: url }))}
+          />
+        )}
+
+        {/* ── ACTIVITY TAB — owner only ── */}
+        {profileTab === "activity" && isOwnProfile && targetUserId && (
+          <ProfileActivityTab
+            profileId={targetUserId}
+            followersCount={(profileData as any).follower_count ?? 0}
+          />
+        )}
       </div>
 
       {/* ═══ GLASS MODALS ═══ */}
