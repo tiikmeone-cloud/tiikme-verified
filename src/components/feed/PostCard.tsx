@@ -276,6 +276,16 @@ export function PostCard({
         action: { label: "View", onClick: () => window.location.assign(`/org/${post.org?.slug}`) },
         duration: 3000,
       });
+      // Notify org creator if available
+      if (post.org?.created_by) {
+        sendNotification({
+          userId: post.org.created_by,
+          actorId: user.id,
+          type: "follow",
+          title: `${authProfile?.full_name || "Someone"} started following ${displayName}`,
+          actionUrl: `/org/${post.org.slug}`,
+        });
+      }
     }
   };
 

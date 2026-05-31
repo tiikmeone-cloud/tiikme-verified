@@ -571,6 +571,21 @@ const SettingsPage = () => {
   const handleSaveProfile = async () => {
     if (!userId) return;
     setSaving(true);
+
+    // Check username uniqueness before saving (if changed)
+    const trimmedSlug = (profile.slug || "").trim().toLowerCase();
+    if (trimmedSlug && trimmedSlug !== (originalProfile.slug || "").toLowerCase()) {
+      const { count } = await supabase.from("profiles").select("id", { count: "exact", head: true })
+        .eq("username", trimmedSlug).neq("id", userId);
+      if (count && count > 0) {
+        setSaving(false);
+        const alt1 = `${trimmedSlug}2`;
+        const alt2 = `${trimmedSlug}_${new Date().getFullYear().toString().slice(2)}`;
+        tiikToast.error(`@${trimmedSlug} is already taken. Try @${alt1} or @${alt2}`);
+        return;
+      }
+    }
+
     const { error } = await supabase.from("profiles").update({
       full_name: profile.name,
       headline: profile.headline,
@@ -578,7 +593,7 @@ const SettingsPage = () => {
       institution_name: profile.institution,
       location_city: profile.city,
       location_state: profile.state,
-      username: profile.slug,
+      username: trimmedSlug || profile.slug,
     }).eq("id", userId);
     if (error) { setSaving(false); tiikToast.error("Failed to save"); return; }
 
