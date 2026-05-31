@@ -312,10 +312,19 @@ const WorkDetailSheet = ({
               <VerificationRequest item={item} itemType={item.item_type || (isEdu ? "education" : "experience")} onStatusChange={onStatusChange} />
             </div>
           )}
+
+          {/* Phase 3: Squad block slot — coworker DP-stack + team/org squad */}
+          {!isEdu && <ExperienceSquadSlot workItemId={item.id} />}
         </div>
       </SheetContent>
     </Sheet>
   );
+};
+
+/* ── ExperienceSquadSlot — Phase 3 placeholder ── */
+export const ExperienceSquadSlot = ({ workItemId: _workItemId }: { workItemId: string }) => {
+  // Phase 3 will render: coworker DP-stack + "N org squad / team squad" here.
+  return null;
 };
 
 /* ═══ EXPERIENCE ═══ */
