@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { sendNotification } from "@/lib/notify";
-import PageSEO from "@/components/PageSEO";
+import { PageSEO } from "@/hooks/usePageSEO";
 
 const TIER_LABELS: Record<string, string> = {
   peer_claimed: "Peer-claimed",
