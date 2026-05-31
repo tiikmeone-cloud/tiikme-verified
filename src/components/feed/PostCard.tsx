@@ -63,6 +63,7 @@ export interface FeedPostCardProps {
   post: any;
   grouped?: boolean;
   connectionIds: Set<string>;
+  followedOrgIds?: Set<string>;
   likeCounts: Record<string, number>;
   myLikes: Record<string, boolean>;
   toggleLike: (postId: string) => void;
@@ -82,6 +83,7 @@ export function PostCard({
   post,
   grouped = false,
   connectionIds,
+  followedOrgIds = new Set(),
   likeCounts,
   myLikes,
   toggleLike,
@@ -101,6 +103,8 @@ export function PostCard({
   const [likeAnimating, setLikeAnimating] = useState(false);
   const [connectState, setConnectState] = useState<"none" | "pending">("none");
   const [sharePostId, setSharePostId] = useState<string | null>(null);
+  const [localUnfollowed, setLocalUnfollowed] = useState(false);
+  const [localFollowed, setLocalFollowed] = useState(false);
   const { user, profile: authProfile } = useAuth();
   const menuRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLElement>(null);
@@ -160,6 +164,8 @@ export function PostCard({
   const [localDisconnected, setLocalDisconnected] = useState(false);
   const effectivelyConnected = isConnected && !localDisconnected;
   const showConnect = !isOrgPost && !isOwn && !effectivelyConnected && author?.id;
+  const isFollowingOrg = isOrgPost && !!post.posted_by_org && (followedOrgIds.has(post.posted_by_org) || localFollowed) && !localUnfollowed;
+  const showFollowOrg = isOrgPost && !!post.posted_by_org && !isFollowingOrg;
 
   const liked = myLikes[post.id] || false;
   const likeCount = likeCounts[post.id] || 0;
@@ -261,6 +267,28 @@ export function PostCard({
     if (result === "accepted") toast.success("Connected!");
   };
 
+  const handleFollowOrg = async () => {
+    if (!user || !post.posted_by_org) return;
+    const { error } = await supabase.from("org_followers").insert({ org_id: post.posted_by_org, user_id: user.id });
+    if (!error) {
+      setLocalFollowed(true);
+      toast.success(`Following ${displayName}`, {
+        action: { label: "View", onClick: () => window.location.assign(`/org/${post.org?.slug}`) },
+        duration: 3000,
+      });
+      // Notify org creator if available
+      if (post.org?.created_by) {
+        sendNotification({
+          userId: post.org.created_by,
+          actorId: user.id,
+          type: "follow",
+          title: `${authProfile?.full_name || "Someone"} started following ${displayName}`,
+          actionUrl: `/org/${post.org.slug}`,
+        });
+      }
+    }
+  };
+
   const handleReport = async () => {
     if (!user) return;
     await supabase.from("post_reports").insert({ post_id: post.id, reporter_id: user.id, reason: "reported" });
@@ -334,6 +362,11 @@ export function PostCard({
                     Connected
                   </span>
                 )}
+                {isFollowingOrg && (
+                  <span className="shrink-0" style={{ fontSize: 11, fontWeight: 600, color: "#0D9488", background: "rgba(13,148,136,0.10)", border: "1px solid rgba(13,148,136,0.20)", borderRadius: 999, padding: "1px 7px" }}>
+                    Following
+                  </span>
+                )}
               </div>
               <div className="flex items-center flex-wrap min-w-0" style={{ gap: "2px 6px", marginTop: 2, lineHeight: "18px" }}>
                 {roleLine && <span style={{ fontSize: 12, color: "var(--text-3)", ...clampTwoLinesStyle }}>{roleLine}</span>}
@@ -360,6 +393,27 @@ export function PostCard({
               </button>
               {showMenu && (
                 <div className="absolute right-0 top-8 z-[100]" style={{ width: 190, borderRadius: 12, padding: "8px 0", background: "var(--bg-card)", border: "1px solid var(--border-glass)", boxShadow: "var(--shadow-lg)" }}>
+                  {isFollowingOrg && post.posted_by_org && (
+                    <button type="button" onClick={() => {
+                      setShowMenu(false);
+                      toast(`Unfollow ${displayName}?`, {
+                        action: { label: "Unfollow", onClick: async () => {
+                          const { error } = await supabase.from("org_followers").delete()
+                            .eq("org_id", post.posted_by_org).eq("user_id", user!.id);
+                          if (!error) {
+                            setLocalUnfollowed(true);
+                            toast.success(`Unfollowed ${displayName}`);
+                          } else {
+                            toast.error("Could not unfollow. Try again.");
+                          }
+                        }},
+                        cancel: { label: "Cancel", onClick: () => {} },
+                        duration: 5000,
+                      });
+                    }} className="flex items-center gap-2 w-full cursor-pointer hover:bg-surface-2" style={{ padding: "10px 16px", fontSize: 14, color: "#EF4444" }}>
+                      <UserX style={{ width: 14, height: 14 }} /> Unfollow {displayName}
+                    </button>
+                  )}
                   {effectivelyConnected && (
                     <button type="button" onClick={() => {
                       setShowMenu(false);
@@ -531,6 +585,24 @@ export function PostCard({
             liked={liked}
             onClose={() => setThreadOpen(false)}
           />
+        )}
+
+        {showFollowOrg && (
+          <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end" }}>
+            <button
+              type="button"
+              onClick={handleFollowOrg}
+              className="cursor-pointer"
+              style={{
+                height: 32, padding: "0 14px", borderRadius: 999,
+                fontSize: 12, fontWeight: 600, border: "none",
+                background: "rgba(13,148,136,0.12)", color: "#0D9488",
+                boxShadow: "0 2px 8px rgba(13,148,136,0.15)",
+              }}
+            >
+              + Follow
+            </button>
+          </div>
         )}
 
         {showConnect && (

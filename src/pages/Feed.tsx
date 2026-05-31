@@ -345,7 +345,7 @@ const FeedComposer = ({ onPublished }: { onPublished: () => void }) => {
 };
 
 const PostGroupCard = ({
-  posts, connectionIds, likeCounts, myLikes, toggleLike,
+  posts, connectionIds, followedOrgIds, likeCounts, myLikes, toggleLike,
   commentCounts, commentsData, commentsOpen, commentInputs,
   setCommentInputs, toggleComments, submitComment, deleteComment, onDelete, onEdit,
 }: { posts: any[] } & Record<string, any>) => {
@@ -393,7 +393,7 @@ const PostGroupCard = ({
           {posts.map((post) => (
             <div key={post.id} className="min-w-0 shrink-0 grow-0 basis-full">
               <SharedFeedPostCard
-                post={post} grouped connectionIds={connectionIds}
+                post={post} grouped connectionIds={connectionIds} followedOrgIds={followedOrgIds}
                 likeCounts={likeCounts} myLikes={myLikes} toggleLike={toggleLike}
                 commentCounts={commentCounts} commentsData={commentsData}
                 commentsOpen={commentsOpen} commentInputs={commentInputs}
@@ -708,7 +708,7 @@ const Feed = () => {
           {loading && !visiblePosts.length && <SkeletonCard count={3} />}
           {feedItems.map((item) => item.kind === "post" ? (
             <SharedFeedPostCard
-              key={item.id} post={item.post} connectionIds={connectionIds}
+              key={item.id} post={item.post} connectionIds={connectionIds} followedOrgIds={followedOrgIds}
               likeCounts={likeCounts} myLikes={myLikes} toggleLike={toggleLike}
               commentCounts={commentCounts} commentsData={commentsData}
               commentsOpen={commentsOpen} commentInputs={commentInputs}
@@ -718,7 +718,7 @@ const Feed = () => {
             />
           ) : (
             <PostGroupCard
-              key={item.id} posts={item.posts} connectionIds={connectionIds}
+              key={item.id} posts={item.posts} connectionIds={connectionIds} followedOrgIds={followedOrgIds}
               likeCounts={likeCounts} myLikes={myLikes} toggleLike={toggleLike}
               commentCounts={commentCounts} commentsData={commentsData}
               commentsOpen={commentsOpen} commentInputs={commentInputs}
