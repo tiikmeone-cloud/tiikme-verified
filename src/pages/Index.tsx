@@ -8,7 +8,6 @@ const TrustSystemsSection = lazy(() => import("@/components/landing/TrustSystems
 const ProblemSection = lazy(() => import("@/components/landing/ProblemSection"));
 const HowItWorksSection = lazy(() => import("@/components/landing/HowItWorksSection"));
 const WhoIsForSection = lazy(() => import("@/components/landing/WhoIsForSection"));
-const CirclesSection = lazy(() => import("@/components/landing/CirclesSection"));
 const InstitutionsSection = lazy(() => import("@/components/landing/InstitutionsSection"));
 const ComparisonSection = lazy(() => import("@/components/landing/ComparisonSection"));
 const VisionSection = lazy(() => import("@/components/landing/VisionSection"));
@@ -21,9 +20,9 @@ const Index = () => {
     <div className="min-h-screen bg-white" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
       <PageSEO
         title="Tiikme — A Professional Network for India"
-        description="India's professional network for students, freelancers, founders, and creators. Join Circles, find opportunities, build verified identity. No fees."
+        description="India's professional network for students, freelancers, founders, and creators. Find opportunities, build verified identity. No fees."
         ogTitle="Tiikme — A Professional Network for India"
-        ogDescription="Built for the ones who build. Students, freelancers, founders, creators. Circles, opportunities, verified communities."
+        ogDescription="Built for the ones who build. Students, freelancers, founders, creators. Opportunities, verified identity, professional discovery."
         ogImage="https://tiikme.com/og-image.png"
         twitterCard="summary_large_image"
         canonical="https://tiikme.com/"
@@ -60,7 +59,6 @@ const Index = () => {
           <ProblemSection />
           <HowItWorksSection />
           <WhoIsForSection />
-          <CirclesSection />
           <InstitutionsSection />
           <ComparisonSection />
           <VisionSection />

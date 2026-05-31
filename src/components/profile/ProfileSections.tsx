@@ -3,11 +3,12 @@ import { fixStorageUrl } from "@/components/ui/AvatarSquare";
 import {
   Briefcase, GraduationCap, Rocket, Award, Code2, MessageCircle,
   MapPin, CheckCircle, Clock, Eye, EyeOff, Trash2, Plus, ExternalLink,
-  Star, X, Heart, Repeat2,
+  Star, X, Heart, Repeat2, ChevronRight, Image,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import VerificationRequest from "@/components/profile/VerificationRequest";
 import { useCompanyLogos } from "@/hooks/useCompanyLogos";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 /* ── Helpers ── */
 const LOGO_COLORS = ["#E8733A", "#C44A1F", "#34C759", "#166534", "#B7640A", "#FFB800"];
@@ -168,20 +169,27 @@ const SectionBox = ({ title, icon: Icon, iconColor, count, isOwnProfile, onAdd, 
 );
 
 /* ── Item Row ── */
-const ItemRow = ({ logo, line1, line2, line3, line4, right, isLast, extra }: {
+const ItemRow = ({ logo, line1, line2, line3, line4, right, isLast, extra, onClick }: {
   logo: React.ReactNode; line1: React.ReactNode; line2?: React.ReactNode; line3?: string; line4?: string;
-  right?: React.ReactNode; isLast: boolean; extra?: React.ReactNode;
+  right?: React.ReactNode; isLast: boolean; extra?: React.ReactNode; onClick?: () => void;
 }) => (
-  <div className="flex" style={{ alignItems: "flex-start", gap: 10, padding: "8px 0", borderBottom: isLast ? "none" : "1px solid var(--border-subtle)" }}>
-    {logo}
-    <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 1 }}>
-      <div style={{ fontSize: 14, fontWeight: 600, lineHeight: "18px", color: "var(--text-primary)", overflowWrap: "anywhere", wordBreak: "break-word" }}>{line1}</div>
-      {line2 && <p style={{ fontSize: 13, fontWeight: 400, lineHeight: "17px", color: "var(--text-secondary)", overflowWrap: "anywhere", wordBreak: "break-word" }}>{line2}</p>}
-      {line3 && <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)" }}>{line3}</p>}
-      {line4 && <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)" }}>{line4}</p>}
-      {extra}
+  <div className="flex items-start" style={{ gap: 8, padding: "8px 0", borderBottom: isLast ? "none" : "1px solid var(--border-subtle)" }}>
+    <div
+      className={onClick ? "flex items-start flex-1 min-w-0 cursor-pointer hover:opacity-80 transition-opacity" : "flex items-start flex-1 min-w-0"}
+      style={{ gap: 10 }}
+      onClick={onClick}
+    >
+      {logo}
+      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 1 }}>
+        <div style={{ fontSize: 14, fontWeight: 600, lineHeight: "18px", color: "var(--text-primary)", overflowWrap: "anywhere", wordBreak: "break-word" }}>{line1}</div>
+        {line2 && <p style={{ fontSize: 13, fontWeight: 400, lineHeight: "17px", color: "var(--text-secondary)", overflowWrap: "anywhere", wordBreak: "break-word" }}>{line2}</p>}
+        {line3 && <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)" }}>{line3}</p>}
+        {line4 && <p style={{ fontSize: 12, fontWeight: 400, color: "var(--text-muted)" }}>{line4}</p>}
+        {extra}
+        {onClick && <span style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>Tap to view details</span>}
+      </div>
     </div>
-    {right && <div className="shrink-0">{right}</div>}
+    {right && <div className="shrink-0" onClick={e => e.stopPropagation()}>{right}</div>}
   </div>
 );
 
@@ -195,11 +203,127 @@ interface SectionProps {
   onStatusChange: (id: string, status: string) => void;
 }
 
+/* ── Experience / Education detail sheet ── */
+const WorkDetailSheet = ({
+  item, type, isOwnProfile, companyLogo, onClose, onStatusChange,
+}: {
+  item: any; type: "experience" | "education"; isOwnProfile: boolean;
+  companyLogo?: { logo_url?: string | null; slug?: string | null } | null;
+  onClose: () => void; onStatusChange?: (id: string, status: string) => void;
+}) => {
+  const isEdu = type === "education";
+  const title = isEdu
+    ? [item.degree_type || item.title, item.field_of_study].filter(Boolean).join(" in ") || "Degree"
+    : item.job_title || item.title || "Role";
+  const org = isEdu
+    ? item.institution_name_edu || item.institution_name || ""
+    : item.company_name || item.institution_name || "";
+  const duration = getDuration(item);
+  const skills: string[] = item.skills || [];
+  const description = item.description || "";
+  const location = item.work_location || item.city || "";
+  const empType = item.employment_type || "";
+  const status = item.verification_status || "unverified";
+
+  return (
+    <Sheet open onOpenChange={open => { if (!open) onClose(); }}>
+      <SheetContent
+        side="right"
+        className="flex flex-col"
+        style={{ width: "min(400px, 92vw)", background: "var(--bg-card)", borderLeft: "1px solid var(--border-glass)", padding: 0, gap: 0 }}
+      >
+        <SheetHeader style={{ padding: "16px 20px 12px", borderBottom: "1px solid var(--border-glass)", flexShrink: 0 }}>
+          <SheetTitle style={{ fontSize: 14, fontWeight: 700, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            {isEdu ? "Education detail" : "Experience detail"}
+          </SheetTitle>
+        </SheetHeader>
+        <div style={{ flex: 1, overflowY: "auto", padding: "20px 20px 32px" }}>
+          {/* Org logo + name */}
+          <div className="flex items-center" style={{ gap: 12, marginBottom: 16 }}>
+            <CompanyLogo name={org} logoUrl={companyLogo?.logo_url} size={48} color={isEdu ? "#34C759" : "#FF5A1F"} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 16, fontWeight: 700, color: "var(--text-1)", lineHeight: "22px", overflowWrap: "anywhere" }}>{title}</p>
+              {companyLogo?.slug ? (
+                <Link to={`/org/${companyLogo.slug}`} style={{ fontSize: 13, color: "#FF5A1F", textDecoration: "none" }}>{org}</Link>
+              ) : (
+                <p style={{ fontSize: 13, color: "var(--text-3)" }}>{org}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Badges row */}
+          <div className="flex flex-wrap" style={{ gap: 6, marginBottom: 16 }}>
+            {empType && (
+              <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 999, background: "var(--surface-2)", color: "var(--text-2)" }}>
+                {empType}
+              </span>
+            )}
+            {status === "verified" && (
+              <span className="flex items-center" style={{ gap: 4, fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 999, background: "rgba(22,163,74,0.10)", color: "#16A34A" }}>
+                <CheckCircle style={{ width: 11, height: 11 }} /> Verified
+              </span>
+            )}
+            {status === "pending" && (
+              <span className="flex items-center" style={{ gap: 4, fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 999, background: "rgba(255,184,0,0.10)", color: "#FFB800" }}>
+                <Clock style={{ width: 11, height: 11 }} /> Pending verification
+              </span>
+            )}
+          </div>
+
+          {/* Duration + location */}
+          {duration && (
+            <div className="flex items-center" style={{ gap: 6, marginBottom: 8 }}>
+              <Clock style={{ width: 13, height: 13, color: "var(--text-3)", flexShrink: 0 }} />
+              <p style={{ fontSize: 13, color: "var(--text-2)" }}>{duration}</p>
+            </div>
+          )}
+          {location && (
+            <div className="flex items-center" style={{ gap: 6, marginBottom: 12 }}>
+              <MapPin style={{ width: 13, height: 13, color: "var(--text-3)", flexShrink: 0 }} />
+              <p style={{ fontSize: 13, color: "var(--text-2)" }}>{location}</p>
+            </div>
+          )}
+
+          {/* Description */}
+          {description && (
+            <div style={{ marginBottom: 16 }}>
+              <p style={{ fontSize: 12, fontWeight: 600, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 6 }}>About this role</p>
+              <p style={{ fontSize: 13, color: "var(--text-2)", lineHeight: "20px", whiteSpace: "pre-wrap" }}>{description}</p>
+            </div>
+          )}
+
+          {/* Skills */}
+          {skills.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <p style={{ fontSize: 12, fontWeight: 600, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 8 }}>Skills</p>
+              <div className="flex flex-wrap" style={{ gap: 6 }}>
+                {skills.map(s => (
+                  <span key={s} style={{ fontSize: 12, fontWeight: 500, padding: "3px 10px", borderRadius: 999, background: "rgba(255,90,31,0.08)", color: "#FF5A1F", border: "1px solid rgba(255,90,31,0.15)" }}>{s}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Verify CTA — own profile, not yet verified */}
+          {isOwnProfile && status === "unverified" && onStatusChange && (
+            <div style={{ marginTop: 8, padding: 12, borderRadius: 10, background: "rgba(255,184,0,0.06)", border: "1px solid rgba(255,184,0,0.20)" }}>
+              <p style={{ fontSize: 12, fontWeight: 600, color: "#FFB800", marginBottom: 6 }}>Get this verified</p>
+              <p style={{ fontSize: 12, color: "var(--text-3)", marginBottom: 8 }}>Request verification from a colleague or manager at {org}.</p>
+              <VerificationRequest item={item} itemType={item.item_type || (isEdu ? "education" : "experience")} onStatusChange={onStatusChange} />
+            </div>
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+};
+
 /* ═══ EXPERIENCE ═══ */
 export const ExperienceSection = ({ items, isOwnProfile, onAdd, onDelete, onToggleVisibility, onStatusChange }: SectionProps) => {
   const { lookupBatch, getLogo } = useCompanyLogos();
   const MAX = 3;
   const [showAll, setShowAll] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
   useEffect(() => {
     const names = items.map(e => e.company_name || e.institution_name || "").filter(Boolean);
     if (names.length > 0) lookupBatch(names);
@@ -208,6 +332,7 @@ export const ExperienceSection = ({ items, isOwnProfile, onAdd, onDelete, onTogg
   if (items.length === 0 && !isOwnProfile) return null;
 
   return (
+    <>
     <SectionBox title="Experience" icon={Briefcase} iconColor="#FF5A1F" borderColor="#FF5A1F" count={items.length} isOwnProfile={isOwnProfile} onAdd={onAdd}>
       {items.length === 0 ? (
         isOwnProfile ? (
@@ -227,6 +352,7 @@ export const ExperienceSection = ({ items, isOwnProfile, onAdd, onDelete, onTogg
             const logo = getLogo(companyName);
             return (
               <ItemRow key={exp.id} isLast={idx === visible.length - 1}
+                onClick={() => setSelectedItem(exp)}
                 logo={<CompanyLogo name={companyName} logoUrl={logo?.logo_url} />}
                 line1={
                   <span className="inline-flex items-center gap-1.5 flex-wrap">
@@ -236,11 +362,7 @@ export const ExperienceSection = ({ items, isOwnProfile, onAdd, onDelete, onTogg
                     )}
                   </span>
                 }
-                line2={
-                  logo?.slug
-                    ? <><Link to={`/org/${logo.slug}`} onClick={e => e.stopPropagation()} style={{ color: "var(--text-secondary)", textDecoration: "underline", textDecorationColor: "transparent", transition: "text-decoration-color 150ms" }} onMouseEnter={e => { (e.target as HTMLElement).style.textDecorationColor = "currentColor"; }} onMouseLeave={e => { (e.target as HTMLElement).style.textDecorationColor = "transparent"; }}>{companyName}</Link>{exp.employment_type ? ` · ${exp.employment_type}` : ""}</>
-                    : [companyName, exp.employment_type].filter(Boolean).join(" · ")
-                }
+                line2={[companyName, exp.employment_type].filter(Boolean).join(" · ")}
                 line3={getDuration(exp)}
                 line4={exp.work_location || undefined}
                 right={
@@ -269,6 +391,17 @@ export const ExperienceSection = ({ items, isOwnProfile, onAdd, onDelete, onTogg
         </>
       )}
     </SectionBox>
+    {selectedItem && (
+      <WorkDetailSheet
+        item={selectedItem}
+        type="experience"
+        isOwnProfile={isOwnProfile}
+        companyLogo={getLogo(selectedItem.company_name || selectedItem.institution_name || "")}
+        onClose={() => setSelectedItem(null)}
+        onStatusChange={onStatusChange}
+      />
+    )}
+    </>
   );
 };
 
@@ -276,15 +409,18 @@ export const ExperienceSection = ({ items, isOwnProfile, onAdd, onDelete, onTogg
 export const EducationSection = ({ items, isOwnProfile, onAdd, onDelete, onToggleVisibility, onStatusChange }: SectionProps) => {
   const { lookupBatch, getLogo } = useCompanyLogos();
   const MAX = 3;
+  const [showAll, setShowAll] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
   useEffect(() => {
     const names = items.map(e => e.institution_name_edu || e.institution_name || "").filter(Boolean);
     if (names.length > 0) lookupBatch(names);
   }, [items, lookupBatch]);
-  const visible = items.slice(0, MAX);
+  const visible = showAll ? items : items.slice(0, MAX);
 
   if (items.length === 0 && !isOwnProfile) return null;
 
   return (
+    <>
     <SectionBox title="Education" icon={GraduationCap} iconColor="#34C759" borderColor="#34C759" count={items.length} isOwnProfile={isOwnProfile} onAdd={onAdd}>
       {items.length === 0 ? (
         isOwnProfile ? (
@@ -310,6 +446,7 @@ export const EducationSection = ({ items, isOwnProfile, onAdd, onDelete, onToggl
             const years = [edu.start_year, edu.is_current ? "Present" : edu.end_year].filter(Boolean).join(" – ");
             return (
               <ItemRow key={edu.id} isLast={idx === visible.length - 1}
+                onClick={() => setSelectedItem({ ...edu, item_type: "education" })}
                 logo={<CompanyLogo name={instName} logoUrl={logo?.logo_url} color="#34C759" />}
                 line1={degree || "Degree"}
                 line2={instName}
@@ -334,11 +471,24 @@ export const EducationSection = ({ items, isOwnProfile, onAdd, onDelete, onToggl
             );
           })}
           {items.length > MAX && (
-            <button type="button" className="cursor-pointer" style={{ fontSize: 12, color: "#E8733A", marginTop: 4, background: "none", border: "none", padding: 0 }}>See all {items.length} →</button>
+            <button type="button" onClick={() => setShowAll(v => !v)} className="cursor-pointer" style={{ fontSize: 12, color: "#E8733A", marginTop: 4, background: "none", border: "none", padding: 0 }}>
+              {showAll ? "Show less ↑" : `See all ${items.length} →`}
+            </button>
           )}
         </>
       )}
     </SectionBox>
+    {selectedItem && (
+      <WorkDetailSheet
+        item={selectedItem}
+        type="education"
+        isOwnProfile={isOwnProfile}
+        companyLogo={getLogo(selectedItem.institution_name_edu || selectedItem.institution_name || "")}
+        onClose={() => setSelectedItem(null)}
+        onStatusChange={onStatusChange}
+      />
+    )}
+    </>
   );
 };
 
@@ -534,10 +684,14 @@ export const PostsSection = ({
 }) => {
   const identifier = username || userId;
   const postsLink = identifier ? `/app/u/${identifier}/posts` : "/app/feed";
-  return (
-    <SectionBox title="Posts" icon={MessageCircle} iconColor="#E8733A" borderColor="#E8733A" count={stats.posts} isOwnProfile={!!isOwnProfile} onAdd={isOwnProfile ? () => {} : undefined}>
-      {stats.posts === 0 ? (
-        isOwnProfile ? (
+  const [tab, setTab] = useState<"posts" | "media">("posts");
+  const mediaPosts = posts.filter(p => p.image_urls?.length > 0);
+  const displayed = tab === "media" ? mediaPosts : posts;
+
+  if (stats.posts === 0) {
+    return (
+      <SectionBox title="Posts" icon={MessageCircle} iconColor="#E8733A" borderColor="#E8733A" count={0} isOwnProfile={!!isOwnProfile}>
+        {isOwnProfile ? (
           <Link to="/post/create" className="flex items-center gap-2 w-full text-left"
             style={{ background: "rgba(232,115,58,0.05)", border: "1px dashed rgba(232,115,58,0.30)", borderRadius: 10, padding: "10px 12px" }}>
             <Plus style={{ width: 14, height: 14, color: "#E8733A", flexShrink: 0 }} />
@@ -545,15 +699,43 @@ export const PostsSection = ({
           </Link>
         ) : (
           <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "4px 0" }}>No posts yet</p>
-        )
-      ) : (
-        <Link to={postsLink} className="flex items-center justify-between hover:opacity-80 transition-opacity" style={{ textDecoration: "none" }}>
-          <div>
-            <span style={{ fontSize: 36, fontWeight: 800, color: "#1A1A2E", lineHeight: 1 }} className="num">{stats.posts}</span>
-            <span style={{ fontSize: 13, fontWeight: 400, color: "#6B7094", marginLeft: 8 }}>Posts</span>
-          </div>
-          <span style={{ fontSize: 12, fontWeight: 600, color: "#E8733A" }}>View all →</span>
+        )}
+      </SectionBox>
+    );
+  }
+
+  return (
+    <SectionBox title="Posts" icon={MessageCircle} iconColor="#E8733A" borderColor="#E8733A" count={stats.posts} isOwnProfile={!!isOwnProfile}>
+      {/* Tab pills */}
+      <div className="flex items-center" style={{ gap: 6, marginBottom: 10 }}>
+        {(["posts", "media"] as const).map(t => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => setTab(t)}
+            style={{
+              height: 26, padding: "0 12px", borderRadius: 999, fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer",
+              background: tab === t ? "#FF5A1F" : "var(--surface-2)",
+              color: tab === t ? "#fff" : "var(--text-3)",
+            }}
+          >
+            {t === "posts" ? "All" : <span className="flex items-center gap-1"><Image style={{ width: 10, height: 10 }} />Media</span>}
+          </button>
+        ))}
+        <Link to={postsLink} style={{ marginLeft: "auto", fontSize: 12, fontWeight: 600, color: "#FF5A1F", textDecoration: "none" }}>
+          View all <ChevronRight style={{ width: 12, height: 12, display: "inline", verticalAlign: "middle" }} />
         </Link>
+      </div>
+
+      {/* Post cards carousel */}
+      {displayed.length === 0 ? (
+        <p style={{ fontSize: 13, color: "var(--text-muted)" }}>No {tab === "media" ? "media " : ""}posts yet</p>
+      ) : (
+        <div className="flex" style={{ gap: 8, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none" }}>
+          {displayed.slice(0, 10).map(post => (
+            <PostPreviewCard key={post.id} post={post} />
+          ))}
+        </div>
       )}
     </SectionBox>
   );

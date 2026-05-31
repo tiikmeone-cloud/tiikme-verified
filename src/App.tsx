@@ -147,7 +147,7 @@ const AppRoutes = () => {
             <Route path="/feed" element={<Navigate to="/app/feed" replace />} />
             <Route path="/jobs" element={<Navigate to="/app/opportunities" replace />} />
             <Route path="/opportunities" element={<Navigate to="/app/opportunities" replace />} />
-            <Route path="/circles" element={<Navigate to="/app/circles" replace />} />
+            <Route path="/circles" element={<Navigate to="/app/feed" replace />} />
             <Route path="/profile" element={<Navigate to="/app/profile" replace />} />
 
             {/* App (protected) */}

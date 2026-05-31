@@ -13,8 +13,7 @@ interface DeleteAccountModalProps {
 
 const DELETED_ITEMS = [
   "Your profile, photo, bio, and personal details",
-  "All posts (Feed and Circles) you created",
-  "All direct messages (Pings) you sent",
+  "All posts you created",
   "Your connection history",
   "Verification documents you submitted",
   "Your notification history",
