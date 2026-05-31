@@ -87,10 +87,10 @@ export default function AIProfileBuilder({ onApplied }: Props) {
     setStep("applying");
     try {
       // 1. Update profile headline + bio
-      const profileUpdates: Record<string, string> = {};
+      const profileUpdates: Record<string, unknown> = {};
       if (structured.headline) profileUpdates.headline = structured.headline;
       if (structured.bio) profileUpdates.bio = structured.bio;
-      if (structured.skills?.length) profileUpdates.skills = JSON.stringify(structured.skills);
+      if (structured.skills?.length) profileUpdates.skills = structured.skills; // text[] column, pass array directly
       if (Object.keys(profileUpdates).length) {
         await supabase.from("profiles").update(profileUpdates as any).eq("id", user.id);
       }
