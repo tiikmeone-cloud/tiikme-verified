@@ -1,12 +1,10 @@
 import { useState, useEffect, useMemo } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
-import { getProfileSubtitle } from "@/lib/profileUtils";
+import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
 import { storageImageUrl } from "@/lib/imageTransform";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import {
   Building2, MapPin, Globe, Users, Heart, Briefcase, Shield, Calendar,
-  Share2, Settings, ExternalLink, Plus, MessageCircle,
-  Star, Rocket, ChevronRight,
+  Share2, Settings, ExternalLink, Plus, FileText, ChevronRight, Rocket,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { sendNotification } from "@/lib/notify";
@@ -41,10 +39,16 @@ function isOrgMembershipConfirmed(member: { is_verified?: boolean | null; approv
   return !!member.is_verified && member.approval_status === "approved";
 }
 
+type OrgTab = "overview" | "posts" | "jobs" | "members";
+
 export default function OrganizationPage() {
   const { slug } = useParams<{ slug: string }>();
   const { user, profile } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = (searchParams.get("tab") as OrgTab) || "overview";
+  const setTab = (t: OrgTab) => setSearchParams(t === "overview" ? {} : { tab: t }, { replace: true });
+
   const [org, setOrg] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -330,88 +334,253 @@ export default function OrganizationPage() {
           </div>
         </div>
 
-        {/* ── SECTION 1: ABOUT ── */}
-        <ScrollSection>
-          <SectionHeader icon={Building2} iconColor="#6B7094" title="About" />
-          {org.description ? (
-            <p style={{ fontSize: 13, fontWeight: 400, color: "#6B7094", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{org.description}</p>
-          ) : (
-            <p style={{ fontSize: 13, color: "#9CA3C0" }}>No description added yet.</p>
-          )}
+        {/* ── TAB NAV ── */}
+        <div style={{ overflowX: "auto", scrollbarWidth: "none" }}>
+          <div className="flex" style={{ gap: 4, minWidth: "max-content" }}>
+            {(["overview", "posts", "jobs", "members"] as OrgTab[]).map(t => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTab(t)}
+                className="cursor-pointer"
+                style={{
+                  height: 34, padding: "0 16px", borderRadius: 10, fontSize: 13, fontWeight: activeTab === t ? 700 : 500,
+                  background: activeTab === t ? "linear-gradient(135deg, #E8733A, #FF6B9D)" : "rgba(255,255,255,0.25)",
+                  color: activeTab === t ? "#fff" : "var(--text-2)",
+                  border: activeTab === t ? "none" : "1px solid rgba(255,255,255,0.40)",
+                  boxShadow: activeTab === t ? "0 2px 12px rgba(232,115,58,0.25)" : "none",
+                  transition: "all 0.15s",
+                  textTransform: "capitalize",
+                }}
+              >{t}</button>
+            ))}
+          </div>
+        </div>
 
-          {/* Detail rows */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 10 }}>
-            {org.founded_year && (
-              <DetailRow icon={Calendar} label="Founded" value={String(org.founded_year)} />
-            )}
-            {(org.city || org.state) && (
-              <DetailRow icon={MapPin} label="Location" value={[org.city, org.state].filter(Boolean).join(", ")} />
-            )}
-            {org.employee_count && (
-              <DetailRow icon={Users} label={teamSizeLabel} value={org.employee_count} />
-            )}
-            {websiteUrl && (
-              <div className="flex items-center" style={{ gap: 6 }}>
-                <Globe style={{ width: 13, height: 13, color: "#9CA3C0", flexShrink: 0 }} />
-                <span style={{ fontSize: 11, fontWeight: 500, color: "#9CA3C0", minWidth: 60 }}>Website</span>
-                <a href={websiteUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, fontWeight: 500, color: "#E8733A" }}>
-                  {websiteLabel || "Visit"}
-                </a>
+        {/* ── OVERVIEW TAB ── */}
+        {activeTab === "overview" && (
+          <>
+            <ScrollSection>
+              <SectionHeader icon={Building2} iconColor="#6B7094" title="About" />
+              {org.description ? (
+                <p style={{ fontSize: 13, fontWeight: 400, color: "#6B7094", lineHeight: 1.6, whiteSpace: "pre-wrap", marginTop: 8 }}>{org.description}</p>
+              ) : (
+                <p style={{ fontSize: 13, color: "#9CA3C0", marginTop: 8 }}>No description added yet.</p>
+              )}
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 12 }}>
+                {org.founded_year && (
+                  <DetailRow icon={Calendar} label="Founded" value={String(org.founded_year)} />
+                )}
+                {(org.city || org.state) && (
+                  <DetailRow icon={MapPin} label="Location" value={[org.city, org.state].filter(Boolean).join(", ")} />
+                )}
+                {org.employee_count && (
+                  <DetailRow icon={Users} label={teamSizeLabel} value={org.employee_count} />
+                )}
+                {websiteUrl && (
+                  <div className="flex items-center" style={{ gap: 6 }}>
+                    <Globe style={{ width: 13, height: 13, color: "#9CA3C0", flexShrink: 0 }} />
+                    <span style={{ fontSize: 11, fontWeight: 500, color: "#9CA3C0", minWidth: 60 }}>Website</span>
+                    <a href={websiteUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, fontWeight: 500, color: "#E8733A" }}>
+                      {websiteLabel || "Visit"}
+                    </a>
+                  </div>
+                )}
+                {org.email && (
+                  <DetailRow icon={Globe} label="Email" value={org.email} />
+                )}
               </div>
-            )}
-            {org.email && (
-              <DetailRow icon={Globe} label="Email" value={org.email} />
-            )}
-          </div>
 
-          {/* Social links */}
-          {org.social_links && Object.keys(org.social_links as any).length > 0 && (
-            <div className="flex flex-wrap" style={{ gap: 6, marginTop: 10 }}>
-              {Object.entries(org.social_links as Record<string, string>).filter(([, v]) => v).map(([k, v]) => (
-                <a key={k} href={v} target="_blank" rel="noopener noreferrer" className="flex items-center" style={{
-                  height: 28, padding: "0 10px", borderRadius: 6, gap: 6,
-                  background: "rgba(255,255,255,0.12)", border: "1px solid rgba(0,0,0,0.06)",
-                }}>
-                  <ExternalLink style={{ width: 12, height: 12, color: "#E8733A", flexShrink: 0 }} />
-                  <span style={{ fontSize: 12, fontWeight: 400, color: "#1A1A2E" }}>{k}</span>
-                </a>
-              ))}
-            </div>
-          )}
-        </ScrollSection>
+              {org.social_links && Object.keys(org.social_links as any).length > 0 && (
+                <div className="flex flex-wrap" style={{ gap: 6, marginTop: 12 }}>
+                  {Object.entries(org.social_links as Record<string, string>).filter(([, v]) => v).map(([k, v]) => (
+                    <a key={k} href={v} target="_blank" rel="noopener noreferrer" className="flex items-center" style={{
+                      height: 28, padding: "0 10px", borderRadius: 6, gap: 6,
+                      background: "rgba(255,255,255,0.12)", border: "1px solid rgba(0,0,0,0.06)",
+                    }}>
+                      <ExternalLink style={{ width: 12, height: 12, color: "#E8733A", flexShrink: 0 }} />
+                      <span style={{ fontSize: 12, fontWeight: 400, color: "#1A1A2E" }}>{k}</span>
+                    </a>
+                  ))}
+                </div>
+              )}
+            </ScrollSection>
 
-        {/* ── SECTION 2: OPEN JOBS ── */}
-        <ScrollSection>
-          <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-            <SectionHeader icon={Briefcase} iconColor="#34C759" title="Open Jobs" count={activeOpps.length} />
-            <Link to={`/app/opportunities?org=${org.id}`} style={{ fontSize: 12, color: "#E8733A", display: "flex", alignItems: "center", gap: 2 }}>
-              See all <ChevronRight style={{ width: 13, height: 13 }} />
-            </Link>
-          </div>
-          {activeOpps.length === 0 ? (
-            <div style={{ padding: "16px 0", textAlign: "center" }}>
-              <p style={{ fontSize: 13, color: "#9CA3C0" }}>No open jobs right now.</p>
+            {/* Recent posts preview in Overview */}
+            {posts.length > 0 && (
+              <ScrollSection>
+                <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
+                  <SectionHeader icon={FileText} iconColor="#E8733A" title="Recent Posts" count={posts.length} />
+                  <button type="button" onClick={() => setTab("posts")} className="cursor-pointer" style={{ fontSize: 12, color: "#E8733A", background: "none", border: "none", display: "flex", alignItems: "center", gap: 2 }}>
+                    See all <ChevronRight style={{ width: 13, height: 13 }} />
+                  </button>
+                </div>
+                {posts.slice(0, 3).map((p, idx) => (
+                  <Link key={p.id} to={`/app/post/${p.id}`} className="block" style={{
+                    padding: "10px 0",
+                    borderBottom: idx < Math.min(posts.length, 3) - 1 ? "1px solid rgba(0,0,0,0.06)" : "none",
+                  }}>
+                    <p style={{ fontSize: 13, color: "#1A1A2E", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{p.content}</p>
+                    {p.image_urls && p.image_urls.length > 0 && (
+                      <div className="flex gap-1 mt-1.5 overflow-hidden" style={{ borderRadius: 8 }}>
+                        {p.image_urls.slice(0, 3).map((url: string, i: number) => (
+                          <img key={i} src={url} alt="" loading="lazy" className="object-cover" style={{ width: p.image_urls.length === 1 ? "100%" : 80, height: 56, borderRadius: 6 }} />
+                        ))}
+                      </div>
+                    )}
+                    <div className="flex items-center" style={{ gap: 12, marginTop: 6 }}>
+                      <span style={{ fontSize: 11, color: "#9CA3C0", marginLeft: "auto" }}>
+                        {p.created_at ? getTimeAgo(new Date(p.created_at)) : ""}
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </ScrollSection>
+            )}
+
+            {/* Recent jobs preview in Overview */}
+            {activeOpps.length > 0 && (
+              <ScrollSection>
+                <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
+                  <SectionHeader icon={Briefcase} iconColor="#34C759" title="Open Jobs" count={activeOpps.length} />
+                  <button type="button" onClick={() => setTab("jobs")} className="cursor-pointer" style={{ fontSize: 12, color: "#E8733A", background: "none", border: "none", display: "flex", alignItems: "center", gap: 2 }}>
+                    See all <ChevronRight style={{ width: 13, height: 13 }} />
+                  </button>
+                </div>
+                {activeOpps.slice(0, 2).map((o, idx) => (
+                  <div key={o.id} onClick={() => navigate("/app/opportunities")} className="cursor-pointer" style={{
+                    padding: "10px 0",
+                    borderBottom: idx < Math.min(activeOpps.length, 2) - 1 ? "1px solid rgba(0,0,0,0.06)" : "none",
+                  }}>
+                    <div className="flex items-start justify-between">
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>{o.title}</p>
+                        <div className="flex items-center flex-wrap" style={{ gap: 6, marginTop: 3 }}>
+                          <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 4, background: "rgba(232,115,58,0.08)", color: "#E8733A" }}>
+                            {(o.type || "job").replace(/[-_]/g, " ")}
+                          </span>
+                          {o.location && <span style={{ fontSize: 11, color: "#9CA3C0" }}>{o.location}</span>}
+                          {o.is_remote && <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 4, background: "rgba(52,199,89,0.1)", color: "#34C759" }}>Remote</span>}
+                        </div>
+                      </div>
+                      <ChevronRight style={{ width: 14, height: 14, color: "#9CA3C0", flexShrink: 0, marginTop: 2 }} />
+                    </div>
+                  </div>
+                ))}
+              </ScrollSection>
+            )}
+
+            {isAdmin && (
+              <ScrollSection>
+                <SectionHeader icon={Building2} iconColor="#7E22CE" title="Company Brain" />
+                <div style={{ marginTop: 8 }}>
+                  <CompanyBrain orgId={org.id} orgName={org.name} isAdmin={isAdmin} />
+                </div>
+              </ScrollSection>
+            )}
+          </>
+        )}
+
+        {/* ── POSTS TAB ── */}
+        {activeTab === "posts" && (
+          <ScrollSection>
+            <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
+              <SectionHeader icon={FileText} iconColor="#E8733A" title="Posts" count={posts.length} />
               {isAdmin && (
-                <button type="button" onClick={() => navigate("/app/opportunities/create")} className="cursor-pointer" style={{
-                  marginTop: 8, height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+                <button type="button" onClick={() => navigate("/post/create")} className="cursor-pointer" style={{
+                  height: 28, padding: "0 10px", borderRadius: 6, fontSize: 11, fontWeight: 600,
                   background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none",
                   display: "inline-flex", alignItems: "center", gap: 4,
                 }}>
-                  <Plus style={{ width: 12, height: 12 }} /> Post the first job
+                  <Plus style={{ width: 11, height: 11 }} /> New Post
                 </button>
               )}
             </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-              {activeOpps.slice(0, 3).map((o, idx) => (
+            {posts.length === 0 ? (
+              <div style={{ padding: "24px 0", textAlign: "center" }}>
+                <FileText style={{ width: 32, height: 32, color: "#E5E7EB", margin: "0 auto 10px" }} />
+                <p style={{ fontSize: 13, color: "#9CA3C0" }}>No posts yet.</p>
+                {isAdmin && (
+                  <button type="button" onClick={() => navigate("/post/create")} className="cursor-pointer" style={{
+                    marginTop: 10, height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+                    background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none",
+                    display: "inline-flex", alignItems: "center", gap: 4,
+                  }}>
+                    <Plus style={{ width: 12, height: 12 }} /> Share your first update
+                  </button>
+                )}
+              </div>
+            ) : (
+              posts.map((p, idx) => (
+                <Link key={p.id} to={`/app/post/${p.id}`} className="block" style={{
+                  padding: "12px 0",
+                  borderBottom: idx < posts.length - 1 ? "1px solid rgba(0,0,0,0.06)" : "none",
+                }}>
+                  <p style={{ fontSize: 13, color: "#1A1A2E", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{p.content}</p>
+                  {p.image_urls && p.image_urls.length > 0 && (
+                    <div className="flex gap-1 mt-1.5 overflow-hidden" style={{ borderRadius: 8 }}>
+                      {p.image_urls.slice(0, 3).map((url: string, i: number) => (
+                        <img key={i} src={url} alt="" loading="lazy" className="object-cover" style={{ width: p.image_urls.length === 1 ? "100%" : 80, height: 60, borderRadius: 6 }} />
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex items-center" style={{ gap: 12, marginTop: 6 }}>
+                    <span className="flex items-center" style={{ gap: 3, fontSize: 12, color: "#9CA3C0" }}>
+                      <Rocket style={{ width: 12, height: 12 }} /> {getLikeCount(p)}
+                    </span>
+                    <span style={{ fontSize: 11, color: "#9CA3C0", marginLeft: "auto" }}>
+                      {p.created_at ? getTimeAgo(new Date(p.created_at)) : ""}
+                    </span>
+                  </div>
+                </Link>
+              ))
+            )}
+          </ScrollSection>
+        )}
+
+        {/* ── JOBS TAB ── */}
+        {activeTab === "jobs" && (
+          <ScrollSection>
+            <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
+              <SectionHeader icon={Briefcase} iconColor="#34C759" title="Jobs" count={opps.length} />
+              {isAdmin && (
+                <button type="button" onClick={() => navigate("/app/opportunities/create")} className="cursor-pointer" style={{
+                  height: 28, padding: "0 10px", borderRadius: 6, fontSize: 11, fontWeight: 600,
+                  background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none",
+                  display: "inline-flex", alignItems: "center", gap: 4,
+                }}>
+                  <Plus style={{ width: 11, height: 11 }} /> Post Job
+                </button>
+              )}
+            </div>
+            {opps.length === 0 ? (
+              <div style={{ padding: "24px 0", textAlign: "center" }}>
+                <Briefcase style={{ width: 32, height: 32, color: "#E5E7EB", margin: "0 auto 10px" }} />
+                <p style={{ fontSize: 13, color: "#9CA3C0" }}>No jobs posted yet.</p>
+                {isAdmin && (
+                  <button type="button" onClick={() => navigate("/app/opportunities/create")} className="cursor-pointer" style={{
+                    marginTop: 10, height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+                    background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none",
+                    display: "inline-flex", alignItems: "center", gap: 4,
+                  }}>
+                    <Plus style={{ width: 12, height: 12 }} /> Post the first job
+                  </button>
+                )}
+              </div>
+            ) : (
+              opps.map((o, idx) => (
                 <div key={o.id} onClick={() => navigate("/app/opportunities")} className="cursor-pointer" style={{
-                  padding: "10px 0",
-                  borderBottom: idx < Math.min(activeOpps.length, 3) - 1 ? "1px solid rgba(0,0,0,0.06)" : "none",
+                  padding: "12px 0",
+                  borderBottom: idx < opps.length - 1 ? "1px solid rgba(0,0,0,0.06)" : "none",
                 }}>
                   <div className="flex items-start justify-between">
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>{o.title}</p>
-                      <div className="flex items-center flex-wrap" style={{ gap: 6, marginTop: 3 }}>
+                      <div className="flex items-center" style={{ gap: 6, marginBottom: 3 }}>
+                        <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>{o.title}</p>
+                        {!o.is_open && <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 4, background: "rgba(156,163,192,0.12)", color: "#9CA3C0" }}>Closed</span>}
+                      </div>
+                      <div className="flex items-center flex-wrap" style={{ gap: 6 }}>
                         <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 4, background: "rgba(232,115,58,0.08)", color: "#E8733A" }}>
                           {(o.type || "job").replace(/[-_]/g, " ")}
                         </span>
@@ -423,154 +592,61 @@ export default function OrganizationPage() {
                     <ChevronRight style={{ width: 14, height: 14, color: "#9CA3C0", flexShrink: 0, marginTop: 2 }} />
                   </div>
                 </div>
-              ))}
-              {activeOpps.length > 3 && (
-                <Link to={`/app/opportunities?org=${org.id}`} style={{ fontSize: 12, color: "#E8733A", marginTop: 8, display: "inline-flex", alignItems: "center", gap: 2 }}>
-                  See all {activeOpps.length} open jobs <ChevronRight style={{ width: 13, height: 13 }} />
-                </Link>
-              )}
-            </div>
-          )}
-        </ScrollSection>
-
-        {/* ── SECTION 3: POSTS ── */}
-        <ScrollSection>
-          <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-            <SectionHeader icon={MessageCircle} iconColor="#E8733A" title="Posts" count={posts.length} />
-            {isAdmin && (
-              <button type="button" onClick={() => navigate("/post/create")} className="cursor-pointer" style={{
-                height: 28, padding: "0 10px", borderRadius: 6, fontSize: 11, fontWeight: 600,
-                background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none",
-                display: "inline-flex", alignItems: "center", gap: 4,
-              }}>
-                <Plus style={{ width: 11, height: 11 }} /> New Post
-              </button>
+              ))
             )}
-          </div>
-          {posts.length === 0 ? (
-            <div style={{ padding: "16px 0", textAlign: "center" }}>
-              <p style={{ fontSize: 13, color: "#9CA3C0" }}>No posts yet.</p>
+          </ScrollSection>
+        )}
+
+        {/* ── MEMBERS TAB ── */}
+        {activeTab === "members" && (
+          <ScrollSection>
+            <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
+              <SectionHeader icon={Users} iconColor="#9CA3C0" title="Members" count={members.length} />
               {isAdmin && (
-                <button type="button" onClick={() => navigate("/post/create")} className="cursor-pointer" style={{
-                  marginTop: 8, height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-                  background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none",
+                <button type="button" onClick={() => navigate("/app/settings?tab=team")} className="cursor-pointer" style={{
+                  height: 28, padding: "0 10px", borderRadius: 6, fontSize: 11, fontWeight: 600,
+                  background: "rgba(232,115,58,0.10)", color: "#E8733A", border: "1px solid rgba(232,115,58,0.20)",
                   display: "inline-flex", alignItems: "center", gap: 4,
                 }}>
-                  <Plus style={{ width: 12, height: 12 }} /> Share your first update
+                  <Settings style={{ width: 11, height: 11 }} /> Manage
                 </button>
               )}
             </div>
-          ) : (
-            <>
-              {posts.slice(0, 3).map((p, idx) => (
-                <Link key={p.id} to={`/app/post/${p.id}`} className="block" style={{
-                  padding: "10px 0",
-                  borderBottom: idx < Math.min(posts.length, 3) - 1 ? "1px solid rgba(0,0,0,0.06)" : "none",
-                }}>
-                  <p style={{ fontSize: 13, fontWeight: 400, color: "#1A1A2E", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{p.content}</p>
-                  {p.image_urls && p.image_urls.length > 0 && (
-                    <div className="flex gap-1 mt-1.5 overflow-hidden" style={{ borderRadius: 8 }}>
-                      {p.image_urls.slice(0, 3).map((url: string, i: number) => (
-                        <img key={i} src={url} alt="" loading="lazy" className="object-cover" style={{ width: p.image_urls.length === 1 ? "100%" : 80, height: 56, borderRadius: 6 }} />
-                      ))}
-                    </div>
-                  )}
-                  <div className="flex items-center" style={{ gap: 12, marginTop: 6 }}>
-                    <span className="flex items-center" style={{ gap: 3, fontSize: 12, color: "#9CA3C0" }}>
-                      <Star style={{ width: 12, height: 12, color: "#FF6B9D" }} /> {getLikeCount(p)}
-                    </span>
-                    <span className="flex items-center" style={{ gap: 3, fontSize: 12, color: "#9CA3C0" }}>
-                      <MessageCircle style={{ width: 12, height: 12 }} /> {getCommentCount(p)}
-                    </span>
-                    <span className="flex items-center" style={{ gap: 3, fontSize: 12, color: "#9CA3C0" }}>
-                      <Rocket style={{ width: 12, height: 12 }} /> {p.repost_count || 0}
-                    </span>
-                    <span style={{ fontSize: 11, color: "#9CA3C0", marginLeft: "auto" }}>
-                      {p.created_at ? getTimeAgo(new Date(p.created_at)) : ""}
-                    </span>
-                  </div>
-                </Link>
-              ))}
-              {posts.length > 3 && (
-                <Link to="/app/feed" style={{ fontSize: 12, color: "#E8733A", marginTop: 8, display: "inline-flex", alignItems: "center", gap: 2 }}>
-                  See all posts <ChevronRight style={{ width: 13, height: 13 }} />
-                </Link>
-              )}
-            </>
-          )}
-        </ScrollSection>
 
-        {/* ── SECTION 4: TEAM ── */}
-        <ScrollSection>
-          <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-            <SectionHeader icon={Users} iconColor="#9CA3C0" title="Team" count={members.length} />
-            {isAdmin && (
-              <button type="button" onClick={() => navigate("/app/settings?tab=team")} className="cursor-pointer" style={{
-                height: 28, padding: "0 10px", borderRadius: 6, fontSize: 11, fontWeight: 600,
-                background: "rgba(232,115,58,0.10)", color: "#E8733A", border: "1px solid rgba(232,115,58,0.20)",
-                display: "inline-flex", alignItems: "center", gap: 4,
-              }}>
-                <Settings style={{ width: 11, height: 11 }} /> Manage
-              </button>
+            {!isAdmin && (
+              <p style={{ fontSize: 12, color: "#6B7094", marginBottom: 12, padding: "8px 12px", borderRadius: 8, background: "rgba(0,0,0,0.03)" }}>
+                Members are verified employees or affiliates of this organisation. Add this organisation to your profile experience and get it verified to appear here.
+              </p>
             )}
-          </div>
 
-          {!isAdmin && (
-            <p style={{ fontSize: 12, color: "#6B7094", marginBottom: 10, padding: "8px 12px", borderRadius: 8, background: "rgba(0,0,0,0.03)" }}>
-              Members are verified employees or affiliates of this organisation. To appear here, add this organisation to your profile experience and get it verified.
-            </p>
-          )}
-
-          {members.length === 0 ? (
-            <p style={{ fontSize: 13, color: "#9CA3C0", padding: "16px 0", textAlign: "center" }}>No verified members listed yet.</p>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-              {members.slice(0, 8).map((m, idx) => (
-                <Link key={m.id} to={`/app/profile/${m.user_id}`} className="flex items-center" style={{
-                  gap: 10, padding: "8px 0",
-                  borderBottom: idx < Math.min(members.length, 8) - 1 ? "1px solid rgba(0,0,0,0.06)" : "none",
-                }}>
-                  <AvatarSquare src={m.profile?.avatar_url} name={m.profile?.full_name || "Member"} size="sm" />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.profile?.full_name || "Member"}</p>
-                    <p style={{ fontSize: 11, color: "#9CA3C0" }}>{m.title || m.role}{m.department ? ` · ${m.department}` : ""}</p>
-                  </div>
-                  {isOrgMembershipConfirmed(m) && (
-                    <span className="shrink-0" style={{
-                      fontSize: 10, fontWeight: 700, padding: "3px 6px", borderRadius: 999,
-                      background: "rgba(255,184,0,0.16)", color: "#B77900", whiteSpace: "nowrap",
-                    }}>Org confirmed</span>
-                  )}
-                </Link>
-              ))}
-              {members.length > 8 && (
-                <p style={{ fontSize: 12, color: "#E8733A", marginTop: 8 }}>+{members.length - 8} more members</p>
-              )}
-            </div>
-          )}
-        </ScrollSection>
-
-        {/* ── SECTION 6: RATINGS / REVIEWS (placeholder) ── */}
-        <ScrollSection>
-          <SectionHeader icon={Star} iconColor="#FFB800" title="Reviews" />
-          <div style={{ padding: "16px 0", textAlign: "center" }}>
-            <div className="flex justify-center" style={{ gap: 4, marginBottom: 8 }}>
-              {[1,2,3,4,5].map(n => (
-                <Star key={n} style={{ width: 22, height: 22, color: "#E5E7EB" }} />
-              ))}
-            </div>
-            <p style={{ fontSize: 13, color: "#9CA3C0" }}>No reviews yet.</p>
-            <p style={{ fontSize: 12, color: "#9CA3C0", marginTop: 4 }}>Be the first to share your experience with {org.name}.</p>
-          </div>
-        </ScrollSection>
-
-        {/* ── AI BRAIN (admin only) ── */}
-        {isAdmin && (
-          <ScrollSection>
-            <SectionHeader icon={Building2} iconColor="#7E22CE" title="Company Brain" />
-            <div style={{ marginTop: 8 }}>
-              <CompanyBrain orgId={org.id} orgName={org.name} isAdmin={isAdmin} />
-            </div>
+            {members.length === 0 ? (
+              <div style={{ padding: "24px 0", textAlign: "center" }}>
+                <Users style={{ width: 32, height: 32, color: "#E5E7EB", margin: "0 auto 10px" }} />
+                <p style={{ fontSize: 13, color: "#9CA3C0" }}>No verified members listed yet.</p>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+                {members.map((m, idx) => (
+                  <Link key={m.id} to={`/app/profile/${m.user_id}`} className="flex items-center" style={{
+                    gap: 10, padding: "10px 0",
+                    borderBottom: idx < members.length - 1 ? "1px solid rgba(0,0,0,0.06)" : "none",
+                  }}>
+                    <AvatarSquare src={m.profile?.avatar_url} name={m.profile?.full_name || "Member"} size="sm" />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.profile?.full_name || "Member"}</p>
+                      <p style={{ fontSize: 11, color: "#9CA3C0" }}>{m.title || m.role}{m.department ? ` · ${m.department}` : ""}</p>
+                    </div>
+                    {isOrgMembershipConfirmed(m) && (
+                      <span className="shrink-0" style={{
+                        fontSize: 10, fontWeight: 700, padding: "3px 6px", borderRadius: 999,
+                        background: "rgba(255,184,0,0.16)", color: "#B77900", whiteSpace: "nowrap",
+                      }}>Verified</span>
+                    )}
+                    <ChevronRight style={{ width: 13, height: 13, color: "#9CA3C0", flexShrink: 0 }} />
+                  </Link>
+                ))}
+              </div>
+            )}
           </ScrollSection>
         )}
 
