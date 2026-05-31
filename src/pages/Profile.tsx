@@ -33,6 +33,7 @@ import EditPostModal from "@/components/feed/EditPostModal";
 import DeletePostDialog from "@/components/feed/DeletePostDialog";
 import { sendNotification } from "@/lib/notify";
 import VerificationStatusCard from "@/components/verification/VerificationStatusCard";
+import ProfileCompletenessCard from "@/components/profile/ProfileCompletenessCard";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import CertificatesSection from "@/components/profile/CertificatesSection";
 import ActivityScoreRing from "@/components/ActivityScoreRing";
@@ -1248,6 +1249,23 @@ const Profile = () => {
           <div className="flex flex-col gap-3">
             {/* Verification status (own profile only, hidden if already verified) */}
             {isOwnProfile && <VerificationStatusCard />}
+
+            {/* Profile completeness nudge — own profile only */}
+            {isOwnProfile && (
+              <ProfileCompletenessCard
+                profile={profileData}
+                workItemCount={experiences.length}
+                educationCount={education.length}
+                onSectionClick={(section) => {
+                  if (section === "avatar") setModalSection("avatar");
+                  else if (section === "headline" || section === "bio" || section === "location") setModalSection("basic");
+                  else if (section === "skills") setModalSection("skills");
+                  else if (section === "experience") setModalSection("experience");
+                  else if (section === "education") setModalSection("education");
+                  else if (section === "resume") resumeInputRef.current?.click();
+                }}
+              />
+            )}
 
             {/* Connections box — hidden if owner set show_connections = "nobody" and viewer isn't owner */}
             {(isOwnProfile || priv.show_connections !== "nobody") && (
