@@ -123,7 +123,7 @@ export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonC
             onClick={e => { e.stopPropagation(); onStrand(); }}
             className="cursor-pointer"
             style={{
-              padding: "6px 14px", borderRadius: 8, minWidth: 94,
+              padding: "10px 14px", borderRadius: 8, minWidth: 94, minHeight: 44,
               fontSize: 12, fontWeight: 600, border: "none",
               whiteSpace: "nowrap",
               ...(isConnected
@@ -213,7 +213,7 @@ export function OrgCard({ org, following, onToggleFollow, navigateTo }: OrgCardP
         onClick={e => { e.stopPropagation(); onToggleFollow(e); }}
         className="cursor-pointer shrink-0 self-start"
         style={{
-          padding: "6px 14px", borderRadius: 8, minWidth: 92,
+          padding: "10px 14px", borderRadius: 8, minWidth: 92, minHeight: 44,
           fontSize: 12, fontWeight: 600, border: "none",
           whiteSpace: "nowrap",
           ...(following

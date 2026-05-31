@@ -251,7 +251,7 @@ export function OpportunityCard({
                 disabled={applying || applied || !opp.is_open}
                 style={{
                   display: "flex", alignItems: "center", gap: 5,
-                  padding: "7px 16px", borderRadius: 10,
+                  padding: "11px 16px", borderRadius: 10, minHeight: 44,
                   fontSize: 13, fontWeight: 700, border: "none", cursor: applying || applied || !opp.is_open ? "default" : "pointer",
                   ...(applied
                     ? { background: "rgba(52,199,89,0.10)", color: "#34C759" }
@@ -278,7 +278,7 @@ export function OpportunityCard({
                   type="button"
                   onClick={() => setShowMenu(!showMenu)}
                   style={{
-                    width: 32, height: 32, borderRadius: 8, display: "flex", alignItems: "center",
+                    width: 44, height: 44, borderRadius: 8, display: "flex", alignItems: "center",
                     justifyContent: "center", background: "var(--surface-2)", border: "none",
                     color: "var(--text-3)", cursor: "pointer",
                   }}
