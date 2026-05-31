@@ -104,6 +104,7 @@ export function PostCard({
   const [connectState, setConnectState] = useState<"none" | "pending">("none");
   const [sharePostId, setSharePostId] = useState<string | null>(null);
   const [localUnfollowed, setLocalUnfollowed] = useState(false);
+  const [localFollowed, setLocalFollowed] = useState(false);
   const { user, profile: authProfile } = useAuth();
   const menuRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLElement>(null);
@@ -163,7 +164,8 @@ export function PostCard({
   const [localDisconnected, setLocalDisconnected] = useState(false);
   const effectivelyConnected = isConnected && !localDisconnected;
   const showConnect = !isOrgPost && !isOwn && !effectivelyConnected && author?.id;
-  const isFollowingOrg = isOrgPost && !!post.posted_by_org && followedOrgIds.has(post.posted_by_org) && !localUnfollowed;
+  const isFollowingOrg = isOrgPost && !!post.posted_by_org && (followedOrgIds.has(post.posted_by_org) || localFollowed) && !localUnfollowed;
+  const showFollowOrg = isOrgPost && !!post.posted_by_org && !isFollowingOrg;
 
   const liked = myLikes[post.id] || false;
   const likeCount = likeCounts[post.id] || 0;
@@ -263,6 +265,18 @@ export function PostCard({
     if (result === null) { setConnectState("pending"); return; }
     setConnectState(result === "accepted" ? "none" : "pending");
     if (result === "accepted") toast.success("Connected!");
+  };
+
+  const handleFollowOrg = async () => {
+    if (!user || !post.posted_by_org) return;
+    const { error } = await supabase.from("org_followers").insert({ org_id: post.posted_by_org, user_id: user.id });
+    if (!error) {
+      setLocalFollowed(true);
+      toast.success(`Following ${displayName}`, {
+        action: { label: "View", onClick: () => window.location.assign(`/org/${post.org?.slug}`) },
+        duration: 3000,
+      });
+    }
   };
 
   const handleReport = async () => {
@@ -561,6 +575,24 @@ export function PostCard({
             liked={liked}
             onClose={() => setThreadOpen(false)}
           />
+        )}
+
+        {showFollowOrg && (
+          <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end" }}>
+            <button
+              type="button"
+              onClick={handleFollowOrg}
+              className="cursor-pointer"
+              style={{
+                height: 32, padding: "0 14px", borderRadius: 999,
+                fontSize: 12, fontWeight: 600, border: "none",
+                background: "rgba(13,148,136,0.12)", color: "#0D9488",
+                boxShadow: "0 2px 8px rgba(13,148,136,0.15)",
+              }}
+            >
+              + Follow
+            </button>
+          </div>
         )}
 
         {showConnect && (
