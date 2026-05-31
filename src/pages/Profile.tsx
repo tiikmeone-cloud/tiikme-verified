@@ -37,6 +37,9 @@ import VerifiedBadge from "@/components/VerifiedBadge";
 import CertificatesSection from "@/components/profile/CertificatesSection";
 import AIProfileBuilder from "@/components/profile/AIProfileBuilder";
 import ProfileCompletenessCard from "@/components/profile/ProfileCompletenessCard";
+import ProfileStatTiles from "@/components/profile/ProfileStatTiles";
+import ProfileAnalyticsRow from "@/components/profile/ProfileAnalyticsRow";
+import { track } from "@/lib/track";
 import ActivityScoreRing from "@/components/ActivityScoreRing";
 import { getActivityTier } from "@/lib/algorithms";
 import {
@@ -352,6 +355,13 @@ const Profile = () => {
 
   useEffect(() => { if (!authLoading) loadProfile(); }, [authLoading, loadProfile]);
 
+  // Track profile_view when a visitor views someone's profile
+  useEffect(() => {
+    if (!targetUserId || isOwnProfile || dataLoading) return;
+    track("profile_view", { viewed_profile_id: targetUserId, viewer_id: user?.id ?? null });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetUserId, isOwnProfile, dataLoading]);
+
   if (authLoading || dataLoading) return (
     <div className="min-h-screen" style={{ background: "transparent" }}>
       <div style={{ maxWidth: 960, margin: "0 auto", padding: 16 }}>
@@ -494,6 +504,22 @@ const Profile = () => {
     navigator.clipboard.writeText(url);
     toast.success("Profile link copied!");
   };
+
+  // Profile completeness score (mirrors ProfileCompletenessCard weights)
+  const completenessPercent = useMemo(() => {
+    if (!profileData) return 0;
+    const pts = [
+      [15, !!profileData.avatar_url],
+      [15, !!profileData.headline?.trim()],
+      [15, !!profileData.bio?.trim()],
+      [20, experiences.length > 0],
+      [10, education.length > 0],
+      [10, Array.isArray(profileData.skills) && profileData.skills.length > 0],
+      [5,  !!(profileData.location_city || profileData.location_state)],
+      [10, !!(profileData as any).resume_url],
+    ] as [number, boolean][];
+    return pts.reduce((sum, [w, ok]) => sum + (ok ? w : 0), 0);
+  }, [profileData, experiences.length, education.length]);
 
   const handleConnect = async () => {
     if (!user || !targetUserId || connectLoading) return;
@@ -1243,6 +1269,17 @@ const Profile = () => {
         {/* ── ABOUT ── */}
         <AboutSection about={aboutText} isOwnProfile={isOwnProfile} userId={targetUserId || ""} />
 
+        {/* ── STAT TILES ── */}
+        <div style={{ marginTop: 12 }}>
+          <ProfileStatTiles
+            isOwner={isOwnProfile}
+            connections={stats.connections}
+            followers={(profileData as any).follower_count ?? 0}
+            activityScore={(profileData as any).activity_score ?? 0}
+            completenessPercent={completenessPercent}
+            profileViewsCount={0}
+          />
+        </div>
 
         {/* ── SECTION GRID ── */}
         <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-3 md:gap-5 mt-3 md:mt-5">
@@ -1615,6 +1652,13 @@ const Profile = () => {
               userId={targetUserId}
               isOwnProfile={isOwnProfile}
             />
+            )}
+
+            {/* ── ANALYTICS ROW — owner only ── */}
+            {isOwnProfile && targetUserId && (
+              <div style={{ marginTop: 4 }}>
+                <ProfileAnalyticsRow profileId={targetUserId} />
+              </div>
             )}
           </div>
         </div>

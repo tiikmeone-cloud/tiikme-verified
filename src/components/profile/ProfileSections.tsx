@@ -9,6 +9,8 @@ import { Link } from "react-router-dom";
 import VerificationRequest from "@/components/profile/VerificationRequest";
 import { useCompanyLogos } from "@/hooks/useCompanyLogos";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { supabase } from "@/integrations/supabase/client";
+import { track } from "@/lib/track";
 
 /* ── Helpers ── */
 const LOGO_COLORS = ["#E8733A", "#C44A1F", "#34C759", "#166534", "#B7640A", "#FFB800"];
@@ -219,11 +221,37 @@ const WorkDetailSheet = ({
     ? item.institution_name_edu || item.institution_name || ""
     : item.company_name || item.institution_name || "";
   const duration = getDuration(item);
-  const skills: string[] = item.skills || [];
+  // skills_used is the canonical field; fall back to skills array
+  const skills: string[] = item.skills_used || item.skills || [];
   const description = item.description || "";
   const location = item.work_location || item.city || "";
   const empType = item.employment_type || "";
   const status = item.verification_status || "unverified";
+
+  // Increment view counters and track event on open
+  useEffect(() => {
+    if (isOwnProfile || isEdu) return;
+    track("experience_detail_open", { work_item_id: item.id });
+    // total_views for everyone, recruiter_views for org/recruiter accounts
+    supabase.from("work_items")
+      .update({ total_views: (item.total_views || 0) + 1 } as any)
+      .eq("id", item.id)
+      .then(() => {});
+    // Recruiter check via profile account_type — fire-and-forget
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      supabase.from("profiles").select("account_type, role").eq("id", user.id).maybeSingle()
+        .then(({ data: p }) => {
+          if (p?.account_type === "institution" || p?.role === "recruiter") {
+            supabase.from("work_items")
+              .update({ recruiter_views: (item.recruiter_views || 0) + 1 } as any)
+              .eq("id", item.id)
+              .then(() => {});
+          }
+        });
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item.id]);
 
   return (
     <Sheet open onOpenChange={open => { if (!open) onClose(); }}>
