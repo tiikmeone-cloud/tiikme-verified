@@ -3,9 +3,8 @@
 // Handles ALL cases: user→user, user→org
 
 import React from "react";
-import { Loader2, UserPlus, UserCheck, MessageCircle, UserX, Check, X } from "lucide-react";
+import { Loader2, UserPlus, UserCheck, Check, X } from "lucide-react";
 import { useConnectionStatus } from "@/hooks/useConnectionStatus";
-import { useNavigate } from "react-router-dom";
 
 interface ConnectionButtonsProps {
   targetUserId?: string | null;
@@ -22,7 +21,6 @@ export function ConnectionButtons({
   targetName = "this person",
   compact = false,
 }: ConnectionButtonsProps) {
-  const navigate = useNavigate();
   const conn = useConnectionStatus(targetUserId);
 
   if (conn.state === "self") return null;
@@ -79,13 +77,6 @@ export function ConnectionButtons({
         >
           <UserCheck size={14} />
           Connected
-        </button>
-        <button
-          className={secondary}
-          onClick={() => navigate(`/app/pings?user=${targetUserId}`)}
-        >
-          <MessageCircle size={14} />
-          {!compact && "Message"}
         </button>
       </div>
     );
