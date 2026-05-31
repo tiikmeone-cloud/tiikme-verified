@@ -66,21 +66,14 @@ export default function AIProfileBuilder({ onApplied }: Props) {
     setError(null);
     setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
-      const { data: { publicUrl } } = supabase.storage.from("public").getPublicUrl("x");
-      const baseUrl = (supabase as any).supabaseUrl as string;
-      const res = await fetch(`${baseUrl}/functions/v1/structure-profile`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-        body: JSON.stringify({ raw_text: rawText }),
+      const { data, error: fnError } = await supabase.functions.invoke("structure-profile", {
+        body: { raw_text: rawText },
       });
-      const json = await res.json();
-      if (!res.ok || !json.ok) {
-        setError(json.error || "Something went wrong — try again.");
+      if (fnError || !data?.ok) {
+        setError((data?.error as string) || fnError?.message || "Something went wrong — try again.");
         return;
       }
-      setStructured(json.data as StructuredProfile);
+      setStructured(data.data as StructuredProfile);
       setStep("preview");
     } catch {
       setError("Network error — check your connection and try again.");
