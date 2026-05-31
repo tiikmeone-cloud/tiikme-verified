@@ -211,6 +211,9 @@ export default function OrgSignup() {
               <button onClick={() => setStep(1)} className="px-4 py-2.5 text-sm text-gray-500 hover:text-gray-700">← Back</button>
               <button onClick={() => {
                 if (!form.name.trim() || !form.city.trim()) { toast.error("Name and city are required"); return; }
+                const domain = form.email_domain.trim();
+                if (!domain) { toast.error("Work email domain is required so employees can self-verify"); return; }
+                if (!/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(domain)) { toast.error("Enter a valid domain, e.g. yourorg.com"); return; }
                 setStep(3);
               }} className="flex-1 bg-[#E8733A] text-white rounded-xl py-2.5 font-semibold text-sm hover:bg-[#d4632e] transition-colors">
                 Continue →
