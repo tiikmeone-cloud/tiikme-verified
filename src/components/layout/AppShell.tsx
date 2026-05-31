@@ -5,7 +5,7 @@ import {
   LayoutGrid, Compass, Users, Target, User,
   Link2, Bell, SlidersHorizontal, PencilLine, LogOut, Home,
   Plus, Search, ClipboardList, Bot, ShieldCheck, Building2, Briefcase,
-  Images, Bookmark,
+  Images, Bookmark, Layers,
 } from "lucide-react";
 import ThemeLogo from "@/components/ThemeLogo";
 import { CreateChooser } from "@/components/layout/CreateChooser";
@@ -36,6 +36,7 @@ const BASE_NAV_GROUPS = [
     label: "CONNECT",
     items: [
       { label: "My Connections", icon: Link2, path: "/app/connections" },
+      { label: "Squads", icon: Layers, path: "/app/squads" },
       { label: "Stash", icon: Bookmark, path: "/app/stash" },
       { label: "Alerts", icon: Bell, path: "/app/alerts" },
     ],

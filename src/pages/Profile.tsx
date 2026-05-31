@@ -234,6 +234,8 @@ const Profile = () => {
   const resumeInputRef = useRef<HTMLInputElement>(null);
   const [certifications, setCertifications] = useState<any[]>([]);
   const [profileTab, setProfileTab] = useState<"overview" | "resume" | "activity">("overview");
+  const [coSignsCount, setCoSignsCount] = useState(0);
+  const [squadsCount, setSquadsCount] = useState(0);
 
   const [connectionStatus, setConnectionStatus] = useState<{ status: string | null; direction: string | null; id: string | null }>({ status: null, direction: null, id: null });
   const [connectLoading, setConnectLoading] = useState(false);
@@ -297,6 +299,12 @@ const Profile = () => {
       (supabase.from("org_user_follows" as any).select("org_id, org:organizations!org_user_follows_org_id_fkey(name, logo_url, slug)").eq("user_id", targetUserId).limit(5) as any)
         .then(({ data }: { data: any }) => setOrgsFollowingMe(data || []));
     }
+
+    // Squad co-sign counts (public)
+    (supabase.from("squad_edges" as any).select("id", { count: "exact", head: true }).or(`user_a.eq.${targetUserId},user_b.eq.${targetUserId}`).eq("status", "confirmed") as any)
+      .then(({ count }: { count: number | null }) => setCoSignsCount(count || 0));
+    (supabase.from("squad_trust" as any).select("org_ref", { count: "exact", head: true }).eq("user_id", targetUserId) as any)
+      .then(({ count }: { count: number | null }) => setSquadsCount(count || 0));
 
     setDataLoading(false);
   }, [targetUserId, isOwnProfile, authProfile]);
@@ -1305,6 +1313,8 @@ const Profile = () => {
             activityScore={(profileData as any).activity_score ?? 0}
             completenessPercent={completenessPercent}
             profileViewsCount={0}
+            coSignsCount={coSignsCount}
+            squadsCount={squadsCount}
           />
         </div>
 

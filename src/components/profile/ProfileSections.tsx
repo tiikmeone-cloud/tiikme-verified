@@ -3,7 +3,7 @@ import { fixStorageUrl } from "@/components/ui/AvatarSquare";
 import {
   Briefcase, GraduationCap, Rocket, Award, Code2, MessageCircle,
   MapPin, CheckCircle, Clock, Eye, EyeOff, Trash2, Plus, ExternalLink,
-  Star, X, Heart, Repeat2, ChevronRight, Image,
+  Star, X, Heart, Repeat2, ChevronRight, Image, Users, Shield,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import VerificationRequest from "@/components/profile/VerificationRequest";
@@ -11,6 +11,8 @@ import { useCompanyLogos } from "@/hooks/useCompanyLogos";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import { track } from "@/lib/track";
+import CoSignSheet, { TIER_LABELS, TIER_COLORS } from "@/components/squad/CoSignSheet";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 /* ── Helpers ── */
 const LOGO_COLORS = ["#E8733A", "#C44A1F", "#34C759", "#166534", "#B7640A", "#FFB800"];
@@ -341,18 +343,100 @@ const WorkDetailSheet = ({
             </div>
           )}
 
-          {/* Phase 3: Squad block slot — coworker DP-stack + team/org squad */}
-          {!isEdu && <ExperienceSquadSlot workItemId={item.id} />}
+          {/* Squad block slot — coworker DP-stack + co-sign CTA */}
+          {!isEdu && <ExperienceSquadSlot workItemId={item.id} companyName={org} isOwnProfile={isOwnProfile} />}
         </div>
       </SheetContent>
     </Sheet>
   );
 };
 
-/* ── ExperienceSquadSlot — Phase 3 placeholder ── */
-export const ExperienceSquadSlot = ({ workItemId: _workItemId }: { workItemId: string }) => {
-  // Phase 3 will render: coworker DP-stack + "N org squad / team squad" here.
-  return null;
+/* ── ExperienceSquadSlot ── */
+export const ExperienceSquadSlot = ({
+  workItemId, companyName, isOwnProfile,
+}: {
+  workItemId: string;
+  companyName: string;
+  isOwnProfile: boolean;
+}) => {
+  const [squadData, setSquadData] = useState<{
+    tier: string | null;
+    coworker_count: number;
+    sample_avatars: Array<{ user_id: string; full_name: string; avatar_url: string | null }>;
+  } | null>(null);
+  const [showSheet, setShowSheet] = useState(false);
+
+  useEffect(() => {
+    if (!workItemId) return;
+    (supabase.rpc as any)("get_experience_squad", { p_work_item_id: workItemId })
+      .then(({ data }: { data: any }) => {
+        if (data) setSquadData(data);
+      });
+  }, [workItemId]);
+
+  const tier = squadData?.tier;
+  const count = squadData?.coworker_count || 0;
+  const avatars = squadData?.sample_avatars || [];
+
+  return (
+    <>
+      <div style={{ marginTop: 20, padding: "14px 16px", borderRadius: 12, background: "rgba(99,102,241,0.04)", border: "1px solid rgba(99,102,241,0.15)" }}>
+        <div className="flex items-center justify-between" style={{ marginBottom: count > 0 ? 10 : 0 }}>
+          <div className="flex items-center" style={{ gap: 6 }}>
+            <Shield style={{ width: 14, height: 14, color: tier ? TIER_COLORS[tier] : "var(--text-3)" }} />
+            <p style={{ fontSize: 12, fontWeight: 700, color: tier ? TIER_COLORS[tier] : "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+              {tier ? TIER_LABELS[tier] : "Org Squad"}
+            </p>
+          </div>
+          {isOwnProfile && (
+            <button
+              type="button"
+              onClick={() => setShowSheet(true)}
+              style={{ fontSize: 12, fontWeight: 600, padding: "4px 12px", borderRadius: 20, background: "#E8733A", color: "#fff", border: "none", cursor: "pointer" }}
+            >
+              Co-sign coworkers
+            </button>
+          )}
+        </div>
+
+        {count > 0 ? (
+          <div className="flex items-center" style={{ gap: 8 }}>
+            <div className="flex" style={{ gap: -6 }}>
+              {avatars.slice(0, 5).map((a, i) => {
+                const initials = a.full_name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
+                return (
+                  <Avatar
+                    key={a.user_id}
+                    style={{ width: 26, height: 26, border: "2px solid var(--bg-card)", marginLeft: i === 0 ? 0 : -8, zIndex: 5 - i }}
+                  >
+                    <AvatarImage src={a.avatar_url || undefined} />
+                    <AvatarFallback style={{ background: "var(--surface-2)", color: "var(--text-2)", fontSize: 9, fontWeight: 700 }}>{initials}</AvatarFallback>
+                  </Avatar>
+                );
+              })}
+            </div>
+            <p style={{ fontSize: 12, color: "var(--text-2)" }}>
+              {count} coworker{count !== 1 ? "s" : ""} co-signed
+            </p>
+          </div>
+        ) : (
+          <p style={{ fontSize: 12, color: "var(--text-3)", lineHeight: "18px" }}>
+            {isOwnProfile
+              ? "Invite coworkers to co-sign and build trust in this role."
+              : "No co-signs yet for this role."}
+          </p>
+        )}
+      </div>
+
+      {showSheet && (
+        <CoSignSheet
+          workItemId={workItemId}
+          companyName={companyName}
+          onClose={() => setShowSheet(false)}
+        />
+      )}
+    </>
+  );
 };
 
 /* ═══ EXPERIENCE ═══ */

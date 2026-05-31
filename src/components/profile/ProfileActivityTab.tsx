@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Lock, Eye, Users, TrendingUp, Briefcase } from "lucide-react";
+import { Lock, Eye, Users, TrendingUp, Briefcase, Shield } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, BarChart, Bar, Cell,
   XAxis, YAxis, Tooltip, CartesianGrid,
@@ -51,6 +51,7 @@ export default function ProfileActivityTab({ profileId, followersCount }: Props)
   const [recruiterViews, setRecruiterViews] = useState(0);
   const [engagement, setEngagement] = useState({ likes: 0, comments: 0, reposts: 0, bookmarks: 0 });
   const [loading, setLoading] = useState(true);
+  const [squadGrowth, setSquadGrowth] = useState<Array<{ month: string; count: number }>>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -84,6 +85,34 @@ export default function ProfileActivityTab({ profileId, followersCount }: Props)
           setEngagement({ likes: likesRes.count || 0, comments: commRes.count || 0, reposts, bookmarks });
         }
       }
+
+      // Squad growth: count confirmed co-signs per month (last 6 months)
+      try {
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+        sixMonthsAgo.setDate(1);
+        const { data: edgesData } = await (supabase
+          .from("squad_edges" as any)
+          .select("confirmed_at")
+          .or(`user_a.eq.${profileId},user_b.eq.${profileId}`)
+          .eq("status", "confirmed")
+          .gte("confirmed_at", sixMonthsAgo.toISOString()) as any);
+        if (!cancelled && edgesData) {
+          const monthMap: Record<string, number> = {};
+          const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+          for (let i = 5; i >= 0; i--) {
+            const d = new Date();
+            d.setMonth(d.getMonth() - i);
+            monthMap[`${months[d.getMonth()]} ${d.getFullYear()}`] = 0;
+          }
+          (edgesData as Array<{ confirmed_at: string }>).forEach(e => {
+            const d = new Date(e.confirmed_at);
+            const key = `${months[d.getMonth()]} ${d.getFullYear()}`;
+            if (key in monthMap) monthMap[key]++;
+          });
+          setSquadGrowth(Object.entries(monthMap).map(([month, count]) => ({ month: month.split(" ")[0], count })));
+        }
+      } catch {}
 
       if (!cancelled) setLoading(false);
     })();
@@ -195,14 +224,25 @@ export default function ProfileActivityTab({ profileId, followersCount }: Props)
           )}
         </ChartCard>
 
-        {/* Squad growth stub */}
-        <div className="glass-card" style={{ padding: 16, borderRadius: 16, border: "1.5px dashed var(--border-subtle)" }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 12 }}>Squad growth</p>
-          <div className="flex flex-col items-center justify-center" style={{ height: 120, gap: 8 }}>
-            <Users style={{ width: 28, height: 28, color: "var(--text-3)" }} />
-            <p style={{ fontSize: 13, fontWeight: 500, color: "var(--text-2)", textAlign: "center" }}>Available when squads launch</p>
-          </div>
-        </div>
+        {/* Squad growth */}
+        <ChartCard title="Co-sign growth">
+          {squadGrowth.every(d => d.count === 0) ? (
+            <div className="flex flex-col items-center justify-center" style={{ height: 120, gap: 8 }}>
+              <Shield style={{ width: 24, height: 24, color: "var(--text-3)" }} />
+              <p style={{ fontSize: 12, color: "var(--text-3)", textAlign: "center" }}>Co-sign coworkers to build your squad</p>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={120}>
+              <BarChart data={squadGrowth} margin={{ top: 4, right: 0, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" vertical={false} />
+                <XAxis dataKey="month" tick={{ fontSize: 10, fill: "var(--text-3)" }} tickLine={false} axisLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: "var(--text-3)" }} tickLine={false} axisLine={false} allowDecimals={false} />
+                <Tooltip content={<Tip />} />
+                <Bar dataKey="count" name="co-signs" fill="#6366F1" radius={[4, 4, 0, 0]} maxBarSize={32} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </ChartCard>
       </div>
 
       {/* Role views */}

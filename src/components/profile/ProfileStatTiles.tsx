@@ -21,6 +21,8 @@ interface Props {
   activityScore: number;
   completenessPercent: number;
   profileViewsCount: number;
+  coSignsCount?: number;
+  squadsCount?: number;
 }
 
 const Tile = ({ icon, label, value, sub, accent = "var(--accent)", stub }: Tile) => (
@@ -57,6 +59,8 @@ export default function ProfileStatTiles({
   activityScore,
   completenessPercent,
   profileViewsCount,
+  coSignsCount,
+  squadsCount,
 }: Props) {
   if (isOwner) {
     return (
@@ -109,18 +113,18 @@ export default function ProfileStatTiles({
       <Tile
         icon={<Shield style={{ width: 14, height: 14 }} />}
         label="Co-signs"
-        value="—"
-        sub="Squads launch"
-        accent="var(--text-3)"
-        stub
+        value={coSignsCount != null && coSignsCount > 0 ? coSignsCount.toLocaleString() : "—"}
+        sub={coSignsCount != null && coSignsCount > 0 ? "peer attestations" : undefined}
+        accent={coSignsCount ? "#6366F1" : "var(--text-3)"}
+        stub={!coSignsCount}
       />
       <Tile
         icon={<Layers style={{ width: 14, height: 14 }} />}
         label="Squads"
-        value="—"
-        sub="Squads launch"
-        accent="var(--text-3)"
-        stub
+        value={squadsCount != null && squadsCount > 0 ? squadsCount.toLocaleString() : "—"}
+        sub={squadsCount != null && squadsCount > 0 ? "companies" : undefined}
+        accent={squadsCount ? "#16A34A" : "var(--text-3)"}
+        stub={!squadsCount}
       />
     </div>
   );
