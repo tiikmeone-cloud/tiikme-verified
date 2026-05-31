@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import {
   ArrowLeft, Search, User, FileText, Bell, CheckCircle, XCircle,
-  Clock, ChevronRight, Shield, Sparkles, Loader2
+  Clock, ChevronRight, Shield, Sparkles, Loader2, Bookmark, BookmarkCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +41,8 @@ export default function ApplicationsDashboard() {
   const [rejectReason, setRejectReason] = useState("");
   const [scoringId, setScoringId] = useState<string | null>(null);
   const [bulkScoring, setBulkScoring] = useState(false);
+  const [savedCandidateIds, setSavedCandidateIds] = useState<Set<string>>(new Set());
+  const [savingCandidateId, setSavingCandidateId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!oppId) return;
@@ -56,6 +58,17 @@ export default function ApplicationsDashboard() {
       ]);
       if (oppRes.status === "fulfilled") setOpp(oppRes.value.data);
       if (appsRes.status === "fulfilled") setApplications(appsRes.value.data || []);
+
+      // Load saved candidates for this org
+      const orgIdFromOpp = (oppRes.status === "fulfilled" ? (oppRes.value.data as any)?.org_id : null);
+      if (orgIdFromOpp) {
+        const { data: saved } = await supabase
+          .from("saved_candidates" as any)
+          .select("applicant_id")
+          .eq("org_id", orgIdFromOpp);
+        if (saved) setSavedCandidateIds(new Set((saved as any[]).map(s => s.applicant_id)));
+      }
+
       setLoading(false);
     })();
   }, [oppId]);
@@ -162,6 +175,27 @@ export default function ApplicationsDashboard() {
     }
     setBulkScoring(false);
     toast.success(`Scored ${unscored.length} applicants`);
+  };
+
+  const toggleSaveCandidate = async (applicantId: string) => {
+    const orgId = opp?.org_id;
+    if (!orgId || !applicantId) return;
+    setSavingCandidateId(applicantId);
+    const isSaved = savedCandidateIds.has(applicantId);
+    try {
+      if (isSaved) {
+        await supabase.from("saved_candidates" as any).delete().eq("org_id", orgId).eq("applicant_id", applicantId);
+        setSavedCandidateIds(prev => { const next = new Set(prev); next.delete(applicantId); return next; });
+        toast.success("Removed from talent pool");
+      } else {
+        await supabase.from("saved_candidates" as any).insert({ org_id: orgId, applicant_id: applicantId, opportunity_id: oppId });
+        setSavedCandidateIds(prev => new Set([...prev, applicantId]));
+        toast.success("Saved to talent pool");
+      }
+    } catch {
+      toast.error("Could not update talent pool");
+    }
+    setSavingCandidateId(null);
   };
 
   const openResume = async (resumeUrl: string) => {
@@ -296,6 +330,9 @@ export default function ApplicationsDashboard() {
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: colors.bg, color: colors.text }}>
                       {app.status || "reviewing"}
                     </span>
+                    {savedCandidateIds.has(app.applicant_id) && (
+                      <Bookmark className="w-3.5 h-3.5 shrink-0" style={{ color: "#E8733A", fill: "#E8733A" }} />
+                    )}
                   </div>
                 </div>
               </GlassBox>
@@ -496,7 +533,17 @@ export default function ApplicationsDashboard() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-2 pt-3" style={{ borderTop: "1px solid #ECECEA" }}>
+                <div className="flex items-center gap-2 pt-3 flex-wrap" style={{ borderTop: "1px solid #ECECEA" }}>
+                  <Button
+                    variant="secondary" size="sm"
+                    disabled={savingCandidateId === selectedApp.applicant_id}
+                    onClick={() => toggleSaveCandidate(selectedApp.applicant_id)}
+                    style={savedCandidateIds.has(selectedApp.applicant_id) ? { background: "rgba(232,115,58,0.10)", color: "#E8733A", border: "1px solid rgba(232,115,58,0.30)" } : {}}
+                  >
+                    {savedCandidateIds.has(selectedApp.applicant_id)
+                      ? <><BookmarkCheck className="w-3.5 h-3.5 mr-1" /> Saved</>
+                      : <><Bookmark className="w-3.5 h-3.5 mr-1" /> Save</>}
+                  </Button>
                   <Button variant="secondary" size="sm" onClick={() => inviteToInterview(selectedApp.applicant_id, opp?.title || "this role")}>
                     <Bell className="w-3.5 h-3.5 mr-1" /> Invite
                   </Button>
