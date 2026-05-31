@@ -365,10 +365,17 @@ const Explore = () => {
         .filter(Boolean)
     );
 
-    /* org follows */
-    const followsRes = await supabase.from("org_followers").select("org_id").eq("user_id", user.id);
+    /* org follows — institution accounts use org_follows (org→org), others use org_followers (user→org) */
+    const isInstitutionViewer = profile?.account_type === "institution";
+    const viewerOrgIdForFollows = (profile as any)?.org_id;
+    const followsRes = isInstitutionViewer && viewerOrgIdForFollows
+      ? await (supabase.from("org_follows" as any).select("following_org_id").eq("follower_org_id", viewerOrgIdForFollows) as any)
+      : await supabase.from("org_followers").select("org_id").eq("user_id", user.id);
     const fMap: Record<string, boolean> = {};
-    (followsRes.data || []).forEach((f: any) => { fMap[f.org_id] = true; });
+    (followsRes.data || []).forEach((f: any) => {
+      const id = f.following_org_id || f.org_id;
+      if (id) fMap[id] = true;
+    });
     /* ─── PEOPLE (relevance filtered, backfill with top activity) ─── */
     const { data: peopleRaw } = await supabase
       .from("profiles")
@@ -497,16 +504,26 @@ const Explore = () => {
 
   const toggleFollow = async (orgId: string, createdBy?: string) => {
     if (!user) return;
+    const isInstitution = profile?.account_type === "institution";
+    const viewerOrgId = (profile as any)?.org_id;
     if (followMap[orgId]) {
-      await supabase.from("org_followers").delete().eq("org_id", orgId).eq("user_id", user.id);
+      if (isInstitution && viewerOrgId) {
+        await (supabase.from("org_follows" as any).delete().eq("follower_org_id", viewerOrgId).eq("following_org_id", orgId) as any);
+      } else {
+        await supabase.from("org_followers").delete().eq("org_id", orgId).eq("user_id", user.id);
+      }
       setFollowMap(prev => ({ ...prev, [orgId]: false }));
     } else {
-      await supabase.from("org_followers").insert({ org_id: orgId, user_id: user.id });
+      if (isInstitution && viewerOrgId) {
+        await (supabase.from("org_follows" as any).insert({ follower_org_id: viewerOrgId, following_org_id: orgId }) as any);
+      } else {
+        await supabase.from("org_followers").insert({ org_id: orgId, user_id: user.id });
+      }
       setFollowMap(prev => ({ ...prev, [orgId]: true }));
       if (createdBy) {
         sendNotification({
           userId: createdBy, actorId: user.id, type: "follow",
-          title: `${profile?.full_name || "Someone"} started following your organization`,
+          title: `${isInstitution ? (profile as any)?.institution_name || "An organisation" : profile?.full_name || "Someone"} started following your organization`,
           actionUrl: `/app/explore`,
         });
       }
