@@ -25,16 +25,6 @@ const categories: Category[] = [
     ],
   },
   {
-    icon: "💬",
-    title: "Circles",
-    articles: [
-      { title: "What are Circles?" },
-      { title: "How does comment threading work?" },
-      { title: "What are the different post types?" },
-      { title: "How do I create a Circle?" },
-    ],
-  },
-  {
     icon: "💼",
     title: "Jobs & Campaigns",
     articles: [

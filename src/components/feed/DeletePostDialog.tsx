@@ -57,11 +57,11 @@ const DeletePostDialog = ({ postId, onClose, onDeleted }: DeletePostDialogProps)
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center md:pl-[230px]" onClick={onClose}
       style={{ background: "rgba(26,26,78,0.40)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>
-      <div className="bg-white rounded-2xl w-full max-w-[380px] mx-4 p-6 text-center shadow-2xl" onClick={e => e.stopPropagation()}>
-        <h3 className="text-[16px] font-bold mb-2" style={{ color: "#1A1A2E" }}>Delete this post?</h3>
-        <p className="text-[13px] mb-6" style={{ color: "#6B7094" }}>This cannot be undone.</p>
+      <div className="rounded-2xl w-full max-w-[380px] mx-4 p-6 text-center shadow-2xl" style={{ background: "var(--bg-card)" }} onClick={e => e.stopPropagation()}>
+        <h3 className="text-[16px] font-bold mb-2" style={{ color: "var(--text-1)" }}>Delete this post?</h3>
+        <p className="text-[13px] mb-6" style={{ color: "var(--text-3)" }}>This cannot be undone.</p>
         <div className="flex items-center justify-center gap-3">
-          <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-full text-[13px] font-semibold cursor-pointer" style={{ background: "#F3F4F6", color: "#6B7094" }}>
+          <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-full text-[13px] font-semibold cursor-pointer" style={{ background: "var(--surface-2)", color: "var(--text-3)" }}>
             Cancel
           </button>
           <button type="button" onClick={handleDelete} disabled={deleting} className="px-5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer disabled:opacity-50" style={{ background: "#DC2626", color: "white" }}>
