@@ -37,6 +37,7 @@ import VerifiedBadge from "@/components/VerifiedBadge";
 import CertificatesSection from "@/components/profile/CertificatesSection";
 import ActivityScoreRing from "@/components/ActivityScoreRing";
 import { getActivityTier } from "@/lib/algorithms";
+import AIProfileBuilder from "@/components/profile/AIProfileBuilder";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle
 } from "@/components/ui/sheet";
@@ -1293,6 +1294,16 @@ const Profile = () => {
                     );
                   })}
                 </div>
+              </div>
+            )}
+
+            {/* AI Profile Builder — shown for own profile */}
+            {isOwnProfile && (
+              <div className="glass-card" style={{ padding: 12, borderRadius: 16 }}>
+                <AIProfileBuilder onApplied={() => {
+                  supabase.from("work_items").select("id, title, job_title, description, company_name, institution_name, item_type, employment_type, work_location, start_date, end_date, start_month, start_year, end_month, end_year, is_current, status, visibility, verification_status, verified_by_user, verified_at, is_tiik_approved, created_at, owner_id").eq("owner_id", user!.id).order("is_current", { ascending: false }).order("created_at", { ascending: false }).then(({ data }) => { if (data) setWorkItems(data); });
+                  if (authProfile) supabase.from("profiles").select("*").eq("id", user!.id).maybeSingle().then(({ data }) => { if (data) setViewedProfile(data); });
+                }} />
               </div>
             )}
 
