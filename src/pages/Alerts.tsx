@@ -15,7 +15,7 @@ const ICON_MAP: Record<string, any> = {
   strand_request: UserCheck, verification_request: Shield, opportunity: Briefcase, offer: Briefcase,
   delegation_approval: Shield, ex_member_verification: UserCheck,
   like: Heart, comment: MessageSquare, repost: Repeat2, mention: AtSign,
-  connection_request: Users, connection_accepted: UserCheck, follow: Users,
+  connection_request: Users, connection_accepted: UserCheck, follow: Users, org_follow: Users,
   new_message: MessageSquare, verification_approved: Shield, verification_declined: Shield,
 };
 
@@ -39,6 +39,7 @@ const ICON_STYLES: Record<string, { bg: string; color: string }> = {
   connection_request:    { bg: "rgba(255,90,31,0.12)",  color: "#FF5A1F" },
   connection_accepted:   { bg: "rgba(22,163,74,0.12)",  color: "#16A34A" },
   follow:                { bg: "rgba(255,90,31,0.12)",  color: "#FF5A1F" },
+  org_follow:            { bg: "rgba(13,148,136,0.12)",  color: "#0D9488" },
   new_message:           { bg: "rgba(255,90,31,0.12)",  color: "#FF5A1F" },
   delegation_approval:   { bg: "rgba(245,158,11,0.12)", color: "#F59E0B" },
   ex_member_verification:{ bg: "rgba(255,90,31,0.12)",  color: "#FF5A1F" },
@@ -69,7 +70,7 @@ const filterTabs = ["All", "Likes", "Replies", "Follows"];
 
 const LIKE_TYPES = new Set(["like", "repost"]);
 const REPLY_TYPES = new Set(["comment", "mention"]);
-const FOLLOW_TYPES = new Set(["follow", "connection_request", "connection_accepted", "strand_request", "strand"]);
+const FOLLOW_TYPES = new Set(["follow", "org_follow", "connection_request", "connection_accepted", "strand_request", "strand"]);
 
 const Alerts = () => {
   useEffect(() => { trackPageView("notifications"); }, []);
