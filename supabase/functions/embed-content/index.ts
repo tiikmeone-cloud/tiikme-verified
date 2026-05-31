@@ -1,14 +1,14 @@
 /**
- * embed-content — generate OpenAI text-embedding-3-small embeddings for posts and flicks.
+ * embed-content — generate text-embedding-3-small embeddings.
  *
- * Call via Supabase DB webhook (on insert to posts / flicks) OR directly:
+ * Supports: posts, flicks, profiles, opportunities
+ *
+ * Direct call:
  *   POST /functions/v1/embed-content
- *   { "type": "post" | "flick", "id": "<uuid>", "text": "<content to embed>" }
+ *   { "type": "post"|"flick"|"profile"|"opportunity", "id": "<uuid>", "text": "<text>" }
  *
- * Requires env vars:
- *   OPENAI_API_KEY     - your OpenAI secret key
- *   SUPABASE_URL       - auto-injected by Supabase
- *   SUPABASE_SERVICE_ROLE_KEY - auto-injected by Supabase
+ * DB webhook (x-table-name header set by Supabase):
+ *   body.record contains the inserted/updated row
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -27,12 +27,32 @@ async function embed(text: string, apiKey: string): Promise<number[]> {
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
     body: JSON.stringify({ model: MODEL, input: text.slice(0, 8000), dimensions: DIMENSIONS }),
   });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`OpenAI error ${res.status}: ${err}`);
-  }
+  if (!res.ok) throw new Error(`OpenAI ${res.status}: ${await res.text()}`);
   const json = await res.json();
   return json.data[0].embedding as number[];
+}
+
+function resolveTable(type: string | undefined | null): string {
+  if (!type) return "posts";
+  if (type === "flick" || type === "flicks") return "flicks";
+  if (type === "profile" || type === "profiles") return "profiles";
+  if (type === "opportunity" || type === "opportunities") return "opportunities";
+  return "posts";
+}
+
+function extractText(record: Record<string, unknown>, type: string): string {
+  if (type === "profiles" || type === "profile") {
+    const parts = [
+      record.full_name, record.headline, record.designation,
+      record.sector, record.bio, record.location_city, record.location_state,
+      Array.isArray(record.skills) ? (record.skills as string[]).join(", ") : "",
+    ];
+    return parts.filter(Boolean).join(" ");
+  }
+  if (type === "opportunities" || type === "opportunity") {
+    return [record.title, record.description, record.location, record.type].filter(Boolean).join(" ");
+  }
+  return (record.content as string) || (record.alt_text as string) || "";
 }
 
 Deno.serve(async (req) => {
@@ -60,21 +80,23 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Support Supabase DB webhook payload (record.* + table name in header) or direct call
-  const table = req.headers.get("x-table-name") || body.type;
+  const webhookTable = req.headers.get("x-table-name");
+  const typeHint = webhookTable || body.type;
   const record = body.record || {};
   const id = (record.id as string) || body.id;
-  const rawText = (record.content as string) || (record.alt_text as string) || body.text || "";
 
-  if (!id || !rawText) {
-    return new Response(JSON.stringify({ error: "id and text/content required" }), {
+  const rawText = body.text || extractText(record, typeHint || "");
+
+  if (!id || !rawText.trim()) {
+    return new Response(JSON.stringify({ error: "id and text required" }), {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
+  const targetTable = resolveTable(typeHint);
+
   try {
     const embedding = await embed(rawText, openaiKey);
-    const targetTable = table === "flick" || table === "flicks" ? "flicks" : "posts";
     const { error } = await sb.from(targetTable).update({ embedding } as any).eq("id", id);
     if (error) throw error;
 
