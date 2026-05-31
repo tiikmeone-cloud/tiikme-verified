@@ -228,6 +228,8 @@ const Profile = () => {
 
   const [connectionStatus, setConnectionStatus] = useState<{ status: string | null; direction: string | null; id: string | null }>({ status: null, direction: null, id: null });
   const [connectLoading, setConnectLoading] = useState(false);
+  const [orgFollowingUser, setOrgFollowingUser] = useState(false); // org admin viewing user profile
+  const [orgsFollowingMe, setOrgsFollowingMe] = useState<Array<{ org_id: string; org: { name: string; logo_url: string | null; slug: string } }>>([]);
 
   const targetUserId = isOwnProfile ? user?.id : urlUserId;
 
@@ -280,6 +282,12 @@ const Profile = () => {
     supabase.from("gig_services" as any).select("*").eq("user_id", targetUserId).order("created_at", { ascending: false })
       .then(({ data }) => setGigServices((data as any[]) || []));
 
+    // Load orgs that follow this user (only needed for own profile display)
+    if (isOwnProfile) {
+      (supabase.from("org_user_follows" as any).select("org_id, org:organizations!org_user_follows_org_id_fkey(name, logo_url, slug)").eq("user_id", targetUserId).limit(5) as any)
+        .then(({ data }: { data: any }) => setOrgsFollowingMe(data || []));
+    }
+
     setDataLoading(false);
   }, [targetUserId, isOwnProfile, authProfile]);
 
@@ -290,7 +298,12 @@ const Profile = () => {
       .maybeSingle().then(({ data }) => {
         if (data) setConnectionStatus({ status: data.status, direction: data.requester_id === user.id ? "sent" : "received", id: data.id });
       });
-  }, [user, targetUserId, isOwnProfile]);
+    // Institution accounts: check if their org already follows this user
+    if (authProfile?.account_type === "institution" && (authProfile as any)?.org_id) {
+      (supabase.from("org_user_follows" as any).select("id").eq("org_id", (authProfile as any).org_id).eq("user_id", targetUserId).maybeSingle() as any)
+        .then(({ data }: { data: any }) => setOrgFollowingUser(!!data));
+    }
+  }, [user, targetUserId, isOwnProfile, authProfile?.account_type, (authProfile as any)?.org_id]);
 
   // Load mutual connections when viewing someone else's profile
   useEffect(() => {
@@ -959,6 +972,43 @@ const Profile = () => {
         <button type="button" onClick={handleDeclineConnection} className="cursor-pointer" style={{ height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "transparent", color: "#EF4444", border: "1px solid rgba(239,68,68,0.25)" }}>Decline</button>
       </div>
     );
+    // Institution account viewing another user — show "Follow as [OrgName]" instead of Connect
+    if (authProfile?.account_type === "institution" && (authProfile as any)?.org_id) {
+      const orgName = authProfile?.institution_name || "your organization";
+      const orgId = (authProfile as any).org_id;
+      const handleFollowAsOrg = async () => {
+        if (!targetUserId) return;
+        const { error } = await (supabase.from("org_user_follows" as any).insert({ org_id: orgId, user_id: targetUserId }) as any);
+        if (!error) {
+          setOrgFollowingUser(true);
+          sendNotification({ userId: targetUserId, actorId: user!.id, type: "org_follow", title: `${orgName} started following you`, actionUrl: `/app/profile/${user!.id}` });
+          toast.success(`${orgName} is now following this user`);
+        } else {
+          toast.error("Could not follow. Try again.");
+        }
+      };
+      const handleUnfollowAsOrg = () => {
+        toast(`Stop following as ${orgName}?`, {
+          action: { label: "Unfollow", onClick: async () => {
+            await (supabase.from("org_user_follows" as any).delete().eq("org_id", orgId).eq("user_id", targetUserId) as any);
+            setOrgFollowingUser(false);
+            toast.success("Unfollowed");
+          }},
+          cancel: { label: "Cancel", onClick: () => {} },
+          duration: 5000,
+        });
+      };
+      return orgFollowingUser ? (
+        <button type="button" onClick={handleUnfollowAsOrg} className="cursor-pointer" style={{ height: 32, padding: "0 12px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "rgba(13,148,136,0.10)", color: "#0D9488", border: "1px solid rgba(13,148,136,0.25)", display: "inline-flex", alignItems: "center", gap: 4 }}>
+          <CheckCircle className="w-3.5 h-3.5" /> {orgName} Following ✓
+        </button>
+      ) : (
+        <button type="button" onClick={handleFollowAsOrg} className="cursor-pointer" style={{ height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "rgba(13,148,136,0.10)", color: "#0D9488", border: "1px solid rgba(13,148,136,0.25)" }}>
+          Follow as {orgName}
+        </button>
+      );
+    }
+
     return (
       <button type="button" onClick={handleConnect} disabled={connectLoading} className="cursor-pointer" style={{ height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 700, background: "#FF5A1F", color: "#fff", border: "none", boxShadow: "0 2px 12px rgba(255,90,31,0.25)" }}>
         <Users className="w-3 h-3 inline mr-1" />Connect
@@ -1225,6 +1275,25 @@ const Profile = () => {
                 </p>
               )}
             </div>
+            )}
+
+            {/* Followed by orgs — own profile only, shows orgs that follow this user */}
+            {isOwnProfile && orgsFollowingMe.length > 0 && (
+              <div className="glass-card" style={{ padding: 14, borderRadius: 16 }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: "#1A1A2E", display: "block", marginBottom: 10 }}>Followed by</span>
+                <div className="flex flex-col gap-2">
+                  {orgsFollowingMe.map((row: any) => {
+                    const org = row.org;
+                    if (!org) return null;
+                    return (
+                      <Link key={row.org_id} to={`/org/${org.slug}`} className="flex items-center gap-2 hover:opacity-80" style={{ textDecoration: "none" }}>
+                        <AvatarSquare src={org.logo_url} name={org.name || "Org"} size={28} />
+                        <span style={{ fontSize: 13, fontWeight: 500, color: "var(--text-1)", flex: 1 }} className="truncate">{org.name}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
             )}
 
             {/* L3: Resume */}
