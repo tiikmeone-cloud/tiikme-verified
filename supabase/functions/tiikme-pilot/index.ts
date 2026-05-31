@@ -229,8 +229,17 @@ serve(async (req) => {
     const intent = classifyPilotIntent(message, mode);
     const searchText = extractSearchText(message);
 
-    // Parallel retrieval
-    const [orgsRes, oppsRes, profilesRes, circlesRes, appsRes, campaignsRes] = await Promise.allSettled([
+    // Embed the query for semantic search (non-blocking — runs in parallel)
+    const embedQueryPromise: Promise<number[] | null> = openAiKey
+      ? fetch("https://api.openai.com/v1/embeddings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${openAiKey}` },
+          body: JSON.stringify({ model: "text-embedding-3-small", input: searchText.slice(0, 2000), dimensions: 1536 }),
+        }).then(r => r.ok ? r.json().then((j: any) => j.data[0].embedding as number[]) : null).catch(() => null)
+      : Promise.resolve(null);
+
+    // Keyword retrieval in parallel with embedding
+    const [orgsRes, oppsRes, profilesRes, appsRes, campaignsRes] = await Promise.allSettled([
       adminClient.from("organizations")
         .select("id, name, type, tagline, about, city, state, website_url, is_verified, followers_count, slug")
         .or(`name.ilike.%${searchText}%,about.ilike.%${searchText}%,tagline.ilike.%${searchText}%`)
@@ -250,13 +259,6 @@ serve(async (req) => {
             .limit(4)
         : Promise.resolve({ data: [] }),
 
-      (mode === "discover" || intent === "find_circle")
-        ? adminClient.from("circles")
-            .select("id, name, slug, description, member_count")
-            .or(`name.ilike.%${searchText}%,description.ilike.%${searchText}%`)
-            .eq("visibility", "public").limit(3)
-        : Promise.resolve({ data: [] }),
-
       adminClient.from("opportunity_applications")
         .select("id, status, created_at, opportunity:opportunities!opportunity_applications_opportunity_id_fkey(title, org:organizations!opportunities_org_id_fkey(name))")
         .eq("applicant_id", user.id).order("created_at", { ascending: false }).limit(5),
@@ -269,12 +271,48 @@ serve(async (req) => {
         : Promise.resolve({ data: [] }),
     ]);
 
-    const orgs = orgsRes.status === "fulfilled" ? (orgsRes.value as any).data || [] : [];
-    const opps = oppsRes.status === "fulfilled" ? (oppsRes.value as any).data || [] : [];
-    const profiles = profilesRes.status === "fulfilled" ? (profilesRes.value as any).data || [] : [];
-    const circles = circlesRes.status === "fulfilled" ? (circlesRes.value as any).data || [] : [];
+    let orgs = orgsRes.status === "fulfilled" ? (orgsRes.value as any).data || [] : [];
+    let opps = oppsRes.status === "fulfilled" ? (oppsRes.value as any).data || [] : [];
+    let profiles = profilesRes.status === "fulfilled" ? (profilesRes.value as any).data || [] : [];
+    const circles: any[] = [];
     const ownApps = appsRes.status === "fulfilled" ? (appsRes.value as any).data || [] : [];
     const campaigns = campaignsRes.status === "fulfilled" ? (campaignsRes.value as any).data || [] : [];
+
+    // Semantic vector search — augment sparse keyword results
+    const queryEmbedding = await embedQueryPromise;
+    if (queryEmbedding) {
+      const seenProfileIds = new Set(profiles.map((p: any) => p.id));
+      const seenOppIds = new Set(opps.map((o: any) => o.id));
+
+      const [vecProfilesRes, vecOppsRes] = await Promise.allSettled([
+        (mode === "discover" || mode === "hiring" || intent === "find_person") && profiles.length < 3
+          ? adminClient.rpc("match_profiles", {
+              query_embedding: queryEmbedding,
+              match_threshold: 0.3,
+              match_count: 4,
+            })
+          : Promise.resolve({ data: [] }),
+
+        (mode === "jobs" || intent === "find_job") && opps.length < 3
+          ? adminClient.rpc("match_opportunities", {
+              query_embedding: queryEmbedding,
+              match_threshold: 0.3,
+              match_count: 5,
+            })
+          : Promise.resolve({ data: [] }),
+      ]);
+
+      if (vecProfilesRes.status === "fulfilled") {
+        for (const p of (vecProfilesRes.value as any).data || []) {
+          if (!seenProfileIds.has(p.id)) { profiles.push(p); seenProfileIds.add(p.id); }
+        }
+      }
+      if (vecOppsRes.status === "fulfilled") {
+        for (const o of (vecOppsRes.value as any).data || []) {
+          if (!seenOppIds.has(o.id)) { opps.push(o); seenOppIds.add(o.id); }
+        }
+      }
+    }
 
     // Build source cards
     const sourceCards: SourceCard[] = [];
