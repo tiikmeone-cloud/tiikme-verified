@@ -1342,6 +1342,21 @@ const Profile = () => {
               </div>
             )}
 
+            {/* L3b: Export as PDF */}
+            {isOwnProfile && (
+              <Link
+                to={`/app/profile/${targetUserId}/print`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="glass-card flex items-center"
+                style={{ padding: "10px 12px", borderRadius: 16, gap: 8, textDecoration: "none" }}
+              >
+                <FileText style={{ width: 15, height: 15, color: "#E8733A", flexShrink: 0 }} />
+                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-1)", flex: 1 }}>Export profile as PDF</span>
+                <ExternalLink style={{ width: 12, height: 12, color: "var(--text-3)" }} />
+              </Link>
+            )}
+
             {/* L4: Links */}
             <div className="glass-card" style={{ padding: 12, borderRadius: 16 }}>
               <div className="flex items-center" style={{ gap: 8 }}>

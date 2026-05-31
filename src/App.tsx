@@ -67,6 +67,7 @@ const TiikmePilot = lazyWithRetry(() => import("./pages/TiikmePilot.tsx"), "Tiik
 const Flicks = lazyWithRetry(() => import("./pages/Flicks.tsx"), "Flicks");
 const FlickCreate = lazyWithRetry(() => import("./pages/FlickCreate.tsx"), "FlickCreate");
 const Stash = lazyWithRetry(() => import("./pages/Stash.tsx"), "Stash");
+const ProfilePrint = lazyWithRetry(() => import("./pages/ProfilePrint.tsx"), "ProfilePrint");
 
 // SEO guides hub
 const GuidesHub = lazyWithRetry(() => import("./pages/guides/GuidesHub.tsx"), "GuidesHub");
@@ -158,6 +159,7 @@ const AppRoutes = () => {
             <Route path="/app/explore" element={<Shell><Explore /></Shell>} />
             <Route path="/app/profile" element={<Shell><Profile /></Shell>} />
             <Route path="/app/profile/:id" element={<Shell><Profile /></Shell>} />
+            <Route path="/app/profile/:id/print" element={<PageErrorBoundary><ProfilePrint /></PageErrorBoundary>} />
             <Route path="/app/u/:username/posts" element={<Shell><ProfilePosts /></Shell>} />
             <Route path="/app/teams" element={<Shell><MyWork /></Shell>} />
             <Route path="/app/teams/:projectId" element={<Shell><ProjectHub /></Shell>} />
