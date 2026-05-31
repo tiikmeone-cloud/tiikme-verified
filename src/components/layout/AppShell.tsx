@@ -168,13 +168,13 @@ const AppShell = ({ children }: { children: ReactNode }) => {
   // Format alert count badge: 1-9 exact, 10-99 exact, 100+ shows "99+"
   const alertCountLabel = unreadAlerts > 99 ? "99+" : String(unreadAlerts);
 
-  // Mobile bottom nav: Home · Together · [Create FAB] · Jobs · Profile
+  // Mobile bottom nav: Home · Together · [Create FAB] · Alerts · Profile
   const mobileLeftItems = [
     { label: "Home", icon: Home, path: "/app/feed" },
     { label: "Together", icon: Users, path: "/app/connections" },
   ];
   const mobileRightItems = [
-    { label: "Jobs", icon: Briefcase, path: "/app/opportunities" },
+    { label: "Alerts", icon: Bell, path: "/app/alerts" },
     { label: isInstitution ? "Org" : "Profile", icon: User, path: profilePath, isProfile: true },
   ];
 
