@@ -35,6 +35,8 @@ import { sendNotification } from "@/lib/notify";
 import VerificationStatusCard from "@/components/verification/VerificationStatusCard";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import CertificatesSection from "@/components/profile/CertificatesSection";
+import AIProfileBuilder from "@/components/profile/AIProfileBuilder";
+import ProfileCompletenessCard from "@/components/profile/ProfileCompletenessCard";
 import ActivityScoreRing from "@/components/ActivityScoreRing";
 import { getActivityTier } from "@/lib/algorithms";
 import {
@@ -246,7 +248,7 @@ const Profile = () => {
     setDataLoading(true);
     const [profileRes, itemsRes, strandCountRes, postsRes, achvsRes, certsRes, connAvatarsRes] = await Promise.allSettled([
       isOwnProfile ? Promise.resolve({ data: authProfile }) : supabase.from("profiles").select("id, full_name, username, role, role_subtype, headline, bio, avatar_url, institution_name, location_city, location_state, activity_score, is_public, custom_links, open_to_work, otw_visibility, designation, sector, languages, department, is_verified, role_metadata, about_qa, verification_badge_text, verification_type, created_at, account_type, org_id, skills, display_preference, profession_type, currently_working_at, privacy, privacy_settings, email").eq("id", targetUserId).maybeSingle(),
-      supabase.from("work_items").select("id, title, job_title, description, company_name, institution_name, item_type, employment_type, work_location, start_date, end_date, start_month, start_year, end_month, end_year, is_current, status, visibility, verification_status, verified_by_user, verified_at, is_tiik_approved, created_at, owner_id").eq("owner_id", targetUserId).order("is_current", { ascending: false }).order("created_at", { ascending: false }),
+      supabase.from("work_items").select("id, title, job_title, description, company_name, institution_name, item_type, employment_type, work_location, start_date, end_date, start_month, start_year, end_month, end_year, is_current, status, visibility, verification_status, verified_by_user, verified_at, is_tiik_approved, created_at, owner_id, skills_used, tech_stack, degree_type, field_of_study, institution_name_edu, grade_score, role_in_work, tech_stack").eq("owner_id", targetUserId).order("is_current", { ascending: false }).order("created_at", { ascending: false }),
       supabase.from("strands").select("id", { count: "exact", head: true }).or(`requester_id.eq.${targetUserId},receiver_id.eq.${targetUserId}`).eq("status", "accepted"),
       supabase.from("posts").select("id, author_id, posted_by_user_id, posted_by_org, content, type, image_urls, comment_count, repost_count, reactions, is_edited, repost_of, created_at, updated_at, post_reactions(count), post_comments(count)", { count: "exact" }).eq("author_id", targetUserId).order("created_at", { ascending: false }).limit(10),
       supabase.from("achievements").select("id, title, type, description, icon_emoji, achievement_date, issued_by, certificate_url, certificate_file_url, source_type, source_workspace_name, visibility, created_at, user_id").eq("user_id", targetUserId).order("created_at", { ascending: false }),
@@ -1246,6 +1248,32 @@ const Profile = () => {
         <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-3 md:gap-5 mt-3 md:mt-5">
           {/* ═══ LEFT COLUMN ═══ */}
           <div className="flex flex-col gap-3">
+            {/* AI profile builder (own profile only) */}
+            {isOwnProfile && (
+              <AIProfileBuilder
+                onApplied={() => {
+                  loadProfile();
+                }}
+              />
+            )}
+
+            {/* Profile completeness nudge (own profile only, hides at 100%) */}
+            {isOwnProfile && (
+              <ProfileCompletenessCard
+                profile={profileData}
+                workItemCount={experiences.length}
+                educationCount={education.length}
+                onSectionClick={(section) => {
+                  if (section === "avatar") setShowAvatarMenu(true);
+                  else if (section === "headline" || section === "bio" || section === "location") navigate("/app/settings?tab=profile");
+                  else if (section === "skills") setModalSection("skills");
+                  else if (section === "experience") setModalSection("experience");
+                  else if (section === "education") setModalSection("education");
+                  else if (section === "resume") resumeInputRef.current?.click();
+                }}
+              />
+            )}
+
             {/* Verification status (own profile only, hidden if already verified) */}
             {isOwnProfile && <VerificationStatusCard />}
 
