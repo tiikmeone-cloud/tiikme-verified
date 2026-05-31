@@ -131,15 +131,44 @@ const Connections = () => {
     return { connected: accepted, pendingIncoming: incomingData, pendingSent: sentData, suggested: suggestedData || [] };
   }, [user]);
 
-  // Load orgs followed by current user
+  // Load orgs followed by current user (user→org) or by their org (org→org for institution accounts)
   useEffect(() => {
     if (!user) return;
-    supabase.from("org_followers")
-      .select("org_id, followed_at, org:organizations(id, name, slug, logo_url, type, sub_type, followers_count)")
-      .eq("user_id", user.id)
-      .order("followed_at", { ascending: false })
-      .then(({ data }) => setFollowedOrgs(data || []));
-  }, [user]);
+    const isInstitution = (profile as any)?.account_type === "institution";
+    const orgId = (profile as any)?.org_id;
+
+    if (isInstitution && orgId) {
+      // Institution account: load org_follows (org→org) AND org_followers (user→org)
+      Promise.all([
+        supabase.from("org_followers")
+          .select("org_id, followed_at, org:organizations(id, name, slug, logo_url, type, sub_type, followers_count)")
+          .eq("user_id", user.id)
+          .order("followed_at", { ascending: false }),
+        (supabase.from("org_follows" as any)
+          .select("following_org_id, created_at, org:organizations!org_follows_following_org_id_fkey(id, name, slug, logo_url, type, sub_type, followers_count)")
+          .eq("follower_org_id", orgId)
+          .order("created_at", { ascending: false }) as any),
+      ]).then(([userFollows, orgFollows]) => {
+        const userRows = (userFollows.data || []).map((r: any) => ({ ...r, _source: "user" }));
+        const orgRows = ((orgFollows.data || []) as any[]).map((r: any) => ({
+          org_id: r.following_org_id, followed_at: r.created_at, org: r.org, _source: "org",
+        }));
+        // Merge, deduplicate by org_id
+        const seen = new Set<string>();
+        const merged: any[] = [];
+        [...userRows, ...orgRows].forEach(r => {
+          if (r.org_id && !seen.has(r.org_id)) { seen.add(r.org_id); merged.push(r); }
+        });
+        setFollowedOrgs(merged);
+      });
+    } else {
+      supabase.from("org_followers")
+        .select("org_id, followed_at, org:organizations(id, name, slug, logo_url, type, sub_type, followers_count)")
+        .eq("user_id", user.id)
+        .order("followed_at", { ascending: false })
+        .then(({ data }) => setFollowedOrgs(data || []));
+    }
+  }, [user, profile]);
 
   const qc = useQueryClient();
   const queryKey = ["connections", user?.id];
