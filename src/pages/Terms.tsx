@@ -12,8 +12,7 @@ const toc: TocItem[] = [
   { id: "section-8", label: "8. What You Must Not Do" },
   { id: "section-9", label: "9. Enforcement" },
   { id: "section-10", label: "10. Confidentiality" },
-  { id: "section-11", label: "11. Circles" },
-  { id: "section-12", label: "12. Organisations" },
+  { id: "section-12", label: "11. Organisations" },
   { id: "section-campaigns", label: "Campaigns & Creator Deals" },
   { id: "section-pilot", label: "Pilot AI" },
   { id: "section-13", label: "13. Intermediary Status" },
@@ -59,7 +58,7 @@ export default function Terms() {
       </Callout>
 
       <LegalSection id="section-1" num="1" title="Who We Are and What Tiikme Is">
-        <P>Tiikme is a professional social networking platform for students, working professionals, creators, freelancers, and organisations across India. It provides tools for networking, knowledge sharing, community discussions through Circles, and professional opportunity discovery.</P>
+        <P>Tiikme is a professional social networking platform for students, working professionals, creators, freelancers, and organisations across India. It provides tools for networking, knowledge sharing, community building, and professional opportunity discovery.</P>
         <Sub>Tiikme is NOT:</Sub>
         <List items={[
           "A recruitment agency, staffing firm, or employment exchange",
@@ -85,7 +84,7 @@ export default function Terms() {
       <LegalSection id="section-3" num="3" title="What Tiikme Will Never Do">
         <Callout>
           <p className="font-bold text-[16px] mb-2">TIIKME WILL NEVER ASK YOU FOR MONEY.</p>
-          <p className="mb-2">Creating an account, joining Circles, browsing the Feed, connecting with professionals, and applying to Opportunities are all free. We will not charge you to use any core feature of the Platform now or in the future without advance notice and your explicit consent.</p>
+          <p className="mb-2">Creating an account, browsing the Feed, connecting with professionals, and applying to Opportunities are all free. We will not charge you to use any core feature of the Platform now or in the future without advance notice and your explicit consent.</p>
           <p className="mb-2">If you receive any communication — email, WhatsApp, phone call, SMS, or any other channel — claiming to be from Tiikme and asking you for:</p>
           <ul className="list-disc pl-5 space-y-1 mb-2">
             <li>Registration or account activation fees</li>
@@ -107,7 +106,6 @@ export default function Terms() {
             <li>You will receive a job offer, internship, project, or any other opportunity</li>
             <li>Any application you submit will receive a response</li>
             <li>Any connection you make will lead to a professional relationship</li>
-            <li>Any Circle you join will advance your career or income</li>
             <li>Any verification badge on your profile will be accepted by any employer or institution</li>
             <li>The Feed, Explore, or Opportunity algorithms will surface your profile to the right people</li>
           </ul>
@@ -135,7 +133,7 @@ export default function Terms() {
         <P>After 30 days with no reactivation, permanent deletion begins. This cannot be undone. Within 90 days of this point, the following data is permanently removed:</P>
         <List items={[
           "Your profile, photo, bio, and all personal details",
-          "All posts you created (Feed and Circles)",
+          "All posts you created",
           "Your message and conversation history",
           "Your connection history",
           "All verification documents you submitted",
@@ -155,7 +153,7 @@ export default function Terms() {
 
       <LegalSection id="section-7" num="7" title="Content You Create">
         <Sub>7.1 You Own Your Content</Sub>
-        <P>Everything you post on Tiikme — posts, comments, Circle discussions, profile information — remains your intellectual property.</P>
+        <P>Everything you post on Tiikme — posts, comments, discussions, profile information — remains your intellectual property.</P>
         <Sub>7.2 Licence to Tiikme</Sub>
         <P>By posting, you grant Tiikme a non-exclusive, worldwide, royalty-free licence to display, distribute, and promote your content within the Platform for the purpose of providing the service. This licence ends when you delete the content or your account. Tiikme will not modify your content or use it for advertising without your separate explicit consent.</P>
         <Sub>7.3 Deleted Content</Sub>
@@ -219,7 +217,7 @@ export default function Terms() {
 
       <LegalSection id="section-10" num="10" title="Confidential Information and Workplace Discussions">
         <Warning>
-          <p className="mb-2">If you post about your workplace, employer, clients, or colleagues in Circles or the Feed, you are solely responsible for ensuring that your posts do not violate:</p>
+          <p className="mb-2">If you post about your workplace, employer, clients, or colleagues on the Feed, you are solely responsible for ensuring that your posts do not violate:</p>
           <ul className="list-disc pl-5 space-y-1">
             <li>Your employment agreement's confidentiality and NDA clauses</li>
             <li>Trade secret protections applicable to your industry</li>
@@ -249,38 +247,29 @@ export default function Terms() {
           "Pay damages or compensation arising from your disclosure",
         ]} />
         <Sub>10.3 Anonymity Is Not Guaranteed</Sub>
-        <P>Even in semi-anonymous Circles, your company, role, city, tenure, or writing style may allow you or your employer to be identified. Do not assume anonymity protects you legally. A court order can compel Tiikme to disclose identifying information about accounts.</P>
+        <P>Your company, role, city, tenure, or writing style may allow you or your employer to be identified from your posts even without using your name. Do not assume anonymity protects you legally. A court order can compel Tiikme to disclose identifying information about accounts.</P>
       </LegalSection>
 
-      <LegalSection id="section-11" num="11" title="Circles — Community Standards">
-        <P>Circles are professional discussion communities on Tiikme. They are not anonymous forums and are not protected by any legal privilege.</P>
-        <P>Content in Circles reflects individual user views, not Tiikme's. Tiikme does not endorse, verify, or vouch for any advice, opinion, or claim shared in any Circle.</P>
-        <P>Do not treat Circle posts as professional, legal, medical, or financial advice. Consult qualified professionals for decisions affecting your health, finances, career, or legal rights.</P>
-        <P><strong>Circle Moderation:</strong> Circle moderators may remove off-topic, harmful, or violating content. If you believe content was wrongly removed, email circles@tiikme.com within 7 days.</P>
-      </LegalSection>
-
-      <LegalSection id="section-12" num="12" title="Terms for Organisations">
+      <LegalSection id="section-12" num="11" title="Terms for Organisations">
         <P>These additional terms apply specifically to Organisation accounts on Tiikme.</P>
-        <Sub>12.1 Eligibility</Sub>
+        <Sub>11.1 Eligibility</Sub>
         <P>Organisation accounts may only be created by legally registered entities — companies registered under the Companies Act 2013, LLPs, partnerships, educational institutions, NGOs, trusts, and startups with valid CIN/registration. The creating person must be authorised to represent the organisation.</P>
-        <Sub>12.2 Accurate Representation</Sub>
+        <Sub>11.2 Accurate Representation</Sub>
         <P>Organisations must accurately state their legal name, registration number, sector, employee count range, and registered address. Tiikme may request verification documents at any time.</P>
-        <Sub>12.3 Opportunity Posting Rules — Non-Negotiable</Sub>
+        <Sub>11.3 Opportunity Posting Rules — Non-Negotiable</Sub>
         <List items={[
           "All posted opportunities must be genuine, active, and accurately described",
           "Compensation, role scope, location, and eligibility must be truthfully stated",
           "Expired or filled positions must be removed promptly or marked closed",
           "Applications must receive a response or formal rejection within 30 days where practically possible",
         ]} />
-        <Sub>12.4 Absolute Prohibition on Fees from Applicants</Sub>
+        <Sub>11.4 Absolute Prohibition on Fees from Applicants</Sub>
         <P>Organisations categorically agree they will NOT, directly or indirectly, request, suggest, or accept any payment from any applicant for any purpose at any stage — including registration, application, training, equipment, background checks, or onboarding. Any organisation found violating this rule will be immediately and permanently banned from Tiikme and may be reported to the Ministry of Labour and Employment.</P>
-        <Sub>12.5 Verified Badge</Sub>
+        <Sub>11.5 Verified Badge</Sub>
         <P>The Verified badge confirms Tiikme reviewed submitted documents. It does NOT guarantee the organisation's financial stability, operational status, legal compliance, or quality of employment. Verification can be revoked at any time if information is found to be false or outdated.</P>
-        <Sub>12.6 Admin Responsibility</Sub>
+        <Sub>11.6 Admin Responsibility</Sub>
         <P>The organisation is jointly liable for all content posted by any of its admins or team members under the organisation account.</P>
-        <Sub>12.7 Circle Creation</Sub>
-        <P>Verified organisations may create community Circles linked to their organisation. These Circles must remain professionally relevant. Circles used for spam, promotion outside Tiikme's guidelines, or misleading recruitment will be permanently removed.</P>
-        <Sub>12.8 Organisation Termination</Sub>
+        <Sub>11.7 Organisation Termination</Sub>
         <P>Tiikme may terminate an organisation's account if it: posts fraudulent opportunities, requests money from applicants, repeatedly violates Terms, misrepresents its registration status, or receives sustained user complaints.</P>
       </LegalSection>
 
@@ -341,8 +330,8 @@ export default function Terms() {
         <P>A Verified badge does NOT mean Tiikme endorses the person or organisation; that qualifications are accurate; that employment history is confirmed; that the person's professional conduct is endorsed; or that the badge will be recognised by third parties.</P>
         <Sub>14.2 Opportunity Listings</Sub>
         <P>Tiikme does NOT verify company legitimacy, financial stability, job authenticity, compensation accuracy, legal compliance with labour laws, or that applications will receive responses.</P>
-        <Sub>14.3 Circle Content</Sub>
-        <P>Tiikme does NOT verify the accuracy of advice or information shared in Circles; the professional qualifications of those posting; factual claims about companies, industries, or individuals.</P>
+        <Sub>14.3 Feed Content</Sub>
+        <P>Tiikme does NOT verify the accuracy of advice or information shared in the Feed; the professional qualifications of those posting; factual claims about companies, industries, or individuals.</P>
         <Sub>14.4 User Connections</Sub>
         <P>Tiikme does NOT verify user identities in real time; conduct background checks; or assume liability for misuse of personal information shared in private messages or connections.</P>
       </LegalSection>
@@ -371,7 +360,6 @@ export default function Terms() {
           <P>General queries: <a href="mailto:contact@tiikme.com" className="text-brand-hover underline">contact@tiikme.com</a></P>
           <P>Alternate contact: <a href="mailto:contact@veenavarse.com" className="text-brand-hover underline">contact@veenavarse.com</a></P>
           <P>Content reports: <a href="mailto:reports@tiikme.com" className="text-brand-hover underline">reports@tiikme.com</a></P>
-          <P>Circle appeals: <a href="mailto:circles@tiikme.com" className="text-brand-hover underline">circles@tiikme.com</a></P>
           <P>Enforcement appeals: <a href="mailto:appeals@tiikme.com" className="text-brand-hover underline">appeals@tiikme.com</a></P>
           <P>Data rights: <a href="mailto:contact@tiikme.com" className="text-brand-hover underline">contact@tiikme.com</a> (Subject: "Data Rights Request")</P>
           <P>Response time: 3 business days for general queries</P>

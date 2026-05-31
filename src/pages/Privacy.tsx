@@ -86,7 +86,7 @@ export default function Privacy() {
         <List items={[
           "Name and email address",
           "Profile: role, designation, education, work history, skills, location, profile photo",
-          "Content: posts, comments, Circle discussions",
+          "Content: posts, comments, discussions",
           "Verification documents: offer letters, student ID, certificates (used only for verification, deleted after 12 months)",
           "Your preferences: notification settings, display preferences, privacy settings, theme",
         ]} />
@@ -95,7 +95,7 @@ export default function Privacy() {
           "Device information: type, operating system, browser version",
           "IP address and approximate city-level location",
           "Session data: login times, pages visited, features used, time spent",
-          "Interaction data: posts liked, connections made, Circles joined, opportunities viewed",
+          "Interaction data: posts liked, connections made, opportunities viewed",
         ]} />
         <Sub>2.3 Data from Third Parties</Sub>
         <List items={[
@@ -122,7 +122,7 @@ export default function Privacy() {
           headers={["Purpose", "What data", "Legal basis"]}
           rows={[
             ["Creating and maintaining your account", "Name, email", "Contract performance"],
-            ["Showing you relevant Feed, Circles, Opportunities", "Role, location, skills, activity", "Legitimate interest"],
+            ["Showing you relevant Feed and Opportunities", "Role, location, skills, activity", "Legitimate interest"],
             ["Enabling networking and connections", "Profile, activity", "Contract performance"],
             ["Processing verification requests", "Documents, profile data", "Consent"],
             ["Sending in-app notifications and alerts", "In-app only", "Consent"],
