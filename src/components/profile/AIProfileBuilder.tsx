@@ -7,6 +7,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { track } from "@/lib/track";
 
 /* ── types ── */
 interface StructuredProfile {
@@ -148,6 +149,7 @@ export default function AIProfileBuilder({ onApplied }: Props) {
       toast.error("Please add at least a few lines of your career background");
       return;
     }
+    track("ai_build_start");
     setStep("thinking");
     try {
       const { data, error } = await supabase.functions.invoke("structure-profile", {
@@ -266,6 +268,7 @@ export default function AIProfileBuilder({ onApplied }: Props) {
         }
       } catch (_) { /* non-critical */ }
 
+      track("ai_build_accept_block", { count: approvedBlocks.length, kinds: approvedBlocks.map(b => b.kind) });
       setStep("done");
       toast.success(`${approvedBlocks.length} block${approvedBlocks.length !== 1 ? "s" : ""} added to your profile`);
       setTimeout(() => { close(); onApplied(); }, 1500);
