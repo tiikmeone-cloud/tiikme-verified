@@ -1,7 +1,8 @@
 import { useState } from "react";
 import {
   MapPin, Briefcase, Wifi, Clock, Users, Heart, MessageCircle,
-  Share2, MoreHorizontal, Edit2, Trash2, X, CheckCircle, Loader2
+  Share2, MoreHorizontal, Edit2, Trash2, X, CheckCircle, Loader2,
+  Bookmark, BookmarkCheck,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,6 +47,9 @@ interface OpportunityCardProps {
   initialLikeCount?: number;
   initialCommentCount?: number;
   isFollowingOrg?: boolean;
+  isSavedByMe?: boolean;
+  selected?: boolean;
+  onSelect?: () => void;
   onApply?: (opp: OpportunityCardProps["opp"]) => void;
   onRefer?: (opp: OpportunityCardProps["opp"]) => void;
   onDelete?: (oppId: string) => void;
@@ -71,6 +75,9 @@ export function OpportunityCard({
   initialLikeCount = 0,
   initialCommentCount = 0,
   isFollowingOrg = false,
+  isSavedByMe = false,
+  selected = false,
+  onSelect,
   onApply,
   onRefer,
   onDelete,
@@ -85,6 +92,7 @@ export function OpportunityCard({
   const [applying, setApplying] = useState(false);
   const [applied, setApplied] = useState(hasApplied);
   const [showRefer, setShowRefer] = useState(false);
+  const [saved, setSaved] = useState(isSavedByMe);
 
   const isOwn = user?.id === opp.poster_id;
 
@@ -203,6 +211,25 @@ export function OpportunityCard({
     setShowRefer(true);
   };
 
+  const handleSave = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) { toast.error("Sign in to save"); return; }
+    const wasSaved = saved;
+    setSaved(!wasSaved);
+    try {
+      if (wasSaved) {
+        await (supabase.from as any)("opportunity_saves").delete().eq("opportunity_id", opp.id).eq("user_id", user.id);
+        toast.success("Removed from saved");
+      } else {
+        await (supabase.from as any)("opportunity_saves").insert({ opportunity_id: opp.id, user_id: user.id });
+        toast.success("Saved!");
+      }
+    } catch {
+      setSaved(wasSaved);
+      toast.error("Could not save");
+    }
+  };
+
   /* ── action button shared style ── */
   const actionBtn = (active = false) => ({
     display: "flex", alignItems: "center", gap: 6,
@@ -217,13 +244,16 @@ export function OpportunityCard({
     <div
       id={`opportunity-${opp.id}`}
       className="glass-card w-full overflow-hidden"
-      style={{ borderRadius: 16 }}
+      style={{ borderRadius: 16, border: selected ? "2px solid #FF5A1F" : "2px solid transparent", transition: "border-color 150ms" }}
     >
       {/* Header */}
       <div style={{ padding: "14px 14px 12px" }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
-          {/* Left: logo + title */}
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 12, minWidth: 0, flex: 1 }}>
+          {/* Left: logo + title — clicking this area selects the job */}
+          <div
+            style={{ display: "flex", alignItems: "flex-start", gap: 12, minWidth: 0, flex: 1, cursor: onSelect ? "pointer" : "default" }}
+            onClick={onSelect}
+          >
             <AvatarSquare src={company?.logo_url} name={company?.name || "Company"} size={44} />
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
@@ -432,6 +462,12 @@ export function OpportunityCard({
           onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "none"; (e.currentTarget as HTMLElement).style.color = "var(--text-3)"; }}>
           <Users size={15} />
           Refer
+        </button>
+        <button type="button" onClick={handleSave} style={actionBtn(saved)}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,90,31,0.08)"; (e.currentTarget as HTMLElement).style.color = "#FF5A1F"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "none"; (e.currentTarget as HTMLElement).style.color = saved ? "#FF5A1F" : "var(--text-3)"; }}>
+          {saved ? <BookmarkCheck size={15} style={{ fill: "#FF5A1F", color: "#FF5A1F" }} /> : <Bookmark size={15} />}
+          {saved ? "Saved" : "Save"}
         </button>
         <button type="button" style={actionBtn()}
           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,90,31,0.08)"; (e.currentTarget as HTMLElement).style.color = "#FF5A1F"; }}
