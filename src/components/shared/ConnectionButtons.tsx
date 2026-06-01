@@ -6,6 +6,7 @@ import React from "react";
 import { Loader2, UserPlus, UserCheck, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { useConnectionStatus } from "@/hooks/useConnectionStatus";
+import { FollowIconButton } from "@/components/shared/FollowIconButton";
 
 interface ConnectionButtonsProps {
   targetUserId?: string | null;
@@ -40,33 +41,15 @@ export function ConnectionButtons({
 
   // ── ORG MODE ──────────────────────────────────────────────
   if (orgId) {
-    if (conn.state === "org_following") {
-      return (
-        <button
-          className={gray}
-          disabled={conn.isLoading}
-          onClick={() => {
-            toast(`Unfollow ${targetName}?`, {
-              action: { label: "Unfollow", onClick: () => conn.unfollowOrg(orgId) },
-              cancel: { label: "Cancel", onClick: () => {} },
-              duration: 5000,
-            });
-          }}
-        >
-          {conn.isLoading ? <Loader2 size={14} className="animate-spin" /> : <UserCheck size={14} />}
-          Following
-        </button>
-      );
-    }
     return (
-      <button
-        className={primary}
+      <FollowIconButton
+        isFollowing={conn.state === "org_following"}
+        onFollow={() => conn.followOrg(orgId)}
+        onUnfollow={() => conn.unfollowOrg(orgId)}
+        targetName={targetName}
+        size={compact ? 28 : 32}
         disabled={conn.isLoading}
-        onClick={() => conn.followOrg(orgId)}
-      >
-        {conn.isLoading ? <Loader2 size={14} className="animate-spin" /> : null}
-        + Follow
-      </button>
+      />
     );
   }
 

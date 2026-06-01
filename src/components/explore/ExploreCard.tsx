@@ -5,6 +5,7 @@ import { getOrgTypeConfig, isCreatorOrg } from "@/lib/orgTypes";
 import { ActivityScoreMini } from "@/components/profile/ActivityScoreCard";
 import { getDisplayFlags } from "@/utils/displayProfile";
 import { getPrimaryRoleLine, sanitizeIdentityText } from "@/lib/profileUtils";
+import { FollowIconButton } from "@/components/shared/FollowIconButton";
 
 /** @deprecated use getPrimaryRoleLine from @/lib/profileUtils */
 export function getSubtitle(profile: any): string {
@@ -145,7 +146,7 @@ export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonC
 interface OrgCardProps {
   org: any;
   following: boolean;
-  onToggleFollow: (e: React.MouseEvent) => void;
+  onToggleFollow: () => void;
   navigateTo: string;
 }
 
@@ -153,9 +154,6 @@ export function OrgCard({ org, following, onToggleFollow, navigateTo }: OrgCardP
   const navigate = useNavigate();
   const subtype = org.subtype || org.sub_type;
   const isCreator = isCreatorOrg(org.type, subtype);
-  const followLabel = isCreator
-    ? (following ? "Subscribed" : "+ Subscribe")
-    : (following ? "Following"  : "+ Follow");
 
   // Compact secondary line: subscriber/employee count where useful
   const audience = org.followers_count != null ? org.followers_count : null;
@@ -208,24 +206,13 @@ export function OrgCard({ org, following, onToggleFollow, navigateTo }: OrgCardP
           </span>
         )}
       </div>
-      <button
-        type="button"
-        onClick={e => { e.stopPropagation(); onToggleFollow(e); }}
-        className="cursor-pointer shrink-0 self-start"
-        style={{
-          padding: "10px 14px", borderRadius: 8, minWidth: 92, minHeight: 44,
-          fontSize: 12, fontWeight: 600, border: "none",
-          whiteSpace: "nowrap",
-          ...(following
-            ? { background: "rgba(52,199,89,0.10)", color: "#34C759" }
-            : isCreator
-              ? { background: "#EF4444", color: "#fff" }
-              : { background: "#FF5A1F", color: "#fff" }
-          ),
-        }}
-      >
-        {followLabel}
-      </button>
+      <FollowIconButton
+        isFollowing={following}
+        onFollow={onToggleFollow}
+        onUnfollow={onToggleFollow}
+        targetName={org.name}
+        size={32}
+      />
     </article>
   );
 }
