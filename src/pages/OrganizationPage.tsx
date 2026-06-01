@@ -1,53 +1,79 @@
 import { useState, useEffect, useMemo } from "react";
-import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { storageImageUrl } from "@/lib/imageTransform";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import {
-  Building2, MapPin, Globe, Users, Heart, Briefcase, Shield, Calendar,
-  Share2, Settings, ExternalLink, Plus, FileText, ChevronRight, Rocket,
+  MapPin, Globe, Users, Briefcase, Shield, Calendar,
+  ExternalLink, Plus, Building2, Share2, Settings, Link2,
+  BarChart2, Bookmark, TrendingUp,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { sendNotification } from "@/lib/notify";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import OrgVerificationRouting from "@/components/verification/OrgVerificationRouting";
-import { isCreatorOrg } from "@/lib/orgTypes";
 import { PageSEO, orgSEO } from "@/hooks/usePageSEO";
 import { CompanyBrain } from "@/components/org/CompanyBrain";
+import OrgIdentityCard from "@/components/profile/clay/OrgIdentityCard";
+import ClayNavBar from "@/components/profile/clay/ClayNavBar";
 
-const AVATAR_COLORS = ["#E8733A", "#2D7A4F", "#C44A1F", "#7E22CE", "#166534", "#B7640A"];
-const hashColor = (s: string) => AVATAR_COLORS[Math.abs([...s].reduce((a, c) => a + c.charCodeAt(0), 0)) % AVATAR_COLORS.length];
-const normalizeComparableToken = (value?: string | null) =>
-  (value || "").toLowerCase().replace(/[\s_-]+/g, "").trim();
 const normalizeWebsiteUrl = (url?: string | null) => {
   if (!url) return "";
   return /^https?:\/\//i.test(url) ? url : `https://${url}`;
 };
-const stripWebsiteProtocol = (url?: string | null) => (url || "").replace(/^https?:\/\//i, "").replace(/\/$/, "");
+const stripWebsiteProtocol = (url?: string | null) =>
+  (url || "").replace(/^https?:\/\//i, "").replace(/\/$/, "");
 
-function getTimeAgo(d: Date): string {
-  const s = Math.floor((Date.now() - d.getTime()) / 1000);
-  if (s < 60) return "just now";
-  const m = Math.floor(s / 60);
-  if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  return `${Math.floor(h / 24)}d ago`;
+function SectionBox({
+  title, accentColor = "#E8733A", onAdd, isAdmin, children,
+}: {
+  title: string;
+  accentColor?: string;
+  onAdd?: () => void;
+  isAdmin?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="clay-card mb-3" style={{ padding: "20px 20px 16px" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+        <h2 style={{ fontSize: 15, fontWeight: 800, color: "var(--text-1)", letterSpacing: "-0.25px" }}>{title}</h2>
+        {isAdmin && onAdd && (
+          <button type="button" onClick={onAdd} className="clay-btn" style={{ width: 30, height: 30, borderRadius: 10, color: accentColor }}>
+            <Plus style={{ width: 14, height: 14 }} />
+          </button>
+        )}
+      </div>
+      {children}
+    </div>
+  );
 }
 
-function isOrgMembershipConfirmed(member: { is_verified?: boolean | null; approval_status?: string | null }) {
-  return !!member.is_verified && member.approval_status === "approved";
+function OrgDashboard({ followerCount, openRoles, memberCount }: { followerCount: number; openRoles: number; memberCount: number }) {
+  const tiles = [
+    { label: "Followers", value: followerCount, color: "#E8733A" },
+    { label: "Open Roles", value: openRoles, color: "#34C759" },
+    { label: "Members", value: memberCount, color: "#0369A1" },
+  ];
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 12 }}>
+      {tiles.map(t => (
+        <div key={t.label} className="clay-card" style={{ padding: "14px 12px", textAlign: "center" }}>
+          <span style={{ fontSize: 24, fontWeight: 800, color: t.color, display: "block", lineHeight: 1 }}>
+            {(t.value || 0).toLocaleString()}
+          </span>
+          <span style={{ fontSize: 10, color: "#9CA3C0", fontWeight: 500, letterSpacing: "0.02em", marginTop: 4, display: "block" }}>
+            {t.label}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
 }
-
-type OrgTab = "overview" | "posts" | "jobs" | "members";
 
 export default function OrganizationPage() {
   const { slug } = useParams<{ slug: string }>();
   const { user, profile } = useAuth();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = (searchParams.get("tab") as OrgTab) || "overview";
-  const setTab = (t: OrgTab) => setSearchParams(t === "overview" ? {} : { tab: t }, { replace: true });
 
   const [org, setOrg] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -57,6 +83,7 @@ export default function OrganizationPage() {
   const [members, setMembers] = useState<any[]>([]);
   const [opps, setOpps] = useState<any[]>([]);
   const [posts, setPosts] = useState<any[]>([]);
+  const [squadCount, setSquadCount] = useState(0);
 
   useEffect(() => {
     if (!slug) return;
@@ -70,14 +97,24 @@ export default function OrganizationPage() {
         supabase.from("org_members")
           .select("*, profile:profiles!org_members_user_id_fkey(id, full_name, avatar_url, headline, role)")
           .eq("org_id", data.id).eq("is_current", true).order("joined_at", { ascending: true }),
-        supabase.from("opportunities").select("*").eq("org_id", data.id).order("created_at", { ascending: false }).limit(50),
-        supabase.from("posts").select("*, author:profiles!posts_author_id_fkey(full_name, avatar_url), post_reactions(count), post_comments(count)")
-          .eq("posted_by_org", data.id).order("created_at", { ascending: false }).limit(20),
+        supabase.from("opportunities").select("id, title, type, location, is_remote, is_open, compensation, created_at")
+          .eq("org_id", data.id).order("created_at", { ascending: false }).limit(50),
+        supabase.from("posts").select("id, content, image_urls, created_at, post_reactions(count), post_comments(count)")
+          .eq("posted_by_org", data.id).order("created_at", { ascending: false }).limit(6),
       ]);
 
       if (membersRes.status === "fulfilled") setMembers((membersRes.value as any).data || []);
       if (oppsRes.status === "fulfilled") setOpps((oppsRes.value as any).data || []);
       if (postsRes.status === "fulfilled") setPosts((postsRes.value as any).data || []);
+
+      // Squad/cosign count from squad_edges
+      try {
+        const { count } = await (supabase.from("squad_edges" as any)
+          .select("id", { count: "exact", head: true })
+          .eq("org_id", data.id)
+          .eq("status", "confirmed") as any);
+        setSquadCount(count || 0);
+      } catch {}
 
       if (user) {
         const isInstitution = profile?.account_type === "institution";
@@ -104,80 +141,53 @@ export default function OrganizationPage() {
     const viewerOrgId = (profile as any)?.org_id;
 
     if (isFollowing) {
-      if (isInstitution && viewerOrgId) {
-        await supabase.from("org_follows" as any).delete().eq("follower_org_id", viewerOrgId).eq("following_org_id", org.id);
-      } else {
-        const name = org.name || "this organization";
-        toast(`Unfollow ${name}?`, {
-          action: { label: "Unfollow", onClick: async () => {
-            await supabase.from("org_followers").delete().eq("org_id", org.id).eq("user_id", user.id);
-            setIsFollowing(false); setFollowerCount(p => Math.max(0, p - 1));
+      const name = org.name || "this organization";
+      toast(`Unfollow ${name}?`, {
+        action: {
+          label: "Unfollow",
+          onClick: async () => {
+            if (isInstitution && viewerOrgId) {
+              await supabase.from("org_follows" as any).delete().eq("follower_org_id", viewerOrgId).eq("following_org_id", org.id);
+            } else {
+              await supabase.from("org_followers").delete().eq("org_id", org.id).eq("user_id", user.id);
+            }
+            setIsFollowing(false);
+            setFollowerCount(p => Math.max(0, p - 1));
             toast.success(`Unfollowed ${name}`);
-          }},
-          cancel: { label: "Cancel", onClick: () => {} },
-          duration: 5000,
-        });
-        return;
-      }
-      setIsFollowing(false); setFollowerCount(p => Math.max(0, p - 1));
+          },
+        },
+        cancel: { label: "Cancel", onClick: () => {} },
+        duration: 5000,
+      });
     } else {
       if (isInstitution && viewerOrgId) {
         await supabase.from("org_follows" as any).insert({ follower_org_id: viewerOrgId, following_org_id: org.id });
         if (org.created_by) {
-          sendNotification({
-            userId: org.created_by,
-            actorId: user.id,
-            type: "follow",
-            title: `An organization started following ${org.name}`,
-            actionUrl: `/org/${org.slug}`,
-          });
+          sendNotification({ userId: org.created_by, actorId: user.id, type: "follow", title: `An organization started following ${org.name}`, actionUrl: `/org/${org.slug}` });
         }
       } else {
         await supabase.from("org_followers").insert({ org_id: org.id, user_id: user.id });
         if (org.created_by) {
-          sendNotification({
-            userId: org.created_by,
-            actorId: user.id,
-            type: "follow",
-            title: `${profile?.full_name || "Someone"} started following ${org.name}`,
-            actionUrl: `/org/${org.slug}`,
-          });
+          sendNotification({ userId: org.created_by, actorId: user.id, type: "follow", title: `${profile?.full_name || "Someone"} started following ${org.name}`, actionUrl: `/org/${org.slug}` });
         }
       }
-      setIsFollowing(true); setFollowerCount(p => p + 1);
+      setIsFollowing(true);
+      setFollowerCount(p => p + 1);
     }
   };
 
-  const activeOpps = useMemo(() => opps.filter(o => o.is_open), [opps]);
-  const typeLabel = org?.type?.charAt(0).toUpperCase() + org?.type?.slice(1).replace(/_/g, " ");
-  const normalizedSubtype = typeof org?.subtype === "string" ? org.subtype.trim() : "";
-  const showSubtype =
-    normalizedSubtype &&
-    normalizeComparableToken(normalizedSubtype) !== normalizeComparableToken(typeLabel || "");
+  const activeOpps = useMemo(() => opps.filter(o => o.is_open !== false), [opps]);
+  const oneWordType = org?.subtype || org?.industry || org?.type || "";
   const websiteUrl = normalizeWebsiteUrl(org?.website_url);
   const websiteLabel = stripWebsiteProtocol(org?.website_url);
-  const isCreator = isCreatorOrg(org?.type, org?.subtype);
-  const followLabel = isCreator
-    ? (isFollowing ? "Subscribed" : "Subscribe")
-    : (isFollowing ? "Following"  : "Follow");
-  const followerLabel = isCreator ? "Subscribers" : "Followers";
-  const teamSizeLabel = isCreator ? "Subscribers" : "Team Size";
-
-  const getLikeCount = (p: any) => {
-    if (Array.isArray(p.post_reactions) && p.post_reactions.length > 0) return p.post_reactions[0]?.count || 0;
-    return 0;
-  };
-  const getCommentCount = (p: any) => {
-    if (Array.isArray(p.post_comments) && p.post_comments.length > 0) return p.post_comments[0]?.count || 0;
-    return p.comment_count || 0;
-  };
 
   if (loading) return (
     <div className="min-h-screen" style={{ background: "transparent" }}>
-      <div style={{ maxWidth: 960, margin: "0 auto", padding: 16 }}>
+      <div style={{ maxWidth: 720, margin: "0 auto", padding: 16 }}>
         <div className="animate-pulse space-y-3">
-          <div className="glass-card" style={{ height: 140, borderRadius: 16 }} />
-          <div className="glass-card" style={{ height: 80, borderRadius: 16 }} />
+          <div className="clay-card" style={{ height: 200, borderRadius: 28 }} />
+          <div className="clay-card" style={{ height: 80, borderRadius: 24 }} />
+          <div className="clay-card" style={{ height: 120, borderRadius: 24 }} />
         </div>
       </div>
     </div>
@@ -186,7 +196,7 @@ export default function OrganizationPage() {
   if (!org) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
       <Building2 style={{ width: 48, height: 48, color: "#9CA3C0", marginBottom: 12 }} />
-      <p style={{ fontSize: 16, fontWeight: 700, color: "#1A1A2E" }}>Organisation not found</p>
+      <p style={{ fontSize: 16, fontWeight: 700, color: "var(--text-1)" }}>Organisation not found</p>
       <p style={{ fontSize: 13, color: "#9CA3C0", marginTop: 4 }}>No organisation matches "{slug}"</p>
       <button type="button" onClick={() => navigate(-1)} className="cursor-pointer" style={{ fontSize: 13, marginTop: 12, color: "#E8733A", background: "none", border: "none" }}>Go back</button>
     </div>
@@ -197,7 +207,6 @@ export default function OrganizationPage() {
     tagline: org.tagline,
     about: org.about,
     logo_url: org.logo_url,
-    cover_url: org.cover_url,
     city: org.city,
     state: org.state,
     page_type: org.type,
@@ -205,482 +214,270 @@ export default function OrganizationPage() {
     member_count: members.length,
   });
 
-  /* Divider */
-  const Divider = () => (
-    <div style={{ height: 1, background: "rgba(0,0,0,0.06)", margin: "4px 0" }} />
-  );
-
   return (
-    <div className="min-h-screen pb-8">
+    <div className="min-h-screen pb-24">
       <PageSEO {...seoProps} />
-      <div style={{ maxWidth: 960, margin: "0 auto", padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
 
-        {/* ── HERO HEADER ── */}
-        <div className="glass-card" style={{
-          padding: 20, borderRadius: 16,
-          background: "rgba(255,255,255,0.25)", backdropFilter: "blur(20px)",
-          border: "1px solid rgba(255,255,255,0.40)",
-          boxShadow: "0 8px 32px rgba(26,26,78,0.08), inset 0 1px 0 rgba(255,255,255,0.60)",
-        }}>
-          <div className="flex" style={{ gap: 16, alignItems: "flex-start" }}>
-            {/* Logo */}
-            <div className="shrink-0">
-              <AvatarSquare src={org.logo_url ? storageImageUrl(org.logo_url) : undefined} name={org.name} size="profile" bgColor={hashColor(org.id)} className="shadow-md" />
-            </div>
+      <div className="mx-auto px-4 pt-4" style={{ maxWidth: 720 }}>
+        {/* Identity card */}
+        <OrgIdentityCard
+          org={org}
+          followerCount={followerCount}
+          memberCount={members.length}
+          openRolesCount={activeOpps.length}
+          isAdmin={isAdmin}
+          isFollowing={isFollowing}
+          onToggleFollow={toggleFollow}
+          oneWordType={oneWordType}
+          websiteLabel={websiteLabel}
+          websiteUrl={websiteUrl}
+        />
 
-            {/* Info */}
-            <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
-              {/* Row 1: Name + verified */}
-              <div className="flex items-center" style={{ gap: 6 }}>
-                <p style={{ fontSize: 20, fontWeight: 700, lineHeight: "28px", color: "#1A1A2E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{org.name}</p>
-                {org.is_verified && (
-                  <div className="flex items-center justify-center shrink-0" style={{ width: 20, height: 20, borderRadius: 10, background: "#FFB800", boxShadow: "0 0 8px rgba(255,184,0,0.40)" }}>
-                    <Shield className="w-3 h-3 text-white" />
-                  </div>
-                )}
-              </div>
+        {/* Admin dashboard row */}
+        {isAdmin && (
+          <OrgDashboard
+            followerCount={followerCount}
+            openRoles={activeOpps.length}
+            memberCount={members.length}
+          />
+        )}
 
-              {/* Row 2: tagline */}
-              {org.tagline && (
-                <p style={{ fontSize: 13, fontWeight: 400, color: "#6B7094" }}>{org.tagline}</p>
-              )}
+        {/* Main content + sticky nav */}
+        <div className="profile-page-layout">
+          <div className="profile-main-col">
 
-              {/* Row 3: @slug + type + location */}
-              <div className="flex items-center flex-wrap" style={{ gap: 8 }}>
-                <span style={{ fontSize: 12, fontWeight: 400, color: "#9CA3C0" }}>@{org.slug}</span>
-                {typeLabel && (
-                  <>
-                    <span style={{ width: 3, height: 3, borderRadius: "50%", background: "#9CA3C0", flexShrink: 0 }} />
-                    <span style={{ fontSize: 12, color: "#9CA3C0" }}>{typeLabel}{showSubtype ? ` · ${normalizedSubtype}` : ""}</span>
-                  </>
-                )}
-                {(org.city || org.state) && (
-                  <>
-                    <span style={{ width: 3, height: 3, borderRadius: "50%", background: "#9CA3C0", flexShrink: 0 }} />
-                    <span className="flex items-center" style={{ gap: 2, fontSize: 12, color: "#9CA3C0" }}>
-                      <MapPin style={{ width: 12, height: 12 }} />{[org.city, org.state].filter(Boolean).join(", ")}
-                    </span>
-                  </>
-                )}
-              </div>
-
-              {/* Row 4: Stats */}
-              <div className="flex items-center" style={{ gap: 16, marginTop: 4 }}>
-                <div>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{followerCount}</span>
-                  <span style={{ fontSize: 12, fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>{followerLabel}</span>
-                </div>
-                <div>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>{members.length}</span>
-                  <span style={{ fontSize: 12, fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Members</span>
-                </div>
-                {activeOpps.length > 0 && (
-                  <div>
-                    <span style={{ fontSize: 14, fontWeight: 600, color: "#34C759" }}>{activeOpps.length}</span>
-                    <span style={{ fontSize: 12, fontWeight: 400, color: "#6B7094", marginLeft: 4 }}>Open Jobs</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Row 5: Action buttons */}
-              <div className="flex items-center" style={{ gap: 8, marginTop: 8 }}>
-                {isFollowing ? (
-                  <div className="relative group">
-                    <button type="button" className="cursor-pointer" style={{
-                      height: 32, padding: "0 16px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-                      background: "rgba(52,199,89,0.10)", color: "#34C759", border: "1px solid rgba(52,199,89,0.25)",
-                      display: "inline-flex", alignItems: "center", gap: 4,
-                    }}>
-                      <Heart style={{ width: 13, height: 13, fill: "currentColor" }} /> {followLabel}
-                    </button>
-                    <div className="absolute top-full left-0 mt-1 hidden group-hover:block z-20" style={{
-                      background: "#FFFFFF", border: "1px solid #E5E7EB", borderRadius: 10,
-                      boxShadow: "0 4px 16px rgba(0,0,0,0.1)", padding: 4, minWidth: 120,
-                    }}>
-                      <button type="button" onClick={toggleFollow} className="w-full text-left cursor-pointer hover:bg-[#F5F5F5]" style={{ padding: "8px 12px", fontSize: 13, color: "#EF4444", borderRadius: 6 }}>
-                        {isCreator ? "Unsubscribe" : "Unfollow"}
-                      </button>
-                    </div>
-                  </div>
+            {/* The Story */}
+            {(org.description || org.tagline || org.about || isAdmin) && (
+              <SectionBox title="The Story">
+                {org.description || org.tagline || org.about ? (
+                  <p style={{ fontSize: 14, lineHeight: 1.75, color: "var(--text-2)", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                    {org.description || org.about || org.tagline}
+                  </p>
                 ) : (
-                  <button type="button" onClick={toggleFollow} className="cursor-pointer" style={{
-                    height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 700,
-                    background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none",
-                    boxShadow: "0 2px 12px rgba(232,115,58,0.25)", display: "inline-flex", alignItems: "center", gap: 4,
-                  }}>
-                    <Heart style={{ width: 13, height: 13 }} /> {followLabel}
-                  </button>
+                  <p style={{ fontSize: 13, color: "#9CA3C0", fontStyle: "italic" }}>
+                    No description yet — add one in Settings.
+                  </p>
                 )}
+              </SectionBox>
+            )}
 
-                <button type="button" onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success("Link copied"); }} className="cursor-pointer" style={{
-                  height: 32, width: 32, borderRadius: 8, fontSize: 12,
-                  background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.40)",
-                  color: "#1A1A2E", display: "inline-flex", alignItems: "center", justifyContent: "center",
-                }}>
-                  <Share2 style={{ width: 13, height: 13 }} />
-                </button>
-
-                {isAdmin && (
-                  <button type="button" onClick={() => navigate("/app/workspace")} className="cursor-pointer" style={{
-                    height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 500,
-                    background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.40)",
-                    color: "#1A1A2E", display: "inline-flex", alignItems: "center", gap: 4,
-                  }}>
-                    <Settings style={{ width: 13, height: 13 }} /> Manage
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ── TAB NAV ── */}
-        <div style={{ overflowX: "auto", scrollbarWidth: "none" }}>
-          <div className="flex" style={{ gap: 4, minWidth: "max-content" }}>
-            {(["overview", "posts", "jobs", "members"] as OrgTab[]).map(t => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setTab(t)}
-                className="cursor-pointer"
-                style={{
-                  height: 34, padding: "0 16px", borderRadius: 10, fontSize: 13, fontWeight: activeTab === t ? 700 : 500,
-                  background: activeTab === t ? "linear-gradient(135deg, #E8733A, #FF6B9D)" : "rgba(255,255,255,0.25)",
-                  color: activeTab === t ? "#fff" : "var(--text-2)",
-                  border: activeTab === t ? "none" : "1px solid rgba(255,255,255,0.40)",
-                  boxShadow: activeTab === t ? "0 2px 12px rgba(232,115,58,0.25)" : "none",
-                  transition: "all 0.15s",
-                  textTransform: "capitalize",
-                }}
-              >{t}</button>
-            ))}
-          </div>
-        </div>
-
-        {/* ── OVERVIEW TAB ── */}
-        {activeTab === "overview" && (
-          <>
-            <ScrollSection>
-              <SectionHeader icon={Building2} iconColor="#6B7094" title="About" />
-              {org.description ? (
-                <p style={{ fontSize: 13, fontWeight: 400, color: "#6B7094", lineHeight: 1.6, whiteSpace: "pre-wrap", marginTop: 8 }}>{org.description}</p>
-              ) : (
-                <p style={{ fontSize: 13, color: "#9CA3C0", marginTop: 8 }}>No description added yet.</p>
-              )}
-
-              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 12 }}>
-                {org.founded_year && (
-                  <DetailRow icon={Calendar} label="Founded" value={String(org.founded_year)} />
-                )}
-                {(org.city || org.state) && (
-                  <DetailRow icon={MapPin} label="Location" value={[org.city, org.state].filter(Boolean).join(", ")} />
-                )}
-                {org.employee_count && (
-                  <DetailRow icon={Users} label={teamSizeLabel} value={org.employee_count} />
-                )}
-                {websiteUrl && (
-                  <div className="flex items-center" style={{ gap: 6 }}>
-                    <Globe style={{ width: 13, height: 13, color: "#9CA3C0", flexShrink: 0 }} />
-                    <span style={{ fontSize: 11, fontWeight: 500, color: "#9CA3C0", minWidth: 60 }}>Website</span>
-                    <a href={websiteUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, fontWeight: 500, color: "#E8733A" }}>
-                      {websiteLabel || "Visit"}
-                    </a>
+            {/* Open Roles */}
+            {(activeOpps.length > 0 || isAdmin) && (
+              <SectionBox
+                title={`Open Roles${activeOpps.length > 0 ? ` · ${activeOpps.length}` : ""}`}
+                accentColor="#34C759"
+                isAdmin={isAdmin}
+                onAdd={() => navigate("/app/opportunities/create")}
+              >
+                {activeOpps.length === 0 ? (
+                  <p style={{ fontSize: 13, color: "#9CA3C0", fontStyle: "italic" }}>No open roles right now.</p>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {activeOpps.map((o: any) => (
+                      <div
+                        key={o.id}
+                        onClick={() => navigate("/app/opportunities")}
+                        className="cursor-pointer"
+                        style={{
+                          display: "flex", alignItems: "center", gap: 12, padding: "12px 14px",
+                          borderRadius: 14, background: "rgba(52,199,89,0.05)",
+                          border: "1px solid rgba(52,199,89,0.15)", transition: "background 0.15s",
+                        }}
+                      >
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontSize: 14, fontWeight: 700, color: "var(--text-1)" }}>{o.title}</p>
+                          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 3 }}>
+                            {o.type && (
+                              <span className="clay-pill" style={{ fontSize: 10, fontWeight: 600, padding: "2px 8px", background: "rgba(232,115,58,0.10)", color: "#E8733A" }}>
+                                {(o.type || "job").replace(/[-_]/g, " ")}
+                              </span>
+                            )}
+                            {o.location && <span style={{ fontSize: 11, color: "#9CA3C0" }}>{o.location}</span>}
+                            {o.is_remote && (
+                              <span className="clay-pill" style={{ fontSize: 10, fontWeight: 600, padding: "2px 8px", background: "rgba(52,199,89,0.10)", color: "#34C759" }}>Remote</span>
+                            )}
+                          </div>
+                          {o.compensation && (
+                            <p style={{ fontSize: 12, fontWeight: 600, color: "#E8733A", marginTop: 4 }}>{o.compensation}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
-                {org.email && (
-                  <DetailRow icon={Globe} label="Email" value={org.email} />
-                )}
-              </div>
+              </SectionBox>
+            )}
 
-              {org.social_links && Object.keys(org.social_links as any).length > 0 && (
-                <div className="flex flex-wrap" style={{ gap: 6, marginTop: 12 }}>
-                  {Object.entries(org.social_links as Record<string, string>).filter(([, v]) => v).map(([k, v]) => (
-                    <a key={k} href={v} target="_blank" rel="noopener noreferrer" className="flex items-center" style={{
-                      height: 28, padding: "0 10px", borderRadius: 6, gap: 6,
-                      background: "rgba(255,255,255,0.12)", border: "1px solid rgba(0,0,0,0.06)",
-                    }}>
-                      <ExternalLink style={{ width: 12, height: 12, color: "#E8733A", flexShrink: 0 }} />
-                      <span style={{ fontSize: 12, fontWeight: 400, color: "#1A1A2E" }}>{k}</span>
-                    </a>
+            {/* The Squad — verified employees */}
+            <SectionBox title="The Squad">
+              {members.filter((m: any) => m.is_verified && m.approval_status === "approved").length === 0 ? (
+                <p style={{ fontSize: 13, color: "#9CA3C0", fontStyle: "italic" }}>
+                  No verified employees yet. Employees add this org to their profile experience to appear here.
+                </p>
+              ) : (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+                  {members.filter((m: any) => m.is_verified && m.approval_status === "approved").map((m: any) => (
+                    <Link key={m.id} to={`/app/profile/${m.user_id}`} style={{ textDecoration: "none" }}>
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                        <AvatarSquare src={m.profile?.avatar_url} name={m.profile?.full_name || "?"} size={44} />
+                        <span style={{ fontSize: 10, color: "var(--text-2)", fontWeight: 500, maxWidth: 56, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {m.profile?.full_name?.split(" ")[0] || "Member"}
+                        </span>
+                      </div>
+                    </Link>
                   ))}
                 </div>
               )}
-            </ScrollSection>
+            </SectionBox>
 
-            {/* Recent posts preview in Overview */}
-            {posts.length > 0 && (
-              <ScrollSection>
-                <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-                  <SectionHeader icon={FileText} iconColor="#E8733A" title="Recent Posts" count={posts.length} />
-                  <button type="button" onClick={() => setTab("posts")} className="cursor-pointer" style={{ fontSize: 12, color: "#E8733A", background: "none", border: "none", display: "flex", alignItems: "center", gap: 2 }}>
-                    See all <ChevronRight style={{ width: 13, height: 13 }} />
-                  </button>
-                </div>
-                {posts.slice(0, 3).map((p, idx) => (
-                  <Link key={p.id} to={`/app/post/${p.id}`} className="block" style={{
-                    padding: "10px 0",
-                    borderBottom: idx < Math.min(posts.length, 3) - 1 ? "1px solid rgba(0,0,0,0.06)" : "none",
-                  }}>
-                    <p style={{ fontSize: 13, color: "#1A1A2E", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{p.content}</p>
-                    {p.image_urls && p.image_urls.length > 0 && (
-                      <div className="flex gap-1 mt-1.5 overflow-hidden" style={{ borderRadius: 8 }}>
-                        {p.image_urls.slice(0, 3).map((url: string, i: number) => (
-                          <img key={i} src={url} alt="" loading="lazy" className="object-cover" style={{ width: p.image_urls.length === 1 ? "100%" : 80, height: 56, borderRadius: 6 }} />
-                        ))}
-                      </div>
-                    )}
-                    <div className="flex items-center" style={{ gap: 12, marginTop: 6 }}>
-                      <span style={{ fontSize: 11, color: "#9CA3C0", marginLeft: "auto" }}>
-                        {p.created_at ? getTimeAgo(new Date(p.created_at)) : ""}
-                      </span>
-                    </div>
-                  </Link>
-                ))}
-              </ScrollSection>
-            )}
-
-            {/* Recent jobs preview in Overview */}
-            {activeOpps.length > 0 && (
-              <ScrollSection>
-                <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-                  <SectionHeader icon={Briefcase} iconColor="#34C759" title="Open Jobs" count={activeOpps.length} />
-                  <button type="button" onClick={() => setTab("jobs")} className="cursor-pointer" style={{ fontSize: 12, color: "#E8733A", background: "none", border: "none", display: "flex", alignItems: "center", gap: 2 }}>
-                    See all <ChevronRight style={{ width: 13, height: 13 }} />
-                  </button>
-                </div>
-                {activeOpps.slice(0, 2).map((o, idx) => (
-                  <div key={o.id} onClick={() => navigate("/app/opportunities")} className="cursor-pointer" style={{
-                    padding: "10px 0",
-                    borderBottom: idx < Math.min(activeOpps.length, 2) - 1 ? "1px solid rgba(0,0,0,0.06)" : "none",
-                  }}>
-                    <div className="flex items-start justify-between">
+            {/* The Team — all members */}
+            {members.length > 0 && (
+              <SectionBox title={`The Team · ${members.length}`}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+                  {members.map((m: any, idx: number) => (
+                    <Link
+                      key={m.id}
+                      to={`/app/profile/${m.user_id}`}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 10,
+                        padding: "10px 0", textDecoration: "none",
+                        borderBottom: idx < members.length - 1 ? "1px solid rgba(0,0,0,0.06)" : "none",
+                      }}
+                    >
+                      <AvatarSquare src={m.profile?.avatar_url} name={m.profile?.full_name || "Member"} size={40} />
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>{o.title}</p>
-                        <div className="flex items-center flex-wrap" style={{ gap: 6, marginTop: 3 }}>
-                          <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 4, background: "rgba(232,115,58,0.08)", color: "#E8733A" }}>
-                            {(o.type || "job").replace(/[-_]/g, " ")}
-                          </span>
-                          {o.location && <span style={{ fontSize: 11, color: "#9CA3C0" }}>{o.location}</span>}
-                          {o.is_remote && <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 4, background: "rgba(52,199,89,0.1)", color: "#34C759" }}>Remote</span>}
-                        </div>
+                        <p style={{ fontSize: 13, fontWeight: 700, color: "var(--text-1)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {m.profile?.full_name || "Member"}
+                        </p>
+                        <p style={{ fontSize: 11, color: "#9CA3C0" }}>
+                          {m.title || m.role}{m.department ? ` · ${m.department}` : ""}
+                        </p>
                       </div>
-                      <ChevronRight style={{ width: 14, height: 14, color: "#9CA3C0", flexShrink: 0, marginTop: 2 }} />
-                    </div>
-                  </div>
-                ))}
-              </ScrollSection>
-            )}
-
-            {isAdmin && (
-              <ScrollSection>
-                <SectionHeader icon={Building2} iconColor="#7E22CE" title="Company Brain" />
-                <div style={{ marginTop: 8 }}>
-                  <CompanyBrain orgId={org.id} orgName={org.name} isAdmin={isAdmin} />
+                      {m.is_verified && m.approval_status === "approved" && (
+                        <span className="clay-pill" style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", background: "rgba(255,184,0,0.15)", color: "#B77900", flexShrink: 0 }}>
+                          Verified
+                        </span>
+                      )}
+                    </Link>
+                  ))}
                 </div>
-              </ScrollSection>
+              </SectionBox>
             )}
-          </>
-        )}
 
-        {/* ── POSTS TAB ── */}
-        {activeTab === "posts" && (
-          <ScrollSection>
-            <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-              <SectionHeader icon={FileText} iconColor="#E8733A" title="Posts" count={posts.length} />
-              {isAdmin && (
-                <button type="button" onClick={() => navigate("/post/create")} className="cursor-pointer" style={{
-                  height: 28, padding: "0 10px", borderRadius: 6, fontSize: 11, fontWeight: 600,
-                  background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none",
-                  display: "inline-flex", alignItems: "center", gap: 4,
-                }}>
-                  <Plus style={{ width: 11, height: 11 }} /> New Post
-                </button>
-              )}
-            </div>
-            {posts.length === 0 ? (
-              <div style={{ padding: "24px 0", textAlign: "center" }}>
-                <FileText style={{ width: 32, height: 32, color: "#E5E7EB", margin: "0 auto 10px" }} />
-                <p style={{ fontSize: 13, color: "#9CA3C0" }}>No posts yet.</p>
-                {isAdmin && (
-                  <button type="button" onClick={() => navigate("/post/create")} className="cursor-pointer" style={{
-                    marginTop: 10, height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-                    background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none",
-                    display: "inline-flex", alignItems: "center", gap: 4,
-                  }}>
-                    <Plus style={{ width: 12, height: 12 }} /> Share your first update
-                  </button>
-                )}
-              </div>
-            ) : (
-              posts.map((p, idx) => (
-                <Link key={p.id} to={`/app/post/${p.id}`} className="block" style={{
-                  padding: "12px 0",
-                  borderBottom: idx < posts.length - 1 ? "1px solid rgba(0,0,0,0.06)" : "none",
-                }}>
-                  <p style={{ fontSize: 13, color: "#1A1A2E", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{p.content}</p>
-                  {p.image_urls && p.image_urls.length > 0 && (
-                    <div className="flex gap-1 mt-1.5 overflow-hidden" style={{ borderRadius: 8 }}>
-                      {p.image_urls.slice(0, 3).map((url: string, i: number) => (
-                        <img key={i} src={url} alt="" loading="lazy" className="object-cover" style={{ width: p.image_urls.length === 1 ? "100%" : 80, height: 60, borderRadius: 6 }} />
+            {/* Drops — org posts */}
+            {posts.length > 0 && (
+              <SectionBox title={`Drops · ${posts.length}`}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+                  {posts.map((p: any) => (
+                    <Link key={p.id} to={`/app/post/${p.id}`} style={{ textDecoration: "none" }}>
+                      {p.image_urls && p.image_urls.length > 0 ? (
+                        <img
+                          src={p.image_urls[0]}
+                          alt=""
+                          loading="lazy"
+                          style={{ width: "100%", aspectRatio: "4/3", objectFit: "cover", borderRadius: 12 }}
+                        />
+                      ) : (
+                        <div style={{
+                          width: "100%", aspectRatio: "4/3", borderRadius: 12,
+                          background: "rgba(232,115,58,0.08)", display: "flex",
+                          alignItems: "flex-start", padding: "8px",
+                        }}>
+                          <p style={{ fontSize: 11, color: "var(--text-2)", lineHeight: 1.4, display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: 4 as any, overflow: "hidden" }}>
+                            {p.content}
+                          </p>
+                        </div>
+                      )}
+                    </Link>
+                  ))}
+                </div>
+              </SectionBox>
+            )}
+
+            {/* Location + Links */}
+            {(org.city || org.state || org.full_address || websiteUrl || (org.social_links && Object.keys(org.social_links).length > 0) || org.founded_year) && (
+              <SectionBox title="Details">
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {(org.city || org.state) && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <MapPin style={{ width: 13, height: 13, color: "#9CA3C0", flexShrink: 0 }} />
+                      <span style={{ fontSize: 13, color: "var(--text-2)" }}>{[org.city, org.state].filter(Boolean).join(", ")}</span>
+                    </div>
+                  )}
+                  {org.founded_year && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <Calendar style={{ width: 13, height: 13, color: "#9CA3C0", flexShrink: 0 }} />
+                      <span style={{ fontSize: 13, color: "var(--text-2)" }}>Founded {org.founded_year}</span>
+                    </div>
+                  )}
+                  {org.employee_count && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <Users style={{ width: 13, height: 13, color: "#9CA3C0", flexShrink: 0 }} />
+                      <span style={{ fontSize: 13, color: "var(--text-2)" }}>{org.employee_count} employees</span>
+                    </div>
+                  )}
+                  {websiteUrl && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <Globe style={{ width: 13, height: 13, color: "#9CA3C0", flexShrink: 0 }} />
+                      <a href={websiteUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: "#E8733A", display: "flex", alignItems: "center", gap: 3 }}>
+                        {websiteLabel || "Visit website"}
+                        <ExternalLink style={{ width: 10, height: 10 }} />
+                      </a>
+                    </div>
+                  )}
+                  {org.social_links && Object.keys(org.social_links).length > 0 && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
+                      {Object.entries(org.social_links as Record<string, string>).filter(([, v]) => v).map(([k, v]) => (
+                        <a key={k} href={v} target="_blank" rel="noopener noreferrer" className="clay-pill" style={{ fontSize: 11, padding: "4px 10px", color: "#E8733A", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                          <Link2 style={{ width: 10, height: 10 }} /> {k}
+                        </a>
                       ))}
                     </div>
                   )}
-                  <div className="flex items-center" style={{ gap: 12, marginTop: 6 }}>
-                    <span className="flex items-center" style={{ gap: 3, fontSize: 12, color: "#9CA3C0" }}>
-                      <Rocket style={{ width: 12, height: 12 }} /> {getLikeCount(p)}
-                    </span>
-                    <span style={{ fontSize: 11, color: "#9CA3C0", marginLeft: "auto" }}>
-                      {p.created_at ? getTimeAgo(new Date(p.created_at)) : ""}
-                    </span>
-                  </div>
-                </Link>
-              ))
-            )}
-          </ScrollSection>
-        )}
-
-        {/* ── JOBS TAB ── */}
-        {activeTab === "jobs" && (
-          <ScrollSection>
-            <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-              <SectionHeader icon={Briefcase} iconColor="#34C759" title="Jobs" count={opps.length} />
-              {isAdmin && (
-                <button type="button" onClick={() => navigate("/app/opportunities/create")} className="cursor-pointer" style={{
-                  height: 28, padding: "0 10px", borderRadius: 6, fontSize: 11, fontWeight: 600,
-                  background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none",
-                  display: "inline-flex", alignItems: "center", gap: 4,
-                }}>
-                  <Plus style={{ width: 11, height: 11 }} /> Post Job
-                </button>
-              )}
-            </div>
-            {opps.length === 0 ? (
-              <div style={{ padding: "24px 0", textAlign: "center" }}>
-                <Briefcase style={{ width: 32, height: 32, color: "#E5E7EB", margin: "0 auto 10px" }} />
-                <p style={{ fontSize: 13, color: "#9CA3C0" }}>No jobs posted yet.</p>
-                {isAdmin && (
-                  <button type="button" onClick={() => navigate("/app/opportunities/create")} className="cursor-pointer" style={{
-                    marginTop: 10, height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-                    background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none",
-                    display: "inline-flex", alignItems: "center", gap: 4,
-                  }}>
-                    <Plus style={{ width: 12, height: 12 }} /> Post the first job
-                  </button>
-                )}
-              </div>
-            ) : (
-              opps.map((o, idx) => (
-                <div key={o.id} onClick={() => navigate("/app/opportunities")} className="cursor-pointer" style={{
-                  padding: "12px 0",
-                  borderBottom: idx < opps.length - 1 ? "1px solid rgba(0,0,0,0.06)" : "none",
-                }}>
-                  <div className="flex items-start justify-between">
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div className="flex items-center" style={{ gap: 6, marginBottom: 3 }}>
-                        <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>{o.title}</p>
-                        {!o.is_open && <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 4, background: "rgba(156,163,192,0.12)", color: "#9CA3C0" }}>Closed</span>}
-                      </div>
-                      <div className="flex items-center flex-wrap" style={{ gap: 6 }}>
-                        <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 4, background: "rgba(232,115,58,0.08)", color: "#E8733A" }}>
-                          {(o.type || "job").replace(/[-_]/g, " ")}
-                        </span>
-                        {o.location && <span style={{ fontSize: 11, color: "#9CA3C0" }}>{o.location}</span>}
-                        {o.is_remote && <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 4, background: "rgba(52,199,89,0.1)", color: "#34C759" }}>Remote</span>}
-                      </div>
-                      {o.compensation && <p style={{ fontSize: 12, fontWeight: 600, color: "#E8733A", marginTop: 3 }}>{o.compensation}</p>}
-                    </div>
-                    <ChevronRight style={{ width: 14, height: 14, color: "#9CA3C0", flexShrink: 0, marginTop: 2 }} />
-                  </div>
                 </div>
-              ))
-            )}
-          </ScrollSection>
-        )}
-
-        {/* ── MEMBERS TAB ── */}
-        {activeTab === "members" && (
-          <ScrollSection>
-            <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-              <SectionHeader icon={Users} iconColor="#9CA3C0" title="Members" count={members.length} />
-              {isAdmin && (
-                <button type="button" onClick={() => navigate("/app/settings?tab=team")} className="cursor-pointer" style={{
-                  height: 28, padding: "0 10px", borderRadius: 6, fontSize: 11, fontWeight: 600,
-                  background: "rgba(232,115,58,0.10)", color: "#E8733A", border: "1px solid rgba(232,115,58,0.20)",
-                  display: "inline-flex", alignItems: "center", gap: 4,
-                }}>
-                  <Settings style={{ width: 11, height: 11 }} /> Manage
-                </button>
-              )}
-            </div>
-
-            {!isAdmin && (
-              <p style={{ fontSize: 12, color: "#6B7094", marginBottom: 12, padding: "8px 12px", borderRadius: 8, background: "rgba(0,0,0,0.03)" }}>
-                Members are verified employees or affiliates of this organisation. Add this organisation to your profile experience and get it verified to appear here.
-              </p>
+              </SectionBox>
             )}
 
-            {members.length === 0 ? (
-              <div style={{ padding: "24px 0", textAlign: "center" }}>
-                <Users style={{ width: 32, height: 32, color: "#E5E7EB", margin: "0 auto 10px" }} />
-                <p style={{ fontSize: 13, color: "#9CA3C0" }}>No verified members listed yet.</p>
-              </div>
+            {/* Company Brain — admin only */}
+            {isAdmin && (
+              <SectionBox title="Company Brain" isAdmin={isAdmin}>
+                <CompanyBrain orgId={org.id} orgName={org.name} isAdmin={isAdmin} />
+              </SectionBox>
+            )}
+
+          </div>
+
+          {/* Sticky side nav */}
+          <nav className="profile-clay-nav" aria-label="Org actions">
+            {isAdmin ? (
+              <>
+                <Link to="/app/workspace" className="clay-btn" title="Settings" aria-label="Settings" style={{ width: 48, height: 48 }}>
+                  <Settings style={{ width: 18, height: 18, color: "var(--text-2)" }} strokeWidth={1.8} />
+                </Link>
+                <Link to="/app/opportunities/create" className="clay-btn" title="Post a Job" aria-label="Post a Job" style={{ width: 48, height: 48 }}>
+                  <Briefcase style={{ width: 18, height: 18, color: "var(--text-2)" }} strokeWidth={1.8} />
+                </Link>
+                <Link to="/app/workspace?tab=analytics" className="clay-btn" title="Analytics" aria-label="Analytics" style={{ width: 48, height: 48 }}>
+                  <BarChart2 style={{ width: 18, height: 18, color: "var(--text-2)" }} strokeWidth={1.8} />
+                </Link>
+              </>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-                {members.map((m, idx) => (
-                  <Link key={m.id} to={`/app/profile/${m.user_id}`} className="flex items-center" style={{
-                    gap: 10, padding: "10px 0",
-                    borderBottom: idx < members.length - 1 ? "1px solid rgba(0,0,0,0.06)" : "none",
-                  }}>
-                    <AvatarSquare src={m.profile?.avatar_url} name={m.profile?.full_name || "Member"} size="sm" />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.profile?.full_name || "Member"}</p>
-                      <p style={{ fontSize: 11, color: "#9CA3C0" }}>{m.title || m.role}{m.department ? ` · ${m.department}` : ""}</p>
-                    </div>
-                    {isOrgMembershipConfirmed(m) && (
-                      <span className="shrink-0" style={{
-                        fontSize: 10, fontWeight: 700, padding: "3px 6px", borderRadius: 999,
-                        background: "rgba(255,184,0,0.16)", color: "#B77900", whiteSpace: "nowrap",
-                      }}>Verified</span>
-                    )}
-                    <ChevronRight style={{ width: 13, height: 13, color: "#9CA3C0", flexShrink: 0 }} />
-                  </Link>
-                ))}
-              </div>
+              <>
+                <button
+                  type="button"
+                  className="clay-btn"
+                  title="Share"
+                  aria-label="Share"
+                  style={{ width: 48, height: 48 }}
+                  onClick={() => { navigator.clipboard?.writeText(window.location.href).catch(() => {}); toast.success("Link copied!"); }}
+                >
+                  <Share2 style={{ width: 18, height: 18, color: "var(--text-2)" }} strokeWidth={1.8} />
+                </button>
+              </>
             )}
-          </ScrollSection>
-        )}
-
+          </nav>
+        </div>
       </div>
     </div>
   );
 }
-
-/* ── Scroll section wrapper ── */
-const ScrollSection = ({ children }: { children: React.ReactNode }) => (
-  <div className="glass-card" style={{
-    padding: 16, borderRadius: 16,
-    background: "rgba(255,255,255,0.25)", backdropFilter: "blur(20px)",
-    border: "1px solid rgba(255,255,255,0.40)",
-    boxShadow: "0 4px 16px rgba(26,26,78,0.05), inset 0 1px 0 rgba(255,255,255,0.60)",
-  }}>
-    {children}
-  </div>
-);
-
-/* ── Section header ── */
-const SectionHeader = ({ icon: Icon, iconColor, title, count }: { icon: any; iconColor: string; title: string; count?: number }) => (
-  <div className="flex items-center" style={{ gap: 8, marginBottom: 0 }}>
-    <Icon style={{ width: 16, height: 16, color: iconColor }} />
-    <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", flex: 1 }}>{title}</span>
-    {count !== undefined && <span style={{ fontSize: 12, fontWeight: 500, color: "#9CA3C0" }}>{count}</span>}
-  </div>
-);
-
-/* ── Detail row helper ── */
-const DetailRow = ({ icon: Icon, label, value }: { icon: any; label: string; value: string }) => (
-  <div className="flex items-center" style={{ gap: 6 }}>
-    <Icon style={{ width: 13, height: 13, color: "#9CA3C0", flexShrink: 0 }} />
-    <span style={{ fontSize: 11, fontWeight: 500, color: "#9CA3C0", minWidth: 60 }}>{label}</span>
-    <span style={{ fontSize: 12, fontWeight: 500, color: "#1A1A2E" }}>{value}</span>
-  </div>
-);
