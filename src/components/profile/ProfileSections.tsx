@@ -6,7 +6,6 @@ import {
   Star, X, Heart, Repeat2, ChevronRight, Image, Users, Shield,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import VerificationRequest from "@/components/profile/VerificationRequest";
 import { useCompanyLogos } from "@/hooks/useCompanyLogos";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
@@ -115,11 +114,7 @@ const VerifBadge = ({ item, isOwn, onStatusChange }: { item: any; isOwn: boolean
   if (status === "rejected" || status === "declined") return (
     <span className="text-[11px] font-medium shrink-0" style={{ color: "#EF4444" }}>Declined</span>
   );
-  if (isOwn) return (
-    <div className="relative shrink-0">
-      <VerificationRequest item={item} itemType={item.item_type || "experience"} onStatusChange={onStatusChange!} />
-    </div>
-  );
+  if (isOwn) return null;
   return null;
 };
 
@@ -334,14 +329,6 @@ const WorkDetailSheet = ({
             </div>
           )}
 
-          {/* Verify CTA — own profile, not yet verified */}
-          {isOwnProfile && status === "unverified" && onStatusChange && (
-            <div style={{ marginTop: 8, padding: 12, borderRadius: 10, background: "rgba(255,184,0,0.06)", border: "1px solid rgba(255,184,0,0.20)" }}>
-              <p style={{ fontSize: 12, fontWeight: 600, color: "#FFB800", marginBottom: 6 }}>Get this verified</p>
-              <p style={{ fontSize: 12, color: "var(--text-3)", marginBottom: 8 }}>Request verification from a colleague or manager at {org}.</p>
-              <VerificationRequest item={item} itemType={item.item_type || (isEdu ? "education" : "experience")} onStatusChange={onStatusChange} />
-            </div>
-          )}
 
           {/* Squad block slot — coworker DP-stack + co-sign CTA */}
           {!isEdu && <ExperienceSquadSlot workItemId={item.id} companyName={org} isOwnProfile={isOwnProfile} />}

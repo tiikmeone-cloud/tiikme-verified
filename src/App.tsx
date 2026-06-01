@@ -55,7 +55,6 @@ const ApplicationsDashboard = lazyWithRetry(() => import("./pages/ApplicationsDa
 const OpportunityCreate = lazyWithRetry(() => import("./pages/OpportunityCreate.tsx"), "OpportunityCreate");
 const WorkspacePage = lazyWithRetry(() => import("./pages/Workspace.tsx"), "WorkspacePage");
 
-const VerificationInbox = lazyWithRetry(() => import("./pages/VerificationInbox.tsx"), "VerificationInbox");
 const Academy = lazyWithRetry(() => import("./pages/Academy.tsx"), "Academy");
 const BuildLog = lazyWithRetry(() => import("./pages/BuildLog.tsx"), "BuildLog");
 const AcceptAdminInvite = lazyWithRetry(() => import("./pages/AcceptAdminInvite.tsx"), "AcceptAdminInvite");
@@ -178,7 +177,6 @@ const AppRoutes = () => {
             <Route path="/app/connections" element={<Shell><ConnectionsPage /></Shell>} />
             <Route path="/app/strands" element={<Shell><Strands /></Shell>} />
             <Route path="/app/alerts" element={<Shell><Alerts /></Shell>} />
-            <Route path="/app/verification-inbox" element={<Shell><VerificationInbox /></Shell>} />
             <Route path="/app/settings" element={<Shell><SettingsPage /></Shell>} />
             <Route path="/app/organizations/create" element={<Shell><OrganizationCreate /></Shell>} />
 
