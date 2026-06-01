@@ -73,16 +73,17 @@ const AppShell = ({ children }: { children: ReactNode }) => {
     if (isInstitution || orgAdminRole === "owner" || orgAdminRole === "admin") {
       if (isInstitution && orgData?.slug) {
         workItems.splice(0, 0, { label: "Org Page", icon: Building2, path: `/org/${orgData.slug}` });
+        // Remove the /app/profile item (relabelled "Organisation") — Org Page replaces it
+        const profileIdx = workItems.findIndex(i => i.path === "/app/profile");
+        if (profileIdx !== -1) workItems.splice(profileIdx, 1);
       }
       workItems.push({ label: "Opportunities", icon: Target, path: "/app/opportunities" });
       workItems.push({ label: "Applicants", icon: ClipboardList, path: "/app/opportunities/applicants" });
-      workItems.push({ label: "Verification Inbox", icon: ShieldCheck, path: "/app/verification-inbox" });
     } else if (orgAdminRole === "hiring_manager") {
       workItems.push({ label: "Opportunities", icon: Target, path: "/app/opportunities" });
       workItems.push({ label: "Applicants", icon: ClipboardList, path: "/app/opportunities/applicants" });
     } else if (orgAdminRole === "verifier") {
       workItems.push({ label: "Opportunities", icon: Target, path: "/app/opportunities" });
-      workItems.push({ label: "Verification Inbox", icon: ShieldCheck, path: "/app/verification-inbox" });
     } else {
       workItems.push({ label: "Opportunities", icon: Target, path: "/app/opportunities" });
       workItems.push({ label: "Applications", icon: ClipboardList, path: "/app/applications" });
