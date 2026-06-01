@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { sendNotification } from "@/lib/notify";
 import ApplyModal from "@/components/opportunities/ApplyModal";
+import JobDetailPanel from "@/components/opportunities/JobDetailPanel";
 import FindTab from "@/components/opportunities/FindTab";
 import ReferralsTab from "@/components/opportunities/ReferralsTab";
 import { OpportunityCard as SharedOpportunityCard } from "@/components/opportunities/OpportunityCard";
@@ -42,6 +43,7 @@ const Opportunities = () => {
   const [activeType, setActiveType] = useState("All");
   const [search, setSearch] = useState("");
   const [showApply, setShowApply] = useState<any>(null);
+  const [selectedOpp, setSelectedOpp] = useState<any>(null);
   const [userTab, setUserTab] = useState<UserTab>("jobs");
   const [orgTab, setOrgTab] = useState<OrgTab>("listings");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -131,6 +133,28 @@ const Opportunities = () => {
     staleTime: 10 * 60 * 1000,
   });
 
+  const { data: likedOppIds = new Set<string>() } = useQuery({
+    queryKey: ["liked-opportunities", user?.id],
+    queryFn: async () => {
+      if (!user) return new Set<string>();
+      const { data } = await supabase.from("opportunity_likes").select("opportunity_id").eq("user_id", user.id);
+      return new Set((data || []).map((r: any) => r.opportunity_id));
+    },
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: savedOppIds = new Set<string>() } = useQuery({
+    queryKey: ["saved-opportunities", user?.id],
+    queryFn: async () => {
+      if (!user) return new Set<string>();
+      const { data } = await (supabase.from as any)("opportunity_saves").select("opportunity_id").eq("user_id", user.id);
+      return new Set((data || []).map((r: any) => r.opportunity_id));
+    },
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const recommended = useMemo(() => {
     if (!profile?.skills?.length || isInstitution) return [];
     const userSkills = new Set((profile.skills as string[]).map(s => s.toLowerCase()));
@@ -187,7 +211,6 @@ const Opportunities = () => {
 
       {/* USER: JOBS TAB */}
       {!isInstitution && userTab === "jobs" && (() => {
-        // Hide opportunities the user already applied to
         const visibleOpps = opps.filter(o => !appliedIds.has(o.id));
         const visibleRecommended = recommended.filter(o => !appliedIds.has(o.id));
         return (
@@ -198,58 +221,90 @@ const Opportunities = () => {
                 className="w-full h-11 rounded-2xl pl-11 pr-4 text-[14px] outline-none glass-input" />
             </div>
 
-            {visibleRecommended.length > 0 && !search.trim() && activeType === "All" && (
-              <div className="mb-6">
-                <h2 className="text-[16px] font-bold mb-3 flex items-center gap-2" style={{ color: "var(--text-1)" }}>
-                  <Zap className="w-4 h-4" style={{ color: "#F59E0B" }} /> Recommended for You
-                </h2>
-                <div className="space-y-3">
-                  {visibleRecommended.map(o => (
-                    <SharedOpportunityCard
-                      key={`rec-${o.id}`}
-                      opp={o}
-                      company={o.org ? { id: o.org.id, name: o.org.name, logo_url: o.org.logo_url } : null}
-                      isLikedByMe={false}
-                      hasApplied={appliedIds.has(o.id)}
-                      isFollowingOrg={!!(o.org?.id && followedOrgIds.has(o.org.id))}
-                      initialLikeCount={0}
-                      initialCommentCount={0}
-                      onApply={(opp) => setShowApply(opp)}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
+            <div className="flex gap-4 items-start">
+              {/* Left: feed */}
+              <div className="flex-1 min-w-0">
+                {visibleRecommended.length > 0 && !search.trim() && activeType === "All" && (
+                  <div className="mb-6">
+                    <h2 className="text-[16px] font-bold mb-3 flex items-center gap-2" style={{ color: "var(--text-1)" }}>
+                      <Zap className="w-4 h-4" style={{ color: "#F59E0B" }} /> Recommended for You
+                    </h2>
+                    <div className="space-y-3">
+                      {visibleRecommended.map(o => (
+                        <SharedOpportunityCard
+                          key={`rec-${o.id}`}
+                          opp={o}
+                          company={o.org ? { id: o.org.id, name: o.org.name, logo_url: o.org.logo_url } : null}
+                          isLikedByMe={likedOppIds.has(o.id)}
+                          isSavedByMe={savedOppIds.has(o.id)}
+                          hasApplied={appliedIds.has(o.id)}
+                          isFollowingOrg={!!(o.org?.id && followedOrgIds.has(o.org.id))}
+                          initialLikeCount={0}
+                          initialCommentCount={0}
+                          selected={selectedOpp?.id === o.id}
+                          onSelect={() => setSelectedOpp(o)}
+                          onApply={(opp) => setShowApply(opp)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-            {loading && !visibleOpps.length ? (
-              <div className="space-y-4 mt-4">{[1,2,3].map(i => (
-                <div key={i} className="animate-pulse rounded-xl p-5 glass-light" style={{ minHeight: 120 }}>
-                  <div className="flex gap-3"><div className="w-11 h-11 rounded-xl" style={{ background: "var(--surface-2)" }} /><div className="flex-1 space-y-2"><div className="h-5 w-2/3 rounded" style={{ background: "var(--surface-2)" }} /><div className="h-4 w-1/3 rounded" style={{ background: "var(--surface-2)" }} /></div></div>
-                </div>
-              ))}</div>
-            ) : visibleOpps.length === 0 ? (
-              <div className="text-center py-16">
-                <Briefcase className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
-                <p className="text-[16px] font-bold" style={{ color: "var(--text-1)" }}>No opportunities yet</p>
-                <p className="text-[13px] mt-1" style={{ color: "var(--text-3)" }}>Check back later</p>
+                {loading && !visibleOpps.length ? (
+                  <div className="space-y-4">{[1,2,3].map(i => (
+                    <div key={i} className="animate-pulse rounded-xl p-5 glass-light" style={{ minHeight: 120 }}>
+                      <div className="flex gap-3"><div className="w-11 h-11 rounded-xl" style={{ background: "var(--surface-2)" }} /><div className="flex-1 space-y-2"><div className="h-5 w-2/3 rounded" style={{ background: "var(--surface-2)" }} /><div className="h-4 w-1/3 rounded" style={{ background: "var(--surface-2)" }} /></div></div>
+                    </div>
+                  ))}</div>
+                ) : visibleOpps.length === 0 ? (
+                  <div className="text-center py-16">
+                    <Briefcase className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
+                    <p className="text-[16px] font-bold" style={{ color: "var(--text-1)" }}>No opportunities yet</p>
+                    <p className="text-[13px] mt-1" style={{ color: "var(--text-3)" }}>Check back later</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {visibleOpps.map(o => (
+                      <SharedOpportunityCard
+                        key={o.id}
+                        opp={o}
+                        company={o.org ? { id: o.org.id, name: o.org.name, logo_url: o.org.logo_url } : null}
+                        isLikedByMe={likedOppIds.has(o.id)}
+                        isSavedByMe={savedOppIds.has(o.id)}
+                        hasApplied={appliedIds.has(o.id)}
+                        isFollowingOrg={!!(o.org?.id && followedOrgIds.has(o.org.id))}
+                        initialLikeCount={0}
+                        initialCommentCount={0}
+                        selected={selectedOpp?.id === o.id}
+                        onSelect={() => setSelectedOpp(o)}
+                        onApply={(opp) => setShowApply(opp)}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="space-y-3">
-                {visibleOpps.map(o => (
-                  <SharedOpportunityCard
-                    key={o.id}
-                    opp={o}
-                    company={o.org ? { id: o.org.id, name: o.org.name, logo_url: o.org.logo_url } : null}
-                    isLikedByMe={false}
-                    hasApplied={appliedIds.has(o.id)}
-                    isFollowingOrg={!!(o.org?.id && followedOrgIds.has(o.org.id))}
-                    initialLikeCount={0}
-                    initialCommentCount={0}
-                    onApply={(opp) => setShowApply(opp)}
+
+              {/* Right: detail panel (desktop only) */}
+              <div className="hidden md:block w-[360px] shrink-0">
+                {selectedOpp ? (
+                  <JobDetailPanel
+                    opp={selectedOpp}
+                    company={selectedOpp.org ? { id: selectedOpp.org.id, name: selectedOpp.org.name, logo_url: selectedOpp.org.logo_url, slug: selectedOpp.org.slug } : null}
+                    isLikedByMe={likedOppIds.has(selectedOpp.id)}
+                    isSavedByMe={savedOppIds.has(selectedOpp.id)}
+                    hasApplied={appliedIds.has(selectedOpp.id)}
+                    isFollowingOrg={!!(selectedOpp.org?.id && followedOrgIds.has(selectedOpp.org.id))}
+                    onApply={() => setShowApply(selectedOpp)}
+                    onClose={() => setSelectedOpp(null)}
                   />
-                ))}
+                ) : (
+                  <div className="glass-card rounded-2xl flex flex-col items-center justify-center p-8 text-center" style={{ minHeight: 200 }}>
+                    <Briefcase className="w-8 h-8 mb-2" style={{ color: "var(--text-3)" }} />
+                    <p className="text-[13px] font-medium" style={{ color: "var(--text-3)" }}>Click a job to view details</p>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </>
         );
       })()}
