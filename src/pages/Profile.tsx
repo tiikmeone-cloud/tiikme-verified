@@ -49,6 +49,7 @@ import {
   Sheet, SheetContent, SheetHeader, SheetTitle
 } from "@/components/ui/sheet";
 import { applyPrivacyToProfile } from "@/lib/applyPrivacy";
+import { FollowIconButton } from "@/components/FollowIconButton";
 
 /* ── Constants ── */
 const ROLE_COLOR_MAP: Record<string, string> = { student: "#4F46E5", professional: "#0369A1", doctor: "#0E7490", government: "#166534", skilled_trade: "#C2410C", hr: "#6B21A8", faculty: "#92400E", builder: "#7C3AED", aspirant: "#374151" };
@@ -1057,248 +1058,158 @@ const Profile = () => {
     );
   };
 
+  const otwVis = (profileData as any).otw_visibility || "recruiters";
+  const viewerIsRecruiter = authProfile?.account_type === "institution";
+  const showOTW = !!profileData.open_to_work && (
+    isOwnProfile || otwVis === "all" || (otwVis === "recruiters" && viewerIsRecruiter)
+  );
+  const sectionNav = [
+    { key: "experience", label: "Experience", count: experiences.length },
+    { key: "education", label: "Education", count: education.length },
+    { key: "skills", label: "Skills", count: skills.length },
+    { key: "projects", label: "Projects", count: projects.length },
+    { key: "posts", label: "Posts", count: stats.posts },
+  ].filter(s => s.count > 0 || isOwnProfile);
+
   return (
     <div className="min-h-screen pb-6 md:pb-8">
       <PageSEO {...seoProps} />
 
-      <div className="mx-auto p-3 md:p-4 space-y-3 md:space-y-5" style={{ maxWidth: 960 }}>
-        {/* ── PROFILE INFO CARD ── */}
-        <div className="glass-card relative overflow-hidden" style={{
-          borderRadius: 16,
-          background: "var(--bg-card)",
-          border: "1px solid var(--border-glass)",
-          boxShadow: "var(--card-shadow)",
-        }}>
-          {/* Gradient header strip — no cover photo, role color only */}
-          <div style={{
-            height: 72,
-            borderRadius: "14px 14px 0 0",
-            background: `linear-gradient(135deg, ${roleColor}22, ${roleColor}44)`,
-          }} />
-          <div className="p-5 md:p-6 relative">
-          {isOwnProfile && (
-            <Link
-              to="/app/settings"
-              aria-label="Settings"
-              className="absolute flex items-center justify-center cursor-pointer active:scale-95"
-              style={{
-                top: 12, right: 12, width: 36, height: 36, borderRadius: 10,
-                background: "var(--bg-card)", border: "1px solid var(--border-glass)",
-                color: "var(--text-1)", zIndex: 5,
-              }}
-            >
-              <Settings style={{ width: 18, height: 18 }} strokeWidth={1.8} />
-            </Link>
-          )}
-          {(() => {
-            const otwVis = (profileData as any).otw_visibility || "recruiters";
-            const viewerIsRecruiter = authProfile?.account_type === "institution";
-            const showOTW = !!profileData.open_to_work && (
-              isOwnProfile ||
-              otwVis === "all" ||
-              (otwVis === "recruiters" && viewerIsRecruiter)
-            );
-            return (
-          <div className="flex profile-info-flex" style={{ gap: 16, alignItems: "flex-start" }}>
-            {/* LEFT COLUMN: Avatar with ring for OTW */}
-            <div className="profile-avatar-wrap shrink-0" style={{ width: 120 }}>
-              <div style={{ padding: showOTW ? 3 : 0, borderRadius: showOTW ? "50%" : undefined, background: showOTW ? "rgba(16,185,129,0.25)" : undefined }}>
-                <AvatarSquare src={profileData.avatar_url} name={displayName || "U"} size="profile" bgColor={roleColor} className="shadow-md" />
-              </div>
-            </div>
+      <div className="mx-auto px-3 pt-3" style={{ maxWidth: 960 }}>
+        <div className="flex flex-col lg:grid lg:gap-4" style={{ gridTemplateColumns: "200px 1fr" }}>
 
-            {/* RIGHT COLUMN: Info */}
-            <div className="profile-info-body w-full text-center md:text-left" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 5 }}>
-              {/* ROW 1: Name + optional Open to work pill */}
-              <div className="flex items-center md:items-start justify-center md:justify-start flex-wrap" style={{ gap: 8 }}>
-                <p style={{ flex: 1, minWidth: 0, fontSize: 20, fontWeight: 700, lineHeight: "28px", color: "var(--text-1)", whiteSpace: "normal", overflowWrap: "anywhere", wordBreak: "break-word" }}>
-                  {displayName}
-                  {isVerified && <VerifiedBadge size={18} />}
-                </p>
+          {/* ── LEFT RAIL ── */}
+          <aside className="lg:sticky lg:self-start mb-3 lg:mb-0" style={{ top: 72 }}>
+            {/* Identity card */}
+            <div className="glass-card overflow-hidden" style={{ borderRadius: 16, border: "1px solid var(--border-glass)", boxShadow: "var(--card-shadow)" }}>
+              <div style={{ height: 48, background: `linear-gradient(135deg, ${roleColor}22, ${roleColor}44)` }} />
+              <div style={{ padding: "0 14px 14px", textAlign: "center" }}>
+                {/* Avatar overlapping strip */}
+                <div style={{ display: "flex", justifyContent: "center", marginTop: -32 }}>
+                  <div style={{ padding: showOTW ? 3 : 0, borderRadius: "50%", background: showOTW ? "rgba(16,185,129,0.25)" : "transparent" }}>
+                    <AvatarSquare src={profileData.avatar_url} name={displayName || "U"} size={64} bgColor={roleColor} className="shadow-md" />
+                  </div>
+                </div>
+
+                {/* Name + verified */}
+                <div style={{ marginTop: 8 }}>
+                  <p style={{ fontSize: 14, fontWeight: 700, lineHeight: "20px", color: "var(--text-1)", wordBreak: "break-word" }}>
+                    {displayName}{isVerified && <VerifiedBadge size={14} />}
+                  </p>
+                  {username && <p style={{ fontSize: 11, color: "#9CA3C0", marginTop: 2 }}>@{username}</p>}
+                </div>
+
+                {/* Role */}
+                {dpFlags.showRole && compactRoleLine && (
+                  <p style={{ fontSize: 11, fontWeight: 600, color: roleColor, marginTop: 4 }}>{compactRoleLine}</p>
+                )}
+
+                {/* Company / institution */}
+                {dpFlags.showCompany && (() => {
+                  const m = (profileData as any).role_metadata as Record<string, any> | null;
+                  let parts: string[] = [];
+                  if (m && typeof m === "object") {
+                    const r = profileData.role;
+                    if (r === "student") parts = [m.institution, m.current_year].filter(Boolean);
+                    else if (r === "professional" || r === "working") parts = [m.company].filter(Boolean);
+                    else if (r === "doctor" || r === "healthcare") parts = [m.hospital].filter(Boolean);
+                    else if (r === "faculty") parts = [m.institution].filter(Boolean);
+                  }
+                  const txt = parts.join(" · ") || (profileData as any).currently_working_at || profileData.institution_name;
+                  if (!txt) return null;
+                  return <p style={{ fontSize: 11, fontWeight: 500, color: "#E8733A", marginTop: 2, wordBreak: "break-word" }}>{txt}</p>;
+                })()}
+
+                {/* Location */}
+                {(city || state) && (
+                  <p style={{ fontSize: 11, color: "#9CA3C0", marginTop: 3, display: "flex", alignItems: "center", justifyContent: "center", gap: 2 }}>
+                    <MapPin style={{ width: 10, height: 10, flexShrink: 0 }} />
+                    {[city, state].filter(Boolean).join(", ")}
+                  </p>
+                )}
+
+                {/* OTW chip */}
                 {showOTW && (
-                  <span
-                    style={{
-                      display: "inline-flex", alignItems: "center", gap: 4,
-                      flexShrink: 0, minWidth: "fit-content",
-                      minHeight: 22, padding: "2px 8px", borderRadius: 999,
-                      fontSize: 11, fontWeight: 700, whiteSpace: "nowrap",
-                      background: "rgba(16,185,129,0.12)", color: "#059669",
-                      border: "1px solid rgba(16,185,129,0.30)",
-                    }}
-                  >
-                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981", flexShrink: 0 }} />
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 6, padding: "2px 8px", borderRadius: 999, fontSize: 10, fontWeight: 700, background: "rgba(16,185,129,0.12)", color: "#059669", border: "1px solid rgba(16,185,129,0.30)" }}>
+                    <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#10B981", flexShrink: 0 }} />
                     Open to work
                   </span>
                 )}
-              </div>
 
-              {/* ROW 1b: Role · Subtype */}
-              {dpFlags.showRole && compactRoleLine && (
-                <p style={{ fontSize: 12, fontWeight: 600, color: roleColor }}>
-                  {compactRoleLine}
-                </p>
-              )}
+                {/* Action buttons */}
+                <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6, alignItems: "center" }}>
+                  {isOwnProfile ? (
+                    <Link
+                      to="/app/settings"
+                      style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "var(--bg-card)", border: "1px solid var(--border-glass)", color: "var(--text-1)", textDecoration: "none" }}
+                    >
+                      <Settings style={{ width: 14, height: 14 }} strokeWidth={1.8} /> Edit profile
+                    </Link>
+                  ) : (
+                    <div style={{ display: "flex", gap: 8, alignItems: "center", justifyContent: "center", flexWrap: "wrap" }}>
+                      {renderConnectButton()}
+                      <FollowIconButton targetId={targetUserId || ""} targetUsername={username} size={32} />
+                    </div>
+                  )}
+                </div>
 
-              {/* ROW 1c: Currently working at / institution */}
-              {dpFlags.showCompany && (() => {
-                const m = (profileData as any).role_metadata as Record<string, any> | null;
-                let parts: string[] = [];
-                if (m && typeof m === "object") {
-                  const r = profileData.role;
-                  if (r === "student") parts = [m.institution, m.current_year].filter(Boolean);
-                  else if (r === "professional" || r === "working") parts = [m.company, m.years_experience ? `${m.years_experience} yrs` : ""].filter(Boolean);
-                  else if (r === "doctor" || r === "healthcare") parts = [m.hospital, m.specialty === "Other" ? m.specialty_other : m.specialty].filter(Boolean);
-                  else if (r === "faculty") parts = [m.institution, m.department].filter(Boolean);
-                }
-                if (parts.length === 0) {
-                  const fallback = (profileData as any).currently_working_at || profileData.institution_name;
-                  if (!fallback) return null;
-                  return <p style={{ fontSize: 13, fontWeight: 500, lineHeight: "18px", color: "#E8733A", overflowWrap: "anywhere" }}>{fallback}</p>;
-                }
-                return <p style={{ fontSize: 13, fontWeight: 500, lineHeight: "18px", color: "#E8733A", overflowWrap: "anywhere" }}>{parts.join(" · ")}</p>;
-              })()}
-
-              {/* ROW 2: Headline */}
-              {dpFlags.showRole && (currentExp || headline) && (
-                <p style={{ fontSize: 13, fontWeight: 400, lineHeight: "18px", color: "#6B7094", overflowWrap: "anywhere" }}>
-                  {currentExp ? `${currentExp.job_title || currentExp.title} at ${currentExp.company_name || ""}` : headline}
-                </p>
-              )}
-
-              {/* ROW 3: @username + location */}
-              <div className="flex items-center justify-center md:justify-start flex-wrap" style={{ gap: 8 }}>
-                {username && <span style={{ fontSize: 12, fontWeight: 400, color: "#9CA3C0" }}>@{username}</span>}
-                {username && (city || state) && <span style={{ width: 3, height: 3, borderRadius: "50%", background: "#9CA3C0", flexShrink: 0 }} />}
-                {(city || state) && (
-                  <span className="flex items-center" style={{ gap: 2, fontSize: 12, color: "#9CA3C0" }}>
-                    <MapPin style={{ width: 12, height: 12 }} />{[city, state].filter(Boolean).join(", ")}
-                  </span>
+                {/* Mutual connections */}
+                {!isOwnProfile && mutualConnections.total > 0 && (
+                  <div style={{ marginTop: 10, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, flexWrap: "wrap" }}>
+                    <div className="flex">
+                      {mutualConnections.profiles.slice(0, 2).map((p, i) => (
+                        <div key={p.id} style={{ marginLeft: i === 0 ? 0 : -6, zIndex: 2 - i }}>
+                          <AvatarSquare src={p.avatar_url} name={p.full_name || "?"} size={16} />
+                        </div>
+                      ))}
+                    </div>
+                    <span style={{ fontSize: 10, color: "#6B7094" }}>{mutualConnections.total} mutual</span>
+                  </div>
                 )}
               </div>
-
-              {/* ROW 4: Stats — Posts count only; Connections are in the box below */}
-              <div className="flex items-center flex-wrap" style={{ gap: 12, marginTop: 6 }}>
-                <Link to={`/app/u/${username || targetUserId}/posts`} className="hover:opacity-80" style={{ fontSize: 13 }}>
-                  <span className="num" style={{ fontWeight: 700, color: "var(--text-1)" }}>{stats.posts}</span>
-                  <span style={{ fontWeight: 400, color: "var(--text-3)", marginLeft: 4 }}>Posts</span>
-                </Link>
-                {(() => {
-                  const score = (profileData as any).activity_score ?? 0;
-                  const visible = shouldShowPublicScore({ id: profileData.id, activity_score: score }, authProfile ? { id: authProfile.id } : undefined);
-                  if (!visible) return null;
-                  return (
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <button
-                          type="button"
-                          className="cursor-pointer hover:opacity-90"
-                          style={{
-                            display: "inline-flex", alignItems: "center", gap: 4,
-                            height: 24, padding: "0 9px", borderRadius: 999, fontSize: 12, fontWeight: 700,
-                            background: `${tier.color}1A`, color: tier.color, border: `1px solid ${tier.color}33`,
-                          }}
-                        >
-                          <Zap style={{ width: 11, height: 11 }} fill="currentColor" />
-                          <span><span className="num">{activityScore}</span> pts · {tier.name || (tier as any).label}</span>
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent
-                        side="bottom"
-                        align="start"
-                        sideOffset={8}
-                        collisionPadding={16}
-                        className="bg-white border border-gray-200 shadow-xl rounded-xl p-0 w-auto z-50"
-                      >
-                        <ActivityScoreCard score={score} isOwn={isOwnProfile} />
-                      </PopoverContent>
-                    </Popover>
-                  );
-                })()}
-              </div>
-
-              {/* ROW 5: Action buttons — Connect only for user→user */}
-              {!isOwnProfile && (
-                <div className="flex items-center justify-center md:justify-start flex-wrap" style={{ gap: 8, marginTop: 10 }}>
-                  {renderConnectButton()}
-                </div>
-              )}
-
-              {/* ROW 6: Mutual connections — "Y and 21 others you know are connected" */}
-              {!isOwnProfile && mutualConnections.total > 0 && (
-                <div className="flex items-center justify-center md:justify-start flex-wrap" style={{ gap: 6, marginTop: 8 }}>
-                  <div className="flex" style={{ marginRight: 2 }}>
-                    {mutualConnections.profiles.slice(0, 3).map((p, i) => (
-                      <div key={p.id} style={{ marginLeft: i === 0 ? 0 : -8, zIndex: 3 - i }}>
-                        <AvatarSquare src={p.avatar_url} name={p.full_name || "?"} size={20} />
-                      </div>
-                    ))}
-                  </div>
-                  <span style={{ fontSize: 11, color: "#6B7094", lineHeight: "16px" }}>
-                    {mutualConnections.profiles[0]?.full_name || "Someone you know"}
-                    {mutualConnections.total > 1 && ` and ${mutualConnections.total - 1} other${mutualConnections.total > 2 ? "s" : ""} you know`}
-                    {" "}are connected
-                  </span>
-                </div>
-              )}
             </div>
-          </div>
-            );
-          })()}
 
-          {/* Activity Score details now render in the popover above */}
-        </div>
-        </div>{/* end glass-card */}
+            {/* Section nav */}
+            {sectionNav.length > 0 && profileTab === "overview" && (
+              <div className="glass-card mt-2" style={{ padding: "8px 0", borderRadius: 14 }}>
+                {sectionNav.map(s => (
+                  <a
+                    key={s.key}
+                    href={`#section-${s.key}`}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 14px", textDecoration: "none" }}
+                    onClick={e => { e.preventDefault(); document.getElementById(`section-${s.key}`)?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
+                  >
+                    <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text-2)" }}>{s.label}</span>
+                    {s.count > 0 && <span style={{ fontSize: 11, fontWeight: 600, color: "#9CA3C0" }}>{s.count}</span>}
+                  </a>
+                ))}
+              </div>
+            )}
+          </aside>
 
-        {/* ── MOBILE-ONLY QUICK NAV (own profile) ── */}
-        {isOwnProfile && (
-          <div className="md:hidden glass-card mt-2" style={{ padding: 4, borderRadius: 16, overflow: "hidden" }}>
-            {[
-              { label: "Connections", icon: Link2, path: "/app/connections" },
-            ].map((item, i, arr) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className="flex items-center w-full active:scale-[0.99]"
-                style={{
-                  height: 52, padding: "0 12px", gap: 14,
-                  borderBottom: i < arr.length - 1 ? "1px solid rgba(0,0,0,0.05)" : "none",
-                  textDecoration: "none",
-                }}
-              >
-                <div style={{
-                  width: 36, height: 36, borderRadius: 10, display: "flex",
-                  alignItems: "center", justifyContent: "center",
-                  background: "rgba(232,115,58,0.10)",
-                }}>
-                  <item.icon style={{ width: 18, height: 18, color: "#E8733A" }} strokeWidth={1.8} />
-                </div>
-                <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: "#1A1A2E" }}>{item.label}</span>
-                <ChevronRight style={{ width: 16, height: 16, color: "#9CA3C0" }} />
-              </Link>
-            ))}
-          </div>
-        )}
+          {/* ── RIGHT REGION ── */}
+          <div className="flex flex-col" style={{ gap: 12, minWidth: 0 }}>
 
-        {/* ── TAB NAV ── */}
-        <div className="flex" style={{ gap: 6, padding: "6px 0" }}>
-          {(["overview", "resume", ...(isOwnProfile ? ["activity"] : [])] as Array<"overview" | "resume" | "activity">).map(tab => (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => setProfileTab(tab)}
-              className="cursor-pointer"
-              style={{
-                height: 34, padding: "0 18px", borderRadius: 20, fontSize: 13, fontWeight: 500,
-                background: profileTab === tab ? "#E8733A" : "transparent",
-                color: profileTab === tab ? "#fff" : "var(--text-2)",
-                border: `1px solid ${profileTab === tab ? "#E8733A" : "var(--border-glass)"}`,
-                textTransform: "capitalize" as const,
-              }}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
+            {/* Tab nav */}
+            <div className="flex" style={{ gap: 6 }}>
+              {(["overview", "resume", ...(isOwnProfile ? ["activity"] : [])] as Array<"overview" | "resume" | "activity">).map(tab => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setProfileTab(tab)}
+                  className="cursor-pointer"
+                  style={{
+                    height: 34, padding: "0 18px", borderRadius: 20, fontSize: 13, fontWeight: 500,
+                    background: profileTab === tab ? "#E8733A" : "transparent",
+                    color: profileTab === tab ? "#fff" : "var(--text-2)",
+                    border: `1px solid ${profileTab === tab ? "#E8733A" : "var(--border-glass)"}`,
+                    textTransform: "capitalize" as const,
+                  }}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
 
         {profileTab === "overview" && (<>
         {/* ── ABOUT ── */}
@@ -1674,68 +1585,65 @@ const Profile = () => {
                 ))}
               </div>
             )}
-            <ExperienceSection items={experiences} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("experience")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
-            <EducationSection items={education} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("education")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
+            <div id="section-experience">
+              <ExperienceSection items={experiences} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("experience")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
+            </div>
+            <div id="section-education">
+              <EducationSection items={education} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("education")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
+            </div>
             <RolesSection items={profileRoles} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("role")} onDelete={deleteRole} />
-            <ProjectsSection items={projects} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("project")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
+            <div id="section-projects">
+              <ProjectsSection items={projects} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("project")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
+            </div>
             <AchievementsSection items={achievements} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("achievement")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} />
-            <SkillsSection skills={skills} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("skills")} onRemoveSkill={removeSkill} />
-            {/* Only show PostsSection if viewer is allowed to see posts */}
+            <div id="section-skills">
+              <SkillsSection skills={skills} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("skills")} onRemoveSkill={removeSkill} />
+            </div>
             {(isOwnProfile || priv.who_can_see_posts === "everyone" || (priv.who_can_see_posts === "connections" && isConnected) || !priv.who_can_see_posts) && (
-            <PostsSection
-              posts={userPosts}
-              stats={{ posts: stats.posts, reposts: 0 }}
-              username={username}
-              userId={targetUserId}
-              isOwnProfile={isOwnProfile}
-            />
+              <div id="section-posts">
+                <PostsSection posts={userPosts} stats={{ posts: stats.posts, reposts: 0 }} username={username} userId={targetUserId} isOwnProfile={isOwnProfile} />
+              </div>
             )}
-
-            {/* ── ANALYTICS ROW — owner only ── */}
             {isOwnProfile && targetUserId && (
               <div style={{ marginTop: 4 }}>
                 <ProfileAnalyticsRow profileId={targetUserId} />
               </div>
             )}
-
-            {/* Flicks */}
-            {(isOwnProfile || true) && (
-              <div className="glass-card" style={{ padding: "16px 20px", borderRadius: 16 }}>
-                <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-                  <div className="flex items-center" style={{ gap: 6 }}>
-                    <Images style={{ width: 16, height: 16, color: "#FF5A1F" }} />
-                    <p style={{ fontSize: 13, fontWeight: 700, color: "var(--text-1)" }}>Flicks</p>
-                  </div>
-                </div>
-                <ProfileFlicksSection profileId={targetUserId || ""} isOwnProfile={isOwnProfile} />
+            <div className="glass-card" style={{ padding: "16px 20px", borderRadius: 16 }}>
+              <div className="flex items-center" style={{ gap: 6, marginBottom: 12 }}>
+                <Images style={{ width: 16, height: 16, color: "#FF5A1F" }} />
+                <p style={{ fontSize: 13, fontWeight: 700, color: "var(--text-1)" }}>Flicks</p>
               </div>
-            )}
+              <ProfileFlicksSection profileId={targetUserId || ""} isOwnProfile={isOwnProfile} />
+            </div>
           </div>
         </div>
         </>)}
 
-        {/* ── RESUME TAB ── */}
-        {profileTab === "resume" && (
-          <ProfileResumeTab
-            profile={profileData}
-            workItems={workItems}
-            skills={skills}
-            certifications={certifications}
-            customLinks={visibleCustomLinks}
-            userEmail={userEmail}
-            isOwnProfile={isOwnProfile}
-            targetUserId={targetUserId || null}
-            onResumeUploaded={url => setViewedProfile((prev: any) => ({ ...prev, resume_url: url }))}
-          />
-        )}
+            {/* ── RESUME TAB ── */}
+            {profileTab === "resume" && (
+              <ProfileResumeTab
+                profile={profileData}
+                workItems={workItems}
+                skills={skills}
+                certifications={certifications}
+                customLinks={visibleCustomLinks}
+                userEmail={userEmail}
+                isOwnProfile={isOwnProfile}
+                targetUserId={targetUserId || null}
+                onResumeUploaded={url => setViewedProfile((prev: any) => ({ ...prev, resume_url: url }))}
+              />
+            )}
 
-        {/* ── ACTIVITY TAB — owner only ── */}
-        {profileTab === "activity" && isOwnProfile && targetUserId && (
-          <ProfileActivityTab
-            profileId={targetUserId}
-            followersCount={(profileData as any).follower_count ?? 0}
-          />
-        )}
+            {/* ── ACTIVITY TAB — owner only ── */}
+            {profileTab === "activity" && isOwnProfile && targetUserId && (
+              <ProfileActivityTab
+                profileId={targetUserId}
+                followersCount={(profileData as any).follower_count ?? 0}
+              />
+            )}
+          </div>{/* end right region */}
+        </div>{/* end grid */}
       </div>
 
       {/* ═══ GLASS MODALS ═══ */}
