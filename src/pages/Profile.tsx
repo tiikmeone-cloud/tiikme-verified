@@ -8,7 +8,7 @@ import { PageSEO, profileSEO } from "@/hooks/usePageSEO";
 import {
   Shield, X, CheckCircle, Plus,
   Pencil, Trash2, Briefcase, GraduationCap, Award, Code2, Eye, EyeOff,
-  Users, Settings, Layers,
+  Users, Settings, Layers, Rocket,
 } from "lucide-react";
 import GlassModal, { glassInputDarkStyle as gInputStyle, glassSelectDarkStyle as gSelectStyle, glassTextareaDarkStyle as gTextareaStyle, labelStyle } from "@/components/ui/GlassModal";
 import { Input } from "@/components/ui/input";
