@@ -2,54 +2,36 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import { fixStorageUrl } from "@/components/ui/AvatarSquare";
 import { cleanUsername } from "@/lib/cleanUsername";
-import { getPrimaryRoleLine, getProfileSubtitle, sanitizeIdentityText } from "@/lib/profileUtils";
-import { SUBTYPE_OPTIONS, hasSubtypes } from "@/lib/roleSubtypes";
+import { getPrimaryRoleLine, sanitizeIdentityText } from "@/lib/profileUtils";
 import { getDisplayFlags, safeDisplayName } from "@/utils/displayProfile";
 import { PageSEO, profileSEO } from "@/hooks/usePageSEO";
 import {
-  MapPin, Copy, Shield, X, CheckCircle, Building2, Link2, Plus,
+  Shield, X, CheckCircle, Plus,
   Pencil, Trash2, Briefcase, GraduationCap, Award, Code2, Eye, EyeOff,
-  Heart, Rocket, Send, Share2, Users, Globe, ExternalLink, LinkIcon, TrendingUp,
-  Mail, Settings, Camera, UserX, Layers, ChevronRight, LifeBuoy, MoreHorizontal,
-  Flag, Ban, ChevronDown, Zap, FileText, Upload, Images
+  Users, Settings, Layers,
 } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { detectPlatform } from "@/lib/platformDetect";
 import GlassModal, { glassInputDarkStyle as gInputStyle, glassSelectDarkStyle as gSelectStyle, glassTextareaDarkStyle as gTextareaStyle, labelStyle } from "@/components/ui/GlassModal";
-import ActivityScoreCard from "@/components/profile/ActivityScoreCard";
-import { shouldShowPublicScore } from "@/lib/activityTiers";
-import { ExperienceSection, EducationSection, ProjectsSection, AchievementsSection, SkillsSection, PostsSection, RolesSection } from "@/components/profile/ProfileSections";
-import ProfileFlicksSection from "@/components/profile/ProfileFlicksSection";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import MentionText from "@/components/feed/MentionText";
 import EditPostModal from "@/components/feed/EditPostModal";
 import DeletePostDialog from "@/components/feed/DeletePostDialog";
 import { sendNotification } from "@/lib/notify";
-import VerificationStatusCard from "@/components/verification/VerificationStatusCard";
 import VerifiedBadge from "@/components/VerifiedBadge";
-import CertificatesSection from "@/components/profile/CertificatesSection";
-import AIProfileBuilder from "@/components/profile/AIProfileBuilder";
-import ProfileCompletenessCard from "@/components/profile/ProfileCompletenessCard";
-import ProfileStatTiles from "@/components/profile/ProfileStatTiles";
 import ProfileAnalyticsRow from "@/components/profile/ProfileAnalyticsRow";
 import { track } from "@/lib/track";
-import ProfileResumeTab from "@/components/profile/ProfileResumeTab";
-import ProfileActivityTab from "@/components/profile/ProfileActivityTab";
-import ActivityScoreRing from "@/components/ActivityScoreRing";
 import { getActivityTier } from "@/lib/algorithms";
-import {
-  Sheet, SheetContent, SheetHeader, SheetTitle
-} from "@/components/ui/sheet";
 import { applyPrivacyToProfile } from "@/lib/applyPrivacy";
 import { FollowIconButton } from "@/components/FollowIconButton";
+import IdentityCard from "@/components/profile/clay/IdentityCard";
+import ClayNavBar from "@/components/profile/clay/ClayNavBar";
+import {
+  DashboardTiles, TheStory, TheGrind, TheClass,
+  TheToolkit, TheWins, CertsSection, DropsSection,
+  ReelsSection, CreatorSection,
+} from "@/components/profile/clay/Sections";
 
 /* ── Constants ── */
 const ROLE_COLOR_MAP: Record<string, string> = { student: "#4F46E5", professional: "#0369A1", doctor: "#0E7490", government: "#166534", skilled_trade: "#C2410C", hr: "#6B21A8", faculty: "#92400E", builder: "#7C3AED", aspirant: "#374151" };
@@ -235,7 +217,6 @@ const Profile = () => {
   const [resumeUploading, setResumeUploading] = useState(false);
   const resumeInputRef = useRef<HTMLInputElement>(null);
   const [certifications, setCertifications] = useState<any[]>([]);
-  const [profileTab, setProfileTab] = useState<"overview" | "resume" | "activity">("overview");
   const [coSignsCount, setCoSignsCount] = useState(0);
   const [squadsCount, setSquadsCount] = useState(0);
 
@@ -1063,587 +1044,116 @@ const Profile = () => {
   const showOTW = !!profileData.open_to_work && (
     isOwnProfile || otwVis === "all" || (otwVis === "recruiters" && viewerIsRecruiter)
   );
-  const sectionNav = [
-    { key: "experience", label: "Experience", count: experiences.length },
-    { key: "education", label: "Education", count: education.length },
-    { key: "skills", label: "Skills", count: skills.length },
-    { key: "projects", label: "Projects", count: projects.length },
-    { key: "posts", label: "Posts", count: stats.posts },
-  ].filter(s => s.count > 0 || isOwnProfile);
-
   return (
-    <div className="min-h-screen pb-6 md:pb-8">
+    <div className="min-h-screen pb-24">
       <PageSEO {...seoProps} />
 
-      <div className="mx-auto px-3 pt-3" style={{ maxWidth: 960 }}>
-        <div className="flex flex-col lg:grid lg:gap-4" style={{ gridTemplateColumns: "200px 1fr" }}>
+      <div className="mx-auto px-4 pt-4" style={{ maxWidth: 720 }}>
+        {/* ── IDENTITY CARD ── */}
+        <IdentityCard
+          profileData={profileData}
+          displayName={displayName}
+          username={username}
+          oneWordRole={compactRoleLine}
+          roleColor={roleColor}
+          isVerified={isVerified}
+          showOTW={showOTW}
+          isOwnProfile={isOwnProfile}
+          followerCount={(profileData as any).follower_count ?? 0}
+          followingCount={(profileData as any).following_count ?? 0}
+          cosignCount={squadsCount}
+          city={city}
+          state={state}
+          renderConnectButton={renderConnectButton}
+          targetUserId={targetUserId}
+        />
 
-          {/* ── LEFT RAIL ── */}
-          <aside className="lg:sticky lg:self-start mb-3 lg:mb-0" style={{ top: 72 }}>
-            {/* Identity card */}
-            <div className="glass-card overflow-hidden" style={{ borderRadius: 16, border: "1px solid var(--border-glass)", boxShadow: "var(--card-shadow)" }}>
-              <div style={{ height: 48, background: `linear-gradient(135deg, ${roleColor}22, ${roleColor}44)` }} />
-              <div style={{ padding: "0 14px 14px", textAlign: "center" }}>
-                {/* Avatar overlapping strip */}
-                <div style={{ display: "flex", justifyContent: "center", marginTop: -32 }}>
-                  <div style={{ padding: showOTW ? 3 : 0, borderRadius: "50%", background: showOTW ? "rgba(16,185,129,0.25)" : "transparent" }}>
-                    <AvatarSquare src={profileData.avatar_url} name={displayName || "U"} size={64} bgColor={roleColor} className="shadow-md" />
-                  </div>
-                </div>
-
-                {/* Name + verified */}
-                <div style={{ marginTop: 8 }}>
-                  <p style={{ fontSize: 14, fontWeight: 700, lineHeight: "20px", color: "var(--text-1)", wordBreak: "break-word" }}>
-                    {displayName}{isVerified && <VerifiedBadge size={14} />}
-                  </p>
-                  {username && <p style={{ fontSize: 11, color: "#9CA3C0", marginTop: 2 }}>@{username}</p>}
-                </div>
-
-                {/* Role */}
-                {dpFlags.showRole && compactRoleLine && (
-                  <p style={{ fontSize: 11, fontWeight: 600, color: roleColor, marginTop: 4 }}>{compactRoleLine}</p>
-                )}
-
-                {/* Company / institution */}
-                {dpFlags.showCompany && (() => {
-                  const m = (profileData as any).role_metadata as Record<string, any> | null;
-                  let parts: string[] = [];
-                  if (m && typeof m === "object") {
-                    const r = profileData.role;
-                    if (r === "student") parts = [m.institution, m.current_year].filter(Boolean);
-                    else if (r === "professional" || r === "working") parts = [m.company].filter(Boolean);
-                    else if (r === "doctor" || r === "healthcare") parts = [m.hospital].filter(Boolean);
-                    else if (r === "faculty") parts = [m.institution].filter(Boolean);
-                  }
-                  const txt = parts.join(" · ") || (profileData as any).currently_working_at || profileData.institution_name;
-                  if (!txt) return null;
-                  return <p style={{ fontSize: 11, fontWeight: 500, color: "#E8733A", marginTop: 2, wordBreak: "break-word" }}>{txt}</p>;
-                })()}
-
-                {/* Location */}
-                {(city || state) && (
-                  <p style={{ fontSize: 11, color: "#9CA3C0", marginTop: 3, display: "flex", alignItems: "center", justifyContent: "center", gap: 2 }}>
-                    <MapPin style={{ width: 10, height: 10, flexShrink: 0 }} />
-                    {[city, state].filter(Boolean).join(", ")}
-                  </p>
-                )}
-
-                {/* OTW chip */}
-                {showOTW && (
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 6, padding: "2px 8px", borderRadius: 999, fontSize: 10, fontWeight: 700, background: "rgba(16,185,129,0.12)", color: "#059669", border: "1px solid rgba(16,185,129,0.30)" }}>
-                    <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#10B981", flexShrink: 0 }} />
-                    Open to work
-                  </span>
-                )}
-
-                {/* Action buttons */}
-                <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6, alignItems: "center" }}>
-                  {isOwnProfile ? (
-                    <Link
-                      to="/app/settings"
-                      style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 32, padding: "0 14px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "var(--bg-card)", border: "1px solid var(--border-glass)", color: "var(--text-1)", textDecoration: "none" }}
-                    >
-                      <Settings style={{ width: 14, height: 14 }} strokeWidth={1.8} /> Edit profile
-                    </Link>
-                  ) : (
-                    <div style={{ display: "flex", gap: 8, alignItems: "center", justifyContent: "center", flexWrap: "wrap" }}>
-                      {renderConnectButton()}
-                      <FollowIconButton targetId={targetUserId || ""} targetUsername={username} size={32} />
-                    </div>
-                  )}
-                </div>
-
-                {/* Mutual connections */}
-                {!isOwnProfile && mutualConnections.total > 0 && (
-                  <div style={{ marginTop: 10, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, flexWrap: "wrap" }}>
-                    <div className="flex">
-                      {mutualConnections.profiles.slice(0, 2).map((p, i) => (
-                        <div key={p.id} style={{ marginLeft: i === 0 ? 0 : -6, zIndex: 2 - i }}>
-                          <AvatarSquare src={p.avatar_url} name={p.full_name || "?"} size={16} />
-                        </div>
-                      ))}
-                    </div>
-                    <span style={{ fontSize: 10, color: "#6B7094" }}>{mutualConnections.total} mutual</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Section nav */}
-            {sectionNav.length > 0 && profileTab === "overview" && (
-              <div className="glass-card mt-2" style={{ padding: "8px 0", borderRadius: 14 }}>
-                {sectionNav.map(s => (
-                  <a
-                    key={s.key}
-                    href={`#section-${s.key}`}
-                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 14px", textDecoration: "none" }}
-                    onClick={e => { e.preventDefault(); document.getElementById(`section-${s.key}`)?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
-                  >
-                    <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text-2)" }}>{s.label}</span>
-                    {s.count > 0 && <span style={{ fontSize: 11, fontWeight: 600, color: "#9CA3C0" }}>{s.count}</span>}
-                  </a>
-                ))}
-              </div>
-            )}
-          </aside>
-
-          {/* ── RIGHT REGION ── */}
-          <div className="flex flex-col" style={{ gap: 12, minWidth: 0 }}>
-
-            {/* Tab nav */}
-            <div className="flex" style={{ gap: 6 }}>
-              {(["overview", "resume", ...(isOwnProfile ? ["activity"] : [])] as Array<"overview" | "resume" | "activity">).map(tab => (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => setProfileTab(tab)}
-                  className="cursor-pointer"
-                  style={{
-                    height: 34, padding: "0 18px", borderRadius: 20, fontSize: 13, fontWeight: 500,
-                    background: profileTab === tab ? "#E8733A" : "transparent",
-                    color: profileTab === tab ? "#fff" : "var(--text-2)",
-                    border: `1px solid ${profileTab === tab ? "#E8733A" : "var(--border-glass)"}`,
-                    textTransform: "capitalize" as const,
-                  }}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
-
-        {profileTab === "overview" && (<>
-        {/* ── ABOUT ── */}
-        <AboutSection about={aboutText} isOwnProfile={isOwnProfile} userId={targetUserId || ""} />
-
-        {/* ── STAT TILES ── */}
-        <div style={{ marginTop: 12 }}>
-          <ProfileStatTiles
-            isOwner={isOwnProfile}
-            connections={stats.connections}
-            followers={(profileData as any).follower_count ?? 0}
-            activityScore={(profileData as any).activity_score ?? 0}
-            completenessPercent={completenessPercent}
+        {/* ── OWNER DASHBOARD — owner only ── */}
+        {isOwnProfile && (
+          <DashboardTiles
             profileViewsCount={0}
-            coSignsCount={coSignsCount}
-            squadsCount={squadsCount}
+            activityScore={activityScore}
+            cosignCount={squadsCount}
+            completenessPercent={completenessPercent}
           />
-        </div>
+        )}
 
-        {/* ── SECTION GRID ── */}
-        <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-3 md:gap-5 mt-3 md:mt-5">
-          {/* ═══ LEFT COLUMN ═══ */}
-          <div className="flex flex-col gap-3">
-            {/* AI profile builder (own profile only) */}
-            {isOwnProfile && (
-              <AIProfileBuilder
-                onApplied={() => {
-                  loadProfile();
-                }}
+        {/* ── MAIN CONTENT + STICKY NAV ── */}
+        <div className="profile-page-layout">
+          <div className="profile-main-col">
+            <TheStory about={aboutText} isOwner={isOwnProfile} />
+
+            <TheGrind
+              experiences={experiences}
+              isOwner={isOwnProfile}
+              onAdd={() => setModalSection("experience")}
+              onDelete={deleteItem}
+              onToggleVisibility={toggleVisibility}
+            />
+
+            <TheClass
+              education={education}
+              isOwner={isOwnProfile}
+              onAdd={() => setModalSection("education")}
+              onDelete={deleteItem}
+            />
+
+            <TheToolkit
+              skills={skills}
+              isOwner={isOwnProfile}
+              onAdd={() => setModalSection("skills")}
+              onRemoveSkill={removeSkill}
+            />
+
+            <TheWins
+              achievements={achievements}
+              isOwner={isOwnProfile}
+              onAdd={() => setModalSection("achievement")}
+              onDelete={deleteItem}
+            />
+
+            {certifications.length > 0 && (
+              <CertsSection certifications={certifications} />
+            )}
+
+            <DropsSection
+              userId={targetUserId || ""}
+              posts={userPosts}
+              totalPosts={stats.posts}
+              isOwner={isOwnProfile}
+              username={username}
+            />
+
+            <ReelsSection
+              profileId={targetUserId || ""}
+              isOwner={isOwnProfile}
+            />
+
+            {(creatorChannels.length > 0 || isOwnProfile) && (
+              <CreatorSection
+                channels={creatorChannels}
+                isOwner={isOwnProfile}
               />
             )}
 
-            {/* Profile completeness nudge (own profile only, hides at 100%) */}
-            {isOwnProfile && (
-              <ProfileCompletenessCard
-                profile={profileData}
-                workItemCount={experiences.length}
-                educationCount={education.length}
-                onSectionClick={(section) => {
-                  if (section === "avatar") setShowAvatarMenu(true);
-                  else if (section === "headline" || section === "bio" || section === "location") navigate("/app/settings?tab=profile");
-                  else if (section === "skills") setModalSection("skills");
-                  else if (section === "experience") setModalSection("experience");
-                  else if (section === "education") setModalSection("education");
-                  else if (section === "resume") resumeInputRef.current?.click();
-                }}
-              />
-            )}
-
-            {/* Verification status (own profile only, hidden if already verified) */}
-            {isOwnProfile && <VerificationStatusCard />}
-
-            {/* Connections box — hidden if owner set show_connections = "nobody" and viewer isn't owner */}
-            {(isOwnProfile || priv.show_connections !== "nobody") && (
-            <div className="glass-card" style={{ padding: 14, borderRadius: 16 }}>
-              <div className="flex items-center justify-between" style={{ marginBottom: 10 }}>
-                <span style={{ fontSize: 14, fontWeight: 700, color: "#1A1A2E" }}>Connections</span>
-                <Link to="/app/connections" className="hover:opacity-80" style={{ fontSize: 12, fontWeight: 600, color: "#E8733A" }}>
-                  See all
-                </Link>
-              </div>
-              <div style={{ fontSize: 28, fontWeight: 800, color: "#1A1A2E", lineHeight: 1, marginBottom: 8 }}>
-                <span className="num">{stats.connections}</span>
-              </div>
-              {connectedAvatars.length > 0 ? (
-                <div className="flex items-center" style={{ gap: 6, flexWrap: "wrap" }}>
-                  {connectedAvatars.slice(0, 6).map((p: any) => (
-                    <Link key={p.id} to={`/app/profile/${p.id}`} title={p.full_name || "Connection"}>
-                      <AvatarSquare src={p.avatar_url} name={p.full_name || "?"} size={36} />
-                    </Link>
-                  ))}
-                </div>
-              ) : (
-                <p style={{ fontSize: 12, color: "#9CA3C0" }}>
-                  {isOwnProfile ? "Start connecting with people" : "No mutual connections yet"}
-                </p>
-              )}
-            </div>
-            )}
-
-            {/* Followed by orgs — own profile only, shows orgs that follow this user */}
-            {isOwnProfile && orgsFollowingMe.length > 0 && (
-              <div className="glass-card" style={{ padding: 14, borderRadius: 16 }}>
-                <span style={{ fontSize: 14, fontWeight: 700, color: "#1A1A2E", display: "block", marginBottom: 10 }}>Followed by</span>
-                <div className="flex flex-col gap-2">
-                  {orgsFollowingMe.map((row: any) => {
-                    const org = row.org;
-                    if (!org) return null;
-                    return (
-                      <Link key={row.org_id} to={`/org/${org.slug}`} className="flex items-center gap-2 hover:opacity-80" style={{ textDecoration: "none" }}>
-                        <AvatarSquare src={org.logo_url} name={org.name || "Org"} size={28} />
-                        <span style={{ fontSize: 13, fontWeight: 500, color: "var(--text-1)", flex: 1 }} className="truncate">{org.name}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* L3: Resume */}
-            {((profileData as any).resume_url || isOwnProfile) && (
-              <div className="glass-card" style={{ padding: 12, borderRadius: 16 }}>
-                <div className="flex items-center" style={{ gap: 8, marginBottom: (profileData as any).resume_url ? 8 : 0 }}>
-                  <FileText style={{ width: 16, height: 16, color: "#FF5A1F", flexShrink: 0 }} />
-                  <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text-1)", flex: 1 }}>Resume</span>
-                  {isOwnProfile && (
-                    <>
-                      <input
-                        ref={resumeInputRef}
-                        type="file"
-                        accept=".pdf"
-                        style={{ display: "none" }}
-                        onChange={e => { const f = e.target.files?.[0]; if (f) handleResumeUpload(f); e.target.value = ""; }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => resumeInputRef.current?.click()}
-                        disabled={resumeUploading}
-                        className="cursor-pointer"
-                        style={{ height: 26, padding: "0 10px", borderRadius: 6, fontSize: 11, fontWeight: 500, background: "var(--bg-card)", border: "1px solid var(--border-glass)", color: "var(--text-2)", display: "inline-flex", alignItems: "center", gap: 4 }}
-                      >
-                        <Upload style={{ width: 11, height: 11 }} />
-                        {resumeUploading ? "Uploading…" : (profileData as any).resume_url ? "Replace" : "Upload"}
-                      </button>
-                    </>
-                  )}
-                </div>
-                {(profileData as any).resume_url ? (
-                  <a
-                    href={(profileData as any).resume_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center"
-                    style={{ gap: 6, height: 36, padding: "0 12px", borderRadius: 8, background: "rgba(255,90,31,0.06)", border: "1px solid rgba(255,90,31,0.15)", textDecoration: "none" }}
-                  >
-                    <FileText style={{ width: 14, height: 14, color: "#FF5A1F", flexShrink: 0 }} />
-                    <span style={{ fontSize: 12, fontWeight: 500, color: "#FF5A1F", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>View resume PDF</span>
-                    <ExternalLink style={{ width: 12, height: 12, color: "#FF5A1F", flexShrink: 0 }} />
-                  </a>
-                ) : isOwnProfile ? (
-                  <p style={{ fontSize: 12, color: "var(--text-3)", marginTop: 6 }}>Upload a PDF — visible to visitors</p>
-                ) : null}
-              </div>
-            )}
-
-            {/* L3b: Export as PDF */}
-            {isOwnProfile && (
-              <Link
-                to={`/app/profile/${targetUserId}/print`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="glass-card flex items-center"
-                style={{ padding: "10px 12px", borderRadius: 16, gap: 8, textDecoration: "none" }}
-              >
-                <FileText style={{ width: 15, height: 15, color: "#E8733A", flexShrink: 0 }} />
-                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-1)", flex: 1 }}>Export profile as PDF</span>
-                <ExternalLink style={{ width: 12, height: 12, color: "var(--text-3)" }} />
-              </Link>
-            )}
-
-            {/* L4: Links */}
-            <div className="glass-card" style={{ padding: 12, borderRadius: 16 }}>
-              <div className="flex items-center" style={{ gap: 8 }}>
-                <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E", flex: 1 }}>Links</span>
-                {isOwnProfile && (
-                  <button type="button" onClick={() => setShowAddLink(true)} className="cursor-pointer" style={{
-                    height: 26, padding: "0 10px", borderRadius: 6, fontSize: 11, fontWeight: 500,
-                    background: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.40)",
-                    color: "#1A1A2E", display: "inline-flex", alignItems: "center", gap: 4,
-                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.50)",
-                  }}>
-                    <Plus style={{ width: 12, height: 12 }} /> Add
-                  </button>
-                )}
-              </div>
-              {visibleCustomLinks.length > 0 ? (
-                <div className="flex flex-wrap" style={{ gap: 6, marginTop: 8 }}>
-                  {cleanProfileUsername && (
-                    <button
-                      type="button"
-                      onClick={handleCopyLink}
-                      className="flex items-center cursor-pointer"
-                      style={{
-                        height: 28, padding: "0 10px", borderRadius: 6, gap: 6,
-                        background: "rgba(255,255,255,0.12)", border: "1px solid rgba(0,0,0,0.06)",
-                      }}
-                    >
-                      <Globe style={{ width: 14, height: 14, color: "#E8733A", flexShrink: 0 }} />
-                      <span style={{ fontSize: 12, fontWeight: 400, color: "#1A1A2E" }}>
-                        tiikme.com/{cleanProfileUsername}
-                      </span>
-                    </button>
-                  )}
-                  {visibleCustomLinks.map((link: any, i: number) => {
-                    const platform = detectPlatform(link.url);
-                    const Icon = platform.icon;
-                    return (
-                      <a key={i} href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center" style={{
-                        height: 28, padding: "0 10px", borderRadius: 6, gap: 6,
-                        background: "rgba(255,255,255,0.12)", border: "1px solid rgba(0,0,0,0.06)",
-                      }}>
-                        <Icon style={{ width: 14, height: 14, color: platform.color, flexShrink: 0 }} />
-                        <span style={{ fontSize: 12, fontWeight: 400, color: "#1A1A2E" }}>{platform.name}</span>
-                      </a>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div style={{ marginTop: 8 }}>
-                  {cleanProfileUsername && (
-                    <button
-                      type="button"
-                      onClick={handleCopyLink}
-                      className="flex items-center cursor-pointer"
-                      style={{
-                        height: 28, padding: "0 10px", borderRadius: 6, gap: 6,
-                        background: "rgba(255,255,255,0.12)", border: "1px solid rgba(0,0,0,0.06)",
-                      }}
-                    >
-                      <Globe style={{ width: 14, height: 14, color: "#E8733A", flexShrink: 0 }} />
-                      <span style={{ fontSize: 12, fontWeight: 400, color: "#1A1A2E" }}>
-                        tiikme.com/{cleanProfileUsername}
-                      </span>
-                    </button>
-                  )}
-                  <p style={{ fontSize: 12, fontWeight: 400, color: "#9CA3C0", marginTop: cleanProfileUsername ? 8 : 0 }}>{isOwnProfile ? "Add your links" : "No links added"}</p>
-                </div>
-              )}
-              {showAddLink && (
-                <div style={{ marginTop: 8 }} className="space-y-2">
-                  <Input value={newLinkUrl} onChange={e => setNewLinkUrl(e.target.value)} placeholder="Paste your link..." onKeyDown={e => { if (e.key === "Enter") addLink(); }} />
-                  <div className="flex items-center gap-2">
-                    <button type="button" onClick={addLink} className="cursor-pointer" style={{ height: 28, padding: "0 12px", borderRadius: 8, fontSize: 11, fontWeight: 600, background: "linear-gradient(135deg, #E8733A, #FF6B9D)", color: "#fff", border: "none" }}>Add</button>
-                    <button type="button" onClick={() => { setShowAddLink(false); setNewLinkUrl(""); }} className="cursor-pointer" style={{ fontSize: 12, color: "#9CA3C0", background: "none", border: "none" }}>Cancel</button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* L4: Availability (Open to work) */}
-            {(() => {
-              const otwOn = !!profileData.open_to_work;
-              if (isOwnProfile) {
-                return (
-                  <div className="glass-card" style={{ padding: 12, borderRadius: 16 }}>
-                    <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A2E" }}>Availability</p>
-                    <p style={{ fontSize: 12, color: "#6B7094", marginTop: 2 }}>
-                      Let others know you're open to new opportunities.
-                    </p>
-                    <div className="flex items-center justify-between" style={{ marginTop: 10 }}>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>Open to work</span>
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          if (!profileData?.id) return;
-                          const next = !profileData.open_to_work;
-                          setViewedProfile({ ...profileData, open_to_work: next });
-                          const { error } = await supabase.from("profiles").update({ open_to_work: next } as any).eq("id", profileData.id);
-                          if (error) {
-                            setViewedProfile({ ...profileData, open_to_work: !next });
-                            toast.error("Could not update");
-                          } else {
-                            toast.success(next ? "Open to work enabled" : "Open to work disabled");
-                            refreshProfile?.();
-                          }
-                        }}
-                        aria-label="Toggle Open to work"
-                        style={{
-                          width: 44, height: 24, borderRadius: 12, padding: 2, border: "none",
-                          background: otwOn ? "#10B981" : "rgba(0,0,0,0.18)",
-                          display: "inline-flex", alignItems: "center", cursor: "pointer", transition: "background 0.2s",
-                        }}
-                      >
-                        <span
-                          style={{
-                            width: 20, height: 20, borderRadius: "50%", background: "#fff",
-                            transform: otwOn ? "translateX(20px)" : "translateX(0)",
-                            transition: "transform 0.2s",
-                            boxShadow: "0 1px 2px rgba(0,0,0,0.15)",
-                          }}
-                        />
-                      </button>
-                    </div>
-                    <ul style={{ marginTop: 10, fontSize: 11, color: "#6B7094", lineHeight: 1.6, paddingLeft: 14, listStyle: "disc" }}>
-                      <li>Shown on your profile as a badge</li>
-                      <li>Shown in Find / Explore results</li>
-                      <li>You can turn this off any time</li>
-                    </ul>
-                  </div>
-                );
-              }
-              if (otwOn) {
-                return (
-                  <div className="glass-card" style={{ padding: 12, borderRadius: 16, border: "1px solid rgba(16,185,129,0.30)" }}>
-                    <div className="flex items-center" style={{ gap: 6 }}>
-                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#10B981" }} />
-                      <p style={{ fontSize: 14, fontWeight: 700, color: "#059669" }}>Open to work</p>
-                    </div>
-                    <p style={{ fontSize: 12, color: "#6B7094", marginTop: 4 }}>
-                      {displayName} is open to new roles.
-                    </p>
-                    <div className="flex items-center" style={{ gap: 6, marginTop: 10 }}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const publicPath = cleanProfileUsername || username || targetUserId;
-                          const url = `${window.location.origin}/${publicPath}`;
-                          navigator.clipboard?.writeText(url);
-                          toast.success("Profile link copied!");
-                        }}
-                        className="cursor-pointer"
-                        style={{
-                          height: 30, padding: "0 12px", borderRadius: 8, fontSize: 12, fontWeight: 500,
-                          background: "rgba(255,255,255,0.25)", border: "1px solid rgba(0,0,0,0.10)",
-                          color: "#1A1A2E",
-                        }}
-                      >
-                        Share profile
-                      </button>
-                    </div>
-                  </div>
-                );
-              }
-              return null;
-            })()}
-
-            {/* L5: Contact (email) — shown when show_email is on, or own profile */}
-            <ContactSection isOwnProfile={isOwnProfile} profile={profileData} userEmail={userEmail} />
-          </div>
-
-          {/* ═══ RIGHT COLUMN ═══ */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {/* Role-specific sections for creators */}
-            {(profileData as any).profession_type === "creator" && (creatorChannels.length > 0 || isOwnProfile) && (
-              <div className="glass-card" style={{ padding: 16, borderRadius: 14, border: "1px solid rgba(126,34,206,0.18)" }}>
-                <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-                  <span style={{ fontWeight: 700, fontSize: 14, color: "#7E22CE" }}>Channels</span>
-                  {isOwnProfile && <span style={{ fontSize: 12, color: "#9CA3C0" }}>via Settings → Channels</span>}
-                </div>
-                {creatorChannels.length === 0 ? (
-                  <p style={{ fontSize: 13, color: "var(--text-muted)" }}>No channels added yet.</p>
-                ) : creatorChannels.map((ch: any) => (
-                  <div key={ch.id} style={{ display: "flex", gap: 10, alignItems: "flex-start", paddingBottom: 10, marginBottom: 10, borderBottom: "1px solid var(--border-subtle)" }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{ch.channel_name}</p>
-                      <p style={{ fontSize: 12, color: "var(--text-muted)" }}>{ch.platform}{ch.content_niche ? ` · ${ch.content_niche}` : ""}</p>
-                      {ch.subscriber_count != null && <p style={{ fontSize: 11, color: "var(--text-muted)" }}>{ch.subscriber_count.toLocaleString()} subscribers</p>}
-                      {ch.channel_url && <a href={ch.channel_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#E8733A" }}>Visit channel ↗</a>}
-                    </div>
-                    {ch.is_monetized && <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 999, background: "rgba(126,34,206,0.10)", color: "#7E22CE", fontWeight: 600, flexShrink: 0 }}>Monetized</span>}
-                  </div>
-                ))}
-              </div>
-            )}
-            {/* Role-specific sections for gig workers */}
-            {(profileData as any).profession_type === "gig_worker" && (gigServices.length > 0 || isOwnProfile) && (
-              <div className="glass-card" style={{ padding: 16, borderRadius: 14, border: "1px solid rgba(194,65,12,0.18)" }}>
-                <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-                  <span style={{ fontWeight: 700, fontSize: 14, color: "#C2410C" }}>Services</span>
-                  {isOwnProfile && <span style={{ fontSize: 12, color: "#9CA3C0" }}>via Settings → Services</span>}
-                </div>
-                {gigServices.length === 0 ? (
-                  <p style={{ fontSize: 13, color: "var(--text-muted)" }}>No services listed yet.</p>
-                ) : gigServices.map((svc: any) => (
-                  <div key={svc.id} style={{ display: "flex", gap: 10, alignItems: "flex-start", paddingBottom: 10, marginBottom: 10, borderBottom: "1px solid var(--border-subtle)" }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{svc.service_name}</p>
-                      <p style={{ fontSize: 12, color: "var(--text-muted)" }}>{svc.category}{svc.service_area_city ? ` · ${svc.service_area_city}` : ""}</p>
-                      {svc.rate_amount != null && <p style={{ fontSize: 12, color: "#C2410C", fontWeight: 500 }}>₹{svc.rate_amount.toLocaleString()} / {svc.rate_type}</p>}
-                    </div>
-                    <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 999, background: svc.is_available ? "rgba(22,101,52,0.10)" : "rgba(156,163,192,0.15)", color: svc.is_available ? "#166534" : "#9CA3C0", fontWeight: 600, flexShrink: 0 }}>{svc.is_available ? "Available" : "Unavailable"}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div id="section-experience">
-              <ExperienceSection items={experiences} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("experience")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
-            </div>
-            <div id="section-education">
-              <EducationSection items={education} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("education")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
-            </div>
-            <RolesSection items={profileRoles} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("role")} onDelete={deleteRole} />
-            <div id="section-projects">
-              <ProjectsSection items={projects} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("project")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} onStatusChange={(id, status) => setWorkItems(prev => prev.map(w => w.id === id ? { ...w, verification_status: status } : w))} />
-            </div>
-            <AchievementsSection items={achievements} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("achievement")} onDelete={deleteItem} onToggleVisibility={toggleVisibility} />
-            <div id="section-skills">
-              <SkillsSection skills={skills} isOwnProfile={isOwnProfile} onAdd={() => setModalSection("skills")} onRemoveSkill={removeSkill} />
-            </div>
-            {(isOwnProfile || priv.who_can_see_posts === "everyone" || (priv.who_can_see_posts === "connections" && isConnected) || !priv.who_can_see_posts) && (
-              <div id="section-posts">
-                <PostsSection posts={userPosts} stats={{ posts: stats.posts, reposts: 0 }} username={username} userId={targetUserId} isOwnProfile={isOwnProfile} />
-              </div>
-            )}
             {isOwnProfile && targetUserId && (
-              <div style={{ marginTop: 4 }}>
+              <div data-analytics>
                 <ProfileAnalyticsRow profileId={targetUserId} />
               </div>
             )}
-            <div className="glass-card" style={{ padding: "16px 20px", borderRadius: 16 }}>
-              <div className="flex items-center" style={{ gap: 6, marginBottom: 12 }}>
-                <Images style={{ width: 16, height: 16, color: "#FF5A1F" }} />
-                <p style={{ fontSize: 13, fontWeight: 700, color: "var(--text-1)" }}>Flicks</p>
-              </div>
-              <ProfileFlicksSection profileId={targetUserId || ""} isOwnProfile={isOwnProfile} />
-            </div>
           </div>
+
+          <ClayNavBar
+            isOwner={isOwnProfile}
+            targetUserId={targetUserId}
+            cleanProfileUsername={cleanProfileUsername}
+            username={username}
+            onScrollToAnalytics={() => {
+              document.querySelector("[data-analytics]")?.scrollIntoView({ behavior: "smooth" });
+            }}
+          />
         </div>
-        </>)}
 
-            {/* ── RESUME TAB ── */}
-            {profileTab === "resume" && (
-              <ProfileResumeTab
-                profile={profileData}
-                workItems={workItems}
-                skills={skills}
-                certifications={certifications}
-                customLinks={visibleCustomLinks}
-                userEmail={userEmail}
-                isOwnProfile={isOwnProfile}
-                targetUserId={targetUserId || null}
-                onResumeUploaded={url => setViewedProfile((prev: any) => ({ ...prev, resume_url: url }))}
-              />
-            )}
-
-            {/* ── ACTIVITY TAB — owner only ── */}
-            {profileTab === "activity" && isOwnProfile && targetUserId && (
-              <ProfileActivityTab
-                profileId={targetUserId}
-                followersCount={(profileData as any).follower_count ?? 0}
-              />
-            )}
-          </div>{/* end right region */}
-        </div>{/* end grid */}
       </div>
 
       {/* ═══ GLASS MODALS ═══ */}

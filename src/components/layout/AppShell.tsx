@@ -35,7 +35,6 @@ const BASE_NAV_GROUPS = [
   {
     label: "CONNECT",
     items: [
-      { label: "My Connections", icon: Link2, path: "/app/connections" },
       { label: "Squads", icon: Layers, path: "/app/squads" },
       { label: "Stash", icon: Bookmark, path: "/app/stash" },
       { label: "Alerts", icon: Bell, path: "/app/alerts" },

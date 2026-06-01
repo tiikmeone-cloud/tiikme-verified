@@ -877,6 +877,111 @@
   .glass-dark { background: rgba(26,26,78,0.95); }
 }
 
+/* ═══ CLAYMORPHISM ═══ */
+.clay-card {
+  background: var(--bg-card);
+  border-radius: 24px;
+  box-shadow: 6px 6px 18px rgba(0,0,0,0.07), -4px -4px 12px rgba(255,255,255,0.80);
+  border: none;
+  overflow: hidden;
+}
+.dark .clay-card {
+  box-shadow: 8px 8px 22px rgba(0,0,0,0.55), -3px -3px 8px rgba(255,255,255,0.03);
+}
+.clay-btn {
+  background: var(--bg-card);
+  border-radius: 14px;
+  box-shadow: 5px 5px 12px rgba(0,0,0,0.09), -3px -3px 8px rgba(255,255,255,0.75);
+  cursor: pointer;
+  border: none;
+  transition: box-shadow 120ms, transform 80ms;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.clay-btn:hover {
+  box-shadow: 3px 3px 8px rgba(0,0,0,0.12), -2px -2px 6px rgba(255,255,255,0.85);
+  transform: translateY(-1px);
+}
+.clay-btn:active {
+  box-shadow: inset 2px 2px 5px rgba(0,0,0,0.12), inset -1px -1px 3px rgba(255,255,255,0.50);
+  transform: scale(0.97);
+}
+.dark .clay-btn {
+  box-shadow: 5px 5px 14px rgba(0,0,0,0.50), -2px -2px 6px rgba(255,255,255,0.03);
+}
+.dark .clay-btn:hover {
+  box-shadow: 3px 3px 8px rgba(0,0,0,0.60), -1px -1px 4px rgba(255,255,255,0.04);
+}
+.clay-pill {
+  border-radius: 999px;
+  box-shadow: 3px 3px 8px rgba(0,0,0,0.07), -2px -2px 5px rgba(255,255,255,0.75);
+  display: inline-flex; align-items: center;
+}
+.dark .clay-pill {
+  box-shadow: 3px 3px 8px rgba(0,0,0,0.40), -1px -1px 4px rgba(255,255,255,0.03);
+}
+/* Profile page layout */
+.profile-page-layout {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.profile-main-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.profile-clay-nav {
+  width: 56px;
+  position: sticky;
+  top: 72px;
+  align-self: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+@media (max-width: 600px) {
+  .profile-page-layout { flex-direction: column; }
+  .profile-clay-nav {
+    position: fixed;
+    bottom: 76px;
+    left: 50%;
+    transform: translateX(-50%);
+    flex-direction: row;
+    width: auto;
+    padding: 8px 12px;
+    background: var(--bg-card);
+    border-radius: 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    z-index: 50;
+    top: unset;
+    align-self: unset;
+  }
+}
+/* Thread timeline for The Grind + The Class */
+.thread-wrap { position: relative; }
+.thread-line {
+  position: absolute;
+  left: 23px; top: 56px; bottom: 56px;
+  width: 2px;
+  background: linear-gradient(to bottom, rgba(232,115,58,0.35), transparent);
+  z-index: 0;
+  pointer-events: none;
+}
+.thread-line-edu {
+  position: absolute;
+  left: 23px; top: 56px; bottom: 56px;
+  width: 2px;
+  background: linear-gradient(to bottom, rgba(3,105,161,0.35), transparent);
+  z-index: 0;
+  pointer-events: none;
+}
+.thread-item { position: relative; z-index: 1; }
+
 /* ═══ KEYFRAME ANIMATIONS ═══ */
 @keyframes floatOrb1 {
   0%,100% { transform: translate(0,0) scale(1); }

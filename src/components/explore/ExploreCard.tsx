@@ -82,38 +82,27 @@ export function PersonCard({ p, strandStatus, onStrand, currentUserId }: PersonC
       onClick={() => navigate(`/app/profile/${p.id}`)}
     >
       <AvatarSquare src={p.avatar_url} name={name} size={60} />
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-start", gap: 4, minWidth: 0, paddingTop: 1 }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-start", gap: 3, minWidth: 0, paddingTop: 1 }}>
         <div className="flex items-center gap-1.5 min-w-0">
           <span style={{ ...singleLineClamp, fontWeight: 700, fontSize: 14, lineHeight: "18px", color: "var(--text-primary)", flex: 1, minWidth: 0 }}>{name}</span>
           {p.is_verified && <VerifiedBadge size={14} />}
         </div>
-        <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-          {typeof p.activity_score === "number" && (
-            <ActivityScoreMini score={p.activity_score} viewerIsOwner={currentUserId === p.id} />
-          )}
-          {p.account_type === "institution" && (
-            <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 999, background: "rgba(255,90,31,0.12)", color: "#FF5A1F" }}>
-              Company
-            </span>
-          )}
-        </div>
+        {/* One-word role pill */}
         {flags.showRole && designation && (
-          <span style={{ ...clampTwoLines, fontSize: 12, lineHeight: "16px", color: "var(--text-secondary)" }}>{designation}</span>
-        )}
-        {flags.showRole && roleSubtype && roleSubtype.toLowerCase() !== designation.toLowerCase() && (
-          <span
-            style={{
-              fontSize: 11, color: "var(--text-muted)",
-              background: "rgba(156,163,192,0.12)",
-              padding: "1px 8px", borderRadius: 999,
-              alignSelf: "flex-start", marginTop: 1, maxWidth: "100%",
-            }}
-          >
-            {roleSubtype}
+          <span style={{
+            display: "inline-flex", alignSelf: "flex-start",
+            fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 999,
+            background: "rgba(232,115,58,0.10)", color: "#E8733A",
+            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%",
+          }}>
+            {designation.split(" ").slice(0, 3).join(" ")}
           </span>
         )}
         {flags.showCompany && company && (
-          <span style={{ ...clampTwoLines, fontSize: 11, lineHeight: "15px", color: "var(--text-muted)" }}>{company}</span>
+          <span style={{ ...singleLineClamp, fontSize: 11, lineHeight: "15px", color: "var(--text-muted)" }}>{company}</span>
+        )}
+        {typeof p.activity_score === "number" && (
+          <ActivityScoreMini score={p.activity_score} viewerIsOwner={currentUserId === p.id} />
         )}
       </div>
       {currentUserId !== p.id && (
