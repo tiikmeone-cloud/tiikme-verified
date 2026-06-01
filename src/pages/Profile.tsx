@@ -372,6 +372,25 @@ const Profile = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetUserId, isOwnProfile, dataLoading]);
 
+  // Hoisted above early returns to satisfy Rules of Hooks (no hooks after conditional return)
+  const completenessPercent = useMemo(() => {
+    const pd: any = isOwnProfile ? authProfile : viewedProfile;
+    if (!pd) return 0;
+    const expCount = workItems.filter((w: any) => w.item_type === "experience").length;
+    const eduCount = workItems.filter((w: any) => w.item_type === "education").length;
+    const pts: [number, boolean][] = [
+      [15, !!pd.avatar_url],
+      [15, !!pd.headline?.trim()],
+      [15, !!pd.bio?.trim()],
+      [20, expCount > 0],
+      [10, eduCount > 0],
+      [10, Array.isArray(pd.skills) && pd.skills.length > 0],
+      [5,  !!(pd.location_city || pd.location_state)],
+      [10, !!(pd as any).resume_url],
+    ];
+    return pts.reduce((sum, [w, ok]) => sum + (ok ? w : 0), 0);
+  }, [isOwnProfile, authProfile, viewedProfile, workItems]);
+
   if (authLoading || dataLoading) return (
     <div className="min-h-screen" style={{ background: "transparent" }}>
       <div style={{ maxWidth: 960, margin: "0 auto", padding: 16 }}>
@@ -514,22 +533,6 @@ const Profile = () => {
     navigator.clipboard.writeText(url);
     toast.success("Profile link copied!");
   };
-
-  // Profile completeness score (mirrors ProfileCompletenessCard weights)
-  const completenessPercent = useMemo(() => {
-    if (!profileData) return 0;
-    const pts = [
-      [15, !!profileData.avatar_url],
-      [15, !!profileData.headline?.trim()],
-      [15, !!profileData.bio?.trim()],
-      [20, experiences.length > 0],
-      [10, education.length > 0],
-      [10, Array.isArray(profileData.skills) && profileData.skills.length > 0],
-      [5,  !!(profileData.location_city || profileData.location_state)],
-      [10, !!(profileData as any).resume_url],
-    ] as [number, boolean][];
-    return pts.reduce((sum, [w, ok]) => sum + (ok ? w : 0), 0);
-  }, [profileData, experiences.length, education.length]);
 
   const handleConnect = async () => {
     if (!user || !targetUserId || connectLoading) return;
