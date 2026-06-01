@@ -33,24 +33,33 @@ const SECTIONS: { key: SectionKey; label: string }[] = [
 
 /* ─────────── Grid card components ─────────── */
 
+const trunc = (s: string, max: number) => s.length > max ? s.slice(0, max - 1) + "…" : s;
+const fmtCount = (n: number) => n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : n >= 1_000 ? `${(n / 1_000).toFixed(1)}K` : String(n);
+
 const PersonGridCard = ({
-  p, strandStatus, onStrand, isFollowing, onFollow, onUnfollow, currentUserId,
+  p, strandStatus, onStrand, isFollowing, onFollow, onUnfollow, currentUserId, mutualFollowers,
 }: {
   p: any; strandStatus: string; onStrand: () => void;
-  isFollowing: boolean; onFollow: () => void; onUnfollow: () => void; currentUserId?: string;
+  isFollowing: boolean; onFollow: () => void; onUnfollow: () => void;
+  currentUserId?: string; mutualFollowers?: { id: string; avatar_url: string | null; full_name: string | null }[];
 }) => {
   const navigate = useNavigate();
   const isConnected = strandStatus === "accepted";
   const isPending = strandStatus === "pending";
-  const name = p.full_name || p.username || "User";
-  const blurb = p.headline || p.designation || (p.role ? p.role.charAt(0).toUpperCase() + p.role.slice(1).replace(/_/g, " ") : "");
-  const sub = p.location_city || "";
+  const rawName = p.full_name || p.username || "User";
+  const name = trunc(rawName, 28);
+  const rolePart = p.role ? p.role.charAt(0).toUpperCase() + p.role.slice(1).replace(/_/g, " ") : "";
+  const sub = trunc([p.designation || rolePart, p.location_city].filter(Boolean).join(" · "), 40);
+  const blurb = p.headline || (p.bio ? p.bio.split(/[.\n]/)[0].trim() : "") || (rolePart && p.location_city ? `${rolePart} in ${p.location_city}.` : "") || "Verified professional on Tiikme.";
+  const followerCount: number = p.follower_count ?? 0;
+  const mutuals = mutualFollowers || [];
+
   return (
     <article
       className="glass-card"
       style={{
-        height: 220, display: "flex", flexDirection: "column",
-        padding: "14px 14px 12px", borderRadius: 14,
+        height: 214, display: "flex", flexDirection: "column",
+        padding: "14px 14px 11px", borderRadius: 14,
         transition: "transform 180ms, box-shadow 180ms",
         overflow: "hidden", boxSizing: "border-box",
       }}
@@ -74,31 +83,45 @@ const PersonGridCard = ({
           {sub && <p style={{ fontSize: 11, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: 1 }}>{sub}</p>}
         </div>
         {currentUserId !== p.id && (
-          <FollowIconButton
-            isFollowing={isFollowing}
-            onFollow={onFollow}
-            onUnfollow={onUnfollow}
-            targetName={name}
-            size={28}
-          />
+          <FollowIconButton isFollowing={isFollowing} onFollow={onFollow} onUnfollow={onUnfollow} targetName={name} size={28} />
         )}
       </div>
 
-      {/* Blurb — 2-line clamp */}
-      {blurb && (
-        <p style={{
-          fontSize: 12, color: "var(--text-secondary)", marginTop: 8, lineHeight: "16px",
-          display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
-          overflow: "hidden", overflowWrap: "anywhere",
-        }}>
-          {blurb}
-        </p>
-      )}
+      {/* Blurb — always present, 2-line clamp */}
+      <p style={{
+        fontSize: 12, color: "var(--text-secondary)", marginTop: 8, lineHeight: "16px",
+        display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
+        overflow: "hidden", overflowWrap: "anywhere",
+      }}>
+        {blurb}
+      </p>
 
       <div style={{ flex: 1 }} />
 
-      {/* Bottom: connect button + follower count stub */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8, gap: 6 }}>
+      {/* Bottom row: follower avatars OR "New here" + connect button */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
+        {/* Follower DP row */}
+        <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 4, overflow: "hidden" }}>
+          {followerCount === 0 ? (
+            <span style={{ fontSize: 10, fontWeight: 600, color: "var(--text-muted)", background: "var(--surface-2)", borderRadius: 6, padding: "2px 7px", whiteSpace: "nowrap" }}>New here</span>
+          ) : (
+            <>
+              {/* Overlapping avatar stack: mutuals first, then fill with follower count */}
+              <div style={{ display: "flex", alignItems: "center" }}>
+                {mutuals.slice(0, 3).map((m, i) => (
+                  <div key={m.id} style={{ marginLeft: i === 0 ? 0 : -7, zIndex: 3 - i, position: "relative", borderRadius: "50%", border: "1.5px solid var(--bg-card)", flexShrink: 0 }}>
+                    <AvatarSquare src={m.avatar_url} name={m.full_name || "?"} size={18} style={{ borderRadius: "50%", display: "block" }} />
+                  </div>
+                ))}
+              </div>
+              <p style={{ fontSize: 10, color: "var(--text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {mutuals.length > 0 ? `${mutuals.length} mutual · ` : ""}{fmtCount(followerCount)} follower{followerCount !== 1 ? "s" : ""}
+              </p>
+            </>
+          )}
+        </div>
+
+        {/* Connect button */}
         {currentUserId !== p.id && (
           <button
             type="button"
@@ -106,7 +129,7 @@ const PersonGridCard = ({
             onClick={e => { e.stopPropagation(); onStrand(); }}
             className="cursor-pointer"
             style={{
-              flex: 1, height: 28, borderRadius: 7, fontSize: 11, fontWeight: 600,
+              flexShrink: 0, height: 26, padding: "0 10px", borderRadius: 7, fontSize: 11, fontWeight: 600,
               border: "none", whiteSpace: "nowrap",
               ...(isConnected
                 ? { background: "rgba(52,199,89,0.10)", color: "#34C759" }
@@ -116,7 +139,7 @@ const PersonGridCard = ({
               ),
             }}
           >
-            {isConnected ? "Connected ✓" : isPending ? "Requested" : "Connect"}
+            {isConnected ? "✓ Connected" : isPending ? "Requested" : "Connect"}
           </button>
         )}
       </div>
@@ -134,15 +157,14 @@ const OrgGridCard = ({
   const audience = org.followers_count != null ? org.followers_count : null;
   const isCreator = isCreatorOrg(org.type, subtype);
   const audienceLabel = isCreator ? "subscribers" : "followers";
-  const formatCount = (n: number) => n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : n >= 1_000 ? `${(n / 1_000).toFixed(1)}K` : String(n);
   const location = [org.city, org.state].filter(Boolean).join(", ");
   const blurb = org.description ? org.description.split(/[.\n]/)[0].trim() : "";
   return (
     <article
       className="glass-card"
       style={{
-        height: 200, display: "flex", flexDirection: "column",
-        padding: "14px 14px 12px", borderRadius: 14,
+        height: 214, display: "flex", flexDirection: "column",
+        padding: "14px 14px 11px", borderRadius: 14,
         transition: "transform 180ms, box-shadow 180ms",
         overflow: "hidden", boxSizing: "border-box",
       }}
@@ -189,7 +211,7 @@ const OrgGridCard = ({
       {/* Followers count */}
       {audience != null && audience >= 0 && (
         <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 6 }}>
-          <span className="num">{formatCount(audience)}</span> {audienceLabel}
+          <span className="num">{fmtCount(audience)}</span> {audienceLabel}
         </p>
       )}
     </article>
@@ -355,6 +377,7 @@ const Explore = () => {
   const [strandMap, setStrandMap] = useState<Record<string, string>>({});
   const [followMap, setFollowMap] = useState<Record<string, boolean>>({});
   const [userFollowMap, setUserFollowMap] = useState<Record<string, boolean>>({});
+  const [mutualMap, setMutualMap] = useState<Record<string, { id: string; avatar_url: string | null; full_name: string | null }[]>>({});
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [activeFilter, setActiveFilter] = useState<SectionKey | null>(null);
@@ -442,7 +465,7 @@ const Explore = () => {
     /* ─── PEOPLE (relevance filtered, backfill with top activity) ─── */
     const { data: peopleRaw } = await supabase
       .from("profiles")
-      .select("id, full_name, username, avatar_url, role, role_subtype, headline, designation, institution_name, currently_working_at, display_preference, location_city, is_verified, activity_score, privacy, sector, skills, interests, role_metadata, account_type, profession_type")
+      .select("id, full_name, username, avatar_url, role, role_subtype, headline, bio, designation, institution_name, currently_working_at, display_preference, location_city, is_verified, activity_score, follower_count, privacy, sector, skills, interests, role_metadata, account_type, profession_type")
       .eq("is_public", true)
       .not("full_name", "is", null)
       .neq("id", user.id)
@@ -526,20 +549,48 @@ const Explore = () => {
       .slice(0, 10)
       .map(([tag, count]) => ({ tag, count }));
 
-    /* ─── USER FOLLOWS ─── */
+    /* ─── USER FOLLOWS + MUTUAL FOLLOWER MAP ─── */
     const ufMap: Record<string, boolean> = {};
+    const mMap: Record<string, { id: string; avatar_url: string | null; full_name: string | null }[]> = {};
     try {
       const { data: userFollows } = await supabase
         .from("user_follows" as any)
         .select("following_id")
         .eq("follower_id", user.id) as any;
       (userFollows || []).forEach((f: any) => { if (f.following_id) ufMap[f.following_id] = true; });
-    } catch { /* table may not exist yet */ }
 
-    return { sMap, fMap, ufMap, people, orgs, posts, postAuthors, hashtags };
+      const followedByViewer = Object.keys(ufMap);
+      const peopleIds = people.map((p: any) => p.id);
+      if (followedByViewer.length > 0 && peopleIds.length > 0) {
+        const { data: mutualRows } = await supabase
+          .from("user_follows" as any)
+          .select("follower_id, following_id")
+          .in("follower_id", followedByViewer)
+          .in("following_id", peopleIds) as any;
+
+        const byTarget: Record<string, string[]> = {};
+        (mutualRows || []).forEach((r: any) => {
+          if (!byTarget[r.following_id]) byTarget[r.following_id] = [];
+          byTarget[r.following_id].push(r.follower_id);
+        });
+
+        const mutualIds = [...new Set(Object.values(byTarget).flat())];
+        if (mutualIds.length > 0) {
+          const { data: mProfiles } = await supabase
+            .from("profiles").select("id, avatar_url, full_name").in("id", mutualIds);
+          const byId: Record<string, any> = {};
+          (mProfiles || []).forEach((p: any) => { byId[p.id] = p; });
+          Object.entries(byTarget).forEach(([tid, ids]) => {
+            mMap[tid] = ids.map(id => byId[id]).filter(Boolean).slice(0, 3);
+          });
+        }
+      }
+    } catch { /* user_follows may be empty */ }
+
+    return { sMap, fMap, ufMap, mMap, people, orgs, posts, postAuthors, hashtags };
     } catch (err) {
       console.error("[Explore] fetchAll error:", err);
-      return { sMap: {}, fMap: {}, ufMap: {}, people: [], orgs: [], posts: [], postAuthors: {}, hashtags: [] };
+      return { sMap: {}, fMap: {}, ufMap: {}, mMap: {}, people: [], orgs: [], posts: [], postAuthors: {}, hashtags: [] };
     }
   }, [user?.id, profile?.role, profile?.role_subtype, profile?.location_city, profile?.sector, profile?.account_type, (profile as any)?.profession_type, viewerInterests.join(",")]);
 
@@ -555,6 +606,7 @@ const Explore = () => {
       setStrandMap(exploreData.sMap);
       setFollowMap(exploreData.fMap);
       setUserFollowMap(exploreData.ufMap);
+      setMutualMap(exploreData.mMap);
     }
   }, [exploreData]);
 
@@ -869,6 +921,7 @@ const Explore = () => {
                 onFollow={() => handleUserFollow(p.id, p.full_name || p.username || "them")}
                 onUnfollow={() => handleUserFollow(p.id, p.full_name || p.username || "them")}
                 currentUserId={user?.id}
+                mutualFollowers={mutualMap[p.id]}
               />
             ))}
           </GridSection>
