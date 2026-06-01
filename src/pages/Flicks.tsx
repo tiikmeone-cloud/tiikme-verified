@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Heart, Check, Eye, ChevronUp, ChevronDown, Loader2, ImagePlus } from "lucide-react";
+import { Heart, Eye, ChevronUp, ChevronDown, Loader2, ImagePlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import AvatarSquare from "@/components/ui/AvatarSquare";
 import VerifiedBadge from "@/components/VerifiedBadge";
+import { FollowIconButton } from "@/components/shared/FollowIconButton";
 
 interface Flick {
   id: string;
@@ -159,29 +160,21 @@ function FlickCard({
         </div>
 
         {!isOwn && (
-          <button
-            type="button"
-            onClick={handleFollow}
-            aria-label={followed ? "Following" : "Follow"}
-            style={followed ? {
-              width: 34, height: 34, borderRadius: "50%", flexShrink: 0,
-              border: "none", cursor: "pointer",
-              background: "rgba(255,255,255,0.18)",
-              backdropFilter: "blur(8px)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-            } : {
-              height: 34, padding: "0 18px", borderRadius: 999, flexShrink: 0,
-              fontSize: 13, fontWeight: 700, border: "none", cursor: "pointer",
-              background: "linear-gradient(135deg, #FF8A3D 0%, #FF5C00 100%)",
-              color: "#fff",
-              boxShadow: "0 5px 14px rgba(255,92,0,0.42), inset 0 1px 0 rgba(255,255,255,0.45)",
+          <FollowIconButton
+            isFollowing={followed}
+            onFollow={async () => {
+              if (!user) { toast.error("Sign in to follow"); return; }
+              await (supabase.from("user_follows" as any).insert({ follower_id: user.id, following_id: flick.author_id }) as any);
+              onFollow(flick.author_id, true);
             }}
-          >
-            {followed
-              ? <Check style={{ width: 16, height: 16, color: "#fff" }} />
-              : "Follow"
-            }
-          </button>
+            onUnfollow={async () => {
+              if (!user) return;
+              await (supabase.from("user_follows" as any).delete().eq("follower_id", user.id).eq("following_id", flick.author_id) as any);
+              onFollow(flick.author_id, false);
+            }}
+            targetName={name}
+            size={34}
+          />
         )}
       </div>
     </div>

@@ -9,9 +9,10 @@ import { toast } from "sonner";
 import { sendNotification } from "@/lib/notify";
 import type { ReactNode } from "react";
 import AvatarSquare from "@/components/ui/AvatarSquare";
-import { getOrgTypeConfig } from "@/lib/orgTypes";
+import { getOrgTypeConfig, isCreatorOrg } from "@/lib/orgTypes";
 import { sendConnectionRequest } from "@/hooks/useConnectionStatus";
 import { PageSEO } from "@/hooks/usePageSEO";
+import { FollowIconButton } from "@/components/shared/FollowIconButton";
 
 /* ─────────── Helpers ─────────── */
 const HASHTAG_RE = /#([\p{L}0-9_]{2,40})/gu;
@@ -30,134 +31,167 @@ const SECTIONS: { key: SectionKey; label: string }[] = [
   { key: "hashtags", label: "Hashtags" },
 ];
 
-/* ─────────── Fixed-size carousel card wrappers ─────────── */
-/* PersonCard fixed-size wrapper: 200×240px */
-const PersonCarouselCard = ({
-  p, strandStatus, onStrand, currentUserId,
+/* ─────────── Grid card components ─────────── */
+
+const PersonGridCard = ({
+  p, strandStatus, onStrand, isFollowing, onFollow, onUnfollow, currentUserId,
 }: {
-  p: any; strandStatus: string; onStrand: () => void; currentUserId?: string;
+  p: any; strandStatus: string; onStrand: () => void;
+  isFollowing: boolean; onFollow: () => void; onUnfollow: () => void; currentUserId?: string;
 }) => {
   const navigate = useNavigate();
   const isConnected = strandStatus === "accepted";
   const isPending = strandStatus === "pending";
   const name = p.full_name || p.username || "User";
-  const headline = p.headline || p.designation || (p.role ? p.role.charAt(0).toUpperCase() + p.role.slice(1).replace(/_/g, " ") : "");
+  const blurb = p.headline || p.designation || (p.role ? p.role.charAt(0).toUpperCase() + p.role.slice(1).replace(/_/g, " ") : "");
+  const sub = p.location_city || "";
   return (
     <article
-      className="glass-card cursor-pointer"
+      className="glass-card"
       style={{
-        width: 200, minWidth: 200, height: 240, flexShrink: 0,
-        display: "flex", flexDirection: "column", alignItems: "center",
-        padding: "16px 12px 12px", borderRadius: 14,
-        scrollSnapAlign: "start",
-        transition: "transform 200ms, box-shadow 200ms",
-        boxSizing: "border-box", overflow: "hidden",
+        height: 220, display: "flex", flexDirection: "column",
+        padding: "14px 14px 12px", borderRadius: 14,
+        transition: "transform 180ms, box-shadow 180ms",
+        overflow: "hidden", boxSizing: "border-box",
       }}
-      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(26,26,78,0.12)"; }}
+      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 10px 32px rgba(26,26,78,0.10)"; }}
       onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
-      onClick={() => navigate(`/app/profile/${p.id}`)}
     >
-      <AvatarSquare src={p.avatar_url} name={name} size={48} style={{ borderRadius: "50%", flexShrink: 0 }} />
-      <p style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)", marginTop: 8, textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "100%", lineHeight: "18px" }}>
-        {name}
-      </p>
-      {headline && (
-        <p style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 3, textAlign: "center", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: "15px", width: "100%" }}>
-          {headline}
+      {/* Header row */}
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+        <div style={{ cursor: "pointer", flexShrink: 0 }} onClick={() => navigate(`/app/profile/${p.id}`)}>
+          <AvatarSquare src={p.avatar_url} name={name} size={44} style={{ borderRadius: "50%" }} />
+        </div>
+        <div style={{ flex: 1, minWidth: 0, cursor: "pointer" }} onClick={() => navigate(`/app/profile/${p.id}`)}>
+          <p style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: "17px" }}>
+            {name}
+            {p.is_verified && (
+              <span style={{ display: "inline-flex", width: 13, height: 13, marginLeft: 4, verticalAlign: "middle", background: "#FF5A1F", borderRadius: "50%", alignItems: "center", justifyContent: "center" }}>
+                <svg viewBox="0 0 10 8" fill="none" style={{ width: 7, height: 7 }}><path d="M1 4l2.5 2.5L9 1" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </span>
+            )}
+          </p>
+          {sub && <p style={{ fontSize: 11, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: 1 }}>{sub}</p>}
+        </div>
+        {currentUserId !== p.id && (
+          <FollowIconButton
+            isFollowing={isFollowing}
+            onFollow={onFollow}
+            onUnfollow={onUnfollow}
+            targetName={name}
+            size={28}
+          />
+        )}
+      </div>
+
+      {/* Blurb — 2-line clamp */}
+      {blurb && (
+        <p style={{
+          fontSize: 12, color: "var(--text-secondary)", marginTop: 8, lineHeight: "16px",
+          display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
+          overflow: "hidden", overflowWrap: "anywhere",
+        }}>
+          {blurb}
         </p>
       )}
-      {p.location_city && (
-        <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2, textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "100%" }}>
-          {p.location_city}
-        </p>
-      )}
+
       <div style={{ flex: 1 }} />
-      {currentUserId !== p.id && (
-        <button
-          type="button"
-          disabled={strandStatus !== "none"}
-          onClick={e => { e.stopPropagation(); onStrand(); }}
-          className="cursor-pointer"
-          style={{
-            marginTop: 8, padding: "6px 14px", borderRadius: 8, width: "100%",
-            fontSize: 12, fontWeight: 600, border: "none", whiteSpace: "nowrap",
-            ...(isConnected
-              ? { background: "rgba(52,199,89,0.10)", color: "#34C759" }
-              : isPending
-              ? { background: "rgba(255,90,31,0.12)", color: "#FF5A1F" }
-              : { background: "#FF5A1F", color: "#fff" }
-            ),
-          }}
-        >
-          {isConnected ? "Connected ✓" : isPending ? "Requested" : "+ Connect"}
-        </button>
-      )}
+
+      {/* Bottom: connect button + follower count stub */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8, gap: 6 }}>
+        {currentUserId !== p.id && (
+          <button
+            type="button"
+            disabled={strandStatus !== "none"}
+            onClick={e => { e.stopPropagation(); onStrand(); }}
+            className="cursor-pointer"
+            style={{
+              flex: 1, height: 28, borderRadius: 7, fontSize: 11, fontWeight: 600,
+              border: "none", whiteSpace: "nowrap",
+              ...(isConnected
+                ? { background: "rgba(52,199,89,0.10)", color: "#34C759" }
+                : isPending
+                ? { background: "rgba(255,90,31,0.08)", color: "#FF5A1F" }
+                : { background: "#FF5A1F", color: "#fff" }
+              ),
+            }}
+          >
+            {isConnected ? "Connected ✓" : isPending ? "Requested" : "Connect"}
+          </button>
+        )}
+      </div>
     </article>
   );
 };
 
-/* OrgCard fixed-size wrapper: 200×220px */
-const OrgCarouselCard = ({
+const OrgGridCard = ({
   org, following, onToggleFollow, navigateTo,
 }: {
   org: any; following: boolean; onToggleFollow: () => void; navigateTo: string;
 }) => {
   const navigate = useNavigate();
-  const { isCreatorOrg } = require("@/lib/orgTypes");
   const subtype = org.subtype || org.sub_type;
-  const isCreator = isCreatorOrg(org.type, subtype);
-  const followLabel = isCreator ? (following ? "Subscribed" : "+ Subscribe") : (following ? "Following" : "+ Follow");
   const audience = org.followers_count != null ? org.followers_count : null;
+  const isCreator = isCreatorOrg(org.type, subtype);
   const audienceLabel = isCreator ? "subscribers" : "followers";
   const formatCount = (n: number) => n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : n >= 1_000 ? `${(n / 1_000).toFixed(1)}K` : String(n);
   const location = [org.city, org.state].filter(Boolean).join(", ");
+  const blurb = org.description ? org.description.split(/[.\n]/)[0].trim() : "";
   return (
     <article
-      className="glass-card cursor-pointer"
+      className="glass-card"
       style={{
-        width: 200, minWidth: 200, height: 220, flexShrink: 0,
-        display: "flex", flexDirection: "column", alignItems: "center",
-        padding: "16px 12px 12px", borderRadius: 14,
-        scrollSnapAlign: "start",
-        transition: "transform 200ms, box-shadow 200ms",
-        boxSizing: "border-box", overflow: "hidden",
+        height: 200, display: "flex", flexDirection: "column",
+        padding: "14px 14px 12px", borderRadius: 14,
+        transition: "transform 180ms, box-shadow 180ms",
+        overflow: "hidden", boxSizing: "border-box",
       }}
-      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(26,26,78,0.12)"; }}
+      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 10px 32px rgba(26,26,78,0.10)"; }}
       onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
-      onClick={() => navigate(navigateTo)}
     >
-      <AvatarSquare src={org.logo_url} name={org.name || "?"} size={48} style={{ borderRadius: 10, flexShrink: 0 }} />
-      <p style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)", marginTop: 8, textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "100%", lineHeight: "17px" }}>
-        {org.name}
-      </p>
-      {(subtype || location) && (
-        <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2, textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "100%" }}>
-          {[subtype, location].filter(Boolean).join(" · ")}
+      {/* Header row */}
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+        <div style={{ cursor: "pointer", flexShrink: 0 }} onClick={() => navigate(navigateTo)}>
+          <AvatarSquare src={org.logo_url} name={org.name || "?"} size={44} style={{ borderRadius: 10 }} />
+        </div>
+        <div style={{ flex: 1, minWidth: 0, cursor: "pointer" }} onClick={() => navigate(navigateTo)}>
+          <p style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: "17px" }}>
+            {org.name}
+          </p>
+          {(subtype || location) && (
+            <p style={{ fontSize: 11, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: 1 }}>
+              {[subtype, location].filter(Boolean).join(" · ")}
+            </p>
+          )}
+        </div>
+        <FollowIconButton
+          isFollowing={following}
+          onFollow={onToggleFollow}
+          onUnfollow={onToggleFollow}
+          targetName={org.name}
+          size={28}
+        />
+      </div>
+
+      {/* Blurb */}
+      {blurb && (
+        <p style={{
+          fontSize: 12, color: "var(--text-secondary)", marginTop: 8, lineHeight: "16px",
+          display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
+          overflow: "hidden", overflowWrap: "anywhere",
+        }}>
+          {blurb}
         </p>
       )}
-      {audience != null && audience > 0 && (
-        <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2, textAlign: "center" }}>
+
+      <div style={{ flex: 1 }} />
+
+      {/* Followers count */}
+      {audience != null && audience >= 0 && (
+        <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 6 }}>
           <span className="num">{formatCount(audience)}</span> {audienceLabel}
         </p>
       )}
-      <div style={{ flex: 1 }} />
-      <button
-        type="button"
-        onClick={e => { e.stopPropagation(); onToggleFollow(); }}
-        className="cursor-pointer"
-        style={{
-          marginTop: 8, padding: "6px 14px", borderRadius: 8, width: "100%",
-          fontSize: 12, fontWeight: 600, border: "none", whiteSpace: "nowrap",
-          ...(following
-            ? { background: "rgba(52,199,89,0.10)", color: "#34C759" }
-            : isCreator
-              ? { background: "#EF4444", color: "#fff" }
-              : { background: "#FF5A1F", color: "#fff" }
-          ),
-        }}
-      >
-        {followLabel}
-      </button>
     </article>
   );
 };
@@ -273,6 +307,33 @@ const CarouselSection = ({
   );
 };
 
+/* ─────────── GridSection — responsive grid for people + orgs ─────────── */
+const GridSection = ({
+  sectionRef, title, count, children,
+}: {
+  sectionRef?: (el: HTMLDivElement | null) => void;
+  title: string;
+  count: number;
+  children: ReactNode;
+}) => (
+  <div ref={sectionRef} style={{ marginBottom: 28 }}>
+    <div className="flex items-center" style={{ marginBottom: 12 }}>
+      <div style={{ width: 3, height: 18, borderRadius: 2, background: "#FF5A1F", marginRight: 8, flexShrink: 0 }} />
+      <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)", flex: 1, margin: 0 }}>{title}</h2>
+      <span style={{ fontSize: 12, fontWeight: 600, color: "#fff", background: "#FF5A1F", borderRadius: 10, padding: "1px 8px", marginLeft: 8 }}>{count}</span>
+    </div>
+    <div style={{
+      display: "grid",
+      gridTemplateColumns: "repeat(3, 1fr)",
+      gap: 12,
+    }}
+      className="grid-explore"
+    >
+      {children}
+    </div>
+  </div>
+);
+
 const clampTwoLinesStyle = {
   display: "-webkit-box",
   WebkitLineClamp: 2,
@@ -293,6 +354,7 @@ const Explore = () => {
 
   const [strandMap, setStrandMap] = useState<Record<string, string>>({});
   const [followMap, setFollowMap] = useState<Record<string, boolean>>({});
+  const [userFollowMap, setUserFollowMap] = useState<Record<string, boolean>>({});
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [activeFilter, setActiveFilter] = useState<SectionKey | null>(null);
@@ -344,6 +406,7 @@ const Explore = () => {
   /* ─────────── Unified fetch ─────────── */
   const fetchAll = useCallback(async () => {
     if (!user) return null;
+    try {
 
     /* strands → exclusion + status map */
     const { data: strands } = await supabase
@@ -379,7 +442,7 @@ const Explore = () => {
     /* ─── PEOPLE (relevance filtered, backfill with top activity) ─── */
     const { data: peopleRaw } = await supabase
       .from("profiles")
-      .select("id, full_name, username, avatar_url, role, role_subtype, headline, designation, institution_name, currently_working_at, display_preference, location_city, is_verified, activity_score, privacy_settings, privacy, sector, skills, interests, role_metadata, account_type, profession_type")
+      .select("id, full_name, username, avatar_url, role, role_subtype, headline, designation, institution_name, currently_working_at, display_preference, location_city, is_verified, activity_score, privacy, sector, skills, interests, role_metadata, account_type, profession_type")
       .eq("is_public", true)
       .not("full_name", "is", null)
       .neq("id", user.id)
@@ -387,12 +450,8 @@ const Explore = () => {
       .limit(120);
 
     const peopleSafe = (peopleRaw || []).filter((p: any) => {
-      // New canonical column `privacy.show_in_explore` (defaults true)
-      const newP = (p as any).privacy as any;
-      if (newP && newP.show_in_explore === false) return false;
-      // Legacy fallback
-      const ps = p.privacy_settings as any;
-      if (ps && ps.show_in_search === false) return false;
+      const priv = (p as any).privacy as any;
+      if (priv && priv.show_in_explore === false) return false;
       return !excluded.has(p.id);
     });
 
@@ -467,7 +526,21 @@ const Explore = () => {
       .slice(0, 10)
       .map(([tag, count]) => ({ tag, count }));
 
-    return { sMap, fMap, people, orgs, posts, postAuthors, hashtags };
+    /* ─── USER FOLLOWS ─── */
+    const ufMap: Record<string, boolean> = {};
+    try {
+      const { data: userFollows } = await supabase
+        .from("user_follows" as any)
+        .select("following_id")
+        .eq("follower_id", user.id) as any;
+      (userFollows || []).forEach((f: any) => { if (f.following_id) ufMap[f.following_id] = true; });
+    } catch { /* table may not exist yet */ }
+
+    return { sMap, fMap, ufMap, people, orgs, posts, postAuthors, hashtags };
+    } catch (err) {
+      console.error("[Explore] fetchAll error:", err);
+      return { sMap: {}, fMap: {}, ufMap: {}, people: [], orgs: [], posts: [], postAuthors: {}, hashtags: [] };
+    }
   }, [user?.id, profile?.role, profile?.role_subtype, profile?.location_city, profile?.sector, profile?.account_type, (profile as any)?.profession_type, viewerInterests.join(",")]);
 
   const { data: exploreData, isLoading } = useQuery({
@@ -481,6 +554,7 @@ const Explore = () => {
     if (exploreData) {
       setStrandMap(exploreData.sMap);
       setFollowMap(exploreData.fMap);
+      setUserFollowMap(exploreData.ufMap);
     }
   }, [exploreData]);
 
@@ -500,6 +574,22 @@ const Explore = () => {
     }
     setStrandMap(prev => ({ ...prev, [personId]: result }));
     toast.success(result === "accepted" ? "Connected!" : "Request sent");
+  };
+
+  const handleUserFollow = async (personId: string, name: string) => {
+    if (!user) return;
+    if (userFollowMap[personId]) {
+      setUserFollowMap(prev => ({ ...prev, [personId]: false }));
+      try {
+        await (supabase.from("user_follows" as any).delete().eq("follower_id", user.id).eq("following_id", personId) as any);
+      } catch { setUserFollowMap(prev => ({ ...prev, [personId]: true })); }
+    } else {
+      setUserFollowMap(prev => ({ ...prev, [personId]: true }));
+      try {
+        await (supabase.from("user_follows" as any).insert({ follower_id: user.id, following_id: personId }) as any);
+        sendNotification({ userId: personId, actorId: user.id, type: "follow", title: `${profile?.full_name || "Someone"} started following you`, actionUrl: `/app/profile/${user.id}` });
+      } catch { setUserFollowMap(prev => ({ ...prev, [personId]: false })); }
+    }
   };
 
   const toggleFollow = async (orgId: string, createdBy?: string) => {
@@ -761,36 +851,37 @@ const Explore = () => {
         </div>
       )}
 
-      {/* Sections — horizontal carousels */}
+      {/* Sections */}
       <div style={{ marginTop: 18 }}>
         {showPeople && (!activeFilter || activeFilter === "people") && (
-          <CarouselSection
+          <GridSection
             sectionRef={el => { sectionRefs.current.people = el; }}
             title="People you may know"
             count={exploreData!.people.length}
-            seeAllHref="/app/explore?filter=people"
           >
             {exploreData!.people.slice(0, 20).map(p => (
-              <PersonCarouselCard
+              <PersonGridCard
                 key={p.id}
                 p={p}
                 strandStatus={strandMap[p.id] || "none"}
                 onStrand={() => handleStrand(p.id)}
+                isFollowing={!!userFollowMap[p.id]}
+                onFollow={() => handleUserFollow(p.id, p.full_name || p.username || "them")}
+                onUnfollow={() => handleUserFollow(p.id, p.full_name || p.username || "them")}
                 currentUserId={user?.id}
               />
             ))}
-          </CarouselSection>
+          </GridSection>
         )}
 
         {showOrgs && (!activeFilter || activeFilter === "orgs") && (
-          <CarouselSection
+          <GridSection
             sectionRef={el => { sectionRefs.current.orgs = el; }}
             title="Organizations to discover"
             count={exploreData!.orgs.length}
-            seeAllHref="/app/explore?filter=orgs"
           >
             {exploreData!.orgs.slice(0, 10).map(o => (
-              <OrgCarouselCard
+              <OrgGridCard
                 key={o.id}
                 org={o}
                 following={!!followMap[o.id]}
@@ -798,7 +889,7 @@ const Explore = () => {
                 navigateTo={getOrgNavigateTo(o)}
               />
             ))}
-          </CarouselSection>
+          </GridSection>
         )}
 
         {(!activeFilter || activeFilter === "posts") && displayedPosts.length > 0 && (

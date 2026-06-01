@@ -27,6 +27,7 @@ import { sendNotification } from "@/lib/notify";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { getDisplayFlags, formatRoleLine } from "@/utils/displayProfile";
+import { FollowIconButton } from "@/components/shared/FollowIconButton";
 
 const clampTwoLinesStyle: CSSProperties = {
   display: "-webkit-box",
@@ -362,9 +363,20 @@ export function PostCard({
                     Connected
                   </span>
                 )}
-                {isFollowingOrg && (
-                  <span className="shrink-0" style={{ fontSize: 11, fontWeight: 600, color: "#0D9488", background: "rgba(13,148,136,0.10)", border: "1px solid rgba(13,148,136,0.20)", borderRadius: 999, padding: "1px 7px" }}>
-                    Following
+                {isOrgPost && !!post.posted_by_org && !localUnfollowed && (
+                  <span className="shrink-0">
+                    <FollowIconButton
+                      isFollowing={isFollowingOrg}
+                      onFollow={handleFollowOrg}
+                      onUnfollow={async () => {
+                        const { error } = await supabase.from("org_followers").delete()
+                          .eq("org_id", post.posted_by_org).eq("user_id", user!.id);
+                        if (!error) setLocalUnfollowed(true);
+                        else throw new Error("unfollow failed");
+                      }}
+                      targetName={displayName}
+                      size={26}
+                    />
                   </span>
                 )}
               </div>
@@ -589,19 +601,13 @@ export function PostCard({
 
         {showFollowOrg && (
           <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end" }}>
-            <button
-              type="button"
-              onClick={handleFollowOrg}
-              className="cursor-pointer"
-              style={{
-                height: 32, padding: "0 14px", borderRadius: 999,
-                fontSize: 12, fontWeight: 600, border: "none",
-                background: "rgba(13,148,136,0.12)", color: "#0D9488",
-                boxShadow: "0 2px 8px rgba(13,148,136,0.15)",
-              }}
-            >
-              + Follow
-            </button>
+            <FollowIconButton
+              isFollowing={false}
+              onFollow={handleFollowOrg}
+              onUnfollow={handleFollowOrg}
+              targetName={displayName}
+              size={32}
+            />
           </div>
         )}
 

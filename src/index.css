@@ -856,6 +856,21 @@
   }
 }
 
+/* ═══ EXPLORE GRID ═══ */
+.grid-explore {
+  grid-template-columns: repeat(3, 1fr);
+}
+@media (max-width: 640px) {
+  .grid-explore {
+    grid-template-columns: 1fr;
+  }
+}
+@media (min-width: 641px) and (max-width: 900px) {
+  .grid-explore {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 /* ═══ BACKDROP-FILTER FALLBACK ═══ */
 @supports not (backdrop-filter: blur(1px)) {
   .glass-card, .glass-light, .t-card, .glass-liquid { background: var(--bg-card); }
