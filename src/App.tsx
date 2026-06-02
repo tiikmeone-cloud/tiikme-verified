@@ -99,6 +99,11 @@ const Shell = ({ children }: { children: React.ReactNode }) => (
   <ProtectedRoute><LayoutErrorBoundary><AppShell><PageErrorBoundary>{children}</PageErrorBoundary></AppShell></LayoutErrorBoundary></ProtectedRoute>
 );
 
+/** Profile uses its own full-screen CRM layout — no AppShell wrapper. */
+const ProfileShell = ({ children }: { children: React.ReactNode }) => (
+  <ProtectedRoute><LayoutErrorBoundary><PageErrorBoundary>{children}</PageErrorBoundary></LayoutErrorBoundary></ProtectedRoute>
+);
+
 /** Inner component runs hooks that need AuthProvider in scope (e.g. idle logout). */
 const AppRoutes = () => {
   useIdleLogout();
@@ -157,8 +162,8 @@ const AppRoutes = () => {
             <Route path="/app/post/create" element={<Shell><PostCreate /></Shell>} />
             <Route path="/app/post/:postId" element={<Shell><PostDetail /></Shell>} />
             <Route path="/app/explore" element={<Shell><Explore /></Shell>} />
-            <Route path="/app/profile" element={<Shell><Profile /></Shell>} />
-            <Route path="/app/profile/:id" element={<Shell><Profile /></Shell>} />
+            <Route path="/app/profile" element={<ProfileShell><Profile /></ProfileShell>} />
+            <Route path="/app/profile/:id" element={<ProfileShell><Profile /></ProfileShell>} />
             <Route path="/app/profile/:id/print" element={<PageErrorBoundary><ProfilePrint /></PageErrorBoundary>} />
             <Route path="/app/u/:username/posts" element={<Shell><ProfilePosts /></Shell>} />
             <Route path="/app/teams" element={<Shell><MyWork /></Shell>} />
