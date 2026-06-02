@@ -146,6 +146,9 @@
     --sidebar-accent-foreground: var(--text-1);
     --sidebar-ring: var(--brand);
 
+    /* ── Font token (single source of truth) ── */
+    --font: 'General Sans', 'Plus Jakarta Sans', 'Geist', -apple-system, system-ui, sans-serif;
+
     /* ── Typography scale ── */
     --font-h1: 40px;
     --font-h2: 32px;
@@ -196,7 +199,7 @@
   }
 
   body {
-    font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: var(--font);
     color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
     min-height: 100vh;

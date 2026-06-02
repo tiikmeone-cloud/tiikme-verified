@@ -19,19 +19,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import EditPostModal from "@/components/feed/EditPostModal";
 import DeletePostDialog from "@/components/feed/DeletePostDialog";
 import { sendNotification } from "@/lib/notify";
-import VerifiedBadge from "@/components/VerifiedBadge";
-import ProfileAnalyticsRow from "@/components/profile/ProfileAnalyticsRow";
 import { track } from "@/lib/track";
 import { getActivityTier } from "@/lib/algorithms";
 import { applyPrivacyToProfile } from "@/lib/applyPrivacy";
-import { FollowIconButton } from "@/components/FollowIconButton";
-import IdentityCard from "@/components/profile/clay/IdentityCard";
-import ClayNavBar from "@/components/profile/clay/ClayNavBar";
-import {
-  DashboardTiles, TheStory, TheGrind, TheClass,
-  TheToolkit, TheWins, CertsSection, DropsSection,
-  ReelsSection, CreatorSection,
-} from "@/components/profile/clay/Sections";
+import ProfileRail from "@/components/profile/crm/ProfileRail";
+import IdentityPanel from "@/components/profile/crm/IdentityPanel";
+import TopNav, { type ProfileTab } from "@/components/profile/crm/TopNav";
+import StatTiles from "@/components/profile/crm/StatTiles";
+import ExperienceCanvas, { SubNav, type ExperienceSection } from "@/components/profile/crm/ExperienceCanvas";
+import { DropsSection } from "@/components/profile/clay/Sections";
 
 /* ── Constants ── */
 const ROLE_COLOR_MAP: Record<string, string> = { student: "#4F46E5", professional: "#0369A1", doctor: "#0E7490", government: "#166534", skilled_trade: "#C2410C", hr: "#6B21A8", faculty: "#92400E", builder: "#7C3AED", aspirant: "#374151" };
@@ -224,6 +220,11 @@ const Profile = () => {
   const [connectLoading, setConnectLoading] = useState(false);
   const [orgFollowingUser, setOrgFollowingUser] = useState(false); // org admin viewing user profile
   const [orgsFollowingMe, setOrgsFollowingMe] = useState<Array<{ org_id: string; org: { name: string; logo_url: string | null; slug: string } }>>([]);
+
+  /* ── CRM layout state ── */
+  const [activeTab, setActiveTab] = useState<ProfileTab>("experience");
+  const [activeSection, setActiveSection] = useState<ExperienceSection>("experience");
+  const [activeNav, setActiveNav] = useState("about");
 
   const targetUserId = isOwnProfile ? user?.id : urlUserId;
 
@@ -1044,116 +1045,126 @@ const Profile = () => {
   const showOTW = !!profileData.open_to_work && (
     isOwnProfile || otwVis === "all" || (otwVis === "recruiters" && viewerIsRecruiter)
   );
+  /* ── Squad panel data ── */
+  const squadData = {
+    currentOrg: currentExp
+      ? { name: currentExp.company_name || currentExp.institution_name || "Current Org", timeline: currentExp.start_year ? String(currentExp.start_year) : "" }
+      : null,
+    attestedItems: workItems
+      .filter((w: any) => w.verification_status === "verified")
+      .map((w: any) => ({ id: w.id, company_name: w.company_name || w.institution_name || "", start_year: w.start_year || null })),
+    pendingAttestorName: null as string | null,
+  };
+
   return (
-    <div className="min-h-screen pb-24">
+    <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: "#F4F3EF", fontFamily: "var(--font)" }}>
       <PageSEO {...seoProps} />
 
-      <div className="mx-auto px-4 pt-4" style={{ maxWidth: 720 }}>
-        {/* ── IDENTITY CARD ── */}
-        <IdentityCard
-          profileData={profileData}
-          displayName={displayName}
+      {/* 64px icon rail */}
+      <ProfileRail />
+
+      {/* 312px identity panel */}
+      <IdentityPanel
+        profile={profileData}
+        displayName={displayName}
+        oneWordRole={compactRoleLine}
+        roleColor={roleColor}
+        skillCount={skills.length}
+        certCount={certifications.length}
+        squadData={squadData}
+        resumeUrl={(profileData as any).resume_url}
+        isOwner={isOwnProfile}
+        activeNav={activeNav}
+        onNavChange={setActiveNav}
+      />
+
+      {/* 1fr main column */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
+        {/* Sticky top tab nav */}
+        <TopNav
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          isOwner={isOwnProfile}
           username={username}
-          oneWordRole={compactRoleLine}
-          roleColor={roleColor}
-          isVerified={isVerified}
-          showOTW={showOTW}
-          isOwnProfile={isOwnProfile}
-          followerCount={(profileData as any).follower_count ?? 0}
-          followingCount={(profileData as any).following_count ?? 0}
-          cosignCount={squadsCount}
-          city={city}
-          state={state}
-          renderConnectButton={renderConnectButton}
-          targetUserId={targetUserId}
+          cleanUsername={cleanProfileUsername}
+          onEditClick={() => navigate("/app/settings")}
+          renderConnectButton={isOwnProfile ? undefined : renderConnectButton}
         />
 
-        {/* ── OWNER DASHBOARD — owner only ── */}
-        {isOwnProfile && (
-          <DashboardTiles
-            profileViewsCount={0}
-            activityScore={activityScore}
-            cosignCount={squadsCount}
-            completenessPercent={completenessPercent}
-          />
-        )}
+        {/* Scrollable content area */}
+        <div style={{ flex: 1, overflowY: "auto" }}>
 
-        {/* ── MAIN CONTENT + STICKY NAV ── */}
-        <div className="profile-page-layout">
-          <div className="profile-main-col">
-            <TheStory about={aboutText} isOwner={isOwnProfile} />
+          {/* Stat tiles — always visible */}
+          <StatTiles profileId={targetUserId || ""} profile={profileData} />
 
-            <TheGrind
-              experiences={experiences}
-              isOwner={isOwnProfile}
-              onAdd={() => setModalSection("experience")}
-              onDelete={deleteItem}
-              onToggleVisibility={toggleVisibility}
-            />
-
-            <TheClass
-              education={education}
-              isOwner={isOwnProfile}
-              onAdd={() => setModalSection("education")}
-              onDelete={deleteItem}
-            />
-
-            <TheToolkit
-              skills={skills}
-              isOwner={isOwnProfile}
-              onAdd={() => setModalSection("skills")}
-              onRemoveSkill={removeSkill}
-            />
-
-            <TheWins
-              achievements={achievements}
-              isOwner={isOwnProfile}
-              onAdd={() => setModalSection("achievement")}
-              onDelete={deleteItem}
-            />
-
-            {certifications.length > 0 && (
-              <CertsSection certifications={certifications} />
-            )}
-
-            <DropsSection
-              userId={targetUserId || ""}
-              posts={userPosts}
-              totalPosts={stats.posts}
-              isOwner={isOwnProfile}
-              username={username}
-            />
-
-            <ReelsSection
-              profileId={targetUserId || ""}
-              isOwner={isOwnProfile}
-            />
-
-            {(creatorChannels.length > 0 || isOwnProfile) && (
-              <CreatorSection
-                channels={creatorChannels}
+          {/* ── Tab: Experience ── */}
+          {activeTab === "experience" && (
+            <>
+              <SubNav
+                section={activeSection}
+                onSectionChange={setActiveSection}
                 isOwner={isOwnProfile}
+                followerCount={(profileData as any).follower_count ?? 0}
+                followingCount={(profileData as any).following_count ?? 0}
+                onAddNew={() => {
+                  if (activeSection === "experience") setModalSection("experience");
+                  else if (activeSection === "education") setModalSection("education");
+                  else setModalSection("project");
+                }}
               />
-            )}
+              <ExperienceCanvas
+                section={activeSection}
+                experiences={experiences}
+                education={education}
+                projects={projects}
+                isOwner={isOwnProfile}
+                profileId={targetUserId || ""}
+                onAdd={(type) => {
+                  if (type === "experience") setModalSection("experience");
+                  else if (type === "education") setModalSection("education");
+                  else setModalSection("project");
+                }}
+                onDelete={deleteItem}
+                onToggleVisibility={toggleVisibility}
+              />
+            </>
+          )}
 
-            {isOwnProfile && targetUserId && (
-              <div data-analytics>
-                <ProfileAnalyticsRow profileId={targetUserId} />
-              </div>
-            )}
-          </div>
+          {/* ── Tab: About ── */}
+          {activeTab === "about" && (
+            <div style={{ padding: "20px" }}>
+              <AboutSection
+                about={aboutText}
+                isOwnProfile={isOwnProfile}
+                userId={targetUserId || ""}
+              />
+            </div>
+          )}
 
-          <ClayNavBar
-            isOwner={isOwnProfile}
-            targetUserId={targetUserId}
-            cleanProfileUsername={cleanProfileUsername}
-            username={username}
-            onScrollToAnalytics={() => {
-              document.querySelector("[data-analytics]")?.scrollIntoView({ behavior: "smooth" });
-            }}
-          />
+          {/* ── Tab: Squads ── */}
+          {activeTab === "squads" && (
+            <div style={{ padding: "20px", color: "#6E6E76", fontSize: 14 }}>
+              <p style={{ fontWeight: 600, color: "#16161A", marginBottom: 6 }}>Squad peer-attestation</p>
+              <p>Attestation happens on the Squad surface. Verified badges appear on each experience card.</p>
+            </div>
+          )}
+
+          {/* ── Tab: Activity (posts) ── */}
+          {activeTab === "activity" && (
+            <div style={{ padding: "20px" }}>
+              {targetUserId && (
+                <DropsSection
+                  userId={targetUserId}
+                  posts={userPosts}
+                  totalPosts={stats.posts}
+                  isOwner={isOwnProfile}
+                  username={username}
+                />
+              )}
+            </div>
+          )}
+
         </div>
-
       </div>
 
       {/* ═══ GLASS MODALS ═══ */}
