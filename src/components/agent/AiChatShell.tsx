@@ -239,7 +239,7 @@ export default function AiChatShell({ profile }: Props) {
   const today = todayCardFor(persona, firstName)
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden" style={{ backgroundColor:'var(--color-page)' }}>
+    <div className="h-screen flex flex-col overflow-hidden">
       <TopBar />
       <div className="flex flex-1 overflow-hidden">
         <IconRail active="home" onCreateClick={()=>setCreateOpen(true)} />

@@ -144,7 +144,7 @@ export default function JobsShell() {
   })()
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden" style={{ backgroundColor: 'var(--color-page)' }}>
+    <div className="h-screen flex flex-col overflow-hidden">
       <TopBar />
       <div className="flex flex-1 overflow-hidden">
         <IconRail active="jobs" onCreateClick={() => setCreateOpen(true)} />

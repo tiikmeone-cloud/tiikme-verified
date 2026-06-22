@@ -67,9 +67,9 @@ const WITH = [
 
 export default function CompanyLandingShell() {
   return (
-    <main style={{ background:BG, color:INK,
+    <main style={{ background:'#FFFFFF', color:INK,
         backgroundImage:`linear-gradient(rgba(0,0,0,0.045) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,0.045) 1px,transparent 1px)`,
-        backgroundSize:'40px 40px', animation:'tiik-grid-pan 12s linear infinite',
+        backgroundSize:'40px 40px', backgroundAttachment:'fixed',
         '--color-page': '#FFFFFF',
         '--color-card': '#FFFFFF',
         '--color-ink': '#1B1B1D',

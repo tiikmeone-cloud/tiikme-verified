@@ -86,7 +86,7 @@ export default function ProfileShell({ profile: initialProfile }: Props) {
   const handleCreate = () => navigate('my-flex')
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden" style={{ backgroundColor: 'var(--color-page)' }}>
+    <div className="h-screen flex flex-col overflow-hidden">
       <TopBar />
 
       <div className="flex flex-1 overflow-hidden">
@@ -99,7 +99,7 @@ export default function ProfileShell({ profile: initialProfile }: Props) {
           onNavigate={navigate}
         />
 
-        <main className="flex-1 relative overflow-hidden" style={{ backgroundColor: 'var(--color-page)' }}>
+        <main className="flex-1 relative overflow-hidden">
           {/* Grid is pinned to <main> (which never scrolls); the inner div scrolls over it. */}
           <InfiniteGridBackdrop />
           <div id="view-scroll" className="absolute inset-0 overflow-y-auto z-10">

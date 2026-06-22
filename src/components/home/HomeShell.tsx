@@ -32,13 +32,13 @@ export default function HomeShell({ profile }: Props) {
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden" style={{ backgroundColor: 'var(--color-page)' }}>
+    <div className="h-screen flex flex-col overflow-hidden">
       <TopBar />
       <div className="flex flex-1 overflow-hidden">
         <IconRail active="home" onCreateClick={() => setCompose(true)} />
 
         {/* center feed */}
-        <main className="flex-1 overflow-y-auto" style={{ backgroundColor: 'var(--color-page)' }}>
+        <main className="flex-1 overflow-y-auto">
           <div className="px-4 lg:px-8 py-5 pb-24 lg:pb-8 mx-auto" style={{ maxWidth: '720px' }}>
             <Feed profile={profile} posts={posts} onCompose={() => setCompose(true)} onReply={setReplyTo} />
           </div>

@@ -7,7 +7,7 @@
 
   /* Colour palette — no inline hex anywhere in components */
   /* Dribbble-matched surface scale */
-  --color-page:         #F6F5F2;   /* main scrollable bg — warm near-white */
+  --color-page:         #FFFFFF;   /* main scrollable bg — white */
   --color-card:         #FFFFFF;   /* tile / card surface */
   --color-panel:        #EEECEA;   /* left sidebar panel bg */
   --color-ink:          #1B1B1D;
@@ -54,8 +54,18 @@ html.dark {
 html {
   font-family: var(--font-sans);
   background-color: var(--color-page);
+  background-image: linear-gradient(rgba(0,0,0,0.045) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,0,0,0.045) 1px,transparent 1px);
+  background-size: 40px 40px;
+  background-attachment: fixed;
+  animation: tiik-grid-pan 12s linear infinite;
   color: var(--color-ink);
   -webkit-font-smoothing: antialiased;
+}
+
+html.dark {
+  background-image: linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);
 }
 
 @keyframes tiik-grid-pan {
@@ -72,7 +82,7 @@ body {
    components (Button, Textarea, etc.) render on-brand without color edits.
 */
 :root {
-  --background:            #F6F5F2;
+  --background:            #FFFFFF;
   --foreground:            #1B1B1D;
   --card:                  #FFFFFF;
   --card-foreground:       #1B1B1D;
