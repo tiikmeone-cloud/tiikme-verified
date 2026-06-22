@@ -4,8 +4,6 @@ import { NextRequest } from 'next/server'
 import { createHash } from 'crypto'
 import { checkInput, isOutputBlocked, blockedOutputFallback } from '@/lib/guardrails'
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-
 // ── System prompt — kept long for OpenAI prompt-cache (saves ~50% cost on repeat calls) ──
 const TIIK_SYSTEM = `You are Tiik, an elite AI Career Coach on the tiikme platform.
 
@@ -261,6 +259,7 @@ export async function POST(req: NextRequest) {
       { status: 503, headers: { 'Content-Type': 'application/json' } }
     )
   }
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
   const { messages, userId, sessionId } = await req.json() as {
     messages: { role: 'user' | 'assistant'; content: string }[]

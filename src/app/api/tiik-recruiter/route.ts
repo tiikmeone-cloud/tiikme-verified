@@ -2,8 +2,6 @@ import OpenAI from 'openai'
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest } from 'next/server'
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-
 // Strict JSON schema — the model CANNOT hallucinate fields outside this schema.
 // OpenAI enforces this at the API level: any field not in `properties` is rejected.
 const SHORTLIST_SCHEMA = {
@@ -163,6 +161,7 @@ export async function POST(req: NextRequest) {
   if (!process.env.OPENAI_API_KEY) {
     return Response.json({ error: 'Tiik Recruiter not configured' }, { status: 503 })
   }
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
   const body = await req.json() as {
     candidate_id: string

@@ -15,8 +15,6 @@ import OpenAI from 'openai'
 import { NextRequest } from 'next/server'
 import { checkInput } from '@/lib/guardrails'
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-
 type AssistType = 'headline' | 'about' | 'skills' | 'normalize_role'
 
 interface AssistRequest {
@@ -143,6 +141,7 @@ export async function POST(req: NextRequest) {
   if (!process.env.OPENAI_API_KEY) {
     return Response.json({ error: 'AI not configured' }, { status: 503 })
   }
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
   const body = await req.json() as AssistRequest
 

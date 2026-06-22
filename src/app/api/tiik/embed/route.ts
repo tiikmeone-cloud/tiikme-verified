@@ -6,12 +6,11 @@ import OpenAI from 'openai'
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-
 export async function POST(req: NextRequest) {
   if (!process.env.OPENAI_API_KEY) {
     return NextResponse.json({ error: 'OPENAI_API_KEY not set' }, { status: 503 })
   }
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
   const { userId } = await req.json() as { userId: string }
   if (!userId) return NextResponse.json({ error: 'userId required' }, { status: 400 })

@@ -18,8 +18,6 @@ import OpenAI from 'openai'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-
 // ── Strict reranker schema ────────────────────────────────────────────────────
 const RERANK_TOOL: OpenAI.Chat.ChatCompletionTool = {
   type: 'function',
@@ -69,6 +67,7 @@ export async function POST(req: NextRequest) {
   if (!process.env.OPENAI_API_KEY) {
     return NextResponse.json({ error: 'AI not configured' }, { status: 503 })
   }
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
   const { orgId, query, limit = 5 } = await req.json() as {
     orgId: string

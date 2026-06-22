@@ -16,7 +16,6 @@ import OpenAI from 'openai'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 const MIN_TENURE_YEARS = 2
 
 // ── Strict tool schema (matches blueprint exactly) ───────────────────────────
@@ -73,6 +72,7 @@ export async function POST(req: NextRequest) {
   if (!process.env.OPENAI_API_KEY) {
     return NextResponse.json({ error: 'AI not configured' }, { status: 503 })
   }
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
   const { userId } = await req.json() as { userId: string }
   if (!userId) return NextResponse.json({ error: 'userId required' }, { status: 400 })
