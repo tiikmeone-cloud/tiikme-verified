@@ -1,26 +1,176 @@
+@import url('https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap');
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* Single font token — General Sans primary, Plus Jakarta Sans fallback */
+  --font-sans: 'General Sans', var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+
+  /* Colour palette — no inline hex anywhere in components */
+  /* Dribbble-matched surface scale */
+  --color-page:         #F6F5F2;   /* main scrollable bg — warm near-white */
+  --color-card:         #FFFFFF;   /* tile / card surface */
+  --color-panel:        #EEECEA;   /* left sidebar panel bg */
+  --color-ink:          #1B1B1D;
+  --color-ink-2:        #6E6E73;
+  --color-ink-3:        #A1A0A4;
+  --color-line:         #E4E2DE;   /* slightly softer border */
+  --color-orange:       #FF5C28;
+  --color-orange-2:     #FF7A45;
+  --color-orange-soft:  #FFEDE5;
+  --color-purple:       #6D4BD8;
+  --color-teal:         #2BB3A3;
+  --color-green:        #2FB866;
+  --color-amber:        #F5A524;
+  --color-red:          #FF4D4D;
+
+  /* Border-radius scale */
+  --radius-card:        34px;
+  --radius-tile:        22px;
+  --radius-control:     12px;
+  --radius-control-lg:  16px;
+
+  /* Elevation — Dribbble-style minimal lift */
+  --shadow-card:        0 1px 3px rgba(0,0,0,.06), 0 0 0 1px rgba(0,0,0,.04);
+  /* Nav selected "floating card" */
+  --shadow-nav:         0 1px 4px rgba(0,0,0,.10), 0 0 0 1px rgba(0,0,0,.05);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ─── Dark mode — overrides the token vars; every token-based utility flips automatically.
+   Light = our warm cream theme. Dark = reference (near-black). ─── */
+html.dark {
+  --color-page:        #0B0B0C;   /* near-black canvas */
+  --color-card:        #18181B;   /* elevated card */
+  --color-panel:       #0F0F11;   /* left/right rails */
+  --color-ink:         #F4F4F5;   /* primary text */
+  --color-ink-2:       #A1A1AA;   /* secondary text */
+  --color-ink-3:       #71717A;   /* tertiary text */
+  --color-line:        #27272A;   /* borders / dividers */
+  --color-orange-soft: rgba(255,92,40,.16);
+  --shadow-card:       0 1px 3px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.05);
+  --shadow-nav:        0 1px 4px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.06);
+  color-scheme: dark;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  font-family: var(--font-sans);
+  background-color: var(--color-page);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+/* ─── shadcn/ui token bridge ───────────────────────────────────────────
+   Maps shadcn variables to the tiikme palette so dropped-in shadcn
+   components (Button, Textarea, etc.) render on-brand without color edits.
+*/
+:root {
+  --background:            #F6F5F2;
+  --foreground:            #1B1B1D;
+  --card:                  #FFFFFF;
+  --card-foreground:       #1B1B1D;
+  --popover:               #FFFFFF;
+  --popover-foreground:    #1B1B1D;
+  --primary:               #FF5C28;
+  --primary-foreground:    #FFFFFF;
+  --secondary:             #EEECEA;
+  --secondary-foreground:  #1B1B1D;
+  --muted:                 #EEECEA;
+  --muted-foreground:      #6E6E73;
+  --accent:                #FFEDE5;
+  --accent-foreground:     #FF5C28;
+  --destructive:           #FF4D4D;
+  --destructive-foreground:#FFFFFF;
+  --border:                #E4E2DE;
+  --input:                 #E4E2DE;
+  --ring:                  #FF5C28;
+  --radius:                0.75rem;
+}
+
+/* ─── Print / PDF — show only flex-print-zone ─────────────────── */
+@media print {
+  body * { visibility: hidden; }
+  #flex-print-zone,
+  #flex-print-zone * { visibility: visible; }
+  #flex-print-zone {
+    position: fixed;
+    inset: 0;
+    padding: 24px;
+    overflow: visible;
+    background: #F6F5F2;
+  }
+}
+
+html.dark {
+  --background:            #0B0B0C;
+  --foreground:            #F4F4F5;
+  --card:                  #18181B;
+  --card-foreground:       #F4F4F5;
+  --popover:               #18181B;
+  --popover-foreground:    #F4F4F5;
+  --primary:               #FF5C28;
+  --primary-foreground:    #FFFFFF;
+  --secondary:             #27272A;
+  --secondary-foreground:  #F4F4F5;
+  --muted:                 #27272A;
+  --muted-foreground:      #A1A1AA;
+  --accent:                rgba(255,92,40,.16);
+  --accent-foreground:     #FF7A45;
+  --destructive:           #FF4D4D;
+  --destructive-foreground:#FFFFFF;
+  --border:                #27272A;
+  --input:                 #27272A;
+  --ring:                  #FF5C28;
+}
+
+@theme inline {
+  --color-background:             var(--background);
+  --color-foreground:             var(--foreground);
+  --color-popover:                var(--popover);
+  --color-popover-foreground:     var(--popover-foreground);
+  --color-primary:                var(--primary);
+  --color-primary-foreground:     var(--primary-foreground);
+  --color-secondary:              var(--secondary);
+  --color-secondary-foreground:   var(--secondary-foreground);
+  --color-muted:                  var(--muted);
+  --color-muted-foreground:       var(--muted-foreground);
+  --color-accent:                 var(--accent);
+  --color-accent-foreground:      var(--accent-foreground);
+  --color-destructive:            var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border:                 var(--border);
+  --color-input:                  var(--input);
+  --color-ring:                   var(--ring);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-line); border-radius: 2px; }
+
+/* Hidden scrollbar (mobile chip rows) */
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* Gentle idle float — used by landing FloatingCard (GPU keyframe, no re-renders) */
+@keyframes tk-float-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-8px); }
+}
+
+/* Premium bottom-sheet slide-up */
+@keyframes tk-sheet-up {
+  from { transform: translateY(100%); opacity: 0.6; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+/* Backdrop fade-in */
+@keyframes tk-backdrop-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tk-float { animation: none !important; }
 }

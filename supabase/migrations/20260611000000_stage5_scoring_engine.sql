@@ -1,0 +1,15 @@
+-- Stage-5 auto-selection engine. On apply (AFTER INSERT trigger), computes
+-- ai_score + knockout_passed + match_breakdown from the candidate's screening
+-- answers (keyed by question text), verified skills/certs, and the job's
+-- scoring_weights; then applies the job's pipeline auto-rules.
+--
+-- Signals: skill (must-have overlap + nice-to-have bonus), cert (verified
+-- flex_certs vs certs_required), squad (placeholder 0.5), experience (0.6),
+-- vector (0 — no embeddings yet, renormalized out of the weighting). Knockout:
+-- each must-have screening answer must satisfy its expected value (number ≥, or
+-- case-insensitive equality).
+--
+-- See applied migration `stage5_scoring_engine` for the full function bodies
+-- (compute_application_score, tg_score_application + trigger trg_score_application
+-- AFTER INSERT on public.applications). This file documents intent; the function
+-- definitions were applied via apply_migration of the same name.
