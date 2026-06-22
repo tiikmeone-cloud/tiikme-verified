@@ -29,7 +29,7 @@ export default function PrivacyPage() {
 
           <Section title="1. Introduction">
             <p>
-              tiikme Technologies Private Limited (&quot;tiikme&quot;, &quot;we&quot;, &quot;us&quot;, &quot;our&quot;) respects your privacy and is
+              Veenavarse (&quot;tiikme&quot;, &quot;we&quot;, &quot;us&quot;, &quot;our&quot;) respects your privacy and is
               committed to protecting your personal data. This Privacy Policy explains how we collect,
               use, disclose, retain, and safeguard your personal information when you use the tiikme
               platform (&quot;Platform&quot;), including our website, mobile applications, and all associated
@@ -274,7 +274,7 @@ export default function PrivacyPage() {
             </p>
             <div className="bg-gray-50 border border-gray-200 rounded-[14px] p-5 mt-3 not-prose">
               <p className="font-semibold text-gray-900 text-[14px]">Data Protection Officer</p>
-              <p className="text-[13px] text-gray-600 mt-1">tiikme Technologies Private Limited</p>
+              <p className="text-[13px] text-gray-600 mt-1">Veenavarse</p>
               <p className="text-[13px] text-gray-600">Email: <a href="mailto:privacy@tiikme.com" className="text-orange-500 hover:underline">privacy@tiikme.com</a></p>
               <p className="text-[13px] text-gray-600">Grievances: <a href="mailto:grievance@tiikme.com" className="text-orange-500 hover:underline">grievance@tiikme.com</a></p>
               <p className="text-[13px] text-gray-600 mt-1">Response time: Within 30 days of receipt</p>
@@ -295,7 +295,7 @@ export default function PrivacyPage() {
             <Link href="/privacy" className="text-gray-900 font-medium">Privacy Policy</Link>
             <Link href="/terms" className="hover:text-gray-900 transition-colors">Terms</Link>
           </div>
-          <p>© {new Date().getFullYear()} tiikme · made in India</p>
+          <p>© {new Date().getFullYear()} Veenavarse · made in India</p>
         </div>
       </main>
     </div>

@@ -31,8 +31,8 @@ export default function TermsPage() {
           <Section title="1. Introduction and Acceptance">
             <p>
               These Terms and Conditions (&quot;Terms&quot;) constitute a legally binding agreement between you
-              (&quot;User&quot;, &quot;Talent&quot;, &quot;Organisation&quot;, or &quot;you&quot;) and <strong>tiikme Technologies Private Limited</strong>
-              (&quot;tiikme&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;), a company incorporated under the laws of India, with respect
+              (&quot;User&quot;, &quot;Talent&quot;, &quot;Organisation&quot;, or &quot;you&quot;) and <strong>Veenavarse</strong>
+              (&quot;tiikme&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;), incorporated under the laws of India, with respect
               to your use of the tiikme platform, website, mobile applications, and all related services
               (collectively, the &quot;Platform&quot;).
             </p>
@@ -253,7 +253,7 @@ export default function TermsPage() {
           <Section title="11. Intellectual Property">
             <p>
               The Platform, its design, software, trademarks, trade names, logos, and all content
-              produced by tiikme are the exclusive property of tiikme Technologies Private Limited and are
+              produced by tiikme are the exclusive property of Veenavarse and are
               protected by applicable intellectual property laws. You are granted a limited,
               non-exclusive, non-transferable, revocable licence to access and use the Platform for its
               intended purposes. No other rights are granted.
@@ -378,7 +378,7 @@ export default function TermsPage() {
           <Section title="20. Contact Us">
             <p>For questions about these Terms, please contact:</p>
             <div className="bg-gray-50 border border-gray-200 rounded-[14px] p-5 mt-3 not-prose">
-              <p className="font-semibold text-gray-900 text-[14px]">tiikme Technologies Private Limited</p>
+              <p className="font-semibold text-gray-900 text-[14px]">Veenavarse</p>
               <p className="text-[13px] text-gray-600 mt-1">Email: <a href="mailto:legal@tiikme.com" className="text-orange-500 hover:underline">legal@tiikme.com</a></p>
               <p className="text-[13px] text-gray-600">Support: <a href="mailto:hello@tiikme.com" className="text-orange-500 hover:underline">hello@tiikme.com</a></p>
               <p className="text-[13px] text-gray-600 mt-1">Bengaluru, Karnataka, India</p>
@@ -393,7 +393,7 @@ export default function TermsPage() {
             <Link href="/privacy" className="hover:text-gray-900 transition-colors">Privacy Policy</Link>
             <Link href="/terms" className="text-gray-900 font-medium">Terms</Link>
           </div>
-          <p>© {new Date().getFullYear()} tiikme · made in India</p>
+          <p>© {new Date().getFullYear()} Veenavarse · made in India</p>
         </div>
       </main>
     </div>
