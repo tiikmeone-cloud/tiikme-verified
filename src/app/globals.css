@@ -58,6 +58,11 @@ html {
   -webkit-font-smoothing: antialiased;
 }
 
+@keyframes tiik-grid-pan {
+  from { background-position: 0 0; }
+  to   { background-position: 40px 40px; }
+}
+
 body {
   font-family: var(--font-sans);
 }

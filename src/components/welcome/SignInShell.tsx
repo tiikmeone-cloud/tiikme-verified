@@ -307,12 +307,22 @@ export default function SignInShell() {
 
   /* ─── RENDER ─────────────────────────────────────────────────── */
   return (
-    <main className="relative min-h-screen flex items-center justify-center px-5 py-10 overflow-hidden" style={{ backgroundColor: 'var(--color-page)' }}>
-      <InfiniteGridBackdrop />
+    <main className="relative min-h-screen flex items-center justify-center px-5 py-10 overflow-hidden"
+      style={{
+        background: '#FFFFFF',
+        backgroundImage: 'linear-gradient(rgba(0,0,0,0.045) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,0.045) 1px,transparent 1px)',
+        backgroundSize: '40px 40px',
+        animation: 'tiik-grid-pan 12s linear infinite',
+        '--color-card': '#FFFFFF',
+        '--color-ink': '#1B1B1D',
+        '--color-ink-2': '#6E6E73',
+        '--color-ink-3': '#A1A0A4',
+        '--color-line': '#E4E2DE',
+      } as React.CSSProperties}>
       <div className="relative z-10 w-full max-w-[440px]">
-        <div className="bg-white/85 backdrop-blur-xl border border-white/60 rounded-[24px] p-7 lg:p-9 shadow-[0_24px_60px_-20px_rgba(0,0,0,.22),inset_0_1px_0_rgba(255,255,255,.7)]">
+        <div className="bg-white border border-gray-100 rounded-[24px] p-7 lg:p-9 shadow-[0_8px_32px_-8px_rgba(0,0,0,.12),0_0_0_1px_rgba(0,0,0,.05)]">
           <span aria-hidden className="absolute -top-16 left-1/2 -translate-x-1/2 w-[300px] h-[160px] rounded-full pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse,rgba(255,92,40,.28),transparent 65%)', filter: 'blur(40px)' }} />
+            style={{ background: 'radial-gradient(ellipse,rgba(255,92,40,.14),transparent 65%)', filter: 'blur(40px)' }} />
 
           <div className="relative flex flex-col items-center">
             <TiikmeMark size="lg" alive />

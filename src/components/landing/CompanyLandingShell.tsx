@@ -4,13 +4,14 @@ import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import TiikmeMark from '@/components/brand/TiikmeMark'
 
-const BG     = '#0a0a12'
-const CARD   = 'rgba(255,255,255,0.04)'
-const BORDER = 'rgba(255,255,255,0.08)'
+const BG     = '#FFFFFF'
+const CARD   = '#F8FAFC'
+const BORDER = 'rgba(0,0,0,0.08)'
 const ORANGE = '#FF5C28'
-const MINT   = '#4EFFA8'
-const DIM    = 'rgba(255,255,255,0.42)'
-const DIM2   = 'rgba(255,255,255,0.22)'
+const TEAL   = '#0D9488'
+const INK    = '#0F172A'
+const DIM    = 'rgba(15,23,42,0.55)'
+const DIM2   = 'rgba(15,23,42,0.38)'
 
 const PAIN_POINTS = [
   { icon: '📄', pain: '200 applications for one role',      fix: 'AI pre-screens against your JD. You see 5.' },
@@ -66,23 +67,32 @@ const WITH = [
 
 export default function CompanyLandingShell() {
   return (
-    <main style={{ background: BG }} className="relative min-h-screen overflow-hidden text-white font-sans">
-      {/* Ambient glows */}
+    <main style={{ background:BG, color:INK,
+        backgroundImage:`linear-gradient(rgba(0,0,0,0.045) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,0.045) 1px,transparent 1px)`,
+        backgroundSize:'40px 40px', animation:'tiik-grid-pan 12s linear infinite',
+        '--color-page': '#FFFFFF',
+        '--color-card': '#FFFFFF',
+        '--color-ink': '#1B1B1D',
+        '--color-ink-2': '#6E6E73',
+        '--color-ink-3': '#A1A0A4',
+        '--color-line': '#E4E2DE',
+      } as React.CSSProperties}
+      className="relative min-h-screen overflow-hidden font-sans">
       <div aria-hidden className="fixed inset-0 pointer-events-none z-0">
         <div style={{ position:'absolute', top:'-5%', left:'30%', width:800, height:600,
-          background:`radial-gradient(ellipse,rgba(255,92,40,.09) 0%,transparent 65%)`, filter:'blur(80px)' }} />
+          background:`radial-gradient(ellipse,rgba(255,92,40,.08) 0%,transparent 65%)`, filter:'blur(80px)' }} />
         <div style={{ position:'absolute', bottom:'5%', right:'-5%', width:500, height:400,
-          background:`radial-gradient(ellipse,rgba(78,255,168,.06) 0%,transparent 65%)`, filter:'blur(80px)' }} />
+          background:`radial-gradient(ellipse,rgba(13,148,136,.04) 0%,transparent 65%)`, filter:'blur(80px)' }} />
       </div>
 
       {/* ── NAV ─────────────────────────────────────────────────────────── */}
       <header className="relative z-20 flex items-center justify-between px-6 lg:px-16 py-5">
-        <TiikmeMark size="md" showWordmark alive wordmarkClassName="!text-white" />
+        <TiikmeMark size="md" showWordmark alive />
 
         <nav className="hidden md:flex items-center gap-1 px-1 py-1 rounded-[12px]"
-          style={{ background:'rgba(255,255,255,0.05)', border:`1px solid ${BORDER}` }}>
+          style={{ background:'rgba(0,0,0,0.04)', border:`1px solid ${BORDER}` }}>
           <Link href="/landing"
-            className="px-4 py-1.5 rounded-[9px] text-[12.5px] font-medium transition-all hover:text-white"
+            className="px-4 py-1.5 rounded-[9px] text-[12.5px] font-medium transition-all hover:text-gray-900"
             style={{ color:DIM }}>
             For Talent
           </Link>
@@ -94,7 +104,7 @@ export default function CompanyLandingShell() {
 
         <div className="flex items-center gap-3">
           <Link href="/sign-in"
-            className="text-[13px] font-medium transition-colors hover:text-white"
+            className="text-[13px] font-medium transition-colors hover:text-gray-900"
             style={{ color:DIM }}>
             Sign in
           </Link>
@@ -132,7 +142,7 @@ export default function CompanyLandingShell() {
               Start hiring free
             </Link>
             <a href="mailto:hire@tiikme.com"
-              className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-[12px] font-semibold text-[15px] transition-all hover:text-white"
+              className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-[12px] font-semibold text-[15px] transition-all hover:text-gray-900"
               style={{ background:CARD, border:`1px solid ${BORDER}`, color:DIM }}>
               Talk to our team
             </a>
@@ -141,7 +151,7 @@ export default function CompanyLandingShell() {
           <div className="mt-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 text-[12px]" style={{ color:DIM2 }}>
             {['Free to start','No sourcing fee','Verified talent only','Privacy-first — candidates opt in'].map(t => (
               <span key={t} className="flex items-center gap-1.5">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={MINT} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12"/>
                 </svg>
                 {t}
@@ -153,7 +163,7 @@ export default function CompanyLandingShell() {
 
       {/* ── PAIN POINTS ─────────────────────────────────────────────────── */}
       <section className="relative z-10 px-6 lg:px-16 py-14"
-        style={{ borderTop:`1px solid ${BORDER}`, borderBottom:`1px solid ${BORDER}`, background:'rgba(255,255,255,0.015)' }}>
+        style={{ borderTop:`1px solid ${BORDER}`, borderBottom:`1px solid ${BORDER}`, background:'rgba(0,0,0,0.018)' }}>
         <div className="max-w-[1100px] mx-auto">
           <p className="text-center text-[11px] font-bold uppercase tracking-widest mb-10" style={{ color:DIM2 }}>
             Sound familiar?
@@ -162,9 +172,9 @@ export default function CompanyLandingShell() {
             {PAIN_POINTS.map(({ icon, pain, fix }) => (
               <div key={pain} className="rounded-[18px] p-5" style={{ background:CARD, border:`1px solid ${BORDER}` }}>
                 <span className="text-[24px] mb-3 block">{icon}</span>
-                <p className="text-[13px] font-semibold text-white/60 mb-3 line-through leading-snug">{pain}</p>
-                <div style={{ width:28, height:1, background:`rgba(78,255,168,0.4)`, marginBottom:10 }} />
-                <p className="text-[13px] font-medium leading-snug" style={{ color:MINT }}>{fix}</p>
+                <p className="text-[13px] font-semibold text-gray-400 mb-3 line-through leading-snug">{pain}</p>
+                <div style={{ width:28, height:1, background:`rgba(0,0,0,0.15)`, marginBottom:10 }} />
+                <p className="text-[13px] font-medium leading-snug" style={{ color:TEAL }}>{fix}</p>
               </div>
             ))}
           </div>
@@ -235,7 +245,7 @@ export default function CompanyLandingShell() {
 
       {/* ── TRUST PILLARS (stats) ────────────────────────────────────────── */}
       <section className="relative z-10 px-6 lg:px-16 py-14"
-        style={{ borderBottom:`1px solid ${BORDER}`, background:'rgba(255,255,255,0.015)' }}>
+        style={{ borderBottom:`1px solid ${BORDER}`, background:'rgba(0,0,0,0.018)' }}>
         <div className="max-w-[1000px] mx-auto grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
           {TRUST_PILLARS.map(({ stat, label }) => (
             <div key={label}>
@@ -252,38 +262,38 @@ export default function CompanyLandingShell() {
           <div className="text-center mb-12">
             <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color:DIM2 }}>The Difference</p>
             <h2 className="text-[32px] lg:text-[42px] font-bold tracking-tight leading-[1.07]">
-              Traditional hiring vs <span style={{ color:MINT }}>tiikme.</span>
+              Traditional hiring vs <span style={{ color:TEAL }}>tiikme.</span>
             </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="rounded-[18px] p-6" style={{ background:CARD, border:`1px solid ${BORDER}` }}>
-              <p className="text-[11px] font-bold uppercase tracking-widest mb-5" style={{ color:'rgba(255,255,255,0.2)' }}>Traditional</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest mb-5" style={{ color:'rgba(0,0,0,0.3)' }}>Traditional</p>
               <div className="space-y-3">
                 {WITHOUT.map(t => (
                   <div key={t} className="flex items-start gap-3">
-                    <div className="shrink-0 mt-0.5 w-4 h-4 rounded-full flex items-center justify-content-center"
-                      style={{ border:'1px solid rgba(255,255,255,0.1)', background:'rgba(255,255,255,0.03)' }}>
-                      <div style={{ width:6,height:1.5,background:'rgba(255,255,255,0.2)',margin:'auto',borderRadius:1 }} />
+                    <div className="shrink-0 mt-0.5 w-4 h-4 rounded-full flex items-center justify-center"
+                      style={{ border:'1px solid rgba(0,0,0,0.12)', background:'rgba(0,0,0,0.04)' }}>
+                      <div style={{ width:6,height:1.5,background:'rgba(0,0,0,0.25)',margin:'auto',borderRadius:1 }} />
                     </div>
-                    <p className="text-[13.5px] leading-snug" style={{ color:'rgba(255,255,255,0.28)' }}>{t}</p>
+                    <p className="text-[13.5px] leading-snug" style={{ color:'rgba(0,0,0,0.35)' }}>{t}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="rounded-[18px] p-6" style={{ background:`rgba(78,255,168,0.04)`, border:`1px solid rgba(78,255,168,0.15)` }}>
-              <p className="text-[11px] font-bold uppercase tracking-widest mb-5" style={{ color:MINT }}>With tiikme</p>
+            <div className="rounded-[18px] p-6" style={{ background:`rgba(13,148,136,0.04)`, border:`1px solid rgba(13,148,136,0.2)` }}>
+              <p className="text-[11px] font-bold uppercase tracking-widest mb-5" style={{ color:TEAL }}>With tiikme</p>
               <div className="space-y-3">
                 {WITH.map(t => (
                   <div key={t} className="flex items-start gap-3">
                     <div className="shrink-0 mt-0.5 w-4 h-4 rounded-full flex items-center justify-center"
-                      style={{ background:`rgba(78,255,168,0.15)`, border:`1px solid rgba(78,255,168,0.3)` }}>
-                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke={MINT} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      style={{ background:`rgba(13,148,136,0.12)`, border:`1px solid rgba(13,148,136,0.28)` }}>
+                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="20 6 9 17 4 12"/>
                       </svg>
                     </div>
-                    <p className="text-[13.5px] leading-snug" style={{ color:'rgba(255,255,255,0.72)' }}>{t}</p>
+                    <p className="text-[13.5px] leading-snug" style={{ color:INK }}>{t}</p>
                   </div>
                 ))}
               </div>
@@ -311,7 +321,7 @@ export default function CompanyLandingShell() {
               Start hiring free
             </Link>
             <a href="mailto:hire@tiikme.com"
-              className="inline-flex items-center justify-center px-9 py-4 rounded-[14px] font-semibold text-[15px] transition-all hover:text-white"
+              className="inline-flex items-center justify-center px-9 py-4 rounded-[14px] font-semibold text-[15px] transition-all hover:text-gray-900"
               style={{ background:CARD, border:`1px solid ${BORDER}`, color:DIM }}>
               Talk to our team
             </a>
@@ -325,17 +335,17 @@ export default function CompanyLandingShell() {
       {/* ── FOOTER ───────────────────────────────────────────────────────── */}
       <footer className="relative z-10 px-6 lg:px-16 py-8" style={{ borderTop:`1px solid ${BORDER}` }}>
         <div className="max-w-[1100px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <TiikmeMark size="sm" showWordmark wordmarkClassName="!text-white" />
+          <TiikmeMark size="sm" showWordmark />
           <p className="text-[12px] italic" style={{ color:DIM2 }}>
             &ldquo;LeBron has an agent. Your best hire deserves one too.&rdquo;
           </p>
           <div className="flex items-center gap-5 text-[12px]" style={{ color:DIM2 }}>
-            <a href="#" className="hover:text-white transition-colors">Privacy</a>
-            <a href="#" className="hover:text-white transition-colors">Terms</a>
-            <a href="mailto:hire@tiikme.com" className="hover:text-white transition-colors">hire@tiikme.com</a>
+            <a href="#" className="hover:text-gray-900 transition-colors">Privacy</a>
+            <a href="#" className="hover:text-gray-900 transition-colors">Terms</a>
+            <a href="mailto:hire@tiikme.com" className="hover:text-gray-900 transition-colors">hire@tiikme.com</a>
           </div>
         </div>
-        <p className="text-center text-[11px] mt-4" style={{ color:'rgba(255,255,255,0.12)' }}>
+        <p className="text-center text-[11px] mt-4" style={{ color:'rgba(0,0,0,0.3)' }}>
           © {new Date().getFullYear()} tiikme · made in India
         </p>
       </footer>
@@ -353,9 +363,9 @@ function PostRoleVisual() {
   return (
     <div className="rounded-[20px] p-5" style={{ background:CARD, border:`1px solid ${BORDER}`, boxShadow:'0 16px 40px -16px rgba(0,0,0,0.4)' }}>
       <p className="text-[11px] font-bold uppercase tracking-widest mb-4" style={{ color:DIM2 }}>New Search</p>
-      <div className="rounded-[14px] p-4 mb-3" style={{ background:'rgba(255,255,255,0.03)', border:`1px solid rgba(255,255,255,0.07)` }}>
+      <div className="rounded-[14px] p-4 mb-3" style={{ background:'rgba(0,0,0,0.025)', border:`1px solid rgba(0,0,0,0.06)` }}>
         <p className="text-[11px] font-medium mb-2" style={{ color:DIM2 }}>Describe who you&apos;re looking for</p>
-        <p className="text-[13.5px] text-white leading-relaxed">
+        <p className="text-[13.5px] leading-relaxed" style={{ color:INK }}>
           &ldquo;Senior frontend engineer, React + TypeScript, has shipped consumer products at scale, comfortable leading a small team, Bangalore or remote.&rdquo;
         </p>
         <div className="mt-3 flex items-center gap-2">
@@ -396,10 +406,10 @@ function ScanVisual() {
         ].map(({ label, match }) => (
           <div key={label} className="flex items-center gap-3">
             <span className="text-[11.5px] flex-1" style={{ color:DIM }}>{label}</span>
-            <div className="w-20 h-1.5 rounded-full overflow-hidden" style={{ background:'rgba(255,255,255,0.08)' }}>
-              <div style={{ height:'100%', width:`${match}%`, background:`linear-gradient(to right,${ORANGE},${MINT})`, borderRadius:999 }} />
+            <div className="w-20 h-1.5 rounded-full overflow-hidden" style={{ background:'rgba(0,0,0,0.08)' }}>
+              <div style={{ height:'100%', width:`${match}%`, background:`linear-gradient(to right,${ORANGE},${TEAL})`, borderRadius:999 }} />
             </div>
-            <span className="text-[11px] font-semibold w-8 text-right" style={{ color:MINT }}>{match}%</span>
+            <span className="text-[11px] font-semibold w-8 text-right" style={{ color:TEAL }}>{match}%</span>
           </div>
         ))}
       </div>
@@ -416,7 +426,7 @@ function ShortlistVisual() {
   return (
     <div className="rounded-[20px] overflow-hidden" style={{ border:`1px solid ${BORDER}`, boxShadow:'0 16px 40px -16px rgba(0,0,0,0.4)' }}>
       <div className="flex items-center justify-between px-4 py-3"
-        style={{ background:'rgba(255,255,255,0.025)', borderBottom:`1px solid ${BORDER}` }}>
+        style={{ background:'rgba(0,0,0,0.025)', borderBottom:`1px solid ${BORDER}` }}>
         <span className="text-[12px] font-semibold">AI Shortlist · Senior Frontend</span>
         <span className="text-[10.5px] px-2 py-0.5 rounded-full" style={{ background:`rgba(255,92,40,0.12)`,color:ORANGE }}>
           3 of 847
@@ -433,14 +443,14 @@ function ShortlistVisual() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-1">
               <span className="text-[12.5px] font-semibold">{c.name}</span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background:`rgba(78,255,168,0.12)`,color:MINT }}>{c.match}% Match</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background:'rgba(255,255,255,0.05)',color:DIM2 }}>Trust {c.trust}</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background:'rgba(255,255,255,0.05)',color:DIM2 }}>{c.squad} Squad</span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background:`rgba(13,148,136,0.10)`,color:TEAL }}>{c.match}% Match</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background:'rgba(0,0,0,0.05)',color:DIM2 }}>Trust {c.trust}</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background:'rgba(0,0,0,0.05)',color:DIM2 }}>{c.squad} Squad</span>
             </div>
             <p className="text-[11px] leading-relaxed" style={{ color:DIM2 }}>{c.note}</p>
           </div>
-          <button className="shrink-0 px-2.5 py-1.5 rounded-[8px] text-[11px] font-semibold transition-all hover:text-white"
-            style={{ background:'rgba(255,255,255,0.05)', border:`1px solid ${BORDER}`, color:DIM2 }}>
+          <button className="shrink-0 px-2.5 py-1.5 rounded-[8px] text-[11px] font-semibold transition-all hover:text-gray-900"
+            style={{ background:'rgba(0,0,0,0.04)', border:`1px solid ${BORDER}`, color:DIM2 }}>
             View
           </button>
         </div>
@@ -466,12 +476,12 @@ function RequestFlexVisual() {
               <p className="text-[13.5px] font-semibold">Candidate #1 · Mumbai</p>
               <p className="text-[11px]" style={{ color:DIM2 }}>Identity hidden until they approve</p>
             </div>
-            <span className="ml-auto text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0" style={{ background:`rgba(78,255,168,0.12)`,color:MINT }}>94% Match</span>
+            <span className="ml-auto text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0" style={{ background:`rgba(13,148,136,0.10)`,color:TEAL }}>94% Match</span>
           </div>
           <div className="space-y-2 mb-4">
             {['React + TypeScript · verified by 4 Squad','Led Swiggy checkout team 2022–2024','Trust Score 88/100'].map(t => (
-              <div key={t} className="flex items-center gap-2 text-[12px]" style={{ color:'rgba(255,255,255,0.55)' }}>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={MINT} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <div key={t} className="flex items-center gap-2 text-[12px]" style={{ color:DIM }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                 {t}
               </div>
             ))}
@@ -484,7 +494,7 @@ function RequestFlexVisual() {
         </>
       ) : (
         <>
-          <p className="text-[11px] font-bold uppercase tracking-widest mb-4" style={{ color:MINT }}>Candidate Approved ✓</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest mb-4" style={{ color:TEAL }}>Candidate Approved ✓</p>
           <div className="flex items-start gap-3 mb-4">
             <div style={{ width:40,height:40,borderRadius:'50%',background:`linear-gradient(135deg,${ORANGE},#FF8A5C)`,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,color:'white',flexShrink:0 }}>A</div>
             <div>
@@ -492,8 +502,8 @@ function RequestFlexVisual() {
               <p className="text-[11px]" style={{ color:DIM2 }}>arjun.sharma@gmail.com · +91 98xxx xxxxx</p>
             </div>
           </div>
-          <div className="rounded-[12px] p-3.5 mb-3" style={{ background:`rgba(78,255,168,0.06)`, border:`1px solid rgba(78,255,168,0.2)` }}>
-            <p className="text-[12px] font-semibold mb-1" style={{ color:MINT }}>Full verified Flex now visible</p>
+          <div className="rounded-[12px] p-3.5 mb-3" style={{ background:`rgba(13,148,136,0.06)`, border:`1px solid rgba(13,148,136,0.18)` }}>
+            <p className="text-[12px] font-semibold mb-1" style={{ color:TEAL }}>Full verified Flex now visible</p>
             <p className="text-[11.5px]" style={{ color:DIM2 }}>5 years experience · 4 Squad peers · Trust Score 88 · 3 certs · AWS Solutions Architect</p>
           </div>
           <p className="text-[11px]" style={{ color:DIM2 }}>No CV. No PDF. Real verified evidence only.</p>
@@ -567,18 +577,18 @@ function OrgTiikChatDemo() {
   const lastIdx = visible - 1
 
   return (
-    <div className="rounded-[20px] overflow-hidden" style={{ background:'rgba(24,24,27,0.95)', border:`1px solid ${BORDER}`, boxShadow:'0 24px 56px -16px rgba(0,0,0,0.6)' }}>
+    <div className="rounded-[20px] overflow-hidden" style={{ background:CARD, border:`1px solid ${BORDER}`, boxShadow:'0 8px 40px -8px rgba(0,0,0,0.12)' }}>
       {/* Header — org-side Tiik */}
-      <div className="flex items-center gap-2.5 px-4 py-3" style={{ borderBottom:`1px solid rgba(255,255,255,0.06)`, background:'rgba(255,255,255,0.025)' }}>
+      <div className="flex items-center gap-2.5 px-4 py-3" style={{ borderBottom:`1px solid ${BORDER}`, background:'rgba(0,0,0,0.025)' }}>
         <div style={{ width:28,height:28,borderRadius:'50%',background:`linear-gradient(135deg,${ORANGE},#FF8A5C)`,
           display:'flex',alignItems:'center',justifyContent:'center',fontWeight:800,fontSize:12,color:'white' }}>T</div>
         <div>
-          <p className="text-[12px] font-semibold leading-tight">Tiik</p>
+          <p className="text-[12px] font-semibold leading-tight" style={{ color:INK }}>Tiik</p>
           <p className="text-[10px]" style={{ color:DIM2 }}>Hiring AI · Creative Labs</p>
         </div>
         <div className="ml-auto flex items-center gap-1.5">
-          <span style={{ width:7,height:7,borderRadius:'50%',background:'rgba(78,255,168,0.5)',display:'block' }} />
-          <span className="text-[10px]" style={{ color:MINT }}>Online</span>
+          <span style={{ width:7,height:7,borderRadius:'50%',background:`rgba(13,148,136,0.7)`,display:'block' }} />
+          <span className="text-[10px]" style={{ color:TEAL }}>Online</span>
         </div>
       </div>
 
@@ -593,7 +603,7 @@ function OrgTiikChatDemo() {
               <div key={i} className="space-y-2" style={{ animation:'fadeSlideUp 0.35s ease-out' }}>
                 {SHORTLIST_CANDIDATES.map((c, ci) => (
                   <div key={ci} className="flex items-center gap-2.5 px-3 py-2.5 rounded-[12px]"
-                    style={{ background:'rgba(255,255,255,0.04)', border:`1px solid rgba(255,255,255,0.07)`,
+                    style={{ background:'rgba(0,0,0,0.03)', border:`1px solid rgba(0,0,0,0.07)`,
                       animation:`fadeSlideUp 0.3s ease-out ${ci*0.12}s both` }}>
                     <div style={{ width:28,height:28,borderRadius:'50%',background:`linear-gradient(135deg,hsl(${ci*50+200},60%,55%),hsl(${ci*50+240},55%,40%))`,
                       display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,color:'white',flexShrink:0 }}>
@@ -602,8 +612,8 @@ function OrgTiikChatDemo() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="text-[11.5px] font-semibold">{c.name}</span>
-                        <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full" style={{ background:`rgba(78,255,168,0.12)`,color:MINT }}>{c.match}%</span>
-                        <span className="text-[9.5px] px-1.5 py-0.5 rounded-full" style={{ background:'rgba(255,255,255,0.05)',color:DIM2 }}>Trust {c.trust}</span>
+                        <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full" style={{ background:`rgba(13,148,136,0.10)`,color:TEAL }}>{c.match}%</span>
+                        <span className="text-[9.5px] px-1.5 py-0.5 rounded-full" style={{ background:'rgba(0,0,0,0.05)',color:DIM2 }}>Trust {c.trust}</span>
                       </div>
                       <p className="text-[10.5px] truncate" style={{ color:DIM2 }}>{c.note}</p>
                     </div>
@@ -629,10 +639,10 @@ function OrgTiikChatDemo() {
               <div className="max-w-[82%] px-3.5 py-2.5 text-[12.5px] leading-relaxed"
                 style={{
                   borderRadius: isAI ? '4px 14px 14px 14px' : '14px 4px 14px 14px',
-                  background: isAI ? 'rgba(255,255,255,0.06)' : `rgba(255,92,40,0.14)`,
-                  color: isAI ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.82)',
+                  background: isAI ? 'rgba(0,0,0,0.04)' : `rgba(255,92,40,0.12)`,
+                  color: 'rgba(0,0,0,0.75)',
                 }}>
-                {isAI ? <span style={{ color:MINT }}>{msg}</span> : msg}
+                {msg}
               </div>
             </div>
           )
@@ -642,10 +652,10 @@ function OrgTiikChatDemo() {
           <div className="flex gap-2.5">
             <div style={{ width:26,height:26,borderRadius:'50%',background:`linear-gradient(135deg,${ORANGE},#FF8A5C)`,
               flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:800 }}>T</div>
-            <div className="px-3.5 py-3 rounded-[4px_14px_14px_14px]" style={{ background:'rgba(255,255,255,0.06)' }}>
+            <div className="px-3.5 py-3 rounded-[4px_14px_14px_14px]" style={{ background:'rgba(0,0,0,0.04)' }}>
               <div className="flex gap-1 items-center h-3">
                 {[0,1,2].map(j => (
-                  <span key={j} style={{ width:5,height:5,borderRadius:'50%',background:'rgba(255,255,255,0.3)',
+                  <span key={j} style={{ width:5,height:5,borderRadius:'50%',background:'rgba(0,0,0,0.25)',
                     display:'block',animation:`bounce 1.2s ease-in-out infinite`,animationDelay:`${j*0.2}s` }} />
                 ))}
               </div>
@@ -655,9 +665,9 @@ function OrgTiikChatDemo() {
       </div>
 
       {/* Input bar */}
-      <div className="flex items-center gap-2 px-4 py-3" style={{ borderTop:`1px solid rgba(255,255,255,0.05)` }}>
+      <div className="flex items-center gap-2 px-4 py-3" style={{ borderTop:`1px solid ${BORDER}` }}>
         <div className="flex-1 px-3.5 py-2 rounded-[10px] text-[12px]"
-          style={{ background:'rgba(255,255,255,0.04)', color:'rgba(255,255,255,0.2)', border:`1px solid rgba(255,255,255,0.07)` }}>
+          style={{ background:'rgba(0,0,0,0.03)', color:'rgba(0,0,0,0.3)', border:`1px solid rgba(0,0,0,0.07)` }}>
           Describe the talent you need…
         </div>
         <div className="w-8 h-8 rounded-[9px] flex items-center justify-center shrink-0"

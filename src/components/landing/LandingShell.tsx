@@ -9,7 +9,7 @@ const BG     = '#FFFFFF'
 const CARD   = '#F8FAFC'
 const BORDER = 'rgba(0,0,0,0.08)'
 const ORANGE = '#FF5C28'
-const MINT   = '#4EFFA8'
+const TEAL2  = '#0D9488'
 const DIM    = 'rgba(0,0,0,0.55)'
 const DIM2   = 'rgba(0,0,0,0.38)'
 const INK    = '#0F172A'
@@ -87,9 +87,15 @@ export default function LandingShell() {
     <main style={{ background:BG, color:INK,
         backgroundImage:`linear-gradient(rgba(0,0,0,0.045) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,0.045) 1px,transparent 1px)`,
         backgroundSize:'40px 40px',
-        animation:'tiik-grid-pan 12s linear infinite' }}
+        animation:'tiik-grid-pan 12s linear infinite',
+        '--color-page': '#FFFFFF',
+        '--color-card': '#FFFFFF',
+        '--color-ink': '#1B1B1D',
+        '--color-ink-2': '#6E6E73',
+        '--color-ink-3': '#A1A0A4',
+        '--color-line': '#E4E2DE',
+      } as React.CSSProperties}
       className="relative min-h-screen overflow-hidden font-sans">
-      <style>{`@keyframes tiik-grid-pan{from{background-position:0 0}to{background-position:40px 40px}}`}</style>
       <div aria-hidden className="fixed inset-0 pointer-events-none z-0">
         <div style={{ position:'absolute',top:'-5%',left:'50%',transform:'translateX(-50%)',
           width:900,height:700,background:`radial-gradient(ellipse,rgba(255,92,40,.08) 0%,transparent 65%)`,filter:'blur(80px)' }} />
@@ -145,7 +151,7 @@ export default function LandingShell() {
           <div className="mt-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 text-[12px]" style={{ color:DIM2 }}>
             {['No CV required','Squad-verified','Invisible until you approve'].map(t => (
               <span key={t} className="flex items-center gap-1.5">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={MINT} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={TEAL2} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                 {t}
               </span>
             ))}
@@ -181,9 +187,9 @@ export default function LandingShell() {
         <div className="max-w-[1100px] mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color:MINT }}>Level Up</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color:TEAL2 }}>Level Up</p>
               <h2 className="text-[32px] lg:text-[42px] font-bold tracking-tight leading-[1.07] mb-5">
-                Close the gap.<br /><span style={{ color:MINT }}>Become the top match.</span>
+                Close the gap.<br /><span style={{ color:TEAL2 }}>Become the top match.</span>
               </h2>
               <p className="text-[15px] leading-relaxed mb-6" style={{ color:DIM }}>
                 Tiik reads your Flex against live JDs and finds exactly which skills are blocking you from the shortlist.
@@ -229,7 +235,7 @@ export default function LandingShell() {
           <div className="text-center mb-12">
             <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color:DIM2 }}>Why Tiik</p>
             <h2 className="text-[32px] lg:text-[42px] font-bold tracking-tight leading-[1.07]">
-              The difference is <span style={{ color:MINT }}>verification.</span>
+              The difference is <span style={{ color:TEAL2 }}>verification.</span>
             </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -247,12 +253,12 @@ export default function LandingShell() {
               </div>
             </div>
             <div className="rounded-[18px] p-6" style={{ background:`rgba(78,255,168,0.04)`, border:`1px solid rgba(78,255,168,0.15)` }}>
-              <p className="text-[11px] font-bold uppercase tracking-widest mb-5" style={{ color:MINT }}>With Tiik</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest mb-5" style={{ color:TEAL2 }}>With Tiik</p>
               <div className="space-y-3">
                 {WITH.map(t => (
                   <div key={t} className="flex items-start gap-3">
                     <div style={{ width:18,height:18,borderRadius:'50%',background:`rgba(78,255,168,0.12)`,border:`1px solid rgba(78,255,168,0.25)`,flexShrink:0,marginTop:1,display:'flex',alignItems:'center',justifyContent:'center' }}>
-                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={MINT} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={TEAL2} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                     </div>
                     <p className="text-[13.5px] leading-snug" style={{ color:'rgba(0,0,0,0.72)' }}>{t}</p>
                   </div>
