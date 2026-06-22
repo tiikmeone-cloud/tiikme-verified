@@ -35,7 +35,7 @@ export default function TopBar() {
   return (
     <header className="h-12 bg-card/90 backdrop-blur border-b border-line flex items-center px-4 sticky top-0 z-30 shrink-0">
       {/* Logo — left */}
-      <Link href="/" prefetch className="flex items-center shrink-0 w-16">
+      <Link href="/home" prefetch className="flex items-center shrink-0 w-16">
         <TiikmeMark size={20} showWordmark wordmarkClassName="text-[14px]" />
       </Link>
 
