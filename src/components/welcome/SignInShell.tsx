@@ -6,7 +6,7 @@ import TiikmeMark from '@/components/brand/TiikmeMark'
 import { InfiniteGridBackdrop } from '@/components/ui/the-infinite-grid'
 import AvatarUpload from '@/components/ui/AvatarUpload'
 import { createClient } from '@/lib/supabase/client'
-import { signInPassword, resolveIdentifier, sendPasswordReset, sendOtpSignup, verifyOtpAndGetUser, ensureProfile } from '@/lib/auth'
+import { signInPassword, resolveIdentifier, sendPasswordReset, sendOtpSignup, verifyOtpAndGetUser, ensureProfile, signInWithGoogle } from '@/lib/auth'
 import { DEFAULTS } from '@/lib/taxonomy'
 
 /* ─── Types ─────────────────────────────────────────────────────── */
@@ -371,19 +371,23 @@ export default function SignInShell() {
 
             {/* ── SIGN IN ── */}
             {mode === 'signin' && !forgotSent && (
-              <form onSubmit={handleSignIn} className="w-full mt-6 space-y-2.5">
-                <Field label="Email or username">
-                  <Input value={identifier} onChange={setIdentifier} type="text" placeholder="you@work.com or @handle" autoFocus />
-                </Field>
-                <Field label="Password">
-                  <Input value={password} onChange={setPassword} type="password" placeholder="••••••••" />
-                </Field>
-                <Btn busy={busy} disabled={!identifier.trim() || !password} label="Sign in" />
-                <button type="button" onClick={handleForgot}
-                  className="w-full text-[11.5px] text-ink-3 hover:text-orange transition-colors py-0.5 text-center">
-                  Forgot password?
-                </button>
-              </form>
+              <div className="w-full mt-6 space-y-3">
+                <GoogleBtn />
+                <Divider />
+                <form onSubmit={handleSignIn} className="space-y-2.5">
+                  <Field label="Email or username">
+                    <Input value={identifier} onChange={setIdentifier} type="text" placeholder="you@work.com or @handle" autoFocus />
+                  </Field>
+                  <Field label="Password">
+                    <Input value={password} onChange={setPassword} type="password" placeholder="••••••••" />
+                  </Field>
+                  <Btn busy={busy} disabled={!identifier.trim() || !password} label="Sign in" />
+                  <button type="button" onClick={handleForgot}
+                    className="w-full text-[11.5px] text-ink-3 hover:text-orange transition-colors py-0.5 text-center">
+                    Forgot password?
+                  </button>
+                </form>
+              </div>
             )}
             {mode === 'signin' && forgotSent && (
               <div className="w-full mt-7 text-center space-y-4">
@@ -399,6 +403,8 @@ export default function SignInShell() {
             {/* ── SIGNUP: Path ── */}
             {mode === 'signup' && step === 'path' && (
               <div className="w-full mt-6 space-y-3">
+                <GoogleBtn label="Sign up with Google" />
+                <Divider />
                 <button onClick={() => { setPath('user'); setStep('email') }}
                   className="w-full text-left rounded-[16px] border-2 border-line bg-card hover:border-orange/50 transition-all p-4 group">
                   <div className="flex items-center gap-3.5">
@@ -803,4 +809,30 @@ function Btn({ busy, disabled, label }: { busy: boolean; disabled: boolean; labe
     className="w-full bg-gradient-to-br from-orange to-orange-2 text-white text-[13px] font-semibold py-3 rounded-[12px] hover:opacity-95 disabled:opacity-40 transition-opacity shadow-[0_6px_18px_-6px_rgba(255,92,40,.55)] mt-1">
     {busy ? 'Please wait…' : label}
   </button>
+}
+
+function GoogleBtn({ label = 'Continue with Google' }: { label?: string }) {
+  const [busy, setBusy] = useState(false)
+  return (
+    <button type="button" disabled={busy} onClick={async () => { setBusy(true); await signInWithGoogle() }}
+      className="w-full flex items-center justify-center gap-2.5 bg-white border border-line rounded-[12px] px-4 py-3 text-[13px] font-semibold text-ink hover:bg-gray-50 transition-colors disabled:opacity-40 shadow-[0_1px_3px_rgba(0,0,0,0.07)]">
+      <svg width="18" height="18" viewBox="0 0 48 48" fill="none">
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+      </svg>
+      {busy ? 'Redirecting…' : label}
+    </button>
+  )
+}
+
+function Divider() {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="flex-1 h-px bg-line" />
+      <span className="text-[11px] text-ink-3 font-medium">or</span>
+      <div className="flex-1 h-px bg-line" />
+    </div>
+  )
 }

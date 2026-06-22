@@ -148,6 +148,16 @@ export async function claimProfile(userId: string, opts: {
   return {}
 }
 
+export async function signInWithGoogle(): Promise<{ error?: string }> {
+  const supabase = createClient()
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: `${window.location.origin}/auth/callback` },
+  })
+  if (error) return { error: error.message }
+  return {}
+}
+
 export async function signOut(): Promise<void> {
   const supabase = createClient()
   await supabase.auth.signOut()

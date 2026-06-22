@@ -22,19 +22,19 @@ const AMBER  = '#D97706'
 const PURPLE = '#6366F1'
 const TEAL   = '#0D9488'
 
-// ── Dark mockup constants — always-dark app screenshots inside VisualFrame ──
+// ── Light mockup constants — visuals render as white app screenshots ──
 const MOCK = {
-  CARD:   'rgba(255,255,255,0.055)',
-  BORDER: 'rgba(255,255,255,0.09)',
-  INK:    'rgba(255,255,255,0.90)',
-  INK2:   'rgba(255,255,255,0.60)',
-  INK3:   'rgba(255,255,255,0.36)',
-  PAGE:   'rgba(255,255,255,0.03)',
-  LINE:   'rgba(255,255,255,0.09)',
-  GREEN:  '#4EFFA8',
-  PURPLE: '#818CF8',
-  TEAL:   '#43C9BA',
-  AMBER:  '#F5A524',
+  CARD:   '#F8FAFC',
+  BORDER: 'rgba(0,0,0,0.08)',
+  INK:    '#0F172A',
+  INK2:   'rgba(15,23,42,0.60)',
+  INK3:   'rgba(15,23,42,0.40)',
+  PAGE:   'rgba(0,0,0,0.025)',
+  LINE:   'rgba(0,0,0,0.06)',
+  GREEN:  '#16A34A',
+  PURPLE: '#6366F1',
+  TEAL:   '#0D9488',
+  AMBER:  '#D97706',
 }
 
 const LOGOS = ['Swiggy','Razorpay','Zepto','CRED','Groww','PhonePe','Meesho','Flipkart','Ola','Dunzo','BrowserStack','Freshworks']
@@ -86,8 +86,10 @@ export default function LandingShell() {
   return (
     <main style={{ background:BG, color:INK,
         backgroundImage:`linear-gradient(rgba(0,0,0,0.045) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,0.045) 1px,transparent 1px)`,
-        backgroundSize:'40px 40px' }}
+        backgroundSize:'40px 40px',
+        animation:'tiik-grid-pan 12s linear infinite' }}
       className="relative min-h-screen overflow-hidden font-sans">
+      <style>{`@keyframes tiik-grid-pan{from{background-position:0 0}to{background-position:40px 40px}}`}</style>
       <div aria-hidden className="fixed inset-0 pointer-events-none z-0">
         <div style={{ position:'absolute',top:'-5%',left:'50%',transform:'translateX(-50%)',
           width:900,height:700,background:`radial-gradient(ellipse,rgba(255,92,40,.08) 0%,transparent 65%)`,filter:'blur(80px)' }} />
@@ -333,8 +335,8 @@ function LogoScroll() {
 /* ── Dark frame wrapping each step visual (app screenshot on white landing) ── */
 function VisualFrame({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ background:'#0F1117', borderRadius:22,
-      boxShadow:'0 32px 80px -16px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.07)', overflow:'hidden' }}>
+    <div style={{ background:'#FFFFFF', borderRadius:22,
+      boxShadow:'0 8px 40px -8px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.07)', overflow:'hidden' }}>
       {children}
     </div>
   )
