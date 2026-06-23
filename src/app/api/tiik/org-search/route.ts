@@ -101,11 +101,11 @@ export async function POST(req: NextRequest) {
       p_limit: 50, p_offset: 0,
     })
     if (!plainMatches?.length) return NextResponse.json({ candidates: [] })
-    return rerankWithLLM(plainMatches as CandidateRow[], query, limit, supabase)
+    return rerankWithLLM(plainMatches as CandidateRow[], query, limit, supabase, openai)
   }
 
   if (!vectorMatches?.length) return NextResponse.json({ candidates: [] })
-  return rerankWithLLM(vectorMatches as CandidateRow[], query, limit, supabase)
+  return rerankWithLLM(vectorMatches as CandidateRow[], query, limit, supabase, openai)
 }
 
 async function rerankWithLLM(
@@ -114,6 +114,7 @@ async function rerankWithLLM(
   limit: number,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any,
+  openai: OpenAI,
 ) {
   // Fetch trust scores + squad counts for the top 50
   const ids = candidates.slice(0, 50).map(c => c.id)
