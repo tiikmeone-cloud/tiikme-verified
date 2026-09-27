@@ -5,9 +5,11 @@ export default async function MePage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // No auth session — fall back to demo user (naadhn)
+  // No auth session — send to sign-in, never to another user's profile.
+  // Was: redirect to the demo user ("naadhn"), which showed that account's
+  // real identity to every logged-out visitor who hit /profile/me.
   if (!user) {
-    redirect('/profile/naadhn')
+    redirect('/sign-in')
   }
 
   const { data: profile } = await supabase
@@ -21,6 +23,8 @@ export default async function MePage() {
     redirect(`/org/${profile.primary_org_slug}`)
   }
 
-  // User account → personal profile
-  redirect(profile?.username ? `/profile/${profile.username}` : '/profile/naadhn')
+  // User account → personal profile. No username on a signed-in user's own
+  // row is a broken/incomplete profile, not a reason to show them (or
+  // anyone) the demo account's identity — send them home instead.
+  redirect(profile?.username ? `/profile/${profile.username}` : '/home')
 }
